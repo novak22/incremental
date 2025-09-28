@@ -75,7 +75,6 @@ const ASSETS = [
       multiplier: 1,
       active: false,
       buffer: 0,
-      multiplier: 1,
       fundedToday: false
     },
     details: [
@@ -88,9 +87,6 @@ const ASSETS = [
         const total = perInstance * active;
         const totalLabel = active ? ` | Total: <strong>$${formatMoney(total)} / 10s</strong>` : '';
         return `💸 Income: <strong>$${formatMoney(perInstance)} / 10s</strong> per blog${totalLabel}`;
-      }
-        const income = BLOG_CHUNK * asset.multiplier;
-        return `💸 Income: <strong>$${formatMoney(income)} / 10s</strong>`;
       },
       () => {
         const asset = getAssetState('blog');
@@ -122,7 +118,6 @@ const ASSETS = [
         asset.active = true;
         asset.buffer = 0;
         asset.fundedToday = false;
-        addLog('You launched your blog! Expect slow trickles of internet fame and $3 every 10 seconds.', 'passive');
       }, { checkDay: true })
     },
     passiveIncome: {
@@ -131,8 +126,6 @@ const ASSETS = [
       message: amount => `Your blog quietly earned $${formatMoney(amount)} while you scrolled memes.`,
       offlineMessage: total => `Your blog earned $${formatMoney(total)} while you were offline. Not too shabby!`
     },
-    isActive: (_state, assetState) => assetState.instances.length > 0,
-    getIncomeAmount: (_state, assetState, _instance) => BLOG_CHUNK * assetState.multiplier,
     extraContent: card => {
       const container = document.createElement('div');
       container.className = 'asset-instances';
@@ -143,7 +136,7 @@ const ASSETS = [
       if (!ui.extra?.container) return;
       renderBlogInstances(ui.extra.container);
     },
-    isActive: (_state, assetState) => assetState.active && assetState.fundedToday,
+    isActive: (_state, assetState) => assetState.instances.length > 0 && assetState.fundedToday,
     getIncomeAmount: (_state, assetState) => BLOG_CHUNK * assetState.multiplier
   },
   {
@@ -600,11 +593,13 @@ function ensureStateShape(target = state) {
   target.assets = target.assets || {};
   for (const def of ASSETS) {
     const existing = target.assets[def.id];
-    target.assets[def.id] = normalizeAssetState(def, existing || {});
-    target.assets[def.id] = existing ? { ...defaults, ...existing } : defaults;
-    if (target.assets[def.id].fundedToday === undefined) {
-      target.assets[def.id].fundedToday = !!target.assets[def.id].active;
+    const normalized = normalizeAssetState(def, existing || {});
+    if (normalized.fundedToday === undefined) {
+      normalized.fundedToday = Array.isArray(normalized.instances)
+        ? normalized.instances.length > 0
+        : !!normalized.active;
     }
+    target.assets[def.id] = normalized;
   }
 
   target.upgrades = target.upgrades || {};
