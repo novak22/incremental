@@ -1,12 +1,27 @@
 import elements from './elements.js';
-import { getAssetState, getState, getUpgradeState } from '../core/state.js';
+import {
+  getAssetDefinition,
+  getAssetState,
+  getState,
+  getUpgradeDefinition,
+  getUpgradeState
+} from '../core/state.js';
 import { formatHours, formatMoney } from '../core/helpers.js';
 import { attachQualityPanel, focusQualityInstance, updateQualityPanel } from './quality.js';
 import { getDailyIncomeRange, instanceLabel } from '../game/assets/helpers.js';
-import { getQualityLevel } from '../game/assets/quality.js';
-import { registry } from '../game/registry.js';
 import {
+  canPerformQualityAction,
+  getQualityActions,
+  getQualityLevel,
+  getQualityNextRequirements,
+  getQualityTracks,
+  performQualityAction
+} from '../game/assets/quality.js';
+import { KNOWLEDGE_TRACKS, getKnowledgeProgress } from '../game/requirements.js';
+import {
+  calculateInstanceNetHourly,
   describeInstance,
+  describeInstanceNetHourly,
   enableAssetInstanceList
 } from './assetInstances.js';
 import { configureCategoryView, updateCategoryView } from './assetCategoryView.js';
@@ -729,8 +744,15 @@ function populateInstanceDetails(definition) {
   if (elements.assetInfoInstancePayout) {
     elements.assetInfoInstancePayout.textContent = formatInstancePayout(instance);
   }
+  if (elements.assetInfoInstanceRoi) {
+    const roiElement = elements.assetInfoInstanceRoi;
+    const netHourly = calculateInstanceNetHourly(definition, instance);
+    roiElement.textContent = describeInstanceNetHourly(definition, instance);
+    roiElement.classList.toggle('is-positive', typeof netHourly === 'number' && netHourly > 0);
+    roiElement.classList.toggle('is-negative', typeof netHourly === 'number' && netHourly < 0);
+  }
 
-  populateUpgradeLists(definition);
+  populateUpgradeLists(definition, instance);
 }
 
 function renderDefinitionDetails(definition) {
@@ -790,60 +812,218 @@ function formatInstancePayout(instance) {
   return 'No payout yesterday';
 }
 
-function populateUpgradeLists(definition) {
-  const ownedList = elements.assetInfoUpgradesOwned;
-  const availableList = elements.assetInfoUpgradesAvailable;
-  if (ownedList) ownedList.innerHTML = '';
-  if (availableList) availableList.innerHTML = '';
-
-  const upgrades = registry.upgrades || [];
-  const state = getState();
-  const statuses = upgrades.map(upgrade => buildUpgradeStatus(upgrade, state, definition));
-  const owned = statuses.filter(status => status.owned);
-  const available = statuses.filter(status => !status.owned);
-
-  renderUpgradeList(ownedList, owned, 'No upgrades purchased yet.');
-  renderUpgradeList(availableList, available, 'Every upgrade is already active!');
+function populateUpgradeLists(definition, instance) {
+  renderQualityProgress(definition, instance);
+  renderQualityActions(definition, instance);
+  renderSupportingUpgrades(definition);
 }
 
-function buildUpgradeStatus(upgrade, state, definition) {
-  const upgradeState = getUpgradeState(upgrade.id, state);
-  const owned = isUpgradeOwned(upgradeState);
-  const disabled = typeof upgrade.action?.disabled === 'function'
-    ? upgrade.action.disabled(state)
-    : Boolean(upgrade.action?.disabled);
-  const required = isUpgradeRequiredForAsset(definition, upgrade.id);
-  const prefix = owned ? '✅' : disabled ? '🔒' : '🔓';
-  const details = [];
-  if (owned) {
-    const note = describeOwnedUpgrade(upgradeState);
-    if (note) details.push(note);
-  } else if (required) {
-    details.push('Required for unlock');
-  } else if (!disabled) {
-    details.push('Ready to buy');
-  } else {
-    details.push('Locked for now');
-  }
-  const text = details.length ? `${upgrade.name} — ${details.join(', ')}` : upgrade.name;
-  return { owned, text: `${prefix} ${text}` };
-}
+function renderQualityProgress(definition, instance) {
+  const list = elements.assetInfoQualityProgress;
+  if (!list) return;
+  list.innerHTML = '';
 
-function renderUpgradeList(listElement, items, emptyText) {
-  if (!listElement) return;
-  listElement.innerHTML = '';
-  if (!items.length) {
-    const li = document.createElement('li');
-    li.className = 'modal__details-empty';
-    li.textContent = emptyText;
-    listElement.appendChild(li);
+  if (!instance) {
+    appendModalEmpty(list, 'Select an asset build to review progress.');
     return;
   }
-  items.forEach(item => {
+
+  if (instance.status !== 'active') {
+    appendModalEmpty(list, 'Setup in progress — quality work unlocks after launch.');
+    return;
+  }
+
+  const qualityLevel = Number(instance.quality?.level) || 0;
+  const levelDef = getQualityLevel(definition, qualityLevel);
+  const levelItem = document.createElement('li');
+  const levelTitle = levelDef?.name ? ` — ${levelDef.name}` : '';
+  levelItem.innerHTML = `⭐ <strong>Quality ${qualityLevel}</strong>${levelTitle}`;
+  list.appendChild(levelItem);
+
+  const tracks = getQualityTracks(definition);
+  const progress = instance.quality?.progress || {};
+  const nextRequirements = getQualityNextRequirements(definition, qualityLevel);
+  const hasTracks = Object.keys(tracks || {}).length > 0;
+  let populated = false;
+
+  if (hasTracks) {
+    Object.entries(tracks).forEach(([key, track]) => {
+      const current = Number(progress[key]) || 0;
+      const target = Number(nextRequirements?.[key]) || 0;
+      const li = document.createElement('li');
+      if (target > 0) {
+        const complete = current >= target;
+        const icon = complete ? '✅' : '📈';
+        li.innerHTML = `${icon} <strong>${track.label || key}</strong> — ${current} / ${target}`;
+      } else {
+        li.innerHTML = `📈 <strong>${track.label || key}</strong> — ${current}`;
+      }
+      list.appendChild(li);
+      populated = true;
+    });
+  }
+
+  if (!populated) {
+    appendModalEmpty(list, 'No quality tracks configured for this asset.');
+  } else if (!nextRequirements || Object.keys(nextRequirements).length === 0) {
     const li = document.createElement('li');
-    li.textContent = item.text;
-    listElement.appendChild(li);
+    li.innerHTML = '🎉 <strong>Max quality reached!</strong>';
+    list.appendChild(li);
+  }
+}
+
+function renderQualityActions(definition, instance) {
+  const container = elements.assetInfoQualityActions;
+  if (!container) return;
+  container.innerHTML = '';
+
+  if (!instance || instance.status !== 'active') {
+    const note = document.createElement('p');
+    note.className = 'quality-action__none';
+    note.textContent = 'Quality actions will appear after this build launches.';
+    container.appendChild(note);
+    return;
+  }
+
+  const actions = getQualityActions(definition);
+  const state = getState();
+  if (!actions.length) {
+    const note = document.createElement('p');
+    note.className = 'quality-action__none';
+    note.textContent = 'No quality actions configured for this asset.';
+    container.appendChild(note);
+    return;
+  }
+
+  actions.forEach(action => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'quality-action';
+    const details = [];
+    if (action.time) {
+      details.push(`⏳ ${formatHours(action.time)}`);
+    }
+    if (action.cost) {
+      details.push(`💵 $${formatMoney(action.cost)}`);
+    }
+    const suffix = details.length ? ` (${details.join(' · ')})` : '';
+    button.textContent = `${action.label}${suffix}`;
+    button.disabled = !canPerformQualityAction(definition, instance, action, state);
+    button.addEventListener('click', event => {
+      event.preventDefault();
+      if (button.disabled) return;
+      performQualityAction(definition.id, instance.id, action.id);
+    });
+    container.appendChild(button);
   });
+}
+
+function renderSupportingUpgrades(definition) {
+  const list = elements.assetInfoSupportUpgrades;
+  if (!list) return;
+  list.innerHTML = '';
+
+  const requirements = Array.isArray(definition.requirements) ? definition.requirements : [];
+  if (!requirements.length) {
+    appendModalEmpty(list, 'No supporting upgrades required.');
+    return;
+  }
+
+  let populated = false;
+  requirements.forEach(requirement => {
+    const entry = createRequirementEntry(definition, requirement);
+    if (!entry) return;
+    list.appendChild(entry);
+    populated = true;
+  });
+
+  if (!populated) {
+    appendModalEmpty(list, 'No supporting upgrades required.');
+  }
+}
+
+function createRequirementEntry(definition, requirement) {
+  switch (requirement?.type) {
+    case 'equipment':
+      return createEquipmentEntry(requirement.id);
+    case 'knowledge':
+      return createKnowledgeEntry(requirement.id);
+    case 'experience':
+      return createExperienceEntry(requirement);
+    default:
+      return null;
+  }
+}
+
+function createEquipmentEntry(upgradeId) {
+  const upgrade = getUpgradeDefinition(upgradeId);
+  const state = getState();
+  const upgradeState = getUpgradeState(upgradeId, state);
+  const owned = isUpgradeOwned(upgradeState);
+  const li = document.createElement('li');
+  const label = upgrade?.name || upgradeId;
+  const badge = owned ? '✅' : '🔒';
+  const note = owned ? describeOwnedUpgrade(upgradeState) : 'Not purchased yet';
+  const text = document.createElement('span');
+  text.innerHTML = `${badge} <strong>${label}</strong>${note ? ` — ${note}` : ''}`;
+  li.appendChild(text);
+
+  if (!owned && upgrade?.action) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'quality-action';
+    const labelText = typeof upgrade.action.label === 'function'
+      ? upgrade.action.label(state)
+      : upgrade.action.label;
+    button.textContent = labelText || 'Purchase';
+    const disabled = typeof upgrade.action.disabled === 'function'
+      ? upgrade.action.disabled(state)
+      : Boolean(upgrade.action.disabled);
+    button.disabled = disabled;
+    button.addEventListener('click', event => {
+      event.preventDefault();
+      if (button.disabled) return;
+      upgrade.action.onClick();
+    });
+    li.appendChild(button);
+  }
+
+  return li;
+}
+
+function createKnowledgeEntry(knowledgeId) {
+  const track = KNOWLEDGE_TRACKS[knowledgeId];
+  const progress = getKnowledgeProgress(knowledgeId);
+  const li = document.createElement('li');
+  const icon = progress.completed ? '✅' : progress.studiedToday ? '📗' : '📘';
+  const label = track?.name || knowledgeId;
+  const detail = track
+    ? `${progress.daysCompleted}/${track.days} days · ${formatHours(track.hoursPerDay)}/day`
+    : `${progress.daysCompleted} days completed`;
+  li.innerHTML = `${icon} <strong>${label}</strong> — ${detail}`;
+  return li;
+}
+
+function createExperienceEntry(requirement) {
+  const targetId = requirement?.assetId;
+  if (!targetId) return null;
+  const targetDefinition = getAssetDefinition(targetId);
+  const assetState = getAssetState(targetId);
+  const activeCount = (assetState?.instances || []).filter(instance => instance.status === 'active').length;
+  const targetCount = Number(requirement.count) || 0;
+  const icon = activeCount >= targetCount ? '✅' : '🏆';
+  const label = targetDefinition?.singular || targetDefinition?.name || targetId;
+  const li = document.createElement('li');
+  li.innerHTML = `${icon} <strong>${targetCount} ${label}${targetCount === 1 ? '' : 's'}</strong> — Have ${activeCount}`;
+  return li;
+}
+
+function appendModalEmpty(listElement, text) {
+  if (!listElement) return;
+  const li = document.createElement('li');
+  li.className = 'modal__details-empty';
+  li.textContent = text;
+  listElement.appendChild(li);
 }
 
 function isUpgradeOwned(upgradeState = {}) {
@@ -870,23 +1050,6 @@ function describeOwnedUpgrade(upgradeState = {}) {
     return 'Purchased';
   }
   return '';
-}
-
-function isUpgradeRequiredForAsset(definition, upgradeId) {
-  if (!definition || !upgradeId) return false;
-  const requirementList = Array.isArray(definition.requirements) ? definition.requirements : [];
-  if (requirementList.some(req => req?.type === 'equipment' && req.id === upgradeId)) {
-    return true;
-  }
-  if (definition.requiresUpgrade) {
-    const required = Array.isArray(definition.requiresUpgrade)
-      ? definition.requiresUpgrade
-      : [definition.requiresUpgrade];
-    if (required.includes(upgradeId)) {
-      return true;
-    }
-  }
-  return false;
 }
 
 function normalizeCategory(label = '') {

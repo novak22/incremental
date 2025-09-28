@@ -6,7 +6,12 @@ import {
   instanceLabel,
   sellAssetInstance
 } from '../game/assets/helpers.js';
-import { describeInstance, describeInstanceEarnings } from './assetInstances.js';
+import {
+  calculateInstanceNetHourly,
+  describeInstance,
+  describeInstanceEarnings,
+  describeInstanceNetHourly
+} from './assetInstances.js';
 
 const categoryState = {
   definitionsByCategory: new Map(),
@@ -97,7 +102,7 @@ function renderCategoryList(key) {
   table.className = 'asset-category__table';
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
-  ['Asset', 'Upkeep', 'Last Payout', 'Manage'].forEach(label => {
+  ['Asset', 'Upkeep', 'Last Payout', 'Net / Hour', 'Manage'].forEach(label => {
     const th = document.createElement('th');
     th.textContent = label;
     headerRow.appendChild(th);
@@ -145,6 +150,17 @@ function renderCategoryList(key) {
     }
     payoutCell.appendChild(payout);
     tr.appendChild(payoutCell);
+
+    const roiCell = document.createElement('td');
+    const roi = document.createElement('span');
+    roi.textContent = row.roi;
+    if (row.roiPositive) {
+      roi.className = 'asset-category__earnings';
+    } else if (row.roiNegative) {
+      roi.className = 'asset-category__loss';
+    }
+    roiCell.appendChild(roi);
+    tr.appendChild(roiCell);
 
     const actionsCell = document.createElement('td');
     const actionsWrap = document.createElement('div');
@@ -202,6 +218,7 @@ function buildInstanceRows(definitions) {
     const assetState = getAssetState(definition.id, state);
     const instances = assetState?.instances || [];
     instances.forEach((instance, index) => {
+      const netHourly = calculateInstanceNetHourly(definition, instance);
       rows.push({
         definition,
         instance,
@@ -209,7 +226,10 @@ function buildInstanceRows(definitions) {
         status: describeInstance(definition, instance),
         upkeep: formatMaintenance(definition),
         payout: formatPayout(instance),
-        payoutPositive: Math.max(0, Number(instance.lastIncome) || 0) > 0
+        payoutPositive: Math.max(0, Number(instance.lastIncome) || 0) > 0,
+        roi: describeInstanceNetHourly(definition, instance),
+        roiPositive: typeof netHourly === 'number' && netHourly > 0,
+        roiNegative: typeof netHourly === 'number' && netHourly < 0
       });
     });
   });

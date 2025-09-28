@@ -82,8 +82,10 @@ const elements = {
   assetInfoInstanceQuality: document.getElementById('asset-info-instance-quality'),
   assetInfoInstanceUpkeep: document.getElementById('asset-info-instance-upkeep'),
   assetInfoInstancePayout: document.getElementById('asset-info-instance-payout'),
-  assetInfoUpgradesOwned: document.getElementById('asset-info-upgrades-owned'),
-  assetInfoUpgradesAvailable: document.getElementById('asset-info-upgrades-available'),
+  assetInfoInstanceRoi: document.getElementById('asset-info-instance-roi'),
+  assetInfoQualityProgress: document.getElementById('asset-info-quality-progress'),
+  assetInfoQualityActions: document.getElementById('asset-info-quality-actions'),
+  assetInfoSupportUpgrades: document.getElementById('asset-info-support-upgrades'),
   assetInfoClose: document.getElementById('asset-info-close'),
   upgradeSearch: document.getElementById('upgrade-search')
 };
