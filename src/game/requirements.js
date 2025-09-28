@@ -68,42 +68,42 @@ export function getDefinitionRequirements(definition) {
   return bundle;
 }
 
-function isEquipmentUnlocked(id) {
+function isEquipmentUnlocked(id, state = getState()) {
   if (!id) return true;
-  return Boolean(getUpgradeState(id).purchased);
+  return Boolean(getUpgradeState(id, state).purchased);
 }
 
-function isKnowledgeComplete(id) {
+function isKnowledgeComplete(id, state = getState()) {
   if (!id) return true;
   const track = KNOWLEDGE_TRACKS[id];
   if (!track) return true;
-  const progress = getKnowledgeProgress(id);
+  const progress = getKnowledgeProgress(id, state);
   return progress.completed;
 }
 
-function hasExperience(requirement) {
+function hasExperience(requirement, state = getState()) {
   if (!requirement?.assetId) return true;
   const targetCount = Number(requirement.count) || 0;
   if (targetCount <= 0) return true;
-  const assetState = getAssetState(requirement.assetId);
+  const assetState = getAssetState(requirement.assetId, state);
   return (assetState.instances || []).filter(instance => instance.status === 'active').length >= targetCount;
 }
 
-export function isRequirementMet(requirement) {
+export function isRequirementMet(requirement, state = getState()) {
   if (!requirement) return true;
   switch (requirement.type) {
     case 'equipment':
-      return isEquipmentUnlocked(requirement.id);
+      return isEquipmentUnlocked(requirement.id, state);
     case 'knowledge':
-      return isKnowledgeComplete(requirement.id);
+      return isKnowledgeComplete(requirement.id, state);
     case 'experience':
-      return hasExperience(requirement);
+      return hasExperience(requirement, state);
     default:
       return true;
   }
 }
 
-export function describeRequirement(requirement) {
+export function describeRequirement(requirement, state = getState()) {
   if (!requirement) {
     return {
       type: 'unknown',
@@ -114,7 +114,7 @@ export function describeRequirement(requirement) {
     };
   }
 
-  const status = isRequirementMet(requirement) ? 'met' : 'pending';
+  const status = isRequirementMet(requirement, state) ? 'met' : 'pending';
 
   if (requirement.type === 'equipment') {
     const upgrade = getUpgradeDefinition(requirement.id);
@@ -132,7 +132,7 @@ export function describeRequirement(requirement) {
   if (requirement.type === 'knowledge') {
     const track = KNOWLEDGE_TRACKS[requirement.id];
     const label = track?.name || requirement.id;
-    const progress = getKnowledgeProgress(requirement.id);
+    const progress = getKnowledgeProgress(requirement.id, state);
     const icon = progress.completed ? '✅' : progress.studiedToday ? '📗' : '📘';
     const hoursPerDay = Number(track?.hoursPerDay) || 0;
     const detail = track
@@ -149,7 +149,7 @@ export function describeRequirement(requirement) {
 
   if (requirement.type === 'experience') {
     const assetDef = getAssetDefinition(requirement.assetId);
-    const assetState = getAssetState(requirement.assetId);
+    const assetState = getAssetState(requirement.assetId, state);
     const owned = (assetState.instances || []).filter(instance => instance.status === 'active').length;
     const target = Number(requirement.count) || 0;
     const baseLabel = assetDef?.singular || assetDef?.name || requirement.assetId;
@@ -173,49 +173,102 @@ export function describeRequirement(requirement) {
   };
 }
 
-export function definitionRequirementsMet(definition) {
+export function definitionRequirementsMet(definition, state = getState()) {
   const requirements = getDefinitionRequirements(definition);
   if (!requirements.hasAny) return true;
-  return requirements.every(isRequirementMet);
+  return requirements.every(req => isRequirementMet(req, state));
 }
 
-export function assetRequirementsMet(definition) {
-  return definitionRequirementsMet(definition);
+export function assetRequirementsMet(definition, state = getState()) {
+  return definitionRequirementsMet(definition, state);
 }
 
-export function assetRequirementsMetById(id) {
+export function assetRequirementsMetById(id, state = getState()) {
   const definition = getAssetDefinition(id);
   if (!definition) return true;
-  return definitionRequirementsMet(definition);
+  return definitionRequirementsMet(definition, state);
 }
 
-export function formatAssetRequirementLabel(assetId) {
+export function formatAssetRequirementLabel(assetId, state = getState()) {
   const definition = getAssetDefinition(assetId);
   if (!definition) return 'Requirement Missing';
   const requirements = getDefinitionRequirements(definition);
   if (!requirements.hasAny) return 'Ready to Launch';
-  const missing = requirements.missing(isRequirementMet);
+  const missing = requirements.missing(req => isRequirementMet(req, state));
   if (!missing.length) return 'Ready to Launch';
-  const names = missing.map(req => describeRequirement(req).label);
+  const names = missing.map(req => describeRequirement(req, state).label);
   return `Requires ${names.join(' & ')}`;
 }
 
-export function renderAssetRequirementDetail(assetId) {
+export function renderAssetRequirementDetail(assetId, state = getState()) {
   const definition = getAssetDefinition(assetId);
   if (!definition) return '';
   const requirements = getDefinitionRequirements(definition);
   if (!requirements.hasAny) {
     return '🔓 Requirements: <strong>None</strong>';
   }
-  const parts = requirements.map(req => describeRequirement(req).detail);
+  const parts = requirements.map(req => describeRequirement(req, state).detail);
   return `Requirements: ${parts.join(' • ')}`;
 }
 
-export function updateAssetCardLock(assetId, card) {
+export function listAssetRequirementDescriptors(definitionOrId, state = getState()) {
+  const definition = typeof definitionOrId === 'string'
+    ? getAssetDefinition(definitionOrId)
+    : definitionOrId;
+  if (!definition) return [];
+  const requirements = getDefinitionRequirements(definition);
+  if (!requirements.hasAny) return [];
+
+  return requirements.map(req => {
+    switch (req.type) {
+      case 'equipment': {
+        const upgrade = getUpgradeDefinition(req.id);
+        return {
+          type: 'equipment',
+          id: req.id,
+          label: upgrade?.name || req.id,
+          met: isEquipmentUnlocked(req.id, state)
+        };
+      }
+      case 'knowledge': {
+        const track = KNOWLEDGE_TRACKS[req.id];
+        const progress = getKnowledgeProgress(req.id, state);
+        return {
+          type: 'knowledge',
+          id: req.id,
+          label: track?.name || req.id,
+          met: progress.completed,
+          progress: {
+            daysCompleted: progress.daysCompleted,
+            totalDays: track?.days ?? 0,
+            studiedToday: Boolean(progress.studiedToday)
+          }
+        };
+      }
+      case 'experience': {
+        const assetDef = getAssetDefinition(req.assetId);
+        const need = Number(req.count) || 0;
+        const assetState = getAssetState(req.assetId, state);
+        const have = (assetState.instances || []).filter(instance => instance.status === 'active').length;
+        return {
+          type: 'experience',
+          assetId: req.assetId,
+          label: `${need} ${(assetDef?.singular || assetDef?.name || req.assetId)}${need === 1 ? '' : 's'}`,
+          met: have >= need,
+          progress: { have, need }
+        };
+      }
+      default:
+        return { type: req.type || 'unknown', label: 'Unknown requirement', met: false };
+    }
+  });
+}
+
+export function updateAssetCardLock(assetId, card, state = getState()) {
   const definition = getAssetDefinition(assetId);
   if (!definition || !card) return;
   const requirements = getDefinitionRequirements(definition);
-  const locked = requirements.hasAny && !requirements.every(isRequirementMet);
+  const locked = requirements.hasAny && !requirements.every(req => isRequirementMet(req, state));
   card.classList.toggle('locked', locked);
 }
 

@@ -48,6 +48,7 @@ function getAssetMetricId(definition, scope, type) {
 
 export function buildAssetAction(definition, labels = {}) {
   return {
+    id: 'launch',
     label: () => assetActionLabel(definition, labels),
     className: 'primary',
     disabled: () => isAssetPurchaseDisabled(definition),

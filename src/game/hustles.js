@@ -22,25 +22,25 @@ import {
   recordTimeContribution
 } from './metrics.js';
 
-function countActiveAssets(assetId) {
-  const assetState = getAssetState(assetId);
+function countActiveAssets(assetId, state = getState()) {
+  const assetState = getAssetState(assetId, state);
   if (!assetState?.instances) return 0;
   return assetState.instances.filter(instance => instance.status === 'active').length;
 }
 
-function requirementsMet(requirements = []) {
+function requirementsMet(requirements = [], state = getState()) {
   if (!requirements?.length) return true;
-  return requirements.every(req => countActiveAssets(req.assetId) >= (Number(req.count) || 1));
+  return requirements.every(req => countActiveAssets(req.assetId, state) >= (Number(req.count) || 1));
 }
 
-function renderRequirementSummary(requirements = []) {
+function renderRequirementSummary(requirements = [], state = getState()) {
   if (!requirements.length) return 'None';
   return requirements
     .map(req => {
       const definition = getAssetDefinition(req.assetId);
       const label = definition?.singular || definition?.name || req.assetId;
       const need = Number(req.count) || 1;
-      const have = countActiveAssets(req.assetId);
+      const have = countActiveAssets(req.assetId, state);
       return `${label}: ${have}/${need} active`;
     })
     .join(' • ');
@@ -93,6 +93,33 @@ const BUNDLE_PUSH_REQUIREMENTS = [
   { assetId: 'ebook', count: 1 }
 ];
 
+export function getHustleRequirements(definition) {
+  if (!definition) return [];
+  return Array.isArray(definition.requirements) ? definition.requirements : [];
+}
+
+export function describeHustleRequirements(definition, state = getState()) {
+  const requirements = getHustleRequirements(definition);
+  if (!requirements.length) return [];
+  return requirements.map(req => {
+    const assetDefinition = getAssetDefinition(req.assetId);
+    const label = assetDefinition?.singular || assetDefinition?.name || req.assetId;
+    const need = Number(req.count) || 1;
+    const have = countActiveAssets(req.assetId, state);
+    return {
+      type: 'asset',
+      assetId: req.assetId,
+      label: `${need} ${label}${need === 1 ? '' : 's'}`,
+      met: have >= need,
+      progress: { have, need }
+    };
+  });
+}
+
+export function areHustleRequirementsMet(definition, state = getState()) {
+  return requirementsMet(getHustleRequirements(definition), state);
+}
+
 export const HUSTLES = [
   {
     id: 'freelance',
@@ -104,6 +131,9 @@ export const HUSTLES = [
       () => '💵 Payout: <strong>$18</strong>'
     ],
     action: {
+      id: 'writeArticle',
+      timeCost: 2,
+      moneyCost: 0,
       label: 'Write Now',
       className: 'primary',
       disabled: () => getState().timeLeft < 2,
@@ -131,19 +161,23 @@ export const HUSTLES = [
     name: 'Audience Q&A Blast',
     tag: { label: 'Instant', type: 'instant' },
     description: 'Host a 60-minute livestream for your blog readers and pitch a premium checklist.',
+    requirements: AUDIENCE_CALL_REQUIREMENTS,
     details: [
       () => '⏳ Time: <strong>1h</strong>',
       () => '💵 Payout: <strong>$12</strong>',
       () => `Requires: <strong>${renderRequirementSummary(AUDIENCE_CALL_REQUIREMENTS)}</strong>`
     ],
     action: {
+      id: 'goLive',
+      timeCost: 1,
+      moneyCost: 0,
       label: 'Go Live',
       className: 'primary',
       disabled: () => {
         const state = getState();
         if (!state) return true;
         if (state.timeLeft < 1) return true;
-        return !requirementsMet(AUDIENCE_CALL_REQUIREMENTS);
+        return !requirementsMet(AUDIENCE_CALL_REQUIREMENTS, state);
       },
       onClick: () => {
         executeAction(() => {
@@ -153,7 +187,7 @@ export const HUSTLES = [
             addLog('You need a full free hour before going live with your readers.', 'warning');
             return;
           }
-          if (!requirementsMet(AUDIENCE_CALL_REQUIREMENTS)) {
+          if (!requirementsMet(AUDIENCE_CALL_REQUIREMENTS, state)) {
             addLog('You need an active blog to invite readers to that Q&A.', 'warning');
             return;
           }
@@ -179,19 +213,23 @@ export const HUSTLES = [
     name: 'Bundle Promo Push',
     tag: { label: 'Instant', type: 'instant' },
     description: 'Pair your top blogs with an e-book bonus bundle for a limited-time flash sale.',
+    requirements: BUNDLE_PUSH_REQUIREMENTS,
     details: [
       () => '⏳ Time: <strong>2.5h</strong>',
       () => '💵 Payout: <strong>$48</strong>',
       () => `Requires: <strong>${renderRequirementSummary(BUNDLE_PUSH_REQUIREMENTS)}</strong>`
     ],
     action: {
+      id: 'launchBundle',
+      timeCost: 2.5,
+      moneyCost: 0,
       label: 'Launch Bundle',
       className: 'primary',
       disabled: () => {
         const state = getState();
         if (!state) return true;
         if (state.timeLeft < 2.5) return true;
-        return !requirementsMet(BUNDLE_PUSH_REQUIREMENTS);
+        return !requirementsMet(BUNDLE_PUSH_REQUIREMENTS, state);
       },
       onClick: () => {
         executeAction(() => {
@@ -201,7 +239,7 @@ export const HUSTLES = [
             addLog('You need 2.5 free hours to build that promo bundle.', 'warning');
             return;
           }
-          if (!requirementsMet(BUNDLE_PUSH_REQUIREMENTS)) {
+          if (!requirementsMet(BUNDLE_PUSH_REQUIREMENTS, state)) {
             addLog('You need two active blogs and an e-book live before that bundle will sell.', 'warning');
             return;
           }
@@ -236,6 +274,10 @@ export const HUSTLES = [
       pending: []
     },
     action: {
+      id: 'startFlip',
+      timeCost: 4,
+      moneyCost: 20,
+      delaySeconds: 30,
       label: 'Start Flip',
       className: 'primary',
       disabled: () => {
@@ -358,6 +400,7 @@ export function processFlipPayouts(now = Date.now(), offline = false) {
 function createKnowledgeHustles() {
   return Object.values(KNOWLEDGE_TRACKS).map(track => ({
     id: `study-${track.id}`,
+    studyTrackId: track.id,
     name: track.name,
     tag: { label: 'Study', type: 'study' },
     description: track.description,
@@ -377,6 +420,9 @@ function createKnowledgeHustles() {
       }
     ],
     action: {
+      id: `enroll-${track.id}`,
+      timeCost: 0,
+      moneyCost: Number(track.tuition) || 0,
       label: () => {
         const progress = getKnowledgeProgress(track.id);
         if (progress.completed) return 'Course Complete';

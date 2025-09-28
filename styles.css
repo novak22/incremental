@@ -1275,6 +1275,65 @@ body.modal-open {
   color: rgba(148, 163, 184, 0.7);
 }
 
+.debug-panel {
+  background: rgba(15, 23, 42, 0.78);
+  border-radius: 16px;
+  border: 1px dashed rgba(148, 163, 184, 0.35);
+  box-shadow: var(--shadow);
+  padding: 1.5rem;
+  margin: 2rem auto;
+  max-width: 960px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.debug-panel header h2 {
+  font-size: 1.2rem;
+  margin-bottom: 0.25rem;
+}
+
+.debug-panel header p {
+  color: var(--muted);
+}
+
+.debug-panel__summary {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.debug-panel__body {
+  overflow-x: auto;
+}
+
+.debug-table {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.debug-table th,
+.debug-table td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+  text-align: left;
+}
+
+.debug-table th {
+  font-weight: 600;
+  color: rgba(226, 232, 240, 0.75);
+}
+
+.debug-table tr.is-available {
+  background: rgba(74, 222, 128, 0.08);
+}
+
+.debug-table td.is-missing {
+  color: var(--warning);
+  font-weight: 600;
+}
+
 .log.summary .log-entry .message {
   display: inline-block;
   white-space: nowrap;

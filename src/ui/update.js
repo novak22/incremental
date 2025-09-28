@@ -7,6 +7,7 @@ import { registry } from '../game/registry.js';
 import { computeDailySummary } from '../game/summary.js';
 import { renderSummary } from './dashboard.js';
 import { applyCardFilters } from './layout.js';
+import { refreshActionCatalogDebug } from './debugCatalog.js';
 
 function buildCollections() {
   const hustles = registry.hustles.filter(hustle => hustle.tag?.type !== 'study');
@@ -43,4 +44,5 @@ export function updateUI() {
   const summary = computeDailySummary(state);
   renderSummary(summary);
   applyCardFilters();
+  refreshActionCatalogDebug();
 }

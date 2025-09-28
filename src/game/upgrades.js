@@ -64,6 +64,9 @@ export const UPGRADES = [
       () => `📅 Current Payroll: <strong>$${formatMoney(getAssistantDailyCost())} / day</strong>`
     ],
     action: {
+      id: 'hireAssistant',
+      timeCost: 0,
+      moneyCost: ASSISTANT_CONFIG.hiringCost,
       label: () => {
         const count = getAssistantCount();
         if (count >= ASSISTANT_CONFIG.maxAssistants) return 'Assistant Team Full';
@@ -115,6 +118,9 @@ export const UPGRADES = [
       () => 'Unlocks: <strong>Weekly Vlog Channel & Stock Photo Galleries</strong>'
     ],
     action: {
+      id: 'purchaseCamera',
+      timeCost: 0,
+      moneyCost: 200,
       label: () => getUpgradeState('camera').purchased ? 'Camera Ready' : 'Purchase Camera',
       className: 'secondary',
       disabled: () => {
@@ -154,6 +160,9 @@ export const UPGRADES = [
       () => 'Unlocks: <strong>Stock Photo Galleries</strong>'
     ],
     action: {
+      id: 'buildStudio',
+      timeCost: 0,
+      moneyCost: 220,
       label: () => getUpgradeState('studio').purchased ? 'Studio Ready' : 'Build Studio',
       className: 'secondary',
       disabled: () => {
@@ -194,7 +203,11 @@ export const UPGRADES = [
       () => `Requires: <strong>${formatRequirementHeadline(CAMERA_PRO_REQUIREMENT_BUNDLE)}</strong>`,
       () => 'Boosts: <strong>Higher vlog quality payouts</strong>'
     ],
+    requirements: [{ type: 'upgrade', id: 'camera' }],
     action: {
+      id: 'installCinemaGear',
+      timeCost: 0,
+      moneyCost: 480,
       label: () => {
         const upgrade = getUpgradeState('cameraPro');
         if (upgrade.purchased) return 'Cinema Ready';
@@ -244,7 +257,11 @@ export const UPGRADES = [
       () => `Requires: <strong>${formatRequirementHeadline(STUDIO_EXPANSION_REQUIREMENT_BUNDLE)}</strong>`,
       () => 'Boosts: <strong>Stock photo session efficiency</strong>'
     ],
+    requirements: [{ type: 'upgrade', id: 'studio' }],
     action: {
+      id: 'expandStudio',
+      timeCost: 0,
+      moneyCost: 540,
       label: () => {
         const upgrade = getUpgradeState('studioExpansion');
         if (upgrade.purchased) return 'Studio Expanded';
@@ -293,6 +310,9 @@ export const UPGRADES = [
       () => 'Unlocks: <strong>Stable environments for advanced products</strong>'
     ],
     action: {
+      id: 'installServerRack',
+      timeCost: 0,
+      moneyCost: 650,
       label: () => (getUpgradeState('serverRack').purchased ? 'Rack Online' : 'Install Rack'),
       className: 'secondary',
       disabled: () => {
@@ -333,7 +353,11 @@ export const UPGRADES = [
       () => `Requires: <strong>${formatRequirementHeadline(SERVER_CLUSTER_REQUIREMENT_BUNDLE)}</strong>`,
       () => 'Unlocks: <strong>SaaS deployments</strong>'
     ],
+    requirements: [{ type: 'upgrade', id: 'serverRack' }],
     action: {
+      id: 'deployCloudCluster',
+      timeCost: 0,
+      moneyCost: 1150,
       label: () => {
         const upgrade = getUpgradeState('serverCluster');
         if (upgrade.purchased) return 'Cluster Ready';
@@ -383,7 +407,11 @@ export const UPGRADES = [
       () => `Requires: <strong>${formatRequirementHeadline(SERVER_EDGE_REQUIREMENT_BUNDLE)}</strong>`,
       () => 'Boosts: <strong>SaaS subscriber trust</strong>'
     ],
+    requirements: [{ type: 'upgrade', id: 'serverCluster' }],
     action: {
+      id: 'activateEdgeNetwork',
+      timeCost: 0,
+      moneyCost: 1450,
       label: () => {
         const upgrade = getUpgradeState('serverEdge');
         if (upgrade.purchased) return 'Edge Live';
@@ -432,6 +460,9 @@ export const UPGRADES = [
       () => `Daily limit: <strong>${COFFEE_LIMIT}</strong>`
     ],
     action: {
+      id: 'brewTurboCoffee',
+      timeCost: 0,
+      moneyCost: 40,
       label: () => {
         const upgrade = getUpgradeState('coffee');
         return upgrade.usedToday >= COFFEE_LIMIT ? 'Too Much Caffeine' : 'Brew Boost';
@@ -473,7 +504,11 @@ export const UPGRADES = [
       () => '💵 Cost: <strong>$260</strong>',
       () => `Requires: <strong>${formatRequirementHeadline(COURSE_REQUIREMENT_BUNDLE)}</strong>`
     ],
+    requirements: [{ type: 'experience', assetId: 'blog', count: 1 }],
     action: {
+      id: 'enrollAutomationCourse',
+      timeCost: 0,
+      moneyCost: 260,
       label: () => {
         const upgrade = getUpgradeState('course');
         if (upgrade.purchased) return 'Automation Ready';
