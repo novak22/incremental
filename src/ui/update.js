@@ -140,6 +140,12 @@ function renderTimeProgress(summary) {
 
   const playerSegments = [];
   const assistantSegments = [];
+  const assistantCapacity = Math.max(
+    0,
+    getAssistantCount(state) * ASSISTANT_CONFIG.hoursPerAssistant
+  );
+  let assistantRemainingCapacity = assistantCapacity;
+  let assistantOverflowHours = 0;
 
   if (sleepHours > HOURS_EPSILON) {
     playerSegments.push({
@@ -166,7 +172,28 @@ function renderTimeProgress(summary) {
         style: getSegmentStyle(category)
       };
       if (normalized === 'maintenance') {
-        assistantSegments.push({ ...segment, owner: 'assistant' });
+        const assistantHours = Math.min(assistantRemainingCapacity, hours);
+        if (assistantHours > HOURS_EPSILON) {
+          assistantSegments.push({
+            ...segment,
+            key: `${segment.key}:assistant`,
+            hours: assistantHours,
+            owner: 'assistant'
+          });
+          assistantRemainingCapacity = Math.max(0, assistantRemainingCapacity - assistantHours);
+        }
+
+        const manualHours = hours - assistantHours;
+        if (manualHours > HOURS_EPSILON) {
+          assistantOverflowHours += manualHours;
+          playerSegments.push({
+            ...segment,
+            key: `${segment.key}:manual`,
+            label: assistantHours > HOURS_EPSILON ? `${segment.label} (manual)` : segment.label,
+            hours: manualHours,
+            owner: 'player'
+          });
+        }
       } else {
         playerSegments.push({ ...segment, owner: 'player' });
       }
@@ -223,10 +250,6 @@ function renderTimeProgress(summary) {
   renderSegments(elements.timeProgress, playerSegments, { ownerPrefix: '' });
 
   const assistantWrapper = elements.assistantSupport;
-  const assistantCapacity = Math.max(
-    0,
-    getAssistantCount(state) * ASSISTANT_CONFIG.hoursPerAssistant
-  );
   const assistantUsed = assistantSegments.reduce((total, segment) => total + segment.hours, 0);
   const assistantBarSegments = [...assistantSegments];
   const assistantIdle = Math.max(0, assistantCapacity - assistantUsed);
@@ -249,7 +272,17 @@ function renderTimeProgress(summary) {
         ownerPrefix: 'Assistants'
       });
       if (elements.assistantNote) {
-        if (assistantUsed <= HOURS_EPSILON) {
+        if (assistantOverflowHours > HOURS_EPSILON) {
+          if (assistantCapacity > HOURS_EPSILON) {
+            elements.assistantNote.textContent = `Assistants are maxed out — ${formatHours(
+              assistantOverflowHours
+            )} bounced back to you.`;
+          } else {
+            elements.assistantNote.textContent = `${formatHours(
+              assistantOverflowHours
+            )} of upkeep still needs your personal touch.`;
+          }
+        } else if (assistantUsed <= HOURS_EPSILON) {
           elements.assistantNote.textContent = assistantCapacity > 0
             ? 'Idle and ready for upkeep.'
             : 'No upkeep logged yet.';

@@ -103,12 +103,10 @@ function setupTimeLegendToggle() {
   };
 
   toggle.addEventListener('click', () => {
-    if (toggle.disabled) return;
     const expanded = toggle.getAttribute('aria-expanded') === 'true';
     setExpanded(!expanded);
   });
 
-  toggle.disabled = true;
   setExpanded(false);
 }
 
