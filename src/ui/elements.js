@@ -75,6 +75,7 @@ const elements = {
   assetInfoEyebrow: document.getElementById('asset-info-eyebrow'),
   assetInfoTitle: document.getElementById('asset-info-title'),
   assetInfoDescription: document.getElementById('asset-info-description'),
+  assetInfoContent: document.getElementById('asset-info-content'),
   assetInfoDetails: document.getElementById('asset-info-details'),
   assetInfoDefinition: document.getElementById('asset-info-definition'),
   assetInfoInstance: document.getElementById('asset-info-instance'),
