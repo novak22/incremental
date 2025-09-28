@@ -522,7 +522,7 @@ function instanceLabel(definition, index) {
   return `${base} #${index + 1}`;
 }
 
-function getDailyIncomeRange(definition) {
+export function getDailyIncomeRange(definition) {
   const base = Math.max(0, Number(definition.income?.base) || 0);
   const variance = Math.max(0, Number(definition.income?.variance) || 0);
   const min = definition.income?.floor ?? Math.round(base * (1 - variance));

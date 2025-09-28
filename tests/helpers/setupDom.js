@@ -12,7 +12,26 @@ export function ensureTestDom() {
         <span id="time"></span>
         <div id="time-progress"></div>
         <span id="day"></span>
+        <button id="end-day"></button>
       </header>
+      <section id="summary-bar">
+        <div>
+          <span id="summary-time"></span>
+          <span id="summary-time-detail"></span>
+        </div>
+        <div>
+          <span id="summary-income"></span>
+          <span id="summary-income-detail"></span>
+        </div>
+        <div>
+          <span id="summary-cost"></span>
+          <span id="summary-cost-detail"></span>
+        </div>
+        <div>
+          <span id="summary-study"></span>
+          <span id="summary-study-detail"></span>
+        </div>
+      </section>
       <main>
         <div id="hustle-grid"></div>
         <div id="asset-grid"></div>
@@ -28,7 +47,6 @@ export function ensureTestDom() {
           </div>
         </template>
       </section>
-      <button id="end-day"></button>
     </body></html>`,
     { url: 'https://example.com' }
   );
