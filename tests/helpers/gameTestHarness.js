@@ -8,7 +8,7 @@ export async function getGameTestHarness() {
   ensureTestDom();
 
   const stateModule = await import('../../src/core/state.js');
-  const assetsModule = await import('../../src/game/assets.js');
+  const assetsModule = await import('../../src/game/assets/index.js');
   const hustlesModule = await import('../../src/game/hustles.js');
   const upgradesModule = await import('../../src/game/upgrades.js');
   const requirementsModule = await import('../../src/game/requirements.js');
