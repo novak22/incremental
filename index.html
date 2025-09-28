@@ -18,12 +18,16 @@
           <span id="money" class="value">$0</span>
         </div>
         <div class="stat time">
-          <span class="label">Time Left</span>
+          <span class="label">Day Progress</span>
           <div class="time-wrapper">
-            <span id="time" class="value">14h</span>
-            <div class="time-bar">
+            <div class="time-readout">
+              <span id="time" class="value">08h / 24h</span>
+              <span id="time-note" class="time-note">Sleep banked, hustle ready.</span>
+            </div>
+            <div class="time-bar" aria-hidden="true">
               <div id="time-progress" class="time-progress"></div>
             </div>
+            <ul id="time-legend" class="time-legend" aria-live="polite"></ul>
           </div>
         </div>
         <div class="stat">

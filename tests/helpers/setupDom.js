@@ -11,8 +11,12 @@ export function ensureTestDom() {
         <header class="dashboard-header">
           <div class="top-bar">
             <span id="money"></span>
-            <span id="time"></span>
-            <div id="time-progress"></div>
+            <div>
+              <span id="time"></span>
+              <span id="time-note"></span>
+              <div id="time-progress"></div>
+              <ul id="time-legend"></ul>
+            </div>
             <span id="day"></span>
             <button id="end-day"></button>
           </div>

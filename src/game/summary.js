@@ -61,14 +61,21 @@ export function computeDailySummary(state = getState()) {
     .filter(entry => Number(entry?.hours) > 0)
     .sort((a, b) => Number(b.hours) - Number(a.hours))
     .map(entry => {
+      const hours = Number(entry?.hours) || 0;
+      const category = getCategory(entry);
       const result = {
         key: entry.key,
         label: entry.label,
-        value: `${formatHours(Number(entry.hours))} today`
+        value: `${formatHours(hours)} today`,
+        hours,
+        category
       };
       const definition = resolveDefinitionReference(entry.key);
       if (definition) {
         result.definition = definition;
+        if (!result.category && definition.category) {
+          result.category = definition.category;
+        }
       }
       return result;
     });

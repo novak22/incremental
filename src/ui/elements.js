@@ -2,6 +2,8 @@ const elements = {
   money: document.getElementById('money'),
   time: document.getElementById('time'),
   timeProgress: document.getElementById('time-progress'),
+  timeLegend: document.getElementById('time-legend'),
+  timeNote: document.getElementById('time-note'),
   day: document.getElementById('day'),
   logFeed: document.getElementById('log-feed'),
   logTemplate: document.getElementById('log-template'),
