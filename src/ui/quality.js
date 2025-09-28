@@ -41,7 +41,7 @@ export function attachQualityPanel(card, definition) {
 
   card.appendChild(panel);
 
-  return { panel, list };
+  return { panel, list, instanceNodes: new Map() };
 }
 
 export function updateQualityPanel(definition, panelState) {
@@ -56,12 +56,14 @@ export function updateQualityPanel(definition, panelState) {
   }
 
   panelState.list.innerHTML = '';
+  panelState.instanceNodes = new Map();
   const tracks = getQualityTracks(definition);
   const actions = getQualityActions(definition);
 
   instances.forEach((instance, index) => {
     const item = document.createElement('div');
     item.className = 'quality-instance';
+    item.dataset.instanceId = instance.id;
 
     const header = document.createElement('div');
     header.className = 'quality-instance__header';
@@ -141,5 +143,20 @@ export function updateQualityPanel(definition, panelState) {
     }
 
     panelState.list.appendChild(item);
+    panelState.instanceNodes.set(instance.id, item);
   });
+}
+
+export function focusQualityInstance(panelState, instanceId) {
+  if (!panelState?.instanceNodes) return;
+  for (const node of panelState.instanceNodes.values()) {
+    node.classList.remove('is-highlighted');
+  }
+  const target = panelState.instanceNodes.get(instanceId);
+  if (!target) return;
+  target.classList.add('is-highlighted');
+  target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  setTimeout(() => {
+    target.classList.remove('is-highlighted');
+  }, 1600);
 }

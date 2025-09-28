@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- Overhauled the passive asset board with stat-rich cards, upgrade shortcuts, per-instance earnings, and a briefing modal for nailing new launches.
 - Replaced the tabbed workspace with a sticky header navigation that scrolls to each section, refreshed section styling, and removed duplicate passive asset cards.
 - Major UI redesign with a collapsible daily snapshot, tabbed workspace, asset categories, filter toggles, and upgrade search for smoother planning.
 - Shifted passive asset income to a day-driven scheduler with multi-day setup tracking and maintenance allocation.

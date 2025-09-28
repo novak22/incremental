@@ -10,11 +10,19 @@ function describeInstance(definition, instance) {
     }
     return 'Setup • Launching soon';
   }
+  const level = Number(instance.quality?.level) || 0;
+  return `Active • Quality ${level}`;
+}
+
+function describeInstanceEarnings(instance) {
+  if (instance.status !== 'active') {
+    return '💤 No earnings until launch';
+  }
   const lastIncome = Math.max(0, Number(instance.lastIncome) || 0);
   if (lastIncome > 0) {
-    return `Active • Last payout $${formatMoney(lastIncome)}`;
+    return `💰 $${formatMoney(lastIncome)} yesterday`;
   }
-  return 'Active • No payout yesterday';
+  return '💤 No payout yesterday';
 }
 
 function renderInstanceList(definition, state, ui) {
@@ -39,6 +47,7 @@ function renderInstanceList(definition, state, ui) {
   instances.forEach((instance, index) => {
     const item = document.createElement('li');
     item.className = 'asset-instance-item';
+    item.dataset.instanceId = instance.id;
 
     const info = document.createElement('div');
     info.className = 'asset-instance-info';
@@ -51,10 +60,27 @@ function renderInstanceList(definition, state, ui) {
     status.className = 'asset-instance-status';
     status.textContent = describeInstance(definition, instance);
 
-    info.append(title, status);
+    const earnings = document.createElement('span');
+    earnings.className = 'asset-instance-earnings';
+    earnings.textContent = describeInstanceEarnings(instance);
+
+    info.append(title, status, earnings);
 
     const actions = document.createElement('div');
     actions.className = 'asset-instance-actions';
+
+    const upgradeButton = document.createElement('button');
+    upgradeButton.type = 'button';
+    upgradeButton.className = 'secondary outline';
+    upgradeButton.textContent = 'Upgrade';
+    upgradeButton.disabled = instance.status !== 'active' || typeof ui?.extra?.openQuality !== 'function';
+    upgradeButton.addEventListener('click', event => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (upgradeButton.disabled) return;
+      ui.extra.openQuality(instance.id);
+    });
+    actions.appendChild(upgradeButton);
 
     const price = calculateAssetSalePrice(instance);
     const sellButton = document.createElement('button');
