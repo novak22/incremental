@@ -22,7 +22,13 @@ const {
 const { allocateAssetMaintenance, closeOutDay, ASSETS, getIncomeRangeForDisplay } = assetsModule;
 const { HUSTLES } = hustlesModule;
 const { UPGRADES } = upgradesModule;
-const { advanceKnowledgeTracks, markKnowledgeStudied, getKnowledgeProgress } = requirementsModule;
+const {
+  KNOWLEDGE_TRACKS,
+  advanceKnowledgeTracks,
+  allocateDailyStudy,
+  enrollInKnowledgeTrack,
+  getKnowledgeProgress
+} = requirementsModule;
 
 configureRegistry({ assets: ASSETS, hustles: HUSTLES, upgrades: UPGRADES });
 
@@ -121,20 +127,28 @@ test('maintenance stalls when upkeep cash is unavailable', () => {
   assert.equal(state.money, 4, 'money should not be deducted when upkeep fails');
 });
 
-test('knowledge tracks advance only on studied days and mark completion', () => {
+test('knowledge tracks auto-advance after enrollment when time is available', () => {
+  const trackDef = KNOWLEDGE_TRACKS.outlineMastery;
   const progress = getKnowledgeProgress('outlineMastery');
   assert.equal(progress.daysCompleted, 0, 'progress should start at zero');
   assert.equal(progress.completed, false, 'progress should not begin completed');
 
-  for (let day = 0; day < 3; day += 1) {
-    markKnowledgeStudied('outlineMastery');
+  state.money = trackDef.tuition + 500;
+  state.timeLeft = trackDef.hoursPerDay + 4;
+
+  enrollInKnowledgeTrack('outlineMastery');
+
+  for (let day = 0; day < trackDef.days; day += 1) {
     advanceKnowledgeTracks();
+    state.timeLeft = trackDef.hoursPerDay + 4;
+    allocateDailyStudy();
   }
 
   const updated = getKnowledgeProgress('outlineMastery');
-  assert.equal(updated.daysCompleted, 3, 'studied days should accumulate');
+  assert.equal(updated.daysCompleted, trackDef.days, 'studied days should accumulate');
   assert.equal(updated.completed, true, 'track should mark completed after required days');
+  assert.equal(updated.enrolled, false, 'completed tracks should unenroll automatically');
 
   advanceKnowledgeTracks();
-  assert.equal(updated.daysCompleted, 3, 'extra cycles without studying should not change completion');
+  assert.equal(updated.daysCompleted, trackDef.days, 'extra cycles without studying should not change completion');
 });

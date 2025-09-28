@@ -125,23 +125,18 @@ export function computeDailySummary(state = getState()) {
 
   for (const track of Object.values(KNOWLEDGE_TRACKS)) {
     const progress = getKnowledgeProgress(track.id, state);
-    if (progress.completed) continue;
-    const inProgress = progress.daysCompleted > 0 || progress.studiedToday;
-    if (inProgress) {
-      knowledgeInProgress += 1;
-    }
+    if (!progress.enrolled || progress.completed) continue;
+    knowledgeInProgress += 1;
     if (!progress.studiedToday) {
       knowledgePendingToday += 1;
     }
 
-    if (inProgress) {
-      const remainingDays = Math.max(0, track.days - progress.daysCompleted);
-      const status = progress.studiedToday ? 'studied' : 'waiting';
-      studyBreakdown.push({
-        label: `📘 ${track.name}`,
-        value: `${formatHours(track.hoursPerDay)} / day • ${remainingDays} day${remainingDays === 1 ? '' : 's'} left (${status})`
-      });
-    }
+    const remainingDays = Math.max(0, track.days - progress.daysCompleted);
+    const status = progress.studiedToday ? 'scheduled' : 'waiting';
+    studyBreakdown.push({
+      label: `📘 ${track.name}`,
+      value: `${formatHours(track.hoursPerDay)} / day • ${remainingDays} day${remainingDays === 1 ? '' : 's'} left (${status})`
+    });
   }
 
   return {

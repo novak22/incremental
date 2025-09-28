@@ -5,7 +5,7 @@ import { allocateAssetMaintenance, closeOutDay } from './assets/index.js';
 import { processAssistantPayroll } from './assistant.js';
 import { getTimeCap } from './time.js';
 import { updateUI } from '../ui/update.js';
-import { advanceKnowledgeTracks } from './requirements.js';
+import { advanceKnowledgeTracks, allocateDailyStudy } from './requirements.js';
 import { resetDailyMetrics } from './metrics.js';
 
 export function endDay(auto = false) {
@@ -25,6 +25,7 @@ export function endDay(auto = false) {
   state.timeLeft = getTimeCap();
   resetDailyMetrics(state);
   processAssistantPayroll();
+  allocateDailyStudy();
   allocateAssetMaintenance();
   updateUI();
   saveState();
