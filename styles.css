@@ -279,6 +279,43 @@ main {
   color: var(--muted);
 }
 
+.asset-instances {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.instance-empty {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.instance-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.instance-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(148, 163, 184, 0.08);
+  border-radius: 12px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+}
+
+.instance-label {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.instance-status {
+  color: var(--muted);
+}
+
 .log-feed {
   display: flex;
   flex-direction: column;

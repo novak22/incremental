@@ -71,6 +71,8 @@ const ASSETS = [
     maintenanceTime: 1,
     dailyPayout: 45,
     defaultState: {
+      instances: [],
+      multiplier: 1,
       active: false,
       buffer: 0,
       multiplier: 1,
@@ -81,6 +83,12 @@ const ASSETS = [
       () => '💵 Setup Cost: <strong>$25</strong>',
       () => {
         const asset = getAssetState('blog');
+        const perInstance = BLOG_CHUNK * asset.multiplier;
+        const active = asset.instances.length;
+        const total = perInstance * active;
+        const totalLabel = active ? ` | Total: <strong>$${formatMoney(total)} / 10s</strong>` : '';
+        return `💸 Income: <strong>$${formatMoney(perInstance)} / 10s</strong> per blog${totalLabel}`;
+      }
         const income = BLOG_CHUNK * asset.multiplier;
         return `💸 Income: <strong>$${formatMoney(income)} / 10s</strong>`;
       },
@@ -92,16 +100,25 @@ const ASSETS = [
       () => `📆 Daily Payout: <strong>$${formatMoney(ASSET_MAP.get('blog').dailyPayout)}</strong>`
     ],
     action: {
-      label: () => getAssetState('blog').active ? 'Blog Running' : 'Launch Blog',
+      label: () => {
+        const count = getAssetState('blog').instances.length;
+        return count ? 'Launch Another Blog' : 'Launch Blog';
+      },
       className: 'primary',
       disabled: () => {
-        const asset = getAssetState('blog');
-        return asset.active || state.timeLeft < 3 || state.money < 25;
+        return state.timeLeft < 3 || state.money < 25;
       },
       onClick: () => executeAction(() => {
         const asset = getAssetState('blog');
         spendTime(3);
         spendMoney(25);
+        const newInstance = createAssetInstance();
+        asset.instances.push(newInstance);
+        const index = asset.instances.length;
+        addLog(
+          `You launched blog #${index}! Expect slow trickles of internet fame and $${formatMoney(BLOG_CHUNK)} every 10 seconds from each.`,
+          'passive'
+        );
         asset.active = true;
         asset.buffer = 0;
         asset.fundedToday = false;
@@ -113,6 +130,18 @@ const ASSETS = [
       logType: 'passive',
       message: amount => `Your blog quietly earned $${formatMoney(amount)} while you scrolled memes.`,
       offlineMessage: total => `Your blog earned $${formatMoney(total)} while you were offline. Not too shabby!`
+    },
+    isActive: (_state, assetState) => assetState.instances.length > 0,
+    getIncomeAmount: (_state, assetState, _instance) => BLOG_CHUNK * assetState.multiplier,
+    extraContent: card => {
+      const container = document.createElement('div');
+      container.className = 'asset-instances';
+      card.appendChild(container);
+      return { container };
+    },
+    update: (_state, ui) => {
+      if (!ui.extra?.container) return;
+      renderBlogInstances(ui.extra.container);
     },
     isActive: (_state, assetState) => assetState.active && assetState.fundedToday,
     getIncomeAmount: (_state, assetState) => BLOG_CHUNK * assetState.multiplier
@@ -395,20 +424,20 @@ const UPGRADES = [
       label: () => {
         const upgrade = getUpgradeState('course');
         if (upgrade.purchased) return 'Automation Ready';
-        return getAssetState('blog').active ? 'Study Up' : 'Requires Active Blog';
+        return getAssetState('blog').instances.length ? 'Study Up' : 'Requires Active Blog';
       },
       className: 'secondary',
       disabled: () => {
         const upgrade = getUpgradeState('course');
         if (upgrade.purchased) return true;
-        const blogActive = getAssetState('blog').active;
+        const blogActive = getAssetState('blog').instances.length > 0;
         if (!blogActive) return true;
         return state.money < 260;
       },
       onClick: () => executeAction(() => {
         const upgrade = getUpgradeState('course');
         const blog = getAssetState('blog');
-        if (upgrade.purchased || !blog.active) return;
+        if (upgrade.purchased || !blog.instances.length) return;
         spendMoney(260);
         upgrade.purchased = true;
         blog.multiplier = 1.5;
@@ -417,7 +446,7 @@ const UPGRADES = [
     },
     cardState: (_state, card) => {
       const upgrade = getUpgradeState('course');
-      const blogActive = getAssetState('blog').active;
+      const blogActive = getAssetState('blog').instances.length > 0;
       card.classList.toggle('locked', !blogActive && !upgrade.purchased);
     }
   }
@@ -515,6 +544,51 @@ function createId() {
   return Math.random().toString(36).slice(2);
 }
 
+function normalizeAssetInstance(instance = {}) {
+  const normalized = { ...instance };
+  if (!normalized.id) {
+    normalized.id = createId();
+  }
+  const numericBuffer = Number(normalized.buffer);
+  normalized.buffer = Number.isFinite(numericBuffer) ? numericBuffer : 0;
+  if (typeof normalized.startedAt !== 'number' || Number.isNaN(normalized.startedAt)) {
+    normalized.startedAt = Date.now();
+  }
+  return normalized;
+}
+
+function createAssetInstance(overrides = {}) {
+  return normalizeAssetInstance({ ...overrides });
+}
+
+function normalizeAssetState(def, assetState = {}) {
+  const defaults = structuredClone(def.defaultState || {});
+  const merged = { ...defaults, ...assetState };
+
+  const multiplierDefault = typeof defaults.multiplier === 'number' ? defaults.multiplier : 1;
+  const parsedMultiplier = Number(merged.multiplier);
+  merged.multiplier = Number.isFinite(parsedMultiplier) ? parsedMultiplier : multiplierDefault;
+
+  if (!Array.isArray(merged.instances)) {
+    merged.instances = [];
+  }
+
+  const parsedBuffer = Number(merged.buffer);
+  const legacyBuffer = Number.isFinite(parsedBuffer) ? parsedBuffer : 0;
+  const hadLegacyActive = Boolean(merged.active);
+
+  if ((hadLegacyActive || legacyBuffer) && merged.instances.length === 0) {
+    merged.instances.push(createAssetInstance({ buffer: legacyBuffer }));
+  }
+
+  merged.instances = merged.instances.map(normalizeAssetInstance);
+
+  delete merged.active;
+  delete merged.buffer;
+
+  return merged;
+}
+
 function ensureStateShape(target = state) {
   target.hustles = target.hustles || {};
   for (const def of HUSTLES) {
@@ -525,8 +599,8 @@ function ensureStateShape(target = state) {
 
   target.assets = target.assets || {};
   for (const def of ASSETS) {
-    const defaults = structuredClone(def.defaultState || {});
     const existing = target.assets[def.id];
+    target.assets[def.id] = normalizeAssetState(def, existing || {});
     target.assets[def.id] = existing ? { ...defaults, ...existing } : defaults;
     if (target.assets[def.id].fundedToday === undefined) {
       target.assets[def.id].fundedToday = !!target.assets[def.id].active;
@@ -570,10 +644,14 @@ function getHustleState(id, target = state) {
 
 function getAssetState(id, target = state) {
   target.assets = target.assets || {};
-  if (!target.assets[id]) {
-    const def = ASSET_MAP.get(id);
-    target.assets[id] = structuredClone(def?.defaultState || {});
+  const def = ASSET_MAP.get(id);
+  if (!def) {
+    if (!target.assets[id]) {
+      target.assets[id] = {};
+    }
+    return target.assets[id];
   }
+  target.assets[id] = normalizeAssetState(def, target.assets[id] || {});
   return target.assets[id];
 }
 
@@ -641,9 +719,24 @@ function migrateLegacyState(saved) {
 
   if (saved.blog) {
     const blogState = getAssetState('blog', migrated);
-    blogState.active = !!saved.blog.active;
-    blogState.buffer = Number(saved.blog.buffer) || 0;
-    blogState.multiplier = Number(saved.blog.multiplier) || blogState.multiplier;
+    const legacyInstances = Array.isArray(saved.blog.instances)
+      ? saved.blog.instances.map(createAssetInstance)
+      : [];
+    const buffer = Number(saved.blog.buffer) || 0;
+    const hadLegacyInstance = Boolean(saved.blog.active) || buffer > 0;
+
+    if (legacyInstances.length) {
+      blogState.instances = legacyInstances;
+    } else if (hadLegacyInstance) {
+      blogState.instances = [createAssetInstance({ buffer })];
+    } else {
+      blogState.instances = [];
+    }
+
+    const multiplier = Number(saved.blog.multiplier);
+    if (Number.isFinite(multiplier) && multiplier > 0) {
+      blogState.multiplier = multiplier;
+    }
   }
 
   if (Array.isArray(saved.pendingFlips)) {
@@ -952,24 +1045,71 @@ function updateFlipStatus(element) {
   element.textContent = `${flipState.pending.length} ${descriptor} in progress. Next payout in ${label}.`;
 }
 
+function renderBlogInstances(container) {
+  if (!container) return;
+  const asset = getAssetState('blog');
+  container.innerHTML = '';
+
+  if (!asset.instances.length) {
+    const empty = document.createElement('p');
+    empty.className = 'instance-empty';
+    empty.textContent = 'No blogs are running yet.';
+    container.appendChild(empty);
+    return;
+  }
+
+  const list = document.createElement('ul');
+  list.className = 'instance-list';
+
+  asset.instances.forEach((instance, index) => {
+    const item = document.createElement('li');
+    item.className = 'instance-row';
+
+    const label = document.createElement('span');
+    label.className = 'instance-label';
+    label.textContent = `Blog #${index + 1}`;
+
+    const status = document.createElement('span');
+    status.className = 'instance-status';
+    const perInstance = BLOG_CHUNK * asset.multiplier;
+    status.textContent = `$${formatMoney(perInstance)} / 10s`;
+
+    item.appendChild(label);
+    item.appendChild(status);
+    list.appendChild(item);
+  });
+
+  container.appendChild(list);
+}
+
 function collectPassiveIncome(assetDef, elapsedSeconds, offline = false) {
   if (!assetDef.passiveIncome) return 0;
   const assetState = getAssetState(assetDef.id);
   if (assetDef.isActive && !assetDef.isActive(state, assetState)) return 0;
-  const chunkValue = assetDef.getIncomeAmount ? assetDef.getIncomeAmount(state, assetState) : 0;
-  if (!chunkValue || !assetDef.passiveIncome.interval) return 0;
+  if (!assetDef.passiveIncome.interval) return 0;
 
-  const ratePerSecond = chunkValue / assetDef.passiveIncome.interval;
-  assetState.buffer += ratePerSecond * elapsedSeconds;
-
+  const instances = Array.isArray(assetState.instances) ? assetState.instances : [];
   let payouts = 0;
-  while (assetState.buffer >= chunkValue) {
-    assetState.buffer -= chunkValue;
-    payouts += chunkValue;
-    if (offline) {
-      state.money += chunkValue;
-    } else {
-      addMoney(chunkValue, assetDef.passiveIncome.message ? assetDef.passiveIncome.message(chunkValue) : null, assetDef.passiveIncome.logType || 'passive');
+
+  for (const instance of instances) {
+    const chunkValue = assetDef.getIncomeAmount ? assetDef.getIncomeAmount(state, assetState, instance) : 0;
+    if (!chunkValue) continue;
+
+    const ratePerSecond = chunkValue / assetDef.passiveIncome.interval;
+    instance.buffer += ratePerSecond * elapsedSeconds;
+
+    while (instance.buffer >= chunkValue) {
+      instance.buffer -= chunkValue;
+      payouts += chunkValue;
+      if (offline) {
+        state.money += chunkValue;
+      } else {
+        addMoney(
+          chunkValue,
+          assetDef.passiveIncome.message ? assetDef.passiveIncome.message(chunkValue) : null,
+          assetDef.passiveIncome.logType || 'passive'
+        );
+      }
     }
   }
 
