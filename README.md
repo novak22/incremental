@@ -11,7 +11,7 @@ Online Hustle Simulator is a browser-based incremental game about orchestrating 
 - **Daily Recap Log** – Every launch, maintenance result, payout, and study milestone is written to the log so you can reconstruct exactly what happened during busy streaks.
 
 ### Interface Overview
-- **Top Bar & Snapshot** – Money, time, and day stay pinned at the top. A collapsible Daily Snapshot panel now highlights per-stat breakdowns (time invested, cash earned, cash spent, study momentum) without overwhelming the main view.
+- **Top Bar & Snapshot** – Money, time, and day stay pinned at the top. A collapsible Daily Snapshot panel now highlights per-stat breakdowns (time invested, money earned, passive streams, cash spent, study momentum) without overwhelming the main view.
 - **Tabbed Workspace** – Hustles, Education, Passive Assets, and Upgrades each live in their own tab with dedicated copy and per-tab filters. Global toggles hide locked or completed cards, and you can spotlight only actionable options.
 - **Categorised Collections** – Passive assets surface in Foundation, Creative, Commerce, and Advanced groupings with a collapsed-card option for rapid scanning. Upgrades split into Equipment, Automation, Consumables, and a catch-all bucket with a quick search bar.
 - **Event Log Controls** – The log dock keeps its running commentary but now includes a summary/detailed toggle when you want a lighter feed during long sessions.

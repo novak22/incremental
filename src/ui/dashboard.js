@@ -50,6 +50,7 @@ export function renderSummary(summary) {
     timeBreakdown,
     earningsBreakdown,
     spendBreakdown,
+    passiveBreakdown = [],
     studyBreakdown
   } = summary;
 
@@ -72,7 +73,22 @@ export function renderSummary(summary) {
     elements.summaryIncomeCaption,
     earningsSegments.length ? earningsSegments.join(' • ') : 'No earnings logged yet today'
   );
-  renderBreakdown(elements.summaryIncomeBreakdown, earningsBreakdown);
+  const combinedIncomeBreakdown = [];
+  if (passiveBreakdown.length) {
+    combinedIncomeBreakdown.push({
+      label: 'Passive income',
+      value: `$${formatMoney(passiveEarnings)} today`
+    });
+    combinedIncomeBreakdown.push(...passiveBreakdown);
+  }
+  if (earningsBreakdown.length) {
+    combinedIncomeBreakdown.push({
+      label: 'Active wins',
+      value: `$${formatMoney(activeEarnings)} today`
+    });
+    combinedIncomeBreakdown.push(...earningsBreakdown);
+  }
+  renderBreakdown(elements.summaryIncomeBreakdown, combinedIncomeBreakdown);
 
   setText(elements.summaryCost, `$${formatMoney(totalSpend)} today`);
   const spendSegments = [];
