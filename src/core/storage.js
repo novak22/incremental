@@ -3,6 +3,7 @@ import { structuredClone } from './helpers.js';
 import {
   buildDefaultState,
   ensureStateShape,
+  getAssetDefinition,
   getAssetState,
   getHustleState,
   getState,
@@ -86,8 +87,16 @@ function migrateLegacyState(saved, defaultState) {
 
   if (saved.blog) {
     const blogState = getAssetState('blog', migrated);
+    const blogDefinition = getAssetDefinition('blog');
     const legacyInstances = Array.isArray(saved.blog.instances)
-      ? saved.blog.instances.map(instance => createAssetInstance(instance))
+      ? saved.blog.instances.map(instance =>
+          createAssetInstance(blogDefinition, {
+            status: instance.active ? 'active' : 'setup',
+            daysRemaining: instance.active ? 0 : blogDefinition.setup?.days || 0,
+            daysCompleted: instance.active ? blogDefinition.setup?.days || 0 : 0,
+            totalIncome: instance.totalIncome || 0
+          })
+        )
       : [];
     const buffer = Number(saved.blog.buffer) || 0;
     const hadLegacyInstance = Boolean(saved.blog.active) || buffer > 0;
@@ -95,14 +104,16 @@ function migrateLegacyState(saved, defaultState) {
     if (legacyInstances.length) {
       blogState.instances = legacyInstances;
     } else if (hadLegacyInstance) {
-      blogState.instances = [createAssetInstance({ buffer })];
+      blogState.instances = [
+        createAssetInstance(blogDefinition, {
+          status: 'active',
+          daysRemaining: 0,
+          daysCompleted: blogDefinition.setup?.days || 0,
+          totalIncome: buffer
+        })
+      ];
     } else {
       blogState.instances = [];
-    }
-
-    const multiplier = Number(saved.blog.multiplier);
-    if (Number.isFinite(multiplier) && multiplier > 0) {
-      blogState.multiplier = multiplier;
     }
   }
 
@@ -115,12 +126,6 @@ function migrateLegacyState(saved, defaultState) {
   }
 
   getUpgradeState('coffee', migrated).usedToday = saved.coffeesToday || 0;
-
-  if (saved.coursePurchased) {
-    getUpgradeState('course', migrated).purchased = true;
-    const blogState = getAssetState('blog', migrated);
-    blogState.multiplier = saved.blog?.multiplier || blogState.multiplier;
-  }
 
   migrated.log = saved.log || [];
   return migrated;

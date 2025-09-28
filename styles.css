@@ -178,6 +178,11 @@ main {
   pointer-events: none;
 }
 
+.card.completed {
+  border: 1px solid rgba(52, 211, 153, 0.35);
+  opacity: 0.85;
+}
+
 .card-header {
   display: flex;
   align-items: center;
@@ -223,6 +228,11 @@ main {
 .tag.boost {
   color: var(--warning);
   background: rgba(249, 115, 22, 0.12);
+}
+
+.tag.study {
+  color: #34d399;
+  background: rgba(52, 211, 153, 0.16);
 }
 
 .details {

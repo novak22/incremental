@@ -1,58 +1,66 @@
 # Online Hustle Simulator
 
 ## Game Concept
-Online Hustle Simulator is a browser-based incremental game about balancing limited hours with the drive to stack cash. You start each day with $45, a fixed 14-hour schedule, and a humble toolkit. From there you pick up quick gigs, juggle delayed payouts, invest in long-term assets, and use strategic upgrades to stretch the day just a little farther.
+Online Hustle Simulator is a browser-based incremental game about orchestrating your side-hustle empire one in-world day at a time. Each morning you receive a fresh stack of hours, decide how to divide them between quick gigs, study tracks, and asset upkeep, then close the day to trigger payouts. The loop rewards planning, lighthearted experimentation, and a healthy obsession with passive income spreadsheets.
 
 ## Gameplay Loop & Systems
-- **Daily Time Budget** – Every in-game day begins with 14 base hours. Taking hustles, maintaining assets, or studying upgrades consumes that time. Hiring a virtual assistant permanently adds +2 daily hours, while turbo coffee provides up to three one-hour boosts per day. Time bonuses reset when a new day starts.
-- **Daily Cycle & Maintenance** – When you run out of time (or choose to end the day) the simulation advances. Asset upkeep automatically attempts to reserve the required maintenance hours; funded assets stay active and claim any daily payouts, while neglected ones pause and miss their end-of-day cash.
-- **Activity Log** – Every action, payout, maintenance result, and day transition writes flavorful updates to the log so you can trace what happened during long sessions.
+- **Daily Time Budget** – Every in-game day begins with 14 base hours (plus permanent bonuses). Hustles, knowledge study, asset setup, and upkeep all consume this pool. Assistants add +2 hours permanently; turbo coffee grants up to three one-hour boosts per day.
+- **Setup & Maintenance Allocation** – When a day ends, each asset checks whether you funded the required setup/maintenance hours. Funded instances progress (or earn income); unfunded ones pause. The next morning, the scheduler automatically earmarks required hours until you run out.
+- **Knowledge Tracks** – Study hustles (e.g., Outline Mastery, E-Commerce Playbook) require a fixed number of days at specific hour costs. Completing them unlocks advanced assets and generates celebratory log entries; skipping a day after you start produces gentle warnings.
+- **Daily Recap Log** – Every launch, maintenance result, payout, and study milestone is written to the log so you can reconstruct exactly what happened during busy streaks.
 
-### Hustles
-Hustles are active tasks that exchange time (and sometimes money) for short-term cash.
-- **Freelance Writing** – Spend 2h to immediately earn $18. A reliable filler that keeps money flowing between bigger plays.
-- **eBay Flips** – Spend 4h and $20 up front. Each flip finishes 30 seconds later for a $48 payout. Multiple flips can run concurrently, and the card displays the number of pending flips plus the timer to the next payout.
+### Hustles & Study Tracks
+- **Freelance Writing** – Spend 2h to earn $18 instantly.
+- **eBay Flips** – Spend 4h and $20; complete 30 seconds later for $48 (multiple flips queue).
+- **Outline Mastery Workshop** – Study 2h to mark daily progress toward e-book unlocks (3-day course).
+- **Photo Catalog Curation** – Study 1.5h/day for 2 days to unlock polished stock photo galleries.
+- **E-Commerce Playbook** – Study 2h/day for 5 days to prep dropshipping ventures.
+- **Automation Architecture Course** – Study 3h/day for 7 days to earn SaaS-ready engineering chops.
 
-### Passive Assets
-Assets are persistent ventures that pay automatically once launched. They require maintenance time each day to keep running and may offer end-of-day bonuses when properly funded.
-- **Personal Blog** – Spend 3h and $25 to launch each blog instance. Every active blog earns $3 every 10 seconds (boosted to $4.50 after taking the Automation Course) and delivers a $45 daily payout if you allocate 1h of maintenance before the next day.
-- **Vlog Channel** – Requires the Camera upgrade. Spend 4h and $150 to activate. Generates $9 every 15 seconds and consumes 1h of daily maintenance time to stay online.
-- **Podcast Series** – Requires the Studio upgrade. Spend 5h and $220 to activate. Produces $25 every 30 seconds and needs 1.5h of upkeep each day to stay funded.
+### Passive Assets (Daily Payouts)
+Each asset supports multiple instances, tracks setup progress, and rolls a daily income range once active.
+- **Personal Blog Network** – Setup 1 day × 3h ($25). Requires 1h/day maintenance. Base daily income ~$70 with ±25% variance; Automation Course boosts payouts by 50%.
+- **Weekly Vlog Channel** – Setup 3 days × 4h ($180) with Camera upgrade. Maintenance 1.5h/day. Base daily income ~$140 with ±35% variance.
+- **Digital E-Book Series** – Setup 4 days × 3h ($60) after completing Outline Mastery. Maintenance 0.5h/day. Base daily income ~$120 with ±30% variance.
+- **Stock Photo Gallery** – Setup 3 days × 2h (no cost) with Camera + Lighting Kit and Photo Catalog knowledge. Maintenance 1h/day. Base daily income ~$95 with ±45% variance.
+- **Dropshipping Storefront** – Setup 3 days × 4h ($500) after E-Commerce Playbook and two active blogs. Maintenance 2h/day. Base daily income ~$260 with ±50% variance.
+- **SaaS Micro-App** – Setup 7 days × 5h ($1500) after Automation Architecture plus experience running a dropshipping store and e-book line. Maintenance 3h/day. Base daily income ~$620 with ±60% variance.
 
 ### Upgrades & Boosts
-- **Hire Virtual Assistant** – Costs $180. Permanently adds +2 hours to your daily cap and immediately grants the extra time for the current day.
-- **Turbo Coffee** – Costs $40 per cup, up to three per day. Each purchase adds +1 hour for the current day only.
-- **Buy Camera** – Costs $200. Unlocks the Vlog Channel asset card.
-- **Studio Setup** – Costs $260. Unlocks the Podcast Series asset card.
-- **Automation Course** – Costs $260. Requires at least one active blog and increases all blog tick payouts by 50%.
+- **Hire Virtual Assistant** – $180 for a permanent +2h to the daily cap.
+- **Turbo Coffee** – $40 per cup, up to three per day, each adding +1h for the current day.
+- **Buy Camera** – $200, unlocks Vlog Channels and Stock Photo Galleries.
+- **Lighting Kit** – $220, unlocks Stock Photo Galleries after you buy the camera.
+- **Automation Course** – $260 once you have an active blog; permanently boosts blog daily payouts by +50%.
 
-### Persistence & Offline Progress
-- **Autosave** – The game continuously saves to `localStorage` and migrates data from older save formats.
-- **Offline Earnings** – Blogs, vlogs, podcasts, and eBay flips continue to accrue income while you are away. Upon returning, the game credits offline income and adds summary log entries so you can see what paid out.
+### Persistence & Offline Behaviour
+- **Autosave** – State saves every few seconds to `localStorage` (new key: `online-hustle-sim-v2`).
+- **Offline Resolution** – Delayed hustles (e.g., eBay flips) settle while you are away. Assets only progress when you advance days, keeping the economy deterministic.
 
 ## Current Feature Set
-- Three-panel layout for Hustles, Passive Assets, and Upgrades with a persistent activity log and day tracker.
-- Two distinct hustle archetypes (instant vs. delayed) with automated payout processing and countdown feedback.
-- Three passive asset types featuring maintenance requirements, daily payouts, and income multipliers.
-- Upgrade suite that mixes permanent progression, conditional content unlocks, and limited-use daily boosts.
-- Automatic day rollover, maintenance allocation, and end-of-day payout distribution to reinforce the management loop.
-- Persistent save/load via `localStorage` with offline catch-up and legacy save migration support.
-- Flavorful log feed that narrates earnings, upkeep results, and day transitions to keep the player informed.
+- Day-driven scheduler with automatic setup/maintenance allocation and detailed end-of-day recaps.
+- Six passive asset types with multi-instance tracking, setup states, maintenance funding, and dynamic daily income rolls.
+- Knowledge study hustles that gate advanced assets and remember streak progress across days.
+- Equipment and experience requirements surfaced directly on asset cards with live progress indicators.
+- Responsive card grid with upbeat copy, income ranges, latest yield summaries, and lock styling for unmet requirements.
+- Persistent save/load, offline hustle resolution, and flavourful log output to keep players oriented.
 
 ## Running the Project Locally
 1. Clone the repository or download the source.
-2. Open `index.html` in any modern browser. No build step is required—the project is a static HTML/CSS/JS bundle.
-3. Optional: serve the directory with a simple HTTP server (e.g., `npx serve .`) to avoid browser restrictions on `localStorage` when testing in certain environments.
+2. Open `index.html` in any modern browser. The project is a static ES-module bundle; no build tools required.
+3. Optional: serve with a simple HTTP server (e.g., `npx serve .`) to avoid `localStorage` restrictions during local testing.
 
 ## Roadmap
-- Expand the roster of hustles to cover more contract types (recurring gigs, high-risk flips, collaborative ventures).
-- Introduce additional passive assets with distinct setup requirements and income curves (e.g., digital products, subscription communities).
-- Add meta-progression systems such as weekly goals, reputation, or unlock trees to encourage long-term planning.
-- Enrich the event system with narrative hooks, random market events, and streak bonuses that influence payouts and time costs.
+- Expand hustle variety (recurring retainers, seasonal gigs) to diversify daily decision making.
+- Add additional passive assets (courses, subscription communities) with unique requirement chains and income rhythms.
+- Introduce long-term prestige or reputation systems that leverage the new day-focused economy.
+- Explore automated maintenance prioritisation tools when daily hours are over-subscribed.
 
 ## Contribution Notes
-- **Coding Style** – Follow the existing vanilla JavaScript architecture: data for hustles/assets/upgrades are defined as objects inside `script.js`, paired with helper functions for state management. Prefer arrow functions, template literals, and descriptive log messages that match the current tone.
-- **Adding Hustles** – Extend the `HUSTLES` array in `script.js` with new entries that include default state, action handlers, and any `update`/`process` logic for delayed payouts.
-- **Adding Assets** – Append to the `ASSETS` array with definitions for setup costs, passive income logic, and state flags. Ensure `isActive`/`getIncomeAmount` helpers are provided when needed.
-- **Adding Upgrades** – Add to the `UPGRADES` array, defining purchase conditions, state mutations, and optional `cardState` visuals for locked content.
-- After modifying content arrays, confirm that `ensureStateShape` covers new IDs and that UI rendering updates are handled via the existing helpers. Save/load flows rely on consistent default state structures.
+- **Code Structure** – Assets, hustles, and upgrades live in `src/game/` as ES modules; shared helpers and state management are under `src/core/`, while UI utilities live in `src/ui/`.
+- **Adding Hustles** – Extend `HUSTLES` in `src/game/hustles.js`. For study-style hustles, hook into knowledge helpers from `requirements.js`.
+- **Adding Assets** – Append to `ASSETS` in `src/game/assets.js`. Define setup/maintenance data, income ranges, requirement objects, and any custom log messages.
+- **Adding Upgrades** – Update `UPGRADES` in `src/game/upgrades.js` and ensure new upgrade IDs are handled in requirement checks.
+- After modifying content arrays, run through a manual day cycle: start builds, end the day, confirm log messaging, and verify save/load behaviour.
+
+For design context and tuning notes, see `docs/features/day-driven-assets.md`. Recent gameplay adjustments are tracked in `docs/changelog.md`.

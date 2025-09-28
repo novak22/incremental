@@ -1,3 +1,4 @@
+import { DEFAULT_DAY_HOURS } from './constants.js';
 import { structuredClone } from './helpers.js';
 
 let registry = { hustles: [], assets: [], upgrades: [] };
@@ -26,57 +27,82 @@ export function getUpgradeDefinition(id) {
   return upgradeMap.get(id);
 }
 
-export function normalizeAssetInstance(instance = {}) {
+export function normalizeAssetInstance(definition, instance = {}) {
   const normalized = { ...instance };
   if (!normalized.id) {
     normalized.id = cryptoId();
   }
-  const numericBuffer = Number(normalized.buffer);
-  normalized.buffer = Number.isFinite(numericBuffer) ? numericBuffer : 0;
-  if (typeof normalized.startedAt !== 'number' || Number.isNaN(normalized.startedAt)) {
-    normalized.startedAt = Date.now();
+
+  const setupDays = Math.max(0, Number(definition?.setup?.days) || 0);
+  const status = normalized.status === 'active' || setupDays === 0 ? 'active' : 'setup';
+  normalized.status = status;
+
+  const remaining = Number(normalized.daysRemaining);
+  if (status === 'setup') {
+    normalized.daysRemaining = Number.isFinite(remaining) ? Math.max(0, remaining) : setupDays;
+  } else {
+    normalized.daysRemaining = 0;
   }
+
+  const completed = Number(normalized.daysCompleted);
+  if (Number.isFinite(completed)) {
+    normalized.daysCompleted = Math.max(0, completed);
+  } else {
+    normalized.daysCompleted = status === 'active' ? setupDays : 0;
+  }
+
+  normalized.setupFundedToday = Boolean(normalized.setupFundedToday);
+  normalized.maintenanceFundedToday = Boolean(normalized.maintenanceFundedToday);
+
+  const lastIncome = Number(normalized.lastIncome);
+  normalized.lastIncome = Number.isFinite(lastIncome) ? lastIncome : 0;
+  const totalIncome = Number(normalized.totalIncome);
+  normalized.totalIncome = Number.isFinite(totalIncome) ? totalIncome : 0;
+
+  const createdOnDay = Number(normalized.createdOnDay);
+  normalized.createdOnDay = Number.isFinite(createdOnDay) ? Math.max(1, createdOnDay) : (state?.day ?? 1);
+
   return normalized;
 }
 
-export function createAssetInstance(overrides = {}) {
-  return normalizeAssetInstance({ ...overrides });
+export function createAssetInstance(definition, overrides = {}) {
+  const setupDays = Math.max(0, Number(definition?.setup?.days) || 0);
+  const baseInstance = {
+    status: setupDays > 0 ? 'setup' : 'active',
+    daysRemaining: setupDays,
+    daysCompleted: setupDays > 0 ? 0 : setupDays,
+    setupFundedToday: false,
+    maintenanceFundedToday: false,
+    lastIncome: 0,
+    totalIncome: 0,
+    createdOnDay: state?.day ?? 1
+  };
+  const merged = { ...baseInstance, ...structuredClone(overrides) };
+  if (merged.status === 'active') {
+    merged.daysRemaining = 0;
+    if (!Number.isFinite(Number(merged.daysCompleted))) {
+      merged.daysCompleted = setupDays;
+    }
+  }
+  return normalizeAssetInstance(definition, merged);
 }
 
 export function normalizeAssetState(definition, assetState = {}) {
   const defaults = structuredClone(definition.defaultState || {});
   const merged = { ...defaults, ...assetState };
-
-  const multiplierDefault = typeof defaults.multiplier === 'number' ? defaults.multiplier : 1;
-  const parsedMultiplier = Number(merged.multiplier);
-  merged.multiplier = Number.isFinite(parsedMultiplier) ? parsedMultiplier : multiplierDefault;
-
   if (!Array.isArray(merged.instances)) {
     merged.instances = [];
   }
 
-  const parsedBuffer = Number(merged.buffer);
-  const hasLegacyBuffer = Number.isFinite(parsedBuffer);
-  const legacyBuffer = hasLegacyBuffer ? parsedBuffer : 0;
-  const hadLegacyActive = Boolean(merged.active);
+  merged.instances = merged.instances.map(instance => normalizeAssetInstance(definition, instance));
 
-  if ((hadLegacyActive || legacyBuffer) && merged.instances.length === 0) {
-    merged.instances.push(createAssetInstance({ buffer: legacyBuffer }));
+  if (merged.active && merged.instances.length === 0) {
+    merged.instances.push(createAssetInstance(definition, { status: 'active' }));
   }
 
-  merged.instances = merged.instances.map(normalizeAssetInstance);
-
-  const hasInstances = merged.instances.length > 0;
-  merged.active = hasInstances ? true : Boolean(hadLegacyActive);
-
-  if (hasInstances) {
-    const aggregateBuffer = merged.instances.reduce((sum, instance) => sum + instance.buffer, 0);
-    merged.buffer = aggregateBuffer;
-  } else if (hasLegacyBuffer || 'buffer' in defaults || 'buffer' in assetState) {
-    merged.buffer = legacyBuffer;
-  } else {
-    delete merged.buffer;
-  }
+  delete merged.active;
+  delete merged.buffer;
+  delete merged.fundedToday;
 
   return merged;
 }
@@ -95,11 +121,6 @@ export function ensureStateShape(target = state) {
   for (const def of registry.assets) {
     const existing = target.assets[def.id];
     const normalized = normalizeAssetState(def, existing || {});
-    if (normalized.fundedToday === undefined) {
-      normalized.fundedToday = Array.isArray(normalized.instances)
-        ? normalized.instances.length > 0
-        : !!normalized.active;
-    }
     target.assets[def.id] = normalized;
   }
 
@@ -109,19 +130,25 @@ export function ensureStateShape(target = state) {
     const existing = target.upgrades[def.id];
     target.upgrades[def.id] = existing ? { ...defaults, ...existing } : defaults;
   }
+
+  target.progress = target.progress || {};
+  target.progress.knowledge = target.progress.knowledge || {};
 }
 
 export function buildBaseState() {
   return {
     money: 45,
-    timeLeft: 14,
-    baseTime: 14,
+    timeLeft: DEFAULT_DAY_HOURS,
+    baseTime: DEFAULT_DAY_HOURS,
     bonusTime: 0,
     dailyBonusTime: 0,
     day: 1,
     hustles: {},
     assets: {},
     upgrades: {},
+    progress: {
+      knowledge: {}
+    },
     log: [],
     lastSaved: Date.now()
   };

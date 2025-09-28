@@ -4,12 +4,14 @@ import { saveState } from '../core/storage.js';
 import { allocateAssetMaintenance, closeOutDay } from './assets.js';
 import { getTimeCap } from './time.js';
 import { updateUI } from '../ui/update.js';
+import { advanceKnowledgeTracks } from './requirements.js';
 
 export function endDay(auto = false) {
   const state = getState();
   if (!state) return;
 
   closeOutDay();
+  advanceKnowledgeTracks();
   const message = auto
     ? 'You ran out of time. The grind resets tomorrow.'
     : 'You called it a day. Fresh hustle awaits tomorrow.';

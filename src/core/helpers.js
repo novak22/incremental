@@ -31,3 +31,10 @@ export function formatHours(hours) {
   }
   return `${hours.toFixed(1)}h`;
 }
+
+export function formatDays(days) {
+  if (Math.abs(days - Math.round(days)) < 0.05) {
+    return `${Math.round(days)} day${Math.round(days) === 1 ? '' : 's'}`;
+  }
+  return `${days.toFixed(1)} days`;
+}

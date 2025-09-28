@@ -1,10 +1,11 @@
-import { createId, formatMoney } from '../core/helpers.js';
+import { createId, formatHours, formatMoney } from '../core/helpers.js';
 import { addLog } from '../core/log.js';
 import { getHustleState, getState } from '../core/state.js';
 import { addMoney, spendMoney } from './currency.js';
 import { executeAction } from './actions.js';
 import { checkDayEnd } from './lifecycle.js';
 import { spendTime } from './time.js';
+import { KNOWLEDGE_TRACKS, getKnowledgeProgress, markKnowledgeStudied } from './requirements.js';
 
 export const HUSTLES = [
   {
@@ -70,7 +71,8 @@ export const HUSTLES = [
       updateFlipStatus(ui.extra.status);
     },
     process: (now, offline) => processFlipPayouts(now, offline)
-  }
+  },
+  ...createKnowledgeHustles()
 ];
 
 export function scheduleFlip() {
@@ -139,4 +141,56 @@ export function processFlipPayouts(now = Date.now(), offline = false) {
     };
   }
   return result;
+}
+
+function createKnowledgeHustles() {
+  return Object.values(KNOWLEDGE_TRACKS).map(track => ({
+    id: `study-${track.id}`,
+    name: track.name,
+    tag: { label: 'Study', type: 'study' },
+    description: track.description,
+    details: [
+      () => `⏳ Time: <strong>${formatHours(track.hoursPerDay)}</strong>`,
+      () => {
+        const progress = getKnowledgeProgress(track.id);
+        const status = progress.completed ? 'Complete' : `${progress.daysCompleted}/${track.days} days`;
+        return `📚 Progress: <strong>${status}</strong>`;
+      }
+    ],
+    action: {
+      label: () => {
+        const progress = getKnowledgeProgress(track.id);
+        if (progress.completed) return 'Course Complete';
+        if (progress.studiedToday) return 'Studied Today';
+        return 'Study Today';
+      },
+      className: 'secondary',
+      disabled: () => {
+        const state = getState();
+        const progress = getKnowledgeProgress(track.id);
+        if (progress.completed || progress.studiedToday) return true;
+        return state.timeLeft < track.hoursPerDay;
+      },
+      onClick: () => {
+        executeAction(() => {
+          const state = getState();
+          const progress = getKnowledgeProgress(track.id);
+          if (progress.completed || progress.studiedToday) return;
+          if (state.timeLeft < track.hoursPerDay) {
+            addLog('You need more free hours to study today.', 'warning');
+            return;
+          }
+          spendTime(track.hoursPerDay);
+          markKnowledgeStudied(track.id);
+          addLog(`You invested ${formatHours(track.hoursPerDay)} studying ${track.name}.`, 'info');
+        });
+        checkDayEnd();
+      }
+    },
+    cardState: (_state, card) => {
+      const progress = getKnowledgeProgress(track.id);
+      if (!card) return;
+      card.classList.toggle('completed', progress.completed);
+    }
+  }));
 }

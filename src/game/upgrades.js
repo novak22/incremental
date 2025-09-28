@@ -44,13 +44,13 @@ export const UPGRADES = [
     id: 'camera',
     name: 'Buy Camera',
     tag: { label: 'Unlock', type: 'unlock' },
-    description: 'Unlocks video production gear so you can start a vlog channel.',
+    description: 'Unlocks video production gear so you can start vlogs and shoot stock photos.',
     defaultState: {
       purchased: false
     },
     details: [
       () => '💵 Cost: <strong>$200</strong>',
-      () => 'Unlocks: <strong>Vlog Channel</strong>'
+      () => 'Unlocks: <strong>Weekly Vlog Channel & Stock Photo Galleries</strong>'
     ],
     action: {
       label: () => getUpgradeState('camera').purchased ? 'Camera Ready' : 'Purchase Camera',
@@ -65,7 +65,7 @@ export const UPGRADES = [
         if (upgrade.purchased) return;
         spendMoney(200);
         upgrade.purchased = true;
-        addLog('You bought a mirrorless camera rig. The vlog channel card just unlocked!', 'upgrade');
+        addLog('You bought a mirrorless camera rig. Vlogs and photo galleries just unlocked!', 'upgrade');
       })
     },
     cardState: (_state, card) => {
@@ -75,15 +75,15 @@ export const UPGRADES = [
   },
   {
     id: 'studio',
-    name: 'Studio Setup',
+    name: 'Lighting Kit',
     tag: { label: 'Unlock', type: 'unlock' },
-    description: 'Soundproofing, mixers, and lights so your podcast sounds pro.',
+    description: 'Soft boxes, reflectors, and editing presets for glossier stock photos.',
     defaultState: {
       purchased: false
     },
     details: [
-      () => '💵 Cost: <strong>$260</strong>',
-      () => 'Unlocks: <strong>Podcast Series</strong>'
+      () => '💵 Cost: <strong>$220</strong>',
+      () => 'Unlocks: <strong>Stock Photo Galleries</strong>'
     ],
     action: {
       label: () => getUpgradeState('studio').purchased ? 'Studio Ready' : 'Build Studio',
@@ -96,9 +96,9 @@ export const UPGRADES = [
       onClick: () => executeAction(() => {
         const upgrade = getUpgradeState('studio');
         if (upgrade.purchased) return;
-        spendMoney(260);
+        spendMoney(220);
         upgrade.purchased = true;
-        addLog('Podcast studio assembled! Your podcast asset is ready to produce seasons.', 'upgrade');
+        addLog('Lighting kit assembled! Your stock photo galleries now shine in marketplaces.', 'upgrade');
       })
     },
     cardState: (_state, card) => {
@@ -144,15 +144,14 @@ export const UPGRADES = [
   {
     id: 'course',
     name: 'Automation Course',
-    tag: { label: 'Unlock', type: 'unlock' },
-    description: 'Unlocks smarter blogging tools, boosting passive income by +50%.',
+    tag: { label: 'Boost', type: 'boost' },
+    description: 'Unlocks smarter blogging tools, boosting blog income by +50%.',
     defaultState: {
       purchased: false
     },
-    initialClasses: ['locked'],
     details: [
       () => '💵 Cost: <strong>$260</strong>',
-      () => 'Requires active blog'
+      () => 'Requires at least one active blog'
     ],
     action: {
       label: () => {
@@ -174,8 +173,7 @@ export const UPGRADES = [
         if (upgrade.purchased || !blog.instances.length) return;
         spendMoney(260);
         upgrade.purchased = true;
-        blog.multiplier = 1.5;
-        addLog('Automation course complete! Your blog now earns +50% more while you nap.', 'upgrade');
+        addLog('Automation course complete! Your blog network now earns +50% more each day.', 'upgrade');
       })
     },
     cardState: (_state, card) => {

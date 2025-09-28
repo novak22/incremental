@@ -14,7 +14,7 @@ export function updateUI() {
   if (!state) return;
 
   elements.money.textContent = `$${formatMoney(state.money)}`;
-  elements.time.textContent = `${formatHours(state.timeLeft)} / ${formatHours(getTimeCap())}`;
+  elements.time.textContent = `${formatHours(state.timeLeft)} of ${formatHours(getTimeCap())}`;
   elements.day.textContent = state.day;
 
   const cap = getTimeCap();
