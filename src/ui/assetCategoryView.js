@@ -7,6 +7,10 @@ import {
   sellAssetInstance
 } from '../game/assets/helpers.js';
 import {
+  describeRequirement,
+  getDefinitionRequirements
+} from '../game/requirements.js';
+import {
   calculateInstanceNetHourly,
   describeInstance,
   describeInstanceEarnings,
@@ -177,19 +181,6 @@ function renderCategoryList(key) {
     });
     actionsWrap.appendChild(detailsButton);
 
-    const upgradeButton = document.createElement('button');
-    upgradeButton.type = 'button';
-    upgradeButton.textContent = 'Upgrade';
-    const openQuality = row.definition?.ui?.extra?.openQuality;
-    const upgradeDisabled = row.instance.status !== 'active' || typeof openQuality !== 'function';
-    upgradeButton.disabled = upgradeDisabled;
-    upgradeButton.addEventListener('click', event => {
-      event.preventDefault();
-      if (upgradeButton.disabled) return;
-      openQuality(row.instance.id);
-    });
-    actionsWrap.appendChild(upgradeButton);
-
     const sellButton = document.createElement('button');
     sellButton.type = 'button';
     const price = calculateAssetSalePrice(row.instance);
@@ -201,6 +192,11 @@ function renderCategoryList(key) {
       sellAssetInstance(row.definition, row.instance.id);
     });
     actionsWrap.appendChild(sellButton);
+
+    const upgradeHints = createUpgradeHints(row.definition);
+    if (upgradeHints) {
+      actionsWrap.appendChild(upgradeHints);
+    }
 
     actionsCell.appendChild(actionsWrap);
     tr.appendChild(actionsCell);
@@ -234,6 +230,51 @@ function buildInstanceRows(definitions) {
     });
   });
   return rows;
+}
+
+function createUpgradeHints(definition) {
+  if (!definition) return null;
+  const requirements = getDefinitionRequirements(definition);
+  if (!requirements?.hasAny) return null;
+
+  const highlights = requirements
+    .filter(requirement => ['equipment', 'knowledge'].includes(requirement.type))
+    .map(requirement => ({
+      requirement,
+      description: describeRequirement(requirement)
+    }));
+
+  if (!highlights.length) return null;
+
+  const container = document.createElement('div');
+  container.className = 'asset-category__upgrade-hints';
+
+  const title = document.createElement('span');
+  title.className = 'asset-category__upgrade-title';
+  title.textContent = 'Support boosts';
+  container.appendChild(title);
+
+  const limit = Math.min(highlights.length, 2);
+  for (let index = 0; index < limit; index += 1) {
+    const entry = highlights[index];
+    const line = document.createElement('span');
+    line.className = 'asset-category__upgrade-entry';
+    if (entry.description.status === 'pending') {
+      line.classList.add('is-pending');
+    }
+    line.innerHTML = entry.description.detail;
+    container.appendChild(line);
+  }
+
+  if (highlights.length > limit) {
+    const more = document.createElement('span');
+    more.className = 'asset-category__upgrade-more';
+    const remaining = highlights.length - limit;
+    more.textContent = `+${remaining} more boosts`;
+    container.appendChild(more);
+  }
+
+  return container;
 }
 
 function formatMaintenance(definition) {
