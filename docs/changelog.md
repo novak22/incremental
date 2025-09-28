@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- Added category-level asset rosters with upkeep, payout, and upgrade/sell shortcuts, plus an instance-aware briefing modal that surfaces owned and locked upgrades.
 - Overhauled the passive asset board with stat-rich cards, upgrade shortcuts, per-instance earnings, and a briefing modal for nailing new launches.
 - Replaced the tabbed workspace with a sticky header navigation that scrolls to each section, refreshed section styling, and removed duplicate passive asset cards.
 - Major UI redesign with a collapsible daily snapshot, tabbed workspace, asset categories, filter toggles, and upgrade search for smoother planning.

@@ -15,6 +15,18 @@ const elements = {
     commerce: document.getElementById('asset-grid-commerce'),
     advanced: document.getElementById('asset-grid-advanced')
   },
+  assetCategoryLists: {
+    foundation: document.getElementById('asset-list-foundation'),
+    creative: document.getElementById('asset-list-creative'),
+    commerce: document.getElementById('asset-list-commerce'),
+    advanced: document.getElementById('asset-list-advanced')
+  },
+  assetCategoryToggles: {
+    foundation: document.querySelector('[data-asset-category-toggle="foundation"]'),
+    creative: document.querySelector('[data-asset-category-toggle="creative"]'),
+    commerce: document.querySelector('[data-asset-category-toggle="commerce"]'),
+    advanced: document.querySelector('[data-asset-category-toggle="advanced"]')
+  },
   assetSection: document.getElementById('section-assets'),
   upgradeGrid: document.getElementById('upgrade-grid'),
   upgradeGroupGrids: {
@@ -60,9 +72,18 @@ const elements = {
   },
   assetInfoTrigger: document.getElementById('asset-info-trigger'),
   assetInfoModal: document.getElementById('asset-info-modal'),
+  assetInfoEyebrow: document.getElementById('asset-info-eyebrow'),
   assetInfoTitle: document.getElementById('asset-info-title'),
   assetInfoDescription: document.getElementById('asset-info-description'),
   assetInfoDetails: document.getElementById('asset-info-details'),
+  assetInfoDefinition: document.getElementById('asset-info-definition'),
+  assetInfoInstance: document.getElementById('asset-info-instance'),
+  assetInfoInstanceStatus: document.getElementById('asset-info-instance-status'),
+  assetInfoInstanceQuality: document.getElementById('asset-info-instance-quality'),
+  assetInfoInstanceUpkeep: document.getElementById('asset-info-instance-upkeep'),
+  assetInfoInstancePayout: document.getElementById('asset-info-instance-payout'),
+  assetInfoUpgradesOwned: document.getElementById('asset-info-upgrades-owned'),
+  assetInfoUpgradesAvailable: document.getElementById('asset-info-upgrades-available'),
   assetInfoClose: document.getElementById('asset-info-close'),
   upgradeSearch: document.getElementById('upgrade-search')
 };

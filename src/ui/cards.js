@@ -1,9 +1,15 @@
 import elements from './elements.js';
-import { getAssetState, getState } from '../core/state.js';
+import { getAssetState, getState, getUpgradeState } from '../core/state.js';
 import { formatHours, formatMoney } from '../core/helpers.js';
 import { attachQualityPanel, focusQualityInstance, updateQualityPanel } from './quality.js';
-import { getDailyIncomeRange } from '../game/assets/helpers.js';
-import { enableAssetInstanceList } from './assetInstances.js';
+import { getDailyIncomeRange, instanceLabel } from '../game/assets/helpers.js';
+import { getQualityLevel } from '../game/assets/quality.js';
+import { registry } from '../game/registry.js';
+import {
+  describeInstance,
+  enableAssetInstanceList
+} from './assetInstances.js';
+import { configureCategoryView, updateCategoryView } from './assetCategoryView.js';
 
 const ASSET_CATEGORY_KEYS = {
   foundation: 'foundation',
@@ -24,7 +30,9 @@ const assetModalState = {
   definitions: [],
   initialized: false,
   activeId: null,
-  origin: null
+  activeInstanceId: null,
+  origin: null,
+  mode: 'definition'
 };
 
 export function renderCardCollections({ hustles, education, assets, upgrades }) {
@@ -78,6 +86,7 @@ export function updateAllCards({ hustles, education, assets, upgrades }) {
   for (const definition of upgrades) {
     updateCard(definition);
   }
+  updateCategoryView();
 }
 
 function renderAssetCollections(definitions) {
@@ -88,12 +97,17 @@ function renderAssetCollections(definitions) {
 
   const seen = new Set();
   const uniqueDefinitions = [];
+  const definitionsByCategory = new Map();
 
   for (const definition of definitions) {
     if (!definition || seen.has(definition.id)) continue;
     seen.add(definition.id);
     uniqueDefinitions.push(definition);
     const categoryKey = normalizeCategory(definition.tag?.label);
+    if (!definitionsByCategory.has(categoryKey)) {
+      definitionsByCategory.set(categoryKey, []);
+    }
+    definitionsByCategory.get(categoryKey).push(definition);
     const container = elements.assetCategoryGrids[categoryKey] || elements.assetGridRoot;
     if (!container) continue;
     enableAssetInstanceList(definition);
@@ -103,6 +117,7 @@ function renderAssetCollections(definitions) {
   assetModalState.definitions = uniqueDefinitions;
   initAssetInfoModal();
   updateAssetInfoTrigger();
+  configureCategoryView({ definitionsByCategory, openInstanceDetails: openAssetInstanceInfo });
 }
 
 function renderUpgradeCollections(definitions) {
@@ -575,7 +590,28 @@ function openAssetInfo(definition, originButton = null) {
   if (!modal) return;
 
   assetModalState.activeId = definition.id;
+  assetModalState.activeInstanceId = null;
   assetModalState.origin = originButton || null;
+  assetModalState.mode = 'definition';
+
+  populateAssetInfoModal(definition);
+
+  modal.classList.add('is-visible');
+  modal.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('modal-open');
+  elements.assetInfoClose?.focus();
+}
+
+function openAssetInstanceInfo(definition, instance, originButton = null) {
+  if (!definition || !instance) return;
+  initAssetInfoModal();
+  const modal = elements.assetInfoModal;
+  if (!modal) return;
+
+  assetModalState.activeId = definition.id;
+  assetModalState.activeInstanceId = instance.id;
+  assetModalState.origin = originButton || null;
+  assetModalState.mode = 'instance';
 
   populateAssetInfoModal(definition);
 
@@ -594,6 +630,8 @@ function closeAssetInfo() {
   const origin = assetModalState.origin;
   assetModalState.origin = null;
   assetModalState.activeId = null;
+  assetModalState.activeInstanceId = null;
+  assetModalState.mode = 'definition';
   if (origin && typeof origin.focus === 'function') {
     origin.focus();
   }
@@ -601,9 +639,31 @@ function closeAssetInfo() {
 
 function populateAssetInfoModal(definition) {
   if (!definition) return;
+  const mode = assetModalState.mode === 'instance' ? 'instance' : 'definition';
+  if (mode === 'instance') {
+    populateInstanceDetails(definition);
+  } else {
+    populateDefinitionDetails(definition);
+  }
+}
+
+function populateDefinitionDetails(definition) {
   const title = elements.assetInfoTitle;
   const description = elements.assetInfoDescription;
-  const detailsList = elements.assetInfoDetails;
+  const definitionSection = elements.assetInfoDefinition;
+  const instanceSection = elements.assetInfoInstance;
+  const eyebrow = elements.assetInfoEyebrow;
+
+  if (eyebrow) {
+    eyebrow.textContent = 'New Asset Briefing';
+  }
+
+  if (definitionSection) {
+    definitionSection.hidden = false;
+  }
+  if (instanceSection) {
+    instanceSection.hidden = true;
+  }
 
   if (title) {
     title.textContent = definition.name || 'Asset';
@@ -615,26 +675,218 @@ function populateAssetInfoModal(definition) {
     description.hidden = text.length === 0;
   }
 
-  if (detailsList) {
-    detailsList.innerHTML = '';
-    const renderers = getAssetDetailRenderers(definition);
-    const currentState = getState();
-    let populated = false;
-    for (const detail of renderers) {
-      const markup = typeof detail === 'function' ? detail(currentState) : detail;
-      if (!markup) continue;
-      const li = document.createElement('li');
-      li.innerHTML = markup;
-      detailsList.appendChild(li);
-      populated = true;
-    }
-    if (!populated) {
-      const li = document.createElement('li');
-      li.className = 'modal__details-empty';
-      li.textContent = 'No additional details yet. Launch one to generate stats!';
-      detailsList.appendChild(li);
+  renderDefinitionDetails(definition);
+}
+
+function populateInstanceDetails(definition) {
+  const assetState = getAssetState(definition.id);
+  const instances = assetState?.instances || [];
+  const instanceId = assetModalState.activeInstanceId;
+  const instance = instances.find(item => item.id === instanceId);
+  const definitionSection = elements.assetInfoDefinition;
+  const instanceSection = elements.assetInfoInstance;
+  const title = elements.assetInfoTitle;
+  const description = elements.assetInfoDescription;
+  const eyebrow = elements.assetInfoEyebrow;
+
+  if (!instance) {
+    assetModalState.mode = 'definition';
+    assetModalState.activeInstanceId = null;
+    populateDefinitionDetails(definition);
+    return;
+  }
+
+  if (definitionSection) {
+    definitionSection.hidden = false;
+  }
+  if (instanceSection) {
+    instanceSection.hidden = false;
+  }
+  if (eyebrow) {
+    eyebrow.textContent = 'Asset Instance Overview';
+  }
+
+  const index = instances.findIndex(item => item.id === instanceId);
+  if (title) {
+    title.textContent = instanceLabel(definition, Math.max(0, index));
+  }
+
+  if (description) {
+    const text = definition.description || '';
+    description.textContent = text;
+    description.hidden = text.length === 0;
+  }
+
+  if (elements.assetInfoInstanceStatus) {
+    elements.assetInfoInstanceStatus.textContent = describeInstance(definition, instance);
+  }
+  if (elements.assetInfoInstanceQuality) {
+    elements.assetInfoInstanceQuality.textContent = describeInstanceQuality(definition, instance);
+  }
+  if (elements.assetInfoInstanceUpkeep) {
+    elements.assetInfoInstanceUpkeep.textContent = formatInstanceUpkeep(definition);
+  }
+  if (elements.assetInfoInstancePayout) {
+    elements.assetInfoInstancePayout.textContent = formatInstancePayout(instance);
+  }
+
+  populateUpgradeLists(definition);
+}
+
+function renderDefinitionDetails(definition) {
+  const detailsList = elements.assetInfoDetails;
+  if (!detailsList) return;
+  detailsList.innerHTML = '';
+  const renderers = getAssetDetailRenderers(definition);
+  const currentState = getState();
+  let populated = false;
+  for (const detail of renderers) {
+    const markup = typeof detail === 'function' ? detail(currentState) : detail;
+    if (!markup) continue;
+    const li = document.createElement('li');
+    li.innerHTML = markup;
+    detailsList.appendChild(li);
+    populated = true;
+  }
+  if (!populated) {
+    const li = document.createElement('li');
+    li.className = 'modal__details-empty';
+    li.textContent = 'No additional details yet. Launch one to generate stats!';
+    detailsList.appendChild(li);
+  }
+}
+
+function describeInstanceQuality(definition, instance) {
+  if (instance.status !== 'active') {
+    return 'Launch pending';
+  }
+  const level = Number(instance.quality?.level) || 0;
+  const levelDef = getQualityLevel(definition, level);
+  const title = levelDef?.name ? ` · ${levelDef.name}` : '';
+  return `Level ${level}${title}`;
+}
+
+function formatInstanceUpkeep(definition) {
+  const hours = Number(definition.maintenance?.hours) || 0;
+  const cost = Number(definition.maintenance?.cost) || 0;
+  const parts = [];
+  if (hours > 0) {
+    parts.push(`${formatHours(hours)}/day`);
+  }
+  if (cost > 0) {
+    parts.push(`$${formatMoney(cost)}/day`);
+  }
+  return parts.length ? parts.join(' + ') : 'None';
+}
+
+function formatInstancePayout(instance) {
+  if (instance.status !== 'active') {
+    return 'Waiting for launch';
+  }
+  const lastIncome = Math.max(0, Number(instance.lastIncome) || 0);
+  if (lastIncome > 0) {
+    return `$${formatMoney(lastIncome)} yesterday`;
+  }
+  return 'No payout yesterday';
+}
+
+function populateUpgradeLists(definition) {
+  const ownedList = elements.assetInfoUpgradesOwned;
+  const availableList = elements.assetInfoUpgradesAvailable;
+  if (ownedList) ownedList.innerHTML = '';
+  if (availableList) availableList.innerHTML = '';
+
+  const upgrades = registry.upgrades || [];
+  const state = getState();
+  const statuses = upgrades.map(upgrade => buildUpgradeStatus(upgrade, state, definition));
+  const owned = statuses.filter(status => status.owned);
+  const available = statuses.filter(status => !status.owned);
+
+  renderUpgradeList(ownedList, owned, 'No upgrades purchased yet.');
+  renderUpgradeList(availableList, available, 'Every upgrade is already active!');
+}
+
+function buildUpgradeStatus(upgrade, state, definition) {
+  const upgradeState = getUpgradeState(upgrade.id, state);
+  const owned = isUpgradeOwned(upgradeState);
+  const disabled = typeof upgrade.action?.disabled === 'function'
+    ? upgrade.action.disabled(state)
+    : Boolean(upgrade.action?.disabled);
+  const required = isUpgradeRequiredForAsset(definition, upgrade.id);
+  const prefix = owned ? '✅' : disabled ? '🔒' : '🔓';
+  const details = [];
+  if (owned) {
+    const note = describeOwnedUpgrade(upgradeState);
+    if (note) details.push(note);
+  } else if (required) {
+    details.push('Required for unlock');
+  } else if (!disabled) {
+    details.push('Ready to buy');
+  } else {
+    details.push('Locked for now');
+  }
+  const text = details.length ? `${upgrade.name} — ${details.join(', ')}` : upgrade.name;
+  return { owned, text: `${prefix} ${text}` };
+}
+
+function renderUpgradeList(listElement, items, emptyText) {
+  if (!listElement) return;
+  listElement.innerHTML = '';
+  if (!items.length) {
+    const li = document.createElement('li');
+    li.className = 'modal__details-empty';
+    li.textContent = emptyText;
+    listElement.appendChild(li);
+    return;
+  }
+  items.forEach(item => {
+    const li = document.createElement('li');
+    li.textContent = item.text;
+    listElement.appendChild(li);
+  });
+}
+
+function isUpgradeOwned(upgradeState = {}) {
+  if (typeof upgradeState.purchased === 'boolean') {
+    return upgradeState.purchased;
+  }
+  if (typeof upgradeState.count === 'number') {
+    return upgradeState.count > 0;
+  }
+  if (typeof upgradeState.level === 'number') {
+    return upgradeState.level > 0;
+  }
+  return false;
+}
+
+function describeOwnedUpgrade(upgradeState = {}) {
+  if (typeof upgradeState.count === 'number' && upgradeState.count > 0) {
+    return `${upgradeState.count} on staff`;
+  }
+  if (typeof upgradeState.level === 'number' && upgradeState.level > 0) {
+    return `Level ${upgradeState.level}`;
+  }
+  if (typeof upgradeState.purchased === 'boolean' && upgradeState.purchased) {
+    return 'Purchased';
+  }
+  return '';
+}
+
+function isUpgradeRequiredForAsset(definition, upgradeId) {
+  if (!definition || !upgradeId) return false;
+  const requirementList = Array.isArray(definition.requirements) ? definition.requirements : [];
+  if (requirementList.some(req => req?.type === 'equipment' && req.id === upgradeId)) {
+    return true;
+  }
+  if (definition.requiresUpgrade) {
+    const required = Array.isArray(definition.requiresUpgrade)
+      ? definition.requiresUpgrade
+      : [definition.requiresUpgrade];
+    if (required.includes(upgradeId)) {
+      return true;
     }
   }
+  return false;
 }
 
 function normalizeCategory(label = '') {
