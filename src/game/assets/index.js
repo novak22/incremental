@@ -5,12 +5,24 @@ import {
   calculateAssetSalePrice,
   sellAssetInstance
 } from './helpers.js';
+import {
+  performQualityAction,
+  getQualityLevel,
+  getQualityLevelSummary,
+  getQualityActions,
+  getQualityTracks
+} from './quality.js';
 
 const assetsSystem = {
   list: ASSETS,
   allocateMaintenance: allocateAssetMaintenance,
   closeOutDay,
   getIncomeRangeForDisplay,
+  performQualityAction,
+  getQualityLevel,
+  getQualityLevelSummary,
+  getQualityActions,
+  getQualityTracks,
   sellAssetInstance,
   calculateSalePrice: calculateAssetSalePrice
 };
@@ -21,6 +33,11 @@ export {
   allocateAssetMaintenance,
   closeOutDay,
   getIncomeRangeForDisplay,
+  performQualityAction,
+  getQualityLevel,
+  getQualityLevelSummary,
+  getQualityActions,
+  getQualityTracks,
   sellAssetInstance,
   calculateAssetSalePrice
 };

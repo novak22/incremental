@@ -537,6 +537,126 @@ body {
   list-style: none;
 }
 
+.quality-panel {
+  background: rgba(15, 23, 42, 0.55);
+  border-radius: 16px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.quality-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.quality-panel__header h4 {
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.9);
+}
+
+.quality-panel__summary {
+  font-size: 0.85rem;
+  color: rgba(203, 213, 225, 0.8);
+}
+
+.quality-panel__instances {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.quality-instance {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.75rem;
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid rgba(56, 189, 248, 0.15);
+}
+
+.quality-instance__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.quality-instance__header strong {
+  font-size: 0.95rem;
+}
+
+.quality-instance__status {
+  font-size: 0.8rem;
+  color: rgba(56, 189, 248, 0.85);
+}
+
+.quality-instance__status.is-muted {
+  color: rgba(148, 163, 184, 0.7);
+}
+
+.quality-instance__progress {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  color: rgba(226, 232, 240, 0.8);
+}
+
+.quality-progress-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.quality-instance__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.quality-action {
+  align-self: flex-start;
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+  border: none;
+  background: rgba(56, 189, 248, 0.16);
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.quality-action:hover:not(:disabled),
+.quality-action:focus-visible:not(:disabled) {
+  background: rgba(56, 189, 248, 0.28);
+  transform: translateY(-1px);
+}
+
+.quality-action:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.quality-action__none,
+.quality-empty,
+.quality-instance__note {
+  font-size: 0.8rem;
+  color: rgba(148, 163, 184, 0.75);
+}
+
+.quality-empty {
+  text-align: center;
+  padding: 0.6rem 0;
+}
+
 .card button {
   align-self: flex-start;
   padding: 0.65rem 1.1rem;

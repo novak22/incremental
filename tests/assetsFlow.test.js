@@ -20,6 +20,7 @@ const {
   allocateAssetMaintenance,
   closeOutDay,
   getIncomeRangeForDisplay,
+  performQualityAction,
   sellAssetInstance,
   calculateAssetSalePrice
 } = assetsModule;
@@ -109,10 +110,10 @@ test('closing out the day advances setup and pays income when funded', () => {
   }
 });
 
-test('income range for display reflects definition variance', () => {
+test('income range for display reflects quality floor and ceiling', () => {
   const range = getIncomeRangeForDisplay('blog');
-  assert.equal(range.min, Math.round(blogDefinition.income.base * (1 - blogDefinition.income.variance)));
-  assert.equal(range.max, Math.round(blogDefinition.income.base * (1 + blogDefinition.income.variance)));
+  assert.equal(range.min, 1);
+  assert.equal(range.max, 120);
 });
 
 test('spending money during maintenance does not go negative', () => {
@@ -120,6 +121,47 @@ test('spending money during maintenance does not go negative', () => {
   state.money = 10;
   spendMoney(25);
   assert.equal(state.money, 0);
+});
+
+test('quality actions invest resources and unlock stronger income tiers', () => {
+  const originalRandom = Math.random;
+  Math.random = () => 0;
+
+  try {
+    const state = getState();
+    state.money = 200;
+    state.timeLeft = 24;
+
+    const blogState = getAssetState('blog');
+    const instance = createAssetInstance(blogDefinition, { status: 'active' });
+    blogState.instances = [instance];
+    const instanceId = instance.id;
+
+    // Baseline payout at quality 0
+    instance.maintenanceFundedToday = true;
+    closeOutDay();
+    let updatedInstance = getAssetState('blog').instances.find(item => item.id === instanceId);
+    assert.equal(updatedInstance.quality.level, 0);
+    assert.equal(updatedInstance.lastIncome, 1);
+
+    // Invest in posts to reach Quality 1
+    performQualityAction('blog', instanceId, 'writePost');
+    performQualityAction('blog', instanceId, 'writePost');
+    performQualityAction('blog', instanceId, 'writePost');
+
+    updatedInstance = getAssetState('blog').instances.find(item => item.id === instanceId);
+    assert.equal(updatedInstance.quality.level, 1);
+    assert.equal(state.timeLeft, 24 - 9, 'quality actions should spend time');
+
+    // Next payout reflects new tier
+    updatedInstance.maintenanceFundedToday = true;
+    closeOutDay();
+    updatedInstance = getAssetState('blog').instances.find(item => item.id === instanceId);
+    assert.equal(updatedInstance.lastIncome, 10);
+    assert.ok(state.log.some(entry => /Quality 1/.test(entry.message)));
+  } finally {
+    Math.random = originalRandom;
+  }
 });
 
 test('selling an asset instance removes it and pays out last income multiplier', () => {

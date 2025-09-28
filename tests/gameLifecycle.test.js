@@ -19,7 +19,7 @@ const {
   getAssetState,
   createAssetInstance
 } = stateModule;
-const { allocateAssetMaintenance, closeOutDay, ASSETS } = assetsModule;
+const { allocateAssetMaintenance, closeOutDay, ASSETS, getIncomeRangeForDisplay } = assetsModule;
 const { HUSTLES } = hustlesModule;
 const { UPGRADES } = upgradesModule;
 const { advanceKnowledgeTracks, markKnowledgeStudied, getKnowledgeProgress } = requirementsModule;
@@ -72,20 +72,21 @@ test('maintenance funding yields end-of-day payouts', () => {
       daysCompleted: blogDefinition.setup.days,
       maintenanceFundedToday: false
     })];
+    const instanceId = blogState.instances[0].id;
     state.timeLeft = 10;
     state.money = 10;
 
     allocateAssetMaintenance();
 
-    let updatedInstance = getAssetState('blog').instances[0];
+    let updatedInstance = getAssetState('blog').instances.find(item => item.id === instanceId);
     assert.equal(updatedInstance.maintenanceFundedToday, true, 'maintenance should be funded when hours remain');
     assert.equal(state.timeLeft, 9, 'maintenance should consume daily hours');
     assert.equal(state.money, 8, 'maintenance should deduct upkeep cash');
 
     closeOutDay();
 
-    const expectedMinimumIncome = Math.round(blogDefinition.income.base * (1 - blogDefinition.income.variance));
-    updatedInstance = getAssetState('blog').instances[0];
+    const expectedMinimumIncome = getIncomeRangeForDisplay('blog').min;
+    updatedInstance = getAssetState('blog').instances.find(item => item.id === instanceId);
     assert.equal(updatedInstance.lastIncome, expectedMinimumIncome, 'lastIncome should reflect deterministic payout');
     assert.equal(state.money, expectedMinimumIncome + 8, 'daily payout should add to post-upkeep balance');
   } finally {

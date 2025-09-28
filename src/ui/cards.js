@@ -1,5 +1,6 @@
 import elements from './elements.js';
 import { getState } from '../core/state.js';
+import { attachQualityPanel, updateQualityPanel } from './quality.js';
 import { enableAssetInstanceList } from './assetInstances.js';
 
 const ASSET_CATEGORY_KEYS = {
@@ -46,6 +47,9 @@ export function updateCard(definition) {
   }
   if (typeof definition.update === 'function') {
     definition.update(state, definition.ui);
+  }
+  if (definition.quality && definition.ui?.extra?.quality) {
+    updateQualityPanel(definition, definition.ui.extra.quality);
   }
 }
 
@@ -168,7 +172,11 @@ function createCard(definition, container, metadata = {}) {
     card.appendChild(button);
   }
 
-  const extra = typeof definition.extraContent === 'function' ? (definition.extraContent(card, state) || {}) : {};
+  let extra = typeof definition.extraContent === 'function' ? definition.extraContent(card, state) || {} : {};
+  if (definition.quality) {
+    const qualityUI = attachQualityPanel(card, definition);
+    extra = { ...extra, quality: qualityUI };
+  }
 
   container.appendChild(card);
   definition.ui = {
@@ -177,6 +185,9 @@ function createCard(definition, container, metadata = {}) {
     details: detailEntries,
     extra
   };
+  if (definition.quality && definition.ui.extra?.quality) {
+    updateQualityPanel(definition, definition.ui.extra.quality);
+  }
 }
 
 function normalizeCategory(label = '') {
