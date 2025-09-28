@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 - Added cinema/studio upgrade tiers and a three-step server infrastructure ladder culminating in a Cloud Cluster requirement for SaaS launches.
+- Added a net-per-hour ROI column to passive asset rosters and refreshed the instance briefing modal with asset-specific quality progress and upgrade actions.
 - Added category-level asset rosters with upkeep, payout, and upgrade/sell shortcuts, plus an instance-aware briefing modal that surfaces owned and locked upgrades.
 - Shifted passive asset payouts to credit during the morning maintenance sweep so earnings persist in the new day’s snapshot.
 - Highlighted passive asset payouts in the Daily Snapshot caption and breakdown, including instance counts for each earning stream.
