@@ -1,18 +1,8 @@
 import { formatMoney } from '../../../core/helpers.js';
 import { getUpgradeState } from '../../../core/state.js';
-import {
-  buildAssetAction,
-  incomeDetail,
-  latestYieldDetail,
-  maintenanceDetail,
-  ownedDetail,
-  qualityProgressDetail,
-  qualitySummaryDetail,
-  setupCostDetail,
-  setupDetail
-} from '../helpers.js';
+import { createAssetDefinition } from '../../content/schema.js';
 
-const blogDefinition = {
+const blogDefinition = createAssetDefinition({
   id: 'blog',
   name: 'Personal Blog Network',
   singular: 'Blog',
@@ -107,23 +97,20 @@ const blogDefinition = {
     income: (amount, label) => `${label} delivered $${formatMoney(amount)} in ad pennies and affiliate sprinkles.`,
     maintenanceSkipped: label => `${label} missed its edits today, so sponsors withheld the payout.`
   },
-  defaultState: { instances: [] }
-};
-
-blogDefinition.details = [
-  () => ownedDetail(blogDefinition),
-  () => setupDetail(blogDefinition),
-  () => setupCostDetail(blogDefinition),
-  () => maintenanceDetail(blogDefinition),
-  () => qualitySummaryDetail(blogDefinition),
-  () => qualityProgressDetail(blogDefinition),
-  () => incomeDetail(blogDefinition),
-  () => latestYieldDetail(blogDefinition)
-];
-
-blogDefinition.action = buildAssetAction(blogDefinition, {
-  first: 'Launch Blog',
-  repeat: 'Spin Up Another Blog'
+  detailKeys: [
+    'owned',
+    'setup',
+    'setupCost',
+    'maintenance',
+    'qualitySummary',
+    'qualityProgress',
+    'income',
+    'latestYield'
+  ],
+  actionLabels: {
+    first: 'Launch Blog',
+    repeat: 'Spin Up Another Blog'
+  }
 });
 
 export default blogDefinition;

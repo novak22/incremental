@@ -7,20 +7,52 @@ import {
   getHustleState,
   getState
 } from '../core/state.js';
-import { addMoney, spendMoney } from './currency.js';
 import { executeAction } from './actions.js';
+import { addMoney } from './currency.js';
 import { checkDayEnd } from './lifecycle.js';
-import { spendTime } from './time.js';
+import { createInstantHustle } from './content/schema.js';
 import {
   KNOWLEDGE_TRACKS,
   enrollInKnowledgeTrack,
   getKnowledgeProgress
 } from './requirements.js';
-import {
-  recordCostContribution,
-  recordPayoutContribution,
-  recordTimeContribution
-} from './metrics.js';
+import { recordPayoutContribution } from './metrics.js';
+
+const AUDIENCE_CALL_REQUIREMENTS = [{ assetId: 'blog', count: 1 }];
+const BUNDLE_PUSH_REQUIREMENTS = [
+  { assetId: 'blog', count: 2 },
+  { assetId: 'ebook', count: 1 }
+];
+
+function extractMetricKey(metric) {
+  if (!metric) return null;
+  if (typeof metric === 'string') return metric;
+  if (typeof metric === 'object') return metric.key || null;
+  return null;
+}
+
+function getHustleMetricIds(hustleId) {
+  const definition = getHustleDefinition(hustleId);
+  if (!definition) return {};
+  const actionMetrics = definition.action?.metricIds || definition.action?.metrics || {};
+  const definitionMetrics = definition.metricIds || definition.metrics || {};
+  return {
+    time: extractMetricKey(actionMetrics.time) || extractMetricKey(definitionMetrics.time),
+    cost: extractMetricKey(actionMetrics.cost) || extractMetricKey(definitionMetrics.cost),
+    payout: extractMetricKey(actionMetrics.payout) || extractMetricKey(definitionMetrics.payout)
+  };
+}
+
+function fallbackHustleMetricId(hustleId, type) {
+  const suffix = type === 'payout' ? 'payout' : type;
+  return `hustle:${hustleId}:${suffix}`;
+}
+
+function recordHustlePayout(hustleId, { label, amount, category }) {
+  const metrics = getHustleMetricIds(hustleId);
+  const key = metrics.payout || fallbackHustleMetricId(hustleId, 'payout');
+  recordPayoutContribution({ key, label, amount, category });
+}
 
 function countActiveAssets(assetId, state = getState()) {
   const assetState = getAssetState(assetId, state);
@@ -45,53 +77,6 @@ function renderRequirementSummary(requirements = [], state = getState()) {
     })
     .join(' • ');
 }
-
-function getHustleMetricIds(hustleId) {
-  const definition = getHustleDefinition(hustleId);
-  if (!definition) return {};
-  return definition.action?.metricIds || definition.metricIds || {};
-}
-
-function fallbackHustleMetricId(hustleId, type) {
-  const suffix = type === 'payout' ? 'payout' : type;
-  return `hustle:${hustleId}:${suffix}`;
-}
-
-function recordHustleTime(hustleId, { label, hours, category }) {
-  const metrics = getHustleMetricIds(hustleId);
-  recordTimeContribution({
-    key: metrics.time || fallbackHustleMetricId(hustleId, 'time'),
-    label,
-    hours,
-    category
-  });
-}
-
-function recordHustlePayout(hustleId, { label, amount, category }) {
-  const metrics = getHustleMetricIds(hustleId);
-  recordPayoutContribution({
-    key: metrics.payout || fallbackHustleMetricId(hustleId, 'payout'),
-    label,
-    amount,
-    category
-  });
-}
-
-function recordHustleCost(hustleId, { label, amount, category }) {
-  const metrics = getHustleMetricIds(hustleId);
-  recordCostContribution({
-    key: metrics.cost || fallbackHustleMetricId(hustleId, 'cost'),
-    label,
-    amount,
-    category
-  });
-}
-
-const AUDIENCE_CALL_REQUIREMENTS = [{ assetId: 'blog', count: 1 }];
-const BUNDLE_PUSH_REQUIREMENTS = [
-  { assetId: 'blog', count: 2 },
-  { assetId: 'ebook', count: 1 }
-];
 
 export function getHustleRequirements(definition) {
   if (!definition) return [];
@@ -120,204 +105,105 @@ export function areHustleRequirementsMet(definition, state = getState()) {
   return requirementsMet(getHustleRequirements(definition), state);
 }
 
-export const HUSTLES = [
-  {
-    id: 'freelance',
-    name: 'Freelance Writing',
-    tag: { label: 'Instant', type: 'instant' },
-    description: 'Crank out a quick article for a client. Not Pulitzer material, but it pays.',
-    details: [
-      () => '⏳ Time: <strong>2h</strong>',
-      () => '💵 Payout: <strong>$18</strong>'
-    ],
-    action: {
-      id: 'writeArticle',
-      timeCost: 2,
-      moneyCost: 0,
-      label: 'Write Now',
-      className: 'primary',
-      disabled: () => getState().timeLeft < 2,
-      onClick: () => {
-        executeAction(() => {
-          spendTime(2);
-          recordHustleTime('freelance', {
-            label: '⚡ Freelance writing time',
-            hours: 2,
-            category: 'hustle'
-          });
-          addMoney(18, 'You hustled an article for $18. Not Pulitzer material, but it pays the bills!');
-          recordHustlePayout('freelance', {
-            label: '💼 Freelance writing payout',
-            amount: 18,
-            category: 'hustle'
-          });
-        });
-        checkDayEnd();
-      }
-    }
+const freelanceWriting = createInstantHustle({
+  id: 'freelance',
+  name: 'Freelance Writing',
+  tag: { label: 'Instant', type: 'instant' },
+  description: 'Crank out a quick article for a client. Not Pulitzer material, but it pays.',
+  time: 2,
+  payout: {
+    amount: 18,
+    logType: 'hustle',
+    message: () => 'You hustled an article for $18. Not Pulitzer material, but it pays the bills!'
   },
-  {
-    id: 'audienceCall',
-    name: 'Audience Q&A Blast',
-    tag: { label: 'Instant', type: 'instant' },
-    description: 'Host a 60-minute livestream for your blog readers and pitch a premium checklist.',
-    requirements: AUDIENCE_CALL_REQUIREMENTS,
-    details: [
-      () => '⏳ Time: <strong>1h</strong>',
-      () => '💵 Payout: <strong>$12</strong>',
-      () => `Requires: <strong>${renderRequirementSummary(AUDIENCE_CALL_REQUIREMENTS)}</strong>`
-    ],
-    action: {
-      id: 'goLive',
-      timeCost: 1,
-      moneyCost: 0,
-      label: 'Go Live',
-      className: 'primary',
-      disabled: () => {
-        const state = getState();
-        if (!state) return true;
-        if (state.timeLeft < 1) return true;
-        return !requirementsMet(AUDIENCE_CALL_REQUIREMENTS, state);
-      },
-      onClick: () => {
-        executeAction(() => {
-          const state = getState();
-          if (!state) return;
-          if (state.timeLeft < 1) {
-            addLog('You need a full free hour before going live with your readers.', 'warning');
-            return;
-          }
-          if (!requirementsMet(AUDIENCE_CALL_REQUIREMENTS, state)) {
-            addLog('You need an active blog to invite readers to that Q&A.', 'warning');
-            return;
-          }
-          spendTime(1);
-          recordHustleTime('audienceCall', {
-            label: '🎤 Audience Q&A prep',
-            hours: 1,
-            category: 'hustle'
-          });
-          addMoney(12, 'Your audience Q&A tipped $12 in template sales. Small wins add up!', 'hustle');
-          recordHustlePayout('audienceCall', {
-            label: '🎤 Audience Q&A payout',
-            amount: 12,
-            category: 'hustle'
-          });
-        });
-        checkDayEnd();
-      }
-    }
+  metrics: {
+    time: { label: '⚡ Freelance writing time', category: 'hustle' },
+    payout: { label: '💼 Freelance writing payout', category: 'hustle' }
   },
-  {
-    id: 'bundlePush',
-    name: 'Bundle Promo Push',
-    tag: { label: 'Instant', type: 'instant' },
-    description: 'Pair your top blogs with an e-book bonus bundle for a limited-time flash sale.',
-    requirements: BUNDLE_PUSH_REQUIREMENTS,
-    details: [
-      () => '⏳ Time: <strong>2.5h</strong>',
-      () => '💵 Payout: <strong>$48</strong>',
-      () => `Requires: <strong>${renderRequirementSummary(BUNDLE_PUSH_REQUIREMENTS)}</strong>`
-    ],
-    action: {
-      id: 'launchBundle',
-      timeCost: 2.5,
-      moneyCost: 0,
-      label: 'Launch Bundle',
-      className: 'primary',
-      disabled: () => {
-        const state = getState();
-        if (!state) return true;
-        if (state.timeLeft < 2.5) return true;
-        return !requirementsMet(BUNDLE_PUSH_REQUIREMENTS, state);
-      },
-      onClick: () => {
-        executeAction(() => {
-          const state = getState();
-          if (!state) return;
-          if (state.timeLeft < 2.5) {
-            addLog('You need 2.5 free hours to build that promo bundle.', 'warning');
-            return;
-          }
-          if (!requirementsMet(BUNDLE_PUSH_REQUIREMENTS, state)) {
-            addLog('You need two active blogs and an e-book live before that bundle will sell.', 'warning');
-            return;
-          }
-          spendTime(2.5);
-          recordHustleTime('bundlePush', {
-            label: '🧺 Bundle promo planning',
-            hours: 2.5,
-            category: 'hustle'
-          });
-          addMoney(48, 'Your flash bundle moved $48 in upsells. Subscribers love the combo!', 'hustle');
-          recordHustlePayout('bundlePush', {
-            label: '🧺 Bundle promo payout',
-            amount: 48,
-            category: 'hustle'
-          });
-        });
-        checkDayEnd();
-      }
-    }
+  actionLabel: 'Write Now'
+});
+
+const audienceCall = createInstantHustle({
+  id: 'audienceCall',
+  name: 'Audience Q&A Blast',
+  tag: { label: 'Instant', type: 'instant' },
+  description: 'Host a 60-minute livestream for your blog readers and pitch a premium checklist.',
+  time: 1,
+  requirements: AUDIENCE_CALL_REQUIREMENTS,
+  payout: {
+    amount: 12,
+    logType: 'hustle',
+    message: () => 'Your audience Q&A tipped $12 in template sales. Small wins add up!'
   },
-  {
-    id: 'flips',
-    name: 'eBay Flips',
-    tag: { label: 'Delayed', type: 'delayed' },
-    description: 'Hunt for deals, flip them online. Profit arrives fashionably late.',
-    details: [
-      () => '⏳ Time: <strong>4h</strong>',
-      () => '💵 Cost: <strong>$20</strong>',
-      () => '💰 Payout: <strong>$48 after 30s</strong>'
-    ],
-    defaultState: {
-      pending: []
-    },
-    action: {
-      id: 'startFlip',
-      timeCost: 4,
-      moneyCost: 20,
-      delaySeconds: 30,
-      label: 'Start Flip',
-      className: 'primary',
-      disabled: () => {
-        const state = getState();
-        return state.timeLeft < 4 || state.money < 20;
-      },
-      onClick: () => {
-        executeAction(() => {
-          spendTime(4);
-          recordHustleTime('flips', {
-            label: '📦 eBay flips prep',
-            hours: 4,
-            category: 'hustle'
-          });
-          spendMoney(20);
-          recordHustleCost('flips', {
-            label: '💸 eBay flips sourcing',
-            amount: 20,
-            category: 'investment'
-          });
-          scheduleFlip();
-          addLog('You listed a spicy eBay flip. In 30 seconds it should cha-ching for $48!', 'delayed');
-        });
-        checkDayEnd();
-      }
-    },
-    extraContent: card => {
-      const status = document.createElement('div');
-      status.className = 'pending';
-      status.textContent = 'No flips in progress.';
-      card.appendChild(status);
-      return { status };
-    },
-    update: (_state, ui) => {
-      updateFlipStatus(ui.extra.status);
-    },
-    process: (now, offline) => processFlipPayouts(now, offline)
+  metrics: {
+    time: { label: '🎤 Audience Q&A prep', category: 'hustle' },
+    payout: { label: '🎤 Audience Q&A payout', category: 'hustle' }
   },
-  ...createKnowledgeHustles()
-];
+  actionLabel: 'Go Live'
+});
+
+const bundlePush = createInstantHustle({
+  id: 'bundlePush',
+  name: 'Bundle Promo Push',
+  tag: { label: 'Instant', type: 'instant' },
+  description: 'Pair your top blogs with an e-book bonus bundle for a limited-time flash sale.',
+  time: 2.5,
+  requirements: BUNDLE_PUSH_REQUIREMENTS,
+  payout: {
+    amount: 48,
+    logType: 'hustle',
+    message: () => 'Your flash bundle moved $48 in upsells. Subscribers love the combo!'
+  },
+  metrics: {
+    time: { label: '🧺 Bundle promo planning', category: 'hustle' },
+    payout: { label: '🧺 Bundle promo payout', category: 'hustle' }
+  },
+  actionLabel: 'Launch Bundle'
+});
+
+const flips = createInstantHustle({
+  id: 'flips',
+  name: 'eBay Flips',
+  tag: { label: 'Delayed', type: 'delayed' },
+  description: 'Hunt for deals, flip them online. Profit arrives fashionably late.',
+  time: 4,
+  cost: 20,
+  payout: {
+    amount: 48,
+    delaySeconds: 30,
+    grantOnAction: false
+  },
+  metrics: {
+    time: { label: '📦 eBay flips prep', category: 'hustle' },
+    cost: { label: '💸 eBay flips sourcing', category: 'investment' },
+    payout: { label: '💼 eBay flips payout', category: 'delayed' }
+  },
+  defaultState: {
+    pending: []
+  },
+  actionLabel: 'Start Flip',
+  onExecute: context => {
+    context.skipDefaultPayout();
+    scheduleFlip();
+    addLog('You listed a spicy eBay flip. In 30 seconds it should cha-ching for $48!', 'delayed');
+  }
+});
+
+flips.extraContent = card => {
+  const status = document.createElement('div');
+  status.className = 'pending';
+  status.textContent = 'No flips in progress.';
+  card.appendChild(status);
+  return { status };
+};
+
+flips.update = (_state, ui) => {
+  updateFlipStatus(ui.extra.status);
+};
+
+flips.process = (now, offline) => processFlipPayouts(now, offline);
+
+export const HUSTLES = [freelanceWriting, audienceCall, bundlePush, flips, ...createKnowledgeHustles()];
 
 export function scheduleFlip() {
   const flipState = getHustleState('flips');
@@ -336,9 +222,7 @@ export function updateFlipStatus(element) {
     return;
   }
   const now = Date.now();
-  const nextFlip = flipState.pending.reduce((soonest, flip) =>
-    flip.readyAt < soonest.readyAt ? flip : soonest
-  );
+  const nextFlip = flipState.pending.reduce((soonest, flip) => (flip.readyAt < soonest.readyAt ? flip : soonest));
   const timeRemaining = Math.max(0, Math.round((nextFlip.readyAt - now) / 1000));
   const label = timeRemaining === 0 ? 'any moment' : `${timeRemaining}s`;
   const descriptor = flipState.pending.length === 1 ? 'flip' : 'flips';
@@ -366,7 +250,7 @@ export function processFlipPayouts(now = Date.now(), offline = false) {
         recordHustlePayout('flips', {
           label: '💼 eBay flips payout',
           amount: flip.payout,
-          category: offline ? 'offline' : 'delayed'
+          category: 'offline'
         });
       } else {
         addMoney(flip.payout, `Your eBay flip sold for $${formatMoney(flip.payout)}! Shipping label time.`, 'delayed');
@@ -390,7 +274,9 @@ export function processFlipPayouts(now = Date.now(), offline = false) {
   const result = { changed: true };
   if (offline && offlineTotal > 0) {
     result.offlineLog = {
-      message: `While you were away, ${completed} eBay ${completed === 1 ? 'flip' : 'flips'} paid out. $${formatMoney(offlineTotal)} richer!`,
+      message: `While you were away, ${completed} eBay ${completed === 1 ? 'flip' : 'flips'} paid out. $${formatMoney(
+        offlineTotal
+      )} richer!`,
       type: 'delayed'
     };
   }

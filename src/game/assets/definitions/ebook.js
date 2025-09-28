@@ -1,18 +1,7 @@
 import { formatMoney } from '../../../core/helpers.js';
-import {
-  buildAssetAction,
-  incomeDetail,
-  latestYieldDetail,
-  maintenanceDetail,
-  ownedDetail,
-  qualityProgressDetail,
-  qualitySummaryDetail,
-  setupCostDetail,
-  setupDetail
-} from '../helpers.js';
-import { renderAssetRequirementDetail, updateAssetCardLock } from '../../requirements.js';
+import { createAssetDefinition } from '../../content/schema.js';
 
-const ebookDefinition = {
+const ebookDefinition = createAssetDefinition({
   id: 'ebook',
   name: 'Digital E-Book Series',
   singular: 'E-Book',
@@ -105,26 +94,21 @@ const ebookDefinition = {
     income: (amount, label) => `${label} sold bundles worth $${formatMoney(amount)} today.`,
     maintenanceSkipped: label => `${label} skipped promo pushes, so the sales funnel dried up.`
   },
-  defaultState: { instances: [] }
-};
-
-ebookDefinition.details = [
-  () => ownedDetail(ebookDefinition),
-  () => setupDetail(ebookDefinition),
-  () => setupCostDetail(ebookDefinition),
-  () => maintenanceDetail(ebookDefinition),
-  () => renderAssetRequirementDetail('ebook'),
-  () => qualitySummaryDetail(ebookDefinition),
-  () => qualityProgressDetail(ebookDefinition),
-  () => incomeDetail(ebookDefinition),
-  () => latestYieldDetail(ebookDefinition)
-];
-
-ebookDefinition.action = buildAssetAction(ebookDefinition, {
-  first: 'Author First E-Book',
-  repeat: 'Write Another Volume'
+  detailKeys: [
+    'owned',
+    'setup',
+    'setupCost',
+    'maintenance',
+    'requirements',
+    'qualitySummary',
+    'qualityProgress',
+    'income',
+    'latestYield'
+  ],
+  actionLabels: {
+    first: 'Author First E-Book',
+    repeat: 'Write Another Volume'
+  }
 });
-
-ebookDefinition.cardState = (_state, card) => updateAssetCardLock('ebook', card);
 
 export default ebookDefinition;

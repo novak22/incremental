@@ -1,27 +1,17 @@
 import { formatMoney } from '../../../core/helpers.js';
-import {
-  buildAssetAction,
-  incomeDetail,
-  latestYieldDetail,
-  maintenanceDetail,
-  ownedDetail,
-  qualityProgressDetail,
-  qualitySummaryDetail,
-  setupDetail
-} from '../helpers.js';
-import { renderAssetRequirementDetail, updateAssetCardLock } from '../../requirements.js';
+import { createAssetDefinition } from '../../content/schema.js';
 
-const stockPhotosDefinition = {
+const stockPhotosDefinition = createAssetDefinition({
   id: 'stockPhotos',
-  name: 'Stock Photo Gallery',
+  name: 'Stock Photo Galleries',
   singular: 'Gallery',
   tag: { label: 'Creative', type: 'passive' },
-  description: 'Curate vibrant photo packs that designers license in surprising numbers.',
-  setup: { days: 4, hoursPerDay: 2.5, cost: 240 },
-  maintenance: { hours: 1, cost: 4 },
+  description: 'Stage props, shoot themed collections, and list them across marketplaces.',
+  setup: { days: 5, hoursPerDay: 4, cost: 560 },
+  maintenance: { hours: 1.5, cost: 12 },
   income: {
-    base: 28,
-    variance: 0.2,
+    base: 42,
+    variance: 0.25,
     logType: 'passive'
   },
   requirements: {
@@ -29,100 +19,96 @@ const stockPhotosDefinition = {
     knowledge: ['photoLibrary']
   },
   quality: {
-    summary: 'Shoot new packs, keyword diligently, and pitch marketplaces so galleries enjoy evergreen demand.',
+    summary: 'Plan shoots, edit batches, and grow marketing funnels to transform trickle sales into daily bundles.',
     tracks: {
-      packs: { label: 'Photo packs', shortLabel: 'packs' },
-      keywords: { label: 'Keyword sessions', shortLabel: 'keywords' },
-      outreach: { label: 'Marketplace outreach', shortLabel: 'outreach' }
+      shoots: { label: 'Photo shoots', shortLabel: 'shoots' },
+      editing: { label: 'Batch edits', shortLabel: 'edits' },
+      marketing: { label: 'Marketing pushes', shortLabel: 'marketing runs' }
     },
     levels: [
       {
         level: 0,
-        name: 'Dusty Portfolio',
-        description: 'A tiny gallery with generic tags earns a trickle.',
-        income: { min: 3, max: 6 },
+        name: 'Camera Roll Chaos',
+        description: 'Unsorted shoots drip pennies.',
+        income: { min: 2, max: 5 },
         requirements: {}
       },
       {
         level: 1,
-        name: 'Fresh Packs',
-        description: 'Multiple themed packs attract steady design searches.',
-        income: { min: 10, max: 16 },
-        requirements: { packs: 5 }
+        name: 'Curated Collections',
+        description: 'Five themed shoots win daily sales.',
+        income: { min: 12, max: 20 },
+        requirements: { shoots: 5 }
       },
       {
         level: 2,
-        name: 'Tagged Treasure',
-        description: 'Meticulous keywords vault photos to top results.',
-        income: { min: 18, max: 26 },
-        requirements: { packs: 11, keywords: 5 }
+        name: 'Marketplace Darling',
+        description: 'Batch edits make downloads soar.',
+        income: { min: 22, max: 32 },
+        requirements: { shoots: 12, editing: 4 }
       },
       {
         level: 3,
-        name: 'Marketplace Darling',
-        description: 'Partnerships and outreach keep royalties compounding.',
-        income: { min: 26, max: 36 },
-        requirements: { packs: 18, keywords: 9, outreach: 5 }
+        name: 'Brand Staple',
+        description: 'Marketing funnels keep cash flowing.',
+        income: { min: 30, max: 44 },
+        requirements: { shoots: 18, editing: 7, marketing: 5 }
       }
     ],
     actions: [
       {
-        id: 'shootPack',
-        label: 'Shoot Pack',
-        time: 3.5,
-        progressKey: 'packs',
-        log: ({ label }) => `${label} captured a fresh themed pack. Lightroom presets sparkle!`
+        id: 'planShoot',
+        label: 'Plan Shoot',
+        time: 4,
+        cost: 24,
+        progressKey: 'shoots',
+        log: ({ label }) => `${label} staged a dazzling shoot. Props now live rent-free in your studio.`
       },
       {
-        id: 'keywordSession',
-        label: 'Keyword Session',
-        time: 1.5,
-        cost: 8,
-        progressKey: 'keywords',
-        log: ({ label }) => `${label} tagged every shot with laser-focused keywords.`
+        id: 'batchEdit',
+        label: 'Batch Edit',
+        time: 2.5,
+        cost: 16,
+        progressKey: 'editing',
+        log: ({ label }) => `${label} batch-edited a gallery. Clients cheer at the crisp exports!`
       },
       {
-        id: 'portfolioOutreach',
-        label: 'Pitch Marketplace',
+        id: 'runPromo',
+        label: 'Run Promo',
         time: 2,
         cost: 18,
-        cooldownDays: 2,
-        progressKey: 'outreach',
-        log: ({ label }) => `${label} pitched new bundles to marketplaces. Visibility surges!`
+        progressKey: 'marketing',
+        log: ({ label }) => `${label} ran a marketplace feature promo. Download counters spin faster!`
       }
     ],
     messages: {
       levelUp: ({ label, level, levelDef }) =>
-        `${label} blossomed to Quality ${level}! ${levelDef?.name || 'New spotlight'} opens stronger long-tail sales.`
+        `${label} climbed to Quality ${level}! ${levelDef?.name || 'New milestone'} brings steadier sales.`
     }
   },
   messages: {
-    setupStarted: label => `${label} scouting trip kicked off—lens caps off and inspiration flowing.`,
-    setupProgress: (label, completed, total) => `${label} catalogued more shots (${completed}/${total} curation days done).`,
-    setupComplete: label => `${label} went live! Designers are licensing your crisp shots already.`,
-    setupMissed: label => `${label} needed fresh captures today, but the skies stayed figuratively dark.`,
-    income: (amount, label) => `${label} licensed imagery worth $${formatMoney(amount)} today.`,
-    maintenanceSkipped: label => `${label} skipped tagging and lost marketplace visibility.`
+    setupStarted: label => `${label} is booking talent and locations.`,
+    setupProgress: (label, completed, total) => `${label} has wrapped ${completed}/${total} prep days.`,
+    setupComplete: label => `${label} launched its gallery! Clients love the curated sets.`,
+    setupMissed: label => `${label} skipped the shoot today, so progress paused.`,
+    income: (amount, label) => `${label} sold licensing packs worth $${formatMoney(amount)}.`,
+    maintenanceSkipped: label => `${label} skipped its retouch session, so agencies held back payouts.`
   },
-  defaultState: { instances: [] }
-};
-
-stockPhotosDefinition.details = [
-  () => ownedDetail(stockPhotosDefinition),
-  () => setupDetail(stockPhotosDefinition),
-  () => maintenanceDetail(stockPhotosDefinition),
-  () => renderAssetRequirementDetail('stockPhotos'),
-  () => qualitySummaryDetail(stockPhotosDefinition),
-  () => qualityProgressDetail(stockPhotosDefinition),
-  () => incomeDetail(stockPhotosDefinition),
-  () => latestYieldDetail(stockPhotosDefinition)
-];
-
-stockPhotosDefinition.action = buildAssetAction(stockPhotosDefinition, {
-  first: 'Curate Gallery',
-  repeat: 'Add New Gallery'
+  detailKeys: [
+    'owned',
+    'setup',
+    'setupCost',
+    'maintenance',
+    'requirements',
+    'qualitySummary',
+    'qualityProgress',
+    'income',
+    'latestYield'
+  ],
+  actionLabels: {
+    first: 'Open Gallery',
+    repeat: 'Launch Another Gallery'
+  }
 });
-
-stockPhotosDefinition.cardState = (_state, card) => updateAssetCardLock('stockPhotos', card);
 
 export default stockPhotosDefinition;

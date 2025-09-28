@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- Introduced schema-driven builders for hustles, assets, and upgrades so new content can be configured declaratively with shared UI details and metrics hooks.
 - Added a centralized action catalog with selectors plus an optional debug panel that lists availability, costs, and requirement gaps across hustles, assets, upgrades, and quality actions.
 - Unified asset and upgrade requirement schema so unlock conditions share consistent evaluation and UI messaging.
 - Revamped education tracks with upfront tuition costs, longer course lengths, and an automatic daily study scheduler that reserves hours until graduation.
