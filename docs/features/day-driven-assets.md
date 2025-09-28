@@ -20,9 +20,9 @@
   - SaaS: base 620, ±60% variance.
 - **Instance State** – Each instance tracks `status`, `daysRemaining`, `daysCompleted`, `setupFundedToday`, `maintenanceFundedToday`, `lastIncome`, and `totalIncome` for log messaging and UI summaries.
 - **Requirements** – Assets can require:
-  - Equipment upgrades (e.g., Camera, Lighting Kit).
+  - Equipment upgrades (e.g., Camera, Lighting Kit, Cinema Camera, Studio Expansion, Cloud Cluster).
   - Knowledge tracks (Outline Mastery 3×2h, Photo Catalog 2×1.5h, E-Commerce Playbook 5×2h, Automation Architecture 7×3h).
-  - Experience (e.g., Dropshipping needs 2 active blogs; SaaS needs 1 dropshipping store and 1 e-book).
+  - Experience (e.g., Dropshipping needs 2 active blogs; SaaS needs Cloud Cluster infrastructure, 1 dropshipping store, and 1 e-book).
 - **Knowledge Tracks** – New study hustles mark `studiedToday` and advance one day of progress at day end; skipping a day after starting generates a warning log.
 
 ## Open Questions / Next Steps

@@ -154,6 +154,233 @@ export const UPGRADES = [
     }
   },
   {
+    id: 'cameraPro',
+    name: 'Cinema Camera Upgrade',
+    tag: { label: 'Boost', type: 'boost' },
+    description: 'Upgrade your rig with cinema glass and stabilized mounts for prestige productions.',
+    defaultState: {
+      purchased: false
+    },
+    details: [
+      () => '💵 Cost: <strong>$480</strong>',
+      () => 'Requires: <strong>Camera</strong>',
+      () => 'Boosts: <strong>Higher vlog quality payouts</strong>'
+    ],
+    action: {
+      label: () => {
+        const upgrade = getUpgradeState('cameraPro');
+        if (upgrade.purchased) return 'Cinema Ready';
+        if (!getUpgradeState('camera').purchased) return 'Requires Camera';
+        return 'Install Cinema Gear';
+      },
+      className: 'secondary',
+      disabled: () => {
+        const upgrade = getUpgradeState('cameraPro');
+        if (upgrade.purchased) return true;
+        if (!getUpgradeState('camera').purchased) return true;
+        return getState().money < 480;
+      },
+      onClick: () => executeAction(() => {
+        const upgrade = getUpgradeState('cameraPro');
+        if (upgrade.purchased || !getUpgradeState('camera').purchased) return;
+        spendMoney(480);
+        recordCostContribution({
+          key: 'upgrade:cameraPro',
+          label: '🎬 Cinema camera upgrade',
+          amount: 480,
+          category: 'upgrade'
+        });
+        upgrade.purchased = true;
+        addLog('Cinema camera calibrated! Your vlogs now look blockbuster-bright.', 'upgrade');
+      })
+    },
+    cardState: (_state, card) => {
+      const upgrade = getUpgradeState('cameraPro');
+      card.classList.toggle('locked', upgrade.purchased);
+      card.classList.toggle('requires-upgrade', !getUpgradeState('camera').purchased && !upgrade.purchased);
+    }
+  },
+  {
+    id: 'studioExpansion',
+    name: 'Studio Expansion',
+    tag: { label: 'Boost', type: 'boost' },
+    description: 'Add modular sets, color-controlled lighting, and prop storage for faster shoots.',
+    defaultState: {
+      purchased: false
+    },
+    details: [
+      () => '💵 Cost: <strong>$540</strong>',
+      () => 'Requires: <strong>Lighting Kit</strong>',
+      () => 'Boosts: <strong>Stock photo session efficiency</strong>'
+    ],
+    action: {
+      label: () => {
+        const upgrade = getUpgradeState('studioExpansion');
+        if (upgrade.purchased) return 'Studio Expanded';
+        if (!getUpgradeState('studio').purchased) return 'Requires Lighting Kit';
+        return 'Expand Studio';
+      },
+      className: 'secondary',
+      disabled: () => {
+        const upgrade = getUpgradeState('studioExpansion');
+        if (upgrade.purchased) return true;
+        if (!getUpgradeState('studio').purchased) return true;
+        return getState().money < 540;
+      },
+      onClick: () => executeAction(() => {
+        const upgrade = getUpgradeState('studioExpansion');
+        if (upgrade.purchased || !getUpgradeState('studio').purchased) return;
+        spendMoney(540);
+        recordCostContribution({
+          key: 'upgrade:studioExpansion',
+          label: '🏗️ Studio expansion build-out',
+          amount: 540,
+          category: 'upgrade'
+        });
+        upgrade.purchased = true;
+        addLog('Studio expansion complete! You now glide through photo shoots with cinematic flair.', 'upgrade');
+      })
+    },
+    cardState: (_state, card) => {
+      const upgrade = getUpgradeState('studioExpansion');
+      card.classList.toggle('locked', upgrade.purchased);
+      card.classList.toggle('requires-upgrade', !getUpgradeState('studio').purchased && !upgrade.purchased);
+    }
+  },
+  {
+    id: 'serverRack',
+    name: 'Server Rack - Starter',
+    tag: { label: 'Unlock', type: 'unlock' },
+    description: 'Spin up a reliable rack with monitoring so prototypes stay online.',
+    defaultState: {
+      purchased: false
+    },
+    details: [
+      () => '💵 Cost: <strong>$650</strong>',
+      () => 'Unlocks: <strong>Stable environments for advanced products</strong>'
+    ],
+    action: {
+      label: () => (getUpgradeState('serverRack').purchased ? 'Rack Online' : 'Install Rack'),
+      className: 'secondary',
+      disabled: () => {
+        const upgrade = getUpgradeState('serverRack');
+        if (upgrade.purchased) return true;
+        return getState().money < 650;
+      },
+      onClick: () => executeAction(() => {
+        const upgrade = getUpgradeState('serverRack');
+        if (upgrade.purchased) return;
+        spendMoney(650);
+        recordCostContribution({
+          key: 'upgrade:serverRack',
+          label: '🗄️ Starter server rack install',
+          amount: 650,
+          category: 'infrastructure'
+        });
+        upgrade.purchased = true;
+        addLog('Server rack assembled! Your advanced projects now have a home base.', 'upgrade');
+      })
+    },
+    cardState: (_state, card) => {
+      const upgrade = getUpgradeState('serverRack');
+      card.classList.toggle('locked', upgrade.purchased);
+    }
+  },
+  {
+    id: 'serverCluster',
+    name: 'Cloud Cluster',
+    tag: { label: 'Unlock', type: 'unlock' },
+    description: 'Deploy auto-scaling containers and CI pipelines so your SaaS survives launch day.',
+    defaultState: {
+      purchased: false
+    },
+    details: [
+      () => '💵 Cost: <strong>$1,150</strong>',
+      () => 'Requires: <strong>Starter Server Rack</strong>',
+      () => 'Unlocks: <strong>SaaS deployments</strong>'
+    ],
+    action: {
+      label: () => {
+        const upgrade = getUpgradeState('serverCluster');
+        if (upgrade.purchased) return 'Cluster Ready';
+        if (!getUpgradeState('serverRack').purchased) return 'Requires Rack';
+        return 'Deploy Cluster';
+      },
+      className: 'secondary',
+      disabled: () => {
+        const upgrade = getUpgradeState('serverCluster');
+        if (upgrade.purchased) return true;
+        if (!getUpgradeState('serverRack').purchased) return true;
+        return getState().money < 1150;
+      },
+      onClick: () => executeAction(() => {
+        const upgrade = getUpgradeState('serverCluster');
+        if (upgrade.purchased || !getUpgradeState('serverRack').purchased) return;
+        spendMoney(1150);
+        recordCostContribution({
+          key: 'upgrade:serverCluster',
+          label: '☁️ Cloud cluster deployment',
+          amount: 1150,
+          category: 'infrastructure'
+        });
+        upgrade.purchased = true;
+        addLog('Cloud cluster humming! SaaS deploy pipelines now run without midnight fire drills.', 'upgrade');
+      })
+    },
+    cardState: (_state, card) => {
+      const upgrade = getUpgradeState('serverCluster');
+      card.classList.toggle('locked', upgrade.purchased);
+      card.classList.toggle('requires-upgrade', !getUpgradeState('serverRack').purchased && !upgrade.purchased);
+    }
+  },
+  {
+    id: 'serverEdge',
+    name: 'Edge Delivery Network',
+    tag: { label: 'Boost', type: 'boost' },
+    description: 'Distribute workloads across edge nodes for instant response times and uptime bragging rights.',
+    defaultState: {
+      purchased: false
+    },
+    details: [
+      () => '💵 Cost: <strong>$1,450</strong>',
+      () => 'Requires: <strong>Cloud Cluster</strong>',
+      () => 'Boosts: <strong>SaaS subscriber trust</strong>'
+    ],
+    action: {
+      label: () => {
+        const upgrade = getUpgradeState('serverEdge');
+        if (upgrade.purchased) return 'Edge Live';
+        if (!getUpgradeState('serverCluster').purchased) return 'Requires Cluster';
+        return 'Activate Edge Network';
+      },
+      className: 'secondary',
+      disabled: () => {
+        const upgrade = getUpgradeState('serverEdge');
+        if (upgrade.purchased) return true;
+        if (!getUpgradeState('serverCluster').purchased) return true;
+        return getState().money < 1450;
+      },
+      onClick: () => executeAction(() => {
+        const upgrade = getUpgradeState('serverEdge');
+        if (upgrade.purchased || !getUpgradeState('serverCluster').purchased) return;
+        spendMoney(1450);
+        recordCostContribution({
+          key: 'upgrade:serverEdge',
+          label: '🌐 Edge delivery rollout',
+          amount: 1450,
+          category: 'infrastructure'
+        });
+        upgrade.purchased = true;
+        addLog('Edge network activated! Your SaaS now feels instant from any continent.', 'upgrade');
+      })
+    },
+    cardState: (_state, card) => {
+      const upgrade = getUpgradeState('serverEdge');
+      card.classList.toggle('locked', upgrade.purchased);
+      card.classList.toggle('requires-upgrade', !getUpgradeState('serverCluster').purchased && !upgrade.purchased);
+    }
+  },
+  {
     id: 'coffee',
     name: 'Turbo Coffee',
     tag: { label: 'Boost', type: 'boost' },

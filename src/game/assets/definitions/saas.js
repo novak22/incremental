@@ -27,6 +27,7 @@ const saasDefinition = {
   },
   requirements: [
     { type: 'knowledge', id: 'automationCourse' },
+    { type: 'equipment', id: 'serverCluster' },
     { type: 'experience', assetId: 'dropshipping', count: 1 },
     { type: 'experience', assetId: 'ebook', count: 1 }
   ],
