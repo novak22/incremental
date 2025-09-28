@@ -41,6 +41,23 @@ test('requirement label reflects missing equipment and updates after unlock', ()
   assert.equal(labelAfter, 'Ready to Launch');
 });
 
+test('saas requirement includes server infrastructure gating', () => {
+  const labelBefore = formatAssetRequirementLabel('saas');
+  assert.match(labelBefore, /Cloud Cluster/);
+
+  const automation = getKnowledgeProgress('automationCourse');
+  automation.completed = true;
+  getUpgradeState('serverRack').purchased = true;
+  getUpgradeState('serverCluster').purchased = true;
+  const dropshipping = getAssetState('dropshipping');
+  dropshipping.instances = [{ status: 'active' }];
+  const ebook = getAssetState('ebook');
+  ebook.instances = [{ status: 'active' }];
+
+  const labelAfter = formatAssetRequirementLabel('saas');
+  assert.equal(labelAfter, 'Ready to Launch');
+});
+
 test('requirement detail renders dynamic knowledge progress', () => {
   const state = getState();
   const trackDef = KNOWLEDGE_TRACKS.outlineMastery;
