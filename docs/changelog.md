@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- Added a centralized action catalog with selectors plus an optional debug panel that lists availability, costs, and requirement gaps across hustles, assets, upgrades, and quality actions.
 - Revamped education tracks with upfront tuition costs, longer course lengths, and an automatic daily study scheduler that reserves hours until graduation.
 - Added cinema/studio upgrade tiers and a three-step server infrastructure ladder culminating in a Cloud Cluster requirement for SaaS launches.
 - Added instant hustles that reward active blogs/e-books, complete with live requirement summaries and one-hour payouts, plus per-instance cooldowns for high-impact passive quality actions.

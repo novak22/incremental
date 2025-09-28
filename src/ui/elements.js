@@ -87,7 +87,10 @@ const elements = {
   assetInfoQualityActions: document.getElementById('asset-info-quality-actions'),
   assetInfoSupportUpgrades: document.getElementById('asset-info-support-upgrades'),
   assetInfoClose: document.getElementById('asset-info-close'),
-  upgradeSearch: document.getElementById('upgrade-search')
+  upgradeSearch: document.getElementById('upgrade-search'),
+  debugActionCatalog: document.getElementById('debug-action-catalog'),
+  debugActionCatalogSummary: document.getElementById('debug-action-catalog-summary'),
+  debugActionCatalogList: document.getElementById('debug-action-catalog-list')
 };
 
 export default elements;
