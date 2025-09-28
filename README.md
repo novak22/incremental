@@ -10,7 +10,7 @@ Online Hustle Simulator is a browser-based incremental game about orchestrating 
 - **Daily Recap Log** – Every launch, maintenance result, payout, and study milestone is written to the log so you can reconstruct exactly what happened during busy streaks.
 
 ### Interface Overview
-- **Top Bar & Snapshot** – Money, time, and day stay pinned at the top. A collapsible Daily Snapshot panel lets you peek at per-stat breakdowns (time reserved, projected payouts, daily costs, study momentum) without overwhelming the main view.
+- **Top Bar & Snapshot** – Money, time, and day stay pinned at the top. A collapsible Daily Snapshot panel now highlights per-stat breakdowns (time invested, cash earned, cash spent, study momentum) without overwhelming the main view.
 - **Tabbed Workspace** – Hustles, Education, Passive Assets, and Upgrades each live in their own tab with dedicated copy and per-tab filters. Global toggles hide locked or completed cards, and you can spotlight only actionable options.
 - **Categorised Collections** – Passive assets surface in Foundation, Creative, Commerce, and Advanced groupings with a collapsed-card option for rapid scanning. Upgrades split into Equipment, Automation, Consumables, and a catch-all bucket with a quick search bar.
 - **Event Log Controls** – The log dock keeps its running commentary but now includes a summary/detailed toggle when you want a lighter feed during long sessions.
@@ -46,6 +46,7 @@ Each asset supports multiple instances, tracks setup progress, and rolls a daily
 ## Current Feature Set
 - Day-driven scheduler with automatic setup/maintenance allocation and detailed end-of-day recaps.
 - Six passive asset types with multi-instance tracking, setup states, maintenance funding, and dynamic daily income rolls.
+- Daily metrics ledger that captures hours, earnings, and spending, powering the refreshed snapshot breakdowns.
 - Knowledge study hustles that gate advanced assets and remember streak progress across days.
 - Equipment and experience requirements surfaced directly on asset cards with live progress indicators.
 - Responsive card grids with upbeat copy, tabbed navigation, filters, and search so players can focus on the work-in-progress that matters most.

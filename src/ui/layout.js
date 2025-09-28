@@ -49,12 +49,10 @@ function setupStatsPanel() {
     panel.dataset.collapsed = expanded ? 'false' : 'true';
     toggle.setAttribute('aria-expanded', String(expanded));
     toggle.textContent = expanded ? 'Collapse breakdowns' : 'Expand breakdowns';
-    if (!expanded) {
-      const details = panel.querySelectorAll('details');
-      details.forEach(detail => {
-        detail.open = false;
-      });
-    }
+    const details = panel.querySelectorAll('details');
+    details.forEach(detail => {
+      detail.open = expanded;
+    });
   };
 
   toggle.addEventListener('click', () => {

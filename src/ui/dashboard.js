@@ -35,52 +35,54 @@ export function renderSummary(summary) {
   if (!elements.summaryPanel) return;
 
   const {
+    totalTime,
     setupHours,
     maintenanceHours,
-    maintenanceCost,
-    incomeMin,
-    incomeMax,
-    activeCount,
-    setupCount,
+    otherTimeHours,
+    totalEarnings,
+    passiveEarnings,
+    activeEarnings,
+    totalSpend,
+    upkeepSpend,
+    investmentSpend,
     knowledgeInProgress,
     knowledgePendingToday,
     timeBreakdown,
-    payoutBreakdown,
-    costBreakdown,
+    earningsBreakdown,
+    spendBreakdown,
     studyBreakdown
   } = summary;
 
-  const totalReserved = setupHours + maintenanceHours;
-  const setupLabel = setupCount === 1 ? 'build' : 'builds';
-  const upkeepLabel = activeCount === 1 ? 'asset' : 'assets';
-
-  setText(elements.summaryTime, `${formatHours(totalReserved)} reserved`);
+  setText(elements.summaryTime, `${formatHours(totalTime)} invested`);
+  const timeSegments = [];
+  if (setupHours > 0) timeSegments.push(`Setup ${formatHours(setupHours)}`);
+  if (maintenanceHours > 0) timeSegments.push(`Upkeep ${formatHours(maintenanceHours)}`);
+  if (otherTimeHours > 0) timeSegments.push(`Extras ${formatHours(otherTimeHours)}`);
   setText(
     elements.summaryTimeCaption,
-    `${setupCount} ${setupLabel} in prep (${formatHours(setupHours)}) • ${activeCount} active ${upkeepLabel} (${formatHours(maintenanceHours)})`
+    timeSegments.length ? timeSegments.join(' • ') : 'No time spent yet today'
   );
   renderBreakdown(elements.summaryTimeBreakdown, timeBreakdown);
 
-  const minMoney = formatMoney(incomeMin);
-  const maxMoney = formatMoney(incomeMax);
-  const incomeLabel = incomeMin === incomeMax
-    ? `$${minMoney} / day`
-    : `$${minMoney} – $${maxMoney} / day`;
-  setText(elements.summaryIncome, incomeLabel);
+  setText(elements.summaryIncome, `$${formatMoney(totalEarnings)} today`);
+  const earningsSegments = [];
+  if (passiveEarnings > 0) earningsSegments.push(`Passive streams $${formatMoney(passiveEarnings)}`);
+  if (activeEarnings > 0) earningsSegments.push(`Active hustles $${formatMoney(activeEarnings)}`);
   setText(
     elements.summaryIncomeCaption,
-    activeCount ? `Projected from ${activeCount} active ${upkeepLabel}` : 'No passive payouts yet'
+    earningsSegments.length ? earningsSegments.join(' • ') : 'No earnings logged yet today'
   );
-  renderBreakdown(elements.summaryIncomeBreakdown, payoutBreakdown);
+  renderBreakdown(elements.summaryIncomeBreakdown, earningsBreakdown);
 
-  setText(elements.summaryCost, `$${formatMoney(maintenanceCost)} / day`);
+  setText(elements.summaryCost, `$${formatMoney(totalSpend)} today`);
+  const spendSegments = [];
+  if (upkeepSpend > 0) spendSegments.push(`Upkeep & payroll $${formatMoney(upkeepSpend)}`);
+  if (investmentSpend > 0) spendSegments.push(`Investments & boosts $${formatMoney(investmentSpend)}`);
   setText(
     elements.summaryCostCaption,
-    maintenanceCost
-      ? 'Maintenance and staffing costs to keep everything humming'
-      : 'No upkeep or payroll costs today'
+    spendSegments.length ? spendSegments.join(' • ') : 'No spending logged yet today'
   );
-  renderBreakdown(elements.summaryCostBreakdown, costBreakdown);
+  renderBreakdown(elements.summaryCostBreakdown, spendBreakdown);
 
   const studyLabel = knowledgeInProgress === 1 ? 'track' : 'tracks';
   setText(elements.summaryStudy, `${knowledgeInProgress} ${studyLabel}`);

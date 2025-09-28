@@ -15,6 +15,7 @@ import {
 } from './assistant.js';
 import { checkDayEnd } from './lifecycle.js';
 import { spendMoney } from './currency.js';
+import { recordCostContribution } from './metrics.js';
 
 export const UPGRADES = [
   {
@@ -98,6 +99,12 @@ export const UPGRADES = [
         const upgrade = getUpgradeState('camera');
         if (upgrade.purchased) return;
         spendMoney(200);
+        recordCostContribution({
+          key: 'upgrade:camera',
+          label: '🎥 Camera purchase',
+          amount: 200,
+          category: 'upgrade'
+        });
         upgrade.purchased = true;
         addLog('You bought a mirrorless camera rig. Vlogs and photo galleries just unlocked!', 'upgrade');
       })
@@ -131,6 +138,12 @@ export const UPGRADES = [
         const upgrade = getUpgradeState('studio');
         if (upgrade.purchased) return;
         spendMoney(220);
+        recordCostContribution({
+          key: 'upgrade:studio',
+          label: '💡 Lighting kit upgrade',
+          amount: 220,
+          category: 'upgrade'
+        });
         upgrade.purchased = true;
         addLog('Lighting kit assembled! Your stock photo galleries now shine in marketplaces.', 'upgrade');
       })
@@ -168,6 +181,12 @@ export const UPGRADES = [
         const upgrade = getUpgradeState('coffee');
         if (upgrade.usedToday >= COFFEE_LIMIT) return;
         spendMoney(40);
+        recordCostContribution({
+          key: 'upgrade:coffee',
+          label: '☕ Turbo coffee boost',
+          amount: 40,
+          category: 'consumable'
+        });
         upgrade.usedToday += 1;
         state.dailyBonusTime += 1;
         gainTime(1);
@@ -206,6 +225,12 @@ export const UPGRADES = [
         const blog = getAssetState('blog');
         if (upgrade.purchased || !blog.instances.length) return;
         spendMoney(260);
+        recordCostContribution({
+          key: 'upgrade:course',
+          label: '📚 Automation course tuition',
+          amount: 260,
+          category: 'upgrade'
+        });
         upgrade.purchased = true;
         addLog('Automation course complete! Your blog network now earns +50% more each day.', 'upgrade');
       })
