@@ -1,18 +1,7 @@
 import { formatMoney } from '../../../core/helpers.js';
-import {
-  buildAssetAction,
-  incomeDetail,
-  latestYieldDetail,
-  maintenanceDetail,
-  ownedDetail,
-  qualityProgressDetail,
-  qualitySummaryDetail,
-  setupCostDetail,
-  setupDetail
-} from '../helpers.js';
-import { renderAssetRequirementDetail, updateAssetCardLock } from '../../requirements.js';
+import { createAssetDefinition } from '../../content/schema.js';
 
-const vlogDefinition = {
+const vlogDefinition = createAssetDefinition({
   id: 'vlog',
   name: 'Weekly Vlog Channel',
   singular: 'Vlog',
@@ -108,26 +97,21 @@ const vlogDefinition = {
     income: (amount, label) => `${label} raked in $${formatMoney(amount)} from sponsors and mid-rolls.`,
     maintenanceSkipped: label => `${label} skipped its edit session, so the algorithm served someone else.`
   },
-  defaultState: { instances: [] }
-};
-
-vlogDefinition.details = [
-  () => ownedDetail(vlogDefinition),
-  () => setupDetail(vlogDefinition),
-  () => setupCostDetail(vlogDefinition),
-  () => maintenanceDetail(vlogDefinition),
-  () => renderAssetRequirementDetail('vlog'),
-  () => qualitySummaryDetail(vlogDefinition),
-  () => qualityProgressDetail(vlogDefinition),
-  () => incomeDetail(vlogDefinition),
-  () => latestYieldDetail(vlogDefinition)
-];
-
-vlogDefinition.action = buildAssetAction(vlogDefinition, {
-  first: 'Launch Vlog Channel',
-  repeat: 'Add Another Channel'
+  detailKeys: [
+    'owned',
+    'setup',
+    'setupCost',
+    'maintenance',
+    'requirements',
+    'qualitySummary',
+    'qualityProgress',
+    'income',
+    'latestYield'
+  ],
+  actionLabels: {
+    first: 'Launch Vlog Channel',
+    repeat: 'Add Another Channel'
+  }
 });
-
-vlogDefinition.cardState = (_state, card) => updateAssetCardLock('vlog', card);
 
 export default vlogDefinition;

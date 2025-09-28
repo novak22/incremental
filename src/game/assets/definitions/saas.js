@@ -1,131 +1,114 @@
 import { formatMoney } from '../../../core/helpers.js';
-import {
-  buildAssetAction,
-  incomeDetail,
-  latestYieldDetail,
-  maintenanceDetail,
-  ownedDetail,
-  qualityProgressDetail,
-  qualitySummaryDetail,
-  setupCostDetail,
-  setupDetail
-} from '../helpers.js';
-import { renderAssetRequirementDetail, updateAssetCardLock } from '../../requirements.js';
+import { createAssetDefinition } from '../../content/schema.js';
 
-const saasDefinition = {
+const saasDefinition = createAssetDefinition({
   id: 'saas',
-  name: 'SaaS Micro-App',
-  singular: 'App',
-  tag: { label: 'Advanced', type: 'passive' },
-  description: 'Ship a tidy micro-SaaS that collects subscriptions from superfans of your niche tools.',
-  setup: { days: 7, hoursPerDay: 5, cost: 1600 },
-  maintenance: { hours: 2.5, cost: 12 },
+  name: 'Micro SaaS Platform',
+  singular: 'Micro SaaS',
+  tag: { label: 'Tech', type: 'passive' },
+  description: 'Design lean software services, onboard early users, and ship updates that keep churn low.',
+  setup: { days: 8, hoursPerDay: 4, cost: 960 },
+  maintenance: { hours: 2.5, cost: 28 },
   income: {
-    base: 36,
-    variance: 0.2,
+    base: 68,
+    variance: 0.35,
     logType: 'passive'
   },
   requirements: [
-    { type: 'knowledge', id: 'automationCourse' },
     { type: 'equipment', id: 'serverCluster' },
-    { type: 'experience', assetId: 'dropshipping', count: 1 },
-    { type: 'experience', assetId: 'ebook', count: 1 }
+    { type: 'knowledge', id: 'automationCourse' }
   ],
   quality: {
-    summary: 'Squash bugs, ship features, and host support sprints so your app graduates into a churn-proof subscription machine.',
+    summary: 'Build features, squash bugs, and scale infrastructure to transform prototypes into revenue engines.',
     tracks: {
-      fixes: { label: 'Bug fixes', shortLabel: 'bug fixes' },
-      features: { label: 'Feature releases', shortLabel: 'features' },
-      support: { label: 'Support sessions', shortLabel: 'support calls' }
+      features: { label: 'Feature launches', shortLabel: 'features' },
+      stability: { label: 'Reliability upgrades', shortLabel: 'stability fixes' },
+      marketing: { label: 'Marketing pushes', shortLabel: 'marketing runs' }
     },
     levels: [
       {
         level: 0,
-        name: 'Beta Build',
-        description: 'Early adopters tolerate quirks for pocket change revenue.',
-        income: { min: 8, max: 14 },
+        name: 'Beta Sandbox',
+        description: 'Tiny user base and messy bugs limit revenue.',
+        income: { min: 4, max: 8 },
         requirements: {}
       },
       {
         level: 1,
-        name: 'Reliable Release',
-        description: 'Critical bug fixes calm churn and boost sign-ups.',
-        income: { min: 16, max: 24 },
-        requirements: { fixes: 4 }
+        name: 'Early Traction',
+        description: 'Feature roadmap clicks with early adopters.',
+        income: { min: 22, max: 34 },
+        requirements: { features: 6 }
       },
       {
         level: 2,
-        name: 'Feature Favorite',
-        description: 'Steady features keep subscriptions renewing.',
-        income: { min: 24, max: 32 },
-        requirements: { fixes: 10, features: 4 }
+        name: 'Reliable Service',
+        description: 'Reliability boosts and updates reduce churn.',
+        income: { min: 36, max: 50 },
+        requirements: { features: 14, stability: 4 }
       },
       {
         level: 3,
-        name: 'Support Legend',
-        description: 'Dedicated support squads crush churn and win raves.',
-        income: { min: 34, max: 42 },
-        requirements: { fixes: 16, features: 8, support: 8 }
+        name: 'Scaling Flywheel',
+        description: 'Marketing pushes and infrastructure unlock bigger accounts.',
+        income: { min: 54, max: 74 },
+        requirements: { features: 24, stability: 8, marketing: 6 }
       }
     ],
     actions: [
       {
-        id: 'squashBugs',
-        label: 'Squash Bugs',
-        time: 2.5,
-        progressKey: 'fixes',
-        log: ({ label }) => `${label} closed a cluster of bugs. Error logs finally exhale.`
-      },
-      {
         id: 'shipFeature',
         label: 'Ship Feature',
         time: 4,
-        cost: 60,
+        cost: 34,
         progressKey: 'features',
-        log: ({ label }) => `${label} rolled out a shiny feature. Users spam the applause emoji.`
+        log: ({ label }) => `${label} shipped a delightful feature. Beta users erupt in emoji reactions!`
       },
       {
-        id: 'supportSprint',
-        label: 'Support Sprint',
-        time: 2,
-        cost: 20,
-        progressKey: 'support',
-        log: ({ label }) => `${label} hosted a support sprint. Churn gremlins retreat.`
+        id: 'improveStability',
+        label: 'Improve Stability',
+        time: 3,
+        cost: 40,
+        progressKey: 'stability',
+        log: ({ label }) => `${label} patched outages and bolstered uptime. Pager alerts stay quiet.`
+      },
+      {
+        id: 'launchCampaign',
+        label: 'Launch Campaign',
+        time: 2.5,
+        cost: 48,
+        progressKey: 'marketing',
+        log: ({ label }) => `${label} launched a marketing sprint. Sign-ups trickle in all night.`
       }
     ],
     messages: {
       levelUp: ({ label, level, levelDef }) =>
-        `${label} advanced to Quality ${level}! ${levelDef?.name || 'New stature'} locks in recurring revenue.`
+        `${label} advanced to Quality ${level}! ${levelDef?.name || 'New tier'} secures happier subscribers.`
     }
   },
   messages: {
-    setupStarted: label => `${label} sprint kicked off with wireframes and caffeine-fueled commits.`,
-    setupProgress: (label, completed, total) => `${label} completed another release sprint (${completed}/${total}).`,
-    setupComplete: label => `${label} launched! Subscribers fell in love with your automation magic.`,
-    setupMissed: label => `${label} needed coding time today, but the repo stayed untouched.`,
-    income: (amount, label) => `${label} banked $${formatMoney(amount)} in recurring revenue today.`,
-    maintenanceSkipped: label => `${label} skipped bug triage, so churn nibbled the numbers.`
+    setupStarted: label => `${label} kicked off architecture diagrams and feature planning.`,
+    setupProgress: (label, completed, total) => `${label} is ${completed}/${total} sprints into the build.`,
+    setupComplete: label => `${label} launched! Early customers are testing every button.`,
+    setupMissed: label => `${label} skipped stand-up today, so backlog cards stayed put.`,
+    income: (amount, label) => `${label} billed $${formatMoney(amount)} in monthly subscriptions.`,
+    maintenanceSkipped: label => `${label} skipped maintenance, so churn crept upward.`
   },
-  defaultState: { instances: [] }
-};
-
-saasDefinition.details = [
-  () => ownedDetail(saasDefinition),
-  () => setupDetail(saasDefinition),
-  () => setupCostDetail(saasDefinition),
-  () => maintenanceDetail(saasDefinition),
-  () => renderAssetRequirementDetail('saas'),
-  () => qualitySummaryDetail(saasDefinition),
-  () => qualityProgressDetail(saasDefinition),
-  () => incomeDetail(saasDefinition),
-  () => latestYieldDetail(saasDefinition)
-];
-
-saasDefinition.action = buildAssetAction(saasDefinition, {
-  first: 'Prototype Micro-App',
-  repeat: 'Spin Up Another App'
+  detailKeys: [
+    'owned',
+    'setup',
+    'setupCost',
+    'maintenance',
+    'requirements',
+    'qualitySummary',
+    'qualityProgress',
+    'income',
+    'latestYield'
+  ],
+  actionLabels: {
+    first: 'Launch Micro SaaS',
+    repeat: 'Spin Up Another SaaS'
+  }
 });
-
-saasDefinition.cardState = (_state, card) => updateAssetCardLock('saas', card);
 
 export default saasDefinition;

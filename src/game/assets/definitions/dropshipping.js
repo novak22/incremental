@@ -1,130 +1,110 @@
 import { formatMoney } from '../../../core/helpers.js';
-import {
-  buildAssetAction,
-  incomeDetail,
-  latestYieldDetail,
-  maintenanceDetail,
-  ownedDetail,
-  qualityProgressDetail,
-  qualitySummaryDetail,
-  setupCostDetail,
-  setupDetail
-} from '../helpers.js';
-import { renderAssetRequirementDetail, updateAssetCardLock } from '../../requirements.js';
+import { createAssetDefinition } from '../../content/schema.js';
 
-const dropshippingDefinition = {
+const dropshippingDefinition = createAssetDefinition({
   id: 'dropshipping',
-  name: 'Dropshipping Storefront',
-  singular: 'Storefront',
+  name: 'Dropshipping Product Lab',
+  singular: 'Dropshipping Shop',
   tag: { label: 'Commerce', type: 'passive' },
-  description: 'Spin up a storefront, source trending products, and let fulfillment partners handle the rest.',
-  setup: { days: 5, hoursPerDay: 4, cost: 650 },
-  maintenance: { hours: 1.5, cost: 9 },
+  description: 'Prototype products, source suppliers, and automate fulfillment funnels.',
+  setup: { days: 6, hoursPerDay: 4, cost: 720 },
+  maintenance: { hours: 2, cost: 14 },
   income: {
-    base: 34,
-    variance: 0.2,
+    base: 52,
+    variance: 0.3,
     logType: 'passive'
   },
-  requirements: [
-    { type: 'knowledge', id: 'ecomPlaybook' },
-    { type: 'experience', assetId: 'blog', count: 2 }
-  ],
+  requirements: [{ type: 'knowledge', id: 'ecomPlaybook' }],
   quality: {
-    summary: 'Add listings, tune pages, and fund ad bursts to transform a fragile storefront into a conversion machine.',
+    summary: 'Research products, optimize listings, and scale advertising to grow a dependable e-commerce machine.',
     tracks: {
-      listings: { label: 'Product listings', shortLabel: 'listings' },
-      optimization: { label: 'Page optimizations', shortLabel: 'optimizations' },
-      ads: { label: 'Ad bursts', shortLabel: 'ads' }
+      research: { label: 'Product research sprints', shortLabel: 'research runs' },
+      listing: { label: 'Listing optimizations', shortLabel: 'listing tweaks' },
+      ads: { label: 'Ad experiments', shortLabel: 'ad tests' }
     },
     levels: [
       {
         level: 0,
-        name: 'Bare Shelves',
-        description: 'A tiny catalog with wobbly funnels ekes out pocket change.',
-        income: { min: 6, max: 10 },
+        name: 'Prototype Pile',
+        description: 'Inconsistent suppliers mean sporadic payouts.',
+        income: { min: 3, max: 6 },
         requirements: {}
       },
       {
         level: 1,
-        name: 'Curated Offerings',
-        description: 'A handful of optimized listings convert curious scrollers.',
-        income: { min: 18, max: 28 },
-        requirements: { listings: 6 }
+        name: 'Optimized Listings',
+        description: 'Top products have polished listings and reviews.',
+        income: { min: 16, max: 26 },
+        requirements: { research: 5 }
       },
       {
         level: 2,
-        name: 'Ad Funnel Maestro',
-        description: 'Paid campaigns and optimized pages fuel reliable revenue.',
-        income: { min: 24, max: 34 },
-        requirements: { listings: 12, ads: 4, optimization: 2 }
+        name: 'Automation Groove',
+        description: 'Fulfillment and ad funnels make sales steady.',
+        income: { min: 28, max: 40 },
+        requirements: { research: 12, listing: 4 }
       },
       {
         level: 3,
-        name: 'Fulfillment Powerhouse',
-        description: 'Dialed-in logistics handle waves of loyal customers.',
-        income: { min: 32, max: 40 },
-        requirements: { listings: 20, ads: 8, optimization: 6 }
+        name: 'Scaled Flywheel',
+        description: 'Paid campaigns bring consistent high-ticket orders.',
+        income: { min: 42, max: 58 },
+        requirements: { research: 18, listing: 7, ads: 6 }
       }
     ],
     actions: [
       {
-        id: 'addListing',
-        label: 'Add Listing',
-        time: 2.5,
-        cost: 22,
-        progressKey: 'listings',
-        log: ({ label }) => `${label} launched a trending product listing with glossy mockups.`
+        id: 'researchProduct',
+        label: 'Research Product',
+        time: 3.5,
+        progressKey: 'research',
+        log: ({ label }) => `${label} spotted a trending micro-niche. Suppliers start calling back!`
       },
       {
-        id: 'optimizePage',
-        label: 'Optimize Page',
-        time: 1.5,
-        progressKey: 'optimization',
-        log: ({ label }) => `${label} rewrote copy and tightened funnels. Conversion rate hums!`
-      },
-      {
-        id: 'runAdBurst',
-        label: 'Run Ad Burst',
+        id: 'optimizeListing',
+        label: 'Optimize Listing',
         time: 2,
-        cost: 45,
-        cooldownDays: 2,
+        cost: 32,
+        progressKey: 'listing',
+        log: ({ label }) => `${label} revamped copy and photos. Conversion rates begin to pop.`
+      },
+      {
+        id: 'experimentAds',
+        label: 'Experiment With Ads',
+        time: 2.5,
+        cost: 38,
         progressKey: 'ads',
-        log: ({ label }) => `${label} funded a laser-targeted ad burst. Traffic surges in.`
+        log: ({ label }) => `${label} tested lookalike audiences. Click-through rates jump!`
       }
     ],
     messages: {
       levelUp: ({ label, level, levelDef }) =>
-        `${label} leveled to Quality ${level}! ${levelDef?.name || 'New playbook'} keeps carts overflowing.`
+        `${label} hit Quality ${level}! ${levelDef?.name || 'New milestone'} unlocks steadier orders.`
     }
   },
   messages: {
-    setupStarted: label => `${label} is onboarding suppliers. Your product list already looks spicy.`,
-    setupProgress: (label, completed, total) => `${label} refined logistics (${completed}/${total} setup days banked).`,
-    setupComplete: label => `${label} opened to the public! First orders are already in the queue.`,
-    setupMissed: label => `${label} needed operations time today, but the warehouse lights stayed off.`,
-    income: (amount, label) => `${label} cleared $${formatMoney(amount)} in daily profit after fees.`,
-    maintenanceSkipped: label => `${label} skipped customer support, so refunds ate the day.`
+    setupStarted: label => `${label} is sourcing samples and setting up fulfillment.`,
+    setupProgress: (label, completed, total) => `${label} has ${completed}/${total} supplier calls in the books.`,
+    setupComplete: label => `${label} opened for business! Customers are already checking out.`,
+    setupMissed: label => `${label} missed fulfillment prep today, so launch paused.`,
+    income: (amount, label) => `${label} captured $${formatMoney(amount)} in net profit.`,
+    maintenanceSkipped: label => `${label} skipped customer support and refunds ate the profits.`
   },
-  defaultState: { instances: [] }
-};
-
-dropshippingDefinition.details = [
-  () => ownedDetail(dropshippingDefinition),
-  () => setupDetail(dropshippingDefinition),
-  () => setupCostDetail(dropshippingDefinition),
-  () => maintenanceDetail(dropshippingDefinition),
-  () => renderAssetRequirementDetail('dropshipping'),
-  () => qualitySummaryDetail(dropshippingDefinition),
-  () => qualityProgressDetail(dropshippingDefinition),
-  () => incomeDetail(dropshippingDefinition),
-  () => latestYieldDetail(dropshippingDefinition)
-];
-
-dropshippingDefinition.action = buildAssetAction(dropshippingDefinition, {
-  first: 'Open Dropshipping Store',
-  repeat: 'Launch Another Storefront'
+  detailKeys: [
+    'owned',
+    'setup',
+    'setupCost',
+    'maintenance',
+    'requirements',
+    'qualitySummary',
+    'qualityProgress',
+    'income',
+    'latestYield'
+  ],
+  actionLabels: {
+    first: 'Launch Dropshipping Shop',
+    repeat: 'Add Another Shop'
+  }
 });
-
-dropshippingDefinition.cardState = (_state, card) => updateAssetCardLock('dropshipping', card);
 
 export default dropshippingDefinition;
