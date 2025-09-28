@@ -331,6 +331,11 @@ main {
   border-left-color: var(--warning);
 }
 
+.log-entry.type-warning {
+  border-left-color: var(--warning);
+  background: rgba(251, 191, 36, 0.12);
+}
+
 @media (max-width: 768px) {
   body {
     padding: 1.5rem 0.75rem 2.5rem;

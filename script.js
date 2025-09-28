@@ -68,10 +68,13 @@ const ASSETS = [
     name: 'Personal Blog',
     tag: { label: 'Passive', type: 'passive' },
     description: 'Launch a blog that trickles income while you sip questionable coffee.',
+    maintenanceTime: 1,
+    dailyPayout: 45,
     defaultState: {
       active: false,
       buffer: 0,
-      multiplier: 1
+      multiplier: 1,
+      fundedToday: false
     },
     details: [
       () => '⏳ Setup Time: <strong>3h</strong>',
@@ -80,7 +83,13 @@ const ASSETS = [
         const asset = getAssetState('blog');
         const income = BLOG_CHUNK * asset.multiplier;
         return `💸 Income: <strong>$${formatMoney(income)} / 10s</strong>`;
-      }
+      },
+      () => {
+        const asset = getAssetState('blog');
+        const status = asset.fundedToday ? 'Funded' : 'Unfunded';
+        return `🛠 Maintenance: <strong>${formatHours(ASSET_MAP.get('blog').maintenanceTime)} / day</strong> (${status})`;
+      },
+      () => `📆 Daily Payout: <strong>$${formatMoney(ASSET_MAP.get('blog').dailyPayout)}</strong>`
     ],
     action: {
       label: () => getAssetState('blog').active ? 'Blog Running' : 'Launch Blog',
@@ -95,6 +104,7 @@ const ASSETS = [
         spendMoney(25);
         asset.active = true;
         asset.buffer = 0;
+        asset.fundedToday = false;
         addLog('You launched your blog! Expect slow trickles of internet fame and $3 every 10 seconds.', 'passive');
       }, { checkDay: true })
     },
@@ -104,7 +114,7 @@ const ASSETS = [
       message: amount => `Your blog quietly earned $${formatMoney(amount)} while you scrolled memes.`,
       offlineMessage: total => `Your blog earned $${formatMoney(total)} while you were offline. Not too shabby!`
     },
-    isActive: (_state, assetState) => assetState.active,
+    isActive: (_state, assetState) => assetState.active && assetState.fundedToday,
     getIncomeAmount: (_state, assetState) => BLOG_CHUNK * assetState.multiplier
   },
   {
@@ -518,6 +528,9 @@ function ensureStateShape(target = state) {
     const defaults = structuredClone(def.defaultState || {});
     const existing = target.assets[def.id];
     target.assets[def.id] = existing ? { ...defaults, ...existing } : defaults;
+    if (target.assets[def.id].fundedToday === undefined) {
+      target.assets[def.id].fundedToday = !!target.assets[def.id].active;
+    }
   }
 
   target.upgrades = target.upgrades || {};
@@ -691,6 +704,15 @@ function formatMoney(value) {
     minimumFractionDigits: value % 1 === 0 ? 0 : 2,
     maximumFractionDigits: 2
   });
+}
+
+function formatList(items) {
+  if (!items.length) return '';
+  if (items.length === 1) return items[0];
+  if (items.length === 2) return `${items[0]} and ${items[1]}`;
+  const head = items.slice(0, -1).join(', ');
+  const tail = items[items.length - 1];
+  return `${head}, and ${tail}`;
 }
 
 function formatHours(hours) {
@@ -994,13 +1016,87 @@ function processFlipPayouts(now = Date.now(), offline = false) {
   return result;
 }
 
+function closeOutDay() {
+  const unfunded = [];
+
+  for (const asset of ASSETS) {
+    const assetState = getAssetState(asset.id);
+    if (!assetState.active) {
+      assetState.fundedToday = false;
+      continue;
+    }
+
+    if (assetState.fundedToday) {
+      if (asset.dailyPayout) {
+        addMoney(
+          asset.dailyPayout,
+          `${asset.name} delivered its $${formatMoney(asset.dailyPayout)} daily payout after proper upkeep.`,
+          'passive'
+        );
+      }
+    } else if (asset.dailyPayout) {
+      unfunded.push(asset.name);
+    }
+
+    assetState.fundedToday = false;
+  }
+
+  if (unfunded.length) {
+    addLog(
+      `${formatList(unfunded)} couldn't stay online without maintenance today. No daily payout for them.`,
+      'warning'
+    );
+  }
+}
+
+function allocateAssetMaintenance() {
+  const funded = [];
+  const skipped = [];
+
+  for (const asset of ASSETS) {
+    const assetState = getAssetState(asset.id);
+    if (!assetState.active) {
+      assetState.fundedToday = false;
+      continue;
+    }
+
+    const maintenance = Number(asset.maintenanceTime) || 0;
+    if (maintenance <= 0) {
+      assetState.fundedToday = true;
+      funded.push(asset.name);
+      continue;
+    }
+
+    if (state.timeLeft >= maintenance) {
+      state.timeLeft -= maintenance;
+      assetState.fundedToday = true;
+      funded.push(asset.name);
+    } else {
+      assetState.fundedToday = false;
+      skipped.push(asset.name);
+    }
+  }
+
+  if (funded.length) {
+    addLog(`You budgeted maintenance time for ${formatList(funded)}.`, 'info');
+  }
+  if (skipped.length) {
+    addLog(
+      `${formatList(skipped)} couldn't be maintained today and are paused until you free up more hours.`,
+      'warning'
+    );
+  }
+}
+
 function endDay(auto = false) {
+  closeOutDay();
   const message = auto ? 'You ran out of time. The grind resets tomorrow.' : 'You called it a day. Fresh hustle awaits tomorrow.';
   addLog(`${message} Day ${state.day + 1} begins with renewed energy.`, 'info');
   state.day += 1;
   state.dailyBonusTime = 0;
   getUpgradeState('coffee').usedToday = 0;
   state.timeLeft = getTimeCap();
+  allocateAssetMaintenance();
   updateUI();
   saveState();
 }
