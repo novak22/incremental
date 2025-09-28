@@ -85,7 +85,7 @@ test('closing out the day advances setup and pays income when funded', () => {
       createAssetInstance(blogDefinition, {
         status: 'setup',
         daysRemaining: 1,
-        daysCompleted: 0
+        daysCompleted: blogDefinition.setup.days - 1
       }),
       createAssetInstance(blogDefinition, {
         status: 'active'
@@ -113,7 +113,7 @@ test('closing out the day advances setup and pays income when funded', () => {
 test('income range for display reflects quality floor and ceiling', () => {
   const range = getIncomeRangeForDisplay('blog');
   assert.equal(range.min, 1);
-  assert.equal(range.max, 120);
+  assert.equal(range.max, 38);
 });
 
 test('spending money during maintenance does not go negative', () => {
@@ -148,16 +148,17 @@ test('quality actions invest resources and unlock stronger income tiers', () => 
     performQualityAction('blog', instanceId, 'writePost');
     performQualityAction('blog', instanceId, 'writePost');
     performQualityAction('blog', instanceId, 'writePost');
+    performQualityAction('blog', instanceId, 'writePost');
 
     updatedInstance = getAssetState('blog').instances.find(item => item.id === instanceId);
     assert.equal(updatedInstance.quality.level, 1);
-    assert.equal(state.timeLeft, 24 - 9, 'quality actions should spend time');
+    assert.equal(state.timeLeft, 24 - 12, 'quality actions should spend time');
 
     // Next payout reflects new tier
     updatedInstance.maintenanceFundedToday = true;
     closeOutDay();
     updatedInstance = getAssetState('blog').instances.find(item => item.id === instanceId);
-    assert.equal(updatedInstance.lastIncome, 10);
+    assert.equal(updatedInstance.lastIncome, 6);
     assert.ok(state.log.some(entry => /Quality 1/.test(entry.message)));
   } finally {
     Math.random = originalRandom;

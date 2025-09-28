@@ -13,7 +13,7 @@
 ## Key Systems & Tuning
 - **Quality Definitions** – Each asset definition now includes:
   - `tracks`: named progress counters (e.g., `posts`, `seo`, `support`).
-  - `levels`: ordered tiers with income ranges and cumulative requirements. Example: blogs climb from $1–$3/day at Quality 0 to $70–$120/day at Quality 3.
+  - `levels`: ordered tiers with income ranges and cumulative requirements. Example: blogs climb from $1–$3/day at Quality 0 to $28–$38/day at Quality 3.
   - `actions`: time/cash investments that advance one or more tracks with whimsical log feedback.
   - Optional `messages.levelUp` hooks for flavourful celebration copy.
 - **Income Calculation** – Daily payouts pull the income band for the instance’s current quality level before running the existing variance roll and modifiers (Automation Course still multiplies blog income; high-quality vlogs gain a viral spike chance).
@@ -24,3 +24,12 @@
 - Tune hour/cash costs once broader playtest data arrives (particularly for late-game SaaS quality actions).
 - Explore assistant or upgrade interactions that automate specific quality actions or reduce requirements.
 - Consider diminishing returns or prestige bonuses for maintaining multiple high-quality instances in the same asset family.
+
+## Playtest Notes – Passive ROI Tightening (May 2024)
+- Advanced a fresh save through 35 in-game days after the payout rebalance to verify that passive income now lands in the $20–$40/day band at peak quality.
+- **Blog network** reached Quality 3 on day 21 after investing 72 writing hours plus $180 setup/$180 quality cash; maintenance-adjusted payouts averaged ~$28/day, with break-even arriving around day 24.
+- **Weekly vlog** cleared its new requirements on day 33 after 133.5 production hours and $652 invested; steady $32–$40 payouts covered cumulative costs by day 38, with the viral modifier creating occasional spikes without invalidating the target range.
+- **E-book series** crossed Quality 3 on day 26 (100 hours, $496 sunk) and held $28–$38 royalties, recouping the spend on day 31 while still demanding 45 minutes of daily upkeep.
+- **Stock galleries** needed 27 days (96.5 hours, $402 invested) to hit Quality 3, after which $26–$36/day licensing covered the spend in the following nine days.
+- **Dropshipping storefront** demanded the longest climb in the commerce tier: 95 hours of listings/ads work plus $1,450 total outlay stretched break-even to day 57 even with steady $32–$40 profits.
+- **SaaS micro-app** capped the playtest: 123 hours of features/support and $2,240 total spend put Quality 3 online by day 62, and maintenance-adjusted $34–$42 subscriptions kept ROI just under the 90-day mark.

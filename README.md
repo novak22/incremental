@@ -26,12 +26,12 @@ Online Hustle Simulator is a browser-based incremental game about orchestrating 
 
 ### Passive Assets (Daily Payouts)
 Each asset supports multiple instances, tracks setup progress, and rolls a daily income range once active. Quality actions unique to each asset increase payouts and stability, and you can liquidate any instance directly from the card for three times its previous day payout.
-- **Personal Blog Network** – Setup 1 day × 3h ($25). Requires 1h/day + $2 maintenance. Quality actions include drafting posts, SEO sprints, and backlink outreach; Quality 0 drips $1–$3/day while Quality 3 hits $70–$120/day (Automation Course still adds +50%).
-- **Weekly Vlog Channel** – Setup 3 days × 4h ($180) with Camera upgrade. Maintenance 1.5h/day + $5. Record episodes, polish edits, and run promo blasts to climb from $2–$6/day at Quality 0 to $150–$260/day at Quality 3, with viral spikes possible at higher tiers.
-- **Digital E-Book Series** – Setup 4 days × 3h ($60) after completing Outline Mastery. Maintenance 0.5h/day. Write chapters, commission cover art, and rally reviews to move from $3–$6/day drafts to $110–$160/day fandom favorites.
-- **Stock Photo Gallery** – Setup 3 days × 2h (no cost) with Camera + Lighting Kit and Photo Catalog knowledge. Maintenance 1h/day. Shoot themed packs, keyword them, and pitch marketplaces; quality progression raises royalties from $4–$8/day to $70–$140/day.
-- **Dropshipping Storefront** – Setup 3 days × 4h ($500) after E-Commerce Playbook and two active blogs. Maintenance 2h/day. Add listings, tune pages, and run ad bursts so profits scale from $8–$15/day to $170–$260/day.
-- **SaaS Micro-App** – Setup 7 days × 5h ($1500) after Automation Architecture plus experience running a dropshipping store and e-book line. Maintenance 3h/day. Squash bugs, ship features, and host support sprints to grow subscriptions from $10–$20/day to $220–$320/day.
+- **Personal Blog Network** – Setup 3 days × 3h ($180). Requires 1h/day + $5 maintenance. Quality actions include drafting posts, SEO sprints, and backlink outreach; Quality 0 drips $1–$3/day while Quality 3 now lands at $28–$38/day (Automation Course still adds +50%).
+- **Weekly Vlog Channel** – Setup 4 days × 4h ($420) with Camera upgrade. Maintenance 1.5h/day + $9. Record episodes, polish edits, and run promo blasts to climb from $2–$5/day at Quality 0 to $32–$40/day at Quality 3, with viral spikes possible at higher tiers.
+- **Digital E-Book Series** – Setup 4 days × 3h ($260) after completing Outline Mastery. Maintenance 0.75h/day + $3. Write chapters, commission cover art, and rally reviews to move from $2–$4/day drafts to $28–$38/day fandom favorites.
+- **Stock Photo Gallery** – Setup 4 days × 2.5h ($240) with Camera + Lighting Kit and Photo Catalog knowledge. Maintenance 1h/day + $4. Shoot themed packs, keyword them, and pitch marketplaces; quality progression raises royalties from $3–$6/day to $26–$36/day.
+- **Dropshipping Storefront** – Setup 5 days × 4h ($650) after E-Commerce Playbook and two active blogs. Maintenance 1.5h/day + $9. Add listings, tune pages, and run ad bursts so profits scale from $6–$10/day to $32–$40/day.
+- **SaaS Micro-App** – Setup 7 days × 5h ($1600) after Automation Architecture plus experience running a dropshipping store and e-book line. Maintenance 2.5h/day + $12. Squash bugs, ship features, and host support sprints to grow subscriptions from $8–$14/day to $34–$42/day.
 
 ### Upgrades & Boosts
 - **Hire Virtual Assistant** – $180 per hire, up to four assistants. Each adds +2h daily but costs $30/day in payroll; fire assistants anytime to cut wages (and hours).

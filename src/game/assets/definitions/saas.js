@@ -18,11 +18,11 @@ const saasDefinition = {
   singular: 'App',
   tag: { label: 'Advanced', type: 'passive' },
   description: 'Ship a tidy micro-SaaS that collects subscriptions from superfans of your niche tools.',
-  setup: { days: 7, hoursPerDay: 5, cost: 1500 },
-  maintenance: { hours: 3, cost: 0 },
+  setup: { days: 7, hoursPerDay: 5, cost: 1600 },
+  maintenance: { hours: 2.5, cost: 12 },
   income: {
-    base: 280,
-    variance: 0.25,
+    base: 36,
+    variance: 0.2,
     logType: 'passive'
   },
   requirements: [
@@ -42,50 +42,52 @@ const saasDefinition = {
         level: 0,
         name: 'Beta Build',
         description: 'Early adopters tolerate quirks for pocket change revenue.',
-        income: { min: 10, max: 20 },
+        income: { min: 8, max: 14 },
         requirements: {}
       },
       {
         level: 1,
         name: 'Reliable Release',
         description: 'Critical bug fixes calm churn and boost sign-ups.',
-        income: { min: 45, max: 70 },
-        requirements: { fixes: 3 }
+        income: { min: 16, max: 24 },
+        requirements: { fixes: 4 }
       },
       {
         level: 2,
         name: 'Feature Favorite',
         description: 'Steady features keep subscriptions renewing.',
-        income: { min: 110, max: 160 },
-        requirements: { fixes: 8, features: 3 }
+        income: { min: 24, max: 32 },
+        requirements: { fixes: 10, features: 4 }
       },
       {
         level: 3,
         name: 'Support Legend',
         description: 'Dedicated support squads crush churn and win raves.',
-        income: { min: 220, max: 320 },
-        requirements: { fixes: 12, features: 6, support: 6 }
+        income: { min: 34, max: 42 },
+        requirements: { fixes: 16, features: 8, support: 8 }
       }
     ],
     actions: [
       {
         id: 'squashBugs',
         label: 'Squash Bugs',
-        time: 2,
+        time: 2.5,
         progressKey: 'fixes',
         log: ({ label }) => `${label} closed a cluster of bugs. Error logs finally exhale.`
       },
       {
         id: 'shipFeature',
         label: 'Ship Feature',
-        time: 3,
+        time: 4,
+        cost: 60,
         progressKey: 'features',
         log: ({ label }) => `${label} rolled out a shiny feature. Users spam the applause emoji.`
       },
       {
         id: 'supportSprint',
         label: 'Support Sprint',
-        time: 1.5,
+        time: 2,
+        cost: 20,
         progressKey: 'support',
         log: ({ label }) => `${label} hosted a support sprint. Churn gremlins retreat.`
       }
