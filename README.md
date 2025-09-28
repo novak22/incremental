@@ -24,7 +24,7 @@ Online Hustle Simulator is a browser-based incremental game about orchestrating 
 - **Automation Architecture Course** – Study 3h/day for 7 days to earn SaaS-ready engineering chops.
 
 ### Passive Assets (Daily Payouts)
-Each asset supports multiple instances, tracks setup progress, and rolls a daily income range once active.
+Each asset supports multiple instances, tracks setup progress, and rolls a daily income range once active. You can also liquidate any instance directly from the card; the sale price equals three times its previous day payout.
 - **Personal Blog Network** – Setup 1 day × 3h ($25). Requires 1h/day + $2 maintenance. Base daily income ~$70 with ±25% variance; Automation Course boosts payouts by 50%.
 - **Weekly Vlog Channel** – Setup 3 days × 4h ($180) with Camera upgrade. Maintenance 1.5h/day + $5. Base daily income ~$140 with ±35% variance.
 - **Digital E-Book Series** – Setup 4 days × 3h ($60) after completing Outline Mastery. Maintenance 0.5h/day. Base daily income ~$120 with ±30% variance.
@@ -46,6 +46,7 @@ Each asset supports multiple instances, tracks setup progress, and rolls a daily
 ## Current Feature Set
 - Day-driven scheduler with automatic setup/maintenance allocation and detailed end-of-day recaps.
 - Six passive asset types with multi-instance tracking, setup states, maintenance funding, and dynamic daily income rolls.
+- In-card asset management with instance-level breakdowns and a one-click sale option that converts yesterday’s earnings into cash at a 3× multiple.
 - Daily metrics ledger that captures hours, earnings, and spending, powering the refreshed snapshot breakdowns.
 - Knowledge study hustles that gate advanced assets and remember streak progress across days.
 - Equipment and experience requirements surfaced directly on asset cards with live progress indicators.
