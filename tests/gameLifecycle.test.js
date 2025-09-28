@@ -40,7 +40,7 @@ test('funded setup days promote asset instances to active status', () => {
   blogState.instances = [createAssetInstance(blogDefinition, {
     status: 'setup',
     daysRemaining: 1,
-    daysCompleted: 0,
+    daysCompleted: blogDefinition.setup.days - 1,
     setupFundedToday: false
   })];
   state.timeLeft = 10;
@@ -81,14 +81,14 @@ test('maintenance funding yields end-of-day payouts', () => {
     let updatedInstance = getAssetState('blog').instances.find(item => item.id === instanceId);
     assert.equal(updatedInstance.maintenanceFundedToday, true, 'maintenance should be funded when hours remain');
     assert.equal(state.timeLeft, 9, 'maintenance should consume daily hours');
-    assert.equal(state.money, 8, 'maintenance should deduct upkeep cash');
+    assert.equal(state.money, 5, 'maintenance should deduct upkeep cash');
 
     closeOutDay();
 
     const expectedMinimumIncome = getIncomeRangeForDisplay('blog').min;
     updatedInstance = getAssetState('blog').instances.find(item => item.id === instanceId);
     assert.equal(updatedInstance.lastIncome, expectedMinimumIncome, 'lastIncome should reflect deterministic payout');
-    assert.equal(state.money, expectedMinimumIncome + 8, 'daily payout should add to post-upkeep balance');
+    assert.equal(state.money, expectedMinimumIncome + 5, 'daily payout should add to post-upkeep balance');
   } finally {
     Math.random = originalRandom;
   }
@@ -105,14 +105,14 @@ test('maintenance stalls when upkeep cash is unavailable', () => {
   })];
 
   state.timeLeft = 10;
-  state.money = 1; // below the $2 upkeep requirement
+  state.money = 4; // below the $5 upkeep requirement
 
   allocateAssetMaintenance();
 
   const updatedInstance = getAssetState('blog').instances[0];
   assert.equal(updatedInstance.maintenanceFundedToday, false, 'maintenance should not fund without cash');
   assert.equal(state.timeLeft, 10, 'time should remain untouched when upkeep fails');
-  assert.equal(state.money, 1, 'money should not be deducted when upkeep fails');
+  assert.equal(state.money, 4, 'money should not be deducted when upkeep fails');
 });
 
 test('knowledge tracks advance only on studied days and mark completion', () => {

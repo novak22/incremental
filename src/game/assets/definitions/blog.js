@@ -18,11 +18,11 @@ const blogDefinition = {
   singular: 'Blog',
   tag: { label: 'Foundation', type: 'passive' },
   description: 'Launch cozy blogs that drip ad revenue once the posts are polished.',
-  setup: { days: 1, hoursPerDay: 3, cost: 25 },
-  maintenance: { hours: 1, cost: 2 },
+  setup: { days: 3, hoursPerDay: 3, cost: 180 },
+  maintenance: { hours: 1, cost: 5 },
   income: {
-    base: 95,
-    variance: 0.25,
+    base: 30,
+    variance: 0.2,
     logType: 'passive',
     modifier: amount => {
       const automation = getUpgradeState('course').purchased ? 1.5 : 1;
@@ -48,22 +48,22 @@ const blogDefinition = {
         level: 1,
         name: 'Content Sprout',
         description: 'Three polished posts that finally catch organic clicks.',
-        income: { min: 10, max: 20 },
-        requirements: { posts: 3 }
+        income: { min: 6, max: 12 },
+        requirements: { posts: 4 }
       },
       {
         level: 2,
         name: 'SEO Groove',
         description: 'Evergreen articles plus SEO sweeps pull in steady readers.',
-        income: { min: 30, max: 60 },
-        requirements: { posts: 9, seo: 2 }
+        income: { min: 14, max: 22 },
+        requirements: { posts: 12, seo: 3 }
       },
       {
         level: 3,
         name: 'Authority Hub',
         description: 'Backlinks and authority content turn ad clicks into a gush.',
-        income: { min: 70, max: 120 },
-        requirements: { posts: 19, seo: 4, outreach: 3 }
+        income: { min: 28, max: 38 },
+        requirements: { posts: 24, seo: 6, outreach: 4 }
       }
     ],
     actions: [
@@ -78,16 +78,16 @@ const blogDefinition = {
       {
         id: 'seoSprint',
         label: 'SEO Sprint',
-        time: 2,
-        cost: 15,
+        time: 2.5,
+        cost: 18,
         progressKey: 'seo',
         log: ({ label }) => `${label} ran an SEO tune-up. Keywords now shimmy to the top.`
       },
       {
         id: 'outreachPush',
         label: 'Backlink Outreach',
-        time: 1.5,
-        cost: 12,
+        time: 2,
+        cost: 18,
         progressKey: 'outreach',
         log: ({ label }) => `${label} charmed partners into fresh backlinks. Authority climbs!`
       }

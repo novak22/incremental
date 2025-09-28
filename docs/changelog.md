@@ -13,3 +13,4 @@
 - Wired a daily metrics ledger into the snapshot so time invested, cash earned, and spending breakdowns reflect the current day’s actions.
 - Introduced an asset quality ladder with bespoke actions, UI panels, and level-based payout scaling for every passive income stream.
 - Added instance-level asset lists with one-click liquidation; selling pays three times yesterday’s payout and logs the cash in the new daily ledger.
+- Recalibrated passive asset setup costs, maintenance, and quality payouts so Quality 3 earnings fall between $20–$40/day and take multiple weeks of upkeep to recoup, with documentation refreshed to match.

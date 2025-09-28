@@ -18,11 +18,11 @@ const dropshippingDefinition = {
   singular: 'Storefront',
   tag: { label: 'Commerce', type: 'passive' },
   description: 'Spin up a storefront, source trending products, and let fulfillment partners handle the rest.',
-  setup: { days: 3, hoursPerDay: 4, cost: 500 },
-  maintenance: { hours: 2, cost: 0 },
+  setup: { days: 5, hoursPerDay: 4, cost: 650 },
+  maintenance: { hours: 1.5, cost: 9 },
   income: {
-    base: 210,
-    variance: 0.4,
+    base: 34,
+    variance: 0.2,
     logType: 'passive'
   },
   requirements: [
@@ -41,52 +41,52 @@ const dropshippingDefinition = {
         level: 0,
         name: 'Bare Shelves',
         description: 'A tiny catalog with wobbly funnels ekes out pocket change.',
-        income: { min: 8, max: 15 },
+        income: { min: 6, max: 10 },
         requirements: {}
       },
       {
         level: 1,
         name: 'Curated Offerings',
         description: 'A handful of optimized listings convert curious scrollers.',
-        income: { min: 40, max: 70 },
-        requirements: { listings: 4 }
+        income: { min: 18, max: 28 },
+        requirements: { listings: 6 }
       },
       {
         level: 2,
         name: 'Ad Funnel Maestro',
         description: 'Paid campaigns and optimized pages fuel reliable revenue.',
-        income: { min: 90, max: 150 },
-        requirements: { listings: 8, ads: 3 }
+        income: { min: 24, max: 34 },
+        requirements: { listings: 12, ads: 4, optimization: 2 }
       },
       {
         level: 3,
         name: 'Fulfillment Powerhouse',
         description: 'Dialed-in logistics handle waves of loyal customers.',
-        income: { min: 170, max: 260 },
-        requirements: { listings: 12, ads: 6, optimization: 4 }
+        income: { min: 32, max: 40 },
+        requirements: { listings: 20, ads: 8, optimization: 6 }
       }
     ],
     actions: [
       {
         id: 'addListing',
         label: 'Add Listing',
-        time: 2,
-        cost: 15,
+        time: 2.5,
+        cost: 22,
         progressKey: 'listings',
         log: ({ label }) => `${label} launched a trending product listing with glossy mockups.`
       },
       {
         id: 'optimizePage',
         label: 'Optimize Page',
-        time: 1,
+        time: 1.5,
         progressKey: 'optimization',
         log: ({ label }) => `${label} rewrote copy and tightened funnels. Conversion rate hums!`
       },
       {
         id: 'runAdBurst',
         label: 'Run Ad Burst',
-        time: 1.5,
-        cost: 30,
+        time: 2,
+        cost: 45,
         progressKey: 'ads',
         log: ({ label }) => `${label} funded a laser-targeted ad burst. Traffic surges in.`
       }

@@ -17,11 +17,11 @@ const stockPhotosDefinition = {
   singular: 'Gallery',
   tag: { label: 'Creative', type: 'passive' },
   description: 'Curate vibrant photo packs that designers license in surprising numbers.',
-  setup: { days: 3, hoursPerDay: 2, cost: 0 },
-  maintenance: { hours: 1, cost: 0 },
+  setup: { days: 4, hoursPerDay: 2.5, cost: 240 },
+  maintenance: { hours: 1, cost: 4 },
   income: {
-    base: 140,
-    variance: 0.35,
+    base: 28,
+    variance: 0.2,
     logType: 'passive'
   },
   requirements: [
@@ -41,52 +41,52 @@ const stockPhotosDefinition = {
         level: 0,
         name: 'Dusty Portfolio',
         description: 'A tiny gallery with generic tags earns a trickle.',
-        income: { min: 4, max: 8 },
+        income: { min: 3, max: 6 },
         requirements: {}
       },
       {
         level: 1,
         name: 'Fresh Packs',
         description: 'Multiple themed packs attract steady design searches.',
-        income: { min: 12, max: 24 },
-        requirements: { packs: 4 }
+        income: { min: 10, max: 16 },
+        requirements: { packs: 5 }
       },
       {
         level: 2,
         name: 'Tagged Treasure',
         description: 'Meticulous keywords vault photos to top results.',
-        income: { min: 30, max: 60 },
-        requirements: { packs: 9, keywords: 4 }
+        income: { min: 18, max: 26 },
+        requirements: { packs: 11, keywords: 5 }
       },
       {
         level: 3,
         name: 'Marketplace Darling',
         description: 'Partnerships and outreach keep royalties compounding.',
-        income: { min: 70, max: 140 },
-        requirements: { packs: 15, keywords: 8, outreach: 3 }
+        income: { min: 26, max: 36 },
+        requirements: { packs: 18, keywords: 9, outreach: 5 }
       }
     ],
     actions: [
       {
         id: 'shootPack',
         label: 'Shoot Pack',
-        time: 2.5,
+        time: 3.5,
         progressKey: 'packs',
         log: ({ label }) => `${label} captured a fresh themed pack. Lightroom presets sparkle!`
       },
       {
         id: 'keywordSession',
         label: 'Keyword Session',
-        time: 1,
-        cost: 5,
+        time: 1.5,
+        cost: 8,
         progressKey: 'keywords',
         log: ({ label }) => `${label} tagged every shot with laser-focused keywords.`
       },
       {
         id: 'portfolioOutreach',
         label: 'Pitch Marketplace',
-        time: 1.5,
-        cost: 12,
+        time: 2,
+        cost: 18,
         progressKey: 'outreach',
         log: ({ label }) => `${label} pitched new bundles to marketplaces. Visibility surges!`
       }

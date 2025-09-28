@@ -18,11 +18,11 @@ const ebookDefinition = {
   singular: 'E-Book',
   tag: { label: 'Creative', type: 'passive' },
   description: 'Package your expertise into downloadable page-turners that sell while you snooze.',
-  setup: { days: 4, hoursPerDay: 3, cost: 60 },
-  maintenance: { hours: 0.5, cost: 0 },
+  setup: { days: 4, hoursPerDay: 3, cost: 260 },
+  maintenance: { hours: 0.75, cost: 3 },
   income: {
-    base: 150,
-    variance: 0.25,
+    base: 30,
+    variance: 0.2,
     logType: 'passive'
   },
   requirements: [{ type: 'knowledge', id: 'outlineMastery' }],
@@ -38,52 +38,52 @@ const ebookDefinition = {
         level: 0,
         name: 'Rough Manuscript',
         description: 'A handful of notes generate only trickle royalties.',
-        income: { min: 3, max: 6 },
+        income: { min: 2, max: 4 },
         requirements: {}
       },
       {
         level: 1,
         name: 'Polished Draft',
         description: 'Six chapters stitched into a bingeable volume.',
-        income: { min: 25, max: 40 },
-        requirements: { chapters: 6 }
+        income: { min: 10, max: 18 },
+        requirements: { chapters: 8 }
       },
       {
         level: 2,
         name: 'Collector Edition',
         description: 'A premium cover and full season keep fans engaged.',
-        income: { min: 60, max: 90 },
-        requirements: { chapters: 12, cover: 1 }
+        income: { min: 18, max: 28 },
+        requirements: { chapters: 16, cover: 1 }
       },
       {
         level: 3,
         name: 'Fandom Favorite',
         description: 'Glowing reviews lock in bestseller status.',
-        income: { min: 110, max: 160 },
-        requirements: { chapters: 18, cover: 1, reviews: 5 }
+        income: { min: 28, max: 38 },
+        requirements: { chapters: 24, cover: 2, reviews: 8 }
       }
     ],
     actions: [
       {
         id: 'writeChapter',
         label: 'Write Chapter',
-        time: 2.5,
+        time: 3,
         progressKey: 'chapters',
         log: ({ label }) => `${label} gained another gripping chapter. Cliffhangers everywhere!`
       },
       {
         id: 'designCover',
         label: 'Commission Cover',
-        time: 1.5,
-        cost: 45,
+        time: 2,
+        cost: 70,
         progressKey: 'cover',
         log: ({ label }) => `${label} unveiled a shiny cover mockup. Bookstores swoon.`
       },
       {
         id: 'rallyReviews',
         label: 'Rally Reviews',
-        time: 1,
-        cost: 5,
+        time: 1.5,
+        cost: 12,
         progressKey: 'reviews',
         log: ({ label }) => `${label} nudged superfans for reviews. Star ratings climb skyward!`
       }
