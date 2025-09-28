@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- Replaced the tabbed workspace with a sticky header navigation that scrolls to each section, refreshed section styling, and removed duplicate passive asset cards.
 - Major UI redesign with a collapsible daily snapshot, tabbed workspace, asset categories, filter toggles, and upgrade search for smoother planning.
 - Shifted passive asset income to a day-driven scheduler with multi-day setup tracking and maintenance allocation.
 - Added expanded asset catalog (Blogs, Vlog Channels, E-Book Series, Stock Photo Galleries, Dropshipping Storefronts, SaaS Micro-App) with per-instance state and dynamic income ranges.

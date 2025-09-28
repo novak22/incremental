@@ -1,7 +1,7 @@
 import elements from './elements.js';
 
 export function initLayoutControls() {
-  setupNavigation();
+  setupSectionNavigation();
   setupStatsPanel();
   setupLogToggle();
   setupGlobalFilters();
@@ -18,26 +18,53 @@ export function applyCardFilters() {
   applyUpgradeSearchFilter();
 }
 
-function setupNavigation() {
-  if (!elements.navButtons?.length || !elements.views?.length) return;
-  const viewMap = new Map(elements.views.map(view => [view.dataset.view, view]));
+function setupSectionNavigation() {
+  const links = elements.sectionNavLinks || [];
+  const sections = elements.workspaceSections || [];
+  if (!links.length || !sections.length) return;
 
-  const setActiveView = target => {
-    if (!target || !viewMap.has(target)) return;
-    for (const button of elements.navButtons) {
-      button.classList.toggle('is-active', button.dataset.view === target);
-    }
-    for (const [key, view] of viewMap.entries()) {
-      view.classList.toggle('is-active', key === target);
+  const sectionsById = new Map(sections.map(section => [section.id, section]));
+
+  const activateLink = targetId => {
+    for (const link of links) {
+      const href = link.getAttribute('href') || '';
+      const id = href.startsWith('#') ? href.slice(1) : href;
+      const isMatch = id === targetId;
+      link.classList.toggle('is-active', isMatch);
+      link.setAttribute('aria-current', isMatch ? 'true' : 'false');
     }
   };
 
-  for (const button of elements.navButtons) {
-    button.addEventListener('click', () => setActiveView(button.dataset.view));
+  for (const link of links) {
+    link.addEventListener('click', event => {
+      const href = link.getAttribute('href') || '';
+      if (!href.startsWith('#')) return;
+      const id = href.slice(1);
+      const section = sectionsById.get(id);
+      if (!section) return;
+      event.preventDefault();
+      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      activateLink(id);
+    });
   }
 
-  const activeButton = elements.navButtons.find(button => button.classList.contains('is-active'));
-  setActiveView(activeButton?.dataset.view || elements.views[0].dataset.view);
+  activateLink(sections[0]?.id);
+
+  if (typeof IntersectionObserver !== 'function') return;
+
+  const observer = new IntersectionObserver(entries => {
+    const visible = entries
+      .filter(entry => entry.isIntersecting)
+      .sort((a, b) => sections.indexOf(a.target) - sections.indexOf(b.target));
+    if (visible.length === 0) return;
+    const topSection = visible[0].target.id;
+    activateLink(topSection);
+  }, {
+    rootMargin: '-40% 0px -40% 0px',
+    threshold: [0.25, 0.6]
+  });
+
+  sections.forEach(section => observer.observe(section));
 }
 
 function setupStatsPanel() {
@@ -154,15 +181,15 @@ function applyEducationFilters() {
 
 function setupAssetFilters() {
   const { collapsed, hideLocked } = elements.assetsFilters || {};
-  const view = elements.views?.find(section => section.dataset.view === 'assets');
-  if (!view) return;
+  const section = elements.assetSection;
+  if (!section) return;
 
   const apply = () => {
     if (collapsed) {
-      view.classList.toggle('is-collapsed', Boolean(collapsed.checked));
+      section.classList.toggle('is-collapsed', Boolean(collapsed.checked));
     }
     if (hideLocked) {
-      view.classList.toggle('hide-locked', Boolean(hideLocked.checked));
+      section.classList.toggle('hide-locked', Boolean(hideLocked.checked));
     }
   };
 

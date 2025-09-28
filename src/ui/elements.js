@@ -15,6 +15,7 @@ const elements = {
     commerce: document.getElementById('asset-grid-commerce'),
     advanced: document.getElementById('asset-grid-advanced')
   },
+  assetSection: document.getElementById('section-assets'),
   upgradeGrid: document.getElementById('upgrade-grid'),
   upgradeGroupGrids: {
     equipment: document.getElementById('upgrade-grid-equipment'),
@@ -38,8 +39,8 @@ const elements = {
   summaryStudyBreakdown: document.getElementById('summary-study-breakdown'),
   statsToggle: document.getElementById('stats-toggle'),
   logToggle: document.getElementById('log-toggle'),
-  navButtons: Array.from(document.querySelectorAll('.nav-button')),
-  views: Array.from(document.querySelectorAll('.view')),
+  sectionNavLinks: Array.from(document.querySelectorAll('.section-nav .section-link')),
+  workspaceSections: Array.from(document.querySelectorAll('.workspace-section')),
   workspacePanels: document.getElementById('workspace-panels'),
   globalFilters: {
     hideLocked: document.getElementById('filter-hide-locked'),
