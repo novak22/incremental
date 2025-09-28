@@ -67,6 +67,7 @@ test('daily summary aggregates metrics into category totals', () => {
   assert.equal(summary.upkeepSpend, 8);
   assert.equal(summary.investmentSpend, 42);
   assert.equal(summary.timeBreakdown.length, 2);
-  assert.equal(summary.earningsBreakdown.length, 2);
+  assert.equal(summary.passiveBreakdown.length, 1);
+  assert.equal(summary.earningsBreakdown.length, 1);
   assert.equal(summary.spendBreakdown.length, 2);
 });

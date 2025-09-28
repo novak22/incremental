@@ -20,15 +20,11 @@ export function computeDailySummary(state = getState()) {
       knowledgePendingToday: 0,
       timeBreakdown: [],
       earningsBreakdown: [],
+      passiveBreakdown: [],
       spendBreakdown: [],
       studyBreakdown: []
     };
   }
-
-  const metrics = getDailyMetrics(state) || {};
-  const timeEntries = Object.values(metrics.time || {});
-  const earningsEntries = Object.values(metrics.payouts || {});
-  const spendEntries = Object.values(metrics.costs || {});
 
   const getCategory = entry => entry?.category || 'general';
   const sumEntries = (entries, field, predicate = () => true) =>
@@ -37,6 +33,15 @@ export function computeDailySummary(state = getState()) {
       const value = Number(entry?.[field]);
       return Number.isFinite(value) ? total + value : total;
     }, 0);
+
+  const metrics = getDailyMetrics(state) || {};
+  const timeEntries = Object.values(metrics.time || {});
+  const earningsEntries = Object.values(metrics.payouts || {});
+  const passiveEntries = earningsEntries.filter(entry =>
+    ['passive', 'offline'].includes(getCategory(entry))
+  );
+  const activeEntries = earningsEntries.filter(entry => !['passive', 'offline'].includes(getCategory(entry)));
+  const spendEntries = Object.values(metrics.costs || {});
 
   const totalTime = sumEntries(timeEntries, 'hours');
   const setupHours = sumEntries(timeEntries, 'hours', entry => getCategory(entry) === 'setup');
@@ -52,20 +57,20 @@ export function computeDailySummary(state = getState()) {
     }));
 
   const totalEarnings = sumEntries(earningsEntries, 'amount');
-  const passiveEarnings = sumEntries(earningsEntries, 'amount', entry =>
-    ['passive', 'offline'].includes(getCategory(entry))
-  );
-  const activeEarnings = sumEntries(earningsEntries, 'amount', entry =>
-    ['hustle', 'delayed', 'sale'].includes(getCategory(entry))
-  );
+  const passiveEarnings = sumEntries(passiveEntries, 'amount');
+  const activeEarnings = sumEntries(activeEntries, 'amount');
 
-  const earningsBreakdown = earningsEntries
-    .filter(entry => Number(entry?.amount) > 0)
-    .sort((a, b) => Number(b.amount) - Number(a.amount))
-    .map(entry => ({
-      label: entry.label,
-      value: `$${formatMoney(Number(entry.amount))} today`
-    }));
+  const formatIncomeBreakdown = entries =>
+    entries
+      .filter(entry => Number(entry?.amount) > 0)
+      .sort((a, b) => Number(b.amount) - Number(a.amount))
+      .map(entry => ({
+        label: entry.label,
+        value: `$${formatMoney(Number(entry.amount))} today`
+      }));
+
+  const passiveBreakdown = formatIncomeBreakdown(passiveEntries);
+  const earningsBreakdown = formatIncomeBreakdown(activeEntries);
 
   const totalSpend = sumEntries(spendEntries, 'amount');
   const upkeepSpend = sumEntries(spendEntries, 'amount', entry =>
@@ -124,6 +129,7 @@ export function computeDailySummary(state = getState()) {
     timeBreakdown: formatTimeBreakdown,
     earningsBreakdown,
     spendBreakdown,
+    passiveBreakdown,
     studyBreakdown
   };
 }

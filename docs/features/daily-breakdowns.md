@@ -6,7 +6,7 @@
 - Provide designers a single place to plug in additional categories (e.g., automation refunds, seasonal boosts) as the economy expands.
 
 ## Player Impact
-- The Daily Snapshot panel now celebrates progress with concrete figures: total time invested, cash earned, cash spent, and study momentum.
+- The Daily Snapshot panel now celebrates progress with concrete figures: total time invested, money earned, passive income streams, cash spent, and study momentum.
 - Hustle bursts, passive payouts, upkeep, and one-off investments appear in the breakdown lists as soon as they happen, helping players cross-check their plan against results.
 - Day transitions briefly surface the prior day’s totals before resetting, so players can review earnings before diving into the next loop.
 
