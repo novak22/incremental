@@ -11,25 +11,33 @@
 </head>
 <body>
   <div class="app">
-    <header class="top-bar">
-      <div class="stat">
-        <span class="label">Money</span>
-        <span id="money" class="value">$0</span>
-      </div>
-      <div class="stat time">
-        <span class="label">Time Left</span>
-        <div class="time-wrapper">
-          <span id="time" class="value">14h</span>
-          <div class="time-bar">
-            <div id="time-progress" class="time-progress"></div>
+    <header class="dashboard-header">
+      <div class="top-bar">
+        <div class="stat">
+          <span class="label">Money</span>
+          <span id="money" class="value">$0</span>
+        </div>
+        <div class="stat time">
+          <span class="label">Time Left</span>
+          <div class="time-wrapper">
+            <span id="time" class="value">14h</span>
+            <div class="time-bar">
+              <div id="time-progress" class="time-progress"></div>
+            </div>
           </div>
         </div>
+        <div class="stat">
+          <span class="label">Day</span>
+          <span id="day" class="value">1</span>
+        </div>
+        <button id="end-day" class="end-day">End Day</button>
       </div>
-      <div class="stat">
-        <span class="label">Day</span>
-        <span id="day" class="value">1</span>
-      </div>
-      <button id="end-day" class="end-day">End Day</button>
+      <nav class="section-nav" id="section-nav" aria-label="Workspace sections">
+        <a class="section-link is-active" href="#section-hustles">Daily Hustles</a>
+        <a class="section-link" href="#section-education">Education</a>
+        <a class="section-link" href="#section-assets">Passive Assets</a>
+        <a class="section-link" href="#section-upgrades">Upgrades &amp; Boosts</a>
+      </nav>
     </header>
 
     <section class="stats-panel" id="stats-panel" data-collapsed="true">
@@ -85,13 +93,6 @@
     </section>
 
     <main class="workspace">
-      <nav class="workspace-nav" id="workspace-nav" aria-label="Main">
-        <button class="nav-button is-active" data-view="hustles" id="nav-hustles">Daily Hustles</button>
-        <button class="nav-button" data-view="education" id="nav-education">Education</button>
-        <button class="nav-button" data-view="assets" id="nav-assets">Passive Assets</button>
-        <button class="nav-button" data-view="upgrades" id="nav-upgrades">Upgrades &amp; Boosts</button>
-      </nav>
-
       <section class="global-filters" aria-label="Global filters">
         <label class="filter-toggle">
           <input type="checkbox" id="filter-hide-locked" />
@@ -108,13 +109,13 @@
       </section>
 
       <section class="workspace-panels" id="workspace-panels">
-        <section class="view is-active" data-view="hustles" aria-labelledby="nav-hustles">
-          <header class="view-header">
+        <section class="workspace-section" id="section-hustles" aria-labelledby="heading-hustles">
+          <header class="section-header">
             <div>
-              <h2>Daily Hustles</h2>
+              <h2 id="heading-hustles">Daily Hustles</h2>
               <p>Quick-hit gigs for instant cash flow. Spend the hours, bank the wins.</p>
             </div>
-            <div class="view-controls">
+            <div class="section-controls">
               <label class="filter-toggle">
                 <input type="checkbox" id="filter-hustles-available" />
                 <span>Show only available gigs</span>
@@ -124,13 +125,13 @@
           <div class="card-grid" id="hustle-grid"></div>
         </section>
 
-        <section class="view" data-view="education" aria-labelledby="nav-education">
-          <header class="view-header">
+        <section class="workspace-section" id="section-education" aria-labelledby="heading-education">
+          <header class="section-header">
             <div>
-              <h2>Education</h2>
+              <h2 id="heading-education">Education</h2>
               <p>Courses, playbooks, and study tracks that unlock new mastery.</p>
             </div>
-            <div class="view-controls">
+            <div class="section-controls">
               <label class="filter-toggle">
                 <input type="checkbox" id="filter-education-active" />
                 <span>Show only active tracks</span>
@@ -144,13 +145,13 @@
           <div class="card-grid" id="education-grid"></div>
         </section>
 
-        <section class="view" data-view="assets" aria-labelledby="nav-assets">
-          <header class="view-header">
+        <section class="workspace-section assets-section" id="section-assets" aria-labelledby="heading-assets">
+          <header class="section-header">
             <div>
-              <h2>Passive Assets</h2>
+              <h2 id="heading-assets">Passive Assets</h2>
               <p>Launch builds, manage upkeep, and keep payouts humming with lean cards.</p>
             </div>
-            <div class="view-controls">
+            <div class="section-controls">
               <label class="filter-toggle">
                 <input type="checkbox" id="filter-assets-collapsed" checked />
                 <span>Collapsed card view</span>
@@ -189,13 +190,13 @@
           </div>
         </section>
 
-        <section class="view" data-view="upgrades" aria-labelledby="nav-upgrades">
-          <header class="view-header">
+        <section class="workspace-section" id="section-upgrades" aria-labelledby="heading-upgrades">
+          <header class="section-header">
             <div>
-              <h2>Upgrades &amp; Boosts</h2>
+              <h2 id="heading-upgrades">Upgrades &amp; Boosts</h2>
               <p>Equipment, automation, and consumables. Stack them to scale.</p>
             </div>
-            <div class="view-controls">
+            <div class="section-controls">
               <label class="filter-toggle search">
                 <span class="sr-only" id="upgrade-search-label">Search upgrades</span>
                 <input type="search" id="upgrade-search" placeholder="Search upgrades" aria-labelledby="upgrade-search-label" />

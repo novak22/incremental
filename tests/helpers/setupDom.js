@@ -8,12 +8,20 @@ export function ensureTestDom() {
   dom = new JSDOM(
     `<!DOCTYPE html><html><body>
       <div class="app">
-        <header class="top-bar">
-          <span id="money"></span>
-          <span id="time"></span>
-          <div id="time-progress"></div>
-          <span id="day"></span>
-          <button id="end-day"></button>
+        <header class="dashboard-header">
+          <div class="top-bar">
+            <span id="money"></span>
+            <span id="time"></span>
+            <div id="time-progress"></div>
+            <span id="day"></span>
+            <button id="end-day"></button>
+          </div>
+          <nav class="section-nav" id="section-nav">
+            <a class="section-link" href="#section-hustles"></a>
+            <a class="section-link" href="#section-education"></a>
+            <a class="section-link" href="#section-assets"></a>
+            <a class="section-link" href="#section-upgrades"></a>
+          </nav>
         </header>
         <section id="stats-panel" data-collapsed="true">
           <button id="stats-toggle"></button>
@@ -49,27 +57,21 @@ export function ensureTestDom() {
           </div>
         </section>
         <main class="workspace">
-          <nav class="workspace-nav">
-            <button class="nav-button is-active" data-view="hustles" id="nav-hustles"></button>
-            <button class="nav-button" data-view="education" id="nav-education"></button>
-            <button class="nav-button" data-view="assets" id="nav-assets"></button>
-            <button class="nav-button" data-view="upgrades" id="nav-upgrades"></button>
-          </nav>
           <section class="global-filters">
             <input type="checkbox" id="filter-hide-locked" />
             <input type="checkbox" id="filter-hide-completed" />
             <input type="checkbox" id="filter-show-active" />
           </section>
           <section id="workspace-panels" class="workspace-panels">
-            <section class="view is-active" data-view="hustles">
+            <section class="workspace-section" id="section-hustles">
               <div id="hustle-grid"></div>
             </section>
-            <section class="view" data-view="education">
+            <section class="workspace-section" id="section-education">
               <input type="checkbox" id="filter-education-active" />
               <input type="checkbox" id="filter-education-hide-complete" />
               <div id="education-grid"></div>
             </section>
-            <section class="view" data-view="assets">
+            <section class="workspace-section assets-section" id="section-assets">
               <input type="checkbox" id="filter-assets-collapsed" />
               <input type="checkbox" id="filter-assets-hide-locked" />
               <div id="asset-grid">
@@ -79,7 +81,7 @@ export function ensureTestDom() {
                 <div id="asset-grid-advanced"></div>
               </div>
             </section>
-            <section class="view" data-view="upgrades">
+            <section class="workspace-section" id="section-upgrades">
               <input type="search" id="upgrade-search" />
               <div id="upgrade-grid-equipment"></div>
               <div id="upgrade-grid-automation"></div>

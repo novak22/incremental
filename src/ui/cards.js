@@ -74,7 +74,11 @@ function renderAssetCollections(definitions) {
     if (container) container.innerHTML = '';
   }
 
+  const seen = new Set();
+
   for (const definition of definitions) {
+    if (!definition || seen.has(definition.id)) continue;
+    seen.add(definition.id);
     const categoryKey = normalizeCategory(definition.tag?.label);
     const container = elements.assetCategoryGrids[categoryKey] || elements.assetGridRoot;
     if (!container) continue;
