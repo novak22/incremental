@@ -178,6 +178,31 @@ test('quality actions invest resources and unlock stronger income tiers', () => 
   }
 });
 
+test('quality action cooldown blocks repeat work until the next day', () => {
+  const state = getState();
+  state.money = 500;
+  state.timeLeft = 24;
+
+  const blogState = getAssetState('blog');
+  const instance = createAssetInstance(blogDefinition, { status: 'active' });
+  blogState.instances = [instance];
+
+  const instanceId = instance.id;
+  const startingTime = state.timeLeft;
+
+  performQualityAction('blog', instanceId, 'seoSprint');
+  assert.ok(Math.abs(state.timeLeft - (startingTime - 2.5)) < 1e-6, 'first sprint should spend time');
+
+  const afterFirstSprint = state.timeLeft;
+  performQualityAction('blog', instanceId, 'seoSprint');
+  assert.ok(Math.abs(state.timeLeft - afterFirstSprint) < 1e-6, 'cooldown should block repeat time spend');
+
+  state.day += 1;
+  state.timeLeft = 24;
+  performQualityAction('blog', instanceId, 'seoSprint');
+  assert.ok(Math.abs(state.timeLeft - (24 - 2.5)) < 1e-6, 'cooldown should clear on the next day');
+});
+
 test('selling an asset instance removes it and pays out last income multiplier', () => {
   const state = getState();
   state.money = 0;

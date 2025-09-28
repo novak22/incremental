@@ -80,6 +80,7 @@ const blogDefinition = {
         label: 'SEO Sprint',
         time: 2.5,
         cost: 18,
+        cooldownDays: 1,
         progressKey: 'seo',
         log: ({ label }) => `${label} ran an SEO tune-up. Keywords now shimmy to the top.`
       },
@@ -88,6 +89,7 @@ const blogDefinition = {
         label: 'Backlink Outreach',
         time: 2,
         cost: 18,
+        cooldownDays: 2,
         progressKey: 'outreach',
         log: ({ label }) => `${label} charmed partners into fresh backlinks. Authority climbs!`
       }

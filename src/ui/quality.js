@@ -2,6 +2,7 @@ import { formatHours, formatMoney } from '../core/helpers.js';
 import { getAssetState, getState } from '../core/state.js';
 import {
   canPerformQualityAction,
+  getQualityActionCooldown,
   getQualityActions,
   getQualityLevel,
   getQualityNextRequirements,
@@ -119,9 +120,23 @@ export function updateQualityPanel(definition, panelState) {
         if (action.cost) {
           details.push(`💵 $${formatMoney(action.cost)}`);
         }
+        if (action.cooldownDays) {
+          const days = Number(action.cooldownDays);
+          const cooldownLabel = days === 1 ? '1 day' : `${days} days`;
+          details.push(`🕒 Cooldown: ${cooldownLabel}`);
+        }
         const suffix = details.length ? ` (${details.join(' · ')})` : '';
         button.textContent = `${action.label}${suffix}`;
+        const cooldown = getQualityActionCooldown(definition, instance, action, state);
         button.disabled = !canPerformQualityAction(definition, instance, action, state);
+        if (cooldown.onCooldown) {
+          const wait = cooldown.remainingDays === 1
+            ? 'Ready tomorrow'
+            : `Ready in ${cooldown.remainingDays} days`;
+          button.title = wait;
+        } else {
+          button.title = '';
+        }
         button.addEventListener('click', () => {
           if (button.disabled) return;
           performQualityAction(definition.id, instance.id, action.id);

@@ -71,6 +71,17 @@ export function normalizeAssetInstance(definition, instance = {}) {
   normalized.setupFundedToday = Boolean(normalized.setupFundedToday);
   normalized.maintenanceFundedToday = Boolean(normalized.maintenanceFundedToday);
 
+  const cooldownEntries = Object.entries(normalized.cooldowns || {});
+  const normalizedCooldowns = {};
+  for (const [key, value] of cooldownEntries) {
+    const numericValue = Number(value);
+    if (Number.isFinite(numericValue) && numericValue > 0) {
+      normalizedCooldowns[key] = Math.max(0, Math.floor(numericValue));
+    }
+  }
+
+  normalized.cooldowns = normalizedCooldowns;
+
   const lastIncome = Number(normalized.lastIncome);
   normalized.lastIncome = Number.isFinite(lastIncome) ? lastIncome : 0;
   const pendingIncome = Number(normalized.pendingIncome);
@@ -108,6 +119,7 @@ export function createAssetInstance(definition, overrides = {}) {
     daysCompleted: setupDays > 0 ? 0 : setupDays,
     setupFundedToday: false,
     maintenanceFundedToday: false,
+    cooldowns: {},
     lastIncome: 0,
     pendingIncome: 0,
     totalIncome: 0,
