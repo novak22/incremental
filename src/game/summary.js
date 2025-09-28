@@ -2,6 +2,7 @@ import { getState, getAssetState } from '../core/state.js';
 import { formatHours, formatMoney } from '../core/helpers.js';
 import { KNOWLEDGE_TRACKS, getKnowledgeProgress } from './requirements.js';
 import { getDailyMetrics } from './metrics.js';
+import { ASSETS } from './assets/registry.js';
 
 export function computeDailySummary(state = getState()) {
   if (!state) {
@@ -65,11 +66,41 @@ export function computeDailySummary(state = getState()) {
       .filter(entry => Number(entry?.amount) > 0)
       .sort((a, b) => Number(b.amount) - Number(a.amount))
       .map(entry => ({
+        key: entry.key,
         label: entry.label,
         value: `$${formatMoney(Number(entry.amount))} today`
       }));
 
-  const passiveBreakdown = formatIncomeBreakdown(passiveEntries);
+  const passiveAssetSummaries = new Map();
+
+  for (const definition of ASSETS) {
+    const assetState = getAssetState(definition.id, state);
+    const instances = Array.isArray(assetState?.instances) ? assetState.instances : [];
+    const earningInstances = instances.filter(
+      instance => instance.status === 'active' && Number(instance.lastIncome) > 0
+    );
+    if (!earningInstances.length) continue;
+    passiveAssetSummaries.set(`asset:${definition.id}:payout`, {
+      count: earningInstances.length,
+      label: definition.singular || definition.name
+    });
+  }
+
+  let passiveBreakdown = formatIncomeBreakdown(passiveEntries).map(entry => {
+    if (!entry?.key) return entry;
+    const summary = passiveAssetSummaries.get(entry.key);
+    if (!summary) return entry;
+    const iconMatch = entry.label.match(/^([^\w]*)/);
+    const prefix = iconMatch ? iconMatch[1] : '';
+    const decoratedLabel = summary.count > 1
+      ? `${summary.label} (${summary.count})`
+      : summary.label;
+    const parts = [prefix ? prefix.trim() : '', decoratedLabel].filter(Boolean);
+    return {
+      ...entry,
+      label: parts.join(' ')
+    };
+  });
   const earningsBreakdown = formatIncomeBreakdown(activeEntries);
 
   const totalSpend = sumEntries(spendEntries, 'amount');
