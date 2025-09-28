@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- Added instant hustles that reward active blogs/e-books, complete with live requirement summaries and one-hour payouts, plus per-instance cooldowns for high-impact passive quality actions.
 - Added category-level asset rosters with upkeep, payout, and upgrade/sell shortcuts, plus an instance-aware briefing modal that surfaces owned and locked upgrades.
 - Shifted passive asset payouts to credit during the morning maintenance sweep so earnings persist in the new day’s snapshot.
 - Highlighted passive asset payouts in the Daily Snapshot caption and breakdown, including instance counts for each earning stream.

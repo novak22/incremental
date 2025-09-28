@@ -18,6 +18,8 @@ Online Hustle Simulator is a browser-based incremental game about orchestrating 
 
 ### Hustles & Study Tracks
 - **Freelance Writing** – Spend 2h to earn $18 instantly.
+- **Audience Q&A Blast** – Spend 1h with at least one active blog to earn $12 from checklist upsells.
+- **Bundle Promo Push** – Spend 2.5h once you have two active blogs plus an e-book to pocket $48 immediately.
 - **eBay Flips** – Spend 4h and $20; complete 30 seconds later for $48 (multiple flips queue).
 - **Outline Mastery Workshop** – Study 2h to mark daily progress toward e-book unlocks (3-day course).
 - **Photo Catalog Curation** – Study 1.5h/day for 2 days to unlock polished stock photo galleries.
@@ -26,6 +28,7 @@ Online Hustle Simulator is a browser-based incremental game about orchestrating 
 
 ### Passive Assets (Daily Payouts)
 Each asset supports multiple instances, tracks setup progress, and rolls a daily income range once active. Quality actions unique to each asset increase payouts and stability, and you can liquidate any instance directly from the card—or from the category roster—for three times its previous day payout. The asset briefing modal doubles as an instance inspector, outlining status, upkeep, yesterday’s earnings, and which upgrades are owned or still locked.
+- Select quality actions now include a visible cooldown so big-impact moves (SEO sprints, ad bursts, and marketplace pitches) can only be run every few in-game days, nudging players to rotate through their portfolio.
 - **Personal Blog Network** – Setup 3 days × 3h ($180). Requires 1h/day + $5 maintenance. Quality actions include drafting posts, SEO sprints, and backlink outreach; Quality 0 drips $1–$3/day while Quality 3 now lands at $28–$38/day (Automation Course still adds +50%).
 - **Weekly Vlog Channel** – Setup 4 days × 4h ($420) with Camera upgrade. Maintenance 1.5h/day + $9. Record episodes, polish edits, and run promo blasts to climb from $2–$5/day at Quality 0 to $32–$40/day at Quality 3, with viral spikes possible at higher tiers.
 - **Digital E-Book Series** – Setup 4 days × 3h ($260) after completing Outline Mastery. Maintenance 0.75h/day + $3. Write chapters, commission cover art, and rally reviews to move from $2–$4/day drafts to $28–$38/day fandom favorites.
