@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- Major UI redesign with a collapsible daily snapshot, tabbed workspace, asset categories, filter toggles, and upgrade search for smoother planning.
 - Shifted passive asset income to a day-driven scheduler with multi-day setup tracking and maintenance allocation.
 - Added expanded asset catalog (Blogs, Vlog Channels, E-Book Series, Stock Photo Galleries, Dropshipping Storefronts, SaaS Micro-App) with per-instance state and dynamic income ranges.
 - Introduced knowledge study tracks with daily commitments that gate advanced assets alongside equipment and experience requirements.

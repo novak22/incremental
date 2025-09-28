@@ -9,6 +9,12 @@ Online Hustle Simulator is a browser-based incremental game about orchestrating 
 - **Knowledge Tracks** – Study hustles (e.g., Outline Mastery, E-Commerce Playbook) require a fixed number of days at specific hour costs. Completing them unlocks advanced assets and generates celebratory log entries; skipping a day after you start produces gentle warnings.
 - **Daily Recap Log** – Every launch, maintenance result, payout, and study milestone is written to the log so you can reconstruct exactly what happened during busy streaks.
 
+### Interface Overview
+- **Top Bar & Snapshot** – Money, time, and day stay pinned at the top. A collapsible Daily Snapshot panel lets you peek at per-stat breakdowns (time reserved, projected payouts, daily costs, study momentum) without overwhelming the main view.
+- **Tabbed Workspace** – Hustles, Education, Passive Assets, and Upgrades each live in their own tab with dedicated copy and per-tab filters. Global toggles hide locked or completed cards, and you can spotlight only actionable options.
+- **Categorised Collections** – Passive assets surface in Foundation, Creative, Commerce, and Advanced groupings with a collapsed-card option for rapid scanning. Upgrades split into Equipment, Automation, Consumables, and a catch-all bucket with a quick search bar.
+- **Event Log Controls** – The log dock keeps its running commentary but now includes a summary/detailed toggle when you want a lighter feed during long sessions.
+
 ### Hustles & Study Tracks
 - **Freelance Writing** – Spend 2h to earn $18 instantly.
 - **eBay Flips** – Spend 4h and $20; complete 30 seconds later for $48 (multiple flips queue).
@@ -42,7 +48,7 @@ Each asset supports multiple instances, tracks setup progress, and rolls a daily
 - Six passive asset types with multi-instance tracking, setup states, maintenance funding, and dynamic daily income rolls.
 - Knowledge study hustles that gate advanced assets and remember streak progress across days.
 - Equipment and experience requirements surfaced directly on asset cards with live progress indicators.
-- Responsive card grid with upbeat copy, income ranges, latest yield summaries, and lock styling for unmet requirements.
+- Responsive card grids with upbeat copy, tabbed navigation, filters, and search so players can focus on the work-in-progress that matters most.
 - Persistent save/load, offline hustle resolution, and flavourful log output to keep players oriented.
 
 ## Running the Project Locally

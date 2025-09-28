@@ -188,9 +188,12 @@ function createKnowledgeHustles() {
       }
     },
     cardState: (_state, card) => {
-      const progress = getKnowledgeProgress(track.id);
       if (!card) return;
+      const progress = getKnowledgeProgress(track.id);
       card.classList.toggle('completed', progress.completed);
+      const inProgress = progress.daysCompleted > 0 || progress.studiedToday;
+      card.dataset.inProgress = inProgress ? 'true' : 'false';
+      card.dataset.studiedToday = progress.studiedToday ? 'true' : 'false';
     }
   }));
 }

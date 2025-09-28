@@ -1,10 +1,26 @@
 import elements from './elements.js';
 import { getState } from '../core/state.js';
 
-export function renderCardCollections({ hustles, assets, upgrades }) {
+const ASSET_CATEGORY_KEYS = {
+  foundation: 'foundation',
+  creative: 'creative',
+  commerce: 'commerce',
+  advanced: 'advanced'
+};
+
+const UPGRADE_GROUPS = {
+  assistant: 'automation',
+  course: 'automation',
+  camera: 'equipment',
+  studio: 'equipment',
+  coffee: 'consumables'
+};
+
+export function renderCardCollections({ hustles, education, assets, upgrades }) {
   renderCollection(hustles, elements.hustleGrid);
-  renderCollection(assets, elements.assetGrid);
-  renderCollection(upgrades, elements.upgradeGrid);
+  renderCollection(education, elements.educationGrid);
+  renderAssetCollections(assets);
+  renderUpgradeCollections(upgrades);
 }
 
 export function updateCard(definition) {
@@ -22,6 +38,7 @@ export function updateCard(definition) {
       ? definition.action.disabled(state)
       : !!definition.action.disabled;
     definition.ui.button.disabled = disabled;
+    definition.ui.card.classList.toggle('unavailable', disabled);
   }
   if (typeof definition.cardState === 'function') {
     definition.cardState(state, definition.ui.card);
@@ -31,8 +48,11 @@ export function updateCard(definition) {
   }
 }
 
-export function updateAllCards({ hustles, assets, upgrades }) {
+export function updateAllCards({ hustles, education, assets, upgrades }) {
   for (const definition of hustles) {
+    updateCard(definition);
+  }
+  for (const definition of education) {
     updateCard(definition);
   }
   for (const definition of assets) {
@@ -43,14 +63,43 @@ export function updateAllCards({ hustles, assets, upgrades }) {
   }
 }
 
+function renderAssetCollections(definitions) {
+  if (!elements.assetCategoryGrids) return;
+  for (const container of Object.values(elements.assetCategoryGrids)) {
+    if (container) container.innerHTML = '';
+  }
+
+  for (const definition of definitions) {
+    const categoryKey = normalizeCategory(definition.tag?.label);
+    const container = elements.assetCategoryGrids[categoryKey] || elements.assetGridRoot;
+    if (!container) continue;
+    createCard(definition, container, { category: categoryKey });
+  }
+}
+
+function renderUpgradeCollections(definitions) {
+  if (!elements.upgradeGroupGrids) return;
+  for (const container of Object.values(elements.upgradeGroupGrids)) {
+    if (container) container.innerHTML = '';
+  }
+
+  for (const definition of definitions) {
+    const groupKey = UPGRADE_GROUPS[definition.id] || 'misc';
+    const container = elements.upgradeGroupGrids[groupKey] || elements.upgradeGrid;
+    if (!container) continue;
+    createCard(definition, container, { group: groupKey });
+  }
+}
+
 function renderCollection(definitions, container) {
+  if (!container) return;
   container.innerHTML = '';
   for (const def of definitions) {
     createCard(def, container);
   }
 }
 
-function createCard(definition, container) {
+function createCard(definition, container, metadata = {}) {
   const state = getState();
   const card = document.createElement('article');
   card.className = 'card';
@@ -59,6 +108,12 @@ function createCard(definition, container) {
     for (const cls of definition.initialClasses) {
       card.classList.add(cls);
     }
+  }
+  if (metadata.category) {
+    card.dataset.category = metadata.category;
+  }
+  if (metadata.group) {
+    card.dataset.group = metadata.group;
   }
 
   const header = document.createElement('div');
@@ -99,13 +154,15 @@ function createCard(definition, container) {
     button.className = definition.action.className || 'primary';
     const label = typeof definition.action.label === 'function' ? definition.action.label(state) : definition.action.label;
     button.textContent = label;
-    button.disabled = typeof definition.action.disabled === 'function'
+    const disabled = typeof definition.action.disabled === 'function'
       ? definition.action.disabled(state)
       : !!definition.action.disabled;
+    button.disabled = disabled;
     button.addEventListener('click', () => {
       if (button.disabled) return;
       definition.action.onClick();
     });
+    card.classList.toggle('unavailable', disabled);
     card.appendChild(button);
   }
 
@@ -118,4 +175,15 @@ function createCard(definition, container) {
     details: detailEntries,
     extra
   };
+}
+
+function normalizeCategory(label = '') {
+  const key = label.toLowerCase();
+  if (ASSET_CATEGORY_KEYS[key]) {
+    return ASSET_CATEGORY_KEYS[key];
+  }
+  if (key === 'knowledge') {
+    return 'creative';
+  }
+  return 'foundation';
 }
