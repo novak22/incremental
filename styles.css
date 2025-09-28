@@ -11,6 +11,15 @@
   --danger: #f87171;
   --border: rgba(148, 163, 184, 0.16);
   --shadow: 0 16px 30px rgba(15, 23, 42, 0.25);
+  --time-sleep: #3b82f6;
+  --time-setup: #a855f7;
+  --time-maintenance: #fbbf24;
+  --time-hustle: #34d399;
+  --time-study: #f472b6;
+  --time-quality: #fb7185;
+  --time-upgrade: #22d3ee;
+  --time-general: rgba(148, 163, 184, 0.55);
+  --time-remaining: rgba(148, 163, 184, 0.2);
   font-family: 'Manrope', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
@@ -133,22 +142,151 @@ body.modal-open {
 .time-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: 0.65rem;
+}
+
+.time-readout {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.time-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.time-support {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.time-support__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.time-support__label {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.time-support__note {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.time-legend-toggle {
+  align-self: flex-start;
+  font-size: 0.75rem;
+  padding: 0.35rem 0.85rem;
+}
+
+.time-note {
+  font-size: 0.85rem;
+  color: var(--muted);
 }
 
 .time-bar {
   width: 100%;
-  height: 8px;
-  background: rgba(148, 163, 184, 0.2);
+  height: 12px;
+  background: rgba(148, 163, 184, 0.18);
   border-radius: 999px;
   overflow: hidden;
 }
 
 .time-progress {
+  display: flex;
   height: 100%;
   width: 100%;
-  background: linear-gradient(90deg, var(--accent), var(--accent-strong));
-  transition: width 0.4s ease;
+  gap: 2px;
+}
+
+.time-segment {
+  --segment-color: var(--accent);
+  flex: var(--segment-hours, 1);
+  min-width: 2px;
+  background: var(--segment-color);
+  border-radius: 999px;
+  transition: flex 0.3s ease;
+}
+
+.time-segment:first-child {
+  border-top-left-radius: 999px;
+  border-bottom-left-radius: 999px;
+}
+
+.time-segment:last-child {
+  border-top-right-radius: 999px;
+  border-bottom-right-radius: 999px;
+}
+
+.time-segment--sleep {
+  --segment-color: var(--time-sleep);
+}
+
+.time-segment--setup {
+  --segment-color: var(--time-setup);
+}
+
+.time-segment--maintenance {
+  --segment-color: var(--time-maintenance);
+}
+
+.time-segment--hustle {
+  --segment-color: var(--time-hustle);
+}
+
+.time-segment--study {
+  --segment-color: var(--time-study);
+}
+
+.time-segment--quality {
+  --segment-color: var(--time-quality);
+}
+
+.time-segment--upgrade,
+.time-segment--automation {
+  --segment-color: var(--time-upgrade);
+}
+
+.time-segment--general {
+  --segment-color: var(--time-general);
+}
+
+.time-segment--remaining {
+  --segment-color: var(--time-remaining);
+}
+
+.time-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+  list-style: none;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.time-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.time-legend li[data-group='assistant'] {
+  opacity: 0.85;
+}
+
+.time-legend__dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: var(--legend-color, var(--muted));
+  box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.35);
 }
 
 .end-day {
