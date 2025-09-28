@@ -98,19 +98,6 @@ function renderInstanceList(definition, state, ui) {
     const actions = document.createElement('div');
     actions.className = 'asset-instance-actions';
 
-    const upgradeButton = document.createElement('button');
-    upgradeButton.type = 'button';
-    upgradeButton.className = 'secondary outline';
-    upgradeButton.textContent = 'Upgrade';
-    upgradeButton.disabled = instance.status !== 'active' || typeof ui?.extra?.openQuality !== 'function';
-    upgradeButton.addEventListener('click', event => {
-      event.preventDefault();
-      event.stopPropagation();
-      if (upgradeButton.disabled) return;
-      ui.extra.openQuality(instance.id);
-    });
-    actions.appendChild(upgradeButton);
-
     const price = calculateAssetSalePrice(instance);
     const sellButton = document.createElement('button');
     sellButton.type = 'button';

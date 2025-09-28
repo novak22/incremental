@@ -7,7 +7,7 @@ import {
   getUpgradeState
 } from '../core/state.js';
 import { formatHours, formatMoney } from '../core/helpers.js';
-import { attachQualityPanel, focusQualityInstance, updateQualityPanel } from './quality.js';
+import { attachQualityPanel, updateQualityPanel } from './quality.js';
 import { getDailyIncomeRange, instanceLabel } from '../game/assets/helpers.js';
 import {
   canPerformQualityAction,
@@ -234,15 +234,6 @@ function createAssetCard(definition, container, metadata = {}) {
     actions.appendChild(button);
   }
 
-  let qualityButton = null;
-  if (definition.quality) {
-    qualityButton = document.createElement('button');
-    qualityButton.type = 'button';
-    qualityButton.className = 'secondary';
-    qualityButton.textContent = 'Upgrade Quality';
-    actions.appendChild(qualityButton);
-  }
-
   if (actions.childElementCount) {
     card.appendChild(actions);
   }
@@ -268,48 +259,6 @@ function createAssetCard(definition, container, metadata = {}) {
     instancesBody.appendChild(extra.instanceList);
   }
 
-  let qualityPanelState = null;
-  let qualitySection = null;
-  if (definition.quality) {
-    qualityPanelState = attachQualityPanel(card, definition);
-    if (qualityPanelState?.panel) {
-      qualitySection = document.createElement('div');
-      qualitySection.className = 'asset-card__quality';
-      qualitySection.dataset.expanded = 'false';
-      qualitySection.hidden = true;
-      qualitySection.appendChild(qualityPanelState.panel);
-      card.appendChild(qualitySection);
-    }
-  }
-
-  let qualityExpanded = false;
-  const toggleQuality = (force = null) => {
-    if (!qualitySection) return;
-    if (force === true) {
-      qualityExpanded = true;
-    } else if (force === false) {
-      qualityExpanded = false;
-    } else {
-      qualityExpanded = !qualityExpanded;
-    }
-    qualitySection.dataset.expanded = qualityExpanded ? 'true' : 'false';
-    qualitySection.hidden = !qualityExpanded;
-    if (qualityButton) {
-      qualityButton.textContent = qualityExpanded ? 'Hide Quality Actions' : 'Upgrade Quality';
-    }
-  };
-
-  if (qualityButton) {
-    qualityButton.addEventListener('click', () => toggleQuality());
-  }
-
-  const openQuality = instanceId => {
-    toggleQuality(true);
-    if (qualityPanelState) {
-      focusQualityInstance(qualityPanelState, instanceId);
-    }
-  };
-
   const extras = {
     ...extra,
     assetStats: {
@@ -325,12 +274,6 @@ function createAssetCard(definition, container, metadata = {}) {
     assetDetails: getAssetDetailRenderers(definition),
     instancesCount
   };
-
-  if (qualityPanelState) {
-    extras.openQuality = openQuality;
-    extras.toggleQuality = toggleQuality;
-    extras.quality = qualityPanelState;
-  }
 
   container.appendChild(card);
   definition.ui = {
