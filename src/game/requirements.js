@@ -13,6 +13,7 @@ import {
   recordCostContribution,
   recordTimeContribution
 } from './metrics.js';
+import { buildRequirementBundle, resolveRequirementConfig } from './schema/requirements.js';
 
 export const KNOWLEDGE_TRACKS = {
   outlineMastery: {
@@ -49,148 +50,225 @@ export const KNOWLEDGE_TRACKS = {
   }
 };
 
-function normalizeAssetRequirement(definition) {
-  if (!definition) return [];
-  if (Array.isArray(definition.requirements)) {
-    return definition.requirements;
+const EMPTY_REQUIREMENTS = buildRequirementBundle();
+const requirementCache = new WeakMap();
+
+export function getDefinitionRequirements(definition) {
+  if (!definition) return EMPTY_REQUIREMENTS;
+  if (requirementCache.has(definition)) {
+    return requirementCache.get(definition);
   }
-  if (!definition.requiresUpgrade) return [];
-  const upgrades = Array.isArray(definition.requiresUpgrade)
-    ? definition.requiresUpgrade
-    : [definition.requiresUpgrade];
-  return upgrades.map(id => ({ type: 'equipment', id }));
+  const config = resolveRequirementConfig(definition);
+  if (!config) {
+    requirementCache.set(definition, EMPTY_REQUIREMENTS);
+    return EMPTY_REQUIREMENTS;
+  }
+  const bundle = buildRequirementBundle(config);
+  requirementCache.set(definition, bundle);
+  return bundle;
 }
 
-function isEquipmentUnlocked(id) {
+function isEquipmentUnlocked(id, state = getState()) {
   if (!id) return true;
-  return Boolean(getUpgradeState(id).purchased);
+  return Boolean(getUpgradeState(id, state).purchased);
 }
 
-function isKnowledgeComplete(id) {
+function isKnowledgeComplete(id, state = getState()) {
   if (!id) return true;
   const track = KNOWLEDGE_TRACKS[id];
   if (!track) return true;
-  const progress = getKnowledgeProgress(id);
+  const progress = getKnowledgeProgress(id, state);
   return progress.completed;
 }
 
-function hasExperience(requirement) {
+function hasExperience(requirement, state = getState()) {
   if (!requirement?.assetId) return true;
   const targetCount = Number(requirement.count) || 0;
   if (targetCount <= 0) return true;
-  const assetState = getAssetState(requirement.assetId);
+  const assetState = getAssetState(requirement.assetId, state);
   return (assetState.instances || []).filter(instance => instance.status === 'active').length >= targetCount;
 }
 
-export function assetRequirementsMet(definition) {
-  const requirements = normalizeAssetRequirement(definition);
-  if (!requirements.length) return true;
-  return requirements.every(req => requirementSatisfied(req));
-}
-
-export function assetRequirementsMetById(id) {
-  const definition = getAssetDefinition(id);
-  if (!definition) return true;
-  return assetRequirementsMet(definition);
-}
-
-function requirementSatisfied(requirement) {
+export function isRequirementMet(requirement, state = getState()) {
+  if (!requirement) return true;
   switch (requirement.type) {
     case 'equipment':
-      return isEquipmentUnlocked(requirement.id);
+      return isEquipmentUnlocked(requirement.id, state);
     case 'knowledge':
-      return isKnowledgeComplete(requirement.id);
+      return isKnowledgeComplete(requirement.id, state);
     case 'experience':
-      return hasExperience(requirement);
+      return hasExperience(requirement, state);
     default:
       return true;
   }
 }
 
-export function formatAssetRequirementLabel(assetId) {
+export function describeRequirement(requirement, state = getState()) {
+  if (!requirement) {
+    return {
+      type: 'unknown',
+      status: 'unknown',
+      icon: '❓',
+      label: 'Unknown Requirement',
+      detail: '❓ <strong>Unknown requirement</strong>'
+    };
+  }
+
+  const status = isRequirementMet(requirement, state) ? 'met' : 'pending';
+
+  if (requirement.type === 'equipment') {
+    const upgrade = getUpgradeDefinition(requirement.id);
+    const label = upgrade?.name || requirement.id;
+    const icon = status === 'met' ? '✅' : '🔒';
+    return {
+      type: 'equipment',
+      status,
+      icon,
+      label,
+      detail: `${icon} <strong>${label}</strong>`
+    };
+  }
+
+  if (requirement.type === 'knowledge') {
+    const track = KNOWLEDGE_TRACKS[requirement.id];
+    const label = track?.name || requirement.id;
+    const progress = getKnowledgeProgress(requirement.id, state);
+    const icon = progress.completed ? '✅' : progress.studiedToday ? '📗' : '📘';
+    const hoursPerDay = Number(track?.hoursPerDay) || 0;
+    const detail = track
+      ? `${progress.daysCompleted}/${track.days} days, ${formatHours(hoursPerDay)}/day`
+      : 'Progress tracked';
+    return {
+      type: 'knowledge',
+      status,
+      icon,
+      label,
+      detail: `${icon} <strong>${label}</strong> (${detail})`
+    };
+  }
+
+  if (requirement.type === 'experience') {
+    const assetDef = getAssetDefinition(requirement.assetId);
+    const assetState = getAssetState(requirement.assetId, state);
+    const owned = (assetState.instances || []).filter(instance => instance.status === 'active').length;
+    const target = Number(requirement.count) || 0;
+    const baseLabel = assetDef?.singular || assetDef?.name || requirement.assetId;
+    const label = `${target} ${baseLabel}${target === 1 ? '' : 's'}`;
+    const icon = owned >= target ? '✅' : '🏆';
+    return {
+      type: 'experience',
+      status,
+      icon,
+      label,
+      detail: `${icon} <strong>${label}</strong> (have ${owned})`
+    };
+  }
+
+  return {
+    type: requirement.type,
+    status,
+    icon: status === 'met' ? '✅' : '❔',
+    label: 'Unknown Requirement',
+    detail: `${status === 'met' ? '✅' : '❔'} <strong>Unknown requirement</strong>`
+  };
+}
+
+export function definitionRequirementsMet(definition, state = getState()) {
+  const requirements = getDefinitionRequirements(definition);
+  if (!requirements.hasAny) return true;
+  return requirements.every(req => isRequirementMet(req, state));
+}
+
+export function assetRequirementsMet(definition, state = getState()) {
+  return definitionRequirementsMet(definition, state);
+}
+
+export function assetRequirementsMetById(id, state = getState()) {
+  const definition = getAssetDefinition(id);
+  if (!definition) return true;
+  return definitionRequirementsMet(definition, state);
+}
+
+export function formatAssetRequirementLabel(assetId, state = getState()) {
   const definition = getAssetDefinition(assetId);
   if (!definition) return 'Requirement Missing';
-  const requirements = normalizeAssetRequirement(definition);
-  if (!requirements.length) return 'Ready to Launch';
-  const missing = requirements.filter(req => !requirementSatisfied(req));
+  const requirements = getDefinitionRequirements(definition);
+  if (!requirements.hasAny) return 'Ready to Launch';
+  const missing = requirements.missing(req => isRequirementMet(req, state));
   if (!missing.length) return 'Ready to Launch';
-  const names = missing.map(req => requirementName(req));
+  const names = missing.map(req => describeRequirement(req, state).label);
   return `Requires ${names.join(' & ')}`;
 }
 
-export function renderAssetRequirementDetail(assetId) {
+export function renderAssetRequirementDetail(assetId, state = getState()) {
   const definition = getAssetDefinition(assetId);
   if (!definition) return '';
-  const requirements = normalizeAssetRequirement(definition);
-  if (!requirements.length) {
+  const requirements = getDefinitionRequirements(definition);
+  if (!requirements.hasAny) {
     return '🔓 Requirements: <strong>None</strong>';
   }
-
-  const parts = requirements.map(requirementDetail);
+  const parts = requirements.map(req => describeRequirement(req, state).detail);
   return `Requirements: ${parts.join(' • ')}`;
 }
 
-function requirementDetail(requirement) {
-  switch (requirement.type) {
-    case 'equipment':
-      return renderEquipmentRequirement(requirement.id);
-    case 'knowledge':
-      return renderKnowledgeRequirement(requirement.id);
-    case 'experience':
-      return renderExperienceRequirement(requirement);
-    default:
-      return 'Unknown requirement';
-  }
-}
+export function listAssetRequirementDescriptors(definitionOrId, state = getState()) {
+  const definition = typeof definitionOrId === 'string'
+    ? getAssetDefinition(definitionOrId)
+    : definitionOrId;
+  if (!definition) return [];
+  const requirements = getDefinitionRequirements(definition);
+  if (!requirements.hasAny) return [];
 
-function renderEquipmentRequirement(id) {
-  const upgrade = getUpgradeDefinition(id);
-  const purchased = isEquipmentUnlocked(id);
-  const icon = purchased ? '✅' : '🔒';
-  const label = upgrade?.name || id;
-  return `${icon} <strong>${label}</strong>`;
-}
-
-function renderKnowledgeRequirement(id) {
-  const track = KNOWLEDGE_TRACKS[id];
-  if (!track) return `📘 <strong>${id}</strong>`;
-  const progress = getKnowledgeProgress(id);
-  const icon = progress.completed ? '✅' : progress.studiedToday ? '📗' : '📘';
-  const detail = `${progress.daysCompleted}/${track.days} days`;
-  return `${icon} <strong>${track.name}</strong> (${detail}, ${formatHours(track.hoursPerDay)}/day)`;
-}
-
-function renderExperienceRequirement(requirement) {
-  const assetDef = getAssetDefinition(requirement.assetId);
-  const assetState = getAssetState(requirement.assetId);
-  const owned = (assetState.instances || []).filter(instance => instance.status === 'active').length;
-  const target = Number(requirement.count) || 0;
-  const icon = owned >= target ? '✅' : '🏆';
-  const label = assetDef?.singular || assetDef?.name || requirement.assetId;
-  return `${icon} <strong>${target} ${label}${target === 1 ? '' : 's'}</strong> (have ${owned})`;
-}
-
-function requirementName(requirement) {
-  switch (requirement.type) {
-    case 'equipment':
-      return getUpgradeDefinition(requirement.id)?.name || requirement.id;
-    case 'knowledge':
-      return KNOWLEDGE_TRACKS[requirement.id]?.name || requirement.id;
-    case 'experience': {
-      const assetDef = getAssetDefinition(requirement.assetId);
-      const label = assetDef?.singular || assetDef?.name || requirement.assetId;
-      const count = Number(requirement.count) || 0;
-      return `${count} ${label}${count === 1 ? '' : 's'}`;
+  return requirements.map(req => {
+    switch (req.type) {
+      case 'equipment': {
+        const upgrade = getUpgradeDefinition(req.id);
+        return {
+          type: 'equipment',
+          id: req.id,
+          label: upgrade?.name || req.id,
+          met: isEquipmentUnlocked(req.id, state)
+        };
+      }
+      case 'knowledge': {
+        const track = KNOWLEDGE_TRACKS[req.id];
+        const progress = getKnowledgeProgress(req.id, state);
+        return {
+          type: 'knowledge',
+          id: req.id,
+          label: track?.name || req.id,
+          met: progress.completed,
+          progress: {
+            daysCompleted: progress.daysCompleted,
+            totalDays: track?.days ?? 0,
+            studiedToday: Boolean(progress.studiedToday)
+          }
+        };
+      }
+      case 'experience': {
+        const assetDef = getAssetDefinition(req.assetId);
+        const need = Number(req.count) || 0;
+        const assetState = getAssetState(req.assetId, state);
+        const have = (assetState.instances || []).filter(instance => instance.status === 'active').length;
+        return {
+          type: 'experience',
+          assetId: req.assetId,
+          label: `${need} ${(assetDef?.singular || assetDef?.name || req.assetId)}${need === 1 ? '' : 's'}`,
+          met: have >= need,
+          progress: { have, need }
+        };
+      }
+      default:
+        return { type: req.type || 'unknown', label: 'Unknown requirement', met: false };
     }
-    default:
-      return 'Unknown Requirement';
-  }
+  });
 }
 
-export function updateAssetCardLock(assetId, card) {
+export function updateAssetCardLock(assetId, card, state = getState()) {
   const definition = getAssetDefinition(assetId);
   if (!definition || !card) return;
-  const locked = !assetRequirementsMet(definition);
+  const requirements = getDefinitionRequirements(definition);
+  const locked = requirements.hasAny && !requirements.every(req => isRequirementMet(req, state));
   card.classList.toggle('locked', locked);
 }
 

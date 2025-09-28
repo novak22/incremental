@@ -14,10 +14,14 @@ const saasDefinition = createAssetDefinition({
     variance: 0.35,
     logType: 'passive'
   },
-  requirements: [
-    { type: 'equipment', id: 'serverCluster' },
-    { type: 'knowledge', id: 'automationCourse' }
-  ],
+  requirements: {
+    knowledge: ['automationCourse'],
+    equipment: ['serverCluster'],
+    experience: [
+      { assetId: 'dropshipping', count: 1 },
+      { assetId: 'ebook', count: 1 }
+    ]
+  },
   quality: {
     summary: 'Build features, squash bugs, and scale infrastructure to transform prototypes into revenue engines.',
     tracks: {

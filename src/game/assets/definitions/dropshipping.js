@@ -14,7 +14,10 @@ const dropshippingDefinition = createAssetDefinition({
     variance: 0.3,
     logType: 'passive'
   },
-  requirements: [{ type: 'knowledge', id: 'ecomPlaybook' }],
+  requirements: {
+    knowledge: ['ecomPlaybook'],
+    experience: [{ assetId: 'blog', count: 2 }]
+  },
   quality: {
     summary: 'Research products, optimize listings, and scale advertising to grow a dependable e-commerce machine.',
     tracks: {

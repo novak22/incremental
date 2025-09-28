@@ -14,10 +14,10 @@ const stockPhotosDefinition = createAssetDefinition({
     variance: 0.25,
     logType: 'passive'
   },
-  requirements: [
-    { type: 'equipment', id: 'camera' },
-    { type: 'equipment', id: 'studio' }
-  ],
+  requirements: {
+    equipment: ['camera', 'studio'],
+    knowledge: ['photoLibrary']
+  },
   quality: {
     summary: 'Plan shoots, edit batches, and grow marketing funnels to transform trickle sales into daily bundles.',
     tracks: {

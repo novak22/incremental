@@ -1,6 +1,12 @@
 import { createId, formatDays, formatHours, formatMoney } from '../core/helpers.js';
 import { addLog } from '../core/log.js';
-import { getHustleState, getState } from '../core/state.js';
+import {
+  getAssetDefinition,
+  getAssetState,
+  getHustleDefinition,
+  getHustleState,
+  getState
+} from '../core/state.js';
 import { executeAction } from './actions.js';
 import { addMoney } from './currency.js';
 import { checkDayEnd } from './lifecycle.js';
@@ -17,6 +23,87 @@ const BUNDLE_PUSH_REQUIREMENTS = [
   { assetId: 'blog', count: 2 },
   { assetId: 'ebook', count: 1 }
 ];
+
+function extractMetricKey(metric) {
+  if (!metric) return null;
+  if (typeof metric === 'string') return metric;
+  if (typeof metric === 'object') return metric.key || null;
+  return null;
+}
+
+function getHustleMetricIds(hustleId) {
+  const definition = getHustleDefinition(hustleId);
+  if (!definition) return {};
+  const actionMetrics = definition.action?.metricIds || definition.action?.metrics || {};
+  const definitionMetrics = definition.metricIds || definition.metrics || {};
+  return {
+    time: extractMetricKey(actionMetrics.time) || extractMetricKey(definitionMetrics.time),
+    cost: extractMetricKey(actionMetrics.cost) || extractMetricKey(definitionMetrics.cost),
+    payout: extractMetricKey(actionMetrics.payout) || extractMetricKey(definitionMetrics.payout)
+  };
+}
+
+function fallbackHustleMetricId(hustleId, type) {
+  const suffix = type === 'payout' ? 'payout' : type;
+  return `hustle:${hustleId}:${suffix}`;
+}
+
+function recordHustlePayout(hustleId, { label, amount, category }) {
+  const metrics = getHustleMetricIds(hustleId);
+  const key = metrics.payout || fallbackHustleMetricId(hustleId, 'payout');
+  recordPayoutContribution({ key, label, amount, category });
+}
+
+function countActiveAssets(assetId, state = getState()) {
+  const assetState = getAssetState(assetId, state);
+  if (!assetState?.instances) return 0;
+  return assetState.instances.filter(instance => instance.status === 'active').length;
+}
+
+function requirementsMet(requirements = [], state = getState()) {
+  if (!requirements?.length) return true;
+  return requirements.every(req => countActiveAssets(req.assetId, state) >= (Number(req.count) || 1));
+}
+
+function renderRequirementSummary(requirements = [], state = getState()) {
+  if (!requirements.length) return 'None';
+  return requirements
+    .map(req => {
+      const definition = getAssetDefinition(req.assetId);
+      const label = definition?.singular || definition?.name || req.assetId;
+      const need = Number(req.count) || 1;
+      const have = countActiveAssets(req.assetId, state);
+      return `${label}: ${have}/${need} active`;
+    })
+    .join(' • ');
+}
+
+export function getHustleRequirements(definition) {
+  if (!definition) return [];
+  return Array.isArray(definition.requirements) ? definition.requirements : [];
+}
+
+export function describeHustleRequirements(definition, state = getState()) {
+  const requirements = getHustleRequirements(definition);
+  if (!requirements.length) return [];
+  return requirements.map(req => {
+    const assetDefinition = getAssetDefinition(req.assetId);
+    const label = assetDefinition?.singular || assetDefinition?.name || req.assetId;
+    const need = Number(req.count) || 1;
+    const have = countActiveAssets(req.assetId, state);
+    return {
+      type: 'asset',
+      assetId: req.assetId,
+      label: `${need} ${label}${need === 1 ? '' : 's'}`,
+      met: have >= need,
+      progress: { have, need }
+    };
+  });
+}
+
+export function areHustleRequirementsMet(definition, state = getState()) {
+  return requirementsMet(getHustleRequirements(definition), state);
+}
 
 const freelanceWriting = createInstantHustle({
   id: 'freelance',
@@ -89,7 +176,7 @@ const flips = createInstantHustle({
   metrics: {
     time: { label: '📦 eBay flips prep', category: 'hustle' },
     cost: { label: '💸 eBay flips sourcing', category: 'investment' },
-    payout: false
+    payout: { label: '💼 eBay flips payout', category: 'delayed' }
   },
   defaultState: {
     pending: []
@@ -160,16 +247,14 @@ export function processFlipPayouts(now = Date.now(), offline = false) {
       if (offline) {
         state.money += flip.payout;
         offlineTotal += flip.payout;
-        recordPayoutContribution({
-          key: 'hustle:flips:payout',
+        recordHustlePayout('flips', {
           label: '💼 eBay flips payout',
           amount: flip.payout,
-          category: offline ? 'offline' : 'delayed'
+          category: 'offline'
         });
       } else {
         addMoney(flip.payout, `Your eBay flip sold for $${formatMoney(flip.payout)}! Shipping label time.`, 'delayed');
-        recordPayoutContribution({
-          key: 'hustle:flips:payout',
+        recordHustlePayout('flips', {
           label: '💼 eBay flips payout',
           amount: flip.payout,
           category: 'delayed'
@@ -201,6 +286,7 @@ export function processFlipPayouts(now = Date.now(), offline = false) {
 function createKnowledgeHustles() {
   return Object.values(KNOWLEDGE_TRACKS).map(track => ({
     id: `study-${track.id}`,
+    studyTrackId: track.id,
     name: track.name,
     tag: { label: 'Study', type: 'study' },
     description: track.description,
@@ -220,6 +306,9 @@ function createKnowledgeHustles() {
       }
     ],
     action: {
+      id: `enroll-${track.id}`,
+      timeCost: 0,
+      moneyCost: Number(track.tuition) || 0,
       label: () => {
         const progress = getKnowledgeProgress(track.id);
         if (progress.completed) return 'Course Complete';

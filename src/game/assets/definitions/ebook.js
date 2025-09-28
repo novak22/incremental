@@ -14,7 +14,9 @@ const ebookDefinition = createAssetDefinition({
     variance: 0.2,
     logType: 'passive'
   },
-  requirements: [{ type: 'knowledge', id: 'outlineMastery' }],
+  requirements: {
+    knowledge: ['outlineMastery']
+  },
   quality: {
     summary: 'Draft chapters, commission covers, and gather reviews so royalties snowball as quality climbs.',
     tracks: {

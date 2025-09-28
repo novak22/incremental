@@ -21,7 +21,9 @@ const vlogDefinition = createAssetDefinition({
       return amount;
     }
   },
-  requirements: [{ type: 'equipment', id: 'camera' }],
+  requirements: {
+    equipment: ['camera']
+  },
   quality: {
     summary: 'Film episodes, polish edits, and promote premieres to unlock higher quality payouts and viral chances.',
     tracks: {

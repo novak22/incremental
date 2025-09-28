@@ -23,8 +23,32 @@ import {
   getQualityTracks
 } from './quality.js';
 
+function fallbackAssetMetricId(definitionId, scope, type) {
+  if (!definitionId) return null;
+  if (scope === 'payout' && type === 'payout') {
+    return `asset:${definitionId}:payout`;
+  }
+  if (scope === 'sale' && type === 'payout') {
+    return `asset:${definitionId}:sale`;
+  }
+  const suffix = type === 'payout' ? 'payout' : type;
+  return `asset:${definitionId}:${scope}-${suffix}`;
+}
+
+function getAssetMetricId(definition, scope, type) {
+  if (!definition) return null;
+  const metricIds = definition.metricIds || {};
+  const scoped = metricIds[scope];
+  if (scoped && typeof scoped === 'object') {
+    const value = scoped[type];
+    if (value) return value;
+  }
+  return fallbackAssetMetricId(definition.id, scope, type);
+}
+
 export function buildAssetAction(definition, labels = {}) {
   return {
+    id: 'launch',
     label: () => assetActionLabel(definition, labels),
     className: 'primary',
     disabled: () => isAssetPurchaseDisabled(definition),
@@ -74,7 +98,7 @@ function startAsset(definition) {
     if (setupCost > 0) {
       spendMoney(setupCost);
       recordCostContribution({
-        key: `asset:${definition.id}:setup-cost`,
+        key: getAssetMetricId(definition, 'setup', 'cost'),
         label: `💵 ${definition.singular || definition.name} setup`,
         amount: setupCost,
         category: 'setup'
@@ -83,7 +107,7 @@ function startAsset(definition) {
     if (setupHours > 0) {
       spendTime(setupHours);
       recordTimeContribution({
-        key: `asset:${definition.id}:setup-time`,
+        key: getAssetMetricId(definition, 'setup', 'time'),
         label: `🚀 ${definition.singular || definition.name} prep`,
         hours: setupHours,
         category: 'setup'
@@ -198,7 +222,7 @@ export function sellAssetInstance(definition, instanceId) {
     if (price > 0) {
       addMoney(price, `${label} sold off for $${formatMoney(price)}. Fresh funds unlocked!`, 'passive');
       recordPayoutContribution({
-        key: `asset:${definition.id}:sale`,
+        key: getAssetMetricId(definition, 'sale', 'payout'),
         label: `🏷️ ${definition.singular || definition.name} sale`,
         amount: price,
         category: 'sale'
@@ -273,4 +297,4 @@ export function qualityProgressDetail(definition) {
   return `📈 Roadmap: ${lines}`;
 }
 
-export { assetActionLabel, isAssetPurchaseDisabled, startAsset };
+export { assetActionLabel, isAssetPurchaseDisabled, startAsset, getAssetMetricId };

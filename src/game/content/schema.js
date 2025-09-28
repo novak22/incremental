@@ -269,6 +269,13 @@ export function createInstantHustle(config) {
     }
   };
 
+  definition.metricIds = {
+    time: metadata.metrics.time?.key || null,
+    cost: metadata.metrics.cost?.key || null,
+    payout: metadata.metrics.payout?.key || null
+  };
+  definition.action.metricIds = definition.action.metricIds || metadata.metrics;
+
   return definition;
 }
 
@@ -332,6 +339,7 @@ export function createUpgrade(config) {
     type: 'upgrade',
     defaultState: config.defaultState || { purchased: false }
   };
+  definition.requirements = requirements;
 
   const details = [];
   if (config.cost) {
