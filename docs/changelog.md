@@ -10,3 +10,4 @@
 - Expanded the virtual assistant upgrade into a four-person team with daily payroll, hire/fire controls, and log messaging.
 - Added cash-based maintenance costs for blogs ($2/day) and vlogs ($5/day) that block payouts when funds are unavailable.
 - Wired a daily metrics ledger into the snapshot so time invested, cash earned, and spending breakdowns reflect the current day’s actions.
+- Introduced an asset quality ladder with bespoke actions, UI panels, and level-based payout scaling for every passive income stream.

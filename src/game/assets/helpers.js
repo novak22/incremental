@@ -12,6 +12,12 @@ import { checkDayEnd } from '../lifecycle.js';
 import { spendTime } from '../time.js';
 import { assetRequirementsMetById } from '../requirements.js';
 import { recordCostContribution, recordTimeContribution } from '../metrics.js';
+import {
+  getInstanceQualityRange,
+  getOverallQualityRange,
+  getQualityLevelSummary,
+  getQualityTracks
+} from './quality.js';
 
 export function buildAssetAction(definition, labels = {}) {
   return {
@@ -147,9 +153,7 @@ export function maintenanceDetail(definition) {
 
 export function incomeDetail(definition) {
   const { min, max } = getDailyIncomeRange(definition);
-  return `💸 Income: <strong>$${formatMoney(min)} - $${formatMoney(max)} / day</strong> per ${
-    definition.singular || 'asset'
-  }`;
+  return `💸 Income: <strong>$${formatMoney(min)} - $${formatMoney(max)} / day</strong> (quality-scaled)`;
 }
 
 export function latestYieldDetail(definition) {
@@ -168,18 +172,11 @@ export function instanceLabel(definition, index) {
 }
 
 export function getDailyIncomeRange(definition) {
-  const base = Math.max(0, Number(definition.income?.base) || 0);
-  const variance = Math.max(0, Number(definition.income?.variance) || 0);
-  const min = definition.income?.floor ?? Math.round(base * (1 - variance));
-  const max = definition.income?.ceiling ?? Math.round(base * (1 + variance));
-  return {
-    min: Math.max(0, min),
-    max: Math.max(Math.max(0, min), max)
-  };
+  return getOverallQualityRange(definition);
 }
 
 export function rollDailyIncome(definition, assetState, instance) {
-  const { min, max } = getDailyIncomeRange(definition);
+  const { min, max } = getInstanceQualityRange(definition, instance);
   const roll = min + Math.random() * Math.max(0, max - min);
   const rounded = Math.round(roll);
   if (typeof definition.income?.modifier === 'function') {
@@ -192,6 +189,45 @@ export function getIncomeRangeForDisplay(assetId) {
   const definition = getAssetDefinition(assetId);
   if (!definition) return { min: 0, max: 0 };
   return getDailyIncomeRange(definition);
+}
+
+export function qualitySummaryDetail(definition) {
+  const tracks = getQualityTracks(definition);
+  const summary = getQualityLevelSummary(definition);
+  if (!summary.length) return '';
+  const highest = summary.at(-1);
+  const lowest = summary[0];
+  const incomeRange = getDailyIncomeRange(definition);
+  const pieces = [`⭐ Quality ${lowest.level} starts at <strong>$${formatMoney(Math.round(incomeRange.min))}/day</strong>`];
+  if (highest && highest.level !== lowest.level) {
+    pieces.push(
+      `Quality ${highest.level} can reach <strong>$${formatMoney(Math.round(highest.income?.max || incomeRange.max))}/day</strong>`
+    );
+  }
+  const trackNames = Object.values(tracks).map(track => track.shortLabel || track.label);
+  const trackDetail = trackNames.length ? `Progress via ${formatList(trackNames)}` : '';
+  const note = [pieces.join(' · '), trackDetail].filter(Boolean).join(' · ');
+  return `✨ Quality: ${note}`;
+}
+
+export function qualityProgressDetail(definition) {
+  const summary = getQualityLevelSummary(definition);
+  if (!summary.length) return '';
+  const tracks = getQualityTracks(definition);
+  const lines = summary
+    .map(level => {
+      const requirementEntries = Object.entries(level.requirements || {});
+      if (!requirementEntries.length) {
+        return `Quality ${level.level}: ${level.name}`;
+      }
+      const parts = requirementEntries.map(([key, value]) => {
+        const label = tracks[key]?.shortLabel || tracks[key]?.label || key;
+        return `${value} ${label}`;
+      });
+      return `Quality ${level.level}: ${level.name} (${parts.join(', ')})`;
+    })
+    .join(' • ');
+  return `📈 Roadmap: ${lines}`;
 }
 
 export { assetActionLabel, isAssetPurchaseDisabled, startAsset };

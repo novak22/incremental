@@ -79,6 +79,22 @@ export function normalizeAssetInstance(definition, instance = {}) {
   const createdOnDay = Number(normalized.createdOnDay);
   normalized.createdOnDay = Number.isFinite(createdOnDay) ? Math.max(1, createdOnDay) : (state?.day ?? 1);
 
+  const quality = normalized.quality || {};
+  const level = Number(quality.level);
+  const normalizedLevel = Number.isFinite(level) ? Math.max(0, Math.floor(level)) : 0;
+  const progressEntries = Object.entries(quality.progress || {});
+  const normalizedProgress = {};
+  for (const [key, value] of progressEntries) {
+    const numericValue = Number(value);
+    if (Number.isFinite(numericValue) && numericValue > 0) {
+      normalizedProgress[key] = numericValue;
+    }
+  }
+  normalized.quality = {
+    level: normalizedLevel,
+    progress: normalizedProgress
+  };
+
   return normalized;
 }
 
@@ -92,7 +108,11 @@ export function createAssetInstance(definition, overrides = {}) {
     maintenanceFundedToday: false,
     lastIncome: 0,
     totalIncome: 0,
-    createdOnDay: state?.day ?? 1
+    createdOnDay: state?.day ?? 1,
+    quality: {
+      level: 0,
+      progress: {}
+    }
   };
   const merged = { ...baseInstance, ...structuredClone(overrides) };
   if (merged.status === 'active') {

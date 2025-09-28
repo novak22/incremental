@@ -6,6 +6,7 @@ Online Hustle Simulator is a browser-based incremental game about orchestrating 
 ## Gameplay Loop & Systems
 - **Daily Time Budget** – Every in-game day begins with 14 base hours (plus permanent bonuses). Hustles, knowledge study, asset setup, and upkeep all consume this pool. Assistants can be hired (up to four) for +2 hours each, but payroll hits every morning; you can always fire them if cash or time dips too low. Turbo coffee grants up to three one-hour boosts per day.
 - **Setup & Maintenance Allocation** – When a day ends, each asset checks whether you funded the required setup/maintenance hours **and** any daily cash cost. Funded instances progress (or earn income); unfunded ones pause. The next morning, the scheduler automatically earmarks required hours until you run out.
+- **Asset Quality Ladder** – Every passive asset launches at Quality 0 and can be upgraded by investing time (and sometimes cash) into bespoke quality actions. Quality milestones unlock higher payout ranges, steadier log messages, and whimsical celebrations when tiers are reached.
 - **Knowledge Tracks** – Study hustles (e.g., Outline Mastery, E-Commerce Playbook) require a fixed number of days at specific hour costs. Completing them unlocks advanced assets and generates celebratory log entries; skipping a day after you start produces gentle warnings.
 - **Daily Recap Log** – Every launch, maintenance result, payout, and study milestone is written to the log so you can reconstruct exactly what happened during busy streaks.
 
@@ -24,13 +25,13 @@ Online Hustle Simulator is a browser-based incremental game about orchestrating 
 - **Automation Architecture Course** – Study 3h/day for 7 days to earn SaaS-ready engineering chops.
 
 ### Passive Assets (Daily Payouts)
-Each asset supports multiple instances, tracks setup progress, and rolls a daily income range once active.
-- **Personal Blog Network** – Setup 1 day × 3h ($25). Requires 1h/day + $2 maintenance. Base daily income ~$70 with ±25% variance; Automation Course boosts payouts by 50%.
-- **Weekly Vlog Channel** – Setup 3 days × 4h ($180) with Camera upgrade. Maintenance 1.5h/day + $5. Base daily income ~$140 with ±35% variance.
-- **Digital E-Book Series** – Setup 4 days × 3h ($60) after completing Outline Mastery. Maintenance 0.5h/day. Base daily income ~$120 with ±30% variance.
-- **Stock Photo Gallery** – Setup 3 days × 2h (no cost) with Camera + Lighting Kit and Photo Catalog knowledge. Maintenance 1h/day. Base daily income ~$95 with ±45% variance.
-- **Dropshipping Storefront** – Setup 3 days × 4h ($500) after E-Commerce Playbook and two active blogs. Maintenance 2h/day. Base daily income ~$260 with ±50% variance.
-- **SaaS Micro-App** – Setup 7 days × 5h ($1500) after Automation Architecture plus experience running a dropshipping store and e-book line. Maintenance 3h/day. Base daily income ~$620 with ±60% variance.
+Each asset supports multiple instances, tracks setup progress, and rolls a daily income range once active. Quality actions unique to each asset increase payouts and stability.
+- **Personal Blog Network** – Setup 1 day × 3h ($25). Requires 1h/day + $2 maintenance. Quality actions include drafting posts, SEO sprints, and backlink outreach; Quality 0 drips $1–$3/day while Quality 3 hits $70–$120/day (Automation Course still adds +50%).
+- **Weekly Vlog Channel** – Setup 3 days × 4h ($180) with Camera upgrade. Maintenance 1.5h/day + $5. Record episodes, polish edits, and run promo blasts to climb from $2–$6/day at Quality 0 to $150–$260/day at Quality 3, with viral spikes possible at higher tiers.
+- **Digital E-Book Series** – Setup 4 days × 3h ($60) after completing Outline Mastery. Maintenance 0.5h/day. Write chapters, commission cover art, and rally reviews to move from $3–$6/day drafts to $110–$160/day fandom favorites.
+- **Stock Photo Gallery** – Setup 3 days × 2h (no cost) with Camera + Lighting Kit and Photo Catalog knowledge. Maintenance 1h/day. Shoot themed packs, keyword them, and pitch marketplaces; quality progression raises royalties from $4–$8/day to $70–$140/day.
+- **Dropshipping Storefront** – Setup 3 days × 4h ($500) after E-Commerce Playbook and two active blogs. Maintenance 2h/day. Add listings, tune pages, and run ad bursts so profits scale from $8–$15/day to $170–$260/day.
+- **SaaS Micro-App** – Setup 7 days × 5h ($1500) after Automation Architecture plus experience running a dropshipping store and e-book line. Maintenance 3h/day. Squash bugs, ship features, and host support sprints to grow subscriptions from $10–$20/day to $220–$320/day.
 
 ### Upgrades & Boosts
 - **Hire Virtual Assistant** – $180 per hire, up to four assistants. Each adds +2h daily but costs $30/day in payroll; fire assistants anytime to cut wages (and hours).
