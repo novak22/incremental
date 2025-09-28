@@ -56,7 +56,8 @@ export function normalizeAssetState(definition, assetState = {}) {
   }
 
   const parsedBuffer = Number(merged.buffer);
-  const legacyBuffer = Number.isFinite(parsedBuffer) ? parsedBuffer : 0;
+  const hasLegacyBuffer = Number.isFinite(parsedBuffer);
+  const legacyBuffer = hasLegacyBuffer ? parsedBuffer : 0;
   const hadLegacyActive = Boolean(merged.active);
 
   if ((hadLegacyActive || legacyBuffer) && merged.instances.length === 0) {
@@ -65,8 +66,17 @@ export function normalizeAssetState(definition, assetState = {}) {
 
   merged.instances = merged.instances.map(normalizeAssetInstance);
 
-  delete merged.active;
-  delete merged.buffer;
+  const hasInstances = merged.instances.length > 0;
+  merged.active = hasInstances ? true : Boolean(hadLegacyActive);
+
+  if (hasInstances) {
+    const aggregateBuffer = merged.instances.reduce((sum, instance) => sum + instance.buffer, 0);
+    merged.buffer = aggregateBuffer;
+  } else if (hasLegacyBuffer || 'buffer' in defaults || 'buffer' in assetState) {
+    merged.buffer = legacyBuffer;
+  } else {
+    delete merged.buffer;
+  }
 
   return merged;
 }
