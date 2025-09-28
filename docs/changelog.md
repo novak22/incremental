@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 - Revamped education tracks with upfront tuition costs, longer course lengths, and an automatic daily study scheduler that reserves hours until graduation.
+- Added instant hustles that reward active blogs/e-books, complete with live requirement summaries and one-hour payouts, plus per-instance cooldowns for high-impact passive quality actions.
 - Added a net-per-hour ROI column to passive asset rosters and refreshed the instance briefing modal with asset-specific quality progress and upgrade actions.
 - Added category-level asset rosters with upkeep, payout, and upgrade/sell shortcuts, plus an instance-aware briefing modal that surfaces owned and locked upgrades.
 - Shifted passive asset payouts to credit during the morning maintenance sweep so earnings persist in the new day’s snapshot.

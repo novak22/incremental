@@ -87,6 +87,7 @@ const stockPhotosDefinition = {
         label: 'Pitch Marketplace',
         time: 2,
         cost: 18,
+        cooldownDays: 2,
         progressKey: 'outreach',
         log: ({ label }) => `${label} pitched new bundles to marketplaces. Visibility surges!`
       }

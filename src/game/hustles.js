@@ -1,6 +1,6 @@
 import { createId, formatDays, formatHours, formatMoney } from '../core/helpers.js';
 import { addLog } from '../core/log.js';
-import { getHustleState, getState } from '../core/state.js';
+import { getAssetDefinition, getAssetState, getHustleState, getState } from '../core/state.js';
 import { addMoney, spendMoney } from './currency.js';
 import { executeAction } from './actions.js';
 import { checkDayEnd } from './lifecycle.js';
@@ -15,6 +15,36 @@ import {
   recordPayoutContribution,
   recordTimeContribution
 } from './metrics.js';
+
+function countActiveAssets(assetId) {
+  const assetState = getAssetState(assetId);
+  if (!assetState?.instances) return 0;
+  return assetState.instances.filter(instance => instance.status === 'active').length;
+}
+
+function requirementsMet(requirements = []) {
+  if (!requirements?.length) return true;
+  return requirements.every(req => countActiveAssets(req.assetId) >= (Number(req.count) || 1));
+}
+
+function renderRequirementSummary(requirements = []) {
+  if (!requirements.length) return 'None';
+  return requirements
+    .map(req => {
+      const definition = getAssetDefinition(req.assetId);
+      const label = definition?.singular || definition?.name || req.assetId;
+      const need = Number(req.count) || 1;
+      const have = countActiveAssets(req.assetId);
+      return `${label}: ${have}/${need} active`;
+    })
+    .join(' • ');
+}
+
+const AUDIENCE_CALL_REQUIREMENTS = [{ assetId: 'blog', count: 1 }];
+const BUNDLE_PUSH_REQUIREMENTS = [
+  { assetId: 'blog', count: 2 },
+  { assetId: 'ebook', count: 1 }
+];
 
 export const HUSTLES = [
   {
@@ -44,6 +74,106 @@ export const HUSTLES = [
             key: 'hustle:freelance:payout',
             label: '💼 Freelance writing payout',
             amount: 18,
+            category: 'hustle'
+          });
+        });
+        checkDayEnd();
+      }
+    }
+  },
+  {
+    id: 'audienceCall',
+    name: 'Audience Q&A Blast',
+    tag: { label: 'Instant', type: 'instant' },
+    description: 'Host a 60-minute livestream for your blog readers and pitch a premium checklist.',
+    details: [
+      () => '⏳ Time: <strong>1h</strong>',
+      () => '💵 Payout: <strong>$12</strong>',
+      () => `Requires: <strong>${renderRequirementSummary(AUDIENCE_CALL_REQUIREMENTS)}</strong>`
+    ],
+    action: {
+      label: 'Go Live',
+      className: 'primary',
+      disabled: () => {
+        const state = getState();
+        if (!state) return true;
+        if (state.timeLeft < 1) return true;
+        return !requirementsMet(AUDIENCE_CALL_REQUIREMENTS);
+      },
+      onClick: () => {
+        executeAction(() => {
+          const state = getState();
+          if (!state) return;
+          if (state.timeLeft < 1) {
+            addLog('You need a full free hour before going live with your readers.', 'warning');
+            return;
+          }
+          if (!requirementsMet(AUDIENCE_CALL_REQUIREMENTS)) {
+            addLog('You need an active blog to invite readers to that Q&A.', 'warning');
+            return;
+          }
+          spendTime(1);
+          recordTimeContribution({
+            key: 'hustle:audienceCall:time',
+            label: '🎤 Audience Q&A prep',
+            hours: 1,
+            category: 'hustle'
+          });
+          addMoney(12, 'Your audience Q&A tipped $12 in template sales. Small wins add up!', 'hustle');
+          recordPayoutContribution({
+            key: 'hustle:audienceCall:payout',
+            label: '🎤 Audience Q&A payout',
+            amount: 12,
+            category: 'hustle'
+          });
+        });
+        checkDayEnd();
+      }
+    }
+  },
+  {
+    id: 'bundlePush',
+    name: 'Bundle Promo Push',
+    tag: { label: 'Instant', type: 'instant' },
+    description: 'Pair your top blogs with an e-book bonus bundle for a limited-time flash sale.',
+    details: [
+      () => '⏳ Time: <strong>2.5h</strong>',
+      () => '💵 Payout: <strong>$48</strong>',
+      () => `Requires: <strong>${renderRequirementSummary(BUNDLE_PUSH_REQUIREMENTS)}</strong>`
+    ],
+    action: {
+      label: 'Launch Bundle',
+      className: 'primary',
+      disabled: () => {
+        const state = getState();
+        if (!state) return true;
+        if (state.timeLeft < 2.5) return true;
+        return !requirementsMet(BUNDLE_PUSH_REQUIREMENTS);
+      },
+      onClick: () => {
+        executeAction(() => {
+          const state = getState();
+          if (!state) return;
+          if (state.timeLeft < 2.5) {
+            addLog('You need 2.5 free hours to build that promo bundle.', 'warning');
+            return;
+          }
+          if (!requirementsMet(BUNDLE_PUSH_REQUIREMENTS)) {
+            addLog('You need two active blogs and an e-book live before that bundle will sell.', 'warning');
+            return;
+          }
+          spendTime(2.5);
+          recordTimeContribution({
+            key: 'hustle:bundlePush:time',
+            label: '🧺 Bundle promo planning',
+            hours: 2.5,
+            category: 'hustle'
+          });
+          addMoney(48, 'Your flash bundle moved $48 in upsells. Subscribers love the combo!', 'hustle');
+          recordPayoutContribution({
+            key: 'hustle:bundlePush:payout',
+            label: '🧺 Bundle promo payout',
+            amount: 48,
             category: 'hustle'
           });
         });

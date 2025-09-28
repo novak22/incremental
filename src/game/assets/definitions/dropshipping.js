@@ -87,6 +87,7 @@ const dropshippingDefinition = {
         label: 'Run Ad Burst',
         time: 2,
         cost: 45,
+        cooldownDays: 2,
         progressKey: 'ads',
         log: ({ label }) => `${label} funded a laser-targeted ad burst. Traffic surges in.`
       }

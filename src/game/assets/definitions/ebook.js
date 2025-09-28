@@ -76,6 +76,7 @@ const ebookDefinition = {
         label: 'Commission Cover',
         time: 2,
         cost: 70,
+        cooldownDays: 2,
         progressKey: 'cover',
         log: ({ label }) => `${label} unveiled a shiny cover mockup. Bookstores swoon.`
       },
@@ -84,6 +85,7 @@ const ebookDefinition = {
         label: 'Rally Reviews',
         time: 1.5,
         cost: 12,
+        cooldownDays: 1,
         progressKey: 'reviews',
         log: ({ label }) => `${label} nudged superfans for reviews. Star ratings climb skyward!`
       }
