@@ -1,4 +1,4 @@
-import { ASSETS } from './assets.js';
+import { ASSETS } from './assets/index.js';
 import { HUSTLES } from './hustles.js';
 import { UPGRADES } from './upgrades.js';
 

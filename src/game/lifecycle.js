@@ -1,7 +1,7 @@
 import { addLog } from '../core/log.js';
 import { getState, getUpgradeState } from '../core/state.js';
 import { saveState } from '../core/storage.js';
-import { allocateAssetMaintenance, closeOutDay } from './assets.js';
+import { allocateAssetMaintenance, closeOutDay } from './assets/index.js';
 import { processAssistantPayroll } from './assistant.js';
 import { getTimeCap } from './time.js';
 import { updateUI } from '../ui/update.js';

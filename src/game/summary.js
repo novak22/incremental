@@ -1,6 +1,7 @@
 import { getState, getAssetState } from '../core/state.js';
 import { formatHours } from '../core/helpers.js';
-import { ASSETS, getDailyIncomeRange } from './assets.js';
+import { ASSETS } from './assets/index.js';
+import { getDailyIncomeRange } from './assets/helpers.js';
 import { getAssistantDailyCost } from './assistant.js';
 import { KNOWLEDGE_TRACKS, getKnowledgeProgress } from './requirements.js';
 
