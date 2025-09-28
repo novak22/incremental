@@ -19,7 +19,7 @@ const blogDefinition = {
   tag: { label: 'Foundation', type: 'passive' },
   description: 'Launch cozy blogs that drip ad revenue once the posts are polished.',
   setup: { days: 1, hoursPerDay: 3, cost: 25 },
-  maintenance: { hours: 1, cost: 0 },
+  maintenance: { hours: 1, cost: 2 },
   income: {
     base: 70,
     variance: 0.25,
@@ -47,7 +47,7 @@ const vlogDefinition = {
   tag: { label: 'Creative', type: 'passive' },
   description: 'Film upbeat vlogs, edit late-night montages, and ride the algorithmic rollercoaster.',
   setup: { days: 3, hoursPerDay: 4, cost: 180 },
-  maintenance: { hours: 1.5, cost: 0 },
+  maintenance: { hours: 1.5, cost: 5 },
   income: { base: 140, variance: 0.35, logType: 'passive' },
   requirements: [{ type: 'equipment', id: 'camera' }],
   messages: {
@@ -259,12 +259,14 @@ export function allocateAssetMaintenance() {
   const setupFunded = [];
   const setupMissed = [];
   const maintenanceFunded = [];
-  const maintenanceSkipped = [];
+  const maintenanceSkippedTime = [];
+  const maintenanceSkippedFunds = [];
 
   for (const definition of ASSETS) {
     const assetState = getAssetState(definition.id);
     const setupHours = Number(definition.setup?.hoursPerDay) || 0;
     const maintenanceHours = Number(definition.maintenance?.hours) || 0;
+    const maintenanceCost = Number(definition.maintenance?.cost) || 0;
 
     assetState.instances.forEach((instance, index) => {
       if (instance.status === 'setup') {
@@ -285,17 +287,26 @@ export function allocateAssetMaintenance() {
 
       if (instance.status === 'active') {
         instance.maintenanceFundedToday = false;
-        if (maintenanceHours <= 0) {
+        if (maintenanceHours <= 0 && maintenanceCost <= 0) {
           instance.maintenanceFundedToday = true;
           return;
         }
-        if (state.timeLeft >= maintenanceHours) {
-          spendTime(maintenanceHours);
-          instance.maintenanceFundedToday = true;
-          maintenanceFunded.push(instanceLabel(definition, index));
-        } else {
-          maintenanceSkipped.push(instanceLabel(definition, index));
+        const label = instanceLabel(definition, index);
+        const lacksTime = maintenanceHours > 0 && state.timeLeft < maintenanceHours;
+        const lacksMoney = maintenanceCost > 0 && state.money < maintenanceCost;
+        if (lacksTime || lacksMoney) {
+          if (lacksTime) maintenanceSkippedTime.push(label);
+          if (lacksMoney) maintenanceSkippedFunds.push(label);
+          return;
         }
+        if (maintenanceHours > 0) {
+          spendTime(maintenanceHours);
+        }
+        if (maintenanceCost > 0) {
+          spendMoney(maintenanceCost);
+        }
+        instance.maintenanceFundedToday = true;
+        maintenanceFunded.push(label);
       }
     });
   }
@@ -309,8 +320,13 @@ export function allocateAssetMaintenance() {
   if (maintenanceFunded.length) {
     addLog(`Daily upkeep handled for ${formatList(maintenanceFunded)}.`, 'info');
   }
-  if (maintenanceSkipped.length) {
-    addLog(`${formatList(maintenanceSkipped)} missed upkeep and will earn zero today.`, 'warning');
+  if (maintenanceSkippedTime.length) {
+    const unique = [...new Set(maintenanceSkippedTime)];
+    addLog(`${formatList(unique)} missed upkeep because you ran out of hours.`, 'warning');
+  }
+  if (maintenanceSkippedFunds.length) {
+    const unique = [...new Set(maintenanceSkippedFunds)];
+    addLog(`${formatList(unique)} stalled because upkeep cash wasn't available.`, 'warning');
   }
 }
 

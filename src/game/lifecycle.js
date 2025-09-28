@@ -2,6 +2,7 @@ import { addLog } from '../core/log.js';
 import { getState, getUpgradeState } from '../core/state.js';
 import { saveState } from '../core/storage.js';
 import { allocateAssetMaintenance, closeOutDay } from './assets.js';
+import { processAssistantPayroll } from './assistant.js';
 import { getTimeCap } from './time.js';
 import { updateUI } from '../ui/update.js';
 import { advanceKnowledgeTracks } from './requirements.js';
@@ -20,6 +21,7 @@ export function endDay(auto = false) {
   state.dailyBonusTime = 0;
   getUpgradeState('coffee').usedToday = 0;
   state.timeLeft = getTimeCap();
+  processAssistantPayroll();
   allocateAssetMaintenance();
   updateUI();
   saveState();

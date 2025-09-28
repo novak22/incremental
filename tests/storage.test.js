@@ -69,7 +69,7 @@ test('legacy saves migrate to new asset structure', () => {
   assert.equal(result.returning, true);
   assert.equal(state.money, 500);
   assert.equal(getAssetState('blog').instances.length, 2);
-  assert.ok(getUpgradeState('assistant').purchased);
+  assert.equal(getUpgradeState('assistant').count, 1);
   assert.equal(getUpgradeState('coffee').usedToday, 2);
   assert.ok(state.log.some(entry => entry.message === 'Legacy entry'));
 });

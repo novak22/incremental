@@ -11,7 +11,7 @@
 - New knowledge hustles provide deterministic paths to unlock late-game assets without random drops or grindy loops.
 
 ## Key Systems & Tuning
-- **Asset Scheduling** – Each asset definition includes `setup.days`, `setup.hoursPerDay`, and `maintenance.hours`. Setup time is auto-reserved at day start when hours are available; otherwise progress pauses.
+- **Asset Scheduling** – Each asset definition includes `setup.days`, `setup.hoursPerDay`, and `maintenance` requirements (hours plus optional cash cost). Setup time is auto-reserved at day start when hours are available; upkeep only proceeds when you have both time and the required maintenance budget.
 - **Daily Income Curves** – Assets roll payouts using `income.base` with a per-asset variance. Example ranges:
   - Blog: base 70, ±25% variance (modifier: +50% with Automation Course).
   - Vlog: base 140, ±35% variance.

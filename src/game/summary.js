@@ -1,6 +1,7 @@
 import { getState, getAssetState } from '../core/state.js';
 import { formatHours } from '../core/helpers.js';
 import { ASSETS, getDailyIncomeRange } from './assets.js';
+import { getAssistantDailyCost } from './assistant.js';
 import { KNOWLEDGE_TRACKS, getKnowledgeProgress } from './requirements.js';
 
 export function computeDailySummary(state = getState()) {
@@ -62,6 +63,8 @@ export function computeDailySummary(state = getState()) {
       knowledgePendingToday += 1;
     }
   }
+
+  maintenanceCost += getAssistantDailyCost(state);
 
   return {
     setupHours,

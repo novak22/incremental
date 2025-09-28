@@ -44,7 +44,9 @@ export function renderSummary(summary) {
   safeText(elements.summaryCost, `$${formatMoney(maintenanceCost)} / day`);
   safeText(
     elements.summaryCostDetail,
-    maintenanceCost ? 'Maintenance costs to keep everything humming' : 'No upkeep costs today'
+    maintenanceCost
+      ? 'Maintenance and staffing costs to keep everything humming'
+      : 'No upkeep or payroll costs today'
   );
 
   const studyLabel = knowledgeInProgress === 1 ? 'track' : 'tracks';
