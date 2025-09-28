@@ -4,10 +4,10 @@
 Online Hustle Simulator is a browser-based incremental game about orchestrating your side-hustle empire one in-world day at a time. Each morning you receive a fresh stack of hours, decide how to divide them between quick gigs, study tracks, and asset upkeep, then close the day to trigger payouts. The loop rewards planning, lighthearted experimentation, and a healthy obsession with passive income spreadsheets.
 
 ## Gameplay Loop & Systems
-- **Daily Time Budget** – Every in-game day begins with 14 base hours (plus permanent bonuses). Hustles, knowledge study, asset setup, and upkeep all consume this pool. Assistants can be hired (up to four) for +2 hours each, but payroll hits every morning; you can always fire them if cash or time dips too low. Turbo coffee grants up to three one-hour boosts per day.
+- **Daily Time Budget** – Every in-game day begins with 14 base hours (plus permanent bonuses). Hustles, asset setup, upkeep, and any enrolled study tracks automatically reserve time from this pool. Assistants can be hired (up to four) for +2 hours each, but payroll hits every morning; you can always fire them if cash or time dips too low. Turbo coffee grants up to three one-hour boosts per day.
 - **Setup & Maintenance Allocation** – When a day ends, each asset checks whether you funded the required setup/maintenance hours **and** any daily cash cost. Funded instances progress (or earn income); unfunded ones pause. The next morning, the scheduler automatically earmarks required hours until you run out.
 - **Asset Quality Ladder** – Every passive asset launches at Quality 0 and can be upgraded by investing time (and sometimes cash) into bespoke quality actions. Quality milestones unlock higher payout ranges, steadier log messages, and whimsical celebrations when tiers are reached.
-- **Knowledge Tracks** – Study hustles (e.g., Outline Mastery, E-Commerce Playbook) require a fixed number of days at specific hour costs. Completing them unlocks advanced assets and generates celebratory log entries; skipping a day after you start produces gentle warnings.
+- **Knowledge Tracks** – Paying tuition enrolls you in longer-form courses that auto-schedule their daily study load until graduation. Completing them unlocks advanced assets and generates celebratory log entries; if the scheduler runs out of hours, you’ll receive gentle warnings and the course simply waits for tomorrow.
 - **Daily Recap Log** – Every launch, maintenance result, payout, and study milestone is written to the log so you can reconstruct exactly what happened during busy streaks.
 
 ### Interface Overview
@@ -19,10 +19,10 @@ Online Hustle Simulator is a browser-based incremental game about orchestrating 
 ### Hustles & Study Tracks
 - **Freelance Writing** – Spend 2h to earn $18 instantly.
 - **eBay Flips** – Spend 4h and $20; complete 30 seconds later for $48 (multiple flips queue).
-- **Outline Mastery Workshop** – Study 2h to mark daily progress toward e-book unlocks (3-day course).
-- **Photo Catalog Curation** – Study 1.5h/day for 2 days to unlock polished stock photo galleries.
-- **E-Commerce Playbook** – Study 2h/day for 5 days to prep dropshipping ventures.
-- **Automation Architecture Course** – Study 3h/day for 7 days to earn SaaS-ready engineering chops.
+- **Outline Mastery Workshop** – Pay $140 upfront; 2h/day for 5 days auto-reserve to unlock e-book production chops.
+- **Photo Catalog Curation** – Pay $95 upfront; 1.5h/day for 4 days auto-reserve to polish your stock gallery workflow.
+- **E-Commerce Playbook** – Pay $260 upfront; 2.5h/day for 7 days auto-reserve to prep dropshipping ventures.
+- **Automation Architecture Course** – Pay $540 upfront; 3h/day for 10 days auto-reserve to earn SaaS-ready engineering chops.
 
 ### Passive Assets (Daily Payouts)
 Each asset supports multiple instances, tracks setup progress, and rolls a daily income range once active. Quality actions unique to each asset increase payouts and stability, and you can liquidate any instance directly from the card—or from the category roster—for three times its previous day payout. The asset briefing modal doubles as an instance inspector, outlining status, upkeep, yesterday’s earnings, and which upgrades are owned or still locked.
@@ -49,7 +49,7 @@ Each asset supports multiple instances, tracks setup progress, and rolls a daily
 - Six passive asset types with multi-instance tracking, setup states, maintenance funding, and dynamic daily income rolls.
 - In-card asset management with instance-level breakdowns and a one-click sale option that converts yesterday’s earnings into cash at a 3× multiple.
 - Daily metrics ledger that captures hours, earnings, and spending, powering the refreshed snapshot breakdowns.
-- Knowledge study hustles that gate advanced assets and remember streak progress across days.
+- Knowledge study tracks with upfront tuition, automatic daily scheduling, and celebratory completion logs that gate advanced assets.
 - Equipment and experience requirements surfaced directly on asset cards with live progress indicators.
 - Responsive card grids with upbeat copy, tabbed navigation, filters, and search so players can focus on the work-in-progress that matters most.
 - Persistent save/load, offline hustle resolution, and flavourful log output to keep players oriented.

@@ -1,11 +1,15 @@
-import { createId, formatHours, formatMoney } from '../core/helpers.js';
+import { createId, formatDays, formatHours, formatMoney } from '../core/helpers.js';
 import { addLog } from '../core/log.js';
 import { getHustleState, getState } from '../core/state.js';
 import { addMoney, spendMoney } from './currency.js';
 import { executeAction } from './actions.js';
 import { checkDayEnd } from './lifecycle.js';
 import { spendTime } from './time.js';
-import { KNOWLEDGE_TRACKS, getKnowledgeProgress, markKnowledgeStudied } from './requirements.js';
+import {
+  KNOWLEDGE_TRACKS,
+  enrollInKnowledgeTrack,
+  getKnowledgeProgress
+} from './requirements.js';
 import {
   recordCostContribution,
   recordPayoutContribution,
@@ -191,45 +195,44 @@ function createKnowledgeHustles() {
     tag: { label: 'Study', type: 'study' },
     description: track.description,
     details: [
-      () => `⏳ Time: <strong>${formatHours(track.hoursPerDay)}</strong>`,
+      () => `🎓 Tuition: <strong>$${formatMoney(track.tuition)}</strong>`,
+      () => `⏳ Study Load: <strong>${formatHours(track.hoursPerDay)} / day for ${formatDays(track.days)}</strong>`,
       () => {
         const progress = getKnowledgeProgress(track.id);
-        const status = progress.completed ? 'Complete' : `${progress.daysCompleted}/${track.days} days`;
-        return `📚 Progress: <strong>${status}</strong>`;
+        if (progress.completed) {
+          return '✅ Status: <strong>Complete</strong>';
+        }
+        if (progress.enrolled) {
+          const remaining = Math.max(0, track.days - progress.daysCompleted);
+          return `📚 Status: <strong>${remaining} day${remaining === 1 ? '' : 's'} remaining</strong>`;
+        }
+        return '🚀 Status: <strong>Ready to enroll</strong>';
       }
     ],
     action: {
       label: () => {
         const progress = getKnowledgeProgress(track.id);
         if (progress.completed) return 'Course Complete';
-        if (progress.studiedToday) return 'Studied Today';
-        return 'Study Today';
+        if (progress.enrolled) {
+          const remaining = Math.max(0, track.days - progress.daysCompleted);
+          return remaining === 0 ? 'Graduation Pending' : `${remaining} day${remaining === 1 ? '' : 's'} remaining`;
+        }
+        const tuition = Number(track.tuition) || 0;
+        return tuition > 0 ? `Enroll for $${formatMoney(tuition)}` : 'Enroll Now';
       },
       className: 'secondary',
       disabled: () => {
         const state = getState();
         const progress = getKnowledgeProgress(track.id);
-        if (progress.completed || progress.studiedToday) return true;
-        return state.timeLeft < track.hoursPerDay;
+        if (progress.completed || progress.enrolled) return true;
+        const tuition = Number(track.tuition) || 0;
+        return tuition > 0 && state.money < tuition;
       },
       onClick: () => {
         executeAction(() => {
-          const state = getState();
           const progress = getKnowledgeProgress(track.id);
-          if (progress.completed || progress.studiedToday) return;
-          if (state.timeLeft < track.hoursPerDay) {
-            addLog('You need more free hours to study today.', 'warning');
-            return;
-          }
-          spendTime(track.hoursPerDay);
-          recordTimeContribution({
-            key: `study:${track.id}:time`,
-            label: `📘 ${track.name} study`,
-            hours: track.hoursPerDay,
-            category: 'study'
-          });
-          markKnowledgeStudied(track.id);
-          addLog(`You invested ${formatHours(track.hoursPerDay)} studying ${track.name}.`, 'info');
+          if (progress.completed || progress.enrolled) return;
+          enrollInKnowledgeTrack(track.id);
         });
         checkDayEnd();
       }
@@ -238,9 +241,10 @@ function createKnowledgeHustles() {
       if (!card) return;
       const progress = getKnowledgeProgress(track.id);
       card.classList.toggle('completed', progress.completed);
-      const inProgress = progress.daysCompleted > 0 || progress.studiedToday;
+      const inProgress = progress.enrolled && !progress.completed;
       card.dataset.inProgress = inProgress ? 'true' : 'false';
       card.dataset.studiedToday = progress.studiedToday ? 'true' : 'false';
+      card.dataset.enrolled = progress.enrolled ? 'true' : 'false';
     }
   }));
 }

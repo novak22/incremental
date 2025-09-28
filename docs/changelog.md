@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- Revamped education tracks with upfront tuition costs, longer course lengths, and an automatic daily study scheduler that reserves hours until graduation.
 - Added category-level asset rosters with upkeep, payout, and upgrade/sell shortcuts, plus an instance-aware briefing modal that surfaces owned and locked upgrades.
 - Shifted passive asset payouts to credit during the morning maintenance sweep so earnings persist in the new day’s snapshot.
 - Highlighted passive asset payouts in the Daily Snapshot caption and breakdown, including instance counts for each earning stream.

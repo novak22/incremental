@@ -15,12 +15,14 @@ const {
 } = stateModule;
 
 const {
+  KNOWLEDGE_TRACKS,
   formatAssetRequirementLabel,
   renderAssetRequirementDetail,
   updateAssetCardLock,
   getKnowledgeProgress,
-  markKnowledgeStudied,
-  advanceKnowledgeTracks
+  advanceKnowledgeTracks,
+  allocateDailyStudy,
+  enrollInKnowledgeTrack
 } = requirementsModule;
 
 const resetState = () => harness.resetState();
@@ -40,14 +42,21 @@ test('requirement label reflects missing equipment and updates after unlock', ()
 });
 
 test('requirement detail renders dynamic knowledge progress', () => {
+  const state = getState();
+  const trackDef = KNOWLEDGE_TRACKS.outlineMastery;
   const detailBefore = renderAssetRequirementDetail('ebook');
   assert.ok(detailBefore.includes('Outline Mastery Workshop'));
   const progress = getKnowledgeProgress('outlineMastery');
   assert.equal(progress.completed, false);
 
-  for (let day = 0; day < 3; day += 1) {
-    markKnowledgeStudied('outlineMastery');
+  state.money = trackDef.tuition + 500;
+  state.timeLeft = trackDef.hoursPerDay + 2;
+  enrollInKnowledgeTrack('outlineMastery');
+
+  for (let day = 0; day < trackDef.days; day += 1) {
     advanceKnowledgeTracks();
+    state.timeLeft = trackDef.hoursPerDay + 2;
+    allocateDailyStudy();
   }
 
   const detailAfter = renderAssetRequirementDetail('ebook');
@@ -75,16 +84,25 @@ test('updateAssetCardLock toggles class when requirements met', () => {
 
 test('advancing knowledge logs completions and clears daily flags', () => {
   const state = getState();
+  const trackDef = KNOWLEDGE_TRACKS.photoLibrary;
   const progress = getKnowledgeProgress('photoLibrary');
 
-  markKnowledgeStudied('photoLibrary');
+  state.money = trackDef.tuition + 200;
+  state.timeLeft = trackDef.hoursPerDay + 1;
+  enrollInKnowledgeTrack('photoLibrary');
+  const logBaseline = state.log.length;
+
   advanceKnowledgeTracks();
   assert.equal(progress.daysCompleted, 1);
   assert.equal(progress.studiedToday, false);
-  assert.equal(state.log.length, 0, 'no completion yet');
+  assert.equal(state.log.length, logBaseline, 'no completion yet');
 
-  markKnowledgeStudied('photoLibrary');
-  advanceKnowledgeTracks();
+  for (let day = 1; day < trackDef.days; day += 1) {
+    state.timeLeft = trackDef.hoursPerDay + 1;
+    allocateDailyStudy();
+    advanceKnowledgeTracks();
+  }
+
   assert.ok(progress.completed);
   assert.match(state.log.at(-1).message, /Finished .*Photo Catalog Curation/i);
 });

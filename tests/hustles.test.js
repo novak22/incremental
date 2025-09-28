@@ -11,7 +11,7 @@ const {
 } = harness;
 
 const { getState, getHustleState } = stateModule;
-const { getKnowledgeProgress } = requirementsModule;
+const { KNOWLEDGE_TRACKS, getKnowledgeProgress } = requirementsModule;
 
 const {
   HUSTLES,
@@ -62,17 +62,26 @@ test('updateFlipStatus reflects pending queue details', () => {
   assert.match(element.textContent, /2 flips in progress/);
 });
 
-test('study hustles consume time and mark progress', () => {
+test('study hustles charge tuition and auto-schedule class time', () => {
   const state = getState();
   const studyHustle = HUSTLES.find(hustle => hustle.id.startsWith('study-outlineMastery'));
   const track = getKnowledgeProgress('outlineMastery');
-  state.timeLeft = track.hoursPerDay + 1;
+  const tuition = KNOWLEDGE_TRACKS.outlineMastery.tuition;
+
+  state.money = tuition + 500;
+  state.timeLeft = track.hoursPerDay + 2;
+
+  const beforeMoney = state.money;
 
   studyHustle.action.onClick();
 
-  assert.ok(track.studiedToday);
-  assert.equal(state.timeLeft, 1);
-  assert.match(state.log.at(-1).message, /invested/);
+  const updated = getKnowledgeProgress('outlineMastery');
+
+  assert.equal(updated.enrolled, true, 'enrollment should activate the course');
+  assert.ok(updated.studiedToday, 'study time should be booked immediately');
+  assert.equal(state.money, beforeMoney - tuition, 'tuition should be deducted upfront');
+  assert.equal(state.timeLeft, 2, 'daily study hours should be consumed automatically');
+  assert.match(state.log.at(-1).message, /Study sessions reserved|Class time booked/, 'log should mention scheduled study');
 });
 
 test('offline progress processes completed flips and logs summary', () => {
