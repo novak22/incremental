@@ -1,5 +1,6 @@
 import elements from './elements.js';
 import { getState } from '../core/state.js';
+import { enableAssetInstanceList } from './assetInstances.js';
 
 const ASSET_CATEGORY_KEYS = {
   foundation: 'foundation',
@@ -73,6 +74,7 @@ function renderAssetCollections(definitions) {
     const categoryKey = normalizeCategory(definition.tag?.label);
     const container = elements.assetCategoryGrids[categoryKey] || elements.assetGridRoot;
     if (!container) continue;
+    enableAssetInstanceList(definition);
     createCard(definition, container, { category: categoryKey });
   }
 }

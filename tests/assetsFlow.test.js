@@ -19,7 +19,9 @@ const {
 const {
   allocateAssetMaintenance,
   closeOutDay,
-  getIncomeRangeForDisplay
+  getIncomeRangeForDisplay,
+  sellAssetInstance,
+  calculateAssetSalePrice
 } = assetsModule;
 
 const { spendMoney } = currencyModule;
@@ -118,4 +120,23 @@ test('spending money during maintenance does not go negative', () => {
   state.money = 10;
   spendMoney(25);
   assert.equal(state.money, 0);
+});
+
+test('selling an asset instance removes it and pays out last income multiplier', () => {
+  const state = getState();
+  state.money = 0;
+  const instance = createAssetInstance(blogDefinition, { status: 'active' });
+  instance.lastIncome = 42;
+  getAssetState('blog').instances = [instance];
+
+  const expectedPrice = calculateAssetSalePrice(instance);
+  const sold = sellAssetInstance(blogDefinition, instance.id);
+
+  assert.equal(sold, true, 'sellAssetInstance should report success');
+  assert.equal(getAssetState('blog').instances.length, 0, 'instance removed after sale');
+  assert.equal(state.money, expectedPrice, 'sale price added to money');
+
+  const saleMetric = state.metrics.daily.payouts[`asset:${blogDefinition.id}:sale`];
+  assert.ok(saleMetric, 'sale should be recorded in metrics');
+  assert.equal(saleMetric.amount, expectedPrice);
 });
