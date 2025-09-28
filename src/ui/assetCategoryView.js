@@ -1,6 +1,6 @@
 import elements from './elements.js';
 import { formatHours, formatMoney } from '../core/helpers.js';
-import { getAssetState, getState } from '../core/state.js';
+import { getAssetState, getState, getUpgradeDefinition, getUpgradeState } from '../core/state.js';
 import {
   calculateAssetSalePrice,
   instanceLabel,
@@ -193,7 +193,12 @@ function renderCategoryList(key) {
     });
     actionsWrap.appendChild(sellButton);
 
-    const upgradeHints = createUpgradeHints(row.definition);
+    const upgradeShortcuts = createUpgradeShortcuts(row.pendingUpgrades);
+    if (upgradeShortcuts) {
+      actionsWrap.appendChild(upgradeShortcuts);
+    }
+
+    const upgradeHints = createUpgradeHints(row.definition, row.pendingUpgrades);
     if (upgradeHints) {
       actionsWrap.appendChild(upgradeHints);
     }
@@ -215,6 +220,7 @@ function buildInstanceRows(definitions) {
     const instances = assetState?.instances || [];
     instances.forEach((instance, index) => {
       const netHourly = calculateInstanceNetHourly(definition, instance);
+      const pendingUpgrades = getPendingEquipmentUpgrades(definition, state);
       rows.push({
         definition,
         instance,
@@ -225,20 +231,79 @@ function buildInstanceRows(definitions) {
         payoutPositive: Math.max(0, Number(instance.lastIncome) || 0) > 0,
         roi: describeInstanceNetHourly(definition, instance),
         roiPositive: typeof netHourly === 'number' && netHourly > 0,
-        roiNegative: typeof netHourly === 'number' && netHourly < 0
+        roiNegative: typeof netHourly === 'number' && netHourly < 0,
+        pendingUpgrades
       });
     });
   });
   return rows;
 }
 
-function createUpgradeHints(definition) {
+function createUpgradeShortcuts(upgrades = []) {
+  if (!Array.isArray(upgrades) || upgrades.length === 0) {
+    return null;
+  }
+
+  const limit = Math.min(upgrades.length, 2);
+  if (limit <= 0) return null;
+
+  const container = document.createElement('div');
+  container.className = 'asset-category__upgrade-shortcuts';
+
+  const title = document.createElement('span');
+  title.className = 'asset-category__upgrade-title';
+  title.textContent = limit > 1 ? 'Next upgrades' : 'Next upgrade';
+  container.appendChild(title);
+
+  const buttonRow = document.createElement('div');
+  buttonRow.className = 'asset-category__upgrade-buttons';
+  container.appendChild(buttonRow);
+
+  for (let index = 0; index < limit; index += 1) {
+    const upgrade = upgrades[index];
+    if (!upgrade) continue;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'asset-category__upgrade-button';
+    button.dataset.upgradeId = upgrade.id;
+    button.textContent = getUpgradeButtonLabel(upgrade);
+    button.disabled = isUpgradeDisabled(upgrade);
+    if (upgrade.description) {
+      button.title = upgrade.description;
+    }
+    button.addEventListener('click', event => {
+      event.preventDefault();
+      if (button.disabled) return;
+      upgrade.action?.onClick?.();
+    });
+    buttonRow.appendChild(button);
+  }
+
+  const remaining = upgrades.length - limit;
+  if (remaining > 0) {
+    const more = document.createElement('span');
+    more.className = 'asset-category__upgrade-more';
+    more.textContent = `+${remaining} more upgrades`;
+    container.appendChild(more);
+  }
+
+  return container;
+}
+
+function createUpgradeHints(definition, skipUpgrades = []) {
   if (!definition) return null;
   const requirements = getDefinitionRequirements(definition);
   if (!requirements?.hasAny) return null;
 
+  const skipIds = new Set(
+    Array.isArray(skipUpgrades)
+      ? skipUpgrades.map(upgrade => upgrade?.id).filter(Boolean)
+      : []
+  );
+
   const highlights = requirements
     .filter(requirement => ['equipment', 'knowledge'].includes(requirement.type))
+    .filter(requirement => !(requirement.type === 'equipment' && skipIds.has(requirement.id)))
     .map(requirement => ({
       requirement,
       description: describeRequirement(requirement)
@@ -275,6 +340,50 @@ function createUpgradeHints(definition) {
   }
 
   return container;
+}
+
+function getPendingEquipmentUpgrades(definition, state = getState()) {
+  if (!definition) return [];
+  const requirements = getDefinitionRequirements(definition);
+  const equipment = requirements?.byType?.equipment || [];
+  if (!equipment.length) return [];
+
+  const seen = new Set();
+  const pending = [];
+  equipment.forEach(entry => {
+    const id = entry?.id;
+    if (!id || seen.has(id)) return;
+    seen.add(id);
+    const upgrade = getUpgradeDefinition(id);
+    if (!upgrade?.action) return;
+    const upgradeState = getUpgradeState(id, state);
+    if (upgradeState?.purchased) return;
+    pending.push(upgrade);
+  });
+  return pending;
+}
+
+function getUpgradeButtonLabel(upgrade) {
+  if (!upgrade) return 'Upgrade';
+  const action = upgrade.action;
+  if (!action) {
+    return upgrade.name || 'Upgrade';
+  }
+  if (typeof action.label === 'function') {
+    const label = action.label();
+    if (label) return label;
+  } else if (action.label) {
+    return action.label;
+  }
+  return upgrade.name ? `Purchase ${upgrade.name}` : 'Purchase Upgrade';
+}
+
+function isUpgradeDisabled(upgrade) {
+  if (!upgrade?.action) return true;
+  if (typeof upgrade.action.disabled === 'function') {
+    return upgrade.action.disabled();
+  }
+  return Boolean(upgrade.action.disabled);
 }
 
 function formatMaintenance(definition) {

@@ -553,6 +553,7 @@ function openAssetInfo(definition, originButton = null) {
   assetModalState.mode = 'definition';
 
   populateAssetInfoModal(definition);
+  resetAssetInfoScroll();
 
   modal.classList.add('is-visible');
   modal.setAttribute('aria-hidden', 'false');
@@ -572,6 +573,7 @@ function openAssetInstanceInfo(definition, instance, originButton = null) {
   assetModalState.mode = 'instance';
 
   populateAssetInfoModal(definition);
+  resetAssetInfoScroll();
 
   modal.classList.add('is-visible');
   modal.setAttribute('aria-hidden', 'false');
@@ -602,6 +604,13 @@ function populateAssetInfoModal(definition) {
     populateInstanceDetails(definition);
   } else {
     populateDefinitionDetails(definition);
+  }
+}
+
+function resetAssetInfoScroll() {
+  const content = elements.assetInfoContent;
+  if (content) {
+    content.scrollTop = 0;
   }
 }
 

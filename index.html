@@ -277,16 +277,21 @@
       <div class="modal__backdrop" data-modal-close></div>
       <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="asset-info-title">
         <button id="asset-info-close" class="modal__close" type="button" aria-label="Close asset briefing">×</button>
-        <div class="modal__content">
+        <div id="asset-info-content" class="modal__content">
           <header class="modal__header">
             <p id="asset-info-eyebrow" class="modal__eyebrow">New Asset Briefing</p>
             <h3 id="asset-info-title"></h3>
             <p id="asset-info-description" class="modal__description"></p>
           </header>
-          <div id="asset-info-definition" class="asset-modal__definition">
-            <ul id="asset-info-details" class="modal__details"></ul>
-          </div>
           <div id="asset-info-instance" class="asset-modal__instance" hidden>
+            <div class="asset-modal__upgrades">
+              <h4>Quality Progress</h4>
+              <ul id="asset-info-quality-progress" class="modal__details modal__details--compact"></ul>
+              <h4>Upgrade Actions</h4>
+              <div id="asset-info-quality-actions" class="asset-modal__actions"></div>
+              <h4>Supporting Upgrades</h4>
+              <ul id="asset-info-support-upgrades" class="modal__details modal__details--compact"></ul>
+            </div>
             <div class="asset-modal__summary">
               <dl class="asset-modal__stats">
                 <div class="asset-modal__stat">
@@ -311,14 +316,9 @@
                 </div>
               </dl>
             </div>
-            <div class="asset-modal__upgrades">
-              <h4>Quality Progress</h4>
-              <ul id="asset-info-quality-progress" class="modal__details modal__details--compact"></ul>
-              <h4>Upgrade Actions</h4>
-              <div id="asset-info-quality-actions" class="asset-modal__actions"></div>
-              <h4>Supporting Upgrades</h4>
-              <ul id="asset-info-support-upgrades" class="modal__details modal__details--compact"></ul>
-            </div>
+          </div>
+          <div id="asset-info-definition" class="asset-modal__definition">
+            <ul id="asset-info-details" class="modal__details"></ul>
           </div>
         </div>
       </div>
