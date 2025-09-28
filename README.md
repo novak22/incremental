@@ -53,6 +53,7 @@ Each asset supports multiple instances, tracks setup progress, and rolls a daily
 ## Testing
 1. Install dev dependencies with `npm install`.
 2. Run the Node-based suite with `npm test` to exercise the day scheduler, maintenance flow, and knowledge tracks.
+3. A GitHub Actions workflow runs the same command on every push and pull request targeting `main`.
 
 ## Roadmap
 - Expand hustle variety (recurring retainers, seasonal gigs) to diversify daily decision making.
