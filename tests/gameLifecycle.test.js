@@ -88,7 +88,13 @@ test('maintenance funding yields end-of-day payouts', () => {
     const expectedMinimumIncome = getIncomeRangeForDisplay('blog').min;
     updatedInstance = getAssetState('blog').instances.find(item => item.id === instanceId);
     assert.equal(updatedInstance.lastIncome, expectedMinimumIncome, 'lastIncome should reflect deterministic payout');
-    assert.equal(state.money, expectedMinimumIncome + 5, 'daily payout should add to post-upkeep balance');
+    assert.equal(state.money, 5, 'payout should queue until the next maintenance cycle');
+
+    allocateAssetMaintenance();
+
+    updatedInstance = getAssetState('blog').instances.find(item => item.id === instanceId);
+    assert.equal(state.money, expectedMinimumIncome, 'queued payout should credit before new upkeep is deducted');
+    assert.equal(updatedInstance.pendingIncome, 0, 'payout queue should clear after maintenance runs');
   } finally {
     Math.random = originalRandom;
   }

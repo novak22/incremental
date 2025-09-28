@@ -51,12 +51,27 @@ export function allocateAssetMaintenance() {
       }
 
       if (instance.status === 'active') {
+        const label = instanceLabel(definition, index);
+        const pendingIncome = Math.max(0, Number(instance.pendingIncome) || 0);
+        if (pendingIncome > 0) {
+          const incomeMessage = definition.messages?.income
+            ? definition.messages.income(pendingIncome, label, instance, assetState)
+            : `${definition.name} generated $${formatMoney(pendingIncome)} today.`;
+          addMoney(pendingIncome, incomeMessage, definition.income?.logType || 'passive');
+          recordPayoutContribution({
+            key: `asset:${definition.id}:payout`,
+            label: `💰 ${definition.singular || definition.name}`,
+            amount: pendingIncome,
+            category: 'passive'
+          });
+          instance.pendingIncome = 0;
+        }
+
         instance.maintenanceFundedToday = false;
         if (maintenanceHours <= 0 && maintenanceCost <= 0) {
           instance.maintenanceFundedToday = true;
           return;
         }
-        const label = instanceLabel(definition, index);
         const lacksTime = maintenanceHours > 0 && state.timeLeft < maintenanceHours;
         const lacksMoney = maintenanceCost > 0 && state.money < maintenanceCost;
         if (lacksTime || lacksMoney) {
@@ -156,19 +171,10 @@ export function closeOutDay() {
           const payout = rollDailyIncome(definition, assetState, instance);
           instance.lastIncome = payout;
           instance.totalIncome = (instance.totalIncome || 0) + payout;
-          const label = instanceLabel(definition, index);
-          const message = definition.messages?.income
-            ? definition.messages.income(payout, label, instance, assetState)
-            : `${definition.name} generated $${formatMoney(payout)} today.`;
-          addMoney(payout, message, definition.income?.logType || 'passive');
-          recordPayoutContribution({
-            key: `asset:${definition.id}:payout`,
-            label: `💰 ${definition.singular || definition.name}`,
-            amount: payout,
-            category: 'passive'
-          });
+          instance.pendingIncome = (instance.pendingIncome || 0) + payout;
         } else {
           instance.lastIncome = 0;
+          instance.pendingIncome = 0;
           const label = instanceLabel(definition, index);
           const message = definition.messages?.maintenanceSkipped
             ? definition.messages.maintenanceSkipped(label, assetState, instance)

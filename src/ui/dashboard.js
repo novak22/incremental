@@ -67,7 +67,22 @@ export function renderSummary(summary) {
 
   setText(elements.summaryIncome, `$${formatMoney(totalEarnings)} today`);
   const earningsSegments = [];
-  if (passiveEarnings > 0) earningsSegments.push(`Passive streams $${formatMoney(passiveEarnings)}`);
+  if (passiveEarnings > 0) {
+    const passiveHighlights = passiveBreakdown
+      .slice(0, 3)
+      .map(entry => {
+        if (!entry?.label || !entry?.value) return null;
+        const amount = entry.value.replace(/\s*today$/i, '');
+        const label = entry.label.replace(/^💰\s*/, '');
+        return `${label} ${amount}`;
+      })
+      .filter(Boolean);
+    if (passiveBreakdown.length > 3) {
+      passiveHighlights.push(`+${passiveBreakdown.length - 3} more`);
+    }
+    const passiveSummary = passiveHighlights.length ? ` (${passiveHighlights.join(', ')})` : '';
+    earningsSegments.push(`Passive streams $${formatMoney(passiveEarnings)}${passiveSummary}`);
+  }
   if (activeEarnings > 0) earningsSegments.push(`Active hustles $${formatMoney(activeEarnings)}`);
   setText(
     elements.summaryIncomeCaption,

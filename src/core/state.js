@@ -73,6 +73,8 @@ export function normalizeAssetInstance(definition, instance = {}) {
 
   const lastIncome = Number(normalized.lastIncome);
   normalized.lastIncome = Number.isFinite(lastIncome) ? lastIncome : 0;
+  const pendingIncome = Number(normalized.pendingIncome);
+  normalized.pendingIncome = Number.isFinite(pendingIncome) ? Math.max(0, pendingIncome) : 0;
   const totalIncome = Number(normalized.totalIncome);
   normalized.totalIncome = Number.isFinite(totalIncome) ? totalIncome : 0;
 
@@ -107,6 +109,7 @@ export function createAssetInstance(definition, overrides = {}) {
     setupFundedToday: false,
     maintenanceFundedToday: false,
     lastIncome: 0,
+    pendingIncome: 0,
     totalIncome: 0,
     createdOnDay: state?.day ?? 1,
     quality: {
