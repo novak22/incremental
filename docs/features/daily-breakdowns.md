@@ -7,12 +7,12 @@
 
 ## Player Impact
 - The Daily Snapshot panel now celebrates progress with concrete figures: total time invested, money earned, passive income streams, cash spent, and study momentum.
-- Hustle bursts, passive payouts, upkeep, and one-off investments appear in the breakdown lists as soon as they happen, helping players cross-check their plan against results.
+- Hustle bursts, upkeep, and one-off investments appear in the breakdown lists as soon as they happen, helping players cross-check their plan against results. Passive asset payouts now land the following morning during maintenance allocation so they persist through the new day’s review cycle.
 - Day transitions briefly surface the prior day’s totals before resetting, so players can review earnings before diving into the next loop.
 - Passive earnings now surface their contributing assets (with instance counts) directly in the snapshot caption so players can confirm which builds carried the day.
 
 ## Tuning Parameters
 - **Metric Categories** – Time: `setup`, `maintenance`, `hustle`, `study`, `general`. Earnings: `passive`, `offline`, `hustle`, `delayed`, `sale`. Spending: `maintenance`, `payroll`, `setup`, `investment`, `upgrade`, `consumable`.
 - **UI Copy** – Captions summarise the dominant categories (setup vs. upkeep, passive vs. active, upkeep vs. investments). Adjust strings in `src/ui/dashboard.js` if new categories should surface.
-- **Reset Timing** – `resetDailyMetrics` is triggered inside `endDay` after the final summary update and before new-day allocations. If the cadence of automatic maintenance changes, revisit that timing to ensure fresh days start clean.
+- **Reset Timing** – `resetDailyMetrics` is triggered inside `endDay` after the final summary update and before new-day allocations. Because asset income now credits during `allocateAssetMaintenance`, the payouts will register against the new day once maintenance is booked. If the cadence of automatic maintenance changes, revisit that timing to ensure fresh days start clean and passive income still posts before other actions.
 - **Formatting Helpers** – Breakdown rows format hours via `formatHours` and cash via `formatMoney`. Update these helpers if you tweak rounding or currency presentation.
