@@ -9,7 +9,7 @@ export function getTimeCap() {
 export function spendTime(hours) {
   const state = getState();
   if (!state) return;
-  state.timeLeft = Math.max(0, state.timeLeft - hours);
+  state.timeLeft -= hours;
 }
 
 export function gainTime(hours) {

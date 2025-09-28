@@ -122,7 +122,8 @@ function migrateLegacyState(saved, defaultState) {
   }
 
   if (saved.assistantHired) {
-    getUpgradeState('assistant', migrated).purchased = true;
+    const assistant = getUpgradeState('assistant', migrated);
+    assistant.count = Math.max(1, Number(assistant.count) || 0);
   }
 
   getUpgradeState('coffee', migrated).usedToday = saved.coffeesToday || 0;

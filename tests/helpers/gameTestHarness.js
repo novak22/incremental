@@ -15,6 +15,7 @@ export async function getGameTestHarness() {
   const lifecycleModule = await import('../../src/game/lifecycle.js');
   const timeModule = await import('../../src/game/time.js');
   const currencyModule = await import('../../src/game/currency.js');
+  const assistantModule = await import('../../src/game/assistant.js');
   const actionsModule = await import('../../src/game/actions.js');
   const logModule = await import('../../src/core/log.js');
   const storageModule = await import('../../src/core/storage.js');
@@ -58,6 +59,7 @@ export async function getGameTestHarness() {
     lifecycleModule,
     timeModule,
     currencyModule,
+    assistantModule,
     actionsModule,
     logModule,
     storageModule,

@@ -4,8 +4,8 @@
 Online Hustle Simulator is a browser-based incremental game about orchestrating your side-hustle empire one in-world day at a time. Each morning you receive a fresh stack of hours, decide how to divide them between quick gigs, study tracks, and asset upkeep, then close the day to trigger payouts. The loop rewards planning, lighthearted experimentation, and a healthy obsession with passive income spreadsheets.
 
 ## Gameplay Loop & Systems
-- **Daily Time Budget** – Every in-game day begins with 14 base hours (plus permanent bonuses). Hustles, knowledge study, asset setup, and upkeep all consume this pool. Assistants add +2 hours permanently; turbo coffee grants up to three one-hour boosts per day.
-- **Setup & Maintenance Allocation** – When a day ends, each asset checks whether you funded the required setup/maintenance hours. Funded instances progress (or earn income); unfunded ones pause. The next morning, the scheduler automatically earmarks required hours until you run out.
+- **Daily Time Budget** – Every in-game day begins with 14 base hours (plus permanent bonuses). Hustles, knowledge study, asset setup, and upkeep all consume this pool. Assistants can be hired (up to four) for +2 hours each, but payroll hits every morning; you can always fire them if cash or time dips too low. Turbo coffee grants up to three one-hour boosts per day.
+- **Setup & Maintenance Allocation** – When a day ends, each asset checks whether you funded the required setup/maintenance hours **and** any daily cash cost. Funded instances progress (or earn income); unfunded ones pause. The next morning, the scheduler automatically earmarks required hours until you run out.
 - **Knowledge Tracks** – Study hustles (e.g., Outline Mastery, E-Commerce Playbook) require a fixed number of days at specific hour costs. Completing them unlocks advanced assets and generates celebratory log entries; skipping a day after you start produces gentle warnings.
 - **Daily Recap Log** – Every launch, maintenance result, payout, and study milestone is written to the log so you can reconstruct exactly what happened during busy streaks.
 
@@ -19,15 +19,15 @@ Online Hustle Simulator is a browser-based incremental game about orchestrating 
 
 ### Passive Assets (Daily Payouts)
 Each asset supports multiple instances, tracks setup progress, and rolls a daily income range once active.
-- **Personal Blog Network** – Setup 1 day × 3h ($25). Requires 1h/day maintenance. Base daily income ~$70 with ±25% variance; Automation Course boosts payouts by 50%.
-- **Weekly Vlog Channel** – Setup 3 days × 4h ($180) with Camera upgrade. Maintenance 1.5h/day. Base daily income ~$140 with ±35% variance.
+- **Personal Blog Network** – Setup 1 day × 3h ($25). Requires 1h/day + $2 maintenance. Base daily income ~$70 with ±25% variance; Automation Course boosts payouts by 50%.
+- **Weekly Vlog Channel** – Setup 3 days × 4h ($180) with Camera upgrade. Maintenance 1.5h/day + $5. Base daily income ~$140 with ±35% variance.
 - **Digital E-Book Series** – Setup 4 days × 3h ($60) after completing Outline Mastery. Maintenance 0.5h/day. Base daily income ~$120 with ±30% variance.
 - **Stock Photo Gallery** – Setup 3 days × 2h (no cost) with Camera + Lighting Kit and Photo Catalog knowledge. Maintenance 1h/day. Base daily income ~$95 with ±45% variance.
 - **Dropshipping Storefront** – Setup 3 days × 4h ($500) after E-Commerce Playbook and two active blogs. Maintenance 2h/day. Base daily income ~$260 with ±50% variance.
 - **SaaS Micro-App** – Setup 7 days × 5h ($1500) after Automation Architecture plus experience running a dropshipping store and e-book line. Maintenance 3h/day. Base daily income ~$620 with ±60% variance.
 
 ### Upgrades & Boosts
-- **Hire Virtual Assistant** – $180 for a permanent +2h to the daily cap.
+- **Hire Virtual Assistant** – $180 per hire, up to four assistants. Each adds +2h daily but costs $30/day in payroll; fire assistants anytime to cut wages (and hours).
 - **Turbo Coffee** – $40 per cup, up to three per day, each adding +1h for the current day.
 - **Buy Camera** – $200, unlocks Vlog Channels and Stock Photo Galleries.
 - **Lighting Kit** – $220, unlocks Stock Photo Galleries after you buy the camera.
@@ -53,6 +53,7 @@ Each asset supports multiple instances, tracks setup progress, and rolls a daily
 ## Testing
 1. Install dev dependencies with `npm install`.
 2. Run the Node-based suite with `npm test` to exercise the day scheduler, maintenance flow, and knowledge tracks.
+3. A GitHub Actions workflow runs the same command on every push and pull request targeting `main`.
 
 ## Roadmap
 - Expand hustle variety (recurring retainers, seasonal gigs) to diversify daily decision making.

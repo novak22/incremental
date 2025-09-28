@@ -73,23 +73,45 @@ test('maintenance funding yields end-of-day payouts', () => {
       maintenanceFundedToday: false
     })];
     state.timeLeft = 10;
-    state.money = 0;
+    state.money = 10;
 
     allocateAssetMaintenance();
 
     let updatedInstance = getAssetState('blog').instances[0];
     assert.equal(updatedInstance.maintenanceFundedToday, true, 'maintenance should be funded when hours remain');
     assert.equal(state.timeLeft, 9, 'maintenance should consume daily hours');
+    assert.equal(state.money, 8, 'maintenance should deduct upkeep cash');
 
     closeOutDay();
 
     const expectedMinimumIncome = Math.round(blogDefinition.income.base * (1 - blogDefinition.income.variance));
     updatedInstance = getAssetState('blog').instances[0];
     assert.equal(updatedInstance.lastIncome, expectedMinimumIncome, 'lastIncome should reflect deterministic payout');
-    assert.equal(state.money, expectedMinimumIncome, 'daily payout should add to player money');
+    assert.equal(state.money, expectedMinimumIncome + 8, 'daily payout should add to post-upkeep balance');
   } finally {
     Math.random = originalRandom;
   }
+});
+
+test('maintenance stalls when upkeep cash is unavailable', () => {
+  const blogDefinition = getAssetDefinition('blog');
+  const blogState = getAssetState('blog');
+  blogState.instances = [createAssetInstance(blogDefinition, {
+    status: 'active',
+    daysRemaining: 0,
+    daysCompleted: blogDefinition.setup.days,
+    maintenanceFundedToday: false
+  })];
+
+  state.timeLeft = 10;
+  state.money = 1; // below the $2 upkeep requirement
+
+  allocateAssetMaintenance();
+
+  const updatedInstance = getAssetState('blog').instances[0];
+  assert.equal(updatedInstance.maintenanceFundedToday, false, 'maintenance should not fund without cash');
+  assert.equal(state.timeLeft, 10, 'time should remain untouched when upkeep fails');
+  assert.equal(state.money, 1, 'money should not be deducted when upkeep fails');
 });
 
 test('knowledge tracks advance only on studied days and mark completion', () => {

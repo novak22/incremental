@@ -1,7 +1,7 @@
 import { formatList, formatMoney } from '../../core/helpers.js';
 import { addLog } from '../../core/log.js';
 import { getAssetState, getState } from '../../core/state.js';
-import { addMoney } from '../currency.js';
+import { addMoney, spendMoney } from '../currency.js';
 import { spendTime } from '../time.js';
 import { ASSETS } from './registry.js';
 import { instanceLabel, rollDailyIncome } from './helpers.js';
@@ -13,12 +13,14 @@ export function allocateAssetMaintenance() {
   const setupFunded = [];
   const setupMissed = [];
   const maintenanceFunded = [];
-  const maintenanceSkipped = [];
+  const maintenanceSkippedTime = [];
+  const maintenanceSkippedFunds = [];
 
   for (const definition of ASSETS) {
     const assetState = getAssetState(definition.id);
     const setupHours = Number(definition.setup?.hoursPerDay) || 0;
     const maintenanceHours = Number(definition.maintenance?.hours) || 0;
+    const maintenanceCost = Number(definition.maintenance?.cost) || 0;
 
     assetState.instances.forEach((instance, index) => {
       if (instance.status === 'setup') {
@@ -39,17 +41,26 @@ export function allocateAssetMaintenance() {
 
       if (instance.status === 'active') {
         instance.maintenanceFundedToday = false;
-        if (maintenanceHours <= 0) {
+        if (maintenanceHours <= 0 && maintenanceCost <= 0) {
           instance.maintenanceFundedToday = true;
           return;
         }
-        if (state.timeLeft >= maintenanceHours) {
-          spendTime(maintenanceHours);
-          instance.maintenanceFundedToday = true;
-          maintenanceFunded.push(instanceLabel(definition, index));
-        } else {
-          maintenanceSkipped.push(instanceLabel(definition, index));
+        const label = instanceLabel(definition, index);
+        const lacksTime = maintenanceHours > 0 && state.timeLeft < maintenanceHours;
+        const lacksMoney = maintenanceCost > 0 && state.money < maintenanceCost;
+        if (lacksTime || lacksMoney) {
+          if (lacksTime) maintenanceSkippedTime.push(label);
+          if (lacksMoney) maintenanceSkippedFunds.push(label);
+          return;
         }
+        if (maintenanceHours > 0) {
+          spendTime(maintenanceHours);
+        }
+        if (maintenanceCost > 0) {
+          spendMoney(maintenanceCost);
+        }
+        instance.maintenanceFundedToday = true;
+        maintenanceFunded.push(label);
       }
     });
   }
@@ -63,8 +74,13 @@ export function allocateAssetMaintenance() {
   if (maintenanceFunded.length) {
     addLog(`Daily upkeep handled for ${formatList(maintenanceFunded)}.`, 'info');
   }
-  if (maintenanceSkipped.length) {
-    addLog(`${formatList(maintenanceSkipped)} missed upkeep and will earn zero today.`, 'warning');
+  if (maintenanceSkippedTime.length) {
+    const unique = [...new Set(maintenanceSkippedTime)];
+    addLog(`${formatList(unique)} missed upkeep because you ran out of hours.`, 'warning');
+  }
+  if (maintenanceSkippedFunds.length) {
+    const unique = [...new Set(maintenanceSkippedFunds)];
+    addLog(`${formatList(unique)} stalled because upkeep cash wasn't available.`, 'warning');
   }
 }
 

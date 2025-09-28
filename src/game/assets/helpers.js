@@ -6,7 +6,7 @@ import {
   getAssetState,
   getState
 } from '../../core/state.js';
-import { addMoney, spendMoney } from '../currency.js';
+import { spendMoney } from '../currency.js';
 import { executeAction } from '../actions.js';
 import { checkDayEnd } from '../lifecycle.js';
 import { spendTime } from '../time.js';

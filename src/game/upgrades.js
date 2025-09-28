@@ -1,43 +1,77 @@
 import { COFFEE_LIMIT } from '../core/constants.js';
+import { formatMoney } from '../core/helpers.js';
 import { addLog } from '../core/log.js';
 import { getAssetState, getState, getUpgradeState } from '../core/state.js';
-import { spendMoney } from './currency.js';
 import { executeAction } from './actions.js';
 import { gainTime } from './time.js';
+import {
+  ASSISTANT_CONFIG,
+  canFireAssistant,
+  canHireAssistant,
+  fireAssistant,
+  getAssistantCount,
+  getAssistantDailyCost,
+  hireAssistant
+} from './assistant.js';
+import { checkDayEnd } from './lifecycle.js';
+import { spendMoney } from './currency.js';
 
 export const UPGRADES = [
   {
     id: 'assistant',
     name: 'Hire Virtual Assistant',
     tag: { label: 'Unlock', type: 'unlock' },
-    description: 'Add +2h to your daily grind. They handle the boring stuff.',
+    description: 'Scale your admin squad. Each hire adds hours but expects daily wages.',
     defaultState: {
-      purchased: false
+      count: 0
     },
     details: [
-      () => '💵 Cost: <strong>$180</strong>'
+      () => `💵 Hiring Cost: <strong>$${formatMoney(ASSISTANT_CONFIG.hiringCost)}</strong>`,
+      () => `👥 Team Size: <strong>${getAssistantCount()} / ${ASSISTANT_CONFIG.maxAssistants}</strong>`,
+      () => `⏳ Support: <strong>+${ASSISTANT_CONFIG.hoursPerAssistant}h per assistant</strong>`,
+      () =>
+        `💰 Payroll: <strong>$${formatMoney(
+          ASSISTANT_CONFIG.hourlyRate * ASSISTANT_CONFIG.hoursPerAssistant
+        )}</strong> each day per assistant`,
+      () => `📅 Current Payroll: <strong>$${formatMoney(getAssistantDailyCost())} / day</strong>`
     ],
     action: {
-      label: () => getUpgradeState('assistant').purchased ? 'Assistant Hired' : 'Hire Assistant',
-      className: 'secondary',
-      disabled: () => {
-        const upgrade = getUpgradeState('assistant');
-        return upgrade.purchased || getState().money < 180;
+      label: () => {
+        const count = getAssistantCount();
+        if (count >= ASSISTANT_CONFIG.maxAssistants) return 'Assistant Team Full';
+        return 'Hire Assistant';
       },
+      className: 'secondary',
+      disabled: () => !canHireAssistant(),
       onClick: () => executeAction(() => {
-        const upgrade = getUpgradeState('assistant');
-        if (upgrade.purchased) return;
-        spendMoney(180);
-        upgrade.purchased = true;
-        const state = getState();
-        state.bonusTime += 2;
-        gainTime(2);
-        addLog('You hired a virtual assistant who adds +2h to your day and handles inbox chaos.', 'upgrade');
+        hireAssistant();
       })
     },
-    cardState: (_state, card) => {
-      const purchased = getUpgradeState('assistant').purchased;
-      card.classList.toggle('locked', purchased);
+    extraContent: card => {
+      const row = document.createElement('div');
+      row.className = 'inline-actions';
+      const fireButton = document.createElement('button');
+      fireButton.className = 'secondary';
+      fireButton.type = 'button';
+      fireButton.textContent = 'Fire Assistant';
+      fireButton.addEventListener('click', () => {
+        if (fireButton.disabled) return;
+        executeAction(() => {
+          const removed = fireAssistant();
+          if (removed && getState().timeLeft <= 0) {
+            checkDayEnd();
+          }
+        });
+      });
+      row.appendChild(fireButton);
+      card.appendChild(row);
+      return { fireButton };
+    },
+    update: (_state, ui) => {
+      if (!ui?.extra?.fireButton) return;
+      const count = getAssistantCount();
+      ui.extra.fireButton.disabled = !canFireAssistant();
+      ui.extra.fireButton.textContent = count > 0 ? 'Fire Assistant' : 'No Assistants Hired';
     }
   },
   {

@@ -4,6 +4,8 @@ import { formatHours, formatMoney } from '../core/helpers.js';
 import { getState } from '../core/state.js';
 import { getTimeCap } from '../game/time.js';
 import { registry } from '../game/registry.js';
+import { computeDailySummary } from '../game/summary.js';
+import { renderSummary } from './dashboard.js';
 
 export function renderCards() {
   renderCardCollections(registry);
@@ -22,4 +24,7 @@ export function updateUI() {
   elements.timeProgress.style.width = `${percent}%`;
 
   updateAllCards(registry);
+
+  const summary = computeDailySummary(state);
+  renderSummary(summary);
 }

@@ -17,7 +17,7 @@ const blogDefinition = {
   tag: { label: 'Foundation', type: 'passive' },
   description: 'Launch cozy blogs that drip ad revenue once the posts are polished.',
   setup: { days: 1, hoursPerDay: 3, cost: 25 },
-  maintenance: { hours: 1, cost: 0 },
+  maintenance: { hours: 1, cost: 2 },
   income: {
     base: 70,
     variance: 0.25,

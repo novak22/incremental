@@ -17,7 +17,7 @@ const vlogDefinition = {
   tag: { label: 'Creative', type: 'passive' },
   description: 'Film upbeat vlogs, edit late-night montages, and ride the algorithmic rollercoaster.',
   setup: { days: 3, hoursPerDay: 4, cost: 180 },
-  maintenance: { hours: 1.5, cost: 0 },
+  maintenance: { hours: 1.5, cost: 5 },
   income: { base: 140, variance: 0.35, logType: 'passive' },
   requirements: [{ type: 'equipment', id: 'camera' }],
   messages: {

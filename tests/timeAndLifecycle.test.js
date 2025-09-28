@@ -7,13 +7,21 @@ const {
   stateModule,
   timeModule,
   currencyModule,
-  lifecycleModule
+  lifecycleModule,
+  assistantModule
 } = harness;
 
 const { getState, getUpgradeState } = stateModule;
 const { getTimeCap, spendTime, gainTime } = timeModule;
 const { addMoney, spendMoney } = currencyModule;
 const { endDay, checkDayEnd } = lifecycleModule;
+const {
+  ASSISTANT_CONFIG,
+  getAssistantCount,
+  hireAssistant,
+  fireAssistant,
+  processAssistantPayroll
+} = assistantModule;
 
 const resetState = () => harness.resetState();
 
@@ -29,11 +37,11 @@ test('time cap reflects base, bonus, and daily boosts', () => {
   assert.equal(getTimeCap(), 15);
 });
 
-test('spend and gain time respect caps and minimums', () => {
+test('spend and gain time allow negative overflow and respect caps', () => {
   const state = getState();
   state.timeLeft = 5;
   spendTime(10);
-  assert.equal(state.timeLeft, 0);
+  assert.equal(state.timeLeft, -5);
   state.baseTime = 12;
   state.bonusTime = 2;
   state.dailyBonusTime = 1;
@@ -81,4 +89,27 @@ test('checkDayEnd automatically triggers end-of-day sequence', async () => {
 
   assert.ok(state.day >= 2, 'day should increment after automatic end');
   assert.ok(state.log.length > before, 'logs should be written');
+});
+
+test('assistant payroll charges wages and firing removes bonus hours', () => {
+  const state = getState();
+  state.money = 500;
+  state.timeLeft = 5;
+  const baseBonus = state.bonusTime;
+
+  const hired = hireAssistant();
+  assert.equal(hired, true, 'assistant should hire successfully');
+  assert.equal(getAssistantCount(), 1, 'one assistant should be active');
+  assert.equal(state.bonusTime, baseBonus + ASSISTANT_CONFIG.hoursPerAssistant, 'bonus time should increase');
+
+  state.money = 40;
+  processAssistantPayroll();
+  assert.equal(state.money, 40 - (ASSISTANT_CONFIG.hourlyRate * ASSISTANT_CONFIG.hoursPerAssistant), 'payroll should deduct funds');
+
+  state.timeLeft = 1;
+  const fired = fireAssistant();
+  assert.equal(fired, true, 'assistant should fire successfully');
+  assert.equal(getAssistantCount(), 0, 'no assistants should remain');
+  assert.equal(state.bonusTime, baseBonus, 'bonus time should drop back to baseline');
+  assert.equal(state.timeLeft, -1, 'time left should reflect lost support hours');
 });
