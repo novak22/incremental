@@ -6,6 +6,11 @@ import { executeAction } from './actions.js';
 import { checkDayEnd } from './lifecycle.js';
 import { spendTime } from './time.js';
 import { KNOWLEDGE_TRACKS, getKnowledgeProgress, markKnowledgeStudied } from './requirements.js';
+import {
+  recordCostContribution,
+  recordPayoutContribution,
+  recordTimeContribution
+} from './metrics.js';
 
 export const HUSTLES = [
   {
@@ -24,7 +29,19 @@ export const HUSTLES = [
       onClick: () => {
         executeAction(() => {
           spendTime(2);
+          recordTimeContribution({
+            key: 'hustle:freelance:time',
+            label: '⚡ Freelance writing time',
+            hours: 2,
+            category: 'hustle'
+          });
           addMoney(18, 'You hustled an article for $18. Not Pulitzer material, but it pays the bills!');
+          recordPayoutContribution({
+            key: 'hustle:freelance:payout',
+            label: '💼 Freelance writing payout',
+            amount: 18,
+            category: 'hustle'
+          });
         });
         checkDayEnd();
       }
@@ -53,7 +70,19 @@ export const HUSTLES = [
       onClick: () => {
         executeAction(() => {
           spendTime(4);
+          recordTimeContribution({
+            key: 'hustle:flips:time',
+            label: '📦 eBay flips prep',
+            hours: 4,
+            category: 'hustle'
+          });
           spendMoney(20);
+          recordCostContribution({
+            key: 'hustle:flips:cost',
+            label: '💸 eBay flips sourcing',
+            amount: 20,
+            category: 'investment'
+          });
           scheduleFlip();
           addLog('You listed a spicy eBay flip. In 30 seconds it should cha-ching for $48!', 'delayed');
         });
@@ -119,8 +148,20 @@ export function processFlipPayouts(now = Date.now(), offline = false) {
       if (offline) {
         state.money += flip.payout;
         offlineTotal += flip.payout;
+        recordPayoutContribution({
+          key: 'hustle:flips:payout',
+          label: '💼 eBay flips payout',
+          amount: flip.payout,
+          category: offline ? 'offline' : 'delayed'
+        });
       } else {
         addMoney(flip.payout, `Your eBay flip sold for $${formatMoney(flip.payout)}! Shipping label time.`, 'delayed');
+        recordPayoutContribution({
+          key: 'hustle:flips:payout',
+          label: '💼 eBay flips payout',
+          amount: flip.payout,
+          category: 'delayed'
+        });
       }
     } else {
       remaining.push(flip);
@@ -181,6 +222,12 @@ function createKnowledgeHustles() {
             return;
           }
           spendTime(track.hoursPerDay);
+          recordTimeContribution({
+            key: `study:${track.id}:time`,
+            label: `📘 ${track.name} study`,
+            hours: track.hoursPerDay,
+            category: 'study'
+          });
           markKnowledgeStudied(track.id);
           addLog(`You invested ${formatHours(track.hoursPerDay)} studying ${track.name}.`, 'info');
         });

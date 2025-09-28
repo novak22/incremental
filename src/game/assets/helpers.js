@@ -11,6 +11,7 @@ import { executeAction } from '../actions.js';
 import { checkDayEnd } from '../lifecycle.js';
 import { spendTime } from '../time.js';
 import { assetRequirementsMetById } from '../requirements.js';
+import { recordCostContribution, recordTimeContribution } from '../metrics.js';
 
 export function buildAssetAction(definition, labels = {}) {
   return {
@@ -62,9 +63,21 @@ function startAsset(definition) {
 
     if (setupCost > 0) {
       spendMoney(setupCost);
+      recordCostContribution({
+        key: `asset:${definition.id}:setup-cost`,
+        label: `💵 ${definition.singular || definition.name} setup`,
+        amount: setupCost,
+        category: 'setup'
+      });
     }
     if (setupHours > 0) {
       spendTime(setupHours);
+      recordTimeContribution({
+        key: `asset:${definition.id}:setup-time`,
+        label: `🚀 ${definition.singular || definition.name} prep`,
+        hours: setupHours,
+        category: 'setup'
+      });
     }
 
     const assetState = getAssetState(definition.id);

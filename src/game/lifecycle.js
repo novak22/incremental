@@ -6,6 +6,7 @@ import { processAssistantPayroll } from './assistant.js';
 import { getTimeCap } from './time.js';
 import { updateUI } from '../ui/update.js';
 import { advanceKnowledgeTracks } from './requirements.js';
+import { resetDailyMetrics } from './metrics.js';
 
 export function endDay(auto = false) {
   const state = getState();
@@ -13,6 +14,7 @@ export function endDay(auto = false) {
 
   closeOutDay();
   advanceKnowledgeTracks();
+  updateUI();
   const message = auto
     ? 'You ran out of time. The grind resets tomorrow.'
     : 'You called it a day. Fresh hustle awaits tomorrow.';
@@ -21,6 +23,7 @@ export function endDay(auto = false) {
   state.dailyBonusTime = 0;
   getUpgradeState('coffee').usedToday = 0;
   state.timeLeft = getTimeCap();
+  resetDailyMetrics(state);
   processAssistantPayroll();
   allocateAssetMaintenance();
   updateUI();

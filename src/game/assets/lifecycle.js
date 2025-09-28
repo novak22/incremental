@@ -5,6 +5,11 @@ import { addMoney, spendMoney } from '../currency.js';
 import { spendTime } from '../time.js';
 import { ASSETS } from './registry.js';
 import { instanceLabel, rollDailyIncome } from './helpers.js';
+import {
+  recordCostContribution,
+  recordPayoutContribution,
+  recordTimeContribution
+} from '../metrics.js';
 
 export function allocateAssetMaintenance() {
   const state = getState();
@@ -33,6 +38,12 @@ export function allocateAssetMaintenance() {
           spendTime(setupHours);
           instance.setupFundedToday = true;
           setupFunded.push(instanceLabel(definition, index));
+          recordTimeContribution({
+            key: `asset:${definition.id}:setup-time`,
+            label: `🚀 ${definition.singular || definition.name} prep`,
+            hours: setupHours,
+            category: 'setup'
+          });
         } else {
           setupMissed.push(instanceLabel(definition, index));
         }
@@ -55,9 +66,21 @@ export function allocateAssetMaintenance() {
         }
         if (maintenanceHours > 0) {
           spendTime(maintenanceHours);
+          recordTimeContribution({
+            key: `asset:${definition.id}:maintenance-time`,
+            label: `🛠️ ${definition.singular || definition.name} upkeep`,
+            hours: maintenanceHours,
+            category: 'maintenance'
+          });
         }
         if (maintenanceCost > 0) {
           spendMoney(maintenanceCost);
+          recordCostContribution({
+            key: `asset:${definition.id}:maintenance-cost`,
+            label: `🔧 ${definition.singular || definition.name} upkeep`,
+            amount: maintenanceCost,
+            category: 'maintenance'
+          });
         }
         instance.maintenanceFundedToday = true;
         maintenanceFunded.push(label);
@@ -138,6 +161,12 @@ export function closeOutDay() {
             ? definition.messages.income(payout, label, instance, assetState)
             : `${definition.name} generated $${formatMoney(payout)} today.`;
           addMoney(payout, message, definition.income?.logType || 'passive');
+          recordPayoutContribution({
+            key: `asset:${definition.id}:payout`,
+            label: `💰 ${definition.singular || definition.name}`,
+            amount: payout,
+            category: 'passive'
+          });
         } else {
           instance.lastIncome = 0;
           const label = instanceLabel(definition, index);

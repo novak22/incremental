@@ -3,6 +3,7 @@ import { addLog } from '../core/log.js';
 import { getState, getUpgradeState } from '../core/state.js';
 import { spendMoney } from './currency.js';
 import { gainTime } from './time.js';
+import { recordCostContribution } from './metrics.js';
 
 export const ASSISTANT_CONFIG = {
   hiringCost: 180,
@@ -48,6 +49,12 @@ export function hireAssistant() {
   }
 
   spendMoney(ASSISTANT_CONFIG.hiringCost);
+  recordCostContribution({
+    key: 'assistant:hiring',
+    label: '🤝 Assistant onboarding',
+    amount: ASSISTANT_CONFIG.hiringCost,
+    category: 'investment'
+  });
   upgrade.count = currentCount + 1;
   state.bonusTime += ASSISTANT_CONFIG.hoursPerAssistant;
   gainTime(ASSISTANT_CONFIG.hoursPerAssistant);
@@ -90,6 +97,12 @@ export function processAssistantPayroll() {
 
   const hadFunds = state.money >= totalCost;
   spendMoney(totalCost);
+  recordCostContribution({
+    key: 'assistant:payroll',
+    label: '🤖 Assistant payroll',
+    amount: totalCost,
+    category: 'payroll'
+  });
   const formatted = formatMoney(totalCost);
   if (hadFunds) {
     addLog(`Assistant payroll cleared at $${formatted} for ${count} teammate${count === 1 ? '' : 's'}.`, 'info');

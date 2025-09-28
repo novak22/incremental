@@ -8,6 +8,23 @@ let upgradeMap = new Map();
 
 export let state = null;
 
+export function createEmptyDailyMetrics() {
+  return {
+    time: {},
+    payouts: {},
+    costs: {}
+  };
+}
+
+export function ensureDailyMetrics(target = state) {
+  if (!target) return null;
+  target.metrics = target.metrics || {};
+  if (!target.metrics.daily) {
+    target.metrics.daily = createEmptyDailyMetrics();
+  }
+  return target.metrics.daily;
+}
+
 export function configureRegistry({ hustles = [], assets = [], upgrades = [] }) {
   registry = { hustles, assets, upgrades };
   hustleMap = new Map(hustles.map(item => [item.id, item]));
@@ -146,6 +163,8 @@ export function ensureStateShape(target = state) {
 
   target.progress = target.progress || {};
   target.progress.knowledge = target.progress.knowledge || {};
+
+  ensureDailyMetrics(target);
 }
 
 export function buildBaseState() {
@@ -161,6 +180,9 @@ export function buildBaseState() {
     upgrades: {},
     progress: {
       knowledge: {}
+    },
+    metrics: {
+      daily: createEmptyDailyMetrics()
     },
     log: [],
     lastSaved: Date.now()

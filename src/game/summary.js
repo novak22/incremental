@@ -1,109 +1,87 @@
 import { getState, getAssetState } from '../core/state.js';
 import { formatHours, formatMoney } from '../core/helpers.js';
-import { ASSETS } from './assets/index.js';
-import { getDailyIncomeRange } from './assets/helpers.js';
-import { getAssistantDailyCost } from './assistant.js';
 import { KNOWLEDGE_TRACKS, getKnowledgeProgress } from './requirements.js';
+import { getDailyMetrics } from './metrics.js';
 
 export function computeDailySummary(state = getState()) {
   if (!state) {
     return {
+      totalTime: 0,
       setupHours: 0,
       maintenanceHours: 0,
-      maintenanceCost: 0,
-      incomeMin: 0,
-      incomeMax: 0,
-      activeCount: 0,
-      setupCount: 0,
+      otherTimeHours: 0,
+      totalEarnings: 0,
+      passiveEarnings: 0,
+      activeEarnings: 0,
+      totalSpend: 0,
+      upkeepSpend: 0,
+      investmentSpend: 0,
       knowledgeInProgress: 0,
       knowledgePendingToday: 0,
       timeBreakdown: [],
-      payoutBreakdown: [],
-      costBreakdown: [],
+      earningsBreakdown: [],
+      spendBreakdown: [],
       studyBreakdown: []
     };
   }
 
-  let setupHours = 0;
-  let maintenanceHours = 0;
-  let maintenanceCost = 0;
-  let incomeMin = 0;
-  let incomeMax = 0;
-  let activeCount = 0;
-  let setupCount = 0;
+  const metrics = getDailyMetrics(state) || {};
+  const timeEntries = Object.values(metrics.time || {});
+  const earningsEntries = Object.values(metrics.payouts || {});
+  const spendEntries = Object.values(metrics.costs || {});
 
-  const setupMap = new Map();
-  const upkeepMap = new Map();
-  const incomeMap = new Map();
-  const costMap = new Map();
+  const getCategory = entry => entry?.category || 'general';
+  const sumEntries = (entries, field, predicate = () => true) =>
+    entries.reduce((total, entry) => {
+      if (!predicate(entry)) return total;
+      const value = Number(entry?.[field]);
+      return Number.isFinite(value) ? total + value : total;
+    }, 0);
 
-  for (const definition of ASSETS) {
-    const assetState = getAssetState(definition.id, state);
-    if (!assetState?.instances?.length) continue;
+  const totalTime = sumEntries(timeEntries, 'hours');
+  const setupHours = sumEntries(timeEntries, 'hours', entry => getCategory(entry) === 'setup');
+  const maintenanceHours = sumEntries(timeEntries, 'hours', entry => getCategory(entry) === 'maintenance');
+  const otherTimeHours = Math.max(0, totalTime - setupHours - maintenanceHours);
 
-    const setupPerDay = Math.max(0, Number(definition.setup?.hoursPerDay) || 0);
-    const maintenancePerDay = Math.max(0, Number(definition.maintenance?.hours) || 0);
-    const maintenanceMoney = Math.max(0, Number(definition.maintenance?.cost) || 0);
-    const range = getDailyIncomeRange(definition);
-    const label = definition.singular || definition.name;
+  const formatTimeBreakdown = timeEntries
+    .filter(entry => Number(entry?.hours) > 0)
+    .sort((a, b) => Number(b.hours) - Number(a.hours))
+    .map(entry => ({
+      label: entry.label,
+      value: `${formatHours(Number(entry.hours))} today`
+    }));
 
-    for (const instance of assetState.instances) {
-      if (instance.status === 'setup') {
-        setupCount += 1;
-        setupHours += setupPerDay;
-        if (setupPerDay > 0) {
-          setupMap.set(label, (setupMap.get(label) || 0) + setupPerDay);
-        }
-      } else if (instance.status === 'active') {
-        activeCount += 1;
-        maintenanceHours += maintenancePerDay;
-        maintenanceCost += maintenanceMoney;
-        incomeMin += range.min;
-        incomeMax += range.max;
+  const totalEarnings = sumEntries(earningsEntries, 'amount');
+  const passiveEarnings = sumEntries(earningsEntries, 'amount', entry =>
+    ['passive', 'offline'].includes(getCategory(entry))
+  );
+  const activeEarnings = sumEntries(earningsEntries, 'amount', entry =>
+    ['hustle', 'delayed'].includes(getCategory(entry))
+  );
 
-        if (maintenancePerDay > 0) {
-          upkeepMap.set(label, (upkeepMap.get(label) || 0) + maintenancePerDay);
-        }
+  const earningsBreakdown = earningsEntries
+    .filter(entry => Number(entry?.amount) > 0)
+    .sort((a, b) => Number(b.amount) - Number(a.amount))
+    .map(entry => ({
+      label: entry.label,
+      value: `$${formatMoney(Number(entry.amount))} today`
+    }));
 
-        const incomeEntry = incomeMap.get(label) || { min: 0, max: 0, count: 0 };
-        incomeEntry.min += range.min;
-        incomeEntry.max += range.max;
-        incomeEntry.count += 1;
-        incomeMap.set(label, incomeEntry);
+  const totalSpend = sumEntries(spendEntries, 'amount');
+  const upkeepSpend = sumEntries(spendEntries, 'amount', entry =>
+    ['maintenance', 'payroll'].includes(getCategory(entry))
+  );
+  const investmentSpend = sumEntries(spendEntries, 'amount', entry =>
+    ['setup', 'investment', 'upgrade', 'consumable'].includes(getCategory(entry))
+  );
 
-        if (maintenanceMoney > 0) {
-          costMap.set(label, (costMap.get(label) || 0) + maintenanceMoney);
-        }
-      }
-    }
-  }
-
-  const assistantCost = getAssistantDailyCost(state);
-  maintenanceCost += assistantCost;
-
-  const timeBreakdown = [];
-  for (const [label, hours] of setupMap.entries()) {
-    timeBreakdown.push({ label: `🚀 ${label} prep`, value: `${formatHours(hours)} / day` });
-  }
-  for (const [label, hours] of upkeepMap.entries()) {
-    timeBreakdown.push({ label: `🛠️ ${label} upkeep`, value: `${formatHours(hours)} / day` });
-  }
-
-  const payoutBreakdown = Array.from(incomeMap.entries()).map(([label, values]) => {
-    const min = formatMoney(values.min);
-    const max = formatMoney(values.max);
-    const suffix = values.min === values.max ? `/day` : `/day range`;
-    const amount = values.min === values.max ? `$${min}` : `$${min} – $${max}`;
-    return { label: `💰 ${label}`, value: `${amount} ${suffix}` };
-  });
-
-  const costBreakdown = Array.from(costMap.entries()).map(([label, value]) => ({
-    label: `🔧 ${label} upkeep`,
-    value: `$${formatMoney(value)} / day`
-  }));
-  if (assistantCost > 0) {
-    costBreakdown.push({ label: '🤖 Assistant squad', value: `$${formatMoney(assistantCost)} / day` });
-  }
+  const spendBreakdown = spendEntries
+    .filter(entry => Number(entry?.amount) > 0)
+    .sort((a, b) => Number(b.amount) - Number(a.amount))
+    .map(entry => ({
+      label: entry.label,
+      value: `$${formatMoney(Number(entry.amount))} today`
+    }));
 
   let knowledgeInProgress = 0;
   let knowledgePendingToday = 0;
@@ -131,18 +109,21 @@ export function computeDailySummary(state = getState()) {
   }
 
   return {
+    totalTime,
     setupHours,
     maintenanceHours,
-    maintenanceCost,
-    incomeMin,
-    incomeMax,
-    activeCount,
-    setupCount,
+    otherTimeHours,
+    totalEarnings,
+    passiveEarnings,
+    activeEarnings,
+    totalSpend,
+    upkeepSpend,
+    investmentSpend,
     knowledgeInProgress,
     knowledgePendingToday,
-    timeBreakdown,
-    payoutBreakdown,
-    costBreakdown,
+    timeBreakdown: formatTimeBreakdown,
+    earningsBreakdown,
+    spendBreakdown,
     studyBreakdown
   };
 }
