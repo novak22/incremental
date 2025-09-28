@@ -11,7 +11,7 @@
 - Day transitions briefly surface the prior day’s totals before resetting, so players can review earnings before diving into the next loop.
 
 ## Tuning Parameters
-- **Metric Categories** – Time: `setup`, `maintenance`, `hustle`, `study`, `general`. Earnings: `passive`, `offline`, `hustle`, `delayed`. Spending: `maintenance`, `payroll`, `setup`, `investment`, `upgrade`, `consumable`.
+- **Metric Categories** – Time: `setup`, `maintenance`, `hustle`, `study`, `general`. Earnings: `passive`, `offline`, `hustle`, `delayed`, `sale`. Spending: `maintenance`, `payroll`, `setup`, `investment`, `upgrade`, `consumable`.
 - **UI Copy** – Captions summarise the dominant categories (setup vs. upkeep, passive vs. active, upkeep vs. investments). Adjust strings in `src/ui/dashboard.js` if new categories should surface.
 - **Reset Timing** – `resetDailyMetrics` is triggered inside `endDay` after the final summary update and before new-day allocations. If the cadence of automatic maintenance changes, revisit that timing to ensure fresh days start clean.
 - **Formatting Helpers** – Breakdown rows format hours via `formatHours` and cash via `formatMoney`. Update these helpers if you tweak rounding or currency presentation.

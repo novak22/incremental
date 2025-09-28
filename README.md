@@ -25,7 +25,7 @@ Online Hustle Simulator is a browser-based incremental game about orchestrating 
 - **Automation Architecture Course** – Study 3h/day for 7 days to earn SaaS-ready engineering chops.
 
 ### Passive Assets (Daily Payouts)
-Each asset supports multiple instances, tracks setup progress, and rolls a daily income range once active. Quality actions unique to each asset increase payouts and stability.
+Each asset supports multiple instances, tracks setup progress, and rolls a daily income range once active. Quality actions unique to each asset increase payouts and stability, and you can liquidate any instance directly from the card for three times its previous day payout.
 - **Personal Blog Network** – Setup 1 day × 3h ($25). Requires 1h/day + $2 maintenance. Quality actions include drafting posts, SEO sprints, and backlink outreach; Quality 0 drips $1–$3/day while Quality 3 hits $70–$120/day (Automation Course still adds +50%).
 - **Weekly Vlog Channel** – Setup 3 days × 4h ($180) with Camera upgrade. Maintenance 1.5h/day + $5. Record episodes, polish edits, and run promo blasts to climb from $2–$6/day at Quality 0 to $150–$260/day at Quality 3, with viral spikes possible at higher tiers.
 - **Digital E-Book Series** – Setup 4 days × 3h ($60) after completing Outline Mastery. Maintenance 0.5h/day. Write chapters, commission cover art, and rally reviews to move from $3–$6/day drafts to $110–$160/day fandom favorites.
@@ -47,6 +47,7 @@ Each asset supports multiple instances, tracks setup progress, and rolls a daily
 ## Current Feature Set
 - Day-driven scheduler with automatic setup/maintenance allocation and detailed end-of-day recaps.
 - Six passive asset types with multi-instance tracking, setup states, maintenance funding, and dynamic daily income rolls.
+- In-card asset management with instance-level breakdowns and a one-click sale option that converts yesterday’s earnings into cash at a 3× multiple.
 - Daily metrics ledger that captures hours, earnings, and spending, powering the refreshed snapshot breakdowns.
 - Knowledge study hustles that gate advanced assets and remember streak progress across days.
 - Equipment and experience requirements surfaced directly on asset cards with live progress indicators.

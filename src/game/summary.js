@@ -56,7 +56,7 @@ export function computeDailySummary(state = getState()) {
     ['passive', 'offline'].includes(getCategory(entry))
   );
   const activeEarnings = sumEntries(earningsEntries, 'amount', entry =>
-    ['hustle', 'delayed'].includes(getCategory(entry))
+    ['hustle', 'delayed', 'sale'].includes(getCategory(entry))
   );
 
   const earningsBreakdown = earningsEntries

@@ -6,12 +6,16 @@ import {
   getAssetState,
   getState
 } from '../../core/state.js';
-import { spendMoney } from '../currency.js';
+import { addMoney, spendMoney } from '../currency.js';
 import { executeAction } from '../actions.js';
 import { checkDayEnd } from '../lifecycle.js';
 import { spendTime } from '../time.js';
 import { assetRequirementsMetById } from '../requirements.js';
-import { recordCostContribution, recordTimeContribution } from '../metrics.js';
+import {
+  recordCostContribution,
+  recordPayoutContribution,
+  recordTimeContribution
+} from '../metrics.js';
 import {
   getInstanceQualityRange,
   getOverallQualityRange,
@@ -169,6 +173,45 @@ export function latestYieldDetail(definition) {
 export function instanceLabel(definition, index) {
   const base = definition.singular || definition.name;
   return `${base} #${index + 1}`;
+}
+
+export function calculateAssetSalePrice(instance) {
+  const lastIncome = Math.max(0, Number(instance?.lastIncome) || 0);
+  return Math.max(0, Math.round(lastIncome) * 3);
+}
+
+export function sellAssetInstance(definition, instanceId) {
+  if (!definition || !instanceId) return false;
+
+  let sold = false;
+
+  executeAction(() => {
+    const assetState = getAssetState(definition.id);
+    const instances = assetState.instances || [];
+    const index = instances.findIndex(instance => instance.id === instanceId);
+    if (index === -1) return false;
+
+    const instance = instances[index];
+    const price = calculateAssetSalePrice(instance);
+    const label = instanceLabel(definition, index);
+
+    if (price > 0) {
+      addMoney(price, `${label} sold off for $${formatMoney(price)}. Fresh funds unlocked!`, 'passive');
+      recordPayoutContribution({
+        key: `asset:${definition.id}:sale`,
+        label: `🏷️ ${definition.singular || definition.name} sale`,
+        amount: price,
+        category: 'sale'
+      });
+    } else {
+      addLog(`${label} was scrapped for parts—no earnings yet, so no cash back.`, 'info');
+    }
+
+    instances.splice(index, 1);
+    sold = true;
+  });
+
+  return sold;
 }
 
 export function getDailyIncomeRange(definition) {

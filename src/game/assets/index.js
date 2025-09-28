@@ -1,6 +1,10 @@
 import { ASSETS } from './registry.js';
 import { allocateAssetMaintenance, closeOutDay } from './lifecycle.js';
-import { getIncomeRangeForDisplay } from './helpers.js';
+import {
+  getIncomeRangeForDisplay,
+  calculateAssetSalePrice,
+  sellAssetInstance
+} from './helpers.js';
 import {
   performQualityAction,
   getQualityLevel,
@@ -18,7 +22,9 @@ const assetsSystem = {
   getQualityLevel,
   getQualityLevelSummary,
   getQualityActions,
-  getQualityTracks
+  getQualityTracks,
+  sellAssetInstance,
+  calculateSalePrice: calculateAssetSalePrice
 };
 
 export default assetsSystem;
@@ -31,5 +37,7 @@ export {
   getQualityLevel,
   getQualityLevelSummary,
   getQualityActions,
-  getQualityTracks
+  getQualityTracks,
+  sellAssetInstance,
+  calculateAssetSalePrice
 };
