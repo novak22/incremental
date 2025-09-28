@@ -25,12 +25,14 @@ const saasDefinition = {
     variance: 0.2,
     logType: 'passive'
   },
-  requirements: [
-    { type: 'knowledge', id: 'automationCourse' },
-    { type: 'equipment', id: 'serverCluster' },
-    { type: 'experience', assetId: 'dropshipping', count: 1 },
-    { type: 'experience', assetId: 'ebook', count: 1 }
-  ],
+  requirements: {
+    knowledge: ['automationCourse'],
+    equipment: ['serverCluster'],
+    experience: [
+      { assetId: 'dropshipping', count: 1 },
+      { assetId: 'ebook', count: 1 }
+    ]
+  },
   quality: {
     summary: 'Squash bugs, ship features, and host support sprints so your app graduates into a churn-proof subscription machine.',
     tracks: {
