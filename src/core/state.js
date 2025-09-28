@@ -129,6 +129,19 @@ export function ensureStateShape(target = state) {
     const defaults = structuredClone(def.defaultState || {});
     const existing = target.upgrades[def.id];
     target.upgrades[def.id] = existing ? { ...defaults, ...existing } : defaults;
+    if (def.id === 'assistant') {
+      const assistantState = target.upgrades[def.id];
+      const storedCount = Number(assistantState.count);
+      if (!Number.isFinite(storedCount)) {
+        assistantState.count = assistantState.purchased ? 1 : 0;
+      } else {
+        assistantState.count = Math.max(0, storedCount);
+      }
+      if (assistantState.purchased && assistantState.count === 0) {
+        assistantState.count = 1;
+      }
+      delete assistantState.purchased;
+    }
   }
 
   target.progress = target.progress || {};
