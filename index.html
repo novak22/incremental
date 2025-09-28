@@ -21,13 +21,30 @@
           <span class="label">Day Progress</span>
           <div class="time-wrapper">
             <div class="time-readout">
-              <span id="time" class="value">08h / 24h</span>
+              <span id="time" class="value">00h / 14h</span>
               <span id="time-note" class="time-note">Sleep banked, hustle ready.</span>
             </div>
-            <div class="time-bar" aria-hidden="true">
-              <div id="time-progress" class="time-progress"></div>
+            <div class="time-bars">
+              <div class="time-bar" aria-hidden="true">
+                <div id="time-progress" class="time-progress"></div>
+              </div>
+              <div id="assistant-support" class="time-support" hidden>
+                <div class="time-support__header">
+                  <span class="time-support__label">Assistants</span>
+                  <span id="assistant-note" class="time-support__note"></span>
+                </div>
+                <div class="time-bar time-bar--assistants" aria-hidden="true">
+                  <div id="assistant-progress" class="time-progress"></div>
+                </div>
+              </div>
             </div>
-            <ul id="time-legend" class="time-legend" aria-live="polite"></ul>
+            <button
+              id="time-legend-toggle"
+              class="ghost-button time-legend-toggle"
+              type="button"
+              aria-expanded="false"
+            >Show timeline legend</button>
+            <ul id="time-legend" class="time-legend" hidden aria-live="polite"></ul>
           </div>
         </div>
         <div class="stat">

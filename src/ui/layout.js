@@ -3,6 +3,7 @@ import elements from './elements.js';
 export function initLayoutControls() {
   setupSectionNavigation();
   setupStatsPanel();
+  setupTimeLegendToggle();
   setupLogToggle();
   setupGlobalFilters();
   setupHustleFilter();
@@ -88,6 +89,27 @@ function setupStatsPanel() {
   });
 
   update(false);
+}
+
+function setupTimeLegendToggle() {
+  const toggle = elements.timeLegendToggle;
+  const legend = elements.timeLegend;
+  if (!toggle || !legend) return;
+
+  const setExpanded = expanded => {
+    toggle.setAttribute('aria-expanded', String(expanded));
+    toggle.textContent = expanded ? 'Hide timeline legend' : 'Show timeline legend';
+    legend.hidden = !expanded;
+  };
+
+  toggle.addEventListener('click', () => {
+    if (toggle.disabled) return;
+    const expanded = toggle.getAttribute('aria-expanded') === 'true';
+    setExpanded(!expanded);
+  });
+
+  toggle.disabled = true;
+  setExpanded(false);
 }
 
 function setupLogToggle() {

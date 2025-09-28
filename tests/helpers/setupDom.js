@@ -15,6 +15,11 @@ export function ensureTestDom() {
               <span id="time"></span>
               <span id="time-note"></span>
               <div id="time-progress"></div>
+              <div id="assistant-support">
+                <span id="assistant-note"></span>
+                <div id="assistant-progress"></div>
+              </div>
+              <button id="time-legend-toggle"></button>
               <ul id="time-legend"></ul>
             </div>
             <span id="day"></span>
