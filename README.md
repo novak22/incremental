@@ -1,21 +1,43 @@
 # Online Hustle Simulator
 
 ## Game Concept
-Online Hustle Simulator is a browser-based incremental game about balancing limited hours with the drive to stack cash. You start each day with a small nest egg and a fixed 14-hour schedule, then choose how to grind: pick up quick gigs, commit to longer contracts, or invest in passive plays that keep the money coming in while you plan your next move.
+Online Hustle Simulator is a browser-based incremental game about balancing limited hours with the drive to stack cash. You start each day with $45, a fixed 14-hour schedule, and a humble toolkit. From there you pick up quick gigs, juggle delayed payouts, invest in long-term assets, and use strategic upgrades to stretch the day just a little farther.
 
-## Core Mechanics
-- **Daily Time Budget** – Every in-game day grants a 14-hour baseline. Hustle actions spend time, while certain upgrades (like the virtual assistant or turbo coffee) extend the cap so you can squeeze in more work before the clock hits zero.
-- **Contracts (Daily Hustles)** – Instant actions such as Freelance Writing resolve immediately with cash-on-delivery payouts. Delayed contracts like eBay Flips require upfront time (and sometimes money) but reward you later in the day.
-- **Assets** – Persistent investments, currently the Personal Blog, require a one-time setup of time and money. Once active they generate automated income ticks even while you are idle or offline.
-- **Upgrades & Boosts** – Purchasable perks unlock extra capabilities. Examples include hiring a virtual assistant for permanent time increases, brewing turbo coffee for limited-use time boosts, and studying an automation course to amplify blog revenue.
+## Gameplay Loop & Systems
+- **Daily Time Budget** – Every in-game day begins with 14 base hours. Taking hustles, maintaining assets, or studying upgrades consumes that time. Hiring a virtual assistant permanently adds +2 daily hours, while turbo coffee provides up to three one-hour boosts per day. Time bonuses reset when a new day starts.
+- **Daily Cycle & Maintenance** – When you run out of time (or choose to end the day) the simulation advances. Asset upkeep automatically attempts to reserve the required maintenance hours; funded assets stay active and claim any daily payouts, while neglected ones pause and miss their end-of-day cash.
+- **Activity Log** – Every action, payout, maintenance result, and day transition writes flavorful updates to the log so you can trace what happened during long sessions.
+
+### Hustles
+Hustles are active tasks that exchange time (and sometimes money) for short-term cash.
+- **Freelance Writing** – Spend 2h to immediately earn $18. A reliable filler that keeps money flowing between bigger plays.
+- **eBay Flips** – Spend 4h and $20 up front. Each flip finishes 30 seconds later for a $48 payout. Multiple flips can run concurrently, and the card displays the number of pending flips plus the timer to the next payout.
+
+### Passive Assets
+Assets are persistent ventures that pay automatically once launched. They require maintenance time each day to keep running and may offer end-of-day bonuses when properly funded.
+- **Personal Blog** – Spend 3h and $25 to launch each blog instance. Every active blog earns $3 every 10 seconds (boosted to $4.50 after taking the Automation Course) and delivers a $45 daily payout if you allocate 1h of maintenance before the next day.
+- **Vlog Channel** – Requires the Camera upgrade. Spend 4h and $150 to activate. Generates $9 every 15 seconds and consumes 1h of daily maintenance time to stay online.
+- **Podcast Series** – Requires the Studio upgrade. Spend 5h and $220 to activate. Produces $25 every 30 seconds and needs 1.5h of upkeep each day to stay funded.
+
+### Upgrades & Boosts
+- **Hire Virtual Assistant** – Costs $180. Permanently adds +2 hours to your daily cap and immediately grants the extra time for the current day.
+- **Turbo Coffee** – Costs $40 per cup, up to three per day. Each purchase adds +1 hour for the current day only.
+- **Buy Camera** – Costs $200. Unlocks the Vlog Channel asset card.
+- **Studio Setup** – Costs $260. Unlocks the Podcast Series asset card.
+- **Automation Course** – Costs $260. Requires at least one active blog and increases all blog tick payouts by 50%.
+
+### Persistence & Offline Progress
+- **Autosave** – The game continuously saves to `localStorage` and migrates data from older save formats.
+- **Offline Earnings** – Blogs, vlogs, podcasts, and eBay flips continue to accrue income while you are away. Upon returning, the game credits offline income and adds summary log entries so you can see what paid out.
 
 ## Current Feature Set
-- Polished UI with dedicated panels for Hustles, Passive Assets, Upgrades, and the activity Log displayed in `index.html`.
-- Two fully implemented hustles: an instant freelance writing gig and delayed eBay flips that queue payouts after 30 seconds with status updates.
-- Passive blogging asset with buffer-based income ticks every 10 seconds, including offline accrual handling and multiplier upgrades.
-- Upgrade suite covering permanent time boosts, limited-use daily boosts, and conditional unlocks tied to asset state (e.g., automation course requires an active blog).
-- Persistent save/load via `localStorage`, including migration of legacy saves and offline progress compensation.
-- Event log feed with message templating for instant feedback on actions, passive income, delays, and day transitions.
+- Three-panel layout for Hustles, Passive Assets, and Upgrades with a persistent activity log and day tracker.
+- Two distinct hustle archetypes (instant vs. delayed) with automated payout processing and countdown feedback.
+- Three passive asset types featuring maintenance requirements, daily payouts, and income multipliers.
+- Upgrade suite that mixes permanent progression, conditional content unlocks, and limited-use daily boosts.
+- Automatic day rollover, maintenance allocation, and end-of-day payout distribution to reinforce the management loop.
+- Persistent save/load via `localStorage` with offline catch-up and legacy save migration support.
+- Flavorful log feed that narrates earnings, upkeep results, and day transitions to keep the player informed.
 
 ## Running the Project Locally
 1. Clone the repository or download the source.
