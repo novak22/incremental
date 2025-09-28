@@ -1,6 +1,12 @@
 import { createId, formatDays, formatHours, formatMoney } from '../core/helpers.js';
 import { addLog } from '../core/log.js';
-import { getAssetDefinition, getAssetState, getHustleState, getState } from '../core/state.js';
+import {
+  getAssetDefinition,
+  getAssetState,
+  getHustleDefinition,
+  getHustleState,
+  getState
+} from '../core/state.js';
 import { addMoney, spendMoney } from './currency.js';
 import { executeAction } from './actions.js';
 import { checkDayEnd } from './lifecycle.js';
@@ -40,6 +46,47 @@ function renderRequirementSummary(requirements = []) {
     .join(' • ');
 }
 
+function getHustleMetricIds(hustleId) {
+  const definition = getHustleDefinition(hustleId);
+  if (!definition) return {};
+  return definition.action?.metricIds || definition.metricIds || {};
+}
+
+function fallbackHustleMetricId(hustleId, type) {
+  const suffix = type === 'payout' ? 'payout' : type;
+  return `hustle:${hustleId}:${suffix}`;
+}
+
+function recordHustleTime(hustleId, { label, hours, category }) {
+  const metrics = getHustleMetricIds(hustleId);
+  recordTimeContribution({
+    key: metrics.time || fallbackHustleMetricId(hustleId, 'time'),
+    label,
+    hours,
+    category
+  });
+}
+
+function recordHustlePayout(hustleId, { label, amount, category }) {
+  const metrics = getHustleMetricIds(hustleId);
+  recordPayoutContribution({
+    key: metrics.payout || fallbackHustleMetricId(hustleId, 'payout'),
+    label,
+    amount,
+    category
+  });
+}
+
+function recordHustleCost(hustleId, { label, amount, category }) {
+  const metrics = getHustleMetricIds(hustleId);
+  recordCostContribution({
+    key: metrics.cost || fallbackHustleMetricId(hustleId, 'cost'),
+    label,
+    amount,
+    category
+  });
+}
+
 const AUDIENCE_CALL_REQUIREMENTS = [{ assetId: 'blog', count: 1 }];
 const BUNDLE_PUSH_REQUIREMENTS = [
   { assetId: 'blog', count: 2 },
@@ -63,15 +110,13 @@ export const HUSTLES = [
       onClick: () => {
         executeAction(() => {
           spendTime(2);
-          recordTimeContribution({
-            key: 'hustle:freelance:time',
+          recordHustleTime('freelance', {
             label: '⚡ Freelance writing time',
             hours: 2,
             category: 'hustle'
           });
           addMoney(18, 'You hustled an article for $18. Not Pulitzer material, but it pays the bills!');
-          recordPayoutContribution({
-            key: 'hustle:freelance:payout',
+          recordHustlePayout('freelance', {
             label: '💼 Freelance writing payout',
             amount: 18,
             category: 'hustle'
@@ -113,15 +158,13 @@ export const HUSTLES = [
             return;
           }
           spendTime(1);
-          recordTimeContribution({
-            key: 'hustle:audienceCall:time',
+          recordHustleTime('audienceCall', {
             label: '🎤 Audience Q&A prep',
             hours: 1,
             category: 'hustle'
           });
           addMoney(12, 'Your audience Q&A tipped $12 in template sales. Small wins add up!', 'hustle');
-          recordPayoutContribution({
-            key: 'hustle:audienceCall:payout',
+          recordHustlePayout('audienceCall', {
             label: '🎤 Audience Q&A payout',
             amount: 12,
             category: 'hustle'
@@ -163,15 +206,13 @@ export const HUSTLES = [
             return;
           }
           spendTime(2.5);
-          recordTimeContribution({
-            key: 'hustle:bundlePush:time',
+          recordHustleTime('bundlePush', {
             label: '🧺 Bundle promo planning',
             hours: 2.5,
             category: 'hustle'
           });
           addMoney(48, 'Your flash bundle moved $48 in upsells. Subscribers love the combo!', 'hustle');
-          recordPayoutContribution({
-            key: 'hustle:bundlePush:payout',
+          recordHustlePayout('bundlePush', {
             label: '🧺 Bundle promo payout',
             amount: 48,
             category: 'hustle'
@@ -204,15 +245,13 @@ export const HUSTLES = [
       onClick: () => {
         executeAction(() => {
           spendTime(4);
-          recordTimeContribution({
-            key: 'hustle:flips:time',
+          recordHustleTime('flips', {
             label: '📦 eBay flips prep',
             hours: 4,
             category: 'hustle'
           });
           spendMoney(20);
-          recordCostContribution({
-            key: 'hustle:flips:cost',
+          recordHustleCost('flips', {
             label: '💸 eBay flips sourcing',
             amount: 20,
             category: 'investment'
@@ -282,16 +321,14 @@ export function processFlipPayouts(now = Date.now(), offline = false) {
       if (offline) {
         state.money += flip.payout;
         offlineTotal += flip.payout;
-        recordPayoutContribution({
-          key: 'hustle:flips:payout',
+        recordHustlePayout('flips', {
           label: '💼 eBay flips payout',
           amount: flip.payout,
           category: offline ? 'offline' : 'delayed'
         });
       } else {
         addMoney(flip.payout, `Your eBay flip sold for $${formatMoney(flip.payout)}! Shipping label time.`, 'delayed');
-        recordPayoutContribution({
-          key: 'hustle:flips:payout',
+        recordHustlePayout('flips', {
           label: '💼 eBay flips payout',
           amount: flip.payout,
           category: 'delayed'
