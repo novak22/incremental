@@ -13,7 +13,7 @@ Online Hustle Simulator is a browser-based incremental game about orchestrating 
 ### Interface Overview
 - **Top Bar & Snapshot** – Money, time, and day stay pinned at the top. A collapsible Daily Snapshot panel now highlights per-stat breakdowns (time invested, money earned, passive streams, cash spent, study momentum) without overwhelming the main view. Passive earnings even call out which assets (and how many instances) delivered today’s cash, so you can immediately see what worked.
 - **Tabbed Workspace** – Hustles, Education, Passive Assets, and Upgrades each live in their own tab with dedicated copy and per-tab filters. Global toggles hide locked or completed cards, and you can spotlight only actionable options.
-- **Categorised Collections** – Passive assets surface in Foundation, Creative, Commerce, and Advanced groupings with a collapsed-card option for rapid scanning. Upgrades split into Equipment, Automation, Consumables, and a catch-all bucket with a quick search bar.
+- **Categorised Collections** – Passive assets surface in Foundation, Creative, Commerce, and Advanced groupings with a collapsed-card option for rapid scanning. Each grouping now sports a "View launched assets" toggle that opens a management roster listing upkeep, yesterday’s payout, and upgrade/sell controls for every instance. Upgrades split into Equipment, Automation, Consumables, and a catch-all bucket with a quick search bar.
 - **Event Log Controls** – The log dock keeps its running commentary but now includes a summary/detailed toggle when you want a lighter feed during long sessions.
 
 ### Hustles & Study Tracks
@@ -25,7 +25,7 @@ Online Hustle Simulator is a browser-based incremental game about orchestrating 
 - **Automation Architecture Course** – Study 3h/day for 7 days to earn SaaS-ready engineering chops.
 
 ### Passive Assets (Daily Payouts)
-Each asset supports multiple instances, tracks setup progress, and rolls a daily income range once active. Quality actions unique to each asset increase payouts and stability, and you can liquidate any instance directly from the card for three times its previous day payout.
+Each asset supports multiple instances, tracks setup progress, and rolls a daily income range once active. Quality actions unique to each asset increase payouts and stability, and you can liquidate any instance directly from the card—or from the category roster—for three times its previous day payout. The asset briefing modal doubles as an instance inspector, outlining status, upkeep, yesterday’s earnings, and which upgrades are owned or still locked.
 - **Personal Blog Network** – Setup 3 days × 3h ($180). Requires 1h/day + $5 maintenance. Quality actions include drafting posts, SEO sprints, and backlink outreach; Quality 0 drips $1–$3/day while Quality 3 now lands at $28–$38/day (Automation Course still adds +50%).
 - **Weekly Vlog Channel** – Setup 4 days × 4h ($420) with Camera upgrade. Maintenance 1.5h/day + $9. Record episodes, polish edits, and run promo blasts to climb from $2–$5/day at Quality 0 to $32–$40/day at Quality 3, with viral spikes possible at higher tiers.
 - **Digital E-Book Series** – Setup 4 days × 3h ($260) after completing Outline Mastery. Maintenance 0.75h/day + $3. Write chapters, commission cover art, and rally reviews to move from $2–$4/day drafts to $28–$38/day fandom favorites.

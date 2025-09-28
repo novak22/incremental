@@ -167,25 +167,53 @@
             <section class="asset-category" data-category="foundation">
               <header>
                 <h3>Foundation</h3>
+                <button
+                  class="asset-category__toggle ghost-button"
+                  type="button"
+                  data-asset-category-toggle="foundation"
+                  aria-expanded="false"
+                >View launched assets</button>
               </header>
+              <div class="asset-category__list" id="asset-list-foundation" hidden></div>
               <div class="card-grid asset-card-grid" id="asset-grid-foundation"></div>
             </section>
             <section class="asset-category" data-category="creative">
               <header>
                 <h3>Creative</h3>
+                <button
+                  class="asset-category__toggle ghost-button"
+                  type="button"
+                  data-asset-category-toggle="creative"
+                  aria-expanded="false"
+                >View launched assets</button>
               </header>
+              <div class="asset-category__list" id="asset-list-creative" hidden></div>
               <div class="card-grid asset-card-grid" id="asset-grid-creative"></div>
             </section>
             <section class="asset-category" data-category="commerce">
               <header>
                 <h3>Commerce</h3>
+                <button
+                  class="asset-category__toggle ghost-button"
+                  type="button"
+                  data-asset-category-toggle="commerce"
+                  aria-expanded="false"
+                >View launched assets</button>
               </header>
+              <div class="asset-category__list" id="asset-list-commerce" hidden></div>
               <div class="card-grid asset-card-grid" id="asset-grid-commerce"></div>
             </section>
             <section class="asset-category" data-category="advanced">
               <header>
                 <h3>Advanced</h3>
+                <button
+                  class="asset-category__toggle ghost-button"
+                  type="button"
+                  data-asset-category-toggle="advanced"
+                  aria-expanded="false"
+                >View launched assets</button>
               </header>
+              <div class="asset-category__list" id="asset-list-advanced" hidden></div>
               <div class="card-grid asset-card-grid" id="asset-grid-advanced"></div>
             </section>
           </div>
@@ -240,11 +268,41 @@
         <button id="asset-info-close" class="modal__close" type="button" aria-label="Close asset briefing">×</button>
         <div class="modal__content">
           <header class="modal__header">
-            <p class="modal__eyebrow">New Asset Briefing</p>
+            <p id="asset-info-eyebrow" class="modal__eyebrow">New Asset Briefing</p>
             <h3 id="asset-info-title"></h3>
             <p id="asset-info-description" class="modal__description"></p>
           </header>
-          <ul id="asset-info-details" class="modal__details"></ul>
+          <div id="asset-info-definition" class="asset-modal__definition">
+            <ul id="asset-info-details" class="modal__details"></ul>
+          </div>
+          <div id="asset-info-instance" class="asset-modal__instance" hidden>
+            <div class="asset-modal__summary">
+              <dl class="asset-modal__stats">
+                <div class="asset-modal__stat">
+                  <dt>Status</dt>
+                  <dd id="asset-info-instance-status"></dd>
+                </div>
+                <div class="asset-modal__stat">
+                  <dt>Quality</dt>
+                  <dd id="asset-info-instance-quality"></dd>
+                </div>
+                <div class="asset-modal__stat">
+                  <dt>Upkeep</dt>
+                  <dd id="asset-info-instance-upkeep"></dd>
+                </div>
+                <div class="asset-modal__stat">
+                  <dt>Last Payout</dt>
+                  <dd id="asset-info-instance-payout"></dd>
+                </div>
+              </dl>
+            </div>
+            <div class="asset-modal__upgrades">
+              <h4>Current Upgrades</h4>
+              <ul id="asset-info-upgrades-owned" class="modal__details modal__details--compact"></ul>
+              <h4>Available &amp; Locked Upgrades</h4>
+              <ul id="asset-info-upgrades-available" class="modal__details modal__details--compact"></ul>
+            </div>
+          </div>
         </div>
       </div>
     </div>

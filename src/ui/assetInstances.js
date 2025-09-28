@@ -2,7 +2,7 @@ import { formatMoney } from '../core/helpers.js';
 import { getAssetState } from '../core/state.js';
 import { calculateAssetSalePrice, instanceLabel, sellAssetInstance } from '../game/assets/helpers.js';
 
-function describeInstance(definition, instance) {
+export function describeInstance(definition, instance) {
   if (instance.status === 'setup') {
     const remaining = Number(instance.daysRemaining) || 0;
     if (remaining > 0) {
@@ -14,7 +14,7 @@ function describeInstance(definition, instance) {
   return `Active • Quality ${level}`;
 }
 
-function describeInstanceEarnings(instance) {
+export function describeInstanceEarnings(instance) {
   if (instance.status !== 'active') {
     return '💤 No earnings until launch';
   }

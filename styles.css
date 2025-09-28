@@ -890,6 +890,14 @@ body.modal-open {
   gap: 1.5rem;
 }
 
+.asset-category header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
 .asset-category header h3,
 .upgrade-group header h3 {
   font-size: 1.1rem;
@@ -897,6 +905,124 @@ body.modal-open {
   text-transform: uppercase;
   color: rgba(148, 163, 184, 0.8);
   margin-bottom: 0.6rem;
+}
+
+.asset-category__toggle {
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: rgba(15, 23, 42, 0.45);
+  transition: background 0.2s ease, color 0.2s ease, border 0.2s ease;
+}
+
+.asset-category__toggle:hover,
+.asset-category__toggle:focus-visible {
+  color: var(--text);
+  border-color: rgba(56, 189, 248, 0.32);
+  background: rgba(56, 189, 248, 0.18);
+}
+
+.asset-category__list {
+  margin-top: -0.4rem;
+  margin-bottom: 0.35rem;
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 16px;
+  padding: 0.85rem 1rem;
+  box-shadow: var(--shadow);
+}
+
+.asset-category__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.asset-category__table thead th {
+  text-align: left;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.75);
+  padding-bottom: 0.5rem;
+}
+
+.asset-category__table tbody tr {
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.asset-category__table tbody tr:first-child {
+  border-top: none;
+}
+
+.asset-category__table td {
+  padding: 0.65rem 0;
+  vertical-align: middle;
+  color: rgba(226, 232, 240, 0.92);
+}
+
+.asset-category__table td strong {
+  color: var(--text);
+}
+
+.asset-category__name {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.asset-category__status {
+  font-size: 0.72rem;
+  color: rgba(148, 163, 184, 0.75);
+}
+
+.asset-category__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.asset-category__actions button {
+  padding: 0.35rem 0.7rem;
+  font-size: 0.75rem;
+  border-radius: 999px;
+  border: none;
+  background: rgba(148, 163, 184, 0.16);
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.asset-category__actions button:hover:not(:disabled),
+.asset-category__actions button:focus-visible:not(:disabled) {
+  background: rgba(56, 189, 248, 0.32);
+  transform: translateY(-1px);
+}
+
+.asset-category__actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.asset-category__empty {
+  font-size: 0.85rem;
+  color: rgba(148, 163, 184, 0.8);
+  text-align: center;
+  padding: 0.75rem 0;
+}
+
+.asset-category__upkeep {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.asset-category__earnings {
+  font-weight: 600;
+  color: var(--success);
 }
 
 .assets-section.is-collapsed .asset-card {
@@ -1015,6 +1141,15 @@ body.modal-open {
   gap: 0.7rem;
 }
 
+.modal__details--compact {
+  gap: 0.5rem;
+}
+
+.modal__details--compact li {
+  font-size: 0.82rem;
+  padding: 0.6rem 0.8rem;
+}
+
 .modal__details li {
   background: rgba(15, 23, 42, 0.45);
   border-radius: 12px;
@@ -1028,6 +1163,51 @@ body.modal-open {
   text-align: center;
   color: var(--muted);
   font-style: italic;
+}
+
+.asset-modal__instance {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.asset-modal__summary {
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 14px;
+  padding: 0.9rem 1rem;
+}
+
+.asset-modal__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+}
+
+.asset-modal__stat dt {
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.75);
+  margin-bottom: 0.25rem;
+}
+
+.asset-modal__stat dd {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.asset-modal__upgrades h4 {
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.8);
+  margin-bottom: 0.4rem;
+}
+
+.asset-modal__upgrades h4 + .modal__details {
+  margin-bottom: 0.4rem;
 }
 
 .log {
