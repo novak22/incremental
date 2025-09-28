@@ -6,9 +6,23 @@ import { getTimeCap } from '../game/time.js';
 import { registry } from '../game/registry.js';
 import { computeDailySummary } from '../game/summary.js';
 import { renderSummary } from './dashboard.js';
+import { applyCardFilters } from './layout.js';
+
+function buildCollections() {
+  const hustles = registry.hustles.filter(hustle => hustle.tag?.type !== 'study');
+  const education = registry.hustles.filter(hustle => hustle.tag?.type === 'study');
+  return {
+    hustles,
+    education,
+    assets: registry.assets,
+    upgrades: registry.upgrades
+  };
+}
 
 export function renderCards() {
-  renderCardCollections(registry);
+  const collections = buildCollections();
+  renderCardCollections(collections);
+  applyCardFilters();
 }
 
 export function updateUI() {
@@ -23,8 +37,10 @@ export function updateUI() {
   const percent = cap === 0 ? 0 : Math.min(100, Math.max(0, (state.timeLeft / cap) * 100));
   elements.timeProgress.style.width = `${percent}%`;
 
-  updateAllCards(registry);
+  const collections = buildCollections();
+  updateAllCards(collections);
 
   const summary = computeDailySummary(state);
   renderSummary(summary);
+  applyCardFilters();
 }

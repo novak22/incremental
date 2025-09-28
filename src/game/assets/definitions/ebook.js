@@ -14,7 +14,7 @@ const ebookDefinition = {
   id: 'ebook',
   name: 'Digital E-Book Series',
   singular: 'E-Book',
-  tag: { label: 'Knowledge', type: 'passive' },
+  tag: { label: 'Creative', type: 'passive' },
   description: 'Package your expertise into downloadable page-turners that sell while you snooze.',
   setup: { days: 4, hoursPerDay: 3, cost: 60 },
   maintenance: { hours: 0.5, cost: 0 },

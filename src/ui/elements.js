@@ -7,18 +7,57 @@ const elements = {
   logTemplate: document.getElementById('log-template'),
   logTip: document.getElementById('log-tip'),
   hustleGrid: document.getElementById('hustle-grid'),
-  assetGrid: document.getElementById('asset-grid'),
+  educationGrid: document.getElementById('education-grid'),
+  assetGridRoot: document.getElementById('asset-grid'),
+  assetCategoryGrids: {
+    foundation: document.getElementById('asset-grid-foundation'),
+    creative: document.getElementById('asset-grid-creative'),
+    commerce: document.getElementById('asset-grid-commerce'),
+    advanced: document.getElementById('asset-grid-advanced')
+  },
   upgradeGrid: document.getElementById('upgrade-grid'),
+  upgradeGroupGrids: {
+    equipment: document.getElementById('upgrade-grid-equipment'),
+    automation: document.getElementById('upgrade-grid-automation'),
+    consumables: document.getElementById('upgrade-grid-consumables'),
+    misc: document.getElementById('upgrade-grid')
+  },
   endDayButton: document.getElementById('end-day'),
-  summaryBar: document.getElementById('summary-bar'),
+  summaryPanel: document.getElementById('stats-panel'),
   summaryTime: document.getElementById('summary-time'),
-  summaryTimeDetail: document.getElementById('summary-time-detail'),
+  summaryTimeCaption: document.getElementById('summary-time-caption'),
+  summaryTimeBreakdown: document.getElementById('summary-time-breakdown'),
   summaryIncome: document.getElementById('summary-income'),
-  summaryIncomeDetail: document.getElementById('summary-income-detail'),
+  summaryIncomeCaption: document.getElementById('summary-income-caption'),
+  summaryIncomeBreakdown: document.getElementById('summary-income-breakdown'),
   summaryCost: document.getElementById('summary-cost'),
-  summaryCostDetail: document.getElementById('summary-cost-detail'),
+  summaryCostCaption: document.getElementById('summary-cost-caption'),
+  summaryCostBreakdown: document.getElementById('summary-cost-breakdown'),
   summaryStudy: document.getElementById('summary-study'),
-  summaryStudyDetail: document.getElementById('summary-study-detail')
+  summaryStudyCaption: document.getElementById('summary-study-caption'),
+  summaryStudyBreakdown: document.getElementById('summary-study-breakdown'),
+  statsToggle: document.getElementById('stats-toggle'),
+  logToggle: document.getElementById('log-toggle'),
+  navButtons: Array.from(document.querySelectorAll('.nav-button')),
+  views: Array.from(document.querySelectorAll('.view')),
+  workspacePanels: document.getElementById('workspace-panels'),
+  globalFilters: {
+    hideLocked: document.getElementById('filter-hide-locked'),
+    hideCompleted: document.getElementById('filter-hide-completed'),
+    showActive: document.getElementById('filter-show-active')
+  },
+  hustlesFilters: {
+    availableOnly: document.getElementById('filter-hustles-available')
+  },
+  educationFilters: {
+    activeOnly: document.getElementById('filter-education-active'),
+    hideComplete: document.getElementById('filter-education-hide-complete')
+  },
+  assetsFilters: {
+    collapsed: document.getElementById('filter-assets-collapsed'),
+    hideLocked: document.getElementById('filter-assets-hide-locked')
+  },
+  upgradeSearch: document.getElementById('upgrade-search')
 };
 
 export default elements;
