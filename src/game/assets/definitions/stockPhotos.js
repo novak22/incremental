@@ -24,11 +24,10 @@ const stockPhotosDefinition = {
     variance: 0.2,
     logType: 'passive'
   },
-  requirements: [
-    { type: 'equipment', id: 'camera' },
-    { type: 'equipment', id: 'studio' },
-    { type: 'knowledge', id: 'photoLibrary' }
-  ],
+  requirements: {
+    equipment: ['camera', 'studio'],
+    knowledge: ['photoLibrary']
+  },
   quality: {
     summary: 'Shoot new packs, keyword diligently, and pitch marketplaces so galleries enjoy evergreen demand.',
     tracks: {
