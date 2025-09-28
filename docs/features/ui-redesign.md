@@ -1,23 +1,22 @@
 # UI Redesign Notes
 
 ## Overview
-The workspace layout now mirrors the design brief: a clean dashboard that keeps vital stats visible while letting players dive into detail on demand. A sticky header holds the daily meters alongside a quick-jump navigation that smoothly scrolls to each activity pillar instead of swapping tabs.
+Mission Control has been rebuilt into a three-column experience: the Command Deck keeps core meters and marching orders within reach, the Mission Rail gathers navigation and shortcuts, and the Focus Stage in the centre gives each gameplay pillar generous breathing room. Everything noisy now lives inside collapsible drawers so new players see guidance first and summon depth only when they ask for it.
 
 ## Goals
-- Surface daily pacing information without overwhelming the player.
-- Separate instant hustles from longer-term study commitments.
-- Reduce passive asset clutter via categories and collapsed cards.
-- Provide global toggles so locked/completed content can stay out of the way.
-- Support growth of the upgrade catalog with grouping and search.
+- Keep the top-level day summary visible while moving secondary detail into drawers and popouts.
+- Provide obvious shortcuts for common flows (queue hustles, resume studies, browse upgrades) without duplicating entire panels.
+- Reduce cross-page scrolling by grouping navigation, filters, and planners into dedicated rails.
+- Preserve all existing mechanics and breakdowns so returning players still recognise their data.
 
 ## Key Elements
-- **Daily Snapshot Panel** – Collapsible wrapper with per-stat breakdown lists (time reserved, projected payouts, daily costs, study momentum).
-- **Scrolling Workspace Navigation** – Header links highlight as sections come into view, encouraging players to skim every pillar without losing the context of their meters.
-- **Filter Toolbars** – Global controls for hide locked/completed/show active, plus per-section filters (available hustles, active study tracks, collapsed asset view, upgrade search).
-- **Categorised Grids** – Passive assets appear under Foundation, Creative, Commerce, or Advanced headers; upgrades live inside Equipment, Automation, Consumables, and Other buckets.
-- **Event Log Toggle** – Summary/detailed switch keeps the recap readable during long play sessions.
+- **Command Deck** – Sticky three-column header with Money/Day stats, a dedicated timeline hub, and a "Today’s brief" drawer of quick-call buttons.
+- **Mission Rails** – Left rail wraps navigation, the daily snapshot, and strategy shortcuts inside `<details>` drawers; the right rail hosts the live event log plus planner prompts for upgrades and studies.
+- **Global Control Drawer** – Filters now sit inside a collapsible workspace drawer with reminder copy about how they affect the board.
+- **Shortcut Buttons** – Context-aware quick actions focus search inputs, open drawers, and smooth-scroll to their sections so players can move instantly.
+- **Preserved Pillars** – Hustles, Education, Assets, and Upgrades keep their grids, filters, and modal flows but inherit the new breathing room and scroll offsets.
 
 ## Future Considerations
-- Add persistent user preferences for filter states via saved settings.
-- Introduce iconography and progress bars to reinforce course duration and asset setup progress within collapsed cards.
-- Explore responsive tweaks for mobile-first layouts once card interactions are optimised for touch.
+- Animate drawer openings to reinforce the sense of panels sliding into view.
+- Persist drawer open states so veteran players can pin their favourite layout between sessions.
+- Introduce contextual callouts inside the Command Deck when time or cash dips below thresholds.

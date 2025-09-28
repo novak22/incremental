@@ -11,277 +11,353 @@
 </head>
 <body>
   <div class="app">
-    <header class="dashboard-header">
-      <div class="top-bar">
-        <div class="stat">
+    <header class="command-bar">
+      <div class="command-bar__cluster command-bar__cluster--stats">
+        <div class="stat command-bar__stat">
           <span class="label">Money</span>
           <span id="money" class="value">$0</span>
         </div>
-        <div class="stat time">
-          <span class="label">Day Progress</span>
-          <div class="time-wrapper">
-            <div class="time-readout">
-              <span id="time" class="value">00h / 14h</span>
-              <span id="time-note" class="time-note">Sleep banked, hustle ready.</span>
+        <div class="stat command-bar__stat">
+          <span class="label">Day</span>
+          <span id="day" class="value">1</span>
+        </div>
+      </div>
+      <div class="command-bar__cluster command-bar__cluster--timeline">
+        <div class="timeline-hub">
+          <div class="timeline-hub__header">
+            <span class="label">Day Progress</span>
+            <span id="time" class="value">00h / 14h</span>
+          </div>
+          <p id="time-note" class="time-note">Sleep banked, hustle ready.</p>
+          <div class="timeline-hub__bars">
+            <div class="time-bar" aria-hidden="true">
+              <div id="time-progress" class="time-progress"></div>
             </div>
-            <div class="time-bars">
-              <div class="time-bar" aria-hidden="true">
-                <div id="time-progress" class="time-progress"></div>
+            <div id="assistant-support" class="time-support" hidden>
+              <div class="time-support__header">
+                <span class="time-support__label">Assistants</span>
+                <span id="assistant-note" class="time-support__note"></span>
               </div>
-              <div id="assistant-support" class="time-support" hidden>
-                <div class="time-support__header">
-                  <span class="time-support__label">Assistants</span>
-                  <span id="assistant-note" class="time-support__note"></span>
-                </div>
-                <div class="time-bar time-bar--assistants" aria-hidden="true">
-                  <div id="assistant-progress" class="time-progress"></div>
-                </div>
+              <div class="time-bar time-bar--assistants" aria-hidden="true">
+                <div id="assistant-progress" class="time-progress"></div>
               </div>
             </div>
+          </div>
+          <div class="timeline-hub__footer">
             <button
               id="time-legend-toggle"
               class="ghost-button time-legend-toggle"
               type="button"
               aria-expanded="false"
             >Show timeline legend</button>
-            <ul id="time-legend" class="time-legend" hidden aria-live="polite"></ul>
           </div>
+          <ul id="time-legend" class="time-legend" hidden aria-live="polite"></ul>
         </div>
-        <div class="stat">
-          <span class="label">Day</span>
-          <span id="day" class="value">1</span>
-        </div>
-        <button id="end-day" class="end-day">End Day</button>
       </div>
-      <nav class="section-nav" id="section-nav" aria-label="Workspace sections">
-        <a class="section-link is-active" href="#section-hustles">Daily Hustles</a>
-        <a class="section-link" href="#section-education">Education</a>
-        <a class="section-link" href="#section-assets">Passive Assets</a>
-        <a class="section-link" href="#section-upgrades">Upgrades &amp; Boosts</a>
-      </nav>
+      <div class="command-bar__cluster command-bar__cluster--actions">
+        <button id="end-day" class="end-day">Wrap the Day</button>
+        <details class="command-drawer" open>
+          <summary class="command-drawer__summary">Today’s brief</summary>
+          <div class="command-drawer__content">
+            <p>Keep your meters in the green, then jump into any pillar from the rails at your sides.</p>
+            <ul class="command-drawer__list">
+              <li><button type="button" class="link-button" data-quick-action data-scroll-target="#section-hustles">Plan a hustle</button></li>
+              <li><button type="button" class="link-button" data-quick-action data-scroll-target="#section-education">Check study queue</button></li>
+              <li><button type="button" class="link-button" data-quick-action data-scroll-target="#section-assets">Tune assets</button></li>
+            </ul>
+          </div>
+        </details>
+      </div>
     </header>
 
-    <section class="stats-panel" id="stats-panel" data-collapsed="true">
-      <div class="stats-toolbar">
-        <div>
-          <h2>Daily Snapshot</h2>
-          <p>Track today’s hustle at a glance, then pop open a stat to audit the fine print.</p>
-        </div>
-        <button id="stats-toggle" class="toggle-button" aria-expanded="false">Expand breakdowns</button>
-      </div>
-      <div class="stats-grid">
-        <details class="stat-card" id="summary-time-card">
-          <summary>
-            <div class="stat-heading">
-              <h3>Time Invested</h3>
-              <span id="summary-time" class="stat-value">0h</span>
-            </div>
-            <p id="summary-time-caption" class="stat-caption">No time logged yet today</p>
-          </summary>
-          <ul id="summary-time-breakdown" class="stat-breakdown" aria-live="polite"></ul>
+    <div class="dashboard-grid">
+      <aside class="dashboard-rail dashboard-rail--left">
+        <details class="rail-drawer" open>
+          <summary class="rail-drawer__summary">Workspace navigation</summary>
+          <nav class="section-nav" id="section-nav" aria-label="Workspace sections">
+            <a class="section-link is-active" href="#section-hustles">Daily Hustles</a>
+            <a class="section-link" href="#section-education">Education</a>
+            <a class="section-link" href="#section-assets">Passive Assets</a>
+            <a class="section-link" href="#section-upgrades">Upgrades &amp; Boosts</a>
+          </nav>
         </details>
-        <details class="stat-card" id="summary-income-card">
-          <summary>
-            <div class="stat-heading">
-              <h3>Money Earned</h3>
-              <span id="summary-income" class="stat-value">$0</span>
-            </div>
-            <p id="summary-income-caption" class="stat-caption">No earnings logged yet today</p>
-          </summary>
-          <ul id="summary-income-breakdown" class="stat-breakdown" aria-live="polite"></ul>
-        </details>
-        <details class="stat-card" id="summary-cost-card">
-          <summary>
-            <div class="stat-heading">
-              <h3>Cash Spent</h3>
-              <span id="summary-cost" class="stat-value">$0</span>
-            </div>
-            <p id="summary-cost-caption" class="stat-caption">No spending logged yet today</p>
-          </summary>
-          <ul id="summary-cost-breakdown" class="stat-breakdown" aria-live="polite"></ul>
-        </details>
-        <details class="stat-card" id="summary-study-card">
-          <summary>
-            <div class="stat-heading">
-              <h3>Study Momentum</h3>
-              <span id="summary-study" class="stat-value">0 tracks</span>
-            </div>
-            <p id="summary-study-caption" class="stat-caption">All study goals are on track</p>
-          </summary>
-          <ul id="summary-study-breakdown" class="stat-breakdown" aria-live="polite"></ul>
-        </details>
-      </div>
-    </section>
 
-    <main class="workspace">
-      <section class="global-filters" aria-label="Global filters">
-        <label class="filter-toggle">
-          <input type="checkbox" id="filter-hide-locked" />
-          <span>Hide locked</span>
-        </label>
-        <label class="filter-toggle">
-          <input type="checkbox" id="filter-hide-completed" />
-          <span>Hide completed</span>
-        </label>
-        <label class="filter-toggle">
-          <input type="checkbox" id="filter-show-active" />
-          <span>Show only active</span>
-        </label>
-      </section>
-
-      <section class="workspace-panels" id="workspace-panels">
-        <section class="workspace-section" id="section-hustles" aria-labelledby="heading-hustles">
-          <header class="section-header">
-            <div>
-              <h2 id="heading-hustles">Daily Hustles</h2>
-              <p>Quick-hit gigs for instant cash flow. Spend the hours, bank the wins.</p>
+        <details class="rail-drawer" open>
+          <summary class="rail-drawer__summary">Daily snapshot</summary>
+          <section class="stats-panel" id="stats-panel" data-collapsed="true">
+            <div class="stats-toolbar">
+              <div>
+                <h2>Daily Snapshot</h2>
+                <p>Flip open a tile to see where your time, cash, and focus went today.</p>
+              </div>
+              <button id="stats-toggle" class="toggle-button" aria-expanded="false">Expand breakdowns</button>
             </div>
-            <div class="section-controls">
+            <div class="stats-grid">
+              <details class="stat-card" id="summary-time-card">
+                <summary>
+                  <div class="stat-heading">
+                    <h3>Time Invested</h3>
+                    <span id="summary-time" class="stat-value">0h</span>
+                  </div>
+                  <p id="summary-time-caption" class="stat-caption">No time logged yet today</p>
+                </summary>
+                <ul id="summary-time-breakdown" class="stat-breakdown" aria-live="polite"></ul>
+              </details>
+              <details class="stat-card" id="summary-income-card">
+                <summary>
+                  <div class="stat-heading">
+                    <h3>Money Earned</h3>
+                    <span id="summary-income" class="stat-value">$0</span>
+                  </div>
+                  <p id="summary-income-caption" class="stat-caption">No earnings logged yet today</p>
+                </summary>
+                <ul id="summary-income-breakdown" class="stat-breakdown" aria-live="polite"></ul>
+              </details>
+              <details class="stat-card" id="summary-cost-card">
+                <summary>
+                  <div class="stat-heading">
+                    <h3>Cash Spent</h3>
+                    <span id="summary-cost" class="stat-value">$0</span>
+                  </div>
+                  <p id="summary-cost-caption" class="stat-caption">No spending logged yet today</p>
+                </summary>
+                <ul id="summary-cost-breakdown" class="stat-breakdown" aria-live="polite"></ul>
+              </details>
+              <details class="stat-card" id="summary-study-card">
+                <summary>
+                  <div class="stat-heading">
+                    <h3>Study Momentum</h3>
+                    <span id="summary-study" class="stat-value">0 tracks</span>
+                  </div>
+                  <p id="summary-study-caption" class="stat-caption">All study goals are on track</p>
+                </summary>
+                <ul id="summary-study-breakdown" class="stat-breakdown" aria-live="polite"></ul>
+              </details>
+            </div>
+          </section>
+        </details>
+
+        <details class="rail-drawer" open>
+          <summary class="rail-drawer__summary">Strategy shortcuts</summary>
+          <div class="rail-drawer__content">
+            <p>Hop straight to common moves as the day unfolds.</p>
+            <ul class="shortcut-list">
+              <li><button type="button" class="link-button" data-quick-action data-scroll-target="#section-hustles">Queue new gigs</button></li>
+              <li><button type="button" class="link-button" data-quick-action data-scroll-target="#section-education">Resume studies</button></li>
+              <li><button type="button" class="link-button" data-quick-action data-scroll-target="#section-assets">Review upkeep commitments</button></li>
+              <li><button type="button" class="link-button" data-quick-action data-focus-target="upgrade-search" data-scroll-target="#section-upgrades">Search upgrades</button></li>
+              <li><button type="button" class="link-button" data-quick-action data-open-details="drawer-global-controls">Tune global filters</button></li>
+            </ul>
+          </div>
+        </details>
+      </aside>
+
+      <main class="workspace">
+        <details class="workspace-drawer" id="drawer-global-controls">
+          <summary class="workspace-drawer__summary">Global controls &amp; filters</summary>
+          <div class="workspace-drawer__content">
+            <section class="global-filters" aria-label="Global filters">
               <label class="filter-toggle">
-                <input type="checkbox" id="filter-hustles-available" />
-                <span>Show only available gigs</span>
-              </label>
-            </div>
-          </header>
-          <div class="card-grid" id="hustle-grid"></div>
-        </section>
-
-        <section class="workspace-section" id="section-education" aria-labelledby="heading-education">
-          <header class="section-header">
-            <div>
-              <h2 id="heading-education">Education</h2>
-              <p>Courses, playbooks, and study tracks that unlock new mastery.</p>
-            </div>
-            <div class="section-controls">
-              <label class="filter-toggle">
-                <input type="checkbox" id="filter-education-active" />
-                <span>Show only active tracks</span>
+                <input type="checkbox" id="filter-hide-locked" />
+                <span>Hide locked</span>
               </label>
               <label class="filter-toggle">
-                <input type="checkbox" id="filter-education-hide-complete" />
+                <input type="checkbox" id="filter-hide-completed" />
                 <span>Hide completed</span>
               </label>
-            </div>
-          </header>
-          <div class="card-grid" id="education-grid"></div>
-        </section>
-
-        <section class="workspace-section assets-section" id="section-assets" aria-labelledby="heading-assets">
-          <header class="section-header">
-            <div>
-              <h2 id="heading-assets">Passive Assets</h2>
-              <p>Launch builds, manage upkeep, and keep payouts humming with lean cards.</p>
-            </div>
-            <div class="section-controls">
               <label class="filter-toggle">
-                <input type="checkbox" id="filter-assets-collapsed" checked />
-                <span>Collapsed card view</span>
+                <input type="checkbox" id="filter-show-active" />
+                <span>Show only active</span>
               </label>
-              <label class="filter-toggle">
-                <input type="checkbox" id="filter-assets-hide-locked" />
-                <span>Hide unavailable</span>
-              </label>
-              <button id="asset-info-trigger" class="ghost-button" type="button">New Asset Briefing</button>
+            </section>
+            <div class="workspace-drawer__notes">
+              <p>Filters apply across every pillar, so you can keep the decks focused on actionable work.</p>
             </div>
-          </header>
-          <div class="asset-categories" id="asset-grid">
-            <section class="asset-category" data-category="foundation">
-              <header>
-                <h3>Foundation</h3>
-                <button
-                  class="asset-category__toggle ghost-button"
-                  type="button"
-                  data-asset-category-toggle="foundation"
-                  aria-expanded="false"
-                >View launched assets</button>
-              </header>
-              <div class="asset-category__list" id="asset-list-foundation" hidden></div>
-              <div class="card-grid asset-card-grid" id="asset-grid-foundation"></div>
-            </section>
-            <section class="asset-category" data-category="creative">
-              <header>
-                <h3>Creative</h3>
-                <button
-                  class="asset-category__toggle ghost-button"
-                  type="button"
-                  data-asset-category-toggle="creative"
-                  aria-expanded="false"
-                >View launched assets</button>
-              </header>
-              <div class="asset-category__list" id="asset-list-creative" hidden></div>
-              <div class="card-grid asset-card-grid" id="asset-grid-creative"></div>
-            </section>
-            <section class="asset-category" data-category="commerce">
-              <header>
-                <h3>Commerce</h3>
-                <button
-                  class="asset-category__toggle ghost-button"
-                  type="button"
-                  data-asset-category-toggle="commerce"
-                  aria-expanded="false"
-                >View launched assets</button>
-              </header>
-              <div class="asset-category__list" id="asset-list-commerce" hidden></div>
-              <div class="card-grid asset-card-grid" id="asset-grid-commerce"></div>
-            </section>
-            <section class="asset-category" data-category="advanced">
-              <header>
-                <h3>Advanced</h3>
-                <button
-                  class="asset-category__toggle ghost-button"
-                  type="button"
-                  data-asset-category-toggle="advanced"
-                  aria-expanded="false"
-                >View launched assets</button>
-              </header>
-              <div class="asset-category__list" id="asset-list-advanced" hidden></div>
-              <div class="card-grid asset-card-grid" id="asset-grid-advanced"></div>
-            </section>
           </div>
-        </section>
+        </details>
 
-        <section class="workspace-section" id="section-upgrades" aria-labelledby="heading-upgrades">
-          <header class="section-header">
-            <div>
-              <h2 id="heading-upgrades">Upgrades &amp; Boosts</h2>
-              <p>Equipment, automation, and consumables. Stack them to scale.</p>
+        <section class="workspace-panels" id="workspace-panels">
+          <section class="workspace-section" id="section-hustles" aria-labelledby="heading-hustles">
+            <header class="section-header">
+              <div>
+                <h2 id="heading-hustles">Daily Hustles</h2>
+                <p>Quick-hit gigs for instant cash flow. Spend the hours, bank the wins.</p>
+              </div>
+              <div class="section-controls">
+                <label class="filter-toggle">
+                  <input type="checkbox" id="filter-hustles-available" />
+                  <span>Show only available gigs</span>
+                </label>
+              </div>
+            </header>
+            <div class="card-grid" id="hustle-grid"></div>
+          </section>
+
+          <section class="workspace-section" id="section-education" aria-labelledby="heading-education">
+            <header class="section-header">
+              <div>
+                <h2 id="heading-education">Education</h2>
+                <p>Courses, playbooks, and study tracks that unlock new mastery.</p>
+              </div>
+              <div class="section-controls">
+                <label class="filter-toggle">
+                  <input type="checkbox" id="filter-education-active" />
+                  <span>Show only active tracks</span>
+                </label>
+                <label class="filter-toggle">
+                  <input type="checkbox" id="filter-education-hide-complete" />
+                  <span>Hide completed</span>
+                </label>
+              </div>
+            </header>
+            <div class="card-grid" id="education-grid"></div>
+          </section>
+
+          <section class="workspace-section assets-section" id="section-assets" aria-labelledby="heading-assets">
+            <header class="section-header">
+              <div>
+                <h2 id="heading-assets">Passive Assets</h2>
+                <p>Launch builds, manage upkeep, and keep payouts humming with lean cards.</p>
+              </div>
+              <div class="section-controls">
+                <label class="filter-toggle">
+                  <input type="checkbox" id="filter-assets-collapsed" checked />
+                  <span>Collapsed card view</span>
+                </label>
+                <label class="filter-toggle">
+                  <input type="checkbox" id="filter-assets-hide-locked" />
+                  <span>Hide unavailable</span>
+                </label>
+                <button id="asset-info-trigger" class="ghost-button" type="button">New Asset Briefing</button>
+              </div>
+            </header>
+            <div class="asset-categories" id="asset-grid">
+              <section class="asset-category" data-category="foundation">
+                <header>
+                  <h3>Foundation</h3>
+                  <button
+                    class="asset-category__toggle ghost-button"
+                    type="button"
+                    data-asset-category-toggle="foundation"
+                    aria-expanded="false"
+                  >View launched assets</button>
+                </header>
+                <div class="asset-category__list" id="asset-list-foundation" hidden></div>
+                <div class="card-grid asset-card-grid" id="asset-grid-foundation"></div>
+              </section>
+              <section class="asset-category" data-category="creative">
+                <header>
+                  <h3>Creative</h3>
+                  <button
+                    class="asset-category__toggle ghost-button"
+                    type="button"
+                    data-asset-category-toggle="creative"
+                    aria-expanded="false"
+                  >View launched assets</button>
+                </header>
+                <div class="asset-category__list" id="asset-list-creative" hidden></div>
+                <div class="card-grid asset-card-grid" id="asset-grid-creative"></div>
+              </section>
+              <section class="asset-category" data-category="commerce">
+                <header>
+                  <h3>Commerce</h3>
+                  <button
+                    class="asset-category__toggle ghost-button"
+                    type="button"
+                    data-asset-category-toggle="commerce"
+                    aria-expanded="false"
+                  >View launched assets</button>
+                </header>
+                <div class="asset-category__list" id="asset-list-commerce" hidden></div>
+                <div class="card-grid asset-card-grid" id="asset-grid-commerce"></div>
+              </section>
+              <section class="asset-category" data-category="advanced">
+                <header>
+                  <h3>Advanced</h3>
+                  <button
+                    class="asset-category__toggle ghost-button"
+                    type="button"
+                    data-asset-category-toggle="advanced"
+                    aria-expanded="false"
+                  >View launched assets</button>
+                </header>
+                <div class="asset-category__list" id="asset-list-advanced" hidden></div>
+                <div class="card-grid asset-card-grid" id="asset-grid-advanced"></div>
+              </section>
             </div>
-            <div class="section-controls">
-              <label class="filter-toggle search">
-                <span class="sr-only" id="upgrade-search-label">Search upgrades</span>
-                <input type="search" id="upgrade-search" placeholder="Search upgrades" aria-labelledby="upgrade-search-label" />
-              </label>
+          </section>
+
+          <section class="workspace-section" id="section-upgrades" aria-labelledby="heading-upgrades">
+            <header class="section-header">
+              <div>
+                <h2 id="heading-upgrades">Upgrades &amp; Boosts</h2>
+                <p>Equipment, automation, and consumables. Stack them to scale.</p>
+              </div>
+              <div class="section-controls">
+                <label class="filter-toggle search">
+                  <span class="sr-only" id="upgrade-search-label">Search upgrades</span>
+                  <input type="search" id="upgrade-search" placeholder="Search upgrades" aria-labelledby="upgrade-search-label" />
+                </label>
+              </div>
+            </header>
+            <div class="upgrade-groups">
+              <section class="upgrade-group" data-upgrade-group="equipment">
+                <header>
+                  <h3>Equipment</h3>
+                </header>
+                <div class="card-grid" id="upgrade-grid-equipment"></div>
+              </section>
+              <section class="upgrade-group" data-upgrade-group="automation">
+                <header>
+                  <h3>Automation</h3>
+                </header>
+                <div class="card-grid" id="upgrade-grid-automation"></div>
+              </section>
+              <section class="upgrade-group" data-upgrade-group="consumables">
+                <header>
+                  <h3>Consumables</h3>
+                </header>
+                <div class="card-grid" id="upgrade-grid-consumables"></div>
+              </section>
+              <section class="upgrade-group" data-upgrade-group="misc">
+                <header>
+                  <h3>Other Boosts</h3>
+                </header>
+                <div class="card-grid" id="upgrade-grid"></div>
+              </section>
             </div>
-          </header>
-          <div class="upgrade-groups">
-            <section class="upgrade-group" data-upgrade-group="equipment">
-              <header>
-                <h3>Equipment</h3>
-              </header>
-              <div class="card-grid" id="upgrade-grid-equipment"></div>
-            </section>
-            <section class="upgrade-group" data-upgrade-group="automation">
-              <header>
-                <h3>Automation</h3>
-              </header>
-              <div class="card-grid" id="upgrade-grid-automation"></div>
-            </section>
-            <section class="upgrade-group" data-upgrade-group="consumables">
-              <header>
-                <h3>Consumables</h3>
-              </header>
-              <div class="card-grid" id="upgrade-grid-consumables"></div>
-            </section>
-            <section class="upgrade-group" data-upgrade-group="misc">
-              <header>
-                <h3>Other Boosts</h3>
-              </header>
-              <div class="card-grid" id="upgrade-grid"></div>
-            </section>
-          </div>
+          </section>
         </section>
-      </section>
-    </main>
+      </main>
+
+      <aside class="dashboard-rail dashboard-rail--right">
+        <details class="rail-drawer" open id="drawer-log">
+          <summary class="rail-drawer__summary">Live event feed</summary>
+          <section class="panel log" aria-label="Event log">
+            <div class="panel-header">
+              <div>
+                <h2>Event Log</h2>
+                <p id="log-tip">Welcome! Invest time to queue builds and watch the recap at daybreak.</p>
+              </div>
+              <button id="log-toggle" class="toggle-button" aria-expanded="false">Detailed view</button>
+            </div>
+            <div id="log-feed" class="log-feed"></div>
+          </section>
+        </details>
+
+        <details class="rail-drawer" open>
+          <summary class="rail-drawer__summary">Upgrade &amp; study planner</summary>
+          <div class="rail-drawer__content">
+            <p>Keep your long bets thriving with quick pivots.</p>
+            <ul class="shortcut-list">
+              <li><button type="button" class="link-button" data-quick-action data-scroll-target="#section-upgrades" data-focus-target="upgrade-search">Browse the catalog</button></li>
+              <li><button type="button" class="link-button" data-quick-action data-scroll-target="#section-education">Check tuition commitments</button></li>
+              <li><button type="button" class="link-button" data-quick-action data-scroll-target="#section-assets">Review launched assets</button></li>
+            </ul>
+          </div>
+        </details>
+      </aside>
+    </div>
 
     <section class="debug-panel" id="debug-action-catalog" hidden aria-hidden="true">
       <header>
@@ -344,17 +420,6 @@
         </div>
       </div>
     </div>
-
-    <section class="panel log" aria-label="Event log">
-      <div class="panel-header">
-        <div>
-          <h2>Event Log</h2>
-          <p id="log-tip">Welcome! Invest time to queue builds and watch the recap at daybreak.</p>
-        </div>
-        <button id="log-toggle" class="toggle-button" aria-expanded="false">Detailed view</button>
-      </div>
-      <div id="log-feed" class="log-feed"></div>
-    </section>
   </div>
 
   <template id="log-template">

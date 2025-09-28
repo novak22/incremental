@@ -11,10 +11,11 @@ Online Hustle Simulator is a browser-based incremental game about orchestrating 
 - **Daily Recap Log** – Every launch, maintenance result, payout, and study milestone is written to the log so you can reconstruct exactly what happened during busy streaks.
 
 ### Interface Overview
-- **Top Bar & Snapshot** – Money, time, and day stay pinned at the top. A collapsible Daily Snapshot panel now highlights per-stat breakdowns (time invested, money earned, passive streams, cash spent, study momentum) without overwhelming the main view. Passive earnings even call out which assets (and how many instances) delivered today’s cash, so you can immediately see what worked.
-- **Tabbed Workspace** – Hustles, Education, Passive Assets, and Upgrades each live in their own tab with dedicated copy and per-tab filters. Global toggles hide locked or completed cards, and you can spotlight only actionable options.
-- **Categorised Collections** – Passive assets surface in Foundation, Creative, Commerce, and Advanced groupings with a collapsed-card option for rapid scanning. Each grouping now sports a "View launched assets" toggle that opens a management roster listing upkeep, yesterday’s payout, and upgrade/sell controls for every instance. Upgrades split into Equipment, Automation, Consumables, and a catch-all bucket with a quick search bar.
-- **Event Log Controls** – The log dock keeps its running commentary but now includes a summary/detailed toggle when you want a lighter feed during long sessions.
+- **Command Deck** – Money and Day stats live beside a rebuilt day-progress timeline hub, all wrapped in a sticky header. A "Today’s brief" drawer sits next to the Wrap the Day button so you can jump straight to hustles, studies, or asset tuning with a single click.
+- **Mission Rails** – The left rail houses navigation links, the collapsible Daily Snapshot, and a stack of strategy shortcuts. The right rail carries the live event feed and a study/upgrade planner, letting you keep guidance visible without crowding the focus area.
+- **Global Control Drawer** – Hide locked or completed cards, highlight active work, and review filter tips inside a dedicated drawer above the main workspace. Quick-action buttons reopen this drawer and focus the upgrade search box automatically.
+- **Categorised Collections** – Passive assets remain grouped into Foundation, Creative, Commerce, and Advanced categories with roster toggles, while upgrades keep their Equipment, Automation, Consumables, and Other groupings.
+- **Event Log Controls** – The feed still supports summary/detailed modes, now tucked neatly inside the right rail so long-running sessions keep context at a glance.
 
 ### Hustles & Study Tracks
 - **Freelance Writing** – Spend 2h to earn $18 instantly.

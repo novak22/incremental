@@ -10,6 +10,7 @@ export function initLayoutControls() {
   setupEducationFilters();
   setupAssetFilters();
   setupUpgradeSearch();
+  setupQuickActions();
   applyCardFilters();
 }
 
@@ -245,5 +246,45 @@ function applyUpgradeSearchFilter() {
     if (group) {
       group.classList.toggle('is-empty', visibleCount === 0);
     }
+  });
+}
+
+function setupQuickActions() {
+  const triggers = Array.from(document.querySelectorAll('[data-quick-action]'));
+  if (!triggers.length) return;
+
+  triggers.forEach(trigger => {
+    trigger.addEventListener('click', () => {
+      const { openDetails, focusTarget, scrollTarget } = trigger.dataset;
+
+      if (openDetails) {
+        const details = document.getElementById(openDetails);
+        if (details && typeof details.open === 'boolean') {
+          details.open = true;
+          const summary = details.querySelector('summary');
+          if (summary && typeof summary.focus === 'function') {
+            try {
+              summary.focus({ preventScroll: true });
+            } catch (error) {
+              summary.focus();
+            }
+          }
+        }
+      }
+
+      if (scrollTarget) {
+        const target = document.querySelector(scrollTarget);
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+
+      if (focusTarget) {
+        const focusEl = document.getElementById(focusTarget);
+        if (focusEl && typeof focusEl.focus === 'function') {
+          requestAnimationFrame(() => focusEl.focus());
+        }
+      }
+    });
   });
 }
