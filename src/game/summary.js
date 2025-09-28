@@ -1,16 +1,8 @@
-import { getState, getAssetState, getMetricDefinition } from '../core/state.js';
+import { getState, getAssetState } from '../core/state.js';
 import { formatHours, formatMoney } from '../core/helpers.js';
 import { KNOWLEDGE_TRACKS, getKnowledgeProgress } from './requirements.js';
 import { getDailyMetrics } from './metrics.js';
 import { ASSETS } from './assets/registry.js';
-
-function resolveDefinitionReference(metricId) {
-  if (!metricId) return undefined;
-  const reference = getMetricDefinition(metricId);
-  if (!reference) return undefined;
-  const { id, name, category, type, label } = reference;
-  return { id, name, category, type, label };
-}
 
 export function computeDailySummary(state = getState()) {
   if (!state) {
@@ -60,18 +52,10 @@ export function computeDailySummary(state = getState()) {
   const formatTimeBreakdown = timeEntries
     .filter(entry => Number(entry?.hours) > 0)
     .sort((a, b) => Number(b.hours) - Number(a.hours))
-    .map(entry => {
-      const result = {
-        key: entry.key,
-        label: entry.label,
-        value: `${formatHours(Number(entry.hours))} today`
-      };
-      const definition = resolveDefinitionReference(entry.key);
-      if (definition) {
-        result.definition = definition;
-      }
-      return result;
-    });
+    .map(entry => ({
+      label: entry.label,
+      value: `${formatHours(Number(entry.hours))} today`
+    }));
 
   const totalEarnings = sumEntries(earningsEntries, 'amount');
   const passiveEarnings = sumEntries(passiveEntries, 'amount');
@@ -81,18 +65,11 @@ export function computeDailySummary(state = getState()) {
     entries
       .filter(entry => Number(entry?.amount) > 0)
       .sort((a, b) => Number(b.amount) - Number(a.amount))
-      .map(entry => {
-        const result = {
-          key: entry.key,
-          label: entry.label,
-          value: `$${formatMoney(Number(entry.amount))} today`
-        };
-        const definition = resolveDefinitionReference(entry.key);
-        if (definition) {
-          result.definition = definition;
-        }
-        return result;
-      });
+      .map(entry => ({
+        key: entry.key,
+        label: entry.label,
+        value: `$${formatMoney(Number(entry.amount))} today`
+      }));
 
   const passiveAssetSummaries = new Map();
 
@@ -137,18 +114,10 @@ export function computeDailySummary(state = getState()) {
   const spendBreakdown = spendEntries
     .filter(entry => Number(entry?.amount) > 0)
     .sort((a, b) => Number(b.amount) - Number(a.amount))
-    .map(entry => {
-      const result = {
-        key: entry.key,
-        label: entry.label,
-        value: `$${formatMoney(Number(entry.amount))} today`
-      };
-      const definition = resolveDefinitionReference(entry.key);
-      if (definition) {
-        result.definition = definition;
-      }
-      return result;
-    });
+    .map(entry => ({
+      label: entry.label,
+      value: `$${formatMoney(Number(entry.amount))} today`
+    }));
 
   let knowledgeInProgress = 0;
   let knowledgePendingToday = 0;

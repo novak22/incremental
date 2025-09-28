@@ -32,9 +32,7 @@ const vlogDefinition = {
       return amount;
     }
   },
-  requirements: {
-    equipment: ['camera']
-  },
+  requirements: [{ type: 'equipment', id: 'camera' }],
   quality: {
     summary: 'Film episodes, polish edits, and promote premieres to unlock higher quality payouts and viral chances.',
     tracks: {

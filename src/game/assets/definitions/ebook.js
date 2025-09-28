@@ -25,9 +25,7 @@ const ebookDefinition = {
     variance: 0.2,
     logType: 'passive'
   },
-  requirements: {
-    knowledge: ['outlineMastery']
-  },
+  requirements: [{ type: 'knowledge', id: 'outlineMastery' }],
   quality: {
     summary: 'Draft chapters, commission covers, and gather reviews so royalties snowball as quality climbs.',
     tracks: {

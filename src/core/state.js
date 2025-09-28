@@ -1,12 +1,10 @@
 import { DEFAULT_DAY_HOURS } from './constants.js';
 import { structuredClone } from './helpers.js';
-import { attachRegistryMetricIds, buildMetricIndex } from '../game/schema/metrics.js';
 
 let registry = { hustles: [], assets: [], upgrades: [] };
 let hustleMap = new Map();
 let assetMap = new Map();
 let upgradeMap = new Map();
-let metricIndex = new Map();
 
 export let state = null;
 
@@ -28,12 +26,10 @@ export function ensureDailyMetrics(target = state) {
 }
 
 export function configureRegistry({ hustles = [], assets = [], upgrades = [] }) {
-  const prepared = attachRegistryMetricIds({ hustles, assets, upgrades });
-  registry = prepared;
-  hustleMap = new Map(prepared.hustles.map(item => [item.id, item]));
-  assetMap = new Map(prepared.assets.map(item => [item.id, item]));
-  upgradeMap = new Map(prepared.upgrades.map(item => [item.id, item]));
-  metricIndex = buildMetricIndex(prepared);
+  registry = { hustles, assets, upgrades };
+  hustleMap = new Map(hustles.map(item => [item.id, item]));
+  assetMap = new Map(assets.map(item => [item.id, item]));
+  upgradeMap = new Map(upgrades.map(item => [item.id, item]));
 }
 
 export function getHustleDefinition(id) {
@@ -46,10 +42,6 @@ export function getAssetDefinition(id) {
 
 export function getUpgradeDefinition(id) {
   return upgradeMap.get(id);
-}
-
-export function getMetricDefinition(metricId) {
-  return metricIndex.get(metricId);
 }
 
 export function normalizeAssetInstance(definition, instance = {}) {

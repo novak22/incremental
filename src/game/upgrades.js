@@ -16,33 +16,6 @@ import {
 import { checkDayEnd } from './lifecycle.js';
 import { spendMoney } from './currency.js';
 import { recordCostContribution } from './metrics.js';
-import { describeRequirement, isRequirementMet } from './requirements.js';
-import { buildRequirementBundle } from './schema/requirements.js';
-
-const CAMERA_PRO_REQUIREMENTS = { equipment: ['camera'] };
-const CAMERA_PRO_REQUIREMENT_BUNDLE = buildRequirementBundle(CAMERA_PRO_REQUIREMENTS);
-const STUDIO_EXPANSION_REQUIREMENTS = { equipment: ['studio'] };
-const STUDIO_EXPANSION_REQUIREMENT_BUNDLE = buildRequirementBundle(STUDIO_EXPANSION_REQUIREMENTS);
-const SERVER_CLUSTER_REQUIREMENTS = { equipment: ['serverRack'] };
-const SERVER_CLUSTER_REQUIREMENT_BUNDLE = buildRequirementBundle(SERVER_CLUSTER_REQUIREMENTS);
-const SERVER_EDGE_REQUIREMENTS = { equipment: ['serverCluster'] };
-const SERVER_EDGE_REQUIREMENT_BUNDLE = buildRequirementBundle(SERVER_EDGE_REQUIREMENTS);
-const COURSE_REQUIREMENTS = { experience: [{ assetId: 'blog', count: 1 }] };
-const COURSE_REQUIREMENT_BUNDLE = buildRequirementBundle(COURSE_REQUIREMENTS);
-
-function summarizeMissingRequirementLabels(bundle) {
-  if (!bundle?.hasAny) return '';
-  const missing = bundle.missing(isRequirementMet);
-  if (!missing.length) return '';
-  const labels = missing.map(req => describeRequirement(req).label);
-  return labels.join(' & ');
-}
-
-function formatRequirementHeadline(bundle) {
-  if (!bundle?.hasAny) return 'None';
-  const labels = bundle.map(req => describeRequirement(req).label);
-  return labels.join(' & ');
-}
 
 export const UPGRADES = [
   {
@@ -197,10 +170,9 @@ export const UPGRADES = [
     defaultState: {
       purchased: false
     },
-    requirements: CAMERA_PRO_REQUIREMENTS,
     details: [
       () => '💵 Cost: <strong>$480</strong>',
-      () => `Requires: <strong>${formatRequirementHeadline(CAMERA_PRO_REQUIREMENT_BUNDLE)}</strong>`,
+      () => 'Requires: <strong>Camera</strong>',
       () => 'Boosts: <strong>Higher vlog quality payouts</strong>'
     ],
     requirements: [{ type: 'upgrade', id: 'camera' }],
@@ -211,20 +183,19 @@ export const UPGRADES = [
       label: () => {
         const upgrade = getUpgradeState('cameraPro');
         if (upgrade.purchased) return 'Cinema Ready';
-        const missing = summarizeMissingRequirementLabels(CAMERA_PRO_REQUIREMENT_BUNDLE);
-        if (missing) return `Requires ${missing}`;
+        if (!getUpgradeState('camera').purchased) return 'Requires Camera';
         return 'Install Cinema Gear';
       },
       className: 'secondary',
       disabled: () => {
         const upgrade = getUpgradeState('cameraPro');
         if (upgrade.purchased) return true;
-        if (summarizeMissingRequirementLabels(CAMERA_PRO_REQUIREMENT_BUNDLE)) return true;
+        if (!getUpgradeState('camera').purchased) return true;
         return getState().money < 480;
       },
       onClick: () => executeAction(() => {
         const upgrade = getUpgradeState('cameraPro');
-        if (upgrade.purchased || summarizeMissingRequirementLabels(CAMERA_PRO_REQUIREMENT_BUNDLE)) return;
+        if (upgrade.purchased || !getUpgradeState('camera').purchased) return;
         spendMoney(480);
         recordCostContribution({
           key: 'upgrade:cameraPro',
@@ -239,8 +210,7 @@ export const UPGRADES = [
     cardState: (_state, card) => {
       const upgrade = getUpgradeState('cameraPro');
       card.classList.toggle('locked', upgrade.purchased);
-      const missing = summarizeMissingRequirementLabels(CAMERA_PRO_REQUIREMENT_BUNDLE);
-      card.classList.toggle('requires-upgrade', Boolean(missing) && !upgrade.purchased);
+      card.classList.toggle('requires-upgrade', !getUpgradeState('camera').purchased && !upgrade.purchased);
     }
   },
   {
@@ -251,10 +221,9 @@ export const UPGRADES = [
     defaultState: {
       purchased: false
     },
-    requirements: STUDIO_EXPANSION_REQUIREMENTS,
     details: [
       () => '💵 Cost: <strong>$540</strong>',
-      () => `Requires: <strong>${formatRequirementHeadline(STUDIO_EXPANSION_REQUIREMENT_BUNDLE)}</strong>`,
+      () => 'Requires: <strong>Lighting Kit</strong>',
       () => 'Boosts: <strong>Stock photo session efficiency</strong>'
     ],
     requirements: [{ type: 'upgrade', id: 'studio' }],
@@ -265,20 +234,19 @@ export const UPGRADES = [
       label: () => {
         const upgrade = getUpgradeState('studioExpansion');
         if (upgrade.purchased) return 'Studio Expanded';
-        const missing = summarizeMissingRequirementLabels(STUDIO_EXPANSION_REQUIREMENT_BUNDLE);
-        if (missing) return `Requires ${missing}`;
+        if (!getUpgradeState('studio').purchased) return 'Requires Lighting Kit';
         return 'Expand Studio';
       },
       className: 'secondary',
       disabled: () => {
         const upgrade = getUpgradeState('studioExpansion');
         if (upgrade.purchased) return true;
-        if (summarizeMissingRequirementLabels(STUDIO_EXPANSION_REQUIREMENT_BUNDLE)) return true;
+        if (!getUpgradeState('studio').purchased) return true;
         return getState().money < 540;
       },
       onClick: () => executeAction(() => {
         const upgrade = getUpgradeState('studioExpansion');
-        if (upgrade.purchased || summarizeMissingRequirementLabels(STUDIO_EXPANSION_REQUIREMENT_BUNDLE)) return;
+        if (upgrade.purchased || !getUpgradeState('studio').purchased) return;
         spendMoney(540);
         recordCostContribution({
           key: 'upgrade:studioExpansion',
@@ -293,8 +261,7 @@ export const UPGRADES = [
     cardState: (_state, card) => {
       const upgrade = getUpgradeState('studioExpansion');
       card.classList.toggle('locked', upgrade.purchased);
-      const missing = summarizeMissingRequirementLabels(STUDIO_EXPANSION_REQUIREMENT_BUNDLE);
-      card.classList.toggle('requires-upgrade', Boolean(missing) && !upgrade.purchased);
+      card.classList.toggle('requires-upgrade', !getUpgradeState('studio').purchased && !upgrade.purchased);
     }
   },
   {
@@ -347,10 +314,9 @@ export const UPGRADES = [
     defaultState: {
       purchased: false
     },
-    requirements: SERVER_CLUSTER_REQUIREMENTS,
     details: [
       () => '💵 Cost: <strong>$1,150</strong>',
-      () => `Requires: <strong>${formatRequirementHeadline(SERVER_CLUSTER_REQUIREMENT_BUNDLE)}</strong>`,
+      () => 'Requires: <strong>Starter Server Rack</strong>',
       () => 'Unlocks: <strong>SaaS deployments</strong>'
     ],
     requirements: [{ type: 'upgrade', id: 'serverRack' }],
@@ -361,20 +327,19 @@ export const UPGRADES = [
       label: () => {
         const upgrade = getUpgradeState('serverCluster');
         if (upgrade.purchased) return 'Cluster Ready';
-        const missing = summarizeMissingRequirementLabels(SERVER_CLUSTER_REQUIREMENT_BUNDLE);
-        if (missing) return `Requires ${missing}`;
+        if (!getUpgradeState('serverRack').purchased) return 'Requires Rack';
         return 'Deploy Cluster';
       },
       className: 'secondary',
       disabled: () => {
         const upgrade = getUpgradeState('serverCluster');
         if (upgrade.purchased) return true;
-        if (summarizeMissingRequirementLabels(SERVER_CLUSTER_REQUIREMENT_BUNDLE)) return true;
+        if (!getUpgradeState('serverRack').purchased) return true;
         return getState().money < 1150;
       },
       onClick: () => executeAction(() => {
         const upgrade = getUpgradeState('serverCluster');
-        if (upgrade.purchased || summarizeMissingRequirementLabels(SERVER_CLUSTER_REQUIREMENT_BUNDLE)) return;
+        if (upgrade.purchased || !getUpgradeState('serverRack').purchased) return;
         spendMoney(1150);
         recordCostContribution({
           key: 'upgrade:serverCluster',
@@ -389,8 +354,7 @@ export const UPGRADES = [
     cardState: (_state, card) => {
       const upgrade = getUpgradeState('serverCluster');
       card.classList.toggle('locked', upgrade.purchased);
-      const missing = summarizeMissingRequirementLabels(SERVER_CLUSTER_REQUIREMENT_BUNDLE);
-      card.classList.toggle('requires-upgrade', Boolean(missing) && !upgrade.purchased);
+      card.classList.toggle('requires-upgrade', !getUpgradeState('serverRack').purchased && !upgrade.purchased);
     }
   },
   {
@@ -401,10 +365,9 @@ export const UPGRADES = [
     defaultState: {
       purchased: false
     },
-    requirements: SERVER_EDGE_REQUIREMENTS,
     details: [
       () => '💵 Cost: <strong>$1,450</strong>',
-      () => `Requires: <strong>${formatRequirementHeadline(SERVER_EDGE_REQUIREMENT_BUNDLE)}</strong>`,
+      () => 'Requires: <strong>Cloud Cluster</strong>',
       () => 'Boosts: <strong>SaaS subscriber trust</strong>'
     ],
     requirements: [{ type: 'upgrade', id: 'serverCluster' }],
@@ -415,20 +378,19 @@ export const UPGRADES = [
       label: () => {
         const upgrade = getUpgradeState('serverEdge');
         if (upgrade.purchased) return 'Edge Live';
-        const missing = summarizeMissingRequirementLabels(SERVER_EDGE_REQUIREMENT_BUNDLE);
-        if (missing) return `Requires ${missing}`;
+        if (!getUpgradeState('serverCluster').purchased) return 'Requires Cluster';
         return 'Activate Edge Network';
       },
       className: 'secondary',
       disabled: () => {
         const upgrade = getUpgradeState('serverEdge');
         if (upgrade.purchased) return true;
-        if (summarizeMissingRequirementLabels(SERVER_EDGE_REQUIREMENT_BUNDLE)) return true;
+        if (!getUpgradeState('serverCluster').purchased) return true;
         return getState().money < 1450;
       },
       onClick: () => executeAction(() => {
         const upgrade = getUpgradeState('serverEdge');
-        if (upgrade.purchased || summarizeMissingRequirementLabels(SERVER_EDGE_REQUIREMENT_BUNDLE)) return;
+        if (upgrade.purchased || !getUpgradeState('serverCluster').purchased) return;
         spendMoney(1450);
         recordCostContribution({
           key: 'upgrade:serverEdge',
@@ -443,8 +405,7 @@ export const UPGRADES = [
     cardState: (_state, card) => {
       const upgrade = getUpgradeState('serverEdge');
       card.classList.toggle('locked', upgrade.purchased);
-      const missing = summarizeMissingRequirementLabels(SERVER_EDGE_REQUIREMENT_BUNDLE);
-      card.classList.toggle('requires-upgrade', Boolean(missing) && !upgrade.purchased);
+      card.classList.toggle('requires-upgrade', !getUpgradeState('serverCluster').purchased && !upgrade.purchased);
     }
   },
   {
@@ -499,10 +460,9 @@ export const UPGRADES = [
     defaultState: {
       purchased: false
     },
-    requirements: COURSE_REQUIREMENTS,
     details: [
       () => '💵 Cost: <strong>$260</strong>',
-      () => `Requires: <strong>${formatRequirementHeadline(COURSE_REQUIREMENT_BUNDLE)}</strong>`
+      () => 'Requires at least one active blog'
     ],
     requirements: [{ type: 'experience', assetId: 'blog', count: 1 }],
     action: {
@@ -512,20 +472,20 @@ export const UPGRADES = [
       label: () => {
         const upgrade = getUpgradeState('course');
         if (upgrade.purchased) return 'Automation Ready';
-        const missing = summarizeMissingRequirementLabels(COURSE_REQUIREMENT_BUNDLE);
-        if (missing) return `Requires ${missing}`;
-        return 'Study Up';
+        return getAssetState('blog').instances.length ? 'Study Up' : 'Requires Active Blog';
       },
       className: 'secondary',
       disabled: () => {
         const upgrade = getUpgradeState('course');
         if (upgrade.purchased) return true;
-        if (summarizeMissingRequirementLabels(COURSE_REQUIREMENT_BUNDLE)) return true;
+        const blogActive = getAssetState('blog').instances.length > 0;
+        if (!blogActive) return true;
         return getState().money < 260;
       },
       onClick: () => executeAction(() => {
         const upgrade = getUpgradeState('course');
-        if (upgrade.purchased || summarizeMissingRequirementLabels(COURSE_REQUIREMENT_BUNDLE)) return;
+        const blog = getAssetState('blog');
+        if (upgrade.purchased || !blog.instances.length) return;
         spendMoney(260);
         recordCostContribution({
           key: 'upgrade:course',
@@ -539,8 +499,8 @@ export const UPGRADES = [
     },
     cardState: (_state, card) => {
       const upgrade = getUpgradeState('course');
-      const missing = summarizeMissingRequirementLabels(COURSE_REQUIREMENT_BUNDLE);
-      card.classList.toggle('locked', Boolean(missing) && !upgrade.purchased);
+      const blogActive = getAssetState('blog').instances.length > 0;
+      card.classList.toggle('locked', !blogActive && !upgrade.purchased);
     }
   }
 ];

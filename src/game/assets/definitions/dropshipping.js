@@ -25,10 +25,10 @@ const dropshippingDefinition = {
     variance: 0.2,
     logType: 'passive'
   },
-  requirements: {
-    knowledge: ['ecomPlaybook'],
-    experience: [{ assetId: 'blog', count: 2 }]
-  },
+  requirements: [
+    { type: 'knowledge', id: 'ecomPlaybook' },
+    { type: 'experience', assetId: 'blog', count: 2 }
+  ],
   quality: {
     summary: 'Add listings, tune pages, and fund ad bursts to transform a fragile storefront into a conversion machine.',
     tracks: {
