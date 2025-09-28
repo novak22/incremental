@@ -144,8 +144,6 @@ function renderTimeProgress(summary) {
     0,
     getAssistantCount(state) * ASSISTANT_CONFIG.hoursPerAssistant
   );
-  let assistantRemainingCapacity = assistantCapacity;
-  let assistantOverflowHours = 0;
 
   if (sleepHours > HOURS_EPSILON) {
     playerSegments.push({
@@ -153,6 +151,7 @@ function renderTimeProgress(summary) {
       label: 'Sleep',
       hours: sleepHours,
       category: 'sleep',
+      rawCategory: 'sleep',
       style: getSegmentStyle('sleep'),
       owner: 'player'
     });
@@ -169,36 +168,26 @@ function renderTimeProgress(summary) {
         label: entry.label || entry.key || `Activity ${index + 1}`,
         hours,
         category: normalized,
+        rawCategory: entry.category || entry.definition?.category || normalized,
         style: getSegmentStyle(category)
       };
-      if (normalized === 'maintenance') {
-        const assistantHours = Math.min(assistantRemainingCapacity, hours);
-        if (assistantHours > HOURS_EPSILON) {
-          assistantSegments.push({
-            ...segment,
-            key: `${segment.key}:assistant`,
-            hours: assistantHours,
-            owner: 'assistant'
-          });
-          assistantRemainingCapacity = Math.max(0, assistantRemainingCapacity - assistantHours);
-        }
 
-        const manualHours = hours - assistantHours;
-        if (manualHours > HOURS_EPSILON) {
-          assistantOverflowHours += manualHours;
-          playerSegments.push({
-            ...segment,
-            key: `${segment.key}:manual`,
-            label: assistantHours > HOURS_EPSILON ? `${segment.label} (manual)` : segment.label,
-            hours: manualHours,
-            owner: 'player'
-          });
-        }
+      const rawCategory = segment.rawCategory;
+      const isAssistantSegment =
+        typeof rawCategory === 'string' && rawCategory.includes('assistant');
+
+      if (isAssistantSegment) {
+        assistantSegments.push({ ...segment, owner: 'assistant' });
       } else {
         playerSegments.push({ ...segment, owner: 'player' });
       }
     });
   }
+
+  const manualMaintenanceHours = playerSegments
+    .filter(segment => segment.owner === 'player' && segment.rawCategory?.startsWith('maintenance'))
+    .reduce((total, segment) => total + segment.hours, 0);
+  const assistantOverflowHours = assistantCapacity > HOURS_EPSILON ? manualMaintenanceHours : 0;
 
   const playerUsedHours = Math.max(0, Math.min(timeCap, timeCap - timeLeft));
   const trackedPlayerHours = playerSegments
@@ -211,6 +200,7 @@ function renderTimeProgress(summary) {
       label: 'Untracked time',
       hours: untrackedHours,
       category: 'general',
+      rawCategory: 'general',
       style: getSegmentStyle('general'),
       owner: 'player',
       isSummary: true
@@ -224,6 +214,7 @@ function renderTimeProgress(summary) {
       label: 'Unscheduled',
       hours: remainingHours,
       style: getSegmentStyle('remaining'),
+      rawCategory: 'remaining',
       owner: 'player',
       isRemaining: true
     });
@@ -259,6 +250,7 @@ function renderTimeProgress(summary) {
       label: 'Idle capacity',
       hours: assistantIdle,
       style: getSegmentStyle('remaining'),
+      rawCategory: 'remaining',
       owner: 'assistant',
       isRemaining: true
     });

@@ -7,7 +7,7 @@
 
 ## Player Impact
 - The dashboard header now starts every day at 08h to represent a full night of sleep and pushes toward 24h as actions land.
-- Each time investment paints a new colour-coded segment (maintenance gold, setup violet, hustles green, study pink, upgrades cyan, quality coral, misc slate) so the daily rhythm is obvious at a glance.
+- Each time investment paints a new colour-coded segment (maintenance gold, setup violet, hustles green, study pink, upgrades cyan, quality coral, misc slate) so the daily rhythm is obvious at a glance, with assistant-handled upkeep now flagged separately in the legend.
 - A quick legend and caption summarise how many actions have been logged and how many flexible hours remain, helping players decide the next move without opening the full snapshot.
 
 ## Tuning Parameters

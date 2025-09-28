@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 - Reimagined the dashboard clock as a forward-moving 24h day tracker with colour-coded segments for sleep, upkeep, setup, and logged actions plus an at-a-glance legend.
+- Rebalanced assistant upkeep allocation so helper hours are consumed before tasks bounce to the player, with overflow now failing when both pools are spent.
 - Introduced schema-driven builders for hustles, assets, and upgrades so new content can be configured declaratively with shared UI details and metrics hooks.
 - Added a centralized action catalog with selectors plus an optional debug panel that lists availability, costs, and requirement gaps across hustles, assets, upgrades, and quality actions.
 - Unified asset and upgrade requirement schema so unlock conditions share consistent evaluation and UI messaging.
