@@ -25,6 +25,35 @@ export function describeInstanceEarnings(instance) {
   return '💤 No payout yesterday';
 }
 
+export function calculateInstanceNetDaily(definition, instance) {
+  if (!definition || !instance) return null;
+  if (instance.status !== 'active') return null;
+  const income = Math.max(0, Number(instance.lastIncome) || 0);
+  const upkeepCost = Math.max(0, Number(definition.maintenance?.cost) || 0);
+  return income - upkeepCost;
+}
+
+export function calculateInstanceNetHourly(definition, instance) {
+  if (!definition || !instance) return null;
+  if (instance.status !== 'active') return null;
+  const upkeepHours = Math.max(0, Number(definition.maintenance?.hours) || 0);
+  if (upkeepHours <= 0) return null;
+  const netDaily = calculateInstanceNetDaily(definition, instance);
+  if (netDaily === null) return null;
+  return netDaily / upkeepHours;
+}
+
+export function describeInstanceNetHourly(definition, instance) {
+  const netHourly = calculateInstanceNetHourly(definition, instance);
+  if (netHourly === null) {
+    return instance.status === 'active' ? 'No upkeep hours' : 'Launch pending';
+  }
+  const absolute = Math.abs(netHourly);
+  const formatted = formatMoney(Math.round(absolute * 100) / 100);
+  const prefix = netHourly < 0 ? '-$' : '$';
+  return `${prefix}${formatted}/hr`;
+}
+
 function renderInstanceList(definition, state, ui) {
   const container = ui?.extra?.instanceList;
   if (!container) return;
