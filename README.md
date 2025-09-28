@@ -50,6 +50,10 @@ Each asset supports multiple instances, tracks setup progress, and rolls a daily
 2. Open `index.html` in any modern browser. The project is a static ES-module bundle; no build tools required.
 3. Optional: serve with a simple HTTP server (e.g., `npx serve .`) to avoid `localStorage` restrictions during local testing.
 
+## Testing
+1. Install dev dependencies with `npm install`.
+2. Run the Node-based suite with `npm test` to exercise the day scheduler, maintenance flow, and knowledge tracks.
+
 ## Roadmap
 - Expand hustle variety (recurring retainers, seasonal gigs) to diversify daily decision making.
 - Add additional passive assets (courses, subscription communities) with unique requirement chains and income rhythms.
