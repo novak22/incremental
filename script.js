@@ -106,6 +106,132 @@ const ASSETS = [
     },
     isActive: (_state, assetState) => assetState.active,
     getIncomeAmount: (_state, assetState) => BLOG_CHUNK * assetState.multiplier
+  },
+  {
+    id: 'vlog',
+    name: 'Vlog Channel',
+    tag: { label: 'Passive', type: 'passive' },
+    description: 'Shoot and edit weekly vlogs to build your creator empire.',
+    requiresUpgrade: 'camera',
+    defaultState: {
+      active: false,
+      buffer: 0,
+      multiplier: 1
+    },
+    details: [
+      () => '⏳ Setup Time: <strong>4h</strong>',
+      () => '💵 Setup Cost: <strong>$150</strong>',
+      () => '🛠 Maintenance: <strong>1h/day</strong>',
+      () => renderAssetRequirementDetail('vlog'),
+      () => {
+        const asset = getAssetState('vlog');
+        const income = 9 * asset.multiplier;
+        return `💸 Income: <strong>$${formatMoney(income)} / 15s</strong>`;
+      }
+    ],
+    action: {
+      label: () => {
+        const asset = getAssetState('vlog');
+        if (asset.active) return 'Channel Running';
+        if (!assetRequirementsMetById('vlog')) {
+          return formatAssetRequirementLabel('vlog');
+        }
+        return 'Launch Channel';
+      },
+      className: 'primary',
+      disabled: () => {
+        const asset = getAssetState('vlog');
+        if (asset.active) return true;
+        if (!assetRequirementsMetById('vlog')) return true;
+        if (state.timeLeft < 4) return true;
+        if (state.money < 150) return true;
+        return false;
+      },
+      onClick: () => executeAction(() => {
+        const asset = getAssetState('vlog');
+        if (asset.active || !assetRequirementsMetById('vlog')) {
+          addLog('You need the right gear before filming can begin.', 'info');
+          return;
+        }
+        spendTime(4);
+        spendMoney(150);
+        asset.active = true;
+        asset.buffer = 0;
+        addLog('Lights, camera, payout! Your vlog channel is live and ready to monetize every 15 seconds.', 'passive');
+      }, { checkDay: true })
+    },
+    passiveIncome: {
+      interval: 15,
+      logType: 'passive',
+      message: amount => `Your vlog racked up views for $${formatMoney(amount)} while you edited thumbnails.`,
+      offlineMessage: total => `Your vlog library brought in $${formatMoney(total)} while you were AFK. Influencer vibes!`
+    },
+    isActive: (_state, assetState) => assetState.active,
+    getIncomeAmount: (_state, assetState) => 9 * assetState.multiplier,
+    cardState: (_state, card) => updateAssetCardLock('vlog', card)
+  },
+  {
+    id: 'podcast',
+    name: 'Podcast Series',
+    tag: { label: 'Passive', type: 'passive' },
+    description: 'Record interviews and schedule drops that keep listeners binging.',
+    requiresUpgrade: 'studio',
+    defaultState: {
+      active: false,
+      buffer: 0,
+      multiplier: 1
+    },
+    details: [
+      () => '⏳ Setup Time: <strong>5h</strong>',
+      () => '💵 Setup Cost: <strong>$220</strong>',
+      () => '🛠 Maintenance: <strong>1.5h/day</strong>',
+      () => renderAssetRequirementDetail('podcast'),
+      () => {
+        const asset = getAssetState('podcast');
+        const income = 25 * asset.multiplier;
+        return `💸 Income: <strong>$${formatMoney(income)} / 30s</strong>`;
+      }
+    ],
+    action: {
+      label: () => {
+        const asset = getAssetState('podcast');
+        if (asset.active) return 'Podcast Syndicated';
+        if (!assetRequirementsMetById('podcast')) {
+          return formatAssetRequirementLabel('podcast');
+        }
+        return 'Produce Season';
+      },
+      className: 'primary',
+      disabled: () => {
+        const asset = getAssetState('podcast');
+        if (asset.active) return true;
+        if (!assetRequirementsMetById('podcast')) return true;
+        if (state.timeLeft < 5) return true;
+        if (state.money < 220) return true;
+        return false;
+      },
+      onClick: () => executeAction(() => {
+        const asset = getAssetState('podcast');
+        if (asset.active || !assetRequirementsMetById('podcast')) {
+          addLog('Set up your studio before you can hit record on that podcast.', 'info');
+          return;
+        }
+        spendTime(5);
+        spendMoney(220);
+        asset.active = true;
+        asset.buffer = 0;
+        addLog('Your podcast season is queued! Sponsors drip $25 every 30 seconds while episodes drop.', 'passive');
+      }, { checkDay: true })
+    },
+    passiveIncome: {
+      interval: 30,
+      logType: 'passive',
+      message: amount => `Podcast downloads surged, netting $${formatMoney(amount)} in sponsor cash.`,
+      offlineMessage: total => `Your podcast backlog pulled $${formatMoney(total)} while you were off-mic. Nice!`
+    },
+    isActive: (_state, assetState) => assetState.active,
+    getIncomeAmount: (_state, assetState) => 25 * assetState.multiplier,
+    cardState: (_state, card) => updateAssetCardLock('podcast', card)
   }
 ];
 
@@ -141,6 +267,72 @@ const UPGRADES = [
     cardState: (_state, card) => {
       const purchased = getUpgradeState('assistant').purchased;
       card.classList.toggle('locked', purchased);
+    }
+  },
+  {
+    id: 'camera',
+    name: 'Buy Camera',
+    tag: { label: 'Unlock', type: 'unlock' },
+    description: 'Unlocks video production gear so you can start a vlog channel.',
+    defaultState: {
+      purchased: false
+    },
+    details: [
+      () => '💵 Cost: <strong>$200</strong>',
+      () => 'Unlocks: <strong>Vlog Channel</strong>'
+    ],
+    action: {
+      label: () => getUpgradeState('camera').purchased ? 'Camera Ready' : 'Purchase Camera',
+      className: 'secondary',
+      disabled: () => {
+        const upgrade = getUpgradeState('camera');
+        if (upgrade.purchased) return true;
+        return state.money < 200;
+      },
+      onClick: () => executeAction(() => {
+        const upgrade = getUpgradeState('camera');
+        if (upgrade.purchased) return;
+        spendMoney(200);
+        upgrade.purchased = true;
+        addLog('You bought a mirrorless camera rig. The vlog channel card just unlocked!', 'upgrade');
+      })
+    },
+    cardState: (_state, card) => {
+      const upgrade = getUpgradeState('camera');
+      card.classList.toggle('locked', upgrade.purchased);
+    }
+  },
+  {
+    id: 'studio',
+    name: 'Studio Setup',
+    tag: { label: 'Unlock', type: 'unlock' },
+    description: 'Soundproofing, mixers, and lights so your podcast sounds pro.',
+    defaultState: {
+      purchased: false
+    },
+    details: [
+      () => '💵 Cost: <strong>$260</strong>',
+      () => 'Unlocks: <strong>Podcast Series</strong>'
+    ],
+    action: {
+      label: () => getUpgradeState('studio').purchased ? 'Studio Ready' : 'Build Studio',
+      className: 'secondary',
+      disabled: () => {
+        const upgrade = getUpgradeState('studio');
+        if (upgrade.purchased) return true;
+        return state.money < 260;
+      },
+      onClick: () => executeAction(() => {
+        const upgrade = getUpgradeState('studio');
+        if (upgrade.purchased) return;
+        spendMoney(260);
+        upgrade.purchased = true;
+        addLog('Podcast studio assembled! Your podcast asset is ready to produce seasons.', 'upgrade');
+      })
+    },
+    cardState: (_state, card) => {
+      const upgrade = getUpgradeState('studio');
+      card.classList.toggle('locked', upgrade.purchased);
     }
   },
   {
@@ -224,6 +416,67 @@ const UPGRADES = [
 const HUSTLE_MAP = new Map(HUSTLES.map(item => [item.id, item]));
 const ASSET_MAP = new Map(ASSETS.map(item => [item.id, item]));
 const UPGRADE_MAP = new Map(UPGRADES.map(item => [item.id, item]));
+
+function isUpgradePurchased(id) {
+  if (!id) return true;
+  return !!getUpgradeState(id).purchased;
+}
+
+function normalizeAssetRequirement(def) {
+  if (!def || !def.requiresUpgrade) return [];
+  return Array.isArray(def.requiresUpgrade) ? def.requiresUpgrade : [def.requiresUpgrade];
+}
+
+function assetRequirementsMet(def) {
+  const requirements = normalizeAssetRequirement(def);
+  return requirements.every(isUpgradePurchased);
+}
+
+function assetRequirementsMetById(id) {
+  const def = ASSET_MAP.get(id);
+  if (!def) return true;
+  return assetRequirementsMet(def);
+}
+
+function missingAssetRequirements(def) {
+  const requirements = normalizeAssetRequirement(def);
+  return requirements.filter(req => !isUpgradePurchased(req));
+}
+
+function formatAssetRequirementLabel(assetId) {
+  const def = ASSET_MAP.get(assetId);
+  if (!def) return 'Requirement Missing';
+  const missing = missingAssetRequirements(def);
+  if (!missing.length) return 'Ready to Launch';
+  const names = missing.map(id => UPGRADE_MAP.get(id)?.name || id);
+  return `Requires ${names.join(' & ')}`;
+}
+
+function renderAssetRequirementDetail(assetId) {
+  const def = ASSET_MAP.get(assetId);
+  if (!def) return '';
+  const requirements = normalizeAssetRequirement(def);
+  if (!requirements.length) {
+    return '🔓 Requirements: <strong>None</strong>';
+  }
+  const parts = requirements.map(id => {
+    const upgradeDef = UPGRADE_MAP.get(id);
+    const purchased = isUpgradePurchased(id);
+    const icon = purchased ? '✅' : '🔒';
+    const label = upgradeDef ? upgradeDef.name : id;
+    const status = purchased ? 'Unlocked' : 'Locked';
+    return `${icon} <strong>${label}</strong> (${status})`;
+  });
+  return `Requirements: ${parts.join(' & ')}`;
+}
+
+function updateAssetCardLock(assetId, card) {
+  const def = ASSET_MAP.get(assetId);
+  if (!def || !card) return;
+  const assetState = getAssetState(assetId);
+  const locked = !assetRequirementsMet(def) && !assetState.active;
+  card.classList.toggle('locked', locked);
+}
 
 const DEFAULT_STATE = buildDefaultState();
 let state = structuredClone(DEFAULT_STATE);
