@@ -1,6 +1,8 @@
 import elements from './elements.js';
-import { getState } from '../core/state.js';
-import { attachQualityPanel, updateQualityPanel } from './quality.js';
+import { getAssetState, getState } from '../core/state.js';
+import { formatHours, formatMoney } from '../core/helpers.js';
+import { attachQualityPanel, focusQualityInstance, updateQualityPanel } from './quality.js';
+import { getDailyIncomeRange } from '../game/assets/helpers.js';
 import { enableAssetInstanceList } from './assetInstances.js';
 
 const ASSET_CATEGORY_KEYS = {
@@ -16,6 +18,13 @@ const UPGRADE_GROUPS = {
   camera: 'equipment',
   studio: 'equipment',
   coffee: 'consumables'
+};
+
+const assetModalState = {
+  definitions: [],
+  initialized: false,
+  activeId: null,
+  origin: null
 };
 
 export function renderCardCollections({ hustles, education, assets, upgrades }) {
@@ -44,6 +53,9 @@ export function updateCard(definition) {
   }
   if (typeof definition.cardState === 'function') {
     definition.cardState(state, definition.ui.card);
+  }
+  if (definition.ui?.extra?.assetStats) {
+    updateAssetSummary(definition, state);
   }
   if (typeof definition.update === 'function') {
     definition.update(state, definition.ui);
@@ -75,16 +87,22 @@ function renderAssetCollections(definitions) {
   }
 
   const seen = new Set();
+  const uniqueDefinitions = [];
 
   for (const definition of definitions) {
     if (!definition || seen.has(definition.id)) continue;
     seen.add(definition.id);
+    uniqueDefinitions.push(definition);
     const categoryKey = normalizeCategory(definition.tag?.label);
     const container = elements.assetCategoryGrids[categoryKey] || elements.assetGridRoot;
     if (!container) continue;
     enableAssetInstanceList(definition);
-    createCard(definition, container, { category: categoryKey });
+    createAssetCard(definition, container, { category: categoryKey });
   }
+
+  assetModalState.definitions = uniqueDefinitions;
+  initAssetInfoModal();
+  updateAssetInfoTrigger();
 }
 
 function renderUpgradeCollections(definitions) {
@@ -106,6 +124,195 @@ function renderCollection(definitions, container) {
   container.innerHTML = '';
   for (const def of definitions) {
     createCard(def, container);
+  }
+}
+
+function createAssetCard(definition, container, metadata = {}) {
+  const state = getState();
+  const card = document.createElement('article');
+  card.className = 'card asset-card';
+  card.id = `${definition.id}-card`;
+  if (Array.isArray(definition.initialClasses)) {
+    for (const cls of definition.initialClasses) {
+      card.classList.add(cls);
+    }
+  }
+  if (metadata.category) {
+    card.dataset.category = metadata.category;
+  }
+
+  const header = document.createElement('div');
+  header.className = 'asset-card__header';
+
+  const heading = document.createElement('div');
+  heading.className = 'asset-card__heading';
+  const title = document.createElement('h3');
+  title.textContent = definition.name;
+  heading.appendChild(title);
+  if (definition.tag) {
+    const tagEl = document.createElement('span');
+    tagEl.className = `tag ${definition.tag.type || ''}`.trim();
+    tagEl.textContent = definition.tag.label;
+    heading.appendChild(tagEl);
+  }
+  header.appendChild(heading);
+
+  const briefingButton = document.createElement('button');
+  briefingButton.type = 'button';
+  briefingButton.className = 'asset-card__briefing ghost-button';
+  briefingButton.textContent = 'Briefing';
+  briefingButton.addEventListener('click', () => openAssetInfo(definition, briefingButton));
+  header.appendChild(briefingButton);
+
+  card.appendChild(header);
+
+  if (definition.description) {
+    const blurb = document.createElement('p');
+    blurb.className = 'asset-card__tagline';
+    blurb.textContent = definition.description;
+    card.appendChild(blurb);
+  }
+
+  const stats = document.createElement('div');
+  stats.className = 'asset-card__stats';
+  const ownedStat = createAssetStat('Launches Online');
+  const payoutStat = createAssetStat('Last Payout');
+  const rangeStat = createAssetStat('Daily Potential');
+  const upkeepStat = createAssetStat('Upkeep');
+  stats.append(ownedStat.element, payoutStat.element, rangeStat.element, upkeepStat.element);
+  card.appendChild(stats);
+
+  const actions = document.createElement('div');
+  actions.className = 'asset-card__actions';
+
+  let button = null;
+  if (definition.action) {
+    button = document.createElement('button');
+    button.type = 'button';
+    button.className = definition.action.className || 'primary';
+    const label = typeof definition.action.label === 'function' ? definition.action.label(state) : definition.action.label;
+    button.textContent = label;
+    const disabled = typeof definition.action.disabled === 'function'
+      ? definition.action.disabled(state)
+      : !!definition.action.disabled;
+    button.disabled = disabled;
+    button.addEventListener('click', () => {
+      if (button.disabled) return;
+      definition.action.onClick();
+    });
+    card.classList.toggle('unavailable', disabled);
+    actions.appendChild(button);
+  }
+
+  let qualityButton = null;
+  if (definition.quality) {
+    qualityButton = document.createElement('button');
+    qualityButton.type = 'button';
+    qualityButton.className = 'secondary';
+    qualityButton.textContent = 'Upgrade Quality';
+    actions.appendChild(qualityButton);
+  }
+
+  if (actions.childElementCount) {
+    card.appendChild(actions);
+  }
+
+  const instancesContainer = document.createElement('div');
+  instancesContainer.className = 'asset-card__instances';
+  const instancesHeader = document.createElement('div');
+  instancesHeader.className = 'asset-card__instances-header';
+  const instancesTitle = document.createElement('h4');
+  instancesTitle.textContent = 'Live Builds';
+  instancesHeader.appendChild(instancesTitle);
+  const instancesCount = document.createElement('span');
+  instancesCount.className = 'asset-card__instances-count';
+  instancesHeader.appendChild(instancesCount);
+  instancesContainer.appendChild(instancesHeader);
+  const instancesBody = document.createElement('div');
+  instancesBody.className = 'asset-card__instances-body';
+  instancesContainer.appendChild(instancesBody);
+  card.appendChild(instancesContainer);
+
+  let extra = typeof definition.extraContent === 'function' ? definition.extraContent(card, state) || {} : {};
+  if (extra.instanceList) {
+    instancesBody.appendChild(extra.instanceList);
+  }
+
+  let qualityPanelState = null;
+  let qualitySection = null;
+  if (definition.quality) {
+    qualityPanelState = attachQualityPanel(card, definition);
+    if (qualityPanelState?.panel) {
+      qualitySection = document.createElement('div');
+      qualitySection.className = 'asset-card__quality';
+      qualitySection.dataset.expanded = 'false';
+      qualitySection.hidden = true;
+      qualitySection.appendChild(qualityPanelState.panel);
+      card.appendChild(qualitySection);
+    }
+  }
+
+  let qualityExpanded = false;
+  const toggleQuality = (force = null) => {
+    if (!qualitySection) return;
+    if (force === true) {
+      qualityExpanded = true;
+    } else if (force === false) {
+      qualityExpanded = false;
+    } else {
+      qualityExpanded = !qualityExpanded;
+    }
+    qualitySection.dataset.expanded = qualityExpanded ? 'true' : 'false';
+    qualitySection.hidden = !qualityExpanded;
+    if (qualityButton) {
+      qualityButton.textContent = qualityExpanded ? 'Hide Quality Actions' : 'Upgrade Quality';
+    }
+  };
+
+  if (qualityButton) {
+    qualityButton.addEventListener('click', () => toggleQuality());
+  }
+
+  const openQuality = instanceId => {
+    toggleQuality(true);
+    if (qualityPanelState) {
+      focusQualityInstance(qualityPanelState, instanceId);
+    }
+  };
+
+  const extras = {
+    ...extra,
+    assetStats: {
+      ownedValue: ownedStat.value,
+      ownedNote: ownedStat.note,
+      payoutValue: payoutStat.value,
+      payoutNote: payoutStat.note,
+      rangeValue: rangeStat.value,
+      rangeNote: rangeStat.note,
+      upkeepValue: upkeepStat.value,
+      upkeepNote: upkeepStat.note
+    },
+    assetDetails: getAssetDetailRenderers(definition),
+    instancesCount
+  };
+
+  if (qualityPanelState) {
+    extras.openQuality = openQuality;
+    extras.toggleQuality = toggleQuality;
+    extras.quality = qualityPanelState;
+  }
+
+  container.appendChild(card);
+  definition.ui = {
+    card,
+    button,
+    details: [],
+    extra: extras
+  };
+
+  updateAssetSummary(definition, state);
+  if (definition.quality && definition.ui.extra?.quality) {
+    updateQualityPanel(definition, definition.ui.extra.quality);
   }
 }
 
@@ -191,6 +398,242 @@ function createCard(definition, container, metadata = {}) {
   };
   if (definition.quality && definition.ui.extra?.quality) {
     updateQualityPanel(definition, definition.ui.extra.quality);
+  }
+}
+
+function createAssetStat(label) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'asset-stat';
+  const labelEl = document.createElement('span');
+  labelEl.className = 'asset-stat__label';
+  labelEl.textContent = label;
+  const valueEl = document.createElement('span');
+  valueEl.className = 'asset-stat__value';
+  const noteEl = document.createElement('span');
+  noteEl.className = 'asset-stat__note';
+  noteEl.hidden = true;
+  wrapper.append(labelEl, valueEl, noteEl);
+  return { element: wrapper, value: valueEl, note: noteEl };
+}
+
+function updateAssetSummary(definition, state = getState()) {
+  const stats = definition.ui?.extra?.assetStats;
+  if (!stats) return;
+
+  const assetState = getAssetState(definition.id, state);
+  const instances = assetState?.instances || [];
+  const activeInstances = instances.filter(instance => instance.status === 'active');
+  const setupInstances = instances.length - activeInstances.length;
+
+  stats.ownedValue.textContent = instances.length ? `${instances.length} launched` : 'None yet';
+  const ownedParts = [];
+  if (activeInstances.length) ownedParts.push(`${activeInstances.length} active`);
+  if (setupInstances > 0) ownedParts.push(`${setupInstances} in prep`);
+  setStatNote(stats.ownedNote, ownedParts.join(' · '));
+
+  if (definition.ui.extra?.instancesCount) {
+    const countPieces = [`${activeInstances.length} active`];
+    if (setupInstances > 0) {
+      countPieces.push(`${setupInstances} prep`);
+    }
+    countPieces.push(`${instances.length} total`);
+    definition.ui.extra.instancesCount.textContent = countPieces.join(' · ');
+  }
+
+  const totalPayout = activeInstances.reduce((sum, instance) => sum + Math.max(0, Number(instance.lastIncome) || 0), 0);
+  if (totalPayout > 0) {
+    stats.payoutValue.textContent = `$${formatMoney(totalPayout)}`;
+    const average = activeInstances.length ? Math.round(totalPayout / activeInstances.length) : 0;
+    setStatNote(stats.payoutNote, activeInstances.length ? `Avg $${formatMoney(Math.max(0, average))} per active build` : '');
+  } else {
+    stats.payoutValue.textContent = '$0';
+    setStatNote(
+      stats.payoutNote,
+      activeInstances.length ? 'No payout yesterday' : 'Launch a build to start earnings'
+    );
+  }
+
+  const incomeRange = getDailyIncomeRange(definition);
+  const minDaily = Math.max(0, Math.round(incomeRange.min || 0));
+  const maxDaily = Math.max(minDaily, Math.round(incomeRange.max || 0));
+  stats.rangeValue.textContent = `$${formatMoney(minDaily)} - $${formatMoney(maxDaily)}`;
+  setStatNote(stats.rangeNote, definition.quality ? 'Scales with quality actions' : 'Fixed yield');
+
+  const upkeepParts = [];
+  const upkeepHours = Number(definition.maintenance?.hours) || 0;
+  const upkeepCost = Number(definition.maintenance?.cost) || 0;
+  if (upkeepHours > 0) upkeepParts.push(`${formatHours(upkeepHours)}/day`);
+  if (upkeepCost > 0) upkeepParts.push(`$${formatMoney(upkeepCost)}/day`);
+  stats.upkeepValue.textContent = upkeepParts.length ? upkeepParts.join(' + ') : 'None';
+  setStatNote(stats.upkeepNote, formatAssetSetup(definition));
+
+  if (assetModalState.activeId === definition.id) {
+    populateAssetInfoModal(definition);
+  }
+}
+
+function formatAssetSetup(definition) {
+  const days = Number(definition.setup?.days) || 0;
+  const hoursPerDay = Number(definition.setup?.hoursPerDay) || 0;
+  const cost = Number(definition.setup?.cost) || 0;
+  const parts = [];
+
+  if (days > 1 && hoursPerDay > 0) {
+    parts.push(`${days} days · ${formatHours(hoursPerDay)}/day`);
+  } else if (days > 1) {
+    parts.push(`${days} days to launch`);
+  } else if (hoursPerDay > 0) {
+    parts.push(`${formatHours(hoursPerDay)} to launch`);
+  }
+
+  if (cost > 0) {
+    parts.push(`$${formatMoney(cost)} upfront`);
+  }
+
+  return parts.join(' · ');
+}
+
+function setStatNote(element, text) {
+  if (!element) return;
+  if (text) {
+    element.textContent = text;
+    element.hidden = false;
+  } else {
+    element.textContent = '';
+    element.hidden = true;
+  }
+}
+
+function getAssetDetailRenderers(definition) {
+  if (!Array.isArray(definition.details)) return [];
+  return definition.details.filter(Boolean);
+}
+
+function initAssetInfoModal() {
+  if (assetModalState.initialized) return;
+  const modal = elements.assetInfoModal;
+  if (!modal) return;
+  assetModalState.initialized = true;
+
+  if (elements.assetInfoClose) {
+    elements.assetInfoClose.addEventListener('click', closeAssetInfo);
+  }
+
+  modal.addEventListener('click', event => {
+    const target = event.target;
+    if (target === modal || target?.dataset?.modalClose !== undefined) {
+      closeAssetInfo();
+    }
+  });
+
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && elements.assetInfoModal?.classList.contains('is-visible')) {
+      closeAssetInfo();
+    }
+  });
+}
+
+function updateAssetInfoTrigger() {
+  const trigger = elements.assetInfoTrigger;
+  if (!trigger) return;
+  const available = assetModalState.definitions.length > 0;
+  trigger.disabled = !available;
+  trigger.hidden = !available;
+  if (!available) return;
+
+  if (!trigger.__assetInfoBound) {
+    trigger.addEventListener('click', () => {
+      const targetDefinition = getPrimaryAssetForTrigger();
+      if (targetDefinition) {
+        openAssetInfo(targetDefinition, trigger);
+      }
+    });
+    trigger.__assetInfoBound = true;
+  }
+
+  const primary = getPrimaryAssetForTrigger();
+  if (primary) {
+    trigger.setAttribute('aria-label', `Open briefing for ${primary.name}`);
+  }
+}
+
+function getPrimaryAssetForTrigger() {
+  const state = getState();
+  for (const definition of assetModalState.definitions) {
+    const assetState = getAssetState(definition.id, state);
+    if (!assetState?.instances?.length) {
+      return definition;
+    }
+  }
+  return assetModalState.definitions[0] || null;
+}
+
+function openAssetInfo(definition, originButton = null) {
+  if (!definition) return;
+  initAssetInfoModal();
+  const modal = elements.assetInfoModal;
+  if (!modal) return;
+
+  assetModalState.activeId = definition.id;
+  assetModalState.origin = originButton || null;
+
+  populateAssetInfoModal(definition);
+
+  modal.classList.add('is-visible');
+  modal.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('modal-open');
+  elements.assetInfoClose?.focus();
+}
+
+function closeAssetInfo() {
+  const modal = elements.assetInfoModal;
+  if (!modal || !modal.classList.contains('is-visible')) return;
+  modal.classList.remove('is-visible');
+  modal.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('modal-open');
+  const origin = assetModalState.origin;
+  assetModalState.origin = null;
+  assetModalState.activeId = null;
+  if (origin && typeof origin.focus === 'function') {
+    origin.focus();
+  }
+}
+
+function populateAssetInfoModal(definition) {
+  if (!definition) return;
+  const title = elements.assetInfoTitle;
+  const description = elements.assetInfoDescription;
+  const detailsList = elements.assetInfoDetails;
+
+  if (title) {
+    title.textContent = definition.name || 'Asset';
+  }
+
+  if (description) {
+    const text = definition.description || '';
+    description.textContent = text;
+    description.hidden = text.length === 0;
+  }
+
+  if (detailsList) {
+    detailsList.innerHTML = '';
+    const renderers = getAssetDetailRenderers(definition);
+    const currentState = getState();
+    let populated = false;
+    for (const detail of renderers) {
+      const markup = typeof detail === 'function' ? detail(currentState) : detail;
+      if (!markup) continue;
+      const li = document.createElement('li');
+      li.innerHTML = markup;
+      detailsList.appendChild(li);
+      populated = true;
+    }
+    if (!populated) {
+      const li = document.createElement('li');
+      li.className = 'modal__details-empty';
+      li.textContent = 'No additional details yet. Launch one to generate stats!';
+      detailsList.appendChild(li);
+    }
   }
 }
 

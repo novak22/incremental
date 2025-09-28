@@ -58,6 +58,12 @@ const elements = {
     collapsed: document.getElementById('filter-assets-collapsed'),
     hideLocked: document.getElementById('filter-assets-hide-locked')
   },
+  assetInfoTrigger: document.getElementById('asset-info-trigger'),
+  assetInfoModal: document.getElementById('asset-info-modal'),
+  assetInfoTitle: document.getElementById('asset-info-title'),
+  assetInfoDescription: document.getElementById('asset-info-description'),
+  assetInfoDetails: document.getElementById('asset-info-details'),
+  assetInfoClose: document.getElementById('asset-info-close'),
   upgradeSearch: document.getElementById('upgrade-search')
 };
 
