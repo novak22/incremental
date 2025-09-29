@@ -141,18 +141,18 @@ test('pending income stays queued when upkeep resources fall short', () => {
     daysRemaining: 0,
     daysCompleted: blogDefinition.setup.days,
     maintenanceFundedToday: false,
-    pendingIncome: 3
+    pendingIncome: 2
   })];
 
   const state = getState();
   state.timeLeft = 10;
-  state.money = 1;
+  state.money = 0;
 
   allocateAssetMaintenance();
 
   const updatedInstance = getAssetState('blog').instances[0];
-  assert.equal(state.money, 1, 'money should not change when upkeep fails');
-  assert.equal(updatedInstance.pendingIncome, 3, 'queued income should remain for future days');
+  assert.equal(state.money, 0, 'money should not change when upkeep fails');
+  assert.equal(updatedInstance.pendingIncome, 2, 'queued income should remain for future days');
   assert.equal(updatedInstance.maintenanceFundedToday, false, 'maintenance should remain unfunded');
 });
 
