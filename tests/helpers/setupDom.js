@@ -103,8 +103,7 @@ export function ensureTestDom() {
             <button id="asset-batch-preset"></button>
           </section>
           <section id="panel-upgrades" class="panel" hidden>
-            <input id="upgrade-search" />
-            <input id="upgrade-affordable-toggle" type="checkbox" />
+            <input id="upgrade-unlocked-toggle" type="checkbox" checked />
             <div id="upgrade-category-chips"></div>
             <div id="upgrade-list"></div>
             <aside>
