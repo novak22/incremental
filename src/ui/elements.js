@@ -118,6 +118,7 @@ const elements = {
   },
   upgradeEmpty: document.getElementById('upgrade-empty'),
   upgradeCategoryChips: document.getElementById('upgrade-category-chips'),
+  upgradeLaneList: document.getElementById('upgrade-lane-list'),
   upgradeSearch: document.getElementById('upgrade-search'),
   upgradeList: document.getElementById('upgrade-list'),
   upgradeDockList: document.getElementById('upgrade-dock-list'),

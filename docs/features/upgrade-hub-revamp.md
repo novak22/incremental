@@ -17,6 +17,12 @@
 - The upgrade effect engine applies category/family filters for payout, time, and quality multipliers; bonuses stack multiplicatively with sensible floors to prevent runaway values.
 - Slot-aware upgrades (e.g., hubs providing monitor capacity) surface availability hints directly on cards, ensuring consumptive upgrades respect capacity before purchase.
 
+## Lane navigator & quick stats (Update)
+- A sticky rail on the left pairs the category chips with a lane map, making it simple to focus on one upgrade lane or pan out to "All lanes" in a tap.
+- Each lane entry now broadcasts total discoveries, owned counts, and ready-to-buy picks so players can triage sprawling catalogs without scanning every card.
+- Family groupings render inside bordered pods with local counts and notes, giving the new automation and infrastructure tiers breathing room as more upgrade options arrive.
+- The dock still anchors on the right, mirroring button states from cards, so the three-column layout keeps filters, catalog, and purchase-ready picks visible together.
+
 **Player Impact**
 - Players can filter by affordability, search, or category simultaneously, drastically reducing scan time for priority upgrades.
 - The overview note reinforces short-term goals (buy now, meet requirements, or save up) so progression stalls are easier to diagnose.

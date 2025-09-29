@@ -376,11 +376,26 @@
               <input id="upgrade-affordable-toggle" type="checkbox" />
               <span>Affordable</span>
             </label>
-            <div id="upgrade-category-chips" class="chips" role="listbox" aria-label="Categories"></div>
             <input id="upgrade-search" type="search" placeholder="Search upgrades" aria-label="Search upgrades" />
           </div>
         </header>
         <div class="upgrade-layout">
+          <aside class="upgrade-rail" aria-label="Upgrade lanes">
+            <section class="upgrade-rail__section">
+              <header class="upgrade-rail__header">
+                <h3>Lane filters</h3>
+                <p>Toggle a lane to focus or browse the full list.</p>
+              </header>
+              <div id="upgrade-category-chips" class="chips chips--stacked" role="listbox" aria-label="Categories"></div>
+            </section>
+            <section class="upgrade-rail__section upgrade-rail__section--map" aria-live="polite">
+              <header class="upgrade-rail__header">
+                <h3>Lane map</h3>
+                <p>Glanceable counts for each upgrade lane.</p>
+              </header>
+              <ul id="upgrade-lane-list" class="upgrade-rail__list"></ul>
+            </section>
+          </aside>
           <div class="upgrade-main">
             <section id="upgrade-overview" class="upgrade-overview" aria-labelledby="upgrade-overview-title" aria-live="polite">
               <header>
