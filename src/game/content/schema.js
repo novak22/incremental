@@ -4,6 +4,7 @@ import {
   countActiveAssetInstances,
   getAssetDefinition,
   getAssetState,
+  getHustleState,
   getState,
   getUpgradeDefinition,
   getUpgradeState
@@ -181,16 +182,75 @@ export function createInstantHustle(config) {
         }
       : null,
     metrics: normalizeHustleMetrics(config.id, config.metrics || {}),
-    skills: config.skills
+    skills: config.skills,
+    dailyLimit: Number.isFinite(Number(config.dailyLimit)) && Number(config.dailyLimit) > 0
+      ? Math.max(1, Math.floor(Number(config.dailyLimit)))
+      : null
   };
+
+  function resolveDailyUsage(state = getState(), { sync = false } = {}) {
+    const hustleState = getHustleState(metadata.id, state);
+    const currentDay = Number(state?.day) || 1;
+
+    if (!metadata.dailyLimit) {
+      return {
+        hustleState,
+        currentDay,
+        limit: null,
+        used: Number(hustleState.runsToday) || 0,
+        remaining: null
+      };
+    }
+
+    const lastRunDay = Number(hustleState.lastRunDay) || 0;
+    const usedToday = lastRunDay === currentDay ? Number(hustleState.runsToday) || 0 : 0;
+
+    if (sync && lastRunDay !== currentDay) {
+      hustleState.lastRunDay = currentDay;
+      hustleState.runsToday = usedToday;
+    }
+
+    return {
+      hustleState,
+      currentDay,
+      limit: metadata.dailyLimit,
+      used: usedToday,
+      remaining: Math.max(0, metadata.dailyLimit - usedToday)
+    };
+  }
+
+  function updateDailyUsage(state) {
+    if (!metadata.dailyLimit) return null;
+    const usage = resolveDailyUsage(state, { sync: true });
+    const nextUsed = Math.min(metadata.dailyLimit, usage.used + 1);
+    usage.hustleState.lastRunDay = usage.currentDay;
+    usage.hustleState.runsToday = nextUsed;
+    const remaining = Math.max(0, metadata.dailyLimit - nextUsed);
+    return {
+      limit: metadata.dailyLimit,
+      used: nextUsed,
+      remaining,
+      day: usage.currentDay
+    };
+  }
 
   const definition = {
     ...config,
     type: 'hustle',
     tag: config.tag || { label: 'Instant', type: 'instant' },
-    defaultState: config.defaultState || {},
+    defaultState: (() => {
+      const base = { ...(config.defaultState || {}) };
+      if (metadata.dailyLimit) {
+        if (typeof base.runsToday !== 'number') base.runsToday = 0;
+        if (typeof base.lastRunDay !== 'number') base.lastRunDay = 0;
+      }
+      return base;
+    })(),
     skills: metadata.skills
   };
+
+  definition.dailyLimit = metadata.dailyLimit;
+  definition.getDailyUsage = state => resolveDailyUsage(state, { sync: false });
 
   const baseDetails = [];
   if (metadata.time > 0) {
@@ -208,6 +268,18 @@ export function createInstantHustle(config) {
     baseDetails.push(() => `Requires: <strong>${renderRequirementSummary(metadata.requirements)}</strong>`);
   }
 
+  if (metadata.dailyLimit) {
+    baseDetails.push(() => {
+      const usage = resolveDailyUsage(getState(), { sync: false });
+      const remaining = usage?.remaining ?? metadata.dailyLimit;
+      const limit = usage?.limit ?? metadata.dailyLimit;
+      const status = remaining > 0
+        ? `${remaining}/${limit} runs left today`
+        : 'Daily limit reached today';
+      return `🗓️ Daily limit: <strong>${limit} per day</strong> (${status})`;
+    });
+  }
+
   const educationDetails = describeInstantHustleEducationBonuses(config.id);
 
   definition.details = [...baseDetails, ...educationDetails, ...(config.details || [])];
@@ -215,6 +287,15 @@ export function createInstantHustle(config) {
   const actionClassName = config.actionClassName || 'primary';
 
   function getDisabledReason(state) {
+    if (metadata.dailyLimit) {
+      const usage = resolveDailyUsage(state, { sync: true });
+      if (usage.remaining <= 0) {
+        const runsLabel = metadata.dailyLimit === 1
+          ? 'once'
+          : `${metadata.dailyLimit} times`;
+        return `Daily limit reached: ${definition.name} can only run ${runsLabel} per day. Fresh slots unlock tomorrow.`;
+      }
+    }
     if (metadata.time > 0 && state.timeLeft < metadata.time) {
       return `You need at least ${formatHours(metadata.time)} free before starting ${definition.name}.`;
     }
@@ -285,6 +366,11 @@ export function createInstantHustle(config) {
           addLog(`Your studies kicked in: ${summary}.`, 'info');
         }
       }
+    }
+
+    const updatedUsage = updateDailyUsage(context.state);
+    if (updatedUsage) {
+      context.limitUsage = updatedUsage;
     }
 
     config.onComplete?.(context);
