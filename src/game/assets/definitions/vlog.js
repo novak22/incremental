@@ -1,4 +1,5 @@
 import { formatMoney } from '../../../core/helpers.js';
+import { getUpgradeState } from '../../../core/state.js';
 import { createAssetDefinition } from '../../content/schema.js';
 
 const vlogDefinition = createAssetDefinition({
@@ -20,11 +21,16 @@ const vlogDefinition = createAssetDefinition({
     variance: 0.2,
     logType: 'passive',
     modifier: (amount, { instance }) => {
+      const hasCinemaGear = getUpgradeState('cameraPro').purchased;
       const qualityLevel = instance?.quality?.level || 0;
-      if (qualityLevel >= 3 && Math.random() < 0.18) {
-        return Math.round(amount * 3);
+      const viralChance = hasCinemaGear ? 0.24 : 0.18;
+      const viralMultiplier = hasCinemaGear ? 3.5 : 3;
+      let payout = amount;
+      if (qualityLevel >= 3 && Math.random() < viralChance) {
+        payout = Math.round(payout * viralMultiplier);
       }
-      return amount;
+      const baseMultiplier = hasCinemaGear ? 1.25 : 1;
+      return Math.round(payout * baseMultiplier);
     }
   },
   requirements: {
@@ -73,6 +79,7 @@ const vlogDefinition = createAssetDefinition({
         label: 'Film Episode',
         time: 5,
         progressKey: 'videos',
+        progressAmount: context => (context.upgrade('cameraPro')?.purchased ? 2 : 1),
         skills: ['visual'],
         log: ({ label }) => `${label} filmed an energetic episode. B-roll glitter everywhere!`
       },
@@ -82,6 +89,7 @@ const vlogDefinition = createAssetDefinition({
         time: 2.5,
         cost: 16,
         progressKey: 'edits',
+        progressAmount: context => (context.upgrade('cameraPro')?.purchased ? 2 : 1),
         skills: ['editing'],
         log: ({ label }) => `${label} tightened jump cuts and color graded every frame.`
       },
@@ -91,6 +99,7 @@ const vlogDefinition = createAssetDefinition({
         time: 2,
         cost: 24,
         progressKey: 'promotion',
+        progressAmount: context => (context.upgrade('cameraPro')?.purchased ? 2 : 1),
         skills: ['promotion'],
         log: ({ label }) => `${label} teased the drop on socials. Chat bubbles explode with hype!`
       }

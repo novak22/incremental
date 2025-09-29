@@ -117,7 +117,11 @@ const cameraPro = createUpgrade({
   description: 'Upgrade your rig with cinema glass and stabilized mounts for prestige productions.',
   cost: 480,
   requires: ['camera'],
-  boosts: 'Higher vlog quality payouts',
+  boosts: 'Boosts vlog payouts and doubles quality progress',
+  details: [
+    () => '🎞️ Vlog quality actions count double progress once the cinema rig is live.',
+    () => '💰 Daily vlog income jumps by roughly +25% and viral bursts spike harder.'
+  ],
   skills: ['visual'],
   actionClassName: 'secondary',
   actionLabel: 'Install Cinema Gear',
@@ -139,7 +143,11 @@ const studioExpansion = createUpgrade({
   description: 'Add modular sets, color-controlled lighting, and prop storage for faster shoots.',
   cost: 540,
   requires: ['studio'],
-  boosts: 'Stock photo session efficiency',
+  boosts: 'Stock photo payouts + faster shoot progress',
+  details: [
+    () => '📸 Stock photo quality actions earn double progress with the expanded studio.',
+    () => '💵 Galleries pick up roughly +20% daily income thanks to premium staging.'
+  ],
   skills: ['visual'],
   actionClassName: 'secondary',
   actionLabel: 'Expand Studio',
@@ -203,7 +211,11 @@ const serverEdge = createUpgrade({
   description: 'Distribute workloads across edge nodes for instant response times and uptime bragging rights.',
   cost: 1450,
   requires: ['serverCluster'],
-  boosts: 'SaaS subscriber trust',
+  boosts: 'SaaS payouts + stability progress surges',
+  details: [
+    () => '⚙️ SaaS feature, stability, and marketing pushes count double progress once edge nodes hum.',
+    () => '📈 Subscriptions pay roughly +35% more each day with the global edge footprint.'
+  ],
   skills: ['infrastructure'],
   actionClassName: 'secondary',
   actionLabel: 'Activate Edge Network',
