@@ -62,18 +62,24 @@ export function ensureTestDom() {
               <button id="kpi-study"><span id="kpi-study-value"></span><span id="kpi-study-note"></span></button>
             </section>
             <section class="dashboard__grid">
-              <article>
-                <ol id="action-queue"></ol>
-                <button id="queue-pause"></button>
-                <button id="queue-cancel"></button>
-              </article>
-              <article><ul id="quick-actions"></ul></article>
-              <article><ul id="asset-upgrade-actions"></ul></article>
-              <article><ul id="notification-list"></ul></article>
-              <article>
-                <div id="event-log-preview"></div>
-                <button id="open-event-log"></button>
-              </article>
+              <div class="dashboard__top-row">
+                <article><div id="daily-time-summary"></div></article>
+                <article><ul id="quick-actions"></ul></article>
+                <article><ul id="asset-upgrade-actions"></ul></article>
+              </div>
+              <div class="dashboard__scroll">
+                <article><div id="dashboard-skills"></div></article>
+                <article><ul id="notification-list"></ul></article>
+                <article>
+                  <div id="event-log-preview"></div>
+                  <button id="open-event-log"></button>
+                </article>
+                <article>
+                  <ol id="action-queue"></ol>
+                  <button id="queue-pause"></button>
+                  <button id="queue-cancel"></button>
+                </article>
+              </div>
             </section>
           </section>
           <section id="panel-hustles" class="panel" hidden>

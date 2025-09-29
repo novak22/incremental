@@ -215,6 +215,8 @@ body {
 .panel {
   display: grid;
   gap: 24px;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
 }
 
 .panel[hidden] {
@@ -277,9 +279,40 @@ body {
 
 .dashboard__grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  grid-template-rows: auto auto;
+  grid-template-rows: auto minmax(0, 1fr);
   gap: 18px;
+  min-height: 0;
+}
+
+.dashboard__top-row,
+.dashboard__scroll {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.dashboard__top-row {
+  align-items: stretch;
+}
+
+.dashboard__scroll {
+  overflow-y: auto;
+  padding-right: 4px;
+  min-height: 0;
+  align-content: start;
+}
+
+.dashboard__top-row .dashboard-card {
+  height: 100%;
+  min-height: 0;
+}
+
+.dashboard__top-row .quick-actions,
+.dashboard__top-row .upgrade-actions {
+  flex: 1 1 auto;
+  height: 100%;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
 .dashboard-card {
@@ -1575,7 +1608,8 @@ a:focus-visible {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .dashboard__grid {
+  .dashboard__top-row,
+  .dashboard__scroll {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -1589,8 +1623,13 @@ a:focus-visible {
     flex-wrap: wrap;
   }
 
-  .dashboard__grid {
+  .dashboard__top-row,
+  .dashboard__scroll {
     grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
+
+  .dashboard__scroll {
+    padding-right: 0;
   }
 
   .dashboard-card--wide {
