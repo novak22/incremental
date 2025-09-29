@@ -3,6 +3,7 @@ import { getState } from '../core/state.js';
 import { registry } from '../game/registry.js';
 import { computeDailySummary } from '../game/summary.js';
 import { renderDashboard } from './dashboard.js';
+import { renderSkillWidgets } from './skillsWidget.js';
 import { updateHeaderAction } from './headerAction.js';
 import { applyCardFilters } from './layout.js';
 import { refreshActionCatalogDebug } from './debugCatalog.js';
@@ -30,6 +31,7 @@ export function updateUI() {
 
   const summary = computeDailySummary(state);
   renderDashboard(summary);
+  renderSkillWidgets(state);
   updateHeaderAction(state);
 
   const collections = buildCollections();

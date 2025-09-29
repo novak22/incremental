@@ -56,6 +56,20 @@ const elements = {
     studySummary: document.getElementById('daily-study-summary'),
     studyList: document.getElementById('daily-study-list')
   },
+  skills: {
+    dashboard: {
+      container: document.getElementById('dashboard-skills'),
+      list: document.getElementById('dashboard-skills-list'),
+      tier: document.getElementById('dashboard-skills-tier'),
+      note: document.getElementById('dashboard-skills-progress')
+    },
+    education: {
+      container: document.getElementById('education-skills'),
+      list: document.getElementById('education-skills-list'),
+      tier: document.getElementById('education-skills-tier'),
+      note: document.getElementById('education-skills-progress')
+    }
+  },
   actionQueue: document.getElementById('action-queue'),
   queuePause: document.getElementById('queue-pause'),
   queueCancel: document.getElementById('queue-cancel'),
