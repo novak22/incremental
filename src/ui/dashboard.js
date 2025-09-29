@@ -37,6 +37,51 @@ function createDailyListItem(entry) {
   return li;
 }
 
+function renderActionSection(container, entries, { emptyMessage, buttonClass, defaultLabel } = {}) {
+  if (!container) return;
+  container.innerHTML = '';
+
+  const list = Array.isArray(entries) ? entries.filter(Boolean) : [];
+  if (!list.length) {
+    if (!emptyMessage) return;
+    const empty = document.createElement('li');
+    empty.textContent = emptyMessage;
+    container.appendChild(empty);
+    return;
+  }
+
+  list.forEach(entry => {
+    const item = document.createElement('li');
+    const info = document.createElement('div');
+    info.className = 'quick-actions__info';
+
+    const title = document.createElement('span');
+    title.textContent = entry.title || '';
+    const subtitle = document.createElement('span');
+    subtitle.textContent = entry.subtitle || '';
+    subtitle.className = 'quick-actions__subtitle';
+    info.append(title, subtitle);
+
+    if (entry.meta) {
+      const meta = document.createElement('span');
+      meta.textContent = entry.meta;
+      meta.className = entry.metaClass || 'quick-actions__meta';
+      info.append(meta);
+    }
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = buttonClass || 'primary';
+    button.textContent = entry.buttonLabel || defaultLabel || 'Select';
+    if (typeof entry.onClick === 'function') {
+      button.addEventListener('click', () => entry.onClick?.());
+    }
+
+    item.append(info, button);
+    container.appendChild(item);
+  });
+}
+
 function renderDailyList(container, entries, emptyMessage, limit = 3) {
   if (!container) return;
   container.innerHTML = '';
@@ -275,72 +320,37 @@ function renderQueue(summary) {
 
 function renderQuickActions(state) {
   const container = elements.quickActions;
-  if (!container) return;
-  container.innerHTML = '';
   const suggestions = buildQuickActions(state);
-  if (!suggestions.length) {
-    const empty = document.createElement('li');
-    empty.textContent = 'No ready actions. Check upgrades or assets.';
-    container.appendChild(empty);
-    return;
-  }
+  const entries = suggestions.map(action => ({
+    title: action.label,
+    subtitle: action.description,
+    buttonLabel: action.primaryLabel,
+    onClick: action.onClick
+  }));
 
-  suggestions.forEach(action => {
-    const item = document.createElement('li');
-    const info = document.createElement('div');
-    info.className = 'quick-actions__info';
-    const title = document.createElement('span');
-    title.textContent = action.label;
-    const subtitle = document.createElement('span');
-    subtitle.textContent = action.description;
-    subtitle.className = 'quick-actions__subtitle';
-    info.append(title, subtitle);
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'primary';
-    button.textContent = action.primaryLabel || 'Queue';
-    button.addEventListener('click', () => action.onClick?.());
-    item.append(info, button);
-    container.appendChild(item);
+  renderActionSection(container, entries, {
+    emptyMessage: 'No ready actions. Check upgrades or assets.',
+    buttonClass: 'primary',
+    defaultLabel: 'Queue'
   });
 }
 
 function renderAssetUpgradeActions(state) {
   const container = elements.assetUpgradeActions;
-  if (!container) return;
-  container.innerHTML = '';
-
   const suggestions = buildAssetUpgradeRecommendations(state);
-  if (!suggestions.length) {
-    const empty = document.createElement('li');
-    empty.textContent = 'Every asset is humming along. Check back after today’s upkeep.';
-    container.appendChild(empty);
-    return;
-  }
+  const entries = suggestions.map(action => ({
+    title: action.title,
+    subtitle: action.subtitle,
+    meta: action.meta,
+    metaClass: 'upgrade-actions__meta',
+    buttonLabel: action.buttonLabel,
+    onClick: action.onClick
+  }));
 
-  suggestions.forEach(action => {
-    const item = document.createElement('li');
-    const info = document.createElement('div');
-    info.className = 'quick-actions__info';
-    const title = document.createElement('span');
-    title.textContent = action.title;
-    const subtitle = document.createElement('span');
-    subtitle.textContent = action.subtitle;
-    subtitle.className = 'quick-actions__subtitle';
-    info.append(title, subtitle);
-    if (action.meta) {
-      const meta = document.createElement('span');
-      meta.textContent = action.meta;
-      meta.className = 'upgrade-actions__meta';
-      info.append(meta);
-    }
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'secondary';
-    button.textContent = action.buttonLabel || 'Boost';
-    button.addEventListener('click', () => action.onClick?.());
-    item.append(info, button);
-    container.appendChild(item);
+  renderActionSection(container, entries, {
+    emptyMessage: 'Every asset is humming along. Check back after today’s upkeep.',
+    buttonClass: 'secondary',
+    defaultLabel: 'Boost'
   });
 }
 
