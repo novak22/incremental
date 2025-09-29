@@ -366,10 +366,10 @@
       </section>
 
       <section id="panel-upgrades" class="panel" role="tabpanel" aria-labelledby="tab-upgrades" hidden>
-        <header class="panel__header">
+        <header class="panel__header upgrade-panel__header">
           <div>
             <h2>Upgrades</h2>
-            <p>Boost every hustle with focused reinvestment.</p>
+            <p>Plot your reinvestments, queue favorites, and celebrate each new unlock.</p>
           </div>
           <div class="filter-bar" role="group" aria-label="Upgrade filters">
             <label class="filter-toggle">
@@ -385,7 +385,30 @@
           </div>
         </header>
         <div class="upgrade-layout">
-          <div id="upgrade-list" class="upgrade-list" aria-live="polite"></div>
+          <div class="upgrade-main">
+            <section id="upgrade-overview" class="upgrade-overview" aria-labelledby="upgrade-overview-title" aria-live="polite">
+              <header>
+                <h3 id="upgrade-overview-title">Upgrade roadmap</h3>
+                <p id="upgrade-overview-note">Queue your next win and keep momentum humming.</p>
+              </header>
+              <dl class="upgrade-overview__stats">
+                <div>
+                  <dt>Owned</dt>
+                  <dd id="upgrade-overview-owned">0</dd>
+                </div>
+                <div>
+                  <dt>Ready to buy</dt>
+                  <dd id="upgrade-overview-ready">0</dd>
+                </div>
+                <div>
+                  <dt>Favorites</dt>
+                  <dd id="upgrade-overview-favorites">0</dd>
+                </div>
+              </dl>
+            </section>
+            <p id="upgrade-empty" class="upgrade-empty" hidden>No upgrades match these filters yet. Try another category or clear the toggles.</p>
+            <div id="upgrade-list" class="upgrade-list" aria-live="polite"></div>
+          </div>
           <aside class="upgrade-dock" aria-label="Upgrade dock">
             <header>
               <h3>Dock</h3>

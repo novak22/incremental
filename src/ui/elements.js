@@ -111,6 +111,14 @@ const elements = {
     affordable: document.getElementById('upgrade-affordable-toggle'),
     favorites: document.getElementById('upgrade-favorites-toggle')
   },
+  upgradeOverview: {
+    container: document.getElementById('upgrade-overview'),
+    purchased: document.getElementById('upgrade-overview-owned'),
+    ready: document.getElementById('upgrade-overview-ready'),
+    favorites: document.getElementById('upgrade-overview-favorites'),
+    note: document.getElementById('upgrade-overview-note')
+  },
+  upgradeEmpty: document.getElementById('upgrade-empty'),
   upgradeCategoryChips: document.getElementById('upgrade-category-chips'),
   upgradeSearch: document.getElementById('upgrade-search'),
   upgradeList: document.getElementById('upgrade-list'),
