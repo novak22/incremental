@@ -20,6 +20,7 @@
 - Added quick-buy buttons for the next passive asset upgrades alongside each launched instance and made the asset briefing modal scrollable with quality actions pinned near the top.
 - Replaced dormant passive upgrade buttons with inline "Support boosts" hints so category rosters call out the next helpful equipment or study unlocks.
 - Added category-level asset rosters with upkeep, payout, and upgrade/sell shortcuts, plus an instance-aware briefing modal that surfaces owned and locked upgrades.
+- Added a dedicated "Builds" toggle to passive asset rows so the inline roster expands without opening the detail briefing.
 - Shifted passive asset payouts to credit during the morning maintenance sweep so earnings persist in the new day’s snapshot.
 - Highlighted passive asset payouts in the Daily Snapshot caption and breakdown, including instance counts for each earning stream.
 - Overhauled the passive asset board with stat-rich cards, upgrade shortcuts, per-instance earnings, and a briefing modal for nailing new launches.

@@ -31,6 +31,8 @@ const assetUi = new Map();
 const upgradeUi = new Map();
 const studyUi = new Map();
 
+let expandedAssetId = null;
+
 function showSlideOver({ eyebrow, title, body }) {
   const { slideOver, slideOverContent, slideOverEyebrow, slideOverTitle } = elements;
   if (!slideOver || !slideOverContent) return;
@@ -201,9 +203,13 @@ function createInstanceQuickActions(definition, instance, state) {
   return container;
 }
 
-function createInstanceListSection(definition, state) {
-  const assetState = getAssetState(definition.id, state);
-  const instances = Array.isArray(assetState?.instances) ? assetState.instances : [];
+function createInstanceListSection(definition, state, instancesOverride) {
+  const instances = Array.isArray(instancesOverride)
+    ? instancesOverride
+    : (() => {
+        const assetState = getAssetState(definition.id, state);
+        return Array.isArray(assetState?.instances) ? assetState.instances : [];
+      })();
 
   const section = document.createElement('section');
   section.className = 'asset-detail__section asset-detail__section--instances';
@@ -700,15 +706,34 @@ function renderAssetRow(definition, tbody) {
   actionsCell.className = 'actions-col';
   const actions = document.createElement('div');
   actions.className = 'asset-row-actions';
+  const buildsButton = document.createElement('button');
+  buildsButton.type = 'button';
+  buildsButton.className = 'ghost';
+  buildsButton.textContent = 'Builds';
+  buildsButton.setAttribute('aria-expanded', 'false');
+  buildsButton.addEventListener('click', event => {
+    event.preventDefault();
+    event.stopPropagation();
+    toggleAssetBuilds(definition);
+  });
+  actions.appendChild(buildsButton);
   const details = document.createElement('button');
   details.type = 'button';
   details.className = 'ghost';
   details.textContent = 'Details';
   details.addEventListener('click', event => {
+    event.preventDefault();
     event.stopPropagation();
     openAssetDetails(definition);
   });
   actions.appendChild(details);
+  const entry = {
+    row,
+    buildsButton,
+    buildsRow: null,
+    buildsContainer: null,
+    cells: { state: stateCell, yield: yieldCell, upkeep: upkeepCell }
+  };
   if (definition.action?.onClick) {
     const primary = document.createElement('button');
     primary.type = 'button';
@@ -722,10 +747,9 @@ function renderAssetRow(definition, tbody) {
       definition.action.onClick();
     });
     actions.appendChild(primary);
-    assetUi.set(definition.id, { row, primary, cells: { state: stateCell, yield: yieldCell, upkeep: upkeepCell } });
-  } else {
-    assetUi.set(definition.id, { row, cells: { state: stateCell, yield: yieldCell, upkeep: upkeepCell } });
+    entry.primary = primary;
   }
+  assetUi.set(definition.id, entry);
   actionsCell.appendChild(actions);
   row.appendChild(actionsCell);
 
@@ -778,6 +802,130 @@ function refreshAssetRow(definition) {
       : Boolean(definition.action?.disabled);
     ui.primary.disabled = disabled;
   }
+
+  refreshExpandedAsset(definition);
+}
+
+function getAssetInstances(definition, state) {
+  if (!definition) return [];
+  const assetState = getAssetState(definition.id, state);
+  return Array.isArray(assetState?.instances) ? assetState.instances : [];
+}
+
+function describeAssetBuildRoster(instances = []) {
+  const activeCount = instances.filter(instance => instance?.status === 'active').length;
+  const queuedCount = instances.length - activeCount;
+  if (!instances.length) {
+    return 'Launch a build to start earning and it will show up right here.';
+  }
+  if (activeCount > 0) {
+    const activeLabel = `${activeCount} active build${activeCount === 1 ? '' : 's'} humming along`;
+    return queuedCount > 0
+      ? `${activeLabel} • ${queuedCount} queued.`
+      : `${activeLabel}.`;
+  }
+  return `Queue warming up • ${queuedCount} build${queuedCount === 1 ? '' : 's'} getting ready to launch.`;
+}
+
+function renderAssetBuildsContent(definition, state, container, instances, { includeSummary = false } = {}) {
+  if (!container) return;
+  const rosterNote = describeAssetBuildRoster(instances);
+  container.innerHTML = '';
+  if (includeSummary) {
+    const summary = document.createElement('p');
+    summary.className = 'asset-builds__summary';
+    summary.textContent = rosterNote;
+    container.appendChild(summary);
+  }
+
+  const section = createInstanceListSection(definition, state, instances);
+  if (section) {
+    const heading = section.querySelector('h3');
+    if (heading) {
+      section.removeChild(heading);
+    }
+    while (section.firstChild) {
+      container.appendChild(section.firstChild);
+    }
+  }
+
+  if (!container.childElementCount) {
+    const empty = document.createElement('p');
+    empty.className = 'asset-builds__empty';
+    empty.textContent = rosterNote;
+    container.appendChild(empty);
+  }
+}
+
+function refreshExpandedAsset(definition) {
+  if (!definition || expandedAssetId !== definition.id) return;
+  const ui = assetUi.get(definition.id);
+  if (!ui?.buildsContainer) return;
+  const state = getState();
+  const instances = getAssetInstances(definition, state);
+  renderAssetBuildsContent(definition, state, ui.buildsContainer, instances, { includeSummary: true });
+  renderLaunchedBuilds(definition, state);
+}
+
+function toggleAssetBuilds(definition) {
+  if (!definition) return;
+  if (expandedAssetId === definition.id) {
+    collapseAssetBuilds(definition.id);
+    return;
+  }
+  if (expandedAssetId) {
+    collapseAssetBuilds(expandedAssetId, { silent: true });
+  }
+  expandAssetBuilds(definition);
+}
+
+function expandAssetBuilds(definition) {
+  const ui = assetUi.get(definition.id);
+  if (!ui?.row) return;
+  const state = getState();
+  const instances = getAssetInstances(definition, state);
+  const buildsRow = document.createElement('tr');
+  buildsRow.className = 'asset-row-builds';
+  buildsRow.dataset.assetBuilds = definition.id;
+  const cell = document.createElement('td');
+  cell.colSpan = ui.row.children.length || 1;
+  const container = document.createElement('div');
+  container.className = 'asset-builds';
+  renderAssetBuildsContent(definition, state, container, instances, { includeSummary: true });
+  cell.appendChild(container);
+  buildsRow.appendChild(cell);
+  ui.row.insertAdjacentElement('afterend', buildsRow);
+  ui.buildsRow = buildsRow;
+  ui.buildsContainer = container;
+  if (ui.buildsButton) {
+    ui.buildsButton.textContent = 'Hide builds';
+    ui.buildsButton.setAttribute('aria-expanded', 'true');
+  }
+  ui.row.classList.add('is-expanded');
+  expandedAssetId = definition.id;
+  renderLaunchedBuilds(definition, state);
+}
+
+function collapseAssetBuilds(assetId, { silent = false } = {}) {
+  if (!assetId) return;
+  const ui = assetUi.get(assetId);
+  if (!ui) return;
+  if (ui.buildsRow?.parentElement) {
+    ui.buildsRow.remove();
+  }
+  ui.buildsRow = null;
+  ui.buildsContainer = null;
+  if (ui.buildsButton) {
+    ui.buildsButton.textContent = 'Builds';
+    ui.buildsButton.setAttribute('aria-expanded', 'false');
+  }
+  ui.row?.classList.remove('is-expanded');
+  if (expandedAssetId === assetId) {
+    expandedAssetId = null;
+    if (!silent) {
+      renderLaunchedBuilds(null, getState());
+    }
+  }
 }
 
 function openAssetDetails(definition) {
@@ -807,7 +955,6 @@ function openAssetDetails(definition) {
   body.appendChild(createDefinitionSummary('Roster snapshot', summaryRows));
 
   showSlideOver({ eyebrow: 'Asset', title: definition.name, body });
-  renderLaunchedBuilds(definition, state);
 }
 
 function renderLaunchedBuilds(definition, state) {
@@ -827,41 +974,28 @@ function renderLaunchedBuilds(definition, state) {
     return;
   }
 
-  const assetState = getAssetState(definition.id, state);
-  const instances = Array.isArray(assetState?.instances) ? assetState.instances : [];
+  const instances = getAssetInstances(definition, state);
 
   if (title) {
     title.textContent = `${definition.name} builds`;
   }
 
   if (note) {
-    const activeCount = instances.filter(instance => instance.status === 'active').length;
-    const queuedCount = instances.filter(instance => instance.status !== 'active').length;
-    if (!instances.length) {
-      note.textContent = 'Launch a build to start earning and it will show up right here.';
-    } else if (activeCount > 0) {
-      note.textContent = `${activeCount} active build${activeCount === 1 ? '' : 's'} humming along${queuedCount > 0 ? ` • ${queuedCount} queued` : ''}.`;
-    } else {
-      note.textContent = `Queue warming up • ${queuedCount} build${queuedCount === 1 ? '' : 's'} getting ready to launch.`;
-    }
+    note.textContent = describeAssetBuildRoster(instances);
   }
 
-  const section = createInstanceListSection(definition, state);
-  const heading = section.querySelector('h3');
-  if (heading) {
-    section.removeChild(heading);
-  }
-
-  while (section.firstChild) {
-    content.appendChild(section.firstChild);
-  }
+  renderAssetBuildsContent(definition, state, content, instances);
 }
 
 function renderAssets(definitions) {
   const tbody = elements.assetTableBody;
   if (!tbody) return;
+  if (expandedAssetId) {
+    collapseAssetBuilds(expandedAssetId);
+  }
   tbody.innerHTML = '';
   assetUi.clear();
+  expandedAssetId = null;
   definitions.forEach(def => renderAssetRow(def, tbody));
 }
 
