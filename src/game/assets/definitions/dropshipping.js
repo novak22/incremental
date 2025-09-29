@@ -60,6 +60,20 @@ const dropshippingDefinition = createAssetDefinition({
         description: 'Paid campaigns bring consistent high-ticket orders.',
         income: { min: 68, max: 92 },
         requirements: { research: 18, listing: 8, ads: 7 }
+      },
+      {
+        level: 4,
+        name: 'Omnichannel Engine',
+        description: 'Automation spans every marketplace and upsell funnel you run.',
+        income: { min: 95, max: 128 },
+        requirements: { research: 26, listing: 12, ads: 10 }
+      },
+      {
+        level: 5,
+        name: 'Global Logistics Titan',
+        description: 'Worldwide warehouses and brand loyalty make daily profits thunder.',
+        income: { min: 130, max: 176 },
+        requirements: { research: 38, listing: 18, ads: 16 }
       }
     ],
     actions: [
