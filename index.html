@@ -46,6 +46,7 @@
 
     <nav class="shell__tabs" role="tablist" aria-label="Primary">
       <button id="tab-dashboard" class="shell__tab is-active" role="tab" aria-selected="true" aria-controls="panel-dashboard">Dashboard</button>
+      <button id="tab-player" class="shell__tab" role="tab" aria-selected="false" aria-controls="panel-player">Player</button>
       <button id="tab-hustles" class="shell__tab" role="tab" aria-selected="false" aria-controls="panel-hustles">Hustles</button>
       <button id="tab-assets" class="shell__tab" role="tab" aria-selected="false" aria-controls="panel-assets">Assets</button>
       <button id="tab-upgrades" class="shell__tab" role="tab" aria-selected="false" aria-controls="panel-upgrades">Upgrades</button>
@@ -198,6 +199,85 @@
               </article>
             </div>
           </section>
+        </div>
+      </section>
+
+      <section id="panel-player" class="panel" role="tabpanel" aria-labelledby="tab-player" hidden>
+        <header class="panel__header">
+          <div>
+            <h2>Player</h2>
+            <p>Track your personal growth, study streaks, and gear at a glance.</p>
+          </div>
+        </header>
+        <div class="player-overview">
+          <div class="player-overview__grid">
+            <article class="card player-card player-card--summary" aria-labelledby="player-summary-heading">
+              <header>
+                <h3 id="player-summary-heading">Career snapshot</h3>
+                <p>Celebrate today’s level, focus, and bankroll momentum.</p>
+              </header>
+              <div class="player-summary">
+                <div class="player-summary__level">
+                  <span id="player-summary-tier" class="player-summary__tier">Rising Creator · Level 1</span>
+                  <p id="player-summary-note" class="player-summary__note">0 XP logged so far.</p>
+                </div>
+                <dl class="player-summary__metrics">
+                  <div>
+                    <dt>Cash on hand</dt>
+                    <dd id="player-summary-money">$0</dd>
+                  </div>
+                  <div>
+                    <dt>Total earned</dt>
+                    <dd id="player-summary-earned">$0</dd>
+                  </div>
+                  <div>
+                    <dt>Total spent</dt>
+                    <dd id="player-summary-spent">$0</dd>
+                  </div>
+                  <div>
+                    <dt>Current day</dt>
+                    <dd id="player-summary-day">Day 1</dd>
+                  </div>
+                  <div>
+                    <dt>Focus left</dt>
+                    <dd id="player-summary-time">0h</dd>
+                  </div>
+                </dl>
+              </div>
+            </article>
+
+            <article class="card player-card" aria-labelledby="player-skills-heading">
+              <header>
+                <h3 id="player-skills-heading">Skill journey</h3>
+                <p id="player-skills-summary">Log XP to reveal your standout disciplines.</p>
+              </header>
+              <ol id="player-skills-list" class="player-skill-list" aria-live="polite"></ol>
+            </article>
+
+            <article class="card player-card" aria-labelledby="player-education-heading">
+              <header>
+                <h3 id="player-education-heading">Education</h3>
+                <p>Workshops and courses that power your next unlock.</p>
+              </header>
+              <ul id="player-education-list" class="player-education-list" aria-live="polite"></ul>
+            </article>
+
+            <article class="card player-card" aria-labelledby="player-equipment-heading">
+              <header>
+                <h3 id="player-equipment-heading">Equipment locker</h3>
+                <p>Your purchased gear and studio upgrades.</p>
+              </header>
+              <ul id="player-equipment-list" class="player-equipment-list" aria-live="polite"></ul>
+            </article>
+
+            <article class="card player-card" aria-labelledby="player-stats-heading">
+              <header>
+                <h3 id="player-stats-heading">Momentum metrics</h3>
+                <p>Extra stats that spotlight where the hustle is thriving.</p>
+              </header>
+              <ul id="player-stats-list" class="player-stats-list" aria-live="polite"></ul>
+            </article>
+          </div>
         </div>
       </section>
 

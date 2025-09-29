@@ -7,6 +7,7 @@ import { renderSkillWidgets } from './skillsWidget.js';
 import { updateHeaderAction } from './headerAction.js';
 import { applyCardFilters } from './layout.js';
 import { refreshActionCatalogDebug } from './debugCatalog.js';
+import { renderPlayerPanel } from './player.js';
 
 function buildCollections() {
   const hustles = registry.hustles.filter(hustle => hustle.tag?.type !== 'study');
@@ -32,6 +33,7 @@ export function updateUI() {
   const summary = computeDailySummary(state);
   renderDashboard(summary);
   renderSkillWidgets(state);
+  renderPlayerPanel(state, summary);
   updateHeaderAction(state);
 
   const collections = buildCollections();
