@@ -2138,8 +2138,14 @@ body {
 }
 
 .asset-detail__requirement-list--milestone {
+  display: flex;
+  flex-wrap: nowrap;
   gap: 12px;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 6px;
+  scroll-snap-type: x proximity;
+  scrollbar-gutter: stable;
 }
 
 .asset-detail__requirement-entry {
@@ -2157,12 +2163,28 @@ body {
     'label value'
     'meter meter'
     'remaining remaining';
-  gap: 6px 14px;
+  gap: 6px 12px;
   align-items: center;
   background: rgba(17, 27, 48, 0.35);
   border-radius: var(--radius-md);
-  padding: 12px 14px;
+  padding: 10px 12px;
   backdrop-filter: blur(4px);
+  min-width: 220px;
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+}
+
+.asset-detail__requirement-list--milestone::-webkit-scrollbar {
+  height: 6px;
+}
+
+.asset-detail__requirement-list--milestone::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.asset-detail__requirement-list--milestone::-webkit-scrollbar-thumb {
+  background: rgba(240, 237, 255, 0.28);
+  border-radius: 999px;
 }
 
 .asset-detail__requirement-label {
