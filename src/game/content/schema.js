@@ -25,6 +25,7 @@ import {
   incomeDetail,
   latestYieldDetail,
   maintenanceDetail,
+  nicheDetail,
   ownedDetail,
   qualityProgressDetail,
   qualitySummaryDetail,
@@ -96,6 +97,7 @@ export function createAssetDefinition(config) {
     'requirements',
     'qualitySummary',
     'qualityProgress',
+    'niche',
     'income',
     'latestYield'
   ];
@@ -108,6 +110,7 @@ export function createAssetDefinition(config) {
     requirements: () => renderAssetRequirementDetail(definition.id),
     qualitySummary: () => qualitySummaryDetail(definition),
     qualityProgress: () => qualityProgressDetail(definition),
+    niche: () => nicheDetail(definition),
     income: () => incomeDetail(definition),
     latestYield: () => latestYieldDetail(definition)
   };

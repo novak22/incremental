@@ -1,6 +1,8 @@
 import { formatMoney } from '../core/helpers.js';
 import { getAssetState } from '../core/state.js';
 import { calculateAssetSalePrice, instanceLabel, sellAssetInstance } from '../game/assets/helpers.js';
+import { assignAssetNiche } from '../game/assets/nicheAssignments.js';
+import { describePopularity, getInstanceNiche, getNicheOptions } from '../game/assets/niches.js';
 
 export function describeInstance(definition, instance) {
   if (instance.status === 'setup') {
@@ -93,7 +95,45 @@ function renderInstanceList(definition, state, ui) {
     earnings.className = 'asset-instance-earnings';
     earnings.textContent = describeInstanceEarnings(instance);
 
-    info.append(title, status, earnings);
+    const niche = document.createElement('div');
+    niche.className = 'asset-instance-niche';
+    if (instance.status !== 'active') {
+      niche.textContent = '🎯 Niche unlocks once the build is live.';
+    } else {
+      const assigned = getInstanceNiche(instance);
+      if (assigned) {
+        niche.textContent = `🎯 ${assigned.name} (${describePopularity(assigned.popularity)})`;
+      } else {
+        const label = document.createElement('span');
+        label.textContent = '🎯 Pick a niche:';
+        const select = document.createElement('select');
+        select.className = 'asset-instance-niche-select';
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = 'Select a vibe';
+        placeholder.disabled = true;
+        placeholder.selected = true;
+        select.appendChild(placeholder);
+        getNicheOptions().forEach(option => {
+          const choice = document.createElement('option');
+          choice.value = option.id;
+          choice.textContent = option.name;
+          choice.title = option.description;
+          select.appendChild(choice);
+        });
+        select.addEventListener('change', event => {
+          const value = event.target.value;
+          if (!value) return;
+          const assignedNow = assignAssetNiche(definition, instance.id, value);
+          if (!assignedNow) {
+            event.target.value = '';
+          }
+        });
+        niche.append(label, select);
+      }
+    }
+
+    info.append(title, status, earnings, niche);
 
     const actions = document.createElement('div');
     actions.className = 'asset-instance-actions';

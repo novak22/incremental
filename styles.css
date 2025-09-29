@@ -2839,17 +2839,42 @@ a:focus-visible {
     grid-template-columns: 1fr;
   }
 
-  .dashboard-card {
-    min-height: auto;
-  }
+.dashboard-card {
+  min-height: auto;
+}
 
-  .upgrade-layout {
-    grid-template-columns: 1fr;
-  }
+.upgrade-layout {
+  grid-template-columns: 1fr;
+}
 
-  .upgrade-dock {
-    position: static;
-  }
+.upgrade-dock {
+  position: static;
+}
+}
+
+.asset-instance-niche {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: rgba(203, 213, 255, 0.85);
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.asset-instance-niche-select {
+  background: var(--surface-muted);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.asset-instance-niche-select:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
 }
 
 @media (max-width: 600px) {

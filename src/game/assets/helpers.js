@@ -24,6 +24,7 @@ import {
 } from './quality.js';
 import { awardSkillProgress } from '../skills/index.js';
 import { getAssetEffectMultiplier } from '../upgrades/effects.js';
+import { describePopularity, getInstanceNiche, getTrendingNiches } from './niches.js';
 
 function fallbackAssetMetricId(definitionId, scope, type) {
   if (!definitionId) return null;
@@ -210,6 +211,27 @@ export function latestYieldDetail(definition) {
   return `📊 Latest Yield: <strong>$${formatMoney(Math.round(average))}</strong> avg per active instance`;
 }
 
+export function nicheDetail(definition) {
+  const assetState = getAssetState(definition.id);
+  const instances = assetState.instances || [];
+  const active = instances.filter(instance => instance.status === 'active');
+  const unassigned = active.filter(instance => !instance.niche).length;
+  const parts = [];
+  if (!active.length) {
+    parts.push('Assign a niche after launch to tap into daily trend swings.');
+  } else if (unassigned > 0) {
+    parts.push(`${unassigned} active build${unassigned === 1 ? '' : 's'} waiting for a niche pick.`);
+  } else {
+    parts.push('All active builds are already tuned to their chosen niches.');
+  }
+  const trending = getTrendingNiches(2);
+  if (trending.length) {
+    const highlights = trending.map(niche => `${niche.name}: ${describePopularity(niche.popularity)}`);
+    parts.push(`Today’s buzz — ${highlights.join(' • ')}`);
+  }
+  return `🎯 Niches: ${parts.join(' ')}`;
+}
+
 export function instanceLabel(definition, index) {
   const base = definition.singular || definition.name;
   return `${base} #${index + 1}`;
@@ -355,6 +377,27 @@ export function rollDailyIncome(definition, assetState, instance) {
   }
 
   let payoutTotal = Math.max(0, roundedTotal);
+  const nicheEntries = [];
+  if (instance) {
+    const niche = getInstanceNiche(instance);
+    if (niche) {
+      const multiplier = Number(niche.popularity);
+      if (Number.isFinite(multiplier) && multiplier > 0) {
+        const adjusted = payoutTotal * multiplier;
+        const delta = adjusted - payoutTotal;
+        if (Math.abs(delta) > 0.01) {
+          nicheEntries.push({
+            id: `niche:${niche.id}`,
+            label: `${niche.name} buzz`,
+            amount: delta,
+            type: 'niche',
+            percent: Number.isFinite(multiplier) ? multiplier - 1 : null
+          });
+        }
+        payoutTotal = adjusted;
+      }
+    }
+  }
   const upgradeEffect = getAssetEffectMultiplier(definition, 'payout_mult', {
     actionType: 'payout'
   });
@@ -385,6 +428,11 @@ export function rollDailyIncome(definition, assetState, instance) {
 
   const payoutRounded = Math.max(0, Math.round(payoutTotal));
   let combinedRounded = Math.max(0, roundedTotal);
+  const roundedNicheEntries = nicheEntries.map(entry => {
+    const amount = Math.round(Number(entry.amount) || 0);
+    combinedRounded += amount;
+    return { ...entry, amount };
+  });
   const roundedUpgradeEntries = upgradeEntries.map(entry => {
     const amount = Math.round(Number(entry.amount) || 0);
     combinedRounded += amount;
@@ -396,13 +444,16 @@ export function rollDailyIncome(definition, assetState, instance) {
     if (roundedUpgradeEntries.length) {
       roundedUpgradeEntries[roundedUpgradeEntries.length - 1].amount += upgradeDiff;
       combinedRounded += upgradeDiff;
+    } else if (roundedNicheEntries.length) {
+      roundedNicheEntries[roundedNicheEntries.length - 1].amount += upgradeDiff;
+      combinedRounded += upgradeDiff;
     } else if (baseEntries.length) {
       baseEntries[baseEntries.length - 1].amount += upgradeDiff;
       combinedRounded += upgradeDiff;
     }
   }
 
-  const finalEntries = [...baseEntries, ...roundedUpgradeEntries];
+  const finalEntries = [...baseEntries, ...roundedNicheEntries, ...roundedUpgradeEntries];
 
   if (instance) {
     instance.lastIncomeBreakdown = {

@@ -74,7 +74,8 @@ test('ending the day resets time and coffee usage', () => {
   assert.equal(state.timeLeft, getTimeCap());
   assert.equal(state.dailyBonusTime, 0);
   assert.equal(getUpgradeState('coffee').usedToday, 0);
-  assert.match(state.log.at(-1).message, /Day 4 begins/);
+  const recentMessages = state.log.slice(-3).map(entry => entry.message);
+  assert.ok(recentMessages.some(message => /Day 4 begins/.test(message)));
 });
 
 test('checkDayEnd automatically triggers end-of-day sequence', async () => {

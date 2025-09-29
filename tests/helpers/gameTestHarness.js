@@ -21,6 +21,8 @@ export async function getGameTestHarness() {
   const storageModule = await import('../../src/core/storage.js');
   const offlineModule = await import('../../src/game/offline.js');
   const elementsModule = await import('../../src/ui/elements.js');
+  const nichesModule = await import('../../src/game/assets/niches.js');
+  const nicheAssignmentsModule = await import('../../src/game/assets/nicheAssignments.js');
 
   stateModule.configureRegistry({
     assets: assetsModule.ASSETS,
@@ -64,6 +66,8 @@ export async function getGameTestHarness() {
     logModule,
     storageModule,
     offlineModule,
+    nichesModule,
+    nicheAssignmentsModule,
     elements,
     resetState
   };

@@ -2,6 +2,7 @@ import { addLog } from '../core/log.js';
 import { getState, getUpgradeState } from '../core/state.js';
 import { saveState } from '../core/storage.js';
 import { allocateAssetMaintenance, closeOutDay } from './assets/index.js';
+import { randomizeNichePopularity, summarizeNicheTrends } from './assets/niches.js';
 import { processAssistantPayroll } from './assistant.js';
 import { getTimeCap } from './time.js';
 import { updateUI } from '../ui/update.js';
@@ -23,6 +24,11 @@ export function endDay(auto = false) {
   state.dailyBonusTime = 0;
   getUpgradeState('coffee').usedToday = 0;
   state.timeLeft = getTimeCap();
+  const nicheChanges = randomizeNichePopularity(state);
+  const nicheSummary = summarizeNicheTrends(nicheChanges);
+  if (nicheSummary) {
+    addLog(nicheSummary, 'info');
+  }
   resetDailyMetrics(state);
   processAssistantPayroll();
   allocateDailyStudy();

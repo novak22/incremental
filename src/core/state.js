@@ -1,6 +1,7 @@
 import { DEFAULT_DAY_HOURS } from './constants.js';
 import { createId, structuredClone } from './helpers.js';
 import { attachRegistryMetricIds, buildMetricIndex } from '../game/schema/metrics.js';
+import { ensureNicheState, isValidNicheId } from '../game/assets/niches.js';
 import {
   createEmptyCharacterState,
   createEmptySkillState,
@@ -150,6 +151,9 @@ export function normalizeAssetInstance(definition, instance = {}) {
     progress: normalizedProgress
   };
 
+  const nicheId = typeof normalized.niche === 'string' ? normalized.niche : null;
+  normalized.niche = nicheId && isValidNicheId(nicheId) ? nicheId : null;
+
   return normalized;
 }
 
@@ -170,7 +174,8 @@ export function createAssetInstance(definition, overrides = {}) {
     quality: {
       level: 0,
       progress: {}
-    }
+    },
+    niche: null
   };
   const merged = { ...baseInstance, ...structuredClone(overrides) };
   if (merged.status === 'active') {
@@ -236,8 +241,10 @@ export function ensureStateShape(target = state) {
         assistantState.count = 1;
       }
       delete assistantState.purchased;
-    }
   }
+
+  ensureNicheState(target);
+}
 
   target.totals = target.totals || {};
   const earned = Number(target.totals.earned);
@@ -265,6 +272,7 @@ export function buildBaseState() {
     hustles: {},
     assets: {},
     upgrades: {},
+    niches: {},
     skills: createEmptySkillState(),
     character: createEmptyCharacterState(),
     totals: {
