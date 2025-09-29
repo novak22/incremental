@@ -10,6 +10,7 @@
 - Automation & infrastructure: broader instant gigs, smarter assistant load balancing, and new studio/server tiers expand long-term play.
 - Education clarity: finished courses now show 100% progress and list the XP-rich skills they elevate.
 - Upgrade hub redesign: roadmap stats, category chips, and a refreshed dock make reinvestment planning faster and more celebratory.
+- Hustle pacing: retired the eBay flip queue and delayed payouts so every gig pays out the moment you wrap it.
 
 ## Recent Highlights
 - Passive assets gained Quality 4–5 milestones with higher payouts and refreshed modifiers.

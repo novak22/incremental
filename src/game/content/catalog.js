@@ -142,8 +142,7 @@ function buildAssetEntries() {
       moneyCost,
       durationDays,
       tags: {
-        group: definition.tag?.type || null,
-        delayed: durationDays > 0
+        group: definition.tag?.type || null
       },
       resolveLabel: state => resolveActionLabel(action, `Launch ${definition.singular || definition.name}`),
       describeRequirements: state => listAssetRequirementDescriptors(definition, state),
@@ -349,12 +348,6 @@ function applyFilters(entry, filters = {}) {
     return false;
   }
   if (filters.maxTime != null && entry.timeCost > filters.maxTime) {
-    return false;
-  }
-  if (filters.instantOnly && entry.tags?.delayed) {
-    return false;
-  }
-  if (filters.delayedOnly && !entry.tags?.delayed) {
     return false;
   }
   if (filters.groups && entry.tags?.group && !filters.groups.includes(entry.tags.group)) {

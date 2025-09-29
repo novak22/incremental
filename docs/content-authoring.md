@@ -5,7 +5,7 @@ Designers can configure new hustles, assets, and upgrades without writing impera
 ## Available Builders
 
 - `createAssetDefinition(config)` – Produces a full asset definition from declarative data. Standard details (owned count, setup, maintenance, quality, and yield summaries) are injected automatically. Provide `detailKeys` to reorder or extend the default stack and `actionLabels` to customize card CTA copy.
-- `createInstantHustle(config)` – Creates instant or delayed hustles. Supply `time`, `cost`, `payout`, and optional `requirements`. Metrics labels, payout copy, and requirement summaries are generated for you. Hook custom logic with `onExecute`/`onComplete` callbacks.
+- `createInstantHustle(config)` – Creates instant hustles. Supply `time`, `cost`, `payout`, and optional `requirements`. Metrics labels, payout copy, and requirement summaries are generated for you. Hook custom logic with `onExecute`/`onComplete` callbacks.
 - `createUpgrade(config)` – Generates purchase or repeatable upgrades. Costs, requirement details, and lock states are standardized. Use `labels` for dynamic button text, `metrics` for custom telemetry labels, and `onPurchase` to trigger special behavior.
 
 ## Adding New Content

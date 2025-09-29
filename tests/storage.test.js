@@ -57,7 +57,6 @@ test('legacy saves migrate to new asset structure', () => {
         { active: false }
       ]
     },
-    pendingFlips: [{ id: 'legacy', readyAt: Date.now() + 1000, payout: 48 }],
     assistantHired: true,
     coffeesToday: 2,
     log: [{ id: 'legacy', message: 'Legacy entry', timestamp: Date.now(), type: 'info' }]

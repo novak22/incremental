@@ -1,14 +1,6 @@
-import { createId, formatDays, formatHours, formatMoney } from '../core/helpers.js';
-import { addLog } from '../core/log.js';
-import {
-  getAssetDefinition,
-  getAssetState,
-  getHustleDefinition,
-  getHustleState,
-  getState
-} from '../core/state.js';
+import { formatDays, formatHours, formatMoney } from '../core/helpers.js';
+import { getAssetDefinition, getAssetState, getHustleDefinition, getState } from '../core/state.js';
 import { executeAction } from './actions.js';
-import { addMoney } from './currency.js';
 import { checkDayEnd } from './lifecycle.js';
 import { createInstantHustle } from './content/schema.js';
 import {
@@ -404,52 +396,6 @@ const streetPromoSprint = createInstantHustle({
   actionLabel: 'Deploy Street Team'
 });
 
-const flips = createInstantHustle({
-  id: 'flips',
-  name: 'eBay Flips',
-  tag: { label: 'Delayed', type: 'delayed' },
-  description: 'Hunt for deals, flip them online. Profit arrives fashionably late.',
-  time: 4,
-  cost: 20,
-  payout: {
-    amount: 48,
-    delaySeconds: 30,
-    grantOnAction: false
-  },
-  metrics: {
-    time: { label: '📦 eBay flips prep', category: 'hustle' },
-    cost: { label: '💸 eBay flips sourcing', category: 'investment' },
-    payout: { label: '💼 eBay flips payout', category: 'delayed' }
-  },
-  defaultState: {
-    pending: []
-  },
-  actionLabel: 'Start Flip',
-  skills: [
-    { id: 'research', weight: 0.7 },
-    { id: 'commerce', weight: 0.7 }
-  ],
-  onExecute: context => {
-    context.skipDefaultPayout();
-    scheduleFlip();
-    addLog('You listed a spicy eBay flip. In 30 seconds it should cha-ching for $48!', 'delayed');
-  }
-});
-
-flips.extraContent = card => {
-  const status = document.createElement('div');
-  status.className = 'pending';
-  status.textContent = 'No flips in progress.';
-  card.appendChild(status);
-  return { status };
-};
-
-flips.update = (_state, ui) => {
-  updateFlipStatus(ui.extra.status);
-};
-
-flips.process = (now, offline) => processFlipPayouts(now, offline);
-
 export const HUSTLES = [
   freelanceWriting,
   audienceCall,
@@ -462,87 +408,8 @@ export const HUSTLES = [
   saasBugSquash,
   audiobookNarration,
   streetPromoSprint,
-  flips,
   ...createKnowledgeHustles()
 ];
-
-export function scheduleFlip() {
-  const flipState = getHustleState('flips');
-  flipState.pending.push({
-    id: createId(),
-    readyAt: Date.now() + 30000,
-    payout: 48
-  });
-}
-
-export function updateFlipStatus(element) {
-  if (!element) return;
-  const flipState = getHustleState('flips');
-  if (!flipState.pending.length) {
-    element.textContent = 'No flips in progress.';
-    return;
-  }
-  const now = Date.now();
-  const nextFlip = flipState.pending.reduce((soonest, flip) => (flip.readyAt < soonest.readyAt ? flip : soonest));
-  const timeRemaining = Math.max(0, Math.round((nextFlip.readyAt - now) / 1000));
-  const label = timeRemaining === 0 ? 'any moment' : `${timeRemaining}s`;
-  const descriptor = flipState.pending.length === 1 ? 'flip' : 'flips';
-  element.textContent = `${flipState.pending.length} ${descriptor} in progress. Next payout in ${label}.`;
-}
-
-export function processFlipPayouts(now = Date.now(), offline = false) {
-  const state = getState();
-  if (!state) return { changed: false };
-  const flipState = getHustleState('flips');
-  if (!flipState.pending.length) {
-    return { changed: false };
-  }
-
-  const remaining = [];
-  let completed = 0;
-  let offlineTotal = 0;
-
-  for (const flip of flipState.pending) {
-    if (flip.readyAt <= now) {
-      completed += 1;
-      if (offline) {
-        state.money += flip.payout;
-        offlineTotal += flip.payout;
-        recordHustlePayout('flips', {
-          label: '💼 eBay flips payout',
-          amount: flip.payout,
-          category: 'offline'
-        });
-      } else {
-        addMoney(flip.payout, `Your eBay flip sold for $${formatMoney(flip.payout)}! Shipping label time.`, 'delayed');
-        recordHustlePayout('flips', {
-          label: '💼 eBay flips payout',
-          amount: flip.payout,
-          category: 'delayed'
-        });
-      }
-    } else {
-      remaining.push(flip);
-    }
-  }
-
-  flipState.pending = remaining;
-
-  if (!completed) {
-    return { changed: false };
-  }
-
-  const result = { changed: true };
-  if (offline && offlineTotal > 0) {
-    result.offlineLog = {
-      message: `While you were away, ${completed} eBay ${completed === 1 ? 'flip' : 'flips'} paid out. $${formatMoney(
-        offlineTotal
-      )} richer!`,
-      type: 'delayed'
-    };
-  }
-  return result;
-}
 
 function createKnowledgeHustles() {
   return Object.values(KNOWLEDGE_TRACKS).map(track => ({

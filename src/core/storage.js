@@ -5,7 +5,6 @@ import {
   ensureStateShape,
   getAssetDefinition,
   getAssetState,
-  getHustleState,
   getState,
   getUpgradeState,
   initializeState,
@@ -115,10 +114,6 @@ function migrateLegacyState(saved, defaultState) {
     } else {
       blogState.instances = [];
     }
-  }
-
-  if (Array.isArray(saved.pendingFlips)) {
-    getHustleState('flips', migrated).pending = saved.pendingFlips;
   }
 
   if (saved.assistantHired) {
