@@ -80,6 +80,13 @@ function setupSlideOver() {
     if (event.key === 'Escape') hide();
   });
 
+  document.addEventListener('mousedown', event => {
+    if (slideOver.hidden) return;
+    const panel = slideOver.querySelector('.slide-over__panel');
+    if (panel?.contains(event.target)) return;
+    hide();
+  });
+
   slideOver.hidePanel = hide;
 }
 

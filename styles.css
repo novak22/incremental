@@ -620,6 +620,44 @@ body {
   gap: 12px;
 }
 
+.asset-launched {
+  margin-top: 28px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+  display: grid;
+  gap: 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.asset-launched__header {
+  display: grid;
+  gap: 4px;
+}
+
+.asset-launched__header h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.asset-launched__header p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-subtle);
+}
+
+.asset-launched__content {
+  display: grid;
+  gap: 16px;
+}
+
+.asset-launched__empty {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-subtle);
+}
+
 .upgrade-layout {
   display: grid;
   grid-template-columns: 1fr 280px;

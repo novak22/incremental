@@ -806,9 +806,55 @@ function openAssetDetails(definition) {
   ];
   body.appendChild(createDefinitionSummary('Roster snapshot', summaryRows));
 
-  body.appendChild(createInstanceListSection(definition, state));
-
   showSlideOver({ eyebrow: 'Asset', title: definition.name, body });
+  renderLaunchedBuilds(definition, state);
+}
+
+function renderLaunchedBuilds(definition, state) {
+  const panel = elements.assetLaunched;
+  if (!panel?.content) return;
+
+  const { content, note, title } = panel;
+  content.innerHTML = '';
+
+  if (!definition) {
+    if (title) title.textContent = 'Launched builds';
+    if (note) note.textContent = 'Select an asset to explore active and queued builds.';
+    const empty = document.createElement('p');
+    empty.className = 'asset-launched__empty';
+    empty.textContent = 'No asset selected yet. Tap a row to review its build roster.';
+    content.appendChild(empty);
+    return;
+  }
+
+  const assetState = getAssetState(definition.id, state);
+  const instances = Array.isArray(assetState?.instances) ? assetState.instances : [];
+
+  if (title) {
+    title.textContent = `${definition.name} builds`;
+  }
+
+  if (note) {
+    const activeCount = instances.filter(instance => instance.status === 'active').length;
+    const queuedCount = instances.filter(instance => instance.status !== 'active').length;
+    if (!instances.length) {
+      note.textContent = 'Launch a build to start earning and it will show up right here.';
+    } else if (activeCount > 0) {
+      note.textContent = `${activeCount} active build${activeCount === 1 ? '' : 's'} humming along${queuedCount > 0 ? ` • ${queuedCount} queued` : ''}.`;
+    } else {
+      note.textContent = `Queue warming up • ${queuedCount} build${queuedCount === 1 ? '' : 's'} getting ready to launch.`;
+    }
+  }
+
+  const section = createInstanceListSection(definition, state);
+  const heading = section.querySelector('h3');
+  if (heading) {
+    section.removeChild(heading);
+  }
+
+  while (section.firstChild) {
+    content.appendChild(section.firstChild);
+  }
 }
 
 function renderAssets(definitions) {
