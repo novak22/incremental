@@ -1,12 +1,12 @@
 # Passive Asset Dashboard Refresh
 
 ## Summary
-The passive asset workspace now presents each asset as a management card that highlights ownership counts, yesterday's earnings, income potential, upkeep, and net return per upkeep hour at a glance. Cards surface quick actions to launch new builds and sell individual instances without digging through secondary panels. Category toggles also roll up every launched instance into a single management list so upkeep, payouts, supporting upgrades, and liquidation stay reachable even when the compact card view is enabled. The instance briefing modal now focuses on the selected build, showcasing its quality track progress, ROI, and relevant upgrade actions, while quick-purchase upgrade buttons and a scrollable layout keep next steps visible without crowding the screen.
+The passive asset workspace now presents each asset as a management card that highlights ownership counts, yesterday's earnings, income potential, upkeep, and net return per upkeep hour at a glance. Cards surface quick actions to launch new builds and sell individual instances without digging through secondary panels. Category toggles also roll up every launched instance into a single management list so upkeep, payouts, supporting upgrades, and liquidation stay reachable even when the compact card view is enabled. The instance briefing modal now focuses on the selected build, showcasing its quality track progress, ROI, and relevant upgrade actions, while quick-purchase upgrade buttons and a scrollable layout keep next steps visible without crowding the screen. The briefing now opens with a "Launch blueprint" checklist that calls out setup time, upfront costs, upkeep, and income ranges before you commit, and every launched instance lists upgrade quick actions beside the sell shortcut.
 
 ## Goals
 - Give players immediate insight into how every passive build performed yesterday, what it costs to maintain, and whether upkeep hours are paying off.
 - Reduce the click depth for upkeep decisions by embedding sell controls and upgrade guidance into each instance row.
-- Provide an upbeat "New Asset Briefing" modal so players can review setup requirements and payout expectations before committing resources.
+- Provide an upbeat "New Asset Briefing" modal so players can review setup requirements and payout expectations before committing resources, including a live checklist of setup costs, upkeep, and income ranges.
 - Restore at-a-glance control of every active build via per-category asset rosters that remain available when cards are collapsed.
 
 ## Player Impact
@@ -19,9 +19,9 @@ The passive asset workspace now presents each asset as a management card that hi
 ## Implementation Notes
 - Asset cards keep the existing category structure but use a dedicated layout (`asset-card__*` classes) for stats, actions, and instance management.
 - Instance rows now expose both the previous day's payout and inline sell buttons so liquidation is always one click away.
-- Each instance row can render up to two quick-purchase buttons for the next required equipment upgrades, deferring to existing upgrade action handlers for cost checks and logging.
+- Each instance row can render up to two quick-purchase buttons for the next required equipment upgrades, deferring to existing upgrade action handlers for cost checks and logging. Quick actions now sit directly beside the sell button in the instance list so players can invest or liquidate without leaving the modal.
 - Category-level "View launched assets" toggles render aggregated tables populated by `assetCategoryView`, which now highlights the first couple of supporting upgrades directly under each instance's actions.
-- The briefing modal now switches between the legacy definition view and an instance-specific overview that highlights status, upkeep, yesterday's payout, net hourly return, and quality progress/upgrade actions tailored to that build, with the quality upgrades section pinned above the stat summary and the content area scrollable for long descriptions.
+- The briefing modal now switches between the legacy definition view and an instance-specific overview that highlights status, upkeep, yesterday's payout, net hourly return, and quality progress/upgrade actions tailored to that build, with the quality upgrades section pinned above the stat summary and the content area scrollable for long descriptions. The top of the modal reuses schema-driven detail renderers to keep setup and upkeep numbers accurate even before the first launch.
 - ROI rows in the category roster use last income minus upkeep costs divided by upkeep hours to surface a quick dollars-per-hour snapshot for active builds.
 - The modal is populated via `populateAssetInfoModal` using current detail renderers so future balance changes automatically propagate.
 - Collapsed view hides the tagline, instances, and quality panel while keeping the stat summary visible for quick scanning.
