@@ -37,7 +37,7 @@ Each asset supports multiple instances, tracks setup progress, and rolls a daily
 - **Digital E-Book Series** – Setup 4 days × 3h ($260) after completing Outline Mastery. Maintenance 0.75h/day + $3. Faster chapter drafting (2.5h) and cheaper cover/review pushes mean Quality 0 still earns $3–$6/day while the series can now crescendo to $60–$78/day at Quality 5.
 - **Stock Photo Gallery** – Setup 5 days × 4h ($560) with Camera + Studio Expansion upgrades and Photo Catalog knowledge. Maintenance 1.2h/day + $10. Shoot themed packs, keyword them, and pitch marketplaces; sustained quality pushes now raise royalties from $3–$6/day at launch to $112–$150/day at Quality 5.
 - **Dropshipping Storefront** – Setup 6 days × 4h ($720) after E-Commerce Playbook and two active blogs. Maintenance 1.5h/day + $12. Add listings, tune pages, and run ad bursts so profits scale from $6–$10/day to $130–$176/day once the omnichannel engine is humming at Quality 5.
-- **SaaS Micro-App** – Setup 8 days × 4h ($960) after Automation Architecture, the Server Rack → Cloud Cluster → Edge Delivery ladder, and experience running a dropshipping store plus e-book line. Maintenance 2.2h/day + $24. Squash bugs, ship features, and host support sprints to grow subscriptions from $4–$8/day to $168–$220/day after unlocking the Ecosystem Powerhouse tier at Quality 5.
+- **SaaS Micro-App** – Setup 8 days × 4h ($960) after Automation Architecture, the Server Rack → Cloud Cluster → Edge Delivery ladder, and experience running a dropshipping store plus e-book line. Maintenance 2.2h/day + $24. Squash bugs, ship features, and host support sprints to grow subscriptions from $4–$8/day to $168–$220/day after unlocking the Ecosystem Powerhouse tier at Quality 5. Global Ops Center → Predictive Insights → Autonomous Support upgrades add +1 progress bonuses, shorten edge cooldowns, and stack multipliers that more than double late-game revenue.
 
 ### Upgrades & Boosts
 - **Hire Virtual Assistant** – $180 per hire, up to four assistants. Each adds +2h daily but costs $30/day in payroll; fire assistants anytime to cut wages (and hours).
@@ -49,6 +49,9 @@ Each asset supports multiple instances, tracks setup progress, and rolls a daily
 - **Server Rack - Starter** – $650, unlocks infrastructure foundations for advanced projects.
 - **Cloud Cluster** – $1,150, requires the rack and unlocks SaaS deployments.
 - **Edge Delivery Network** – $1,450, requires the cluster, keeps your micro-app snappy worldwide, and unlocks the Quality 4 edge deployment pushes for SaaS builds.
+- **Global Ops Center** – $1,550, requires Fulfillment Automation, Automation Architecture, Edge Delivery, and two active SaaS builds; adds a ~40% SaaS income bump and +1 edge progress.
+- **Predictive Insights Engine** – $1,950, follows the Ops Center and three active SaaS apps; grants +1 feature/stability/marketing progress plus another ~20% income multiplier.
+- **Autonomous Support Mesh** – $2,400, unlocks with four active SaaS apps after Predictive Insights; adds +1 stability and edge progress, trims edge cooldowns to one day, and lifts SaaS revenue by roughly 25%.
 - **Automation Course** – $260 once you have an active blog; permanently boosts blog daily payouts by +50%.
 
 ### Persistence & Offline Behaviour
@@ -75,6 +78,7 @@ Each asset supports multiple instances, tracks setup progress, and rolls a daily
 2. Run the Node-based suite with `npm test` to exercise the day scheduler, maintenance flow, and knowledge tracks.
 3. A GitHub Actions workflow runs the same command on every push and pull request targeting `main`.
 4. Manual spot-check: launch a blog and e-book after Outline Mastery, advance several days, and confirm Quality 0–1 payouts exceed upkeep before and after buying the Automation Course.
+5. Manual spot-check: spin up four SaaS instances, purchase the new Global Ops → Predictive Insights → Autonomous Support chain, and confirm edge deployments show 1-day cooldowns with stacked progress bonuses.
 
 ## Roadmap
 - Expand hustle variety (recurring retainers, seasonal gigs) to diversify daily decision making.

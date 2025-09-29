@@ -2,6 +2,75 @@ import { formatMoney } from '../../../core/helpers.js';
 import { getUpgradeState } from '../../../core/state.js';
 import { createAssetDefinition } from '../../content/schema.js';
 
+function hasUpgrade(id) {
+  return Boolean(getUpgradeState(id)?.purchased);
+}
+
+function applySaasIncomeModifiers(amount, context) {
+  const multipliers = [
+    {
+      id: 'serverEdge',
+      label: 'Edge delivery boost',
+      multiplier: hasUpgrade('serverEdge') ? 1.35 : 1
+    },
+    {
+      id: 'globalOpsCenter',
+      label: 'Global ops boost',
+      multiplier: hasUpgrade('globalOpsCenter') ? 1.4 : 1
+    },
+    {
+      id: 'predictiveInsights',
+      label: 'Predictive insights boost',
+      multiplier: hasUpgrade('predictiveInsights') ? 1.2 : 1
+    },
+    {
+      id: 'autonomousSupport',
+      label: 'Autonomous support boost',
+      multiplier: hasUpgrade('autonomousSupport') ? 1.25 : 1
+    }
+  ];
+
+  let total = amount;
+  for (const entry of multipliers) {
+    if (entry.multiplier <= 1) continue;
+    const before = total;
+    total *= entry.multiplier;
+    if (typeof context?.recordModifier === 'function') {
+      context.recordModifier(entry.label, total - before, {
+        id: entry.id,
+        type: 'upgrade',
+        percent: entry.multiplier - 1
+      });
+    }
+  }
+  return total;
+}
+
+function getRoadmapProgress(context, track) {
+  const getUpgrade = context?.upgrade ?? (() => ({}));
+  const hasEdge = Boolean(getUpgrade('serverEdge')?.purchased);
+  const hasOps = Boolean(getUpgrade('globalOpsCenter')?.purchased);
+  const hasInsights = Boolean(getUpgrade('predictiveInsights')?.purchased);
+  const hasAutoSupport = Boolean(getUpgrade('autonomousSupport')?.purchased);
+
+  let progress = 1;
+  if (hasInsights && ['features', 'stability', 'marketing'].includes(track)) {
+    progress += 1;
+  }
+  if (hasOps && track === 'edge') {
+    progress += 1;
+  }
+  if (hasAutoSupport && (track === 'stability' || track === 'edge')) {
+    progress += 1;
+  }
+
+  if (hasEdge) {
+    progress *= 2;
+  }
+
+  return progress;
+}
+
 const saasDefinition = createAssetDefinition({
   id: 'saas',
   name: 'Micro SaaS Platform',
@@ -21,18 +90,7 @@ const saasDefinition = createAssetDefinition({
     base: 108,
     variance: 0.4,
     logType: 'passive',
-    modifier: (amount, context = {}) => {
-      const edge = getUpgradeState('serverEdge').purchased ? 1.35 : 1;
-      const total = amount * edge;
-      if (edge > 1 && typeof context.recordModifier === 'function') {
-        context.recordModifier('Edge delivery boost', total - amount, {
-          id: 'serverEdge',
-          type: 'upgrade',
-          percent: edge - 1
-        });
-      }
-      return total;
-    }
+    modifier: (amount, context = {}) => applySaasIncomeModifiers(amount, context)
   },
   requirements: {
     knowledge: ['automationCourse'],
@@ -101,7 +159,7 @@ const saasDefinition = createAssetDefinition({
         time: 3.5,
         cost: 32,
         progressKey: 'features',
-        progressAmount: context => (context.upgrade('serverEdge')?.purchased ? 2 : 1),
+        progressAmount: context => getRoadmapProgress(context, 'features'),
         skills: ['software'],
         log: ({ label }) => `${label} shipped a delightful feature. Beta users erupt in emoji reactions!`
       },
@@ -111,7 +169,7 @@ const saasDefinition = createAssetDefinition({
         time: 2.5,
         cost: 36,
         progressKey: 'stability',
-        progressAmount: context => (context.upgrade('serverEdge')?.purchased ? 2 : 1),
+        progressAmount: context => getRoadmapProgress(context, 'stability'),
         skills: ['infrastructure'],
         log: ({ label }) => `${label} patched outages and bolstered uptime. Pager alerts stay quiet.`
       },
@@ -121,7 +179,7 @@ const saasDefinition = createAssetDefinition({
         time: 2.5,
         cost: 44,
         progressKey: 'marketing',
-        progressAmount: context => (context.upgrade('serverEdge')?.purchased ? 2 : 1),
+        progressAmount: context => getRoadmapProgress(context, 'marketing'),
         skills: ['promotion'],
         log: ({ label }) => `${label} launched a marketing sprint. Sign-ups trickle in all night.`
       },
@@ -130,8 +188,9 @@ const saasDefinition = createAssetDefinition({
         label: 'Deploy Edge Nodes',
         time: 3,
         cost: 64,
-        cooldownDays: 2,
+        cooldownDays: context => (context.upgrade('autonomousSupport')?.purchased ? 1 : 2),
         progressKey: 'edge',
+        progressAmount: context => getRoadmapProgress(context, 'edge'),
         requiresUpgrade: 'serverEdge',
         unavailableMessage: () => 'Activate the Edge Delivery Network upgrade to unlock global deployments.',
         log: ({ label }) => `${label} pushed code to new edge regions. Enterprise clients cheer the instant load times!`

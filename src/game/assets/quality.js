@@ -15,6 +15,16 @@ function ensureCooldownMap(instance) {
   return instance.cooldowns;
 }
 
+function resolveCooldownDays(action, context) {
+  if (!action) return 0;
+  const value = typeof action.cooldownDays === 'function'
+    ? action.cooldownDays(context)
+    : action.cooldownDays;
+  const number = Number(value);
+  if (!Number.isFinite(number)) return 0;
+  return Math.max(0, number);
+}
+
 function getActionAvailableDay(instance, actionId) {
   if (!instance?.cooldowns) return 0;
   const value = Number(instance.cooldowns[actionId]);
@@ -27,8 +37,8 @@ function getCurrentDay(state = getState()) {
   return Number.isFinite(day) ? Math.max(0, Math.floor(day)) : 0;
 }
 
-function getCooldownStatus(instance, action, state = getState()) {
-  const cooldownDays = Number(action?.cooldownDays) || 0;
+function getCooldownStatus(instance, action, context) {
+  const cooldownDays = resolveCooldownDays(action, context);
   if (cooldownDays <= 0) {
     return {
       cooldownDays: 0,
@@ -38,6 +48,7 @@ function getCooldownStatus(instance, action, state = getState()) {
     };
   }
   const availableDay = getActionAvailableDay(instance, action.id);
+  const state = context?.state ?? getState();
   const currentDay = getCurrentDay(state);
   const remainingDays = Math.max(0, availableDay - currentDay);
   return {
@@ -48,10 +59,11 @@ function getCooldownStatus(instance, action, state = getState()) {
   };
 }
 
-function scheduleCooldown(instance, action, state = getState()) {
-  const cooldownDays = Number(action?.cooldownDays) || 0;
+function scheduleCooldown(instance, action, context) {
+  const cooldownDays = resolveCooldownDays(action, context);
   if (cooldownDays <= 0) return;
   const map = ensureCooldownMap(instance);
+  const state = context?.state ?? getState();
   const currentDay = getCurrentDay(state);
   map[action.id] = Math.max(0, currentDay + Math.max(0, Math.floor(cooldownDays)));
 }
@@ -237,7 +249,7 @@ function runQualityAction(definition, instanceId, actionId) {
     return;
   }
 
-  const cooldown = getCooldownStatus(instance, action, state);
+  const cooldown = getCooldownStatus(instance, action, context);
   if (cooldown.onCooldown) {
     const label = getActionLabel(definition, assetState, instance);
     const waitLabel = cooldown.remainingDays === 1
@@ -298,7 +310,7 @@ function runQualityAction(definition, instanceId, actionId) {
     action.onComplete({ state, definition, instance, quality });
   }
 
-  scheduleCooldown(instance, action, state);
+  scheduleCooldown(instance, action, context);
 
   const label = getActionLabel(definition, assetState, instance);
   if (typeof action.log === 'function') {
@@ -400,9 +412,10 @@ export function canPerformQualityAction(definition, instance, action, state = ge
   if (!definition || !instance || !action) return false;
   if (!state) return false;
   if (instance.status !== 'active') return false;
-  const availability = getQualityActionAvailabilityInternal(definition, instance, action, state);
+  const context = createActionContext(definition, instance, state);
+  const availability = evaluateActionAvailability(action, context);
   if (!availability.unlocked) return false;
-  const cooldown = getCooldownStatus(instance, action, state);
+  const cooldown = getCooldownStatus(instance, action, context);
   if (cooldown.onCooldown) return false;
   const timeCost = Math.max(0, Number(action.time) || 0);
   const moneyCost = Math.max(0, Number(action.cost) || 0);
@@ -434,7 +447,8 @@ export function getQualityActionCooldown(definition, instance, action, state = g
       availableDay: 0
     };
   }
-  return getCooldownStatus(instance, action, state);
+  const context = createActionContext(definition, instance, state);
+  return getCooldownStatus(instance, action, context);
 }
 
 export function getQualityLevelSummary(definition) {

@@ -5,6 +5,7 @@ import { executeAction } from './actions.js';
 import { checkDayEnd } from './lifecycle.js';
 import { createUpgrade } from './content/schema.js';
 import { gainTime } from './time.js';
+import { getKnowledgeProgress } from './requirements.js';
 import {
   ASSISTANT_CONFIG,
   canFireAssistant,
@@ -230,6 +231,145 @@ const serverEdge = createUpgrade({
   logType: 'upgrade'
 });
 
+function getActiveSaasCount() {
+  const saas = getAssetState('saas');
+  const instances = saas?.instances || [];
+  return instances.filter(instance => instance.status === 'active').length;
+}
+
+function automationCourseComplete() {
+  return Boolean(getKnowledgeProgress('automationCourse')?.completed);
+}
+
+const globalOpsCenter = createUpgrade({
+  id: 'globalOpsCenter',
+  name: 'Global Ops Center',
+  tag: { label: 'Boost', type: 'boost' },
+  description: 'Stand up a follow-the-sun command hub so every SaaS instance shares playbooks and uptime coverage.',
+  cost: 1550,
+  requires: [
+    'serverEdge',
+    {
+      type: 'custom',
+      met: () => Boolean(getUpgradeState('fulfillmentAutomation')?.purchased),
+      detail: 'Requires: <strong>Fulfillment Automation upgrade</strong>'
+    },
+    {
+      type: 'custom',
+      met: () => automationCourseComplete(),
+      detail: 'Requires: <strong>Automation Architecture Course completed</strong>'
+    },
+    {
+      type: 'custom',
+      met: () => getActiveSaasCount() >= 2,
+      detail: 'Requires: <strong>2 active Micro SaaS platforms</strong>'
+    }
+  ],
+  boosts: 'Supercharges SaaS payouts and preps the team for predictive analytics.',
+  details: [
+    () => '🌍 Global ops coordination adds roughly +40% to daily SaaS revenue.',
+    () => '🛰️ Edge deployments pick up extra progress as regions share runbooks.'
+  ],
+  skills: ['infrastructure'],
+  actionClassName: 'secondary',
+  actionLabel: 'Launch Ops Center',
+  labels: {
+    purchased: 'Ops Center Ready',
+    missing: () => 'Requires SaaS Ops Prereqs'
+  },
+  metrics: {
+    cost: { label: '🌍 Global ops center rollout', category: 'infrastructure' }
+  },
+  logMessage: 'Global ops center online! SaaS teams now hand off flawlessly across time zones.',
+  logType: 'upgrade'
+});
+
+const predictiveInsights = createUpgrade({
+  id: 'predictiveInsights',
+  name: 'Predictive Insights Engine',
+  tag: { label: 'Boost', type: 'boost' },
+  description: 'Pipe product telemetry into machine learning dashboards so every roadmap call lands with data-backed confidence.',
+  cost: 1950,
+  requires: [
+    'globalOpsCenter',
+    {
+      type: 'custom',
+      met: () => Boolean(getUpgradeState('fulfillmentAutomation')?.purchased),
+      detail: 'Requires: <strong>Fulfillment Automation upgrade</strong>'
+    },
+    {
+      type: 'custom',
+      met: () => automationCourseComplete(),
+      detail: 'Requires: <strong>Automation Architecture Course completed</strong>'
+    },
+    {
+      type: 'custom',
+      met: () => getActiveSaasCount() >= 3,
+      detail: 'Requires: <strong>3 active Micro SaaS platforms</strong>'
+    }
+  ],
+  boosts: 'Adds predictive boosts to feature, stability, and marketing pushes while raising subscriptions.',
+  details: [
+    () => '📊 Feature, stability, and marketing actions earn +1 extra progress each time.',
+    () => '💹 Daily SaaS income gains another ~20% thanks to churn forecasts.'
+  ],
+  skills: ['software'],
+  actionClassName: 'secondary',
+  actionLabel: 'Spin Up Insights Engine',
+  labels: {
+    purchased: 'Insights Streaming',
+    missing: () => 'Requires Predictive Prereqs'
+  },
+  metrics: {
+    cost: { label: '📊 Predictive insights deployment', category: 'infrastructure' }
+  },
+  logMessage: 'Predictive dashboards humming! Roadmaps now ship with clairvoyant confidence.',
+  logType: 'upgrade'
+});
+
+const autonomousSupport = createUpgrade({
+  id: 'autonomousSupport',
+  name: 'Autonomous Support Mesh',
+  tag: { label: 'Boost', type: 'boost' },
+  description: 'Deploy AI copilots and scripted runbooks so customer support and reliability fixes happen before users even notice.',
+  cost: 2400,
+  requires: [
+    'predictiveInsights',
+    {
+      type: 'custom',
+      met: () => Boolean(getUpgradeState('fulfillmentAutomation')?.purchased),
+      detail: 'Requires: <strong>Fulfillment Automation upgrade</strong>'
+    },
+    {
+      type: 'custom',
+      met: () => automationCourseComplete(),
+      detail: 'Requires: <strong>Automation Architecture Course completed</strong>'
+    },
+    {
+      type: 'custom',
+      met: () => getActiveSaasCount() >= 4,
+      detail: 'Requires: <strong>4 active Micro SaaS platforms</strong>'
+    }
+  ],
+  boosts: 'Stacks autonomous responses on SaaS uptime, stability work, and subscription momentum.',
+  details: [
+    () => '🤖 Stability pushes gain another +1 progress and edge deployments cool down faster.',
+    () => '🚀 Daily SaaS revenue climbs roughly +25% from proactive retention.'
+  ],
+  skills: ['infrastructure'],
+  actionClassName: 'secondary',
+  actionLabel: 'Activate Support Mesh',
+  labels: {
+    purchased: 'Support Mesh Live',
+    missing: () => 'Requires Autonomous Prereqs'
+  },
+  metrics: {
+    cost: { label: '🤖 Autonomous support rollout', category: 'infrastructure' }
+  },
+  logMessage: 'Autonomous support mesh engaged! Customers rave about help desks that answer before they ask.',
+  logType: 'upgrade'
+});
+
 const coffee = createUpgrade({
   id: 'coffee',
   name: 'Turbo Coffee',
@@ -309,6 +449,9 @@ export const UPGRADES = [
   serverRack,
   serverCluster,
   serverEdge,
+  globalOpsCenter,
+  predictiveInsights,
+  autonomousSupport,
   coffee,
   course
 ];
