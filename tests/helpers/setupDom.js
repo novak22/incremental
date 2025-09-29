@@ -7,110 +7,94 @@ export function ensureTestDom() {
   if (dom) return dom;
   dom = new JSDOM(
     `<!DOCTYPE html><html><body>
-      <div class="app">
-        <header class="dashboard-header">
-          <div class="top-bar">
-            <span id="money"></span>
-            <div>
-              <span id="time"></span>
-              <span id="time-note"></span>
-              <div id="time-progress"></div>
-              <div id="assistant-support">
-                <span id="assistant-note"></span>
-                <div id="assistant-progress"></div>
-              </div>
-              <button id="time-legend-toggle"></button>
-              <ul id="time-legend"></ul>
-            </div>
-            <span id="day"></span>
+      <div class="shell">
+        <header class="shell__header">
+          <div class="shell__brand">
+            <h1>Test Shell</h1>
+            <p id="session-status"></p>
+          </div>
+          <div class="shell__controls">
+            <button id="command-palette-trigger"></button>
             <button id="end-day"></button>
           </div>
-          <nav class="section-nav" id="section-nav">
-            <a class="section-link" href="#section-hustles"></a>
-            <a class="section-link" href="#section-education"></a>
-            <a class="section-link" href="#section-assets"></a>
-            <a class="section-link" href="#section-upgrades"></a>
-          </nav>
         </header>
-        <section id="stats-panel" data-collapsed="true">
-          <button id="stats-toggle"></button>
-          <div>
-            <details id="summary-time-card">
-              <summary>
-                <span id="summary-time"></span>
-                <span id="summary-time-caption"></span>
-              </summary>
-              <ul id="summary-time-breakdown"></ul>
-            </details>
-            <details id="summary-income-card">
-              <summary>
-                <span id="summary-income"></span>
-                <span id="summary-income-caption"></span>
-              </summary>
-              <ul id="summary-income-breakdown"></ul>
-            </details>
-            <details id="summary-cost-card">
-              <summary>
-                <span id="summary-cost"></span>
-                <span id="summary-cost-caption"></span>
-              </summary>
-              <ul id="summary-cost-breakdown"></ul>
-            </details>
-            <details id="summary-study-card">
-              <summary>
-                <span id="summary-study"></span>
-                <span id="summary-study-caption"></span>
-              </summary>
-              <ul id="summary-study-breakdown"></ul>
-            </details>
-          </div>
-        </section>
-        <main class="workspace">
-          <section class="global-filters">
-            <input type="checkbox" id="filter-hide-locked" />
-            <input type="checkbox" id="filter-hide-completed" />
-            <input type="checkbox" id="filter-show-active" />
+        <nav class="shell__tabs" role="tablist">
+          <button id="tab-dashboard" class="shell__tab" aria-controls="panel-dashboard"></button>
+          <button id="tab-hustles" class="shell__tab" aria-controls="panel-hustles"></button>
+          <button id="tab-assets" class="shell__tab" aria-controls="panel-assets"></button>
+          <button id="tab-upgrades" class="shell__tab" aria-controls="panel-upgrades"></button>
+          <button id="tab-education" class="shell__tab" aria-controls="panel-education"></button>
+        </nav>
+        <main class="shell__main">
+          <section id="panel-dashboard" class="panel">
+            <section class="dashboard__kpis">
+              <button id="kpi-cash"></button>
+              <button id="kpi-net"><span id="kpi-net-value"></span><span id="kpi-net-note"></span></button>
+              <button id="kpi-hours"><span id="kpi-hours-value"></span><span id="kpi-hours-note"></span></button>
+              <button id="kpi-upkeep"><span id="kpi-upkeep-value"></span><span id="kpi-upkeep-note"></span></button>
+              <button id="kpi-assets"><span id="kpi-assets-value"></span><span id="kpi-assets-note"></span></button>
+              <button id="kpi-study"><span id="kpi-study-value"></span><span id="kpi-study-note"></span></button>
+            </section>
+            <section class="dashboard__grid">
+              <article>
+                <ol id="action-queue"></ol>
+                <button id="queue-pause"></button>
+                <button id="queue-cancel"></button>
+              </article>
+              <article><ul id="quick-actions"></ul></article>
+              <article><ul id="notification-list"></ul></article>
+              <article>
+                <div id="event-log-preview"></div>
+                <button id="open-event-log"></button>
+              </article>
+            </section>
           </section>
-          <section id="workspace-panels" class="workspace-panels">
-            <section class="workspace-section" id="section-hustles">
-              <div id="hustle-grid"></div>
-            </section>
-            <section class="workspace-section" id="section-education">
-              <input type="checkbox" id="filter-education-active" />
-              <input type="checkbox" id="filter-education-hide-complete" />
-              <div id="education-grid"></div>
-            </section>
-            <section class="workspace-section assets-section" id="section-assets">
-              <input type="checkbox" id="filter-assets-collapsed" />
-              <input type="checkbox" id="filter-assets-hide-locked" />
-              <div id="asset-grid">
-                <div id="asset-grid-foundation"></div>
-                <div id="asset-grid-creative"></div>
-                <div id="asset-grid-commerce"></div>
-                <div id="asset-grid-advanced"></div>
-              </div>
-            </section>
-            <section class="workspace-section" id="section-upgrades">
-              <input type="search" id="upgrade-search" />
-              <div id="upgrade-grid-equipment"></div>
-              <div id="upgrade-grid-automation"></div>
-              <div id="upgrade-grid-consumables"></div>
-              <div id="upgrade-grid"></div>
-            </section>
+          <section id="panel-hustles" class="panel" hidden>
+            <input id="hustle-search" />
+            <input id="hustle-available-toggle" type="checkbox" />
+            <select id="hustle-sort"></select>
+            <div id="hustle-category-chips"></div>
+            <div id="hustle-req-chips"></div>
+            <div id="hustle-list"></div>
+          </section>
+          <section id="panel-assets" class="panel" hidden>
+            <input id="asset-active-toggle" type="checkbox" />
+            <input id="asset-maintenance-toggle" type="checkbox" />
+            <input id="asset-risk-toggle" type="checkbox" />
+            <table>
+              <tbody id="asset-table-body"></tbody>
+            </table>
+            <div id="asset-selection-note"></div>
+            <button id="asset-batch-maintain"></button>
+            <button id="asset-batch-pause"></button>
+            <button id="asset-batch-preset"></button>
+          </section>
+          <section id="panel-upgrades" class="panel" hidden>
+            <input id="upgrade-search" />
+            <input id="upgrade-affordable-toggle" type="checkbox" />
+            <input id="upgrade-favorites-toggle" type="checkbox" />
+            <div id="upgrade-category-chips"></div>
+            <div id="upgrade-list"></div>
+            <aside>
+              <ul id="upgrade-dock-list"></ul>
+            </aside>
+          </section>
+          <section id="panel-education" class="panel" hidden>
+            <input id="study-active-toggle" type="checkbox" />
+            <input id="study-hide-complete" type="checkbox" />
+            <ol id="study-queue-list"></ol>
+            <span id="study-queue-eta"></span>
+            <span id="study-queue-cap"></span>
+            <div id="study-track-list"></div>
           </section>
         </main>
-        <section class="log">
-          <div id="log-tip"></div>
-          <button id="log-toggle"></button>
-          <div id="log-feed"></div>
-        </section>
       </div>
-      <template id="log-template">
-        <div class="log-entry">
-          <span class="timestamp"></span>
-          <p class="message"></p>
-        </div>
-      </template>
+      <template id="log-template"><article class="log-entry"><span class="timestamp"></span><p class="message"></p></article></template>
+      <div id="log-tip"></div>
+      <div id="slide-over"><div class="slide-over__backdrop" data-close="slide-over"></div><div class="slide-over__panel"><header><p id="slide-over-eyebrow"></p><h2 id="slide-over-title"></h2><button id="slide-over-close" data-close="slide-over"></button></header><div id="slide-over-content"></div></div></div>
+      <aside id="event-log-panel" hidden><button id="event-log-close" data-close="event-log"></button></aside>
+      <div id="log-feed"></div>
+      <div id="command-palette"><div class="command-palette__backdrop" data-close="command"></div><div class="command-palette__panel"><header><input id="command-palette-search" /></header><ul id="command-palette-results"></ul></div></div>
     </body></html>`,
     { url: 'https://example.com' }
   );
