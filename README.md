@@ -7,7 +7,7 @@ Online Hustle Simulator is a browser-based incremental game about orchestrating 
 - **Daily Time Budget** – Every in-game day begins with 14 base hours (plus permanent bonuses). Hustles, asset setup, upkeep, and any enrolled study tracks automatically reserve time from this pool. Assistants can be hired (up to four) for +2 hours each, but payroll hits every morning; you can always fire them if cash or time dips too low. Turbo coffee grants up to three one-hour boosts per day.
 - **Setup & Maintenance Allocation** – When a day ends, each asset checks whether you funded the required setup/maintenance hours **and** any daily cash cost. Funded instances progress (or earn income); unfunded ones pause. The next morning, the scheduler automatically earmarks required hours until you run out.
 - **Asset Quality Ladder** – Every passive asset launches at Quality 0 and can be upgraded by investing time (and sometimes cash) into bespoke quality actions. Quality milestones unlock higher payout ranges, steadier log messages, and whimsical celebrations when tiers are reached.
-- **Knowledge Tracks** – Paying tuition enrolls you in longer-form courses that auto-schedule their daily study load until graduation. Completing them unlocks advanced assets and generates celebratory log entries; if the scheduler runs out of hours, you’ll receive gentle warnings and the course simply waits for tomorrow.
+- **Knowledge Tracks** – Paying tuition enrolls you in longer-form courses that auto-schedule their daily study load until graduation. Completing them unlocks advanced assets, now grants gig-specific payout boosts, and generates celebratory log entries; if the scheduler runs out of hours, you’ll receive gentle warnings and the course simply waits for tomorrow.
 - **Daily Recap Log** – Every launch, maintenance result, payout, and study milestone is written to the log so you can reconstruct exactly what happened during busy streaks.
 
 ### Interface Overview
@@ -17,14 +17,16 @@ Online Hustle Simulator is a browser-based incremental game about orchestrating 
 - **Event Log Controls** – The log dock keeps its running commentary but now includes a summary/detailed toggle when you want a lighter feed during long sessions.
 
 ### Hustles & Study Tracks
-- **Freelance Writing** – Spend 2h to earn $18 instantly.
-- **Audience Q&A Blast** – Spend 1h with at least one active blog to earn $12 from checklist upsells.
-- **Bundle Promo Push** – Spend 2.5h once you have two active blogs plus an e-book to pocket $48 immediately.
+- **Freelance Writing** – Spend 2h to earn $18 instantly (Outline Mastery grads earn +25%).
+- **Audience Q&A Blast** – Spend 1h with at least one active blog to earn $12 from checklist upsells (+$4 after Brand Voice Lab).
+- **Bundle Promo Push** – Spend 2.5h once you have two active blogs plus an e-book to pocket $48 immediately (+$6 after E-Commerce Playbook).
 - **eBay Flips** – Spend 4h and $20; complete 30 seconds later for $48 (multiple flips queue).
-- **Outline Mastery Workshop** – Pay $140 upfront; 2h/day for 5 days auto-reserve to unlock e-book production chops.
-- **Photo Catalog Curation** – Pay $95 upfront; 1.5h/day for 4 days auto-reserve to polish your stock gallery workflow.
-- **E-Commerce Playbook** – Pay $260 upfront; 2.5h/day for 7 days auto-reserve to prep dropshipping ventures.
-- **Automation Architecture Course** – Pay $540 upfront; 3h/day for 10 days auto-reserve to earn SaaS-ready engineering chops.
+- **Outline Mastery Workshop** – Pay $140 upfront; 2h/day for 5 days auto-reserve to unlock e-book production chops and boost writing/narration gigs.
+- **Photo Catalog Curation** – Pay $95 upfront; 1.5h/day for 4 days auto-reserve to polish your stock gallery workflow and increase Event Photo Gig payouts by 20%.
+- **E-Commerce Playbook** – Pay $260 upfront; 2.5h/day for 7 days auto-reserve to prep dropshipping ventures (+$6 Bundle Promo Push, +20% Dropship Pack Party).
+- **Automation Architecture Course** – Pay $540 upfront; 3h/day for 10 days auto-reserve to earn SaaS-ready engineering chops (+$12 SaaS Bug Squash).
+- **Brand Voice Lab** – Pay $120 upfront; 1h/day for 4 days to sharpen livestream charisma and unlock +$4 tips on Audience Q&A gigs.
+- **Guerrilla Buzz Workshop** – Pay $180 upfront; 1.5h/day for 6 days to field-test street marketing hooks (+25% Street Team Promo, +$1.50 Micro Survey Dash).
 
 ### Passive Assets (Daily Payouts)
 Each asset supports multiple instances, tracks setup progress, and rolls a daily income range once active. Quality actions unique to each asset increase payouts and stability, and you can liquidate any instance directly from the card—or from the category roster—for three times its previous day payout. The asset briefing modal doubles as an instance inspector, outlining status, upkeep, yesterday’s earnings, and which upgrades are owned or still locked.
