@@ -5,6 +5,7 @@
 - Corrected the Personal Blog Network upkeep to its 0.75h/$3 tuning so maintenance consumes the intended time budget and queued payouts behave consistently.
 - Retuned Stock Photo Galleries, Dropshipping Labs, and Micro SaaS payouts with lighter upkeep and lower quality hurdles, and wired the Cinema Camera, Studio Expansion, and Edge Delivery upgrades into tangible income and progress boosts.
 - Introduced a character skill system with ten themed disciplines, action-driven XP awards, education bonuses, and overall creator levels that log celebratory progress.
+- Added a "Skill constellation" widget to the dashboard and education tab so current skill tiers and XP-to-next goals stay front and centre.
 - Expanded the Micro SaaS quality ladder with an Edge-powered Quality 4 tier, fresh action gating, and UI messaging so late-game payouts highlight the Edge Delivery Network upgrade.
 - Retuned Stock Photo Galleries, Dropshipping Labs, and Micro SaaS payouts with lighter upkeep and lower quality hurdles, and wired the Cinema Camera, Studio Expansion, and Edge Delivery upgrades into tangible income and progress boosts.
 - Rebalanced the Personal Blog Network and Digital E-Book Series so Quality 0–1 payouts cover their maintenance, trimmed early post/chapter requirements, and sped up support actions while keeping the Automation Course perk impactful.

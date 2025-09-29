@@ -146,6 +146,20 @@
               <ul id="quick-actions" class="quick-actions" aria-live="polite"></ul>
             </article>
 
+            <article class="card dashboard-card" aria-labelledby="skills-heading">
+              <header>
+                <h2 id="skills-heading">Skill constellation</h2>
+                <p>Watch every discipline climb as you ship and study.</p>
+              </header>
+              <div id="dashboard-skills" class="skills-widget">
+                <div class="skills-widget__summary">
+                  <span id="dashboard-skills-tier" class="skills-widget__summary-tier">Rising Creator</span>
+                  <span id="dashboard-skills-progress" class="skills-widget__summary-note">0 XP logged so far.</span>
+                </div>
+                <ul id="dashboard-skills-list" class="skills-widget__list" aria-live="polite"></ul>
+              </div>
+            </article>
+
             <article class="card dashboard-card" aria-labelledby="asset-upgrades-heading">
               <header>
                 <h2 id="asset-upgrades-heading">Asset upgrade</h2>
@@ -324,6 +338,19 @@
           <div class="study-queue__meta">
             <span id="study-queue-eta">Total ETA: 0h</span>
             <span id="study-queue-cap">Daily cap: 0h</span>
+          </div>
+        </section>
+        <section class="education-skills" aria-labelledby="education-skills-heading">
+          <header>
+            <h3 id="education-skills-heading">Skill constellation</h3>
+            <p>Courses boost these creative disciplines.</p>
+          </header>
+          <div id="education-skills" class="skills-widget skills-widget--compact">
+            <div class="skills-widget__summary">
+              <span id="education-skills-tier" class="skills-widget__summary-tier">Rising Creator</span>
+              <span id="education-skills-progress" class="skills-widget__summary-note">Keep stacking XP to rank up.</span>
+            </div>
+            <ul id="education-skills-list" class="skills-widget__list" aria-live="polite"></ul>
           </div>
         </section>
         <div id="study-track-list" class="study-tracks" aria-live="polite"></div>
