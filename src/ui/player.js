@@ -118,7 +118,7 @@ function renderSkillList(state) {
     name.textContent = skill.name;
     const badge = document.createElement('span');
     badge.className = 'player-skill__badge';
-    badge.textContent = `Lv ${skill.level}`;
+    badge.textContent = `LVL ${skill.level}`;
     header.append(name, badge);
 
     const tier = document.createElement('p');

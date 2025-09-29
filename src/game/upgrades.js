@@ -72,7 +72,7 @@ const assistantUpgrade = createUpgrade({
 
 const camera = createUpgrade({
   id: 'camera',
-  name: 'Buy Camera',
+  name: 'Camera',
   tag: { label: 'Unlock', type: 'unlock' },
   description: 'Unlocks video production gear so you can start vlogs and shoot stock photos.',
   cost: 200,
