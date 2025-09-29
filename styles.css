@@ -1520,6 +1520,46 @@ body {
   gap: 6px;
 }
 
+.asset-detail__insight--panel {
+  position: relative;
+  padding: 18px 20px;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(124, 92, 255, 0.32);
+  background: linear-gradient(155deg, rgba(15, 23, 42, 0.92), rgba(30, 41, 59, 0.72));
+  box-shadow: var(--shadow-md);
+  gap: 12px;
+  overflow: hidden;
+}
+
+.asset-detail__insight--panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(125% 145% at 90% -20%, rgba(124, 92, 255, 0.28), transparent 60%);
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+.asset-detail__insight--panel > * {
+  position: relative;
+  z-index: 1;
+}
+
+.asset-detail__insight--panel .asset-detail__insight-title {
+  color: rgba(236, 233, 255, 0.72);
+  letter-spacing: 0.08em;
+}
+
+.asset-detail__insight--panel .asset-detail__insight-body {
+  color: #f7f4ff;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.asset-detail__insight--panel .asset-detail__insight-note {
+  color: rgba(236, 233, 255, 0.68);
+}
+
 .asset-detail__insight--milestone {
   position: relative;
   overflow: hidden;
@@ -1599,7 +1639,8 @@ body {
 }
 
 .asset-detail__requirement-list--milestone {
-  gap: 10px;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 }
 
 .asset-detail__requirement-entry {
@@ -1612,11 +1653,16 @@ body {
 
 .asset-detail__requirement-entry--milestone {
   display: grid;
-  gap: 8px;
-  align-items: stretch;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'label value'
+    'meter meter'
+    'remaining remaining';
+  gap: 6px 14px;
+  align-items: center;
   background: rgba(17, 27, 48, 0.35);
   border-radius: var(--radius-md);
-  padding: 10px 12px;
+  padding: 12px 14px;
   backdrop-filter: blur(4px);
 }
 
@@ -1626,6 +1672,7 @@ body {
 }
 
 .asset-detail__requirement-entry--milestone .asset-detail__requirement-label {
+  grid-area: label;
   color: rgba(240, 237, 255, 0.82);
   font-size: 11px;
   letter-spacing: 0.04em;
@@ -1637,24 +1684,27 @@ body {
 }
 
 .asset-detail__requirement-value--milestone {
-  font-size: 15px;
+  grid-area: value;
+  font-size: 18px;
   font-weight: 700;
   color: #ffffff;
 }
 
 .asset-detail__requirement-progress {
-  display: grid;
-  gap: 6px;
+  display: contents;
 }
 
 .asset-detail__requirement-remaining {
+  grid-area: remaining;
+  justify-self: end;
   font-size: 12px;
   color: rgba(240, 237, 255, 0.72);
 }
 
 .asset-detail__requirement-meter {
+  grid-area: meter;
   position: relative;
-  height: 6px;
+  height: 5px;
   background: rgba(240, 237, 255, 0.25);
   border-radius: 999px;
   overflow: hidden;

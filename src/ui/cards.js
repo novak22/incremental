@@ -415,7 +415,7 @@ function buildQualityInsight(definition, instance) {
   const level = Number(instance.quality?.level) || 0;
   const levelInfo = getQualityLevel(definition, level);
   const container = document.createElement('div');
-  container.className = 'asset-detail__insight';
+  container.className = 'asset-detail__insight asset-detail__insight--panel';
 
   const title = document.createElement('h4');
   title.className = 'asset-detail__insight-title';
@@ -442,7 +442,7 @@ function buildNextQualityInsight(definition, instance) {
   const level = Number(instance.quality?.level) || 0;
   const nextRequirements = getQualityNextRequirements(definition, level);
   const container = document.createElement('div');
-  container.className = 'asset-detail__insight asset-detail__insight--milestone';
+  container.className = 'asset-detail__insight asset-detail__insight--panel asset-detail__insight--milestone';
 
   const hero = document.createElement('div');
   hero.className = 'asset-detail__milestone-hero';
@@ -543,7 +543,7 @@ function buildNextQualityInsight(definition, instance) {
 
 function buildPayoutInsight(definition, instance) {
   const container = document.createElement('div');
-  container.className = 'asset-detail__insight';
+  container.className = 'asset-detail__insight asset-detail__insight--panel';
 
   const title = document.createElement('h4');
   title.className = 'asset-detail__insight-title';
