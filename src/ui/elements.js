@@ -108,8 +108,7 @@ const elements = {
     content: document.getElementById('asset-launched-content')
   },
   upgradeFilters: {
-    affordable: document.getElementById('upgrade-affordable-toggle'),
-    available: document.getElementById('upgrade-available-toggle')
+    unlocked: document.getElementById('upgrade-unlocked-toggle')
   },
   upgradeOverview: {
     container: document.getElementById('upgrade-overview'),
@@ -119,7 +118,6 @@ const elements = {
   },
   upgradeEmpty: document.getElementById('upgrade-empty'),
   upgradeLaneList: document.getElementById('upgrade-lane-list'),
-  upgradeSearch: document.getElementById('upgrade-search'),
   upgradeList: document.getElementById('upgrade-list'),
   upgradeDockList: document.getElementById('upgrade-dock-list'),
   studyFilters: {

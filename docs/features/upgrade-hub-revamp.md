@@ -10,7 +10,7 @@
 - Sectioned layouts cluster upgrades into unlocks, boosts, and support lanes with per-section availability notes.
 - Ready upgrades automatically populate the dock with their current label and price for one-click purchasing.
 - Each card now carries tag/status badges, refreshed copy, and rotating detail bullets that stay current with game state.
-- A friendly "Ready to install" toggle hides anything you can’t fire up yet—whether you’re short on cash or still chasing prerequisites.
+- A friendly "Unlocked now" toggle defaults to showing instant-install picks while a quick flip reveals the full future catalog.
 
 ## Structured taxonomy & stacking (Update)
 - Tech, House, Infra, and Support tabs organise the catalog into breezy, high-level lanes so players can zero in on the gear they crave.
@@ -26,7 +26,7 @@
 - The dock still anchors on the right, mirroring button states from cards, so the three-column layout keeps filters, catalog, and purchase-ready picks visible together.
 
 **Player Impact**
-- Players can filter by affordability, availability, or search simultaneously, drastically reducing scan time for priority upgrades.
+- Players land on a curated list of upgrades they can install immediately, with a single toggle to reveal future goals when they want to plan ahead.
 - The overview note reinforces short-term goals (buy now, meet requirements, or save up) so progression stalls are easier to diagnose.
 - Enhanced dock interactions mirror the card call-to-action, reinforcing confidence that the purchase will behave as expected.
 

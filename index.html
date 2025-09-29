@@ -373,14 +373,9 @@
           </div>
           <div class="filter-bar" role="group" aria-label="Upgrade filters">
             <label class="filter-toggle">
-              <input id="upgrade-affordable-toggle" type="checkbox" />
-              <span>Affordable</span>
+              <input id="upgrade-unlocked-toggle" type="checkbox" checked />
+              <span>Unlocked now</span>
             </label>
-            <label class="filter-toggle">
-              <input id="upgrade-available-toggle" type="checkbox" />
-              <span>Ready to install</span>
-            </label>
-            <input id="upgrade-search" type="search" placeholder="Search upgrades" aria-label="Search upgrades" />
           </div>
         </header>
         <div class="upgrade-layout">
@@ -410,7 +405,7 @@
                 </div>
               </dl>
             </section>
-            <p id="upgrade-empty" class="upgrade-empty" hidden>No upgrades match these filters yet. Tweak the toggles or clear search.</p>
+            <p id="upgrade-empty" class="upgrade-empty" hidden>No upgrades match this view yet. Toggle "Unlocked now" to browse everything.</p>
             <div id="upgrade-list" class="upgrade-list" aria-live="polite"></div>
           </div>
           <aside class="upgrade-dock" aria-label="Upgrade dock">
