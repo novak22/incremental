@@ -35,8 +35,8 @@ Each asset supports multiple instances, tracks setup progress, and rolls a daily
 - **Personal Blog Network** – Setup 3 days × 3h ($180). Requires 0.75h/day + $3 maintenance. Quality actions include drafting posts, SEO sprints, and backlink outreach; the ladder now climbs from $3–$6/day at Quality 0 to $64–$84/day at Quality 5 once backlinks, SEO, and outreach hum in unison (Automation Course still boosts payouts another 50%).
 - **Weekly Vlog Channel** – Setup 4 days × 4h ($420) with Camera upgrade. Maintenance 1.5h/day + $9. Record episodes, polish edits, and run promo blasts to climb from $2–$5/day at Quality 0 to $62–$82/day at Quality 5, with viral spikes getting juicier at the new top tiers.
 - **Digital E-Book Series** – Setup 4 days × 3h ($260) after completing Outline Mastery. Maintenance 0.75h/day + $3. Faster chapter drafting (2.5h) and cheaper cover/review pushes mean Quality 0 still earns $3–$6/day while the series can now crescendo to $60–$78/day at Quality 5.
-- **Stock Photo Gallery** – Setup 5 days × 4h ($560) with Camera + Studio Expansion upgrades and Photo Catalog knowledge. Maintenance 1.2h/day + $10. Shoot themed packs, keyword them, and pitch marketplaces; sustained quality pushes now raise royalties from $3–$6/day at launch to $112–$150/day at Quality 5.
-- **Dropshipping Storefront** – Setup 6 days × 4h ($720) after E-Commerce Playbook and two active blogs. Maintenance 1.5h/day + $12. Add listings, tune pages, and run ad bursts so profits scale from $6–$10/day to $130–$176/day once the omnichannel engine is humming at Quality 5.
+- **Stock Photo Gallery** – Setup 5 days × 4h ($560) with Camera + Studio Expansion upgrades and Photo Catalog knowledge. Maintenance 1.2h/day + $10. Shoot themed packs, keyword them, and pitch marketplaces; sustained quality pushes now raise royalties from $3–$6/day at launch to $112–$150/day at Quality 5, with White-Label Alliance partners layering extra income and marketing progress.
+- **Dropshipping Storefront** – Setup 6 days × 4h ($720) after E-Commerce Playbook and two active blogs. Maintenance 1.5h/day + $12. Add listings, tune pages, and run ad bursts so profits scale from $6–$10/day to $130–$176/day once the omnichannel engine is humming at Quality 5; the new commerce ladder stacks payout multipliers and +1 progress to every quality action tier you unlock.
 - **SaaS Micro-App** – Setup 8 days × 4h ($960) after Automation Architecture, the Server Rack → Cloud Cluster → Edge Delivery ladder, and experience running a dropshipping store plus e-book line. Maintenance 2.2h/day + $24. Squash bugs, ship features, and host support sprints to grow subscriptions from $4–$8/day to $168–$220/day after unlocking the Ecosystem Powerhouse tier at Quality 5.
 
 ### Upgrades & Boosts
@@ -47,8 +47,11 @@ Each asset supports multiple instances, tracks setup progress, and rolls a daily
 - **Lighting Kit** – $220, unlocks Stock Photo Galleries after you buy the camera.
 - **Studio Expansion** – $540, requires the Lighting Kit and outfits your studio for rapid-fire shoots.
 - **Server Rack - Starter** – $650, unlocks infrastructure foundations for advanced projects.
+- **Fulfillment Automation Suite** – $780, requires two active dropshipping shops plus the E-Commerce Playbook; adds a payout multiplier and +1 progress to dropshipping research/listing/ad actions.
 - **Cloud Cluster** – $1,150, requires the rack and unlocks SaaS deployments.
+- **Global Supply Mesh** – $1,150, requires the automation suite, three active shops, and Photo Catalog Curation to accelerate dropshipping payouts and marketing pushes.
 - **Edge Delivery Network** – $1,450, requires the cluster, keeps your micro-app snappy worldwide, and unlocks the Quality 4 edge deployment pushes for SaaS builds.
+- **White-Label Alliance** – $1,500, requires the global mesh, four active shops, and both commerce/photo studies; boosts dropshipping payouts again while empowering stock photo promos.
 - **Automation Course** – $260 once you have an active blog; permanently boosts blog daily payouts by +50%.
 
 ### Persistence & Offline Behaviour

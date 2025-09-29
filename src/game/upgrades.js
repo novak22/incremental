@@ -1,6 +1,7 @@
 import { COFFEE_LIMIT } from '../core/constants.js';
 import { formatMoney } from '../core/helpers.js';
 import { getAssetState, getState, getUpgradeState } from '../core/state.js';
+import { getKnowledgeProgress } from './requirements.js';
 import { executeAction } from './actions.js';
 import { checkDayEnd } from './lifecycle.js';
 import { createUpgrade } from './content/schema.js';
@@ -182,6 +183,39 @@ const serverRack = createUpgrade({
   logType: 'upgrade'
 });
 
+const fulfillmentAutomation = createUpgrade({
+  id: 'fulfillmentAutomation',
+  name: 'Fulfillment Automation Suite',
+  tag: { label: 'Commerce', type: 'boost' },
+  description: 'Tie together your winning storefronts with automated pick, pack, and ship magic.',
+  cost: 780,
+  requires: [
+    {
+      type: 'asset',
+      id: 'dropshipping',
+      count: 2,
+      active: true
+    },
+    {
+      type: 'custom',
+      met: () => getKnowledgeProgress('ecomPlaybook').completed,
+      detail: 'Requires: <strong>Complete the E-Commerce Playbook</strong>'
+    }
+  ],
+  boosts: 'Dropshipping payouts + faster research/listing/ads progress',
+  skills: ['commerce', { id: 'research', weight: 0.6 }],
+  actionClassName: 'secondary',
+  actionLabel: 'Automate Fulfillment',
+  labels: {
+    purchased: 'Automation Active'
+  },
+  metrics: {
+    cost: { label: '📦 Fulfillment automation rollout', category: 'upgrade' }
+  },
+  logMessage: 'Robotic pickers, synced CRMs, and instant fulfillment dashboards now power your shops.',
+  logType: 'upgrade'
+});
+
 const serverCluster = createUpgrade({
   id: 'serverCluster',
   name: 'Cloud Cluster',
@@ -201,6 +235,42 @@ const serverCluster = createUpgrade({
     cost: { label: '☁️ Cloud cluster deployment', category: 'infrastructure' }
   },
   logMessage: 'Cloud cluster humming! SaaS deploy pipelines now run without midnight fire drills.',
+  logType: 'upgrade'
+});
+
+const globalSupplyMesh = createUpgrade({
+  id: 'globalSupplyMesh',
+  name: 'Global Supply Mesh',
+  tag: { label: 'Commerce', type: 'boost' },
+  description: 'Forge data-sharing deals with worldwide 3PL partners so inventory never sleeps.',
+  cost: 1150,
+  requires: [
+    'fulfillmentAutomation',
+    {
+      type: 'asset',
+      id: 'dropshipping',
+      count: 3,
+      active: true
+    },
+    {
+      type: 'custom',
+      met: () => getKnowledgeProgress('photoLibrary').completed,
+      detail: 'Requires: <strong>Complete the Photo Catalog Curation course</strong>'
+    }
+  ],
+  boosts: 'Dropshipping payouts surge & marketing tests finish faster',
+  skills: ['commerce', { id: 'promotion', weight: 0.5 }],
+  actionClassName: 'secondary',
+  actionLabel: 'Link Global Partners',
+  labels: {
+    purchased: 'Mesh Live',
+    missing: () => 'Requires Automation & Active Shops'
+  },
+  metrics: {
+    cost: { label: '🌍 Global supply mesh integration', category: 'upgrade' }
+  },
+  logMessage:
+    'You inked worldwide fulfillment agreements. Inventory syncs in real-time across every region.',
   logType: 'upgrade'
 });
 
@@ -227,6 +297,43 @@ const serverEdge = createUpgrade({
     cost: { label: '🌐 Edge delivery rollout', category: 'infrastructure' }
   },
   logMessage: 'Edge network activated! Your SaaS now feels instant from any continent.',
+  logType: 'upgrade'
+});
+
+const whiteLabelAlliance = createUpgrade({
+  id: 'whiteLabelAlliance',
+  name: 'White-Label Alliance',
+  tag: { label: 'Commerce', type: 'boost' },
+  description: 'Partner with boutique studios to bundle your galleries with each storefront launch.',
+  cost: 1500,
+  requires: [
+    'globalSupplyMesh',
+    {
+      type: 'asset',
+      id: 'dropshipping',
+      count: 4,
+      active: true
+    },
+    {
+      type: 'custom',
+      met: () =>
+        getKnowledgeProgress('ecomPlaybook').completed && getKnowledgeProgress('photoLibrary').completed,
+      detail: 'Requires: <strong>Complete both E-Commerce Playbook and Photo Catalog Curation</strong>'
+    }
+  ],
+  boosts: 'Dropshipping & stock photo income climb together with faster ad promos',
+  skills: ['commerce', { id: 'visual', weight: 0.4 }],
+  actionClassName: 'secondary',
+  actionLabel: 'Sign Alliance Charter',
+  labels: {
+    purchased: 'Alliance Forged',
+    missing: () => 'Requires Global Mesh & Active Shops'
+  },
+  metrics: {
+    cost: { label: '🤝 White-label alliance charter', category: 'upgrade' }
+  },
+  logMessage:
+    'Creative partners now preload your galleries into every new storefront bundle. Co-branded kits fly off the shelves.',
   logType: 'upgrade'
 });
 
@@ -307,8 +414,11 @@ export const UPGRADES = [
   cameraPro,
   studioExpansion,
   serverRack,
+  fulfillmentAutomation,
   serverCluster,
+  globalSupplyMesh,
   serverEdge,
+  whiteLabelAlliance,
   coffee,
   course
 ];

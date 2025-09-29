@@ -1,6 +1,50 @@
 import { formatMoney } from '../../../core/helpers.js';
 import { createAssetDefinition } from '../../content/schema.js';
 
+const COMMERCE_UPGRADE_CHAIN = [
+  {
+    id: 'fulfillmentAutomation',
+    label: 'Fulfillment automation boost',
+    multiplier: 1.25
+  },
+  {
+    id: 'globalSupplyMesh',
+    label: 'Global supply mesh boost',
+    multiplier: 1.3
+  },
+  {
+    id: 'whiteLabelAlliance',
+    label: 'White-label alliance boost',
+    multiplier: 1.35
+  }
+];
+
+function getCommerceTierBonus(context) {
+  if (!context?.upgrade) return 0;
+  return COMMERCE_UPGRADE_CHAIN.reduce((bonus, tier) => {
+    return context.upgrade(tier.id)?.purchased ? bonus + 1 : bonus;
+  }, 0);
+}
+
+function applyCommerceMultipliers(amount, context) {
+  if (!context?.upgrade) return amount;
+  let total = amount;
+  COMMERCE_UPGRADE_CHAIN.forEach(tier => {
+    if (context.upgrade(tier.id)?.purchased) {
+      const before = total;
+      total *= tier.multiplier;
+      if (typeof context.recordModifier === 'function') {
+        context.recordModifier(tier.label, total - before, {
+          id: tier.id,
+          type: 'upgrade',
+          percent: tier.multiplier - 1
+        });
+      }
+    }
+  });
+  return total;
+}
+
 const dropshippingDefinition = createAssetDefinition({
   id: 'dropshipping',
   name: 'Dropshipping Product Lab',
@@ -19,7 +63,8 @@ const dropshippingDefinition = createAssetDefinition({
   income: {
     base: 84,
     variance: 0.35,
-    logType: 'passive'
+    logType: 'passive',
+    modifier: (amount, context = {}) => applyCommerceMultipliers(amount, context)
   },
   requirements: {
     knowledge: ['ecomPlaybook'],
@@ -82,6 +127,7 @@ const dropshippingDefinition = createAssetDefinition({
         label: 'Research Product',
         time: 3,
         progressKey: 'research',
+        progressAmount: context => 1 + getCommerceTierBonus(context),
         skills: ['research'],
         log: ({ label }) => `${label} spotted a trending micro-niche. Suppliers start calling back!`
       },
@@ -91,6 +137,7 @@ const dropshippingDefinition = createAssetDefinition({
         time: 1.8,
         cost: 28,
         progressKey: 'listing',
+        progressAmount: context => 1 + getCommerceTierBonus(context),
         skills: ['promotion', { id: 'commerce', weight: 0.6 }],
         log: ({ label }) => `${label} revamped copy and photos. Conversion rates begin to pop.`
       },
@@ -100,6 +147,7 @@ const dropshippingDefinition = createAssetDefinition({
         time: 2.2,
         cost: 34,
         progressKey: 'ads',
+        progressAmount: context => 1 + getCommerceTierBonus(context),
         skills: ['promotion', { id: 'research', weight: 0.5 }],
         log: ({ label }) => `${label} tested lookalike audiences. Click-through rates jump!`
       }
