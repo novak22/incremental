@@ -1,7 +1,10 @@
 # Passive Asset Dashboard Refresh
 
 ## Summary
-The passive asset workspace now presents each asset as a management card that highlights ownership counts, yesterday's earnings, income potential, upkeep, and net return per upkeep hour at a glance. Cards surface quick actions to launch new builds and sell individual instances without digging through secondary panels. Category toggles also roll up every launched instance into a single management list so upkeep, payouts, supporting upgrades, and liquidation stay reachable even when the compact card view is enabled. The instance briefing modal now focuses on the selected build, showcasing its quality track progress, ROI, and relevant upgrade actions, while quick-purchase upgrade buttons and a scrollable layout keep next steps visible without crowding the screen. Active builds are grouped at the top of the slide-over with stat tiles for last payout, net per hour, upkeep, and inline upgrade shortcuts so players can tune performance instantly. The briefing now opens with a "Launch blueprint" checklist that calls out setup time, upfront costs, upkeep, and income ranges before you commit, and every launched instance lists upgrade quick actions beside the sell shortcut.
+- TL;DR: Asset cards surface launches, upkeep, and yesterday's payouts so the best next investment pops immediately.
+- Category toggles keep every launched instance reachable, even when the compact card layout is collapsed.
+- Inline rosters place sell and upgrade controls side by side so upkeep pivots stay snappy.
+- The briefing modal opens with a launch checklist and highlights upgrade priorities for the selected build.
 
 ## Goals
 - Give players immediate insight into how every passive build performed yesterday, what it costs to maintain, and whether upkeep hours are paying off.
@@ -17,17 +20,16 @@ The passive asset workspace now presents each asset as a management card that hi
 - Confident launches: the briefing modal reuses live detail renderers, ensuring setup costs, maintenance, and quality roadmaps stay accurate as modifiers shift.
 
 ## Implementation Notes
-- Asset cards keep the existing category structure but use a dedicated layout (`asset-card__*` classes) for stats, actions, and instance management.
-- Asset rows now offer a dedicated "Builds" toggle that expands the inline roster while the "Details" button focuses on the slide-over briefing.
-- The dashboard now includes an "Asset upgrade" card that calls out the next quality actions for struggling builds, prioritising low-yield instances that still owe progress toward their upcoming quality tier.
-- The dashboard now includes an "Asset upgrade" card that calls out the next quality actions for struggling builds, prioritising low-yield instances that still owe progress toward their upcoming quality tier. The list now scrolls to surface up to eight recommendations at once and each entry highlights the percentage remaining alongside the existing effort notes.
-- Instance rows now expose both the previous day's payout and inline sell buttons so liquidation is always one click away.
-- Each instance row can render up to two quick-purchase buttons for the next required equipment upgrades, deferring to existing upgrade action handlers for cost checks and logging. Quick actions now sit directly beside the sell button in the instance list so players can invest or liquidate without leaving the modal. Active builds in the slide-over now include a dedicated stat strip with payout, ROI, and upkeep details above the action row, plus inline shortcuts for pending equipment upgrades.
-- Category-level "View launched assets" toggles render aggregated tables populated by `assetCategoryView`, which now highlights the first couple of supporting upgrades directly under each instance's actions. Upgrade shortcut helpers live in `src/ui/assetUpgrades.js` so both the category roster and the slide-over reuse identical button logic.
-- The briefing modal now switches between the legacy definition view and an instance-specific overview that highlights status, upkeep, yesterday's payout, net hourly return, and quality progress/upgrade actions tailored to that build, with the quality upgrades section pinned above the stat summary and the content area scrollable for long descriptions. The top of the modal reuses schema-driven detail renderers to keep setup and upkeep numbers accurate even before the first launch.
-- ROI rows in the category roster use last income minus upkeep costs divided by upkeep hours to surface a quick dollars-per-hour snapshot for active builds.
-- The modal is populated via `populateAssetInfoModal` using current detail renderers so future balance changes automatically propagate.
-- Collapsed view hides the tagline, instances, and quality panel while keeping the stat summary visible for quick scanning.
+- **Cards:** Maintain category groupings with the dedicated `asset-card__*` layout, add the scrolling "Asset upgrade" recommendation card (up to eight entries with remaining percentage callouts), and preserve stat summaries when the compact view hides taglines, instances, and quality panels.
+- **Inline actions:** "Builds" toggles expand the aggregated roster rendered by `assetCategoryView`, each instance row shows yesterday's payout, ROI (last income minus upkeep divided by upkeep hours), inline sell buttons, and up to two quick-buy upgrade shortcuts powered by helpers in `src/ui/assetUpgrades.js`.
+- **Modal:** Active builds load through `populateAssetInfoModal`, presenting stat strips for payout, ROI, and upkeep, plus pinned quality upgrades. The briefing view swaps between legacy definitions and instance-specific overviews while keeping schema-driven setup data accurate and upgrade shortcuts aligned with inline action handlers.
+
+## Quick Reference
+| Mechanic | Confirmed? | Reminder |
+| --- | --- | --- |
+| Cards show launches, upkeep, and payout stats at a glance. | ☐ | Use `asset-card__*` layout with collapsible details. |
+| Inline rosters expose sell + upgrade controls together. | ☐ | Ensure `assetCategoryView` renders payouts, ROI, and quick-buy buttons. |
+| Blueprint modal opens with launch checklist and upgrade priorities. | ☐ | `populateAssetInfoModal` must highlight quality progress and shortcuts. |
 
 ## Open Questions
 - Should the briefing modal include projected payback periods based on current quality levels?
