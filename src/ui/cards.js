@@ -1448,10 +1448,15 @@ function renderStudyQueue(definitions) {
     empty.textContent = 'No study queued today.';
     queue.appendChild(empty);
   }
-  elements.studyQueueEta.textContent = `Total ETA: ${formatHours(totalHours)}`;
-  const state = getState();
-  const cap = state ? getTimeCap() : 0;
-  elements.studyQueueCap.textContent = `Daily cap: ${formatHours(cap)}`;
+  if (elements.studyQueueEta) {
+    elements.studyQueueEta.textContent = `Total ETA: ${formatHours(totalHours)}`;
+  }
+
+  if (elements.studyQueueCap) {
+    const state = getState();
+    const cap = state ? getTimeCap() : 0;
+    elements.studyQueueCap.textContent = `Daily cap: ${formatHours(cap)}`;
+  }
 }
 
 export function renderCardCollections({ hustles, education, assets, upgrades }) {
