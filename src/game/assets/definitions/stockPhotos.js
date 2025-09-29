@@ -22,14 +22,29 @@ const stockPhotosDefinition = createAssetDefinition({
     variance: 0.35,
     logType: 'passive',
     modifier: (amount, context = {}) => {
-      const expansion = getUpgradeState('studioExpansion').purchased ? 1.2 : 1;
-      const total = amount * expansion;
-      if (expansion > 1 && typeof context.recordModifier === 'function') {
-        context.recordModifier('Studio expansion boost', total - amount, {
-          id: 'studioExpansion',
-          type: 'upgrade',
-          percent: expansion - 1
-        });
+      let total = amount;
+      const expansionOwned = getUpgradeState('studioExpansion').purchased;
+      if (expansionOwned) {
+        const before = total;
+        total *= 1.2;
+        if (typeof context.recordModifier === 'function') {
+          context.recordModifier('Studio expansion boost', total - before, {
+            id: 'studioExpansion',
+            type: 'upgrade',
+            percent: 0.2
+          });
+        }
+      }
+      if (context.upgrade?.('whiteLabelAlliance')?.purchased) {
+        const before = total;
+        total *= 1.3;
+        if (typeof context.recordModifier === 'function') {
+          context.recordModifier('White-label alliance boost', total - before, {
+            id: 'whiteLabelAlliance',
+            type: 'upgrade',
+            percent: 0.3
+          });
+        }
       }
       return total;
     }
@@ -116,7 +131,13 @@ const stockPhotosDefinition = createAssetDefinition({
         time: 2,
         cost: 16,
         progressKey: 'marketing',
-        progressAmount: context => (context.upgrade('studioExpansion')?.purchased ? 2 : 1),
+        progressAmount: context => {
+          let amount = context.upgrade('studioExpansion')?.purchased ? 2 : 1;
+          if (context.upgrade('whiteLabelAlliance')?.purchased) {
+            amount += 1;
+          }
+          return amount;
+        },
         skills: ['promotion'],
         log: ({ label }) => `${label} ran a marketplace feature promo. Download counters spin faster!`
       }

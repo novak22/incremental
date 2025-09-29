@@ -8,6 +8,7 @@
 - Asset stewardship: detail panels, sell controls, and recommendations highlight ROI, upkeep costs, and upgrade shortcuts for each build.
 - Active build cards surface quality tiers, remaining steps to the next milestone, and yesterday’s payout breakdown so upgrades feel tangible.
 - Automation & infrastructure: broader instant gigs, smarter assistant load balancing, and new studio/server tiers expand long-term play.
+- Commerce ladder: fulfillment automation, global supply mesh, and white-label alliances stack payouts for thriving dropshipping empires.
 - Education clarity: finished courses now show 100% progress and list the XP-rich skills they elevate.
 - Upgrade hub redesign: roadmap stats, category chips, and a refreshed dock make reinvestment planning faster and more celebratory.
 - Hustle pacing: retired the eBay flip queue and delayed payouts so every gig pays out the moment you wrap it.
