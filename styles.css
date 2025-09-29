@@ -2264,7 +2264,6 @@ body {
   border-radius: var(--radius-md);
   padding: 10px 12px;
   backdrop-filter: blur(4px);
-  min-width: 220px;
   flex: 0 0 auto;
   scroll-snap-align: start;
 }
