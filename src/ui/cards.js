@@ -2,7 +2,7 @@ import elements from './elements.js';
 import { getAssetState, getState, getUpgradeState } from '../core/state.js';
 import { formatDays, formatHours, formatMoney } from '../core/helpers.js';
 import { describeHustleRequirements } from '../game/hustles.js';
-import { KNOWLEDGE_TRACKS, getKnowledgeProgress } from '../game/requirements.js';
+import { KNOWLEDGE_TRACKS, KNOWLEDGE_REWARDS, getKnowledgeProgress } from '../game/requirements.js';
 import { getTimeCap } from '../game/time.js';
 import {
   describeInstance,
@@ -26,6 +26,7 @@ import {
   getQualityTracks,
   performQualityAction
 } from '../game/assets/quality.js';
+import { getSkillDefinition, normalizeSkillList } from '../game/skills/data.js';
 
 const hustleUi = new Map();
 const assetUi = new Map();
@@ -78,7 +79,11 @@ function createDefinitionSummary(title, rows = []) {
     }
     if (row.value) {
       const value = document.createElement('span');
-      value.textContent = row.value;
+      if (row.value instanceof Node) {
+        value.appendChild(row.value);
+      } else {
+        value.textContent = row.value;
+      }
       value.className = 'definition-list__value';
       item.appendChild(value);
     }
@@ -86,6 +91,31 @@ function createDefinitionSummary(title, rows = []) {
   });
   section.appendChild(list);
   return section;
+}
+
+function buildSkillRewards(trackId) {
+  const reward = KNOWLEDGE_REWARDS[trackId];
+  if (!reward) {
+    return { xp: 0, skills: [] };
+  }
+  const xp = Number.isFinite(Number(reward.baseXp)) ? Number(reward.baseXp) : 0;
+  const normalized = normalizeSkillList(reward.skills);
+  const skills = normalized.map(entry => {
+    const definition = getSkillDefinition(entry.id);
+    return {
+      id: entry.id,
+      name: definition?.name || entry.id,
+      weight: Number(entry.weight) || 0
+    };
+  });
+  return { xp, skills };
+}
+
+function describeSkillWeight(weight = 0) {
+  if (weight >= 0.75) return 'Signature focus';
+  if (weight >= 0.5) return 'Core boost';
+  if (weight >= 0.3) return 'Supporting practice';
+  return 'Quick primer';
 }
 
 function createAssetDetailHighlights(definition) {
@@ -1175,12 +1205,15 @@ function resolveTrack(definition) {
       days: 1,
       hoursPerDay: 1,
       tuition: 0,
-      action: null
+      action: null,
+      skillXp: 0,
+      skills: []
     };
   }
 
   const canonicalId = definition.studyTrackId || definition.id;
   const canonical = KNOWLEDGE_TRACKS[canonicalId];
+  const skillRewards = buildSkillRewards(canonical?.id || canonicalId);
 
   const summary = definition.description || canonical?.description || '';
   const description = canonical?.description || definition.description || '';
@@ -1198,7 +1231,9 @@ function resolveTrack(definition) {
     days,
     hoursPerDay,
     tuition,
-    action: definition.action
+    action: definition.action,
+    skillXp: skillRewards.xp,
+    skills: skillRewards.skills
   };
 }
 
@@ -1207,11 +1242,13 @@ function formatStudyCountdown(trackInfo, progress) {
     return 'Diploma earned';
   }
 
+  const totalDays = Math.max(0, Number(progress.totalDays ?? trackInfo.days ?? 0));
   if (!progress.enrolled) {
-    return `${formatDays(trackInfo.days)}`;
+    return `${formatDays(totalDays || trackInfo.days)}`;
   }
 
-  const remainingDays = Math.max(0, trackInfo.days - progress.daysCompleted);
+  const completedDays = Math.max(0, Math.min(totalDays, Number(progress.daysCompleted) || 0));
+  const remainingDays = Math.max(0, totalDays - completedDays);
   if (remainingDays === 0) {
     return 'Graduation tomorrow';
   }
@@ -1268,8 +1305,15 @@ function applyStudyTrackState(track, trackInfo, progress) {
     note.textContent = describeStudyMomentum(trackInfo, progress);
   }
 
-  const remainingDays = Math.max(0, trackInfo.days - progress.daysCompleted);
-  const percent = Math.min(100, Math.round((progress.daysCompleted / Math.max(1, trackInfo.days)) * 100));
+  const totalDays = Math.max(0, Number(progress.totalDays ?? trackInfo.days ?? 0));
+  const completedDays = progress.completed
+    ? totalDays
+    : Math.max(0, Math.min(totalDays, Number(progress.daysCompleted) || 0));
+  const remainingDays = Math.max(0, totalDays - completedDays);
+  const percent = Math.min(
+    100,
+    Math.max(0, Math.round((totalDays === 0 ? (progress.completed ? 1 : 0) : completedDays / totalDays) * 100))
+  );
   const fill = track.querySelector('.study-track__progress span');
   if (fill) {
     fill.style.width = `${percent}%`;
@@ -1283,8 +1327,8 @@ function applyStudyTrackState(track, trackInfo, progress) {
 
   const remaining = track.querySelector('.study-track__remaining');
   if (remaining) {
-    const daysComplete = progress.completed ? trackInfo.days : progress.daysCompleted;
-    remaining.textContent = `${daysComplete}/${trackInfo.days} days complete`;
+    const totalLabel = totalDays || trackInfo.days;
+    remaining.textContent = `${completedDays}/${totalLabel} days complete`;
   }
 
   const countdownValue = track.querySelector('.study-track__remaining-days');
@@ -1348,6 +1392,39 @@ function renderStudyTrack(definition) {
     meta.appendChild(dd);
   });
   track.appendChild(meta);
+
+  if (trackInfo.skills.length) {
+    const skills = document.createElement('section');
+    skills.className = 'study-track__skills';
+
+    const heading = document.createElement('h4');
+    heading.className = 'study-track__skills-heading';
+    heading.textContent = 'Skill rewards';
+    skills.appendChild(heading);
+
+    if (trackInfo.skillXp > 0) {
+      const xpNote = document.createElement('p');
+      xpNote.className = 'study-track__skills-note';
+      xpNote.textContent = `Graduates collect +${trackInfo.skillXp} XP across these disciplines.`;
+      skills.appendChild(xpNote);
+    }
+
+    const list = document.createElement('ul');
+    list.className = 'study-track__skills-list';
+    trackInfo.skills.forEach(entry => {
+      const item = document.createElement('li');
+      item.className = 'study-track__skills-item';
+      const name = document.createElement('strong');
+      name.textContent = entry.name;
+      item.appendChild(name);
+      const note = document.createElement('span');
+      note.textContent = describeSkillWeight(entry.weight);
+      item.appendChild(note);
+      list.appendChild(item);
+    });
+    skills.appendChild(list);
+    track.appendChild(skills);
+  }
 
   const progressWrap = document.createElement('div');
   progressWrap.className = 'study-track__progress-wrap';

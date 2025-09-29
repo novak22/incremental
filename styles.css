@@ -1105,6 +1105,54 @@ body {
   font-weight: 600;
 }
 
+.study-track__skills {
+  margin: 16px 0;
+  padding: 16px;
+  border-radius: var(--radius-md);
+  background: rgba(124, 92, 255, 0.08);
+  display: grid;
+  gap: 10px;
+}
+
+.study-track__skills-heading {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.study-track__skills-note {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-subtle);
+}
+
+.study-track__skills-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.study-track__skills-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-subtle);
+}
+
+.study-track__skills-item strong {
+  font-size: 14px;
+  color: var(--text);
+}
+
+.study-track__skills-item span {
+  font-size: 13px;
+  color: var(--text-subtle);
+}
+
 .study-track__progress-wrap {
   display: grid;
   gap: 8px;

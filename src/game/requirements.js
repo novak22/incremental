@@ -133,7 +133,7 @@ export const KNOWLEDGE_TRACKS = {
   }
 };
 
-const KNOWLEDGE_REWARDS = {
+export const KNOWLEDGE_REWARDS = {
   outlineMastery: { baseXp: 120, skills: ['writing'] },
   photoLibrary: {
     baseXp: 120,
@@ -154,6 +154,20 @@ const KNOWLEDGE_REWARDS = {
     skills: [
       { id: 'software', weight: 0.6 },
       { id: 'infrastructure', weight: 0.4 }
+    ]
+  },
+  brandVoiceLab: {
+    baseXp: 100,
+    skills: [
+      { id: 'audience', weight: 0.6 },
+      { id: 'promotion', weight: 0.4 }
+    ]
+  },
+  guerillaBuzzWorkshop: {
+    baseXp: 110,
+    skills: [
+      { id: 'promotion', weight: 0.6 },
+      { id: 'audience', weight: 0.4 }
     ]
   }
 };
