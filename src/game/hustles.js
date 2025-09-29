@@ -23,6 +23,16 @@ const BUNDLE_PUSH_REQUIREMENTS = [
   { assetId: 'blog', count: 2 },
   { assetId: 'ebook', count: 1 }
 ];
+const EVENT_PHOTO_REQUIREMENTS = [{ assetId: 'stockPhotos', count: 1 }];
+const WORKSHOP_REQUIREMENTS = [
+  { assetId: 'blog', count: 1 },
+  { assetId: 'ebook', count: 1 }
+];
+const EDIT_RUSH_REQUIREMENTS = [{ assetId: 'vlog', count: 1 }];
+const PACK_PARTY_REQUIREMENTS = [{ assetId: 'dropshipping', count: 1 }];
+const BUG_SQUASH_REQUIREMENTS = [{ assetId: 'saas', count: 1 }];
+const NARRATION_REQUIREMENTS = [{ assetId: 'ebook', count: 1 }];
+const STREET_PROMO_REQUIREMENTS = [{ assetId: 'blog', count: 2 }];
 
 function extractMetricKey(metric) {
   if (!metric) return null;
@@ -161,6 +171,161 @@ const bundlePush = createInstantHustle({
   actionLabel: 'Launch Bundle'
 });
 
+const surveySprint = createInstantHustle({
+  id: 'surveySprint',
+  name: 'Micro Survey Dash',
+  tag: { label: 'Instant', type: 'instant' },
+  description: 'Knock out a 15-minute feedback survey while your coffee is still warm.',
+  time: 0.25,
+  payout: {
+    amount: 1,
+    logType: 'hustle',
+    message: () => 'You breezed through a micro survey for $1. It all counts toward the dream!'
+  },
+  metrics: {
+    time: { label: '📝 Survey dash time', category: 'hustle' },
+    payout: { label: '🪙 Survey dash payout', category: 'hustle' }
+  },
+  actionLabel: 'Start Survey'
+});
+
+const eventPhotoGig = createInstantHustle({
+  id: 'eventPhotoGig',
+  name: 'Event Photo Gig',
+  tag: { label: 'Instant', type: 'instant' },
+  description: 'Grab your gallery gear and capture candid magic at a pop-up showcase.',
+  time: 3.5,
+  requirements: EVENT_PHOTO_REQUIREMENTS,
+  payout: {
+    amount: 72,
+    logType: 'hustle',
+    message: () => 'Your lenses caught the event buzz! $72 in photo packages just dropped.'
+  },
+  metrics: {
+    time: { label: '📸 Event shoot time', category: 'hustle' },
+    payout: { label: '📸 Event shoot payout', category: 'hustle' }
+  },
+  actionLabel: 'Pack the Camera Bag'
+});
+
+const popUpWorkshop = createInstantHustle({
+  id: 'popUpWorkshop',
+  name: 'Pop-Up Workshop',
+  tag: { label: 'Instant', type: 'instant' },
+  description: 'Host a cozy crash course that blends your blog insights with e-book handouts.',
+  time: 2.5,
+  requirements: WORKSHOP_REQUIREMENTS,
+  payout: {
+    amount: 38,
+    logType: 'hustle',
+    message: () => 'Your pop-up workshop wrapped with $38 in sign-ups and smiling grads.'
+  },
+  metrics: {
+    time: { label: '🎓 Workshop facilitation', category: 'hustle' },
+    payout: { label: '🎓 Workshop payout', category: 'hustle' }
+  },
+  actionLabel: 'Set the Agenda'
+});
+
+const vlogEditRush = createInstantHustle({
+  id: 'vlogEditRush',
+  name: 'Vlog Edit Rush',
+  tag: { label: 'Instant', type: 'instant' },
+  description: 'Slice, color, and caption a backlog vlog episode for a partner channel.',
+  time: 1.5,
+  requirements: EDIT_RUSH_REQUIREMENTS,
+  payout: {
+    amount: 24,
+    logType: 'hustle',
+    message: () => 'You polished a collab vlog for $24. Their subscribers are already bingeing!'
+  },
+  metrics: {
+    time: { label: '🎬 Vlog edit time', category: 'hustle' },
+    payout: { label: '🎬 Vlog edit payout', category: 'hustle' }
+  },
+  actionLabel: 'Launch Edit Sprint'
+});
+
+const dropshipPackParty = createInstantHustle({
+  id: 'dropshipPackParty',
+  name: 'Dropship Pack Party',
+  tag: { label: 'Instant', type: 'instant' },
+  description: 'Bundle hot orders with branded tissue paper and a confetti of thank-you notes.',
+  time: 2,
+  cost: 8,
+  requirements: PACK_PARTY_REQUIREMENTS,
+  payout: {
+    amount: 28,
+    logType: 'hustle',
+    message: () => 'Packing party complete! $28 cleared after shipping labels and sparkle tape.'
+  },
+  metrics: {
+    time: { label: '📦 Packing party time', category: 'hustle' },
+    cost: { label: '📦 Packing party supplies', category: 'investment' },
+    payout: { label: '📦 Packing party payout', category: 'hustle' }
+  },
+  actionLabel: 'Queue Shipments'
+});
+
+const saasBugSquash = createInstantHustle({
+  id: 'saasBugSquash',
+  name: 'SaaS Bug Squash',
+  tag: { label: 'Instant', type: 'instant' },
+  description: 'Dig through error logs and deploy a patch before support tickets pile up.',
+  time: 1,
+  requirements: BUG_SQUASH_REQUIREMENTS,
+  payout: {
+    amount: 30,
+    logType: 'hustle',
+    message: () => 'Customers cheered your hotfix! $30 in retention credits landed instantly.'
+  },
+  metrics: {
+    time: { label: '🧰 Bug fix time', category: 'hustle' },
+    payout: { label: '🧰 Bug fix payout', category: 'hustle' }
+  },
+  actionLabel: 'Patch the Glitch'
+});
+
+const audiobookNarration = createInstantHustle({
+  id: 'audiobookNarration',
+  name: 'Audiobook Narration',
+  tag: { label: 'Instant', type: 'instant' },
+  description: 'Record a silky-smooth sample chapter to hype your flagship e-book series.',
+  time: 2.75,
+  requirements: NARRATION_REQUIREMENTS,
+  payout: {
+    amount: 44,
+    logType: 'hustle',
+    message: () => 'Your narration melted ears and earned $44 in audio bundle preorders.'
+  },
+  metrics: {
+    time: { label: '🎙️ Narration booth time', category: 'hustle' },
+    payout: { label: '🎙️ Narration payout', category: 'hustle' }
+  },
+  actionLabel: 'Warm Up Vocals'
+});
+
+const streetPromoSprint = createInstantHustle({
+  id: 'streetPromoSprint',
+  name: 'Street Team Promo',
+  tag: { label: 'Instant', type: 'instant' },
+  description: 'Hand out QR stickers at a pop-up market to funnel readers toward your latest drops.',
+  time: 0.75,
+  cost: 5,
+  requirements: STREET_PROMO_REQUIREMENTS,
+  payout: {
+    amount: 18,
+    logType: 'hustle',
+    message: () => 'Your sticker swarm paid off! $18 in rush sales chimed in on the go.'
+  },
+  metrics: {
+    time: { label: '🚀 Street promo time', category: 'hustle' },
+    cost: { label: '🚀 Street promo stickers', category: 'investment' },
+    payout: { label: '🚀 Street promo payout', category: 'hustle' }
+  },
+  actionLabel: 'Deploy Street Team'
+});
+
 const flips = createInstantHustle({
   id: 'flips',
   name: 'eBay Flips',
@@ -203,7 +368,21 @@ flips.update = (_state, ui) => {
 
 flips.process = (now, offline) => processFlipPayouts(now, offline);
 
-export const HUSTLES = [freelanceWriting, audienceCall, bundlePush, flips, ...createKnowledgeHustles()];
+export const HUSTLES = [
+  freelanceWriting,
+  audienceCall,
+  bundlePush,
+  surveySprint,
+  eventPhotoGig,
+  popUpWorkshop,
+  vlogEditRush,
+  dropshipPackParty,
+  saasBugSquash,
+  audiobookNarration,
+  streetPromoSprint,
+  flips,
+  ...createKnowledgeHustles()
+];
 
 export function scheduleFlip() {
   const flipState = getHustleState('flips');
