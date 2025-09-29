@@ -15,6 +15,6 @@
 ## Tuning Parameters
 - **Metric Categories** – Time: `setup`, `maintenance`, `hustle`, `study`, `general`. Earnings: `passive`, `offline`, `hustle`, `delayed`, `sale`. Spending: `maintenance`, `payroll`, `setup`, `investment`, `upgrade`, `consumable`.
 - **UI Copy** – Captions summarise the dominant categories (setup vs. upkeep, passive vs. active, upkeep vs. investments). Adjust strings in `src/ui/dashboard.js` if new categories should surface.
-- **Dashboard Layout** – The Daily Stats card lives beside the action queue in `index.html` and is styled in `styles.css`. Each section displays up to five highlighted entries; increase the limits in `renderDailyList` if future categories need more room.
+- **Dashboard Layout** – The Daily Stats card lives beside the action queue in `index.html` and is styled in `styles.css`. Each section displays up to three highlighted entries; increase the limits in `renderDailyList` if future categories need more room.
 - **Reset Timing** – `resetDailyMetrics` is triggered inside `endDay` after the final summary update and before new-day allocations. Because asset income now credits during `allocateAssetMaintenance`, the payouts will register against the new day once maintenance is booked. If the cadence of automatic maintenance changes, revisit that timing to ensure fresh days start clean and passive income still posts before other actions.
 - **Formatting Helpers** – Breakdown rows format hours via `formatHours` and cash via `formatMoney`. Update these helpers if you tweak rounding or currency presentation.

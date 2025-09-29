@@ -2,6 +2,14 @@ import elements from './elements.js';
 import { formatHours, formatMoney } from '../core/helpers.js';
 import { getAssetState, getState } from '../core/state.js';
 import { registry } from '../game/registry.js';
+import {
+  canPerformQualityAction,
+  getNextQualityLevel,
+  getQualityActions,
+  getQualityTracks,
+  performQualityAction
+} from '../game/assets/quality.js';
+import { instanceLabel } from '../game/assets/helpers.js';
 import { KNOWLEDGE_TRACKS, getKnowledgeProgress } from '../game/requirements.js';
 import { getTimeCap } from '../game/time.js';
 
@@ -29,7 +37,7 @@ function createDailyListItem(entry) {
   return li;
 }
 
-function renderDailyList(container, entries, emptyMessage, limit = 6) {
+function renderDailyList(container, entries, emptyMessage, limit = 3) {
   if (!container) return;
   container.innerHTML = '';
   const list = Array.isArray(entries) ? entries.filter(Boolean) : [];
@@ -95,6 +103,104 @@ function buildQuickActions(state) {
 
   items.sort((a, b) => b.roi - a.roi);
   return items.slice(0, 4);
+}
+
+const MAX_UPGRADE_RECOMMENDATIONS = 3;
+
+function buildAssetUpgradeRecommendations(state) {
+  if (!state) return [];
+
+  const suggestions = [];
+
+  for (const asset of registry.assets) {
+    const qualityActions = getQualityActions(asset);
+    if (!qualityActions.length) continue;
+
+    const assetState = getAssetState(asset.id, state);
+    const instances = Array.isArray(assetState?.instances) ? assetState.instances : [];
+    if (!instances.length) continue;
+
+    const tracks = getQualityTracks(asset);
+
+    instances.forEach(instance => {
+      if (instance?.status !== 'active') return;
+
+      const quality = instance.quality || {};
+      const level = Math.max(0, Number(quality.level) || 0);
+      const nextLevel = getNextQualityLevel(asset, level);
+      if (!nextLevel?.requirements) return;
+
+      const progress = quality.progress || {};
+      const requirements = Object.entries(nextLevel.requirements);
+      if (!requirements.length) return;
+
+      const assetIndex = assetState.instances.indexOf(instance);
+      const label = instanceLabel(asset, assetIndex >= 0 ? assetIndex : 0);
+      const performance = Math.max(0, Number(instance.lastIncome) || 0);
+
+      requirements.forEach(([key, targetValue]) => {
+        const target = Math.max(0, Number(targetValue) || 0);
+        if (target <= 0) return;
+        const current = Math.max(0, Number(progress?.[key]) || 0);
+        const remaining = Math.max(0, target - current);
+        if (remaining <= 0) return;
+
+        const action = qualityActions.find(entry => entry.progressKey === key);
+        if (!action) return;
+        if (!canPerformQualityAction(asset, instance, action, state)) return;
+
+        const completion = target > 0 ? Math.min(1, current / target) : 1;
+        const track = tracks?.[key] || {};
+        const requirementLabel = track.shortLabel || track.label || key;
+        const timeCost = Math.max(0, Number(action.time) || 0);
+        const moneyCost = Math.max(0, Number(action.cost) || 0);
+        const effortParts = [];
+        if (timeCost > 0) {
+          effortParts.push(`${formatHours(timeCost)} focus`);
+        }
+        if (moneyCost > 0) {
+          effortParts.push(`$${formatMoney(moneyCost)}`);
+        }
+        const progressNote = `${Math.min(current, target)}/${target} logged`;
+        const meta = effortParts.length ? `${progressNote} • ${effortParts.join(' • ')}` : progressNote;
+        const actionLabel = typeof action.label === 'function'
+          ? action.label({ definition: asset, instance, state })
+          : action.label;
+        const buttonLabel = actionLabel || 'Boost Quality';
+
+        suggestions.push({
+          id: `asset-upgrade:${asset.id}:${instance.id}:${action.id}:${key}`,
+          title: `${label} · ${buttonLabel}`,
+          subtitle: `${remaining} ${requirementLabel} to go for Quality ${nextLevel.level}.`,
+          meta,
+          buttonLabel,
+          onClick: () => performQualityAction(asset.id, instance.id, action.id),
+          performance,
+          completion,
+          remaining,
+          level
+        });
+      });
+    });
+  }
+
+  suggestions.sort((a, b) => {
+    if (a.performance !== b.performance) {
+      return a.performance - b.performance;
+    }
+    if (a.level !== b.level) {
+      return a.level - b.level;
+    }
+    if (a.completion !== b.completion) {
+      return a.completion - b.completion;
+    }
+    if (a.remaining !== b.remaining) {
+      return b.remaining - a.remaining;
+    }
+    return a.title.localeCompare(b.title);
+  });
+
+  return suggestions.slice(0, MAX_UPGRADE_RECOMMENDATIONS);
 }
 
 function buildNotifications(state) {
@@ -190,6 +296,45 @@ function renderQuickActions(state) {
     button.type = 'button';
     button.className = 'primary';
     button.textContent = action.primaryLabel || 'Queue';
+    button.addEventListener('click', () => action.onClick?.());
+    item.append(info, button);
+    container.appendChild(item);
+  });
+}
+
+function renderAssetUpgradeActions(state) {
+  const container = elements.assetUpgradeActions;
+  if (!container) return;
+  container.innerHTML = '';
+
+  const suggestions = buildAssetUpgradeRecommendations(state);
+  if (!suggestions.length) {
+    const empty = document.createElement('li');
+    empty.textContent = 'Every asset is humming along. Check back after today’s upkeep.';
+    container.appendChild(empty);
+    return;
+  }
+
+  suggestions.forEach(action => {
+    const item = document.createElement('li');
+    const info = document.createElement('div');
+    info.className = 'quick-actions__info';
+    const title = document.createElement('span');
+    title.textContent = action.title;
+    const subtitle = document.createElement('span');
+    subtitle.textContent = action.subtitle;
+    subtitle.className = 'quick-actions__subtitle';
+    info.append(title, subtitle);
+    if (action.meta) {
+      const meta = document.createElement('span');
+      meta.textContent = action.meta;
+      meta.className = 'upgrade-actions__meta';
+      info.append(meta);
+    }
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'secondary';
+    button.textContent = action.buttonLabel || 'Boost';
     button.addEventListener('click', () => action.onClick?.());
     item.append(info, button);
     container.appendChild(item);
@@ -337,8 +482,8 @@ function renderDailyStats(summary) {
     ? `$${formatMoney(totalEarnings)} earned • $${formatMoney(activeEarnings)} active • $${formatMoney(passiveEarnings)} passive`
     : 'Payouts will appear once you start closing deals.';
   setText(earningsSummary, earningsSummaryText);
-  renderDailyList(earningsActive, summary.earningsBreakdown, 'Active gigs will report here.', 5);
-  renderDailyList(earningsPassive, summary.passiveBreakdown, 'Passive and offline streams update after upkeep.', 5);
+  renderDailyList(earningsActive, summary.earningsBreakdown, 'Active gigs will report here.', 3);
+  renderDailyList(earningsPassive, summary.passiveBreakdown, 'Passive and offline streams update after upkeep.', 3);
 
   const totalSpend = Math.max(0, Number(summary.totalSpend) || 0);
   const upkeepSpend = Math.max(0, Number(summary.upkeepSpend) || 0);
@@ -347,7 +492,7 @@ function renderDailyStats(summary) {
     ? `$${formatMoney(totalSpend)} spent • $${formatMoney(upkeepSpend)} upkeep • $${formatMoney(investmentSpend)} investments`
     : 'Outflows land here when upkeep and investments fire.';
   setText(spendSummary, spendSummaryText);
-  renderDailyList(spendList, summary.spendBreakdown, 'No cash out yet. Fund upkeep or buy an upgrade.', 6);
+  renderDailyList(spendList, summary.spendBreakdown, 'No cash out yet. Fund upkeep or buy an upgrade.', 3);
 
   const knowledgeInProgress = Math.max(0, Number(summary.knowledgeInProgress) || 0);
   const knowledgePending = Math.max(0, Number(summary.knowledgePendingToday) || 0);
@@ -355,7 +500,7 @@ function renderDailyStats(summary) {
     ? `${knowledgeInProgress} track${knowledgeInProgress === 1 ? '' : 's'} in flight • ${knowledgePending > 0 ? `${knowledgePending} session${knowledgePending === 1 ? '' : 's'} waiting today` : 'All sessions logged today'}`
     : 'Enroll in a track to kickstart your learning streak.';
   setText(studySummary, studySummaryText);
-  renderDailyList(studyList, summary.studyBreakdown, 'Your courses will list here once enrolled.', 5);
+  renderDailyList(studyList, summary.studyBreakdown, 'Your courses will list here once enrolled.', 3);
 }
 
 export function renderDashboard(summary) {
@@ -457,6 +602,7 @@ export function renderDashboard(summary) {
 
   renderQueue(summary);
   renderQuickActions(state);
+  renderAssetUpgradeActions(state);
   renderNotifications(state);
   renderEventPreview(state);
   renderDailyStats(summary);

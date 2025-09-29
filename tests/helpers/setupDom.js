@@ -68,6 +68,7 @@ export function ensureTestDom() {
                 <button id="queue-cancel"></button>
               </article>
               <article><ul id="quick-actions"></ul></article>
+              <article><ul id="asset-upgrade-actions"></ul></article>
               <article><ul id="notification-list"></ul></article>
               <article>
                 <div id="event-log-preview"></div>
