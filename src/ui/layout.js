@@ -221,7 +221,7 @@ function applyUpgradeFilters() {
   cards.forEach(card => {
     const matchesSearch = !query || card.dataset.search?.includes(query);
     const matchesAffordable = !affordableOnly || card.dataset.affordable === 'true';
-    const matchesAvailability = !availableOnly || card.dataset.available === 'true';
+    const matchesAvailability = !availableOnly || card.dataset.ready === 'true';
     card.hidden = !(matchesSearch && matchesAffordable && matchesAvailability);
   });
 
