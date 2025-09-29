@@ -1,4 +1,4 @@
-import { formatDays, formatHours, formatList, formatMoney } from '../core/helpers.js';
+import { formatDays, formatHours, formatList, formatMoney, toNumber } from '../core/helpers.js';
 import { addLog } from '../core/log.js';
 import {
   countActiveAssetInstances,
@@ -320,6 +320,19 @@ export function formatAssetRequirementLabel(assetId, state = getState()) {
   if (!missing.length) return 'Ready to Launch';
   const names = missing.map(req => describeRequirement(req, state).label);
   return `Requires ${names.join(' & ')}`;
+}
+
+export function summarizeAssetRequirements(requirements = [], state = getState()) {
+  if (!requirements?.length) return 'None';
+  return requirements
+    .map(req => {
+      const definition = getAssetDefinition(req.assetId);
+      const label = definition?.singular || definition?.name || req.assetId;
+      const need = toNumber(req.count, 1);
+      const have = countActiveAssetInstances(req.assetId, state);
+      return `${label}: ${have}/${need} active`;
+    })
+    .join(' • ');
 }
 
 export function renderAssetRequirementDetail(assetId, state = getState()) {
