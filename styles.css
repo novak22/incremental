@@ -225,17 +225,15 @@ body {
 
 .player-overview {
   padding-inline: 8px;
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
   -webkit-overflow-scrolling: touch;
 }
 
 .player-overview__grid {
-  display: flex;
+  display: grid;
   gap: 20px;
   padding-block: 4px 12px;
-  min-width: max-content;
-  scroll-snap-type: x proximity;
 }
 
 .player-card {
@@ -247,8 +245,7 @@ body {
   flex-direction: column;
   gap: 16px;
   min-height: 0;
-  flex: 0 0 clamp(280px, 80vw, 360px);
-  scroll-snap-align: start;
+  width: 100%;
 }
 
 .player-card header h3 {
