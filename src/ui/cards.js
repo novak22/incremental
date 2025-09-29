@@ -14,6 +14,11 @@ import {
   sellAssetInstance
 } from '../game/assets/helpers.js';
 import {
+  assignInstanceToNiche,
+  getAssignableNicheSummaries,
+  getInstanceNicheInfo
+} from '../game/assets/niches.js';
+import {
   getPendingEquipmentUpgrades,
   getUpgradeButtonLabel,
   isUpgradeDisabled
@@ -487,6 +492,82 @@ function createInstanceQuickActions(definition, instance, state) {
   return container;
 }
 
+function createInstanceNicheSelector(definition, instance) {
+  if (!definition || !instance) return null;
+  const summaries = getAssignableNicheSummaries(definition);
+  if (!summaries.length) return null;
+
+  const container = document.createElement('div');
+  container.className = 'asset-detail__niche-selector';
+
+  const label = document.createElement('label');
+  label.className = 'asset-detail__niche-label';
+  const selectId = `asset-niche-${instance.id}`;
+  label.setAttribute('for', selectId);
+  label.textContent = 'Target niche';
+  container.appendChild(label);
+
+  const select = document.createElement('select');
+  select.className = 'asset-detail__niche-dropdown';
+  select.id = selectId;
+  select.name = selectId;
+
+  const placeholder = document.createElement('option');
+  placeholder.value = '';
+  placeholder.textContent = 'Unassigned';
+  select.appendChild(placeholder);
+
+  summaries.forEach(entry => {
+    if (!entry?.definition) return;
+    const option = document.createElement('option');
+    option.value = entry.definition.id;
+    const labelParts = [entry.definition.name];
+    if (entry.popularity?.label) {
+      labelParts.push(entry.popularity.label);
+    }
+    option.textContent = labelParts.join(' • ');
+    select.appendChild(option);
+  });
+
+  const currentValue = typeof instance.nicheId === 'string' ? instance.nicheId : '';
+  select.value = currentValue && Array.from(select.options).some(opt => opt.value === currentValue)
+    ? currentValue
+    : '';
+
+  const hint = document.createElement('p');
+  hint.className = 'asset-detail__niche-note';
+
+  function updateHint(selectedId) {
+    const match = summaries.find(entry => entry?.definition?.id === selectedId) || null;
+    if (!match || !match.popularity) {
+      hint.textContent = 'Choose a niche to tap into daily popularity rerolls.';
+      return;
+    }
+    const multiplier = Number(match.popularity.multiplier);
+    let percentLabel = '±0%';
+    if (Number.isFinite(multiplier)) {
+      const percent = Math.round((multiplier - 1) * 100);
+      const sign = percent > 0 ? '+' : '';
+      percentLabel = `${sign}${percent}%`;
+    }
+    const summary = match.popularity.summary || 'Demand shifts update daily.';
+    hint.textContent = `${summary} • Payout impact ${percentLabel}`;
+  }
+
+  updateHint(select.value || '');
+
+  select.addEventListener('change', event => {
+    const nextValue = event.target.value;
+    assignInstanceToNiche(definition.id, instance.id, nextValue || null);
+    updateHint(nextValue || '');
+  });
+
+  container.appendChild(select);
+  container.appendChild(hint);
+
+  return container;
+}
+
 function createInstanceListSection(definition, state, instancesOverride) {
   const instances = Array.isArray(instancesOverride)
     ? instancesOverride
@@ -609,7 +690,14 @@ function createInstanceCard(definition, instance, index, state) {
 
   const actionColumns = document.createElement('div');
   actionColumns.className = 'asset-detail__action-columns';
-  actionColumns.appendChild(createInstanceQuickActions(definition, instance, state));
+  const quickActions = createInstanceQuickActions(definition, instance, state);
+  if (quickActions) {
+    actionColumns.appendChild(quickActions);
+  }
+  const nicheSelector = createInstanceNicheSelector(definition, instance);
+  if (nicheSelector) {
+    actionColumns.appendChild(nicheSelector);
+  }
   const equipmentShortcuts = instance.status === 'active'
     ? createEquipmentShortcuts(definition, state)
     : null;
@@ -637,6 +725,10 @@ function createInstanceCard(definition, instance, index, state) {
 
 function buildInstanceOverview(definition, instance) {
   const sections = [];
+  const niche = buildNicheInsight(definition, instance);
+  if (niche) {
+    sections.push(niche);
+  }
   const quality = buildQualityInsight(definition, instance);
   if (quality) {
     sections.push(quality);
@@ -658,6 +750,44 @@ function buildInstanceOverview(definition, instance) {
   wrapper.className = 'asset-detail__instance-overview';
   sections.forEach(section => wrapper.appendChild(section));
   return wrapper;
+}
+
+function buildNicheInsight(definition, instance) {
+  const container = document.createElement('div');
+  container.className = 'asset-detail__insight asset-detail__insight--panel asset-detail__insight--niche';
+
+  const title = document.createElement('h4');
+  title.className = 'asset-detail__insight-title';
+  title.textContent = 'Audience niche';
+  container.appendChild(title);
+
+  const info = getInstanceNicheInfo(instance);
+  if (!info) {
+    const summary = document.createElement('p');
+    summary.className = 'asset-detail__insight-body';
+    summary.textContent = 'Unassigned — pick a niche below to sync with daily demand.';
+    container.appendChild(summary);
+    return container;
+  }
+
+  const summary = document.createElement('p');
+  summary.className = 'asset-detail__insight-body';
+  summary.textContent = `${info.definition.name} • ${info.popularity.label} mood`;
+  container.appendChild(summary);
+
+  const note = document.createElement('p');
+  note.className = 'asset-detail__insight-note';
+  const multiplier = Number(info.popularity.multiplier);
+  let percentLabel = '±0%';
+  if (Number.isFinite(multiplier)) {
+    const percent = Math.round((multiplier - 1) * 100);
+    const sign = percent > 0 ? '+' : '';
+    percentLabel = `${sign}${percent}%`;
+  }
+  note.textContent = `${info.popularity.summary || 'Demand shifts update daily.'} (payout impact ${percentLabel}).`;
+  container.appendChild(note);
+
+  return container;
 }
 
 function buildQualityInsight(definition, instance) {

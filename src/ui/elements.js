@@ -56,6 +56,9 @@ const elements = {
     studySummary: document.getElementById('daily-study-summary'),
     studyList: document.getElementById('daily-study-list')
   },
+  nicheTrends: {
+    list: document.getElementById('niche-trends-list')
+  },
   skills: {
     dashboard: {
       container: document.getElementById('dashboard-skills'),

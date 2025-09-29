@@ -13,6 +13,7 @@ import {
 import { instanceLabel } from '../game/assets/helpers.js';
 import { KNOWLEDGE_TRACKS, getKnowledgeProgress } from '../game/requirements.js';
 import { getTimeCap } from '../game/time.js';
+import { getNicheRoster } from '../game/assets/niches.js';
 
 function createDailyListItem(entry) {
   const li = document.createElement('li');
@@ -512,6 +513,101 @@ function renderDailyStats(summary) {
   renderDailyList(studyList, summary.studyBreakdown, 'Your courses will list here once enrolled.', 3);
 }
 
+function renderNicheWidget(state) {
+  const list = elements.nicheTrends?.list;
+  if (!list) return;
+  list.innerHTML = '';
+
+  const roster = getNicheRoster(state) || [];
+  if (!roster.length) {
+    const empty = document.createElement('li');
+    empty.className = 'niche-widget__empty';
+    empty.textContent = 'Assign a niche to an asset to start tracking demand swings.';
+    list.appendChild(empty);
+    return;
+  }
+
+  roster.forEach(entry => {
+    if (!entry) return;
+    const definition = entry.definition || {};
+    const popularity = entry.popularity || {};
+    const item = document.createElement('li');
+    item.className = 'niche-widget__item';
+    if (popularity.tone) {
+      item.dataset.tone = popularity.tone;
+    }
+
+    const header = document.createElement('div');
+    header.className = 'niche-widget__header';
+
+    const name = document.createElement('span');
+    name.className = 'niche-widget__name';
+    name.textContent = definition.name || 'Untitled niche';
+    header.appendChild(name);
+
+    const badge = document.createElement('span');
+    badge.className = 'niche-widget__badge';
+    badge.textContent = popularity.label || 'Unknown';
+    header.appendChild(badge);
+
+    item.appendChild(header);
+
+    const meta = document.createElement('div');
+    meta.className = 'niche-widget__meta';
+
+    const score = document.createElement('span');
+    score.className = 'niche-widget__score';
+    const scoreValue = Number(popularity.score);
+    score.textContent = Number.isFinite(scoreValue)
+      ? `${scoreValue}/100 interest`
+      : 'Interest pending';
+    meta.appendChild(score);
+
+    const deltaValue = Number(popularity.delta);
+    const delta = document.createElement('span');
+    delta.className = 'niche-widget__delta';
+    if (Number.isFinite(deltaValue)) {
+      if (deltaValue === 0) {
+        delta.textContent = 'Holding steady';
+      } else {
+        const sign = deltaValue > 0 ? '+' : '';
+        delta.textContent = `${sign}${deltaValue} vs yesterday`;
+      }
+    } else {
+      delta.textContent = 'Fresh reading';
+    }
+    meta.appendChild(delta);
+
+    const impact = document.createElement('span');
+    impact.className = 'niche-widget__impact';
+    const multiplier = Number(popularity.multiplier);
+    if (Number.isFinite(multiplier)) {
+      const percent = Math.round((multiplier - 1) * 100);
+      const sign = percent > 0 ? '+' : '';
+      impact.textContent = `Payout impact ${sign}${percent}%`;
+    } else {
+      impact.textContent = 'Payout impact ±0%';
+    }
+    meta.appendChild(impact);
+
+    item.appendChild(meta);
+
+    const status = document.createElement('p');
+    status.className = 'niche-widget__status';
+    status.textContent = popularity.summary || 'Popularity data incoming soon.';
+    item.appendChild(status);
+
+    if (definition.description) {
+      const description = document.createElement('p');
+      description.className = 'niche-widget__description';
+      description.textContent = definition.description;
+      item.appendChild(description);
+    }
+
+    list.appendChild(item);
+  });
+}
+
 export function renderDashboard(summary) {
   const state = getState();
   if (!state) return;
@@ -614,5 +710,6 @@ export function renderDashboard(summary) {
   renderAssetUpgradeActions(state);
   renderNotifications(state);
   renderEventPreview(state);
+  renderNicheWidget(state);
   renderDailyStats(summary);
 }

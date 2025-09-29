@@ -7,6 +7,7 @@ import { getTimeCap } from './time.js';
 import { updateUI } from '../ui/update.js';
 import { advanceKnowledgeTracks, allocateDailyStudy } from './requirements.js';
 import { resetDailyMetrics } from './metrics.js';
+import { rerollNichePopularity } from './assets/niches.js';
 
 export function endDay(auto = false) {
   const state = getState();
@@ -20,6 +21,7 @@ export function endDay(auto = false) {
     : 'You called it a day. Fresh hustle awaits tomorrow.';
   addLog(`${message} Day ${state.day + 1} begins with renewed energy.`, 'info');
   state.day += 1;
+  rerollNichePopularity();
   state.dailyBonusTime = 0;
   getUpgradeState('coffee').usedToday = 0;
   state.timeLeft = getTimeCap();

@@ -24,6 +24,7 @@ import {
 } from './quality.js';
 import { awardSkillProgress } from '../skills/index.js';
 import { getAssetEffectMultiplier } from '../upgrades/effects.js';
+import { getInstanceNicheEffect } from './niches.js';
 
 function fallbackAssetMetricId(definitionId, scope, type) {
   if (!definitionId) return null;
@@ -331,6 +332,23 @@ export function rollDailyIncome(definition, assetState, instance) {
         percent: entry.percent
       });
     });
+  }
+
+  const nicheEffect = getInstanceNicheEffect(instance);
+  if (nicheEffect) {
+    const before = finalAmount;
+    const adjusted = before * nicheEffect.multiplier;
+    finalAmount = adjusted;
+    const delta = adjusted - before;
+    if (Math.abs(delta) > 0.01) {
+      contributions.push({
+        id: `niche:${nicheEffect.id}`,
+        label: `${nicheEffect.definition?.name || 'Niche'} pulse`,
+        amount: delta,
+        type: 'niche',
+        percent: nicheEffect.multiplier - 1
+      });
+    }
   }
 
   let roundedTotal = 0;
