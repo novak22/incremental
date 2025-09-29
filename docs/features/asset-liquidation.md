@@ -5,7 +5,7 @@
 
 **Core behavior**
 - Each card lists owned instances with last payout, upkeep, and a one-click sell button.
-- Sale value defaults to `lastIncome × 3`; zero-earning builds display "No buyer yet" to signal no return.
+- Sale value defaults to `lastIncome × 3 × (qualityLevel + 1)`; zero-earning builds display "No buyer yet" to signal no return.
 - Selling frees the slot, pays out immediately, and logs the event in the daily snapshot under the `sale` category.
 
 **Why it helps players**

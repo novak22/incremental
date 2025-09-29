@@ -209,7 +209,10 @@ export function instanceLabel(definition, index) {
 
 export function calculateAssetSalePrice(instance) {
   const lastIncome = Math.max(0, Number(instance?.lastIncome) || 0);
-  return Math.max(0, Math.round(lastIncome) * 3);
+  const basePrice = Math.max(0, Math.round(lastIncome) * 3);
+  const qualityLevel = Number(instance?.quality?.level);
+  const qualityMultiplier = Number.isFinite(qualityLevel) ? Math.max(1, Math.floor(qualityLevel) + 1) : 1;
+  return Math.max(0, Math.round(basePrice * qualityMultiplier));
 }
 
 export function sellAssetInstance(definition, instanceId) {

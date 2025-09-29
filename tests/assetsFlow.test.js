@@ -216,11 +216,12 @@ test('quality action daily limit blocks repeat work until the next day', () => {
   assert.ok(Math.abs(state.timeLeft - (24 - 2)) < 1e-6, 'daily limit should reset on the next day');
 });
 
-test('selling an asset instance removes it and pays out last income multiplier', () => {
+test('selling an asset instance removes it and scales by quality multiplier', () => {
   const state = getState();
   state.money = 0;
   const instance = createAssetInstance(blogDefinition, { status: 'active' });
   instance.lastIncome = 42;
+  instance.quality.level = 2;
   getAssetState('blog').instances = [instance];
 
   const expectedPrice = calculateAssetSalePrice(instance);

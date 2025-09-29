@@ -2,6 +2,7 @@
 
 ## Unreleased
 - Player screen: new overview tab spotlights character level, skills, education, gear, and hustle momentum in one place.
+- Asset liquidation rebalance: selling an instance now multiplies the 3× sale value by its quality tier for high-grade exits.
 - Passive economy rebalance: smoother upkeep for blogs, stock photos, dropshipping, and SaaS so late tiers feel rewarding without micromanagement spikes.
 - Progression refresh: character skills, study scheduling, and celebratory UI now guide players through course-driven bonuses and countdowns.
 - Flow helpers: the "Next" action, Daily Stats card, and header pulse now keep priorities, earnings, and schedules visible at a glance.
