@@ -60,6 +60,7 @@ const elements = {
   queuePause: document.getElementById('queue-pause'),
   queueCancel: document.getElementById('queue-cancel'),
   quickActions: document.getElementById('quick-actions'),
+  assetUpgradeActions: document.getElementById('asset-upgrade-actions'),
   notifications: document.getElementById('notification-list'),
   eventLogPreview: document.getElementById('event-log-preview'),
   openEventLog: document.getElementById('open-event-log'),
