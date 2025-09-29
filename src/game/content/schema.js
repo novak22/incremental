@@ -18,6 +18,11 @@ import {
   setupCostDetail,
   setupDetail
 } from '../assets/helpers.js';
+import {
+  applyInstantHustleEducationBonus,
+  describeInstantHustleEducationBonuses,
+  formatEducationBonusSummary
+} from '../educationEffects.js';
 
 function asNumber(value, fallback = 0) {
   const parsed = Number(value);
@@ -194,7 +199,9 @@ export function createInstantHustle(config) {
     baseDetails.push(() => `Requires: <strong>${renderRequirementSummary(metadata.requirements)}</strong>`);
   }
 
-  definition.details = [...baseDetails, ...(config.details || [])];
+  const educationDetails = describeInstantHustleEducationBonuses(config.id);
+
+  definition.details = [...baseDetails, ...educationDetails, ...(config.details || [])];
 
   const actionClassName = config.actionClassName || 'primary';
 
@@ -228,12 +235,38 @@ export function createInstantHustle(config) {
     config.onExecute?.(context);
 
     if (metadata.payout && metadata.payout.grantOnAction && !context.__skipDefaultPayout) {
-      const message = typeof metadata.payout.message === 'function'
-        ? metadata.payout.message(context)
-        : metadata.payout.message || `${definition.name} paid $${formatMoney(metadata.payout.amount)}.`;
-      addMoney(metadata.payout.amount, message, metadata.payout.logType);
-      applyMetric(recordPayoutContribution, metadata.metrics.payout, { amount: metadata.payout.amount });
-      context.payoutGranted = metadata.payout.amount;
+      const basePayout = metadata.payout.amount;
+      const { amount: finalPayout, applied: appliedBonuses } = applyInstantHustleEducationBonus({
+        hustleId: metadata.id,
+        baseAmount: basePayout,
+        state: context.state
+      });
+
+      context.basePayout = basePayout;
+      context.finalPayout = finalPayout;
+      context.appliedEducationBoosts = appliedBonuses;
+      context.payoutGranted = finalPayout;
+
+      const template = metadata.payout.message;
+      let message;
+      if (typeof template === 'function') {
+        message = template(context);
+      } else if (template) {
+        message = template;
+      } else {
+        const bonusNote = appliedBonuses.length ? ' Education bonus included!' : '';
+        message = `${definition.name} paid $${formatMoney(finalPayout)}.${bonusNote}`;
+      }
+
+      addMoney(finalPayout, message, metadata.payout.logType);
+      applyMetric(recordPayoutContribution, metadata.metrics.payout, { amount: finalPayout });
+
+      if (appliedBonuses.length) {
+        const summary = formatEducationBonusSummary(appliedBonuses);
+        if (summary) {
+          addLog(`Your studies kicked in: ${summary}.`, 'info');
+        }
+      }
     }
 
     config.onComplete?.(context);

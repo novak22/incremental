@@ -125,8 +125,8 @@ test('closing out the day advances setup and pays income when funded', () => {
 
 test('income range for display reflects quality floor and ceiling', () => {
   const range = getIncomeRangeForDisplay('blog');
-  assert.equal(range.min, 1);
-  assert.equal(range.max, 38);
+  assert.equal(range.min, 3);
+  assert.equal(range.max, 42);
 });
 
 test('spending money during maintenance does not go negative', () => {
@@ -155,23 +155,22 @@ test('quality actions invest resources and unlock stronger income tiers', () => 
     closeOutDay();
     let updatedInstance = getAssetState('blog').instances.find(item => item.id === instanceId);
     assert.equal(updatedInstance.quality.level, 0);
-    assert.equal(updatedInstance.lastIncome, 1);
+    assert.equal(updatedInstance.lastIncome, 3);
 
     // Invest in posts to reach Quality 1
-    performQualityAction('blog', instanceId, 'writePost');
     performQualityAction('blog', instanceId, 'writePost');
     performQualityAction('blog', instanceId, 'writePost');
     performQualityAction('blog', instanceId, 'writePost');
 
     updatedInstance = getAssetState('blog').instances.find(item => item.id === instanceId);
     assert.equal(updatedInstance.quality.level, 1);
-    assert.equal(state.timeLeft, 24 - 12, 'quality actions should spend time');
+    assert.equal(state.timeLeft, 24 - 9, 'quality actions should spend time');
 
     // Next payout reflects new tier
     updatedInstance.maintenanceFundedToday = true;
     closeOutDay();
     updatedInstance = getAssetState('blog').instances.find(item => item.id === instanceId);
-    assert.equal(updatedInstance.lastIncome, 6);
+    assert.equal(updatedInstance.lastIncome, 9);
     assert.ok(state.log.some(entry => /Quality 1/.test(entry.message)));
   } finally {
     Math.random = originalRandom;
@@ -191,7 +190,7 @@ test('quality action cooldown blocks repeat work until the next day', () => {
   const startingTime = state.timeLeft;
 
   performQualityAction('blog', instanceId, 'seoSprint');
-  assert.ok(Math.abs(state.timeLeft - (startingTime - 2.5)) < 1e-6, 'first sprint should spend time');
+  assert.ok(Math.abs(state.timeLeft - (startingTime - 2)) < 1e-6, 'first sprint should spend time');
 
   const afterFirstSprint = state.timeLeft;
   performQualityAction('blog', instanceId, 'seoSprint');
@@ -200,7 +199,7 @@ test('quality action cooldown blocks repeat work until the next day', () => {
   state.day += 1;
   state.timeLeft = 24;
   performQualityAction('blog', instanceId, 'seoSprint');
-  assert.ok(Math.abs(state.timeLeft - (24 - 2.5)) < 1e-6, 'cooldown should clear on the next day');
+  assert.ok(Math.abs(state.timeLeft - (24 - 2)) < 1e-6, 'cooldown should clear on the next day');
 });
 
 test('selling an asset instance removes it and pays out last income multiplier', () => {
