@@ -347,6 +347,13 @@ body {
   border: 1px solid transparent;
 }
 
+.upgrade-actions {
+  max-height: 320px;
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-gutter: stable both-edges;
+}
+
 .upgrade-actions li {
   border-color: rgba(129, 140, 248, 0.35);
 }
