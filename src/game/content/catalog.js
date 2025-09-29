@@ -1,5 +1,6 @@
 import { registry } from '../registry.js';
 import { getState, getAssetState, getUpgradeState, getUpgradeDefinition, getAssetDefinition } from '../../core/state.js';
+import { toNumber } from '../../core/helpers.js';
 import { assetRequirementsMet, listAssetRequirementDescriptors, KNOWLEDGE_TRACKS, getKnowledgeProgress } from '../requirements.js';
 import { getQualityActions, canPerformQualityAction } from '../assets/quality.js';
 import { describeHustleRequirements, areHustleRequirementsMet } from '../hustles.js';
@@ -8,11 +9,6 @@ import { COFFEE_LIMIT } from '../../core/constants.js';
 
 function createKey(sourceType, sourceId, actionId) {
   return `${sourceType}:${sourceId}:${actionId}`;
-}
-
-function asNumber(value) {
-  const numeric = Number(value);
-  return Number.isFinite(numeric) ? numeric : 0;
 }
 
 function resolveActionLabel(action, fallback) {
@@ -128,9 +124,9 @@ function buildAssetEntries() {
   return registry.assets.map(definition => {
     const action = definition.action || {};
     const actionId = action.id || 'launch';
-    const timeCost = Math.max(0, asNumber(definition.setup?.hoursPerDay));
-    const moneyCost = Math.max(0, asNumber(definition.setup?.cost));
-    const durationDays = Math.max(0, asNumber(definition.setup?.days));
+    const timeCost = Math.max(0, toNumber(definition.setup?.hoursPerDay, 0));
+    const moneyCost = Math.max(0, toNumber(definition.setup?.cost, 0));
+    const durationDays = Math.max(0, toNumber(definition.setup?.days, 0));
     return {
       key: createKey('asset', definition.id, actionId),
       sourceType: 'asset',
@@ -162,8 +158,8 @@ function buildQualityEntries() {
     const actions = getQualityActions(definition) || [];
     for (const action of actions) {
       const actionId = action.id || action.label;
-      const timeCost = Math.max(0, asNumber(action.time));
-      const moneyCost = Math.max(0, asNumber(action.cost));
+      const timeCost = Math.max(0, toNumber(action.time, 0));
+      const moneyCost = Math.max(0, toNumber(action.cost, 0));
       entries.push({
         key: createKey('quality', definition.id, actionId),
         sourceType: 'quality',
@@ -197,8 +193,8 @@ function buildHustleEntries() {
   return registry.hustles.map(definition => {
     const action = definition.action || {};
     const actionId = action.id || 'action';
-    const timeCost = Math.max(0, asNumber(action.timeCost));
-    const moneyCost = Math.max(0, asNumber(action.moneyCost));
+    const timeCost = Math.max(0, toNumber(action.timeCost, 0));
+    const moneyCost = Math.max(0, toNumber(action.moneyCost, 0));
     return {
       key: createKey('hustle', definition.id, actionId),
       sourceType: definition.tag?.type === 'study' ? 'study' : 'hustle',
@@ -208,7 +204,7 @@ function buildHustleEntries() {
       category: definition.tag?.type || 'instant',
       timeCost,
       moneyCost,
-      delaySeconds: asNumber(action.delaySeconds),
+      delaySeconds: toNumber(action.delaySeconds, 0),
       tags: {
         group: definition.tag?.type || null
       },
@@ -268,8 +264,8 @@ function buildUpgradeEntries() {
   return registry.upgrades.map(definition => {
     const action = definition.action || {};
     const actionId = action.id || 'activate';
-    const timeCost = Math.max(0, asNumber(action.timeCost));
-    const moneyCost = Math.max(0, asNumber(action.moneyCost));
+    const timeCost = Math.max(0, toNumber(action.timeCost, 0));
+    const moneyCost = Math.max(0, toNumber(action.moneyCost, 0));
     return {
       key: createKey('upgrade', definition.id, actionId),
       sourceType: 'upgrade',
