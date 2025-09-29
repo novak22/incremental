@@ -78,7 +78,7 @@ function describeQueue(summary) {
   }));
 }
 
-function buildQuickActions(state) {
+export function buildQuickActions(state) {
   const items = [];
   for (const hustle of registry.hustles) {
     if (!hustle?.action?.onClick) continue;
@@ -97,7 +97,8 @@ function buildQuickActions(state) {
         : hustle.action.label || 'Queue',
       description: `${formatMoney(payout)} payout • ${formatHours(time)}`,
       onClick: hustle.action.onClick,
-      roi
+      roi,
+      timeCost: time
     });
   }
 
@@ -105,7 +106,7 @@ function buildQuickActions(state) {
   return items.slice(0, 4);
 }
 
-function buildAssetUpgradeRecommendations(state) {
+export function buildAssetUpgradeRecommendations(state) {
   if (!state) return [];
 
   const suggestions = [];
@@ -178,7 +179,8 @@ function buildAssetUpgradeRecommendations(state) {
           performance,
           completion,
           remaining,
-          level
+          level,
+          timeCost
         });
       });
     });
