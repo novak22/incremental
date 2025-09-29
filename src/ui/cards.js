@@ -31,6 +31,7 @@ const hustleUi = new Map();
 const assetUi = new Map();
 const upgradeUi = new Map();
 const studyUi = new Map();
+let studyElementsDocument = null;
 
 let expandedAssetId = null;
 
@@ -1415,7 +1416,39 @@ function openStudyDetails(definition) {
   showSlideOver({ eyebrow: 'Study track', title: definition.name, body });
 }
 
+function ensureStudyElements() {
+  const doc = document;
+  if (!doc) return;
+
+  let refreshed = studyElementsDocument && studyElementsDocument !== doc;
+
+  const syncElement = (key, id) => {
+    const current = elements[key];
+    if (current && current.ownerDocument === doc && doc.contains(current)) {
+      return current;
+    }
+    const next = doc.getElementById(id);
+    if (elements[key] !== next) {
+      elements[key] = next;
+      refreshed = true;
+    }
+    return next;
+  };
+
+  const trackList = syncElement('studyTrackList', 'study-track-list');
+  syncElement('studyQueueList', 'study-queue-list');
+  syncElement('studyQueueEta', 'study-queue-eta');
+  syncElement('studyQueueCap', 'study-queue-cap');
+
+  if (refreshed) {
+    studyUi.clear();
+  }
+
+  studyElementsDocument = doc;
+}
+
 function renderEducation(definitions) {
+  ensureStudyElements();
   const list = elements.studyTrackList;
   if (!list) return;
   list.innerHTML = '';
@@ -1429,6 +1462,7 @@ function renderEducation(definitions) {
 }
 
 function renderStudyQueue(definitions) {
+  ensureStudyElements();
   const queue = elements.studyQueueList;
   if (!queue) return;
   queue.innerHTML = '';
