@@ -155,6 +155,7 @@ const freelanceWriting = createInstantHustle({
   name: 'Freelance Writing',
   tag: { label: 'Instant', type: 'instant' },
   description: 'Crank out a quick article for a client. Not Pulitzer material, but it pays.',
+  tags: ['writing', 'desktop_work'],
   time: 2,
   payout: {
     amount: 18,
@@ -180,6 +181,7 @@ const audienceCall = createInstantHustle({
   name: 'Audience Q&A Blast',
   tag: { label: 'Instant', type: 'instant' },
   description: 'Host a 60-minute livestream for your blog readers and pitch a premium checklist.',
+  tags: ['community', 'live', 'video'],
   time: 1,
   requirements: AUDIENCE_CALL_REQUIREMENTS,
   dailyLimit: 1,
@@ -207,6 +209,7 @@ const bundlePush = createInstantHustle({
   name: 'Bundle Promo Push',
   tag: { label: 'Instant', type: 'instant' },
   description: 'Pair your top blogs with an e-book bonus bundle for a limited-time flash sale.',
+  tags: ['commerce', 'marketing'],
   time: 2.5,
   requirements: BUNDLE_PUSH_REQUIREMENTS,
   payout: {
@@ -233,6 +236,7 @@ const surveySprint = createInstantHustle({
   name: 'Micro Survey Dash',
   tag: { label: 'Instant', type: 'instant' },
   description: 'Knock out a 15-minute feedback survey while your coffee is still warm.',
+  tags: ['ops', 'desktop_work'],
   time: 0.25,
   dailyLimit: 4,
   payout: {
@@ -259,6 +263,7 @@ const eventPhotoGig = createInstantHustle({
   name: 'Event Photo Gig',
   tag: { label: 'Instant', type: 'instant' },
   description: 'Grab your gallery gear and capture candid magic at a pop-up showcase.',
+  tags: ['photo', 'shoot', 'studio'],
   time: 3.5,
   requirements: EVENT_PHOTO_REQUIREMENTS,
   payout: {
@@ -285,6 +290,7 @@ const popUpWorkshop = createInstantHustle({
   name: 'Pop-Up Workshop',
   tag: { label: 'Instant', type: 'instant' },
   description: 'Host a cozy crash course that blends your blog insights with e-book handouts.',
+  tags: ['education', 'in_person'],
   time: 2.5,
   requirements: WORKSHOP_REQUIREMENTS,
   payout: {
@@ -311,6 +317,7 @@ const vlogEditRush = createInstantHustle({
   name: 'Vlog Edit Rush',
   tag: { label: 'Instant', type: 'instant' },
   description: 'Slice, color, and caption a backlog vlog episode for a partner channel.',
+  tags: ['video', 'editing', 'desktop_work'],
   time: 1.5,
   requirements: EDIT_RUSH_REQUIREMENTS,
   payout: {
@@ -337,6 +344,7 @@ const dropshipPackParty = createInstantHustle({
   name: 'Dropship Pack Party',
   tag: { label: 'Instant', type: 'instant' },
   description: 'Bundle hot orders with branded tissue paper and a confetti of thank-you notes.',
+  tags: ['commerce', 'fulfillment'],
   time: 2,
   cost: 8,
   requirements: PACK_PARTY_REQUIREMENTS,
@@ -365,6 +373,7 @@ const saasBugSquash = createInstantHustle({
   name: 'SaaS Bug Squash',
   tag: { label: 'Instant', type: 'instant' },
   description: 'Dig through error logs and deploy a patch before support tickets pile up.',
+  tags: ['software', 'ops'],
   time: 1,
   requirements: BUG_SQUASH_REQUIREMENTS,
   payout: {
@@ -391,6 +400,7 @@ const audiobookNarration = createInstantHustle({
   name: 'Audiobook Narration',
   tag: { label: 'Instant', type: 'instant' },
   description: 'Record a silky-smooth sample chapter to hype your flagship e-book series.',
+  tags: ['audio', 'studio'],
   time: 2.75,
   requirements: NARRATION_REQUIREMENTS,
   payout: {
@@ -417,6 +427,7 @@ const streetPromoSprint = createInstantHustle({
   name: 'Street Team Promo',
   tag: { label: 'Instant', type: 'instant' },
   description: 'Hand out QR stickers at a pop-up market to funnel readers toward your latest drops.',
+  tags: ['marketing', 'field'],
   time: 0.75,
   cost: 5,
   requirements: STREET_PROMO_REQUIREMENTS,

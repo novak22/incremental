@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Upgrade taxonomy: tech/house/infra tabs with family sub-sections and slot-aware tooltips make browsing gear lanes intuitive while the new effect engine drives unified payout, time, and quality multipliers.
 - Player screen: new overview tab spotlights character level, skills, education, gear, and hustle momentum in one place.
 - Asset liquidation rebalance: selling an instance now multiplies the 3× sale value by its quality tier for high-grade exits.
 - Passive economy rebalance: smoother upkeep for blogs, stock photos, dropshipping, and SaaS so late tiers feel rewarding without micromanagement spikes.

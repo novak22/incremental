@@ -43,3 +43,9 @@ export function formatDays(days) {
   }
   return `${days.toFixed(1)} days`;
 }
+
+export function ensureArray(value) {
+  if (Array.isArray(value)) return value;
+  if (value == null) return [];
+  return [value];
+}

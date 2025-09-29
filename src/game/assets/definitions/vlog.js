@@ -1,31 +1,12 @@
 import { formatMoney } from '../../../core/helpers.js';
-import { getUpgradeState } from '../../../core/state.js';
 import { createAssetDefinition } from '../../content/schema.js';
-
-function hasUpgrade(context, id) {
-  if (!id) return false;
-  if (context && typeof context.upgrade === 'function') {
-    const upgrade = context.upgrade(id);
-    if (upgrade) return Boolean(upgrade.purchased);
-  }
-  const state = getUpgradeState(id);
-  return Boolean(state?.purchased);
-}
-
-function vlogProgress(context) {
-  let progress = 1;
-  if (hasUpgrade(context, 'cameraPro')) progress += 1;
-  if (hasUpgrade(context, 'editorialPipeline')) progress += 1;
-  if (hasUpgrade(context, 'syndicationSuite')) progress += 1;
-  if (hasUpgrade(context, 'immersiveStoryWorlds')) progress += 1;
-  return progress;
-}
 
 const vlogDefinition = createAssetDefinition({
   id: 'vlog',
   name: 'Weekly Vlog Channel',
   singular: 'Vlog',
   tag: { label: 'Creative', type: 'passive' },
+  tags: ['video', 'visual', 'content', 'studio'],
   description: 'Film upbeat vlogs, edit late-night montages, and ride the algorithmic rollercoaster.',
   setup: { days: 4, hoursPerDay: 4, cost: 420 },
   maintenance: { hours: 1.5, cost: 9 },
@@ -41,29 +22,9 @@ const vlogDefinition = createAssetDefinition({
     logType: 'passive',
     modifier: (amount, context = {}) => {
       const instance = context.instance;
-      const hasCinemaGear = hasUpgrade(context, 'cameraPro');
-      const hasEditorial = hasUpgrade(context, 'editorialPipeline');
-      const hasSyndication = hasUpgrade(context, 'syndicationSuite');
-      const hasImmersive = hasUpgrade(context, 'immersiveStoryWorlds');
       const qualityLevel = instance?.quality?.level || 0;
       let viralChance = qualityLevel >= 4 ? 0.24 : 0.18;
       let viralMultiplier = qualityLevel >= 4 ? 3.5 : 3;
-      if (hasCinemaGear) {
-        viralChance += 0.06;
-        viralMultiplier += 0.5;
-      }
-      if (hasEditorial) {
-        viralChance += 0.03;
-        viralMultiplier += 0.25;
-      }
-      if (hasSyndication) {
-        viralChance += 0.04;
-        viralMultiplier += 0.5;
-      }
-      if (hasImmersive) {
-        viralChance += 0.05;
-        viralMultiplier += 0.75;
-      }
       let payout = amount;
       if (qualityLevel >= 3 && Math.random() < viralChance) {
         const before = payout;
@@ -79,31 +40,7 @@ const vlogDefinition = createAssetDefinition({
         }
         payout = after;
       }
-      const steps = [];
-      if (hasCinemaGear) {
-        steps.push({ id: 'cameraPro', label: 'Cinema rig bonus', percent: 0.25 });
-      }
-      if (hasEditorial) {
-        steps.push({ id: 'editorialPipeline', label: 'Editorial pipeline promo', percent: 0.15 });
-      }
-      if (hasSyndication) {
-        steps.push({ id: 'syndicationSuite', label: 'Syndication suite promo', percent: 0.2 });
-      }
-      if (hasImmersive) {
-        steps.push({ id: 'immersiveStoryWorlds', label: 'Immersive story worlds hype', percent: 0.3 });
-      }
-      return steps.reduce((total, step) => {
-        const before = total;
-        const after = total * (1 + step.percent);
-        if (typeof context.recordModifier === 'function') {
-          context.recordModifier(step.label, after - before, {
-            id: step.id,
-            type: 'upgrade',
-            percent: step.percent
-          });
-        }
-        return after;
-      }, payout);
+      return payout;
     }
   },
   requirements: {
@@ -167,7 +104,7 @@ const vlogDefinition = createAssetDefinition({
         time: 5,
         dailyLimit: 1,
         progressKey: 'videos',
-        progressAmount: context => vlogProgress(context),
+        progressAmount: () => 1,
         skills: ['visual'],
         log: ({ label }) => `${label} filmed an energetic episode. B-roll glitter everywhere!`
       },
@@ -178,7 +115,7 @@ const vlogDefinition = createAssetDefinition({
         cost: 16,
         dailyLimit: 1,
         progressKey: 'edits',
-        progressAmount: context => vlogProgress(context),
+        progressAmount: () => 1,
         skills: ['editing'],
         log: ({ label }) => `${label} tightened jump cuts and color graded every frame.`
       },
@@ -189,7 +126,7 @@ const vlogDefinition = createAssetDefinition({
         cost: 24,
         dailyLimit: 1,
         progressKey: 'promotion',
-        progressAmount: context => vlogProgress(context),
+        progressAmount: () => 1,
         skills: ['promotion'],
         log: ({ label }) => `${label} teased the drop on socials. Chat bubbles explode with hype!`
       }

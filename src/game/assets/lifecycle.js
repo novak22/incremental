@@ -11,6 +11,7 @@ import {
   recordPayoutContribution,
   recordTimeContribution
 } from '../metrics.js';
+import { getAssetEffectMultiplier } from '../upgrades/effects.js';
 
 export function allocateAssetMaintenance() {
   const state = getState();
@@ -30,8 +31,16 @@ export function allocateAssetMaintenance() {
 
   for (const definition of ASSETS) {
     const assetState = getAssetState(definition.id);
-    const setupHours = Number(definition.setup?.hoursPerDay) || 0;
-    const maintenanceHours = Number(definition.maintenance?.hours) || 0;
+    const baseSetupHours = Number(definition.setup?.hoursPerDay) || 0;
+    const setupEffect = getAssetEffectMultiplier(definition, 'setup_time_mult', {
+      actionType: 'setup'
+    });
+    const setupHours = baseSetupHours * (Number.isFinite(setupEffect.multiplier) ? setupEffect.multiplier : 1);
+    const baseMaintenanceHours = Number(definition.maintenance?.hours) || 0;
+    const maintenanceEffect = getAssetEffectMultiplier(definition, 'maint_time_mult', {
+      actionType: 'maintenance'
+    });
+    const maintenanceHours = baseMaintenanceHours * (Number.isFinite(maintenanceEffect.multiplier) ? maintenanceEffect.multiplier : 1);
     const maintenanceCost = Number(definition.maintenance?.cost) || 0;
 
     assetState.instances.forEach((instance, index) => {

@@ -41,38 +41,112 @@ const studyUi = new Map();
 let activeUpgradeCategory = 'all';
 let currentUpgradeDefinitions = [];
 
-const UPGRADE_CATEGORY_ORDER = ['unlock', 'boost', 'automation', 'support', 'sustain', 'misc'];
+const UPGRADE_CATEGORY_ORDER = ['tech', 'house', 'infra', 'support', 'misc'];
 
 const UPGRADE_CATEGORY_COPY = {
-  unlock: {
-    label: 'Unlocks',
-    title: 'Unlock new ventures',
-    note: 'Open fresh money loops, actions, and production tiers.'
+  tech: {
+    label: 'Tech',
+    title: 'Tech gear & gadgets',
+    note: 'Outfit your digital arsenal with rigs, cameras, and clever workflows.'
   },
-  boost: {
-    label: 'Boosts',
-    title: 'Amplify payouts',
-    note: 'Tune quality, dial up income, and sharpen daily routines.'
+  house: {
+    label: 'House',
+    title: 'House & studio',
+    note: 'Shape the spaces that keep shoots smooth and edits comfy.'
   },
-  automation: {
-    label: 'Automation',
-    title: 'Delegate the busywork',
-    note: 'Hand repetitive tasks to bots, assistants, or scripts.'
+  infra: {
+    label: 'Infra',
+    title: 'Infrastructure',
+    note: 'Scale the back-end brains that keep products humming worldwide.'
   },
   support: {
     label: 'Support',
-    title: 'Sustain the squad',
-    note: 'Protect uptime, maintain rigs, and nourish your team.'
-  },
-  sustain: {
-    label: 'Sustain',
-    title: 'Keep momentum rolling',
-    note: 'Lightweight boosters that steady the daily grind.'
+    title: 'Support boosts',
+    note: 'Quick pick-me-ups and helpers that keep momentum rolling.'
   },
   misc: {
     label: 'Special',
-    title: 'Signature perks',
-    note: 'One-off upgrades with quirky, high-impact twists.'
+    title: 'Special upgrades',
+    note: 'One-off perks that refuse to stay in neat boxes.'
+  }
+};
+
+const UPGRADE_FAMILY_COPY = {
+  general: {
+    label: 'Highlights',
+    note: 'Curated upgrades that don’t mind sharing space.'
+  },
+  phone: {
+    label: 'Phone line',
+    note: 'Capture crisp mobile footage and stay responsive on the go.'
+  },
+  pc: {
+    label: 'PC rigs',
+    note: 'Crunch renders, spreadsheets, and creative suites without sweat.'
+  },
+  monitor_hub: {
+    label: 'Monitor hubs',
+    note: 'Dock displays and fan out fresh screen real estate.'
+  },
+  monitor: {
+    label: 'Monitors',
+    note: 'Stack extra displays for editing bays and dashboards.'
+  },
+  storage: {
+    label: 'Storage & scratch',
+    note: 'Keep footage safe and project files lightning fast.'
+  },
+  camera: {
+    label: 'Camera gear',
+    note: 'Level up lenses and rigs so every frame looks cinematic.'
+  },
+  lighting: {
+    label: 'Lighting rigs',
+    note: 'Bathe shoots in flattering glow and zero fuss shadows.'
+  },
+  audio: {
+    label: 'Audio gear',
+    note: 'Capture buttery vocals and clean ambient sound.'
+  },
+  internet: {
+    label: 'Internet plans',
+    note: 'Feed uploads and live drops with consistent bandwidth.'
+  },
+  ergonomics: {
+    label: 'Ergonomics',
+    note: 'Keep posture happy while the hustle runs long hours.'
+  },
+  power_backup: {
+    label: 'Power backup',
+    note: 'Ride through outages without missing a milestone.'
+  },
+  studio: {
+    label: 'Studio spaces',
+    note: 'Build sets and stages tailored to your next shoot.'
+  },
+  workflow: {
+    label: 'Workflow suites',
+    note: 'Coordinate publishing calendars and creative rituals.'
+  },
+  automation: {
+    label: 'Automation',
+    note: 'Let bots and partners handle the repetitive hustle.'
+  },
+  cloud_compute: {
+    label: 'Cloud compute',
+    note: 'Provision serious horsepower for software launches.'
+  },
+  edge_network: {
+    label: 'Edge network',
+    note: 'Beam snappy responses worldwide with low-latency magic.'
+  },
+  commerce_network: {
+    label: 'Commerce alliances',
+    note: 'Bundle storefronts, partners, and licensing deals into one push.'
+  },
+  consumable: {
+    label: 'Daily boosts',
+    note: 'Single-day treats that top up focus right when you need it.'
   }
 };
 let studyElementsDocument = null;
@@ -1501,23 +1575,48 @@ function renderAssets(definitions) {
   definitions.forEach(def => renderAssetRow(def, tbody));
 }
 
+function formatLabelFromKey(id, fallback = 'Special') {
+  if (!id) return fallback;
+  return (
+    id
+      .toString()
+      .replace(/[_-]+/g, ' ')
+      .replace(/([a-z])([A-Z])/g, '$1 $2')
+      .replace(/^./, match => match.toUpperCase())
+      .trim() || fallback
+  );
+}
+
 function getUpgradeCategory(definition) {
-  return definition?.tag?.type || 'misc';
+  return definition?.category || 'misc';
+}
+
+function getUpgradeFamily(definition) {
+  return definition?.family || 'general';
 }
 
 function getCategoryCopy(id) {
   if (UPGRADE_CATEGORY_COPY[id]) {
     return UPGRADE_CATEGORY_COPY[id];
   }
-  const label = (id || 'special')
-    .toString()
-    .replace(/([A-Z])/g, ' $1')
-    .replace(/^./, match => match.toUpperCase())
-    .trim() || 'Special';
+  const label = formatLabelFromKey(id, 'Special');
   return {
     label,
     title: `${label} upgrades`,
     note: 'Specialized boosters that defy tidy labels.'
+  };
+}
+
+function getFamilyCopy(id) {
+  if (!id) {
+    return UPGRADE_FAMILY_COPY.general;
+  }
+  if (UPGRADE_FAMILY_COPY[id]) {
+    return UPGRADE_FAMILY_COPY[id];
+  }
+  return {
+    label: formatLabelFromKey(id, 'Highlights'),
+    note: 'Specialized enhancements for this progression lane.'
   };
 }
 
@@ -1633,11 +1732,16 @@ function sortUpgradesForCategory(definitions, state = getState()) {
 function buildUpgradeCategories(definitions) {
   const grouped = new Map();
   definitions.forEach(definition => {
-    const category = getUpgradeCategory(definition);
-    if (!grouped.has(category)) {
-      grouped.set(category, []);
+    const categoryId = getUpgradeCategory(definition);
+    if (!grouped.has(categoryId)) {
+      grouped.set(categoryId, new Map());
     }
-    grouped.get(category).push(definition);
+    const families = grouped.get(categoryId);
+    const familyId = getUpgradeFamily(definition);
+    if (!families.has(familyId)) {
+      families.set(familyId, []);
+    }
+    families.get(familyId).push(definition);
   });
 
   const seen = new Set();
@@ -1652,11 +1756,21 @@ function buildUpgradeCategories(definitions) {
       seen.add(key);
       return true;
     })
-    .map(id => ({
-      id,
-      copy: getCategoryCopy(id),
-      definitions: grouped.get(id)
-    }));
+    .map(id => {
+      const families = Array.from(grouped.get(id)?.entries() || []).map(([familyId, defs]) => ({
+        id: familyId,
+        copy: getFamilyCopy(familyId),
+        definitions: defs
+      }));
+      families.sort((a, b) => a.copy.label.localeCompare(b.copy.label, undefined, { sensitivity: 'base' }));
+      const total = families.reduce((sum, family) => sum + family.definitions.length, 0);
+      return {
+        id,
+        copy: getCategoryCopy(id),
+        families,
+        total
+      };
+    });
 }
 
 function emitUIEvent(name) {
@@ -1741,8 +1855,8 @@ function renderUpgradeCategoryFilters(categories) {
 
   createChip('all', 'All upgrades', totals);
   categories.forEach(category => {
-    const { id, copy, definitions } = category;
-    createChip(id, copy.label, definitions.length);
+    const { id, copy, total } = category;
+    createChip(id, copy.label, total);
   });
 
   syncUpgradeCategoryChips();
@@ -1787,12 +1901,13 @@ document.addEventListener('upgrades:filtered', () => {
   refreshUpgradeSections();
 });
 
-function renderUpgradeCard(definition, container, categoryId) {
+function renderUpgradeCard(definition, container, categoryId, familyId = 'general') {
   const state = getState();
   const card = document.createElement('article');
   card.className = 'upgrade-card';
   card.dataset.upgrade = definition.id;
   card.dataset.category = categoryId;
+  card.dataset.family = familyId;
   const searchPieces = [definition.name, definition.description, definition.tag?.label]
     .filter(Boolean)
     .join(' ');
@@ -1951,11 +2066,52 @@ function renderUpgrades(definitions) {
     header.append(headingGroup, count);
     section.appendChild(header);
 
-    const categoryList = document.createElement('div');
-    categoryList.className = 'upgrade-section__list';
-    const sorted = sortUpgradesForCategory(category.definitions);
-    sorted.forEach(def => renderUpgradeCard(def, categoryList, category.id));
-    section.appendChild(categoryList);
+    const familiesContainer = document.createElement('div');
+    familiesContainer.className = 'upgrade-section__families';
+    const families = category.families.length ? category.families : [{ id: 'general', copy: getFamilyCopy('general'), definitions: [] }];
+    families.forEach(family => {
+      const familyArticle = document.createElement('article');
+      familyArticle.className = 'upgrade-family';
+      familyArticle.dataset.category = category.id;
+      familyArticle.dataset.family = family.id;
+
+      const familyHeader = document.createElement('header');
+      familyHeader.className = 'upgrade-family__header';
+      const familyTitle = document.createElement('h4');
+      familyTitle.textContent = family.copy.label;
+      const familyCount = document.createElement('span');
+      familyCount.className = 'upgrade-family__count';
+      familyHeader.append(familyTitle, familyCount);
+      familyArticle.appendChild(familyHeader);
+
+      if (family.copy.note) {
+        const familyNote = document.createElement('p');
+        familyNote.className = 'upgrade-family__note';
+        familyNote.textContent = family.copy.note;
+        familyArticle.appendChild(familyNote);
+      }
+
+      const familyList = document.createElement('div');
+      familyList.className = 'upgrade-family__list';
+      const sorted = sortUpgradesForCategory(family.definitions);
+      sorted.forEach(def => renderUpgradeCard(def, familyList, category.id, family.id));
+      familyArticle.appendChild(familyList);
+
+      const familyEmpty = document.createElement('p');
+      familyEmpty.className = 'upgrade-family__empty';
+      familyEmpty.textContent = 'No upgrades discovered yet in this family.';
+      familyEmpty.hidden = sorted.length > 0;
+      familyArticle.appendChild(familyEmpty);
+
+      familiesContainer.appendChild(familyArticle);
+      upgradeSections.set(`${category.id}:${family.id}`, {
+        section: familyArticle,
+        list: familyList,
+        count: familyCount,
+        emptyMessage: familyEmpty
+      });
+    });
+    section.appendChild(familiesContainer);
 
     const empty = document.createElement('p');
     empty.className = 'upgrade-section__empty';
@@ -1964,7 +2120,7 @@ function renderUpgrades(definitions) {
     section.appendChild(empty);
 
     fragment.appendChild(section);
-    upgradeSections.set(category.id, { section, list: categoryList, count, emptyMessage: empty });
+    upgradeSections.set(category.id, { section, list: familiesContainer, count, emptyMessage: empty });
   });
 
   list.appendChild(fragment);

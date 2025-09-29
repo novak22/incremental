@@ -1,4 +1,4 @@
-import { formatHours, formatMoney, toNumber } from '../../core/helpers.js';
+import { ensureArray, formatHours, formatMoney, toNumber } from '../../core/helpers.js';
 import { addLog } from '../../core/log.js';
 import {
   countActiveAssetInstances,
@@ -36,10 +36,22 @@ import {
   describeInstantHustleEducationBonuses,
   formatEducationBonusSummary
 } from '../educationEffects.js';
+import {
+  buildSlotLedger,
+  describeSlotLedger,
+  getAssetEffectMultiplier,
+  getExclusiveConflict,
+  getHustleEffectMultiplier,
+  wouldExceedSlotCapacity
+} from '../upgrades/effects.js';
 
-function formatHourDetail(hours) {
+function formatHourDetail(hours, effective) {
   if (!hours) return '⏳ Time: <strong>Instant</strong>';
-  return `⏳ Time: <strong>${formatHours(hours)}</strong>`;
+  const base = formatHours(hours);
+  if (Number.isFinite(Number(effective)) && Math.abs(effective - hours) > 0.01) {
+    return `⏳ Time: <strong>${formatHours(effective)}</strong> (base ${base})`;
+  }
+  return `⏳ Time: <strong>${base}</strong>`;
 }
 
 function formatCostDetail(cost) {
@@ -240,12 +252,42 @@ export function createInstantHustle(config) {
     skills: metadata.skills
   };
 
+  definition.tags = Array.isArray(config.tags) ? config.tags.slice() : [];
+
+  function resolveEffectiveTime(state = getState()) {
+    if (!metadata.time) return metadata.time;
+    const { multiplier } = getHustleEffectMultiplier(definition, 'setup_time_mult', {
+      state,
+      actionType: 'run'
+    });
+    const adjusted = metadata.time * (Number.isFinite(multiplier) ? multiplier : 1);
+    return Number.isFinite(adjusted) ? Math.max(0, adjusted) : metadata.time;
+  }
+
+  function describeEffectiveTime() {
+    return formatHourDetail(metadata.time, resolveEffectiveTime());
+  }
+
+  function applyHustlePayoutMultiplier(amount, context) {
+    if (!amount) {
+      return { amount: 0, multiplier: 1, sources: [] };
+    }
+    const { multiplier, sources } = getHustleEffectMultiplier(definition, 'payout_mult', {
+      state: context.state,
+      actionType: 'payout'
+    });
+    if (!Number.isFinite(multiplier) || multiplier === 1) {
+      return { amount, multiplier: 1, sources: [] };
+    }
+    return { amount: amount * multiplier, multiplier, sources };
+  }
+
   definition.dailyLimit = metadata.dailyLimit;
   definition.getDailyUsage = state => resolveDailyUsage(state, { sync: false });
 
   const baseDetails = [];
   if (metadata.time > 0) {
-    baseDetails.push(() => formatHourDetail(metadata.time));
+    baseDetails.push(() => describeEffectiveTime());
   }
   if (metadata.cost > 0) {
     const detail = formatCostDetail(metadata.cost);
@@ -287,8 +329,9 @@ export function createInstantHustle(config) {
         return `Daily limit reached: ${definition.name} can only run ${runsLabel} per day. Fresh slots unlock tomorrow.`;
       }
     }
-    if (metadata.time > 0 && state.timeLeft < metadata.time) {
-      return `You need at least ${formatHours(metadata.time)} free before starting ${definition.name}.`;
+    const effectiveTime = resolveEffectiveTime(state);
+    if (effectiveTime > 0 && state.timeLeft < effectiveTime) {
+      return `You need at least ${formatHours(effectiveTime)} free before starting ${definition.name}.`;
     }
     if (metadata.cost > 0 && state.money < metadata.cost) {
       return `You need $${formatMoney(metadata.cost)} before funding ${definition.name}.`;
@@ -300,9 +343,10 @@ export function createInstantHustle(config) {
   }
 
   function runHustle(context) {
-    if (metadata.time > 0) {
-      spendTime(metadata.time);
-      applyMetric(recordTimeContribution, metadata.metrics.time, { hours: metadata.time });
+    const effectiveTime = resolveEffectiveTime(context.state);
+    if (effectiveTime > 0) {
+      spendTime(effectiveTime);
+      applyMetric(recordTimeContribution, metadata.metrics.time, { hours: effectiveTime });
     }
     if (metadata.cost > 0) {
       spendMoney(metadata.cost);
@@ -318,7 +362,7 @@ export function createInstantHustle(config) {
     if (metadata.skills) {
       context.skillXpAwarded = awardSkillProgress({
         skills: metadata.skills,
-        timeSpentHours: metadata.time,
+        timeSpentHours: effectiveTime,
         moneySpent: metadata.cost,
         label: definition.name
       });
@@ -333,9 +377,17 @@ export function createInstantHustle(config) {
       });
 
       context.basePayout = basePayout;
-      context.finalPayout = finalPayout;
+      context.educationAdjustedPayout = finalPayout;
       context.appliedEducationBoosts = appliedBonuses;
-      context.payoutGranted = finalPayout;
+
+      const upgradeResult = applyHustlePayoutMultiplier(finalPayout, context);
+      const upgradedAmount = upgradeResult.amount;
+      const roundedPayout = Math.max(0, Math.round(upgradedAmount));
+
+      context.upgradeMultiplier = upgradeResult.multiplier;
+      context.upgradeSources = upgradeResult.sources;
+      context.finalPayout = roundedPayout;
+      context.payoutGranted = roundedPayout;
 
       const template = metadata.payout.message;
       let message;
@@ -345,11 +397,12 @@ export function createInstantHustle(config) {
         message = template;
       } else {
         const bonusNote = appliedBonuses.length ? ' Education bonus included!' : '';
-        message = `${definition.name} paid $${formatMoney(finalPayout)}.${bonusNote}`;
+        const upgradeNote = upgradeResult.sources.length ? ' Upgrades amplified the payout!' : '';
+        message = `${definition.name} paid $${formatMoney(roundedPayout)}.${bonusNote}${upgradeNote}`;
       }
 
-      addMoney(finalPayout, message, metadata.payout.logType);
-      applyMetric(recordPayoutContribution, metadata.metrics.payout, { amount: finalPayout });
+      addMoney(roundedPayout, message, metadata.payout.logType);
+      applyMetric(recordPayoutContribution, metadata.metrics.payout, { amount: roundedPayout });
 
       if (appliedBonuses.length) {
         const summary = formatEducationBonusSummary(appliedBonuses);
@@ -407,6 +460,94 @@ export function createInstantHustle(config) {
   return definition;
 }
 
+function normalizeSlotMap(map) {
+  if (!map || typeof map !== 'object') return null;
+  const normalized = {};
+  Object.entries(map).forEach(([slot, value]) => {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric) || numeric === 0) return;
+    normalized[slot] = numeric;
+  });
+  return Object.keys(normalized).length ? normalized : null;
+}
+
+function formatKeyLabel(key) {
+  if (!key) return '';
+  return key
+    .toString()
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/[_-]+/g, ' ')
+    .replace(/^./, char => char.toUpperCase());
+}
+
+function formatSlotLabel(slot, amount) {
+  const label = formatKeyLabel(slot);
+  const value = Math.abs(Number(amount) || 0);
+  const rounded = Number.isInteger(value) ? value : Number(value.toFixed(2));
+  const plural = rounded === 1 ? '' : 's';
+  return `${rounded} ${label} slot${plural}`;
+}
+
+function formatSlotMap(map) {
+  if (!map) return '';
+  return Object.entries(map)
+    .map(([slot, amount]) => formatSlotLabel(slot, amount))
+    .join(', ');
+}
+
+function describeTargetScope(scope) {
+  if (!scope || typeof scope !== 'object') return '';
+  const tags = ensureArray(scope.tags).map(tag => `#${tag}`);
+  const ids = ensureArray(scope.ids);
+  const families = ensureArray(scope.families).map(formatKeyLabel);
+  const categories = ensureArray(scope.categories).map(formatKeyLabel);
+  const fragments = [];
+  if (ids.length) fragments.push(ids.join(', '));
+  if (families.length) fragments.push(`${families.join(', ')} family`);
+  if (categories.length) fragments.push(`${categories.join(', ')} category`);
+  if (tags.length) fragments.push(tags.join(', '));
+  return fragments.join(' • ');
+}
+
+function describeEffectSummary(effects, affects) {
+  if (!effects || typeof effects !== 'object') return null;
+  const parts = [];
+  Object.entries(effects).forEach(([effect, value]) => {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric) || numeric === 1) return;
+    const percent = Math.round((numeric - 1) * 100);
+    let label;
+    switch (effect) {
+      case 'payout_mult':
+        label = `${percent >= 0 ? '+' : ''}${percent}% payout`;
+        break;
+      case 'setup_time_mult':
+        label = `${percent >= 0 ? '+' : ''}${percent}% setup speed`;
+        break;
+      case 'maint_time_mult':
+        label = `${percent >= 0 ? '+' : ''}${percent}% maintenance speed`;
+        break;
+      case 'quality_progress_mult':
+        label = `${percent >= 0 ? '+' : ''}${percent}% quality progress`;
+        break;
+      default:
+        label = `${effect}: ${numeric}`;
+    }
+    const targetPieces = [];
+    const assetScope = describeTargetScope(affects?.assets);
+    if (assetScope) targetPieces.push(`assets (${assetScope})`);
+    const hustleScope = describeTargetScope(affects?.hustles);
+    if (hustleScope) targetPieces.push(`hustles (${hustleScope})`);
+    const actionScope = ensureArray(affects?.actions?.types);
+    if (actionScope.length) {
+      targetPieces.push(`actions (${actionScope.join(', ')})`);
+    }
+    const targetSummary = targetPieces.length ? ` → ${targetPieces.join(' & ')}` : '';
+    parts.push(`${label}${targetSummary}`);
+  });
+  return parts.length ? parts.join(' • ') : null;
+}
+
 function normalizeUpgradeRequirements(config = []) {
   return config.map(req => {
     if (typeof req === 'string') {
@@ -461,10 +602,28 @@ function upgradeRequirementsMet(requirements) {
 }
 
 export function createUpgrade(config) {
-  const requirements = normalizeUpgradeRequirements(config.requires || []);
+  const rawRequirements = [...ensureArray(config.requires), ...ensureArray(config.prerequisites)];
+  const requirements = normalizeUpgradeRequirements(rawRequirements);
+  const provides = normalizeSlotMap(config.provides);
+  const consumes = normalizeSlotMap(config.consumes);
+  const effects = { ...(config.effects || {}) };
+  const affects = {
+    assets: config.affects?.assets ? { ...config.affects.assets } : {},
+    hustles: config.affects?.hustles ? { ...config.affects.hustles } : {},
+    actions: config.affects?.actions ? { ...config.affects.actions } : {}
+  };
+  const synergies = Array.isArray(config.synergies) ? config.synergies.slice() : [];
   const definition = {
     ...config,
     type: 'upgrade',
+    category: config.category || null,
+    family: config.family || null,
+    exclusivityGroup: config.exclusivityGroup || null,
+    provides,
+    consumes,
+    effects,
+    affects,
+    synergies,
     defaultState: config.defaultState || { purchased: false }
   };
   definition.requirements = requirements;
@@ -482,6 +641,27 @@ export function createUpgrade(config) {
   if (config.boosts) {
     details.push(() => `Boosts: <strong>${config.boosts}</strong>`);
   }
+  if (provides) {
+    details.push(() => `🧰 Provides: <strong>${formatSlotMap(provides)}</strong>`);
+  }
+  if (consumes) {
+    details.push(() => {
+      const ledger = buildSlotLedger({ exclude: [definition.id] });
+      const pieces = Object.entries(consumes).map(([slot, amount]) => {
+        const summary = describeSlotLedger(slot, ledger);
+        const available = summary ? Math.max(0, summary.available) : 0;
+        return `${formatSlotLabel(slot, amount)} (available ${available})`;
+      });
+      return `🎯 Requires: <strong>${pieces.join(', ')}</strong>`;
+    });
+  }
+  const effectSummary = describeEffectSummary(effects, affects);
+  if (effectSummary) {
+    details.push(() => `⚙️ Effects: <strong>${effectSummary}</strong>`);
+  }
+  if (definition.exclusivityGroup) {
+    details.push(() => `🔒 Exclusive lane: <strong>${formatKeyLabel(definition.exclusivityGroup)}</strong>`);
+  }
   definition.details = [...details, ...(config.details || [])];
 
   const costMetric = buildMetricConfig(config.id, 'upgrade', config.metrics?.cost, {
@@ -495,12 +675,16 @@ export function createUpgrade(config) {
     const state = getState();
     const upgradeState = getUpgradeState(config.id);
     const missing = requirements.filter(req => !upgradeRequirementMet(req));
+    const conflict = getExclusiveConflict(definition, { state });
+    const slotConflict = wouldExceedSlotCapacity(definition, { state });
     return {
       definition,
       state,
       upgradeState,
       requirements,
-      missing
+      missing,
+      conflict,
+      slotConflict
     };
   };
 
@@ -532,6 +716,20 @@ export function createUpgrade(config) {
       }
       return missingLabel || 'Requires Prerequisite';
     }
+    if (!context.upgradeState?.purchased && context.conflict) {
+      const conflictLabel = actionConfig.labels.conflict;
+      if (typeof conflictLabel === 'function') {
+        return conflictLabel(context) || `${context.conflict.name || 'Upgrade'} Active`;
+      }
+      return conflictLabel || `${context.conflict.name || 'Upgrade'} Active`;
+    }
+    if (!context.upgradeState?.purchased && context.slotConflict) {
+      const slotLabel = actionConfig.labels.slots;
+      if (typeof slotLabel === 'function') {
+        return slotLabel(context) || 'No Slots Available';
+      }
+      return slotLabel || 'No Slots Available';
+    }
     if (typeof actionConfig.label === 'function') {
       return actionConfig.label(context) || fallback;
     }
@@ -542,6 +740,8 @@ export function createUpgrade(config) {
     if (!context.state) return true;
     if (!config.repeatable && context.upgradeState?.purchased) return true;
     if (context.missing.length) return true;
+    if (!context.upgradeState?.purchased && context.conflict) return true;
+    if (context.slotConflict) return true;
     if (config.cost && context.state.money < config.cost) return true;
     if (typeof config.disabled === 'function' && config.disabled(context)) return true;
     return false;
@@ -562,7 +762,17 @@ export function createUpgrade(config) {
         const context = getContext();
         if (!context.state) return;
         if (isDisabled(context)) {
-          addLog(config.blockedMessage || 'You still need to meet the requirements first.', 'warning');
+          let message = config.blockedMessage || 'You still need to meet the requirements first.';
+          if (!context.upgradeState?.purchased && context.conflict) {
+            message = `${context.conflict.name || 'Another upgrade'} already occupies this lane.`;
+          } else if (context.slotConflict) {
+            const ledger = buildSlotLedger({ state: context.state });
+            const summary = describeSlotLedger(context.slotConflict, ledger);
+            const required = consumes?.[context.slotConflict] || 1;
+            const available = summary ? Math.max(0, summary.available) : 0;
+            message = `You need ${formatSlotLabel(context.slotConflict, required)} available (remaining ${available}).`;
+          }
+          addLog(message, 'warning');
           return;
         }
         if (config.cost) {

@@ -1,5 +1,4 @@
 import { formatMoney } from '../../../core/helpers.js';
-import { getUpgradeState } from '../../../core/state.js';
 import { createAssetDefinition } from '../../content/schema.js';
 
 const saasDefinition = createAssetDefinition({
@@ -7,6 +6,7 @@ const saasDefinition = createAssetDefinition({
   name: 'Micro SaaS Platform',
   singular: 'Micro SaaS',
   tag: { label: 'Tech', type: 'passive' },
+  tags: ['software', 'tech', 'product'],
   description: 'Design lean software services, onboard early users, and ship updates that keep churn low.',
   setup: { days: 8, hoursPerDay: 4, cost: 960 },
   maintenance: { hours: 2.2, cost: 24 },
@@ -17,23 +17,7 @@ const saasDefinition = createAssetDefinition({
       { id: 'promotion', weight: 0.5 }
     ]
   },
-  income: {
-    base: 108,
-    variance: 0.4,
-    logType: 'passive',
-    modifier: (amount, context = {}) => {
-      const edge = getUpgradeState('serverEdge').purchased ? 1.35 : 1;
-      const total = amount * edge;
-      if (edge > 1 && typeof context.recordModifier === 'function') {
-        context.recordModifier('Edge delivery boost', total - amount, {
-          id: 'serverEdge',
-          type: 'upgrade',
-          percent: edge - 1
-        });
-      }
-      return total;
-    }
-  },
+  income: { base: 108, variance: 0.4, logType: 'passive' },
   requirements: {
     knowledge: ['automationCourse'],
     equipment: ['serverCluster'],
@@ -102,7 +86,7 @@ const saasDefinition = createAssetDefinition({
         cost: 32,
         dailyLimit: 1,
         progressKey: 'features',
-        progressAmount: context => (context.upgrade('serverEdge')?.purchased ? 2 : 1),
+        progressAmount: () => 1,
         skills: ['software'],
         log: ({ label }) => `${label} shipped a delightful feature. Beta users erupt in emoji reactions!`
       },
@@ -113,7 +97,7 @@ const saasDefinition = createAssetDefinition({
         cost: 36,
         dailyLimit: 1,
         progressKey: 'stability',
-        progressAmount: context => (context.upgrade('serverEdge')?.purchased ? 2 : 1),
+        progressAmount: () => 1,
         skills: ['infrastructure'],
         log: ({ label }) => `${label} patched outages and bolstered uptime. Pager alerts stay quiet.`
       },
@@ -124,7 +108,7 @@ const saasDefinition = createAssetDefinition({
         cost: 44,
         dailyLimit: 1,
         progressKey: 'marketing',
-        progressAmount: context => (context.upgrade('serverEdge')?.purchased ? 2 : 1),
+        progressAmount: () => 1,
         skills: ['promotion'],
         log: ({ label }) => `${label} launched a marketing sprint. Sign-ups trickle in all night.`
       },

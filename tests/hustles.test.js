@@ -69,7 +69,7 @@ test('education multipliers boost freelance writing payout once mastered', () =>
   const boostedFreelance = HUSTLES.find(hustle => hustle.id === 'freelance');
   boostedFreelance.action.onClick();
 
-  assert.equal(boostedState.money, 22.5, 'outline mastery should add a 25% payout boost');
+  assert.equal(boostedState.money, 23, 'outline mastery should add a 25% payout boost (rounded)');
   assert.match(
     boostedState.log.at(-1).message,
     /Outline Mastery Workshop/,

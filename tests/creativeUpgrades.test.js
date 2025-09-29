@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { getGameTestHarness } from './helpers/gameTestHarness.js';
+import { getAssetEffectMultiplier } from '../src/game/upgrades/effects.js';
 
 const harness = await getGameTestHarness();
 const {
@@ -29,13 +30,6 @@ const syndicationSuite = UPGRADES.find(upgrade => upgrade.id === 'syndicationSui
 const immersiveStoryWorlds = UPGRADES.find(upgrade => upgrade.id === 'immersiveStoryWorlds');
 
 const resetState = () => harness.resetState();
-
-function upgradeContext() {
-  return {
-    upgrade: id => getUpgradeState(id),
-    recordModifier: () => {}
-  };
-}
 
 test.beforeEach(() => {
   resetState();
@@ -82,67 +76,83 @@ test('creative upgrades enforce cascading requirements', () => {
   assert.equal(immersiveAction.disabled(), false, 'Immersive worlds open after all media online');
 });
 
-test('creative upgrades stack blog payouts and progress increments', () => {
+test('creative upgrades stack blog payouts and progress multipliers', () => {
   const writePost = blogDefinition.quality.actions.find(action => action.id === 'writePost');
-  const blogIncome = blogDefinition.income.modifier;
-  const context = upgradeContext();
+  assert.ok(writePost, 'Blog quality action missing');
 
-  assert.equal(writePost.progressAmount(context), 1, 'Base progress is 1 without upgrades');
-  assert.equal(blogIncome(100, context), 100, 'Baseline payout unchanged');
+  const qualityMultiplier = () =>
+    getAssetEffectMultiplier(blogDefinition, 'quality_progress_mult', {
+      actionType: 'quality'
+    });
+  const payoutMultiplier = () =>
+    getAssetEffectMultiplier(blogDefinition, 'payout_mult', {
+      actionType: 'payout'
+    });
+
+  assert.equal(writePost.progressAmount({}), 1, 'Base progress is 1 without upgrades');
+  assert.equal(qualityMultiplier().multiplier, 1, 'quality multiplier starts neutral');
+  assert.equal(payoutMultiplier().multiplier, 1, 'payout multiplier starts neutral');
 
   getUpgradeState('course').purchased = true;
-  assert.equal(writePost.progressAmount(context), 2, 'Course adds +1 progress');
-  assert.equal(blogIncome(100, context), 150, 'Course adds +50%');
+  assert.equal(qualityMultiplier().multiplier, 2, 'Course doubles blog quality progress');
+  assert.ok(Math.abs(payoutMultiplier().multiplier - 1.5) < 1e-9, 'Course adds +50% payout');
 
   getUpgradeState('editorialPipeline').purchased = true;
-  assert.equal(writePost.progressAmount(context), 3, 'Editorial pipeline adds +1 progress');
-  assert.equal(blogIncome(100, context), 180, 'Editorial pipeline adds +20% after course');
+  assert.ok(Math.abs(qualityMultiplier().multiplier - 3) < 1e-9, 'Editorial pipeline lifts progress to 3×');
+  assert.ok(Math.abs(payoutMultiplier().multiplier - 1.8) < 1e-9, 'Editorial pipeline stacks a 20% multiplier');
 
   getUpgradeState('syndicationSuite').purchased = true;
-  assert.equal(writePost.progressAmount(context), 4, 'Syndication suite adds +1 progress');
-  assert.equal(blogIncome(100, context), 225, 'Syndication suite stacks after other boosts');
+  assert.ok(Math.abs(qualityMultiplier().multiplier - 4) < 1e-9, 'Syndication suite pushes total progress to 4×');
+  assert.ok(Math.abs(payoutMultiplier().multiplier - 2.25) < 1e-9, 'Syndication suite brings total payouts to 2.25×');
 });
 
 test('creative upgrades accelerate e-books and vlogs', () => {
   const chapterAction = ebookDefinition.quality.actions.find(action => action.id === 'writeChapter');
-  const ebookIncome = ebookDefinition.income.modifier;
   const shootEpisode = vlogDefinition.quality.actions.find(action => action.id === 'shootEpisode');
-  const vlogIncome = vlogDefinition.income.modifier;
-  const context = upgradeContext();
+  assert.ok(chapterAction, 'E-book quality action missing');
+  assert.ok(shootEpisode, 'Vlog quality action missing');
 
-  // prevent viral bursts from affecting deterministic checks
-  const originalRandom = Math.random;
-  Math.random = () => 1;
+  const ebookQuality = () =>
+    getAssetEffectMultiplier(ebookDefinition, 'quality_progress_mult', {
+      actionType: 'quality'
+    });
+  const ebookPayout = () =>
+    getAssetEffectMultiplier(ebookDefinition, 'payout_mult', {
+      actionType: 'payout'
+    });
+  const vlogQuality = () =>
+    getAssetEffectMultiplier(vlogDefinition, 'quality_progress_mult', {
+      actionType: 'quality'
+    });
+  const vlogPayout = () =>
+    getAssetEffectMultiplier(vlogDefinition, 'payout_mult', {
+      actionType: 'payout'
+    });
 
-  try {
-    assert.equal(chapterAction.progressAmount(context), 1, 'Base e-book progress is 1');
-    assert.equal(shootEpisode.progressAmount(context), 1, 'Base vlog progress is 1');
-    assert.equal(ebookIncome(100, context), 100, 'Baseline e-book payout');
-    assert.equal(vlogIncome(100, { ...context, instance: { quality: { level: 5 } } }), 100, 'Baseline vlog payout');
+  assert.equal(chapterAction.progressAmount({}), 1, 'Base e-book progress is 1');
+  assert.equal(shootEpisode.progressAmount({}), 1, 'Base vlog progress is 1');
+  assert.equal(ebookQuality().multiplier, 1, 'E-book quality multiplier starts neutral');
+  assert.equal(vlogQuality().multiplier, 1, 'Vlog quality multiplier starts neutral');
+  assert.equal(ebookPayout().multiplier, 1, 'E-book payout multiplier starts neutral');
+  assert.equal(vlogPayout().multiplier, 1, 'Vlog payout multiplier starts neutral');
 
-    getUpgradeState('editorialPipeline').purchased = true;
-    assert.equal(chapterAction.progressAmount(context), 2, 'Editorial pipeline accelerates e-book chapters');
-    assert.equal(shootEpisode.progressAmount(context), 2, 'Editorial pipeline accelerates vlog shoots');
-    assert.equal(ebookIncome(100, context), 120, 'Editorial pipeline adds 20% to e-books');
-    const editorialPayout = vlogIncome(100, { ...context, instance: { quality: { level: 5 } } });
-    assert.ok(Math.abs(editorialPayout - 115) < 1e-6, 'Editorial pipeline adds 15% to vlogs');
+  getUpgradeState('editorialPipeline').purchased = true;
+  assert.ok(Math.abs(ebookQuality().multiplier - 1.5) < 1e-9, 'Editorial pipeline boosts e-book progress by 1.5×');
+  assert.ok(Math.abs(vlogQuality().multiplier - 1.5) < 1e-9, 'Editorial pipeline boosts vlog progress by 1.5×');
+  assert.ok(Math.abs(ebookPayout().multiplier - 1.2) < 1e-9, 'Editorial pipeline adds 20% e-book payout');
+  assert.ok(Math.abs(vlogPayout().multiplier - 1.2) < 1e-9, 'Editorial pipeline adds 20% vlog payout');
 
-    getUpgradeState('syndicationSuite').purchased = true;
-    assert.equal(chapterAction.progressAmount(context), 3, 'Syndication suite adds another +1 progress');
-    assert.equal(shootEpisode.progressAmount(context), 3, 'Syndication suite stacks on vlogs');
-    assert.equal(ebookIncome(100, context), 150, 'Syndication suite lifts e-book royalties');
-    const syndicationPayout = vlogIncome(100, { ...context, instance: { quality: { level: 5 } } });
-    assert.ok(Math.abs(syndicationPayout - 138) < 1e-6, 'Syndication suite adds 20% on top of editorial bonus');
+  getUpgradeState('syndicationSuite').purchased = true;
+  assert.ok(Math.abs(ebookQuality().multiplier - 2) < 1e-9, 'Syndication suite lifts e-book progress to 2× total');
+  assert.ok(Math.abs(vlogQuality().multiplier - 2) < 1e-9, 'Syndication suite lifts vlog progress to 2× total');
+  assert.ok(Math.abs(ebookPayout().multiplier - 1.5) < 1e-9, 'Syndication suite brings e-book payout to 1.5×');
+  assert.ok(Math.abs(vlogPayout().multiplier - 1.5) < 1e-9, 'Syndication suite brings vlog payout to 1.5×');
 
-    getUpgradeState('immersiveStoryWorlds').purchased = true;
-    assert.equal(chapterAction.progressAmount(context), 4, 'Immersive worlds max out e-book acceleration');
-    assert.equal(shootEpisode.progressAmount(context), 4, 'Immersive worlds add another vlog step');
-    assert.equal(ebookIncome(100, context), 202.5, 'Immersive worlds push e-book royalties to 202.5');
-    const immersivePayout = vlogIncome(100, { ...context, instance: { quality: { level: 5 } } });
-    assert.ok(Math.abs(immersivePayout - 179.4) < 1e-6, 'Immersive worlds add 30% hype to vlogs');
-  } finally {
-    Math.random = originalRandom;
-  }
+  getUpgradeState('immersiveStoryWorlds').purchased = true;
+  assert.ok(Math.abs(ebookQuality().multiplier - 4) < 1e-9, 'Immersive worlds double e-book progress again');
+  assert.ok(Math.abs(vlogQuality().multiplier - 4) < 1e-9, 'Immersive worlds double vlog progress again');
+  assert.ok(Math.abs(ebookPayout().multiplier - 1.68) < 1e-9, 'Immersive worlds lift e-book payout to 1.68×');
+  assert.ok(Math.abs(vlogPayout().multiplier - 1.68) < 1e-9, 'Immersive worlds lift vlog payout to 1.68×');
 });
 
 test('creative upgrade cards surface knowledge progress detail', () => {
