@@ -253,11 +253,105 @@ export function getDailyIncomeRange(definition) {
 export function rollDailyIncome(definition, assetState, instance) {
   const { min, max } = getInstanceQualityRange(definition, instance);
   const roll = min + Math.random() * Math.max(0, max - min);
-  const rounded = Math.round(roll);
-  if (typeof definition.income?.modifier === 'function') {
-    return Math.max(0, Math.round(definition.income.modifier(rounded, { definition, assetState, instance })));
+  const baseAmount = Math.max(0, Math.round(roll));
+
+  let finalAmount = baseAmount;
+  const contributions = [
+    {
+      id: 'base',
+      label: 'Base quality payout',
+      amount: baseAmount,
+      type: 'base',
+      percent: null
+    }
+  ];
+
+  const modifier = definition.income?.modifier;
+  if (typeof modifier === 'function') {
+    const recorded = [];
+    const context = {
+      definition,
+      assetState,
+      instance,
+      baseAmount,
+      recordModifier(label, amount, meta = {}) {
+        if (!label) return;
+        const numericAmount = Number(amount);
+        if (!Number.isFinite(numericAmount) || numericAmount === 0) return;
+        recorded.push({
+          id: meta.id || null,
+          label,
+          amount: numericAmount,
+          type: meta.type || 'modifier',
+          percent: Number.isFinite(Number(meta.percent)) ? Number(meta.percent) : null
+        });
+      }
+    };
+
+    const rawResult = modifier(baseAmount, context);
+    if (rawResult && typeof rawResult === 'object' && !Number.isFinite(Number(rawResult))) {
+      if (Number.isFinite(Number(rawResult.amount))) {
+        finalAmount = Number(rawResult.amount);
+      }
+      if (Array.isArray(rawResult.breakdown)) {
+        rawResult.breakdown.forEach(entry => {
+          if (!entry) return;
+          const numericAmount = Number(entry.amount);
+          if (!Number.isFinite(numericAmount) || numericAmount === 0) return;
+          recorded.push({
+            id: entry.id || null,
+            label: entry.label || 'Modifier',
+            amount: numericAmount,
+            type: entry.type || 'modifier',
+            percent: Number.isFinite(Number(entry.percent)) ? Number(entry.percent) : null
+          });
+        });
+      }
+    } else if (Number.isFinite(Number(rawResult))) {
+      finalAmount = Number(rawResult);
+    }
+
+    recorded.forEach(entry => {
+      contributions.push({
+        id: entry.id,
+        label: entry.label,
+        amount: entry.amount,
+        type: entry.type,
+        percent: entry.percent
+      });
+    });
   }
-  return Math.max(0, rounded);
+
+  let roundedTotal = 0;
+  const roundedEntries = contributions.map(entry => {
+    const amount = Math.round(Number(entry.amount) || 0);
+    roundedTotal += amount;
+    return {
+      id: entry.id,
+      label: entry.label,
+      amount,
+      type: entry.type,
+      percent: entry.percent
+    };
+  });
+
+  const finalRounded = Math.max(0, Math.round(Number(finalAmount) || 0));
+  const diff = finalRounded - roundedTotal;
+  if (diff !== 0 && roundedEntries.length) {
+    const targetIndex = roundedEntries.length > 1 ? roundedEntries.length - 1 : 0;
+    roundedEntries[targetIndex].amount += diff;
+    roundedTotal += diff;
+  }
+
+  const payout = Math.max(0, roundedTotal);
+  if (instance) {
+    instance.lastIncomeBreakdown = {
+      total: payout,
+      entries: roundedEntries
+    };
+  }
+
+  return payout;
 }
 
 export function getIncomeRangeForDisplay(assetId) {

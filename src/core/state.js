@@ -98,6 +98,33 @@ export function normalizeAssetInstance(definition, instance = {}) {
 
   const lastIncome = Number(normalized.lastIncome);
   normalized.lastIncome = Number.isFinite(lastIncome) ? lastIncome : 0;
+  const breakdown = normalized.lastIncomeBreakdown;
+  if (breakdown && typeof breakdown === 'object') {
+    const entries = Array.isArray(breakdown.entries)
+      ? breakdown.entries
+          .map(entry => {
+            if (!entry) return null;
+            const label = String(entry.label || '').trim();
+            const amount = Number(entry.amount);
+            if (!label || !Number.isFinite(amount)) return null;
+            return {
+              id: entry.id || null,
+              label,
+              amount: Math.round(amount),
+              type: entry.type || 'modifier',
+              percent: Number.isFinite(Number(entry.percent)) ? Number(entry.percent) : null
+            };
+          })
+          .filter(Boolean)
+      : [];
+    const total = Number(breakdown.total);
+    normalized.lastIncomeBreakdown = {
+      total: Number.isFinite(total) ? Math.max(0, Math.round(total)) : normalized.lastIncome,
+      entries
+    };
+  } else {
+    normalized.lastIncomeBreakdown = null;
+  }
   const pendingIncome = Number(normalized.pendingIncome);
   normalized.pendingIncome = Number.isFinite(pendingIncome) ? Math.max(0, pendingIncome) : 0;
   const totalIncome = Number(normalized.totalIncome);
@@ -135,6 +162,7 @@ export function createAssetInstance(definition, overrides = {}) {
     maintenanceFundedToday: false,
     cooldowns: {},
     lastIncome: 0,
+    lastIncomeBreakdown: null,
     pendingIncome: 0,
     totalIncome: 0,
     createdOnDay: state?.day ?? 1,

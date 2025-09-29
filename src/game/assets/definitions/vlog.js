@@ -20,7 +20,8 @@ const vlogDefinition = createAssetDefinition({
     base: 34,
     variance: 0.2,
     logType: 'passive',
-    modifier: (amount, { instance }) => {
+    modifier: (amount, context = {}) => {
+      const instance = context.instance;
       const hasCinemaGear = getUpgradeState('cameraPro').purchased;
       const qualityLevel = instance?.quality?.level || 0;
       const viralChance = hasCinemaGear
@@ -39,10 +40,29 @@ const vlogDefinition = createAssetDefinition({
           : 3;
       let payout = amount;
       if (qualityLevel >= 3 && Math.random() < viralChance) {
-        payout = Math.round(payout * viralMultiplier);
+        const before = payout;
+        const raw = payout * viralMultiplier;
+        const after = Math.round(raw);
+        if (typeof context.recordModifier === 'function') {
+          const percent = before > 0 ? raw / before - 1 : null;
+          context.recordModifier('Viral surge', raw - before, {
+            id: 'vlog:viralSpike',
+            type: 'event',
+            percent
+          });
+        }
+        payout = after;
       }
       const baseMultiplier = hasCinemaGear ? 1.25 : 1;
-      return Math.round(payout * baseMultiplier);
+      const total = payout * baseMultiplier;
+      if (hasCinemaGear && typeof context.recordModifier === 'function') {
+        context.recordModifier('Cinema rig bonus', total - payout, {
+          id: 'cameraPro',
+          type: 'upgrade',
+          percent: baseMultiplier - 1
+        });
+      }
+      return total;
     }
   },
   requirements: {

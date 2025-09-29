@@ -199,6 +199,7 @@ export function closeOutDay() {
           instance.pendingIncome = (instance.pendingIncome || 0) + payout;
         } else {
           instance.lastIncome = 0;
+          instance.lastIncomeBreakdown = null;
           instance.pendingIncome = 0;
           const label = instanceLabel(definition, index);
           const message = definition.messages?.maintenanceSkipped

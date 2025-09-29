@@ -17,7 +17,8 @@ const {
   getState,
   getAssetDefinition,
   getAssetState,
-  createAssetInstance
+  createAssetInstance,
+  getUpgradeState
 } = stateModule;
 const { allocateAssetMaintenance, closeOutDay, ASSETS, getIncomeRangeForDisplay } = assetsModule;
 const { HUSTLES } = hustlesModule;
@@ -107,6 +108,53 @@ test('maintenance funding yields end-of-day payouts', () => {
       'queued payout should credit before new upkeep is deducted'
     );
     assert.equal(updatedInstance.pendingIncome, 0, 'payout queue should clear after maintenance runs');
+  } finally {
+    Math.random = originalRandom;
+  }
+});
+
+test('payout breakdown captures upgrade boosts and clears on skipped upkeep', () => {
+  const originalRandom = Math.random;
+  Math.random = () => 0;
+
+  try {
+    const blogDefinition = getAssetDefinition('blog');
+    const blogState = getAssetState('blog');
+    blogState.instances = [createAssetInstance(blogDefinition, {
+      status: 'active',
+      daysRemaining: 0,
+      daysCompleted: blogDefinition.setup.days,
+      maintenanceFundedToday: false
+    })];
+    const instanceId = blogState.instances[0].id;
+
+    const courseUpgrade = getUpgradeState('course');
+    courseUpgrade.purchased = true;
+
+    state.timeLeft = 10;
+    state.money = 50;
+
+    allocateAssetMaintenance();
+    closeOutDay();
+
+    let instance = getAssetState('blog').instances.find(item => item.id === instanceId);
+    assert.ok(instance.lastIncome > 0, 'payout should register when upkeep is funded');
+    assert.ok(instance.lastIncomeBreakdown, 'breakdown should be stored after payout');
+    assert.equal(instance.lastIncomeBreakdown.total, instance.lastIncome, 'breakdown total should match payout');
+    const baseEntry = instance.lastIncomeBreakdown.entries.find(entry => entry.id === 'base' || entry.type === 'base');
+    assert.ok(baseEntry, 'base payout entry should exist');
+    const upgradeEntry = instance.lastIncomeBreakdown.entries.find(entry => entry.id === 'course');
+    assert.ok(upgradeEntry, 'automation course boost should be recorded');
+    assert.ok(upgradeEntry.amount > 0, 'upgrade bonus should add payout value');
+
+    state.timeLeft = 0;
+    state.money = 0;
+    allocateAssetMaintenance();
+    closeOutDay();
+
+    instance = getAssetState('blog').instances.find(item => item.id === instanceId);
+    assert.equal(instance.lastIncome, 0, 'payout should reset when maintenance is skipped');
+    assert.equal(instance.lastIncomeBreakdown, null, 'breakdown should clear after unpaid upkeep');
   } finally {
     Math.random = originalRandom;
   }

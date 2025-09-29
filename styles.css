@@ -1450,6 +1450,117 @@ body {
   gap: 12px;
 }
 
+.asset-detail__instance-overview {
+  display: grid;
+  gap: 12px;
+}
+
+@media (min-width: 720px) {
+  .asset-detail__instance-overview {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+}
+
+.asset-detail__insight {
+  background: rgba(148, 163, 184, 0.16);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  display: grid;
+  gap: 6px;
+}
+
+.asset-detail__insight-title {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-subtle);
+  font-weight: 700;
+}
+
+.asset-detail__insight-body {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.asset-detail__insight-note {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-subtle);
+}
+
+.asset-detail__requirement-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 4px;
+}
+
+.asset-detail__requirement-entry {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.asset-detail__requirement-label {
+  color: var(--text-subtle);
+  font-weight: 600;
+}
+
+.asset-detail__requirement-value {
+  font-weight: 700;
+}
+
+.asset-detail__payout-breakdown {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 4px;
+}
+
+.asset-detail__payout-entry {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.asset-detail__payout-label {
+  color: var(--text-subtle);
+  font-weight: 600;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.asset-detail__payout-percent {
+  color: var(--text-subtle);
+  font-weight: 500;
+}
+
+.asset-detail__payout-value {
+  font-weight: 700;
+}
+
+.asset-detail__payout-entry.is-base .asset-detail__payout-label,
+.asset-detail__payout-entry.is-base .asset-detail__payout-value {
+  color: var(--text);
+}
+
+.asset-detail__payout-entry.is-positive .asset-detail__payout-value {
+  color: var(--success);
+}
+
+.asset-detail__payout-entry.is-negative .asset-detail__payout-value {
+  color: var(--danger);
+}
+
 .asset-detail__instance-stats {
   display: grid;
   gap: 8px;
@@ -1528,6 +1639,16 @@ body {
   gap: 8px 12px;
   font-size: 12px;
   color: var(--text-subtle);
+}
+
+.asset-detail__progress-entry.is-pending {
+  color: var(--warning);
+  font-weight: 600;
+}
+
+.asset-detail__progress-entry.is-complete {
+  color: var(--success);
+  font-weight: 600;
 }
 
 .asset-detail__actions {
