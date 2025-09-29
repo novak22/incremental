@@ -1415,7 +1415,29 @@ function openStudyDetails(definition) {
   showSlideOver({ eyebrow: 'Study track', title: definition.name, body });
 }
 
+function ensureStudyElements() {
+  const doc = document;
+  if (!doc) return;
+
+  if (!elements.studyTrackList || elements.studyTrackList.ownerDocument !== doc) {
+    elements.studyTrackList = doc.getElementById('study-track-list');
+  }
+
+  if (!elements.studyQueueList || elements.studyQueueList.ownerDocument !== doc) {
+    elements.studyQueueList = doc.getElementById('study-queue-list');
+  }
+
+  if (!elements.studyQueueEta || elements.studyQueueEta.ownerDocument !== doc) {
+    elements.studyQueueEta = doc.getElementById('study-queue-eta');
+  }
+
+  if (!elements.studyQueueCap || elements.studyQueueCap.ownerDocument !== doc) {
+    elements.studyQueueCap = doc.getElementById('study-queue-cap');
+  }
+}
+
 function renderEducation(definitions) {
+  ensureStudyElements();
   const list = elements.studyTrackList;
   if (!list) return;
   list.innerHTML = '';
@@ -1429,6 +1451,7 @@ function renderEducation(definitions) {
 }
 
 function renderStudyQueue(definitions) {
+  ensureStudyElements();
   const queue = elements.studyQueueList;
   if (!queue) return;
   queue.innerHTML = '';
