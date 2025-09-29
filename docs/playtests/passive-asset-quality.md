@@ -1,11 +1,13 @@
 # Passive Asset Quality – May 2024 Playtest
 
-These notes capture the ROI verification run that followed the passive payout rebalance.
+Objective: confirm the post-rebalance passive loop keeps Quality 3 earnings in the $20–$40/day band.
 
-- Advanced a fresh save through 35 in-game days to confirm peak-quality passive income stays within the $20–$40/day target range.
-- **Blog network** reached Quality 3 on day 21 after investing 72 writing hours plus $180 setup/$180 quality cash; maintenance-adjusted payouts averaged ~$28/day, with break-even arriving around day 24.
-- **Weekly vlog** cleared its new requirements on day 33 after 133.5 production hours and $652 invested; steady $32–$40 payouts covered cumulative costs by day 38, with viral spikes staying within expectations.
-- **E-book series** crossed Quality 3 on day 26 (100 hours, $496 sunk) and held $28–$38 royalties, recouping the spend on day 31 while still demanding 45 minutes of daily upkeep.
-- **Stock galleries** needed 27 days (96.5 hours, $402 invested) to hit Quality 3, after which $26–$36/day licensing covered the spend in the following nine days.
-- **Dropshipping storefront** demanded the longest climb in the commerce tier: 95 hours of listings/ads work plus $1,450 total outlay stretched break-even to day 57 even with steady $32–$40 profits.
-- **SaaS micro-app** capped the playtest: 123 hours of features/support and $2,240 total spend put Quality 3 online by day 62, and maintenance-adjusted $34–$42 subscriptions kept ROI just under the 90-day mark.
+**Highlights**
+- Blogs: Q3 on day 21 after 72h + $360 total; ~$28/day nets break-even by day 24.
+- Vlogs: Q3 on day 33 after 133.5h + $652; $32–$40/day recoups costs by day 38 with controlled viral spikes.
+- E-books: Q3 on day 26 after 100h + $496; $28–$38/day covers spend by day 31 (45m upkeep ongoing).
+- Stock photos: Q3 on day 27 after 96.5h + $402; $26–$36/day pays back within nine days.
+- Dropshipping: Q3 on day 57 after 95h + $1,450; steady $32–$40/day keeps ROI long but viable.
+- SaaS: Q3 on day 62 after 123h + $2,240; $34–$42/day maintains sub-90-day ROI target.
+
+Takeaway: the tuning meets targets, though late commerce/SaaS loops remain the slowest climb to profitability.

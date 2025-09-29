@@ -1,16 +1,13 @@
 # Header Pulse Metrics
 
-## Goals
-- Use the previously empty center of the shell header to surface the key daily and lifetime signals players check most often.
-- Keep the daily flow (income versus upkeep) visible even when scrolling away from the dashboard cards.
-- Reinforce time pressure by pairing remaining hours with the amount already spoken for each day.
+**Purpose**
+- Fill the shell header with the daily signals players check most: net cash, lifetime totals, and time pressure.
 
-## Player Impact
-- Players see at a glance whether today is net-positive or cash hungry without opening the snapshot card.
-- Lifetime totals call out long-term momentum, highlighting the overall net trend and total spend across days.
-- Remaining versus reserved hours help players decide if they can squeeze in another hustle or need to wrap up for the day.
+**What shows up**
+- Daily earnings vs. spend feed from `computeDailySummary`.
+- Lifetime totals use `state.totals` to track cumulative cash in/out.
+- Remaining hours pair with already-reserved time so players know if there’s room for one more action.
 
-## Tuning Notes
-- Daily earnings and spending pull directly from the existing `computeDailySummary` output.
-- Lifetime totals accumulate via the `state.totals` ledger that increments alongside cost/payout metric recording.
-- Reserved time is calculated from the daily time cap minus the remaining hours, with setup/maintenance portions highlighted when present.
+**Player benefit**
+- Net-positive or upkeep-heavy days are obvious without opening the snapshot.
+- Long-term momentum stays visible even while scrolling away from dashboard cards.

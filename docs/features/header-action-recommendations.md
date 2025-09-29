@@ -1,15 +1,13 @@
-# Header action recommendations
+# Header Action Recommendations
 
-## Goal
-Keep players focused on the most impactful next step without digging through cards or lists by turning the header's day control into a smart recommendation.
+**Purpose**
+- Turn the header button into a friendly "do this next" guide instead of just "End Day".
 
-## Player impact
-- Surfaces a single "do this next" suggestion drawn from the same logic that powers the Asset upgrade and Quick actions panels.
-- Prioritises longer time commitments so the button nudges players toward chunky investments before minor clean-up tasks.
-- Falls back to the traditional "End Day" control whenever no qualifying action is available, preserving a clear exit.
+**Behavior**
+- Pulls upgrade recommendations first, then quick actions; both lists share the same availability checks as their panels.
+- Sorts candidates by time cost (longest first) so chunky commitments win before cleanup tasks.
+- Button copy becomes `Next: <action> (<time>)`; clicking runs the action. When no match exists we fall back to End Day.
 
-## Mechanics
-- Pull the current recommendations from the Asset upgrade panel first; if none remain, evaluate the Quick actions pool.
-- Sort each candidate set by time cost (descending) to highlight the most time-intensive opportunity.
-- Update the header button copy with a "Next:" prefix plus the recommended action and its time commitment.
-- Clicking the button fires the recommended action immediately; only when no recommendation exists does it end the day.
+**Player effect**
+- Keeps priorities visible without opening more UI.
+- Encourages high-impact actions before wrapping the day.

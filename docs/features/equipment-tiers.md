@@ -1,23 +1,16 @@
 # Equipment Tier Expansion
 
-## Goals
-- Offer mid-game cash sinks that reward continued investment into existing content pillars.
-- Establish an infrastructure ladder that clearly communicates when players are ready for SaaS deployments.
-- Celebrate equipment upgrades with upbeat copy that reinforces progress and provides aspirational context.
+**Purpose**
+- Provide mid-game cash sinks that amplify existing assets and telegraph readiness for SaaS.
 
-## Player Impact
-- Vloggers and photographers now have optional Cinema Camera and Studio Expansion upgrades that promise richer payouts and faster sessions once purchased.
-- Server infrastructure progresses from a Starter Server Rack to a Cloud Cluster (required for SaaS) and culminates in an Edge Delivery Network for prestige uptime bragging rights.
-- Equipment cards surface prerequisite messaging so players always know which upgrade to chase next.
+**Key upgrades**
+- Cinema Camera ($480, requires base camera): doubles vlog quality progress, +~25% payouts, stronger viral spikes.
+- Studio Expansion ($540, requires Lighting Kit): doubles stock photo quality progress, +~20% gallery income.
+- Server Rack → Cloud Cluster ($650 → $1,150) unlocks SaaS deployments; Edge Delivery Network ($1,450) doubles SaaS quality progress and lifts payouts ~35%.
 
-## Tuning Notes
-- Cinema Camera Upgrade costs $480 and requires the base camera before purchase. Studio Expansion costs $540 and requires the Lighting Kit.
-- Server Rack - Starter costs $650 and unlocks foundational infrastructure. Cloud Cluster costs $1,150, requires the rack, and is the new SaaS prerequisite. Edge Delivery Network costs $1,450 and requires the cluster.
-- All upgrades log celebratory flavour text and contribute spending data to the daily metrics ledger.
-- Cinema Camera now doubles vlog quality progress, bumps daily payouts by roughly 25%, and adds a juicier viral spike chance that ramps again at Quality 4 and beyond.
-- Studio Expansion doubles stock photo quality action progress and lifts gallery payouts by about 20% to offset the larger marketing pushes.
-- Edge Delivery Network doubles SaaS quality action progress across all tracks and increases subscription payouts by roughly 35%.
+**Player takeaways**
+- Equipment cards explain prerequisites and celebrate purchases with upbeat copy.
+- Spending logs feed the daily metrics ledger so investments stay visible.
 
-## Follow-Up Ideas
-- Explore prestige-tier upgrades that convert the doubled progress into passive automation for late-game scaling.
-- Introduce maintenance costs or downtime events that encourage balancing infrastructure investments against daily upkeep budgets.
+**Next ideas**
+- Consider prestige-tier automation or light maintenance costs to keep infrastructure decisions meaningful.
