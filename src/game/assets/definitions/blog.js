@@ -1,22 +1,12 @@
 import { formatMoney } from '../../../core/helpers.js';
-import { getUpgradeState } from '../../../core/state.js';
 import { createAssetDefinition } from '../../content/schema.js';
-
-function hasUpgrade(context, id) {
-  if (!id) return false;
-  if (context && typeof context.upgrade === 'function') {
-    const upgrade = context.upgrade(id);
-    if (upgrade) return Boolean(upgrade.purchased);
-  }
-  const state = getUpgradeState(id);
-  return Boolean(state?.purchased);
-}
 
 const blogDefinition = createAssetDefinition({
   id: 'blog',
   name: 'Personal Blog Network',
   singular: 'Blog',
   tag: { label: 'Foundation', type: 'passive' },
+  tags: ['writing', 'content', 'desktop_work'],
   description: 'Launch cozy blogs that drip ad revenue once the posts are polished.',
   setup: { days: 3, hoursPerDay: 3, cost: 180 },
   maintenance: { hours: 0.75, cost: 3 },
@@ -26,35 +16,7 @@ const blogDefinition = createAssetDefinition({
       { id: 'promotion', weight: 0.5 }
     ]
   },
-  income: {
-    base: 30,
-    variance: 0.2,
-    logType: 'passive',
-    modifier: (amount, context = {}) => {
-      const steps = [];
-      if (hasUpgrade(context, 'course')) {
-        steps.push({ id: 'course', label: 'Automation course boost', percent: 0.5 });
-      }
-      if (hasUpgrade(context, 'editorialPipeline')) {
-        steps.push({ id: 'editorialPipeline', label: 'Editorial pipeline boost', percent: 0.2 });
-      }
-      if (hasUpgrade(context, 'syndicationSuite')) {
-        steps.push({ id: 'syndicationSuite', label: 'Syndication suite boost', percent: 0.25 });
-      }
-      return steps.reduce((total, step) => {
-        const before = total;
-        const after = total * (1 + step.percent);
-        if (typeof context.recordModifier === 'function') {
-          context.recordModifier(step.label, after - before, {
-            id: step.id,
-            type: 'upgrade',
-            percent: step.percent
-          });
-        }
-        return after;
-      }, amount);
-    }
-  },
+  income: { base: 30, variance: 0.2, logType: 'passive' },
   quality: {
     summary: 'Draft posts, tune SEO, and rally backlinks to climb from skeleton sites to a thriving blog constellation.',
     tracks: {
@@ -113,13 +75,7 @@ const blogDefinition = createAssetDefinition({
         time: 3,
         dailyLimit: 1,
         progressKey: 'posts',
-        progressAmount: context => {
-          let progress = 1;
-          if (hasUpgrade(context, 'course')) progress += 1;
-          if (hasUpgrade(context, 'editorialPipeline')) progress += 1;
-          if (hasUpgrade(context, 'syndicationSuite')) progress += 1;
-          return progress;
-        },
+        progressAmount: () => 1,
         skills: ['writing'],
         log: ({ label }) => `${label} published a sparkling post. Subscribers sip the fresh ideas!`
       },

@@ -1,6 +1,7 @@
 import { formatHours, formatMoney } from '../../core/helpers.js';
 import { addLog } from '../../core/log.js';
 import { getAssetDefinition, getAssetState, getState, getUpgradeState } from '../../core/state.js';
+import { getAssetEffectMultiplier } from '../upgrades/effects.js';
 import { executeAction } from '../actions.js';
 import { spendMoney } from '../currency.js';
 import { checkDayEnd } from '../lifecycle.js';
@@ -272,8 +273,13 @@ function runQualityAction(definition, instanceId, actionId) {
   if (progressKey) {
     const amount = resolveProgressAmount(action, context);
     if (amount !== 0) {
+      const effect = getAssetEffectMultiplier(definition, 'quality_progress_mult', {
+        actionType: 'quality'
+      });
+      const multiplier = Number.isFinite(effect.multiplier) ? effect.multiplier : 1;
+      const adjusted = amount * multiplier;
       const current = Number(quality.progress[progressKey]) || 0;
-      quality.progress[progressKey] = Math.max(0, current + amount);
+      quality.progress[progressKey] = Math.max(0, current + adjusted);
     }
   }
 

@@ -11,6 +11,12 @@
 - Ready upgrades automatically populate the dock with their current label and price for one-click purchasing.
 - Each card now carries tag/status badges, refreshed copy, and rotating detail bullets that stay current with game state.
 
+## Structured taxonomy & stacking (Update)
+- Tech, House, Infra, and Support tabs organise the catalog into breezy, high-level lanes so players can zero in on the gear they crave.
+- Family groupings (phone rigs, workflow suites, automation, and more) now sit inside each category, clarifying upgrade progression at a glance.
+- The upgrade effect engine applies category/family filters for payout, time, and quality multipliers; bonuses stack multiplicatively with sensible floors to prevent runaway values.
+- Slot-aware upgrades (e.g., hubs providing monitor capacity) surface availability hints directly on cards, ensuring consumptive upgrades respect capacity before purchase.
+
 **Player Impact**
 - Players can filter by affordability, search, or category simultaneously, drastically reducing scan time for priority upgrades.
 - The overview note reinforces short-term goals (buy now, meet requirements, or save up) so progression stalls are easier to diagnose.

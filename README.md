@@ -15,7 +15,7 @@ Online Hustle Simulator is a browser-based incremental game about orchestrating 
 ### Interface Overview
 - **Top Bar & Snapshot** – Money, time, and day stay pinned at the top. A collapsible Daily Snapshot panel now highlights per-stat breakdowns (time invested, money earned, passive streams, cash spent, study momentum) without overwhelming the main view. Passive earnings even call out which assets (and how many instances) delivered today’s cash, so you can immediately see what worked.
 - **Tabbed Workspace** – Hustles, Education, Passive Assets, and Upgrades each live in their own tab with dedicated copy and per-tab filters. Global toggles hide locked or completed cards, and you can spotlight only actionable options.
-- **Categorised Collections** – Passive assets surface in Foundation, Creative, Commerce, and Advanced groupings with a collapsed-card option for rapid scanning. Each grouping now sports a "View launched assets" toggle that opens a management roster listing upkeep, yesterday’s payout, and upgrade/sell controls for every instance. Upgrades split into Equipment, Automation, Consumables, and a catch-all bucket with a quick search bar.
+- **Categorised Collections** – Passive assets surface in Foundation, Creative, Commerce, and Advanced groupings with a collapsed-card option for rapid scanning. Each grouping now sports a "View launched assets" toggle that opens a management roster listing upkeep, yesterday’s payout, and upgrade/sell controls for every instance. Upgrades now live inside Tech, House, Infra, and Support tabs, each with friendly family sub-sections (phones, workflow suites, automation chains, daily boosts) so progression lanes read clearly at a glance.
 - **Event Log Controls** – The log dock keeps its running commentary but now includes a summary/detailed toggle when you want a lighter feed during long sessions.
 
 ### Hustles & Study Tracks
@@ -45,19 +45,19 @@ Each asset supports multiple instances, tracks setup progress, and rolls a daily
 - **Hire Virtual Assistant** – $180 per hire, up to four assistants. Each adds +2h daily but costs $30/day in payroll; fire assistants anytime to cut wages (and hours).
 - **Turbo Coffee** – $40 per cup, up to three per day, each adding +1h for the current day.
 - **Camera** – $200, unlocks Vlog Channels and Stock Photo Galleries.
-- **Cinema Camera Upgrade** – $480, requires the base camera and promises richer vlog production value.
+- **Cinema Camera Upgrade** – $480, requires the base camera; trims setup/maintenance time, adds ~25% vlog payouts, and doubles quality progress for video/photo actions.
 - **Lighting Kit** – $220, unlocks Stock Photo Galleries after you buy the camera.
-- **Studio Expansion** – $540, requires the Lighting Kit and outfits your studio for rapid-fire shoots.
-- **Editorial Pipeline Suite** – $360, requires the Automation Course, an active blog, and Outline Mastery; adds +20% blog/e-book income plus +1 progress to posts, chapters, and vlog actions.
-- **Syndication Suite** – $720, requires Editorial Pipeline, an active blog and e-book, and Brand Voice Lab; layers another +25% blog/e-book boost, +20% vlog multipliers, and extra +1 progress for each creative action.
-- **Immersive Story Worlds** – $1,080, requires Syndication Suite alongside active blog/e-book/vlog combos and both knowledge tracks; adds +35% e-book income, +30% vlog hype, and +1 more progress to creative pushes.
-- **Server Rack - Starter** – $650, unlocks infrastructure foundations for advanced projects.
-- **Fulfillment Automation Suite** – $780, requires two active dropshipping shops plus the E-Commerce Playbook; adds a payout multiplier and +1 progress to dropshipping research/listing/ad actions.
-- **Cloud Cluster** – $1,150, requires the rack and unlocks SaaS deployments.
-- **Global Supply Mesh** – $1,150, requires the automation suite, three active shops, and Photo Catalog Curation to accelerate dropshipping payouts and marketing pushes.
-- **Edge Delivery Network** – $1,450, requires the cluster, keeps your micro-app snappy worldwide, and unlocks the Quality 4 edge deployment pushes for SaaS builds.
-- **White-Label Alliance** – $1,500, requires the global mesh, four active shops, and both commerce/photo studies; boosts dropshipping payouts again while empowering stock photo promos.
-- **Automation Course** – $260 once you have an active blog; permanently boosts blog daily payouts by +50%.
+- **Studio Expansion** – $540, requires the Lighting Kit; adds ~15% payouts to galleries, doubles related quality progress, and speeds photo/video setup work.
+- **Editorial Pipeline Suite** – $360, requires the Automation Course, an active blog, and Outline Mastery; grants ~20% more blog/e-book payouts, 1.5× quality progress for writing content, and snappier setup windows.
+- **Syndication Suite** – $720, requires Editorial Pipeline, an active blog and e-book, and Brand Voice Lab; adds ~25% payouts across blogs, e-books, and vlogs while multiplying creative quality progress by roughly 1.33×.
+- **Immersive Story Worlds** – $1,080, requires Syndication Suite alongside active blog/e-book/vlog combos and both knowledge tracks; adds ~12% extra payouts and doubles quality progress for every creative asset you target.
+- **Server Rack - Starter** – $650, unlocks infrastructure foundations for advanced projects and shaves ~5% off tech setup time.
+- **Fulfillment Automation Suite** – $780, requires two active dropshipping shops plus the E-Commerce Playbook; injects ~25% higher dropshipping payouts and doubles research/listing/ad quality progress.
+- **Cloud Cluster** – $1,150, requires the rack, unlocks SaaS deployments, and lifts micro-app payouts by ~20% while boosting feature/stability progress by 1.5×.
+- **Global Supply Mesh** – $1,150, requires the automation suite, three active shops, and Photo Catalog Curation; adds ~30% dropshipping income, 1.5× quality progress, and faster setup sprints for commerce actions.
+- **Edge Delivery Network** – $1,450, requires the cluster; multiplies SaaS payouts by ~35%, trims maintenance drag by ~15%, and doubles feature/stability/marketing progress.
+- **White-Label Alliance** – $1,500, requires the global mesh, four active shops, and both commerce/photo studies; layers ~35% more income across dropshipping and stock photos while adding a 1.33× quality progress multiplier for their actions.
+- **Automation Course** – $260 once you have an active blog; permanently boosts blog daily payouts by +50% and doubles post-quality progress.
 
 ### Persistence & Offline Behaviour
 - **Autosave** – State saves every few seconds to `localStorage` (new key: `online-hustle-sim-v2`).

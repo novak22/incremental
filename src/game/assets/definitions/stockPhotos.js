@@ -1,5 +1,4 @@
 import { formatMoney } from '../../../core/helpers.js';
-import { getUpgradeState } from '../../../core/state.js';
 import { createAssetDefinition } from '../../content/schema.js';
 
 const stockPhotosDefinition = createAssetDefinition({
@@ -7,6 +6,7 @@ const stockPhotosDefinition = createAssetDefinition({
   name: 'Stock Photo Galleries',
   singular: 'Gallery',
   tag: { label: 'Creative', type: 'passive' },
+  tags: ['photo', 'visual', 'content'],
   description: 'Stage props, shoot themed collections, and list them across marketplaces.',
   setup: { days: 5, hoursPerDay: 4, cost: 560 },
   maintenance: { hours: 1.2, cost: 10 },
@@ -17,38 +17,7 @@ const stockPhotosDefinition = createAssetDefinition({
       { id: 'promotion', weight: 0.4 }
     ]
   },
-  income: {
-    base: 58,
-    variance: 0.35,
-    logType: 'passive',
-    modifier: (amount, context = {}) => {
-      let total = amount;
-      const expansionOwned = getUpgradeState('studioExpansion').purchased;
-      if (expansionOwned) {
-        const before = total;
-        total *= 1.2;
-        if (typeof context.recordModifier === 'function') {
-          context.recordModifier('Studio expansion boost', total - before, {
-            id: 'studioExpansion',
-            type: 'upgrade',
-            percent: 0.2
-          });
-        }
-      }
-      if (context.upgrade?.('whiteLabelAlliance')?.purchased) {
-        const before = total;
-        total *= 1.3;
-        if (typeof context.recordModifier === 'function') {
-          context.recordModifier('White-label alliance boost', total - before, {
-            id: 'whiteLabelAlliance',
-            type: 'upgrade',
-            percent: 0.3
-          });
-        }
-      }
-      return total;
-    }
-  },
+  income: { base: 58, variance: 0.35, logType: 'passive' },
   requirements: {
     equipment: ['camera', 'studio'],
     knowledge: ['photoLibrary']
@@ -112,7 +81,7 @@ const stockPhotosDefinition = createAssetDefinition({
         cost: 22,
         dailyLimit: 1,
         progressKey: 'shoots',
-        progressAmount: context => (context.upgrade('studioExpansion')?.purchased ? 2 : 1),
+        progressAmount: () => 1,
         skills: ['visual'],
         log: ({ label }) => `${label} staged a dazzling shoot. Props now live rent-free in your studio.`
       },
@@ -123,7 +92,7 @@ const stockPhotosDefinition = createAssetDefinition({
         cost: 14,
         dailyLimit: 1,
         progressKey: 'editing',
-        progressAmount: context => (context.upgrade('studioExpansion')?.purchased ? 2 : 1),
+        progressAmount: () => 1,
         skills: ['editing'],
         log: ({ label }) => `${label} batch-edited a gallery. Clients cheer at the crisp exports!`
       },
@@ -134,13 +103,7 @@ const stockPhotosDefinition = createAssetDefinition({
         cost: 16,
         dailyLimit: 1,
         progressKey: 'marketing',
-        progressAmount: context => {
-          let amount = context.upgrade('studioExpansion')?.purchased ? 2 : 1;
-          if (context.upgrade('whiteLabelAlliance')?.purchased) {
-            amount += 1;
-          }
-          return amount;
-        },
+        progressAmount: () => 1,
         skills: ['promotion'],
         log: ({ label }) => `${label} ran a marketplace feature promo. Download counters spin faster!`
       }

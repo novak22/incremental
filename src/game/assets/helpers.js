@@ -23,6 +23,7 @@ import {
   getQualityTracks
 } from './quality.js';
 import { awardSkillProgress } from '../skills/index.js';
+import { getAssetEffectMultiplier } from '../upgrades/effects.js';
 
 function fallbackAssetMetricId(definitionId, scope, type) {
   if (!definitionId) return null;
@@ -34,6 +35,13 @@ function fallbackAssetMetricId(definitionId, scope, type) {
   }
   const suffix = type === 'payout' ? 'payout' : type;
   return `asset:${definitionId}:${scope}-${suffix}`;
+}
+
+function getEffectiveSetupHours(definition) {
+  const base = Number(definition.setup?.hoursPerDay) || 0;
+  if (base <= 0) return base;
+  const effect = getAssetEffectMultiplier(definition, 'setup_time_mult', { actionType: 'setup' });
+  return base * (Number.isFinite(effect.multiplier) ? effect.multiplier : 1);
 }
 
 function getAssetMetricId(definition, scope, type) {
@@ -67,7 +75,7 @@ function assetActionLabel(definition, labels) {
 function isAssetPurchaseDisabled(definition) {
   if (!assetRequirementsMetById(definition.id)) return true;
   const state = getState();
-  const setupHours = Number(definition.setup?.hoursPerDay) || 0;
+  const setupHours = getEffectiveSetupHours(definition);
   const setupCost = Number(definition.setup?.cost) || 0;
   if (setupHours > 0 && state.timeLeft < setupHours) return true;
   if (setupCost > 0 && state.money < setupCost) return true;
@@ -85,7 +93,7 @@ function startAsset(definition) {
     }
 
     const state = getState();
-    const setupHours = Number(definition.setup?.hoursPerDay) || 0;
+    const setupHours = getEffectiveSetupHours(definition);
     const setupCost = Number(definition.setup?.cost) || 0;
     if (setupHours > 0 && state.timeLeft < setupHours) {
       addLog('You ran out of hours today. Tackle setup tomorrow after resting.', 'warning');
@@ -326,7 +334,7 @@ export function rollDailyIncome(definition, assetState, instance) {
   }
 
   let roundedTotal = 0;
-  const roundedEntries = contributions.map(entry => {
+  const baseEntries = contributions.map(entry => {
     const amount = Math.round(Number(entry.amount) || 0);
     roundedTotal += amount;
     return {
@@ -340,21 +348,70 @@ export function rollDailyIncome(definition, assetState, instance) {
 
   const finalRounded = Math.max(0, Math.round(Number(finalAmount) || 0));
   const diff = finalRounded - roundedTotal;
-  if (diff !== 0 && roundedEntries.length) {
-    const targetIndex = roundedEntries.length > 1 ? roundedEntries.length - 1 : 0;
-    roundedEntries[targetIndex].amount += diff;
+  if (diff !== 0 && baseEntries.length) {
+    const targetIndex = baseEntries.length > 1 ? baseEntries.length - 1 : 0;
+    baseEntries[targetIndex].amount += diff;
     roundedTotal += diff;
   }
 
-  const payout = Math.max(0, roundedTotal);
+  let payoutTotal = Math.max(0, roundedTotal);
+  const upgradeEffect = getAssetEffectMultiplier(definition, 'payout_mult', {
+    actionType: 'payout'
+  });
+  const upgradeEntries = [];
+  if (payoutTotal > 0 && Number.isFinite(upgradeEffect.multiplier) && upgradeEffect.multiplier !== 1) {
+    const targetTotal = payoutTotal * upgradeEffect.multiplier;
+    let running = payoutTotal;
+    upgradeEffect.sources.forEach((source, index) => {
+      const before = running;
+      const factor = Number.isFinite(source.multiplier) ? source.multiplier : 1;
+      running *= factor;
+      if (index === upgradeEffect.sources.length - 1) {
+        running = targetTotal;
+      }
+      const delta = running - before;
+      if (Math.abs(delta) > 0.01) {
+        upgradeEntries.push({
+          id: source.id,
+          label: `${source.label} boost`,
+          amount: delta,
+          type: 'upgrade',
+          percent: Number.isFinite(factor) ? factor - 1 : null
+        });
+      }
+    });
+    payoutTotal = Math.max(0, running);
+  }
+
+  const payoutRounded = Math.max(0, Math.round(payoutTotal));
+  let combinedRounded = Math.max(0, roundedTotal);
+  const roundedUpgradeEntries = upgradeEntries.map(entry => {
+    const amount = Math.round(Number(entry.amount) || 0);
+    combinedRounded += amount;
+    return { ...entry, amount };
+  });
+
+  const upgradeDiff = payoutRounded - combinedRounded;
+  if (upgradeDiff !== 0) {
+    if (roundedUpgradeEntries.length) {
+      roundedUpgradeEntries[roundedUpgradeEntries.length - 1].amount += upgradeDiff;
+      combinedRounded += upgradeDiff;
+    } else if (baseEntries.length) {
+      baseEntries[baseEntries.length - 1].amount += upgradeDiff;
+      combinedRounded += upgradeDiff;
+    }
+  }
+
+  const finalEntries = [...baseEntries, ...roundedUpgradeEntries];
+
   if (instance) {
     instance.lastIncomeBreakdown = {
-      total: payout,
-      entries: roundedEntries
+      total: payoutRounded,
+      entries: finalEntries
     };
   }
 
-  return payout;
+  return payoutRounded;
 }
 
 export function getIncomeRangeForDisplay(assetId) {

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { getGameTestHarness } from './helpers/gameTestHarness.js';
+import { getAssetEffectMultiplier } from '../src/game/upgrades/effects.js';
 
 const harness = await getGameTestHarness();
 const { stateModule, upgradesModule, requirementsModule, assetsModule } = harness;
@@ -84,42 +85,36 @@ test('commerce ladder stacks dropshipping progress and multipliers', () => {
   const action = dropshippingDef.quality.actions.find(item => item.id === 'researchProduct');
   assert.ok(action, 'dropshipping research action missing');
 
-  const modifiers = [];
-  const context = {
-    upgrade: id => getUpgradeState(id),
-    recordModifier: (label, amount, meta) => {
-      modifiers.push({ label, amount, meta });
-    }
-  };
+  const qualityMultiplier = () =>
+    getAssetEffectMultiplier(dropshippingDef, 'quality_progress_mult', {
+      actionType: 'quality'
+    });
+  const payoutMultiplier = () =>
+    getAssetEffectMultiplier(dropshippingDef, 'payout_mult', {
+      actionType: 'payout'
+    });
 
-  assert.equal(action.progressAmount(context), 1, 'base progress should start at 1');
-  let total = dropshippingDef.income.modifier(100, context);
-  assert.equal(total, 100, 'income should be unchanged without upgrades');
+  assert.equal(action.progressAmount({}), 1, 'base progress should start at 1');
+  assert.equal(qualityMultiplier().multiplier, 1, 'quality multiplier starts neutral');
+  assert.equal(payoutMultiplier().multiplier, 1, 'payout multiplier starts neutral');
 
   getUpgradeState('fulfillmentAutomation').purchased = true;
-  assert.equal(action.progressAmount(context), 2, 'automation adds +1 progress');
-  total = dropshippingDef.income.modifier(100, context);
-  assert.ok(Math.abs(total - 125) < 1e-9, 'automation adds 25% payout');
+  assert.equal(qualityMultiplier().multiplier, 2, 'automation doubles dropshipping quality progress');
+  assert.ok(Math.abs(payoutMultiplier().multiplier - 1.25) < 1e-9, 'automation adds 25% payout');
 
   getUpgradeState('globalSupplyMesh').purchased = true;
-  assert.equal(action.progressAmount(context), 3, 'mesh adds another +1 progress');
-  total = dropshippingDef.income.modifier(100, context);
-  assert.ok(Math.abs(total - 162.5) < 1e-9, 'mesh stacks a 30% multiplier');
+  assert.ok(Math.abs(qualityMultiplier().multiplier - 3) < 1e-9, 'mesh adds 1.5× quality progress (total 3)');
+  assert.ok(Math.abs(payoutMultiplier().multiplier - 1.625) < 1e-9, 'mesh stacks a 30% multiplier (total 1.625×)');
 
   getUpgradeState('whiteLabelAlliance').purchased = true;
-  assert.equal(action.progressAmount(context), 4, 'alliance adds final +1 progress');
-  total = dropshippingDef.income.modifier(100, context);
-  assert.ok(Math.abs(total - 219.375) < 1e-9, 'alliance stacks a 35% multiplier');
+  assert.ok(Math.abs(qualityMultiplier().multiplier - 4) < 1e-9, 'alliance lifts quality progress to 4× overall');
+  assert.ok(Math.abs(payoutMultiplier().multiplier - 2.19375) < 1e-9, 'alliance stacks a 35% multiplier');
 
-  const labels = modifiers.slice(-3).map(entry => entry.label);
+  const sources = qualityMultiplier().sources.map(entry => entry.id);
   assert.deepEqual(
-    labels,
-    [
-      'Fulfillment automation boost',
-      'Global supply mesh boost',
-      'White-label alliance boost'
-    ],
-    'should record modifiers for each tier'
+    sources,
+    ['fulfillmentAutomation', 'globalSupplyMesh', 'whiteLabelAlliance'],
+    'quality multiplier should list each commerce upgrade'
   );
 });
 
@@ -127,22 +122,24 @@ test('white-label alliance boosts stock photo income and marketing progress', ()
   const promo = stockPhotosDef.quality.actions.find(item => item.id === 'runPromo');
   assert.ok(promo, 'stock photo marketing action missing');
 
-  const context = {
-    upgrade: id => getUpgradeState(id),
-    recordModifier: () => {}
-  };
+  const qualityMultiplier = () =>
+    getAssetEffectMultiplier(stockPhotosDef, 'quality_progress_mult', {
+      actionType: 'quality'
+    });
+  const payoutMultiplier = () =>
+    getAssetEffectMultiplier(stockPhotosDef, 'payout_mult', {
+      actionType: 'payout'
+    });
 
-  assert.equal(promo.progressAmount(context), 1, 'base marketing progress should be 1');
-  let total = stockPhotosDef.income.modifier(100, context);
-  assert.equal(total, 100, 'no upgrades should leave payouts unchanged');
+  assert.equal(promo.progressAmount({}), 1, 'base marketing progress should be 1');
+  assert.equal(qualityMultiplier().multiplier, 1, 'quality multiplier starts neutral');
+  assert.equal(payoutMultiplier().multiplier, 1, 'payout multiplier starts neutral');
 
   getUpgradeState('studioExpansion').purchased = true;
-  assert.equal(promo.progressAmount(context), 2, 'studio expansion doubles marketing progress');
-  total = stockPhotosDef.income.modifier(100, context);
-  assert.ok(Math.abs(total - 120) < 1e-9, 'studio expansion keeps its 20% multiplier');
+  assert.equal(qualityMultiplier().multiplier, 2, 'studio expansion doubles marketing progress');
+  assert.ok(Math.abs(payoutMultiplier().multiplier - 1.15) < 1e-9, 'studio expansion keeps its 15% multiplier');
 
   getUpgradeState('whiteLabelAlliance').purchased = true;
-  assert.equal(promo.progressAmount(context), 3, 'alliance adds +1 marketing progress');
-  total = stockPhotosDef.income.modifier(100, context);
-  assert.ok(Math.abs(total - 156) < 1e-9, 'alliance stacks an additional 30% multiplier');
+  assert.ok(Math.abs(qualityMultiplier().multiplier - (2 * 1.3333333333333333)) < 1e-9, 'alliance adds a 1.33× marketing boost');
+  assert.ok(Math.abs(payoutMultiplier().multiplier - 1.5525) < 1e-9, 'alliance stacks an additional 35% multiplier on top of studio expansion');
 });

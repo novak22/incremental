@@ -1,55 +1,12 @@
 import { formatMoney } from '../../../core/helpers.js';
 import { createAssetDefinition } from '../../content/schema.js';
 
-const COMMERCE_UPGRADE_CHAIN = [
-  {
-    id: 'fulfillmentAutomation',
-    label: 'Fulfillment automation boost',
-    multiplier: 1.25
-  },
-  {
-    id: 'globalSupplyMesh',
-    label: 'Global supply mesh boost',
-    multiplier: 1.3
-  },
-  {
-    id: 'whiteLabelAlliance',
-    label: 'White-label alliance boost',
-    multiplier: 1.35
-  }
-];
-
-function getCommerceTierBonus(context) {
-  if (!context?.upgrade) return 0;
-  return COMMERCE_UPGRADE_CHAIN.reduce((bonus, tier) => {
-    return context.upgrade(tier.id)?.purchased ? bonus + 1 : bonus;
-  }, 0);
-}
-
-function applyCommerceMultipliers(amount, context) {
-  if (!context?.upgrade) return amount;
-  let total = amount;
-  COMMERCE_UPGRADE_CHAIN.forEach(tier => {
-    if (context.upgrade(tier.id)?.purchased) {
-      const before = total;
-      total *= tier.multiplier;
-      if (typeof context.recordModifier === 'function') {
-        context.recordModifier(tier.label, total - before, {
-          id: tier.id,
-          type: 'upgrade',
-          percent: tier.multiplier - 1
-        });
-      }
-    }
-  });
-  return total;
-}
-
 const dropshippingDefinition = createAssetDefinition({
   id: 'dropshipping',
   name: 'Dropshipping Product Lab',
   singular: 'Dropshipping Shop',
   tag: { label: 'Commerce', type: 'passive' },
+  tags: ['commerce', 'ecommerce', 'fulfillment'],
   description: 'Prototype products, source suppliers, and automate fulfillment funnels.',
   setup: { days: 6, hoursPerDay: 4, cost: 720 },
   maintenance: { hours: 1.5, cost: 12 },
@@ -60,12 +17,7 @@ const dropshippingDefinition = createAssetDefinition({
       { id: 'promotion', weight: 0.5 }
     ]
   },
-  income: {
-    base: 84,
-    variance: 0.35,
-    logType: 'passive',
-    modifier: (amount, context = {}) => applyCommerceMultipliers(amount, context)
-  },
+  income: { base: 84, variance: 0.35, logType: 'passive' },
   requirements: {
     knowledge: ['ecomPlaybook'],
     experience: [{ assetId: 'blog', count: 2 }]
@@ -128,7 +80,7 @@ const dropshippingDefinition = createAssetDefinition({
         time: 3,
         dailyLimit: 1,
         progressKey: 'research',
-        progressAmount: context => 1 + getCommerceTierBonus(context),
+        progressAmount: () => 1,
         skills: ['research'],
         log: ({ label }) => `${label} spotted a trending micro-niche. Suppliers start calling back!`
       },
@@ -139,7 +91,7 @@ const dropshippingDefinition = createAssetDefinition({
         cost: 28,
         dailyLimit: 1,
         progressKey: 'listing',
-        progressAmount: context => 1 + getCommerceTierBonus(context),
+        progressAmount: () => 1,
         skills: ['promotion', { id: 'commerce', weight: 0.6 }],
         log: ({ label }) => `${label} revamped copy and photos. Conversion rates begin to pop.`
       },
@@ -150,7 +102,7 @@ const dropshippingDefinition = createAssetDefinition({
         cost: 34,
         dailyLimit: 1,
         progressKey: 'ads',
-        progressAmount: context => 1 + getCommerceTierBonus(context),
+        progressAmount: () => 1,
         skills: ['promotion', { id: 'research', weight: 0.5 }],
         log: ({ label }) => `${label} tested lookalike audiences. Click-through rates jump!`
       }

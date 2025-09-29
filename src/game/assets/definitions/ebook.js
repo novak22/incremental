@@ -1,30 +1,12 @@
 import { formatMoney } from '../../../core/helpers.js';
-import { getUpgradeState } from '../../../core/state.js';
 import { createAssetDefinition } from '../../content/schema.js';
-
-function hasUpgrade(context, id) {
-  if (!id) return false;
-  if (context && typeof context.upgrade === 'function') {
-    const upgrade = context.upgrade(id);
-    if (upgrade) return Boolean(upgrade.purchased);
-  }
-  const state = getUpgradeState(id);
-  return Boolean(state?.purchased);
-}
-
-function applyCreativeProgress(base, context) {
-  let progress = base;
-  if (hasUpgrade(context, 'editorialPipeline')) progress += 1;
-  if (hasUpgrade(context, 'syndicationSuite')) progress += 1;
-  if (hasUpgrade(context, 'immersiveStoryWorlds')) progress += 1;
-  return progress;
-}
 
 const ebookDefinition = createAssetDefinition({
   id: 'ebook',
   name: 'Digital E-Book Series',
   singular: 'E-Book',
   tag: { label: 'Creative', type: 'passive' },
+  tags: ['writing', 'product', 'digital'],
   description: 'Package your expertise into downloadable page-turners that sell while you snooze.',
   setup: { days: 4, hoursPerDay: 3, cost: 260 },
   maintenance: { hours: 0.75, cost: 3 },
@@ -34,35 +16,7 @@ const ebookDefinition = createAssetDefinition({
       { id: 'editing', weight: 0.75 }
     ]
   },
-  income: {
-    base: 30,
-    variance: 0.2,
-    logType: 'passive',
-    modifier: (amount, context = {}) => {
-      const steps = [];
-      if (hasUpgrade(context, 'editorialPipeline')) {
-        steps.push({ id: 'editorialPipeline', label: 'Editorial pipeline royalties', percent: 0.2 });
-      }
-      if (hasUpgrade(context, 'syndicationSuite')) {
-        steps.push({ id: 'syndicationSuite', label: 'Syndication suite royalties', percent: 0.25 });
-      }
-      if (hasUpgrade(context, 'immersiveStoryWorlds')) {
-        steps.push({ id: 'immersiveStoryWorlds', label: 'Immersive story worlds royalties', percent: 0.35 });
-      }
-      return steps.reduce((total, step) => {
-        const before = total;
-        const after = total * (1 + step.percent);
-        if (typeof context.recordModifier === 'function') {
-          context.recordModifier(step.label, after - before, {
-            id: step.id,
-            type: 'upgrade',
-            percent: step.percent
-          });
-        }
-        return after;
-      }, amount);
-    }
-  },
+  income: { base: 30, variance: 0.2, logType: 'passive' },
   requirements: {
     knowledge: ['outlineMastery']
   },
@@ -124,7 +78,7 @@ const ebookDefinition = createAssetDefinition({
         time: 2.5,
         dailyLimit: 1,
         progressKey: 'chapters',
-        progressAmount: context => applyCreativeProgress(1, context),
+        progressAmount: () => 1,
         skills: ['writing'],
         log: ({ label }) => `${label} gained another gripping chapter. Cliffhangers everywhere!`
       },
@@ -135,7 +89,7 @@ const ebookDefinition = createAssetDefinition({
         cost: 60,
         dailyLimit: 1,
         progressKey: 'cover',
-        progressAmount: context => applyCreativeProgress(1, context),
+        progressAmount: () => 1,
         skills: ['visual', { id: 'editing', weight: 0.6 }],
         log: ({ label }) => `${label} unveiled a shiny cover mockup. Bookstores swoon.`
       },
@@ -146,7 +100,7 @@ const ebookDefinition = createAssetDefinition({
         cost: 10,
         dailyLimit: 1,
         progressKey: 'reviews',
-        progressAmount: context => applyCreativeProgress(1, context),
+        progressAmount: () => 1,
         skills: ['audience'],
         log: ({ label }) => `${label} nudged superfans for reviews. Star ratings climb skyward!`
       }
