@@ -6,7 +6,8 @@ import { createInstantHustle } from './content/schema.js';
 import {
   KNOWLEDGE_TRACKS,
   enrollInKnowledgeTrack,
-  getKnowledgeProgress
+  getKnowledgeProgress,
+  summarizeAssetRequirements
 } from './requirements.js';
 import { recordPayoutContribution } from './metrics.js';
 import { describeTrackEducationBonuses } from './educationEffects.js';
@@ -58,16 +59,7 @@ function recordHustlePayout(hustleId, { label, amount, category }) {
 }
 
 function renderRequirementSummary(requirements = [], state = getState()) {
-  if (!requirements.length) return 'None';
-  return requirements
-    .map(req => {
-      const definition = getAssetDefinition(req.assetId);
-      const label = definition?.singular || definition?.name || req.assetId;
-      const need = Number(req.count) || 1;
-      const have = countActiveAssetInstances(req.assetId, state);
-      return `${label}: ${have}/${need} active`;
-    })
-    .join(' • ');
+  return summarizeAssetRequirements(requirements, state);
 }
 
 export function getHustleRequirements(definition) {

@@ -13,7 +13,11 @@ import { executeAction } from '../actions.js';
 import { addMoney, spendMoney } from '../currency.js';
 import { checkDayEnd } from '../lifecycle.js';
 import { recordCostContribution, recordPayoutContribution, recordTimeContribution } from '../metrics.js';
-import { renderAssetRequirementDetail, updateAssetCardLock } from '../requirements.js';
+import {
+  renderAssetRequirementDetail,
+  summarizeAssetRequirements,
+  updateAssetCardLock
+} from '../requirements.js';
 import { spendTime } from '../time.js';
 import { awardSkillProgress } from '../skills/index.js';
 import {
@@ -50,19 +54,6 @@ function formatPayoutDetail(payout) {
     return `${base} after ${payout.delaySeconds}s`;
   }
   return base;
-}
-
-function renderRequirementSummary(requirements = [], state = getState()) {
-  if (!requirements.length) return 'None';
-  return requirements
-    .map(req => {
-      const definition = getAssetDefinition(req.assetId);
-      const label = definition?.singular || definition?.name || req.assetId;
-      const need = toNumber(req.count, 1);
-      const have = countActiveAssetInstances(req.assetId, state);
-      return `${label}: ${have}/${need} active`;
-    })
-    .join(' • ');
 }
 
 function meetsAssetRequirements(requirements = [], state = getState()) {
@@ -265,7 +256,7 @@ export function createInstantHustle(config) {
     baseDetails.push(() => payoutDetail);
   }
   if (metadata.requirements.length) {
-    baseDetails.push(() => `Requires: <strong>${renderRequirementSummary(metadata.requirements)}</strong>`);
+    baseDetails.push(() => `Requires: <strong>${summarizeAssetRequirements(metadata.requirements)}</strong>`);
   }
 
   if (metadata.dailyLimit) {
@@ -303,7 +294,7 @@ export function createInstantHustle(config) {
       return `You need $${formatMoney(metadata.cost)} before funding ${definition.name}.`;
     }
     if (!meetsAssetRequirements(metadata.requirements, state)) {
-      return `You still need: ${renderRequirementSummary(metadata.requirements, state)}.`;
+      return `You still need: ${summarizeAssetRequirements(metadata.requirements, state)}.`;
     }
     return null;
   }
@@ -631,7 +622,7 @@ export function createUpgrade(config) {
 }
 
 export function renderHustleRequirementSummary(requirements) {
-  return renderRequirementSummary(requirements);
+  return summarizeAssetRequirements(requirements);
 }
 
 export function hustleRequirementsMet(requirements) {
