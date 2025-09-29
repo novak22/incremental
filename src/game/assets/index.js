@@ -12,6 +12,14 @@ import {
   getQualityActions,
   getQualityTracks
 } from './quality.js';
+import {
+  assignInstanceToNiche,
+  getAssignableNicheSummaries,
+  getInstanceNicheEffect,
+  getNichePopularity,
+  getNicheRoster,
+  rerollNichePopularity
+} from './niches.js';
 
 const assetsSystem = {
   list: ASSETS,
@@ -24,7 +32,15 @@ const assetsSystem = {
   getQualityActions,
   getQualityTracks,
   sellAssetInstance,
-  calculateSalePrice: calculateAssetSalePrice
+  calculateSalePrice: calculateAssetSalePrice,
+  niches: {
+    assignInstance: assignInstanceToNiche,
+    getAssignableSummaries: getAssignableNicheSummaries,
+    getInstanceEffect: getInstanceNicheEffect,
+    getPopularity: getNichePopularity,
+    getRoster: getNicheRoster,
+    reroll: rerollNichePopularity
+  }
 };
 
 export default assetsSystem;
@@ -39,5 +55,11 @@ export {
   getQualityActions,
   getQualityTracks,
   sellAssetInstance,
-  calculateAssetSalePrice
+  calculateAssetSalePrice,
+  assignInstanceToNiche,
+  getAssignableNicheSummaries,
+  getInstanceNicheEffect,
+  getNichePopularity,
+  getNicheRoster,
+  rerollNichePopularity
 };

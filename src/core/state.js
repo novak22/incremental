@@ -1,6 +1,7 @@
 import { DEFAULT_DAY_HOURS } from './constants.js';
 import { createId, structuredClone } from './helpers.js';
 import { attachRegistryMetricIds, buildMetricIndex } from '../game/schema/metrics.js';
+import nicheDefinitions from '../game/assets/nicheData.js';
 import {
   createEmptyCharacterState,
   createEmptySkillState,
@@ -13,6 +14,52 @@ let hustleMap = new Map();
 let assetMap = new Map();
 let upgradeMap = new Map();
 let metricIndex = new Map();
+
+function getNicheIdSet() {
+  return new Set(nicheDefinitions.map(entry => entry.id));
+}
+
+function isValidNicheId(id) {
+  if (typeof id !== 'string' || !id) return false;
+  return getNicheIdSet().has(id);
+}
+
+function rollInitialNicheScore() {
+  const min = 25;
+  const max = 95;
+  const spread = max - min;
+  return Math.max(0, Math.min(100, Math.round(min + Math.random() * spread)));
+}
+
+function ensureNicheStateShape(target) {
+  target.niches = target.niches || {};
+  const nicheState = target.niches;
+  nicheState.popularity = nicheState.popularity || {};
+
+  const validIds = getNicheIdSet();
+  for (const id of Object.keys(nicheState.popularity)) {
+    if (!validIds.has(id)) {
+      delete nicheState.popularity[id];
+    }
+  }
+
+  for (const definition of nicheDefinitions) {
+    const entry = nicheState.popularity[definition.id] || {};
+    const score = Number(entry.score);
+    const previousScore = Number(entry.previousScore);
+    nicheState.popularity[definition.id] = {
+      score: Number.isFinite(score)
+        ? Math.max(0, Math.min(100, Math.round(score)))
+        : rollInitialNicheScore(),
+      previousScore: Number.isFinite(previousScore)
+        ? Math.max(0, Math.min(100, Math.round(previousScore)))
+        : null
+    };
+  }
+
+  const storedDay = Number(nicheState.lastRollDay);
+  nicheState.lastRollDay = Number.isFinite(storedDay) ? storedDay : target.day || 1;
+}
 
 export let state = null;
 
@@ -150,6 +197,9 @@ export function normalizeAssetInstance(definition, instance = {}) {
     progress: normalizedProgress
   };
 
+  const nicheId = typeof normalized.nicheId === 'string' ? normalized.nicheId : null;
+  normalized.nicheId = nicheId && isValidNicheId(nicheId) ? nicheId : null;
+
   return normalized;
 }
 
@@ -170,7 +220,8 @@ export function createAssetInstance(definition, overrides = {}) {
     quality: {
       level: 0,
       progress: {}
-    }
+    },
+    nicheId: null
   };
   const merged = { ...baseInstance, ...structuredClone(overrides) };
   if (merged.status === 'active') {
@@ -252,6 +303,7 @@ export function ensureStateShape(target = state) {
   target.character = normalizeCharacterState(target.character);
 
   ensureDailyMetrics(target);
+  ensureNicheStateShape(target);
 }
 
 export function buildBaseState() {
@@ -273,6 +325,10 @@ export function buildBaseState() {
     },
     progress: {
       knowledge: {}
+    },
+    niches: {
+      popularity: {},
+      lastRollDay: 0
     },
     metrics: {
       daily: createEmptyDailyMetrics()
