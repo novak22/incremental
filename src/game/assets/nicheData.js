@@ -1,39 +1,63 @@
 const NICHE_DEFINITIONS = [
   {
-    id: 'evergreenGuides',
-    name: 'Evergreen Guides',
-    description: 'How-to libraries and niche blogs that reward consistent, helpful storytelling.',
-    tags: ['writing', 'content', 'digital']
-  },
-  {
-    id: 'creatorCollabs',
-    name: 'Creator Collabs',
-    description: 'Livestream takeovers, vlog collabs, and behind-the-scenes drops that thrive on video energy.',
-    tags: ['video', 'visual', 'content', 'studio']
-  },
-  {
-    id: 'marketplaceSpotlight',
-    name: 'Marketplace Spotlight',
-    description: 'Bundled products, photo packs, and digital goods tuned for marketplace bursts.',
-    tags: ['photo', 'visual', 'commerce', 'product']
-  },
-  {
-    id: 'trendChaser',
-    name: 'Trend Chaser',
-    description: 'Dropshipping curations and hot-list products that pivot with every scroll trend.',
-    tags: ['commerce', 'ecommerce', 'content']
-  },
-  {
-    id: 'automationNerds',
-    name: 'Automation Nerds',
-    description: 'SaaS tools, scripts, and workflow boosters that serve the builder crowd.',
+    id: 'techInnovators',
+    name: 'Tech Innovators',
+    description: 'Gadget lovers and software tinkerers who jump on the next productivity breakthrough.',
     tags: ['software', 'tech', 'product']
   },
   {
-    id: 'aestheticObsessed',
-    name: 'Aesthetic Obsessed',
-    description: 'High-style visuals, presets, and branding kits for designers who crave polish.',
-    tags: ['visual', 'photo', 'content', 'digital']
+    id: 'healthWellness',
+    name: 'Health & Wellness',
+    description: 'People chasing healthier routines, mindful habits, and science-backed self-care.',
+    tags: ['writing', 'content', 'digital']
+  },
+  {
+    id: 'personalFinance',
+    name: 'Personal Finance',
+    description: 'Budgeters and investors who devour tips on saving smarter and building wealth.',
+    tags: ['writing', 'content', 'product']
+  },
+  {
+    id: 'sustainableLiving',
+    name: 'Sustainable Living',
+    description: 'Eco-conscious shoppers eager for low-waste swaps, ethical products, and reuse hacks.',
+    tags: ['commerce', 'content', 'ecommerce']
+  },
+  {
+    id: 'fitnessTraining',
+    name: 'Fitness & Training',
+    description: 'Athletes-in-progress streaming workouts, form checks, and at-home training plans.',
+    tags: ['video', 'content', 'studio']
+  },
+  {
+    id: 'travelAdventures',
+    name: 'Travel & Adventure',
+    description: 'Globetrotters scouting itineraries, remote-work escapes, and photo-ready destinations.',
+    tags: ['photo', 'visual', 'content']
+  },
+  {
+    id: 'beautySkincare',
+    name: 'Beauty & Skincare',
+    description: 'Product reviewers and glam squads comparing routines, looks, and ingredient deep dives.',
+    tags: ['photo', 'visual', 'product']
+  },
+  {
+    id: 'homeDIY',
+    name: 'Home & DIY',
+    description: 'Organizers and makers swapping renovation tips, storage wins, and weekend builds.',
+    tags: ['content', 'product', 'digital']
+  },
+  {
+    id: 'parentingSupport',
+    name: 'Parenting Support',
+    description: 'Caregivers trading routines, milestone advice, and sanity-saving family systems.',
+    tags: ['writing', 'content']
+  },
+  {
+    id: 'petCare',
+    name: 'Pet Care & Training',
+    description: 'Pet parents learning enrichment games, nutrition tips, and grooming must-dos.',
+    tags: ['video', 'content', 'commerce']
   }
 ];
 
