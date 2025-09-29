@@ -689,15 +689,36 @@ function groupAssetsByCategory(definitions = []) {
   return map;
 }
 
-function renderAssetRow(definition, tbody) {
-  const state = getState();
-  const assetState = getAssetState(definition.id, state);
+function resolveAssetInstanceSnapshot(definition, assetState) {
   const instances = Array.isArray(assetState?.instances) ? assetState.instances : [];
   const activeInstances = instances.filter(instance => instance.status === 'active');
   const pausedInstances = instances.filter(instance => instance.status !== 'active');
   const lastIncome = activeInstances.reduce((total, instance) => total + Number(instance.lastIncome || 0), 0);
   const focusInstance = activeInstances[0] || instances[0] || null;
   const nextRequirements = focusInstance ? describeNextQualityRequirements(definition, focusInstance) : [];
+  return {
+    instances,
+    activeInstances,
+    pausedInstances,
+    lastIncome,
+    focusInstance,
+    nextRequirements,
+    hasInstances: instances.length > 0
+  };
+}
+
+function renderAssetRow(definition, tbody) {
+  const state = getState();
+  const assetState = getAssetState(definition.id, state);
+  const {
+    instances,
+    activeInstances,
+    pausedInstances,
+    lastIncome,
+    focusInstance,
+    nextRequirements,
+    hasInstances
+  } = resolveAssetInstanceSnapshot(definition, assetState);
   const upkeepCost = Number(definition.maintenance?.cost) || 0;
   const upkeepHours = Number(definition.maintenance?.hours) || 0;
 
@@ -749,7 +770,6 @@ function renderAssetRow(definition, tbody) {
   const details = document.createElement('button');
   details.type = 'button';
   details.className = 'ghost';
-  const hasInstances = instances.length > 0;
   details.textContent = hasInstances ? 'Instances' : 'Details';
   details.dataset.focusSection = hasInstances ? 'instances' : 'overview';
   if (focusInstance?.id) {
@@ -813,12 +833,15 @@ function refreshAssetRow(definition) {
   if (!ui) return;
   const state = getState();
   const assetState = getAssetState(definition.id, state);
-  const instances = Array.isArray(assetState?.instances) ? assetState.instances : [];
-  const activeInstances = instances.filter(instance => instance.status === 'active');
-  const pausedInstances = instances.filter(instance => instance.status !== 'active');
-  const lastIncome = activeInstances.reduce((total, instance) => total + Number(instance.lastIncome || 0), 0);
-  const focusInstance = activeInstances[0] || instances[0] || null;
-  const nextRequirements = focusInstance ? describeNextQualityRequirements(definition, focusInstance) : [];
+  const {
+    instances,
+    activeInstances,
+    pausedInstances,
+    lastIncome,
+    focusInstance,
+    nextRequirements,
+    hasInstances
+  } = resolveAssetInstanceSnapshot(definition, assetState);
   ui.row.dataset.state = activeInstances.length > 0 ? 'active' : 'idle';
   ui.row.dataset.needsMaintenance = activeInstances.some(instance => !instance.maintenanceFundedToday)
     ? 'true'
@@ -846,7 +869,6 @@ function refreshAssetRow(definition) {
     ui.cells.upkeep.textContent = upkeepParts.join(' • ') || 'None';
   }
   if (ui.details) {
-    const hasInstances = instances.length > 0;
     ui.details.textContent = hasInstances ? 'Instances' : 'Details';
     ui.details.dataset.focusSection = hasInstances ? 'instances' : 'overview';
     if (focusInstance?.id) {
