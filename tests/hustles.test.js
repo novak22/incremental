@@ -10,14 +10,11 @@ const {
   offlineModule
 } = harness;
 
-const { getState, getHustleState, getAssetState } = stateModule;
+const { getState, getAssetState } = stateModule;
 const { KNOWLEDGE_TRACKS, getKnowledgeProgress } = requirementsModule;
 
 const {
   HUSTLES,
-  scheduleFlip,
-  updateFlipStatus,
-  processFlipPayouts
 } = hustlesModule;
 
 const { handleOfflineProgress } = offlineModule;
@@ -26,40 +23,6 @@ const resetState = () => harness.resetState();
 
 test.beforeEach(() => {
   resetState();
-});
-
-test('scheduleFlip queues pending flip with future payout', () => {
-  const flipState = getHustleState('flips');
-  assert.equal(flipState.pending.length, 0);
-  scheduleFlip();
-  assert.equal(flipState.pending.length, 1);
-  const flip = flipState.pending[0];
-  assert.ok(flip.readyAt > Date.now());
-});
-
-test('processFlipPayouts awards money and clears completed flips', () => {
-  const state = getState();
-  const flipState = getHustleState('flips');
-  flipState.pending.push({ id: 'flip1', readyAt: Date.now() - 1000, payout: 48 });
-  const beforeMoney = state.money;
-
-  const result = processFlipPayouts(Date.now(), false);
-
-  assert.equal(result.changed, true);
-  assert.ok(state.money > beforeMoney);
-  assert.equal(flipState.pending.length, 0);
-  assert.match(state.log.at(-1).message, /eBay flip/);
-});
-
-test('updateFlipStatus reflects pending queue details', () => {
-  const flipState = getHustleState('flips');
-  flipState.pending = [
-    { id: 'flip1', readyAt: Date.now() + 1500, payout: 48 },
-    { id: 'flip2', readyAt: Date.now() + 5000, payout: 48 }
-  ];
-  const element = document.createElement('div');
-  updateFlipStatus(element);
-  assert.match(element.textContent, /2 flips in progress/);
 });
 
 test('study hustles charge tuition and auto-schedule class time', () => {
@@ -140,15 +103,12 @@ test('education flat bonuses add to audience call payouts', () => {
   );
 });
 
-test('offline progress processes completed flips and logs summary', () => {
+test('offline progress adds a friendly reminder when nothing resolves', () => {
   const state = getState();
-  const flipState = getHustleState('flips');
-  flipState.pending.push({ id: 'offline', readyAt: Date.now() - 10000, payout: 60 });
-  const moneyBefore = state.money;
-  const logBefore = state.log.length;
+  const beforeLogLength = state.log.length;
 
   handleOfflineProgress(Date.now() - 60000);
 
-  assert.ok(state.money > moneyBefore, 'money should increase from offline flips');
-  assert.ok(state.log.length >= logBefore + 2, 'should log flip payout and offline reminder');
+  assert.equal(state.log.length, beforeLogLength + 1);
+  assert.match(state.log.at(-1).message, /While you were away, the clock paused/);
 });

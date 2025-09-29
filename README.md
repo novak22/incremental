@@ -22,7 +22,6 @@ Online Hustle Simulator is a browser-based incremental game about orchestrating 
 - **Freelance Writing** – Spend 2h to earn $18 instantly (Outline Mastery grads earn +25%).
 - **Audience Q&A Blast** – Spend 1h with at least one active blog to earn $12 from checklist upsells (+$4 after Brand Voice Lab).
 - **Bundle Promo Push** – Spend 2.5h once you have two active blogs plus an e-book to pocket $48 immediately (+$6 after E-Commerce Playbook).
-- **eBay Flips** – Spend 4h and $20; complete 30 seconds later for $48 (multiple flips queue).
 - **Outline Mastery Workshop** – Pay $140 upfront; 2h/day for 5 days auto-reserve to unlock e-book production chops and boost writing/narration gigs.
 - **Photo Catalog Curation** – Pay $95 upfront; 1.5h/day for 4 days auto-reserve to polish your stock gallery workflow and increase Event Photo Gig payouts by 20%.
 - **E-Commerce Playbook** – Pay $260 upfront; 2.5h/day for 7 days auto-reserve to prep dropshipping ventures (+$6 Bundle Promo Push, +20% Dropship Pack Party).
@@ -54,7 +53,7 @@ Each asset supports multiple instances, tracks setup progress, and rolls a daily
 
 ### Persistence & Offline Behaviour
 - **Autosave** – State saves every few seconds to `localStorage` (new key: `online-hustle-sim-v2`).
-- **Offline Resolution** – Delayed hustles (e.g., eBay flips) settle while you are away. Assets only progress when you advance days, keeping the economy deterministic.
+- **Offline Reminder** – The clock pauses while you are away; advance in-game days to keep assets earning.
 
 ## Current Feature Set
 - Day-driven scheduler with automatic setup/maintenance allocation and detailed end-of-day recaps.
@@ -64,7 +63,7 @@ Each asset supports multiple instances, tracks setup progress, and rolls a daily
 - Knowledge study tracks with upfront tuition, automatic daily scheduling, and celebratory completion logs that gate advanced assets.
 - Equipment and experience requirements surfaced directly on asset cards with live progress indicators.
 - Responsive card grids with upbeat copy, tabbed navigation, filters, and search so players can focus on the work-in-progress that matters most.
-- Persistent save/load, offline hustle resolution, and flavourful log output to keep players oriented.
+- Persistent save/load and flavourful log output to keep players oriented.
 
 ## Running the Project Locally
 1. Clone the repository or download the source.
