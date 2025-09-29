@@ -29,44 +29,44 @@ const ebookDefinition = createAssetDefinition({
         level: 0,
         name: 'Rough Manuscript',
         description: 'A handful of notes generate only trickle royalties.',
-        income: { min: 2, max: 4 },
+        income: { min: 3, max: 6 },
         requirements: {}
       },
       {
         level: 1,
         name: 'Polished Draft',
         description: 'Six chapters stitched into a bingeable volume.',
-        income: { min: 10, max: 18 },
-        requirements: { chapters: 8 }
+        income: { min: 12, max: 20 },
+        requirements: { chapters: 6 }
       },
       {
         level: 2,
         name: 'Collector Edition',
         description: 'A premium cover and full season keep fans engaged.',
-        income: { min: 18, max: 28 },
-        requirements: { chapters: 16, cover: 1 }
+        income: { min: 20, max: 30 },
+        requirements: { chapters: 12, cover: 1 }
       },
       {
         level: 3,
         name: 'Fandom Favorite',
         description: 'Glowing reviews lock in bestseller status.',
-        income: { min: 28, max: 38 },
-        requirements: { chapters: 24, cover: 2, reviews: 8 }
+        income: { min: 30, max: 42 },
+        requirements: { chapters: 18, cover: 2, reviews: 6 }
       }
     ],
     actions: [
       {
         id: 'writeChapter',
         label: 'Write Chapter',
-        time: 3,
+        time: 2.5,
         progressKey: 'chapters',
         log: ({ label }) => `${label} gained another gripping chapter. Cliffhangers everywhere!`
       },
       {
         id: 'designCover',
         label: 'Commission Cover',
-        time: 2,
-        cost: 70,
+        time: 1.5,
+        cost: 60,
         cooldownDays: 2,
         progressKey: 'cover',
         log: ({ label }) => `${label} unveiled a shiny cover mockup. Bookstores swoon.`
@@ -74,8 +74,8 @@ const ebookDefinition = createAssetDefinition({
       {
         id: 'rallyReviews',
         label: 'Rally Reviews',
-        time: 1.5,
-        cost: 12,
+        time: 1.25,
+        cost: 10,
         cooldownDays: 1,
         progressKey: 'reviews',
         log: ({ label }) => `${label} nudged superfans for reviews. Star ratings climb skyward!`
