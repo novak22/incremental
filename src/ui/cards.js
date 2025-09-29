@@ -1075,7 +1075,12 @@ function updateHustleCard(definition) {
       ? definition.action.label(state)
       : definition.action?.label || 'Queue';
   }
-  ui.card.dataset.available = disabled ? 'false' : 'true';
+  const nextAvailability = disabled ? 'false' : 'true';
+  const availabilityChanged = ui.card.dataset.available !== nextAvailability;
+  ui.card.dataset.available = nextAvailability;
+  if (availabilityChanged) {
+    emitUIEvent('hustles:availability-updated');
+  }
 }
 
 function openHustleDetails(definition) {
