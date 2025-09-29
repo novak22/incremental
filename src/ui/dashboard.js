@@ -9,6 +9,44 @@ function setText(element, value) {
   element.textContent = value;
 }
 
+function createDailyListItem(entry) {
+  const li = document.createElement('li');
+  li.className = 'daily-stats__item';
+  const label = document.createElement('span');
+  label.className = 'daily-stats__label';
+  label.textContent = entry.label || 'Unknown';
+  const value = document.createElement('span');
+  value.className = 'daily-stats__value';
+  value.textContent = entry.value || '';
+  if (entry.definition?.name) {
+    li.title = entry.definition.name;
+  }
+  if (entry.definition?.id) {
+    li.dataset.metric = entry.definition.id;
+  }
+  li.append(label, value);
+  return li;
+}
+
+function renderDailyList(container, entries, emptyMessage, limit = 6) {
+  if (!container) return;
+  container.innerHTML = '';
+  const list = Array.isArray(entries) ? entries.filter(Boolean) : [];
+  if (!list.length) {
+    if (!emptyMessage) return;
+    const empty = document.createElement('li');
+    empty.className = 'daily-stats__empty';
+    empty.textContent = emptyMessage;
+    container.appendChild(empty);
+    return;
+  }
+
+  list.slice(0, limit).forEach(entry => {
+    const item = createDailyListItem(entry);
+    container.appendChild(item);
+  });
+}
+
 function describeQueue(summary) {
   const entries = Array.isArray(summary?.timeBreakdown) ? summary.timeBreakdown : [];
   if (!entries.length) {
@@ -265,6 +303,60 @@ function computeStudyProgress(state) {
   return { percent, summary };
 }
 
+function renderDailyStats(summary) {
+  const refs = elements.dailyStats || {};
+  if (!refs) return;
+
+  const {
+    timeSummary,
+    timeList,
+    earningsSummary,
+    earningsActive,
+    earningsPassive,
+    spendSummary,
+    spendList,
+    studySummary,
+    studyList
+  } = refs;
+
+  const totalTime = Math.max(0, Number(summary.totalTime) || 0);
+  const setupHours = Math.max(0, Number(summary.setupHours) || 0);
+  const maintenanceHours = Math.max(0, Number(summary.maintenanceHours) || 0);
+  const otherTimeHours = Math.max(0, Number(summary.otherTimeHours) || 0);
+  const timeSummaryText = totalTime > 0
+    ? `${formatHours(totalTime)} invested • ${formatHours(setupHours)} setup • ${formatHours(maintenanceHours)} upkeep • ${formatHours(otherTimeHours)} flex`
+    : 'No hours logged yet. Queue a hustle to get moving.';
+  setText(timeSummary, timeSummaryText);
+  renderDailyList(timeList, summary.timeBreakdown, 'Time tracking kicks off after your first action.');
+
+  const totalEarnings = Math.max(0, Number(summary.totalEarnings) || 0);
+  const activeEarnings = Math.max(0, Number(summary.activeEarnings) || 0);
+  const passiveEarnings = Math.max(0, Number(summary.passiveEarnings) || 0);
+  const earningsSummaryText = totalEarnings > 0
+    ? `$${formatMoney(totalEarnings)} earned • $${formatMoney(activeEarnings)} active • $${formatMoney(passiveEarnings)} passive`
+    : 'Payouts will appear once you start closing deals.';
+  setText(earningsSummary, earningsSummaryText);
+  renderDailyList(earningsActive, summary.earningsBreakdown, 'Active gigs will report here.', 5);
+  renderDailyList(earningsPassive, summary.passiveBreakdown, 'Passive and offline streams update after upkeep.', 5);
+
+  const totalSpend = Math.max(0, Number(summary.totalSpend) || 0);
+  const upkeepSpend = Math.max(0, Number(summary.upkeepSpend) || 0);
+  const investmentSpend = Math.max(0, Number(summary.investmentSpend) || 0);
+  const spendSummaryText = totalSpend > 0
+    ? `$${formatMoney(totalSpend)} spent • $${formatMoney(upkeepSpend)} upkeep • $${formatMoney(investmentSpend)} investments`
+    : 'Outflows land here when upkeep and investments fire.';
+  setText(spendSummary, spendSummaryText);
+  renderDailyList(spendList, summary.spendBreakdown, 'No cash out yet. Fund upkeep or buy an upgrade.', 6);
+
+  const knowledgeInProgress = Math.max(0, Number(summary.knowledgeInProgress) || 0);
+  const knowledgePending = Math.max(0, Number(summary.knowledgePendingToday) || 0);
+  const studySummaryText = knowledgeInProgress > 0
+    ? `${knowledgeInProgress} track${knowledgeInProgress === 1 ? '' : 's'} in flight • ${knowledgePending > 0 ? `${knowledgePending} session${knowledgePending === 1 ? '' : 's'} waiting today` : 'All sessions logged today'}`
+    : 'Enroll in a track to kickstart your learning streak.';
+  setText(studySummary, studySummaryText);
+  renderDailyList(studyList, summary.studyBreakdown, 'Your courses will list here once enrolled.', 5);
+}
+
 export function renderDashboard(summary) {
   const state = getState();
   if (!state) return;
@@ -299,4 +391,5 @@ export function renderDashboard(summary) {
   renderQuickActions(state);
   renderNotifications(state);
   renderEventPreview(state);
+  renderDailyStats(summary);
 }
