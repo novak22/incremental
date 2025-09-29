@@ -320,6 +320,10 @@ body {
   scrollbar-gutter: stable both-edges;
 }
 
+.dashboard__top-row .upgrade-actions {
+  max-height: calc((var(--dashboard-action-item-height) * 6) + (var(--dashboard-action-gap) * 5));
+}
+
 .dashboard-card {
   background: var(--surface);
   border-radius: var(--radius-lg);
