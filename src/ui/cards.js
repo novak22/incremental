@@ -1079,15 +1079,16 @@ function renderStudyTrack(definition) {
 
   const actions = document.createElement('div');
   actions.className = 'hustle-card__actions';
+  let actionButton = null;
   if (trackInfo.action?.onClick) {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'primary';
-    button.textContent = typeof trackInfo.action.label === 'function'
-      ? trackInfo.action.label(state)
-      : trackInfo.action.label || 'Study';
-    button.addEventListener('click', () => trackInfo.action.onClick());
-    actions.appendChild(button);
+    actionButton = document.createElement('button');
+    actionButton.type = 'button';
+    actionButton.className = trackInfo.action?.className || 'primary';
+    actionButton.addEventListener('click', () => {
+      if (actionButton.disabled) return;
+      trackInfo.action.onClick();
+    });
+    actions.appendChild(actionButton);
   }
   const details = document.createElement('button');
   details.type = 'button';
@@ -1097,7 +1098,11 @@ function renderStudyTrack(definition) {
   actions.appendChild(details);
   track.appendChild(actions);
 
-  return { track, percent };
+  const uiEntry = { track, percent, actionButton };
+  studyUi.set(trackInfo.id, uiEntry);
+  updateStudyTrack(definition);
+
+  return uiEntry;
 }
 
 function openStudyDetails(definition) {
@@ -1123,9 +1128,8 @@ function renderEducation(definitions) {
   list.innerHTML = '';
   studyUi.clear();
   definitions.forEach(def => {
-    const { track, percent } = renderStudyTrack(def);
+    const { track } = renderStudyTrack(def);
     list.appendChild(track);
-    studyUi.set(resolveTrack(def).id, { track, percent });
   });
   renderStudyQueue(definitions);
 }
@@ -1205,4 +1209,17 @@ function updateStudyTrack(definition) {
   ui.track.dataset.complete = progress.completed ? 'true' : 'false';
   const percent = Math.min(100, Math.round((progress.daysCompleted / Math.max(1, info.days)) * 100));
   ui.track.querySelector('.study-track__progress span').style.width = `${percent}%`;
+  if (ui.actionButton && info.action) {
+    const disabled = typeof info.action.disabled === 'function'
+      ? info.action.disabled(state)
+      : Boolean(info.action.disabled);
+    ui.actionButton.disabled = disabled;
+    ui.actionButton.className = info.action?.className || 'primary';
+    ui.actionButton.textContent = typeof info.action.label === 'function'
+      ? info.action.label(state)
+      : info.action.label || 'Study';
+    ui.track.dataset.available = disabled ? 'false' : 'true';
+  } else {
+    ui.track.dataset.available = 'false';
+  }
 }
