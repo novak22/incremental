@@ -4,6 +4,32 @@ const elements = {
   endDayButton: document.getElementById('end-day'),
   shellTabs: Array.from(document.querySelectorAll('.shell__tab')),
   panels: Array.from(document.querySelectorAll('.panel')),
+  headerStats: {
+    dailyPlus: {
+      value: document.getElementById('header-daily-plus'),
+      note: document.getElementById('header-daily-plus-note')
+    },
+    dailyMinus: {
+      value: document.getElementById('header-daily-minus'),
+      note: document.getElementById('header-daily-minus-note')
+    },
+    totalPlus: {
+      value: document.getElementById('header-total-plus'),
+      note: document.getElementById('header-total-plus-note')
+    },
+    totalMinus: {
+      value: document.getElementById('header-total-minus'),
+      note: document.getElementById('header-total-minus-note')
+    },
+    timeAvailable: {
+      value: document.getElementById('header-time-available'),
+      note: document.getElementById('header-time-available-note')
+    },
+    timeReserved: {
+      value: document.getElementById('header-time-reserved'),
+      note: document.getElementById('header-time-reserved-note')
+    }
+  },
   kpis: {
     cash: document.getElementById('kpi-cash'),
     net: document.getElementById('kpi-net'),

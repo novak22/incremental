@@ -204,6 +204,12 @@ export function ensureStateShape(target = state) {
     }
   }
 
+  target.totals = target.totals || {};
+  const earned = Number(target.totals.earned);
+  const spent = Number(target.totals.spent);
+  target.totals.earned = Number.isFinite(earned) && earned > 0 ? earned : 0;
+  target.totals.spent = Number.isFinite(spent) && spent > 0 ? spent : 0;
+
   target.progress = target.progress || {};
   target.progress.knowledge = target.progress.knowledge || {};
 
@@ -221,6 +227,10 @@ export function buildBaseState() {
     hustles: {},
     assets: {},
     upgrades: {},
+    totals: {
+      earned: 0,
+      spent: 0
+    },
     progress: {
       knowledge: {}
     },
