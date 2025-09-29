@@ -67,21 +67,46 @@ export function getHustleRequirements(definition) {
   return Array.isArray(definition.requirements) ? definition.requirements : [];
 }
 
-function describeDailyLimit(definition, state = getState()) {
-  if (!definition || typeof definition.getDailyUsage !== 'function') return [];
-  const usage = definition.getDailyUsage(state);
-  if (!usage || !Number.isFinite(usage.limit) || usage.limit <= 0) return [];
+function normalizeHustleDailyUsage(definition, state = getState()) {
+  if (!definition || typeof definition.getDailyUsage !== 'function') {
+    const dayFromState = Number(state?.day);
+    return {
+      limit: Infinity,
+      used: 0,
+      remaining: Infinity,
+      day: Number.isFinite(dayFromState) && dayFromState > 0 ? dayFromState : 1
+    };
+  }
+
+  const usage = definition.getDailyUsage(state) || {};
+  const rawLimit = Number(usage.limit);
+  const isLimited = Number.isFinite(rawLimit) && rawLimit > 0;
+  const limit = isLimited ? rawLimit : Infinity;
   const used = Math.max(0, Number(usage.used) || 0);
-  const remaining = Math.max(0, Number(usage.remaining ?? (usage.limit - used)));
+  const rawRemaining = usage.remaining ?? (isLimited ? limit - used : Infinity);
+  const remaining = isLimited ? Math.max(0, Number(rawRemaining)) : Infinity;
+  const dayFromState = Number(state?.day);
+  const dayFromUsage = Number(usage.currentDay);
+  const day = Number.isFinite(dayFromState) && dayFromState > 0
+    ? dayFromState
+    : (Number.isFinite(dayFromUsage) && dayFromUsage > 0 ? dayFromUsage : 1);
+
+  return { limit, used, remaining, day };
+}
+
+function describeDailyLimit(definition, state = getState()) {
+  const usage = normalizeHustleDailyUsage(definition, state);
+  if (!usage || !Number.isFinite(usage.limit) || usage.limit <= 0) return [];
+  const { used, remaining, limit } = usage;
   return [
     {
       type: 'limit',
-      label: `Daily runs left: ${remaining}/${usage.limit}`,
+      label: `Daily runs left: ${remaining}/${limit}`,
       met: remaining > 0,
       progress: {
         used,
         remaining,
-        limit: usage.limit
+        limit
       }
     }
   ];
@@ -109,29 +134,20 @@ export function areHustleRequirementsMet(definition, state = getState()) {
   const requirements = getHustleRequirements(definition);
   const assetsMet = requirements.every(req => countActiveAssetInstances(req.assetId, state) >= (Number(req.count) || 1));
   if (!assetsMet) return false;
-  if (definition && typeof definition.getDailyUsage === 'function') {
-    const usage = definition.getDailyUsage(state);
-    if (usage && Number.isFinite(usage.limit) && usage.limit > 0 && Math.max(0, Number(usage.remaining)) <= 0) {
-      return false;
-    }
+  const usage = normalizeHustleDailyUsage(definition, state);
+  if (usage && Number.isFinite(usage.limit) && usage.limit > 0 && Math.max(0, Number(usage.remaining)) <= 0) {
+    return false;
   }
   return true;
 }
 
 export function getHustleDailyUsage(definition, state = getState()) {
-  if (!definition || typeof definition.getDailyUsage !== 'function') return null;
-  const usage = definition.getDailyUsage(state);
+  const usage = normalizeHustleDailyUsage(definition, state);
   if (!usage || !Number.isFinite(usage.limit) || usage.limit <= 0) {
     return null;
   }
-  const used = Math.max(0, Number(usage.used) || 0);
-  const remaining = Math.max(0, Number(usage.remaining ?? (usage.limit - used)));
-  return {
-    limit: usage.limit,
-    used,
-    remaining,
-    day: Number(state?.day) || usage.currentDay || 1
-  };
+  const { limit, used, remaining, day } = usage;
+  return { limit, used, remaining, day };
 }
 
 const freelanceWriting = createInstantHustle({
