@@ -23,11 +23,12 @@ const saasDefinition = createAssetDefinition({
     ]
   },
   quality: {
-    summary: 'Build features, squash bugs, and scale infrastructure to transform prototypes into revenue engines.',
+    summary: 'Build features, squash bugs, and fan out edge nodes to transform prototypes into global revenue engines.',
     tracks: {
       features: { label: 'Feature launches', shortLabel: 'features' },
       stability: { label: 'Reliability upgrades', shortLabel: 'stability fixes' },
-      marketing: { label: 'Marketing pushes', shortLabel: 'marketing runs' }
+      marketing: { label: 'Marketing pushes', shortLabel: 'marketing runs' },
+      edge: { label: 'Edge deployments', shortLabel: 'edge pushes' }
     },
     levels: [
       {
@@ -57,6 +58,13 @@ const saasDefinition = createAssetDefinition({
         description: 'Marketing pushes and infrastructure unlock bigger accounts.',
         income: { min: 54, max: 74 },
         requirements: { features: 24, stability: 8, marketing: 6 }
+      },
+      {
+        level: 4,
+        name: 'Global Edge Authority',
+        description: 'Edge coverage, uptime bragging rights, and enterprise case studies pour gasoline on growth.',
+        income: { min: 82, max: 110 },
+        requirements: { features: 34, stability: 12, marketing: 10, edge: 4 }
       }
     ],
     actions: [
@@ -83,11 +91,26 @@ const saasDefinition = createAssetDefinition({
         cost: 48,
         progressKey: 'marketing',
         log: ({ label }) => `${label} launched a marketing sprint. Sign-ups trickle in all night.`
+      },
+      {
+        id: 'deployEdgeNodes',
+        label: 'Deploy Edge Nodes',
+        time: 3,
+        cost: 64,
+        cooldownDays: 2,
+        progressKey: 'edge',
+        requiresUpgrade: 'serverEdge',
+        unavailableMessage: () => 'Activate the Edge Delivery Network upgrade to unlock global deployments.',
+        log: ({ label }) => `${label} pushed code to new edge regions. Enterprise clients cheer the instant load times!`
       }
     ],
     messages: {
-      levelUp: ({ label, level, levelDef }) =>
-        `${label} advanced to Quality ${level}! ${levelDef?.name || 'New tier'} secures happier subscribers.`
+      levelUp: ({ label, level, levelDef }) => {
+        if (levelDef?.level >= 4) {
+          return `${label} achieved Quality ${level}: ${levelDef?.name || 'global tier'}! Worldwide subscribers rave about the instant response times.`;
+        }
+        return `${label} advanced to Quality ${level}! ${levelDef?.name || 'New tier'} secures happier subscribers.`;
+      }
     }
   },
   messages: {

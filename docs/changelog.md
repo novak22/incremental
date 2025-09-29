@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- Expanded the Micro SaaS quality ladder with an Edge-powered Quality 4 tier, fresh action gating, and UI messaging so late-game payouts highlight the Edge Delivery Network upgrade.
 - Revamped the Education tab with accurate countdowns, celebratory badges, and tuition/daily load summaries so enrolling in a course feels clear and motivating.
 - Replaced the static "End Day" button with a dynamic "Next" recommendation that fires the top asset upgrade or quick action, favouring longer time commitments before ending the day when no tasks remain.
 - Extended the "Asset upgrade" dashboard card with a scrollable list, up to eight recommendations, and percent-to-go callouts for each quality milestone.
