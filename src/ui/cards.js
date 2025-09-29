@@ -31,6 +31,7 @@ const hustleUi = new Map();
 const assetUi = new Map();
 const upgradeUi = new Map();
 const studyUi = new Map();
+let studyElementsDocument = null;
 
 let expandedAssetId = null;
 
@@ -1419,21 +1420,31 @@ function ensureStudyElements() {
   const doc = document;
   if (!doc) return;
 
-  if (!elements.studyTrackList || elements.studyTrackList.ownerDocument !== doc) {
-    elements.studyTrackList = doc.getElementById('study-track-list');
+  let refreshed = studyElementsDocument && studyElementsDocument !== doc;
+
+  const syncElement = (key, id) => {
+    const current = elements[key];
+    if (current && current.ownerDocument === doc && doc.contains(current)) {
+      return current;
+    }
+    const next = doc.getElementById(id);
+    if (elements[key] !== next) {
+      elements[key] = next;
+      refreshed = true;
+    }
+    return next;
+  };
+
+  const trackList = syncElement('studyTrackList', 'study-track-list');
+  syncElement('studyQueueList', 'study-queue-list');
+  syncElement('studyQueueEta', 'study-queue-eta');
+  syncElement('studyQueueCap', 'study-queue-cap');
+
+  if (refreshed) {
+    studyUi.clear();
   }
 
-  if (!elements.studyQueueList || elements.studyQueueList.ownerDocument !== doc) {
-    elements.studyQueueList = doc.getElementById('study-queue-list');
-  }
-
-  if (!elements.studyQueueEta || elements.studyQueueEta.ownerDocument !== doc) {
-    elements.studyQueueEta = doc.getElementById('study-queue-eta');
-  }
-
-  if (!elements.studyQueueCap || elements.studyQueueCap.ownerDocument !== doc) {
-    elements.studyQueueCap = doc.getElementById('study-queue-cap');
-  }
+  studyElementsDocument = doc;
 }
 
 function renderEducation(definitions) {
