@@ -22,7 +22,21 @@ export const KNOWLEDGE_TRACKS = {
     description: 'Deep-dive into narrative scaffolding for 5 days (2h/day). Tuition due upfront.',
     hoursPerDay: 2,
     days: 5,
-    tuition: 140
+    tuition: 140,
+    instantBoosts: [
+      {
+        hustleId: 'freelance',
+        hustleName: 'Freelance Writing',
+        type: 'multiplier',
+        amount: 0.25
+      },
+      {
+        hustleId: 'audiobookNarration',
+        hustleName: 'Audiobook Narration Gig',
+        type: 'multiplier',
+        amount: 0.15
+      }
+    ]
   },
   photoLibrary: {
     id: 'photoLibrary',
@@ -30,7 +44,15 @@ export const KNOWLEDGE_TRACKS = {
     description: 'Archive, tag, and light-edit your best work for 4 days (1.5h/day). Tuition due upfront.',
     hoursPerDay: 1.5,
     days: 4,
-    tuition: 95
+    tuition: 95,
+    instantBoosts: [
+      {
+        hustleId: 'eventPhotoGig',
+        hustleName: 'Event Photo Gig',
+        type: 'multiplier',
+        amount: 0.2
+      }
+    ]
   },
   ecomPlaybook: {
     id: 'ecomPlaybook',
@@ -38,7 +60,21 @@ export const KNOWLEDGE_TRACKS = {
     description: 'Shadow a pro operator for 7 days (2.5h/day) to master funnels and fulfillment math.',
     hoursPerDay: 2.5,
     days: 7,
-    tuition: 260
+    tuition: 260,
+    instantBoosts: [
+      {
+        hustleId: 'bundlePush',
+        hustleName: 'Bundle Promo Push',
+        type: 'flat',
+        amount: 6
+      },
+      {
+        hustleId: 'dropshipPackParty',
+        hustleName: 'Dropship Pack Party',
+        type: 'multiplier',
+        amount: 0.2
+      }
+    ]
   },
   automationCourse: {
     id: 'automationCourse',
@@ -46,7 +82,53 @@ export const KNOWLEDGE_TRACKS = {
     description: 'Pair-program with mentors for 10 days (3h/day) to architect a reliable micro-app.',
     hoursPerDay: 3,
     days: 10,
-    tuition: 540
+    tuition: 540,
+    instantBoosts: [
+      {
+        hustleId: 'saasBugSquash',
+        hustleName: 'SaaS Bug Squash',
+        type: 'flat',
+        amount: 12
+      }
+    ]
+  },
+  brandVoiceLab: {
+    id: 'brandVoiceLab',
+    name: 'Brand Voice Lab',
+    description: 'Work with pitch coaches for 4 days (1h/day) to sharpen live Q&A charisma.',
+    hoursPerDay: 1,
+    days: 4,
+    tuition: 120,
+    instantBoosts: [
+      {
+        hustleId: 'audienceCall',
+        hustleName: 'Audience Q&A Blast',
+        type: 'flat',
+        amount: 4
+      }
+    ]
+  },
+  guerillaBuzzWorkshop: {
+    id: 'guerillaBuzzWorkshop',
+    name: 'Guerrilla Buzz Workshop',
+    description: 'Field-test hype hooks for 6 days (1.5h/day) with a crew of street marketers.',
+    hoursPerDay: 1.5,
+    days: 6,
+    tuition: 180,
+    instantBoosts: [
+      {
+        hustleId: 'streetPromoSprint',
+        hustleName: 'Street Promo Sprint',
+        type: 'multiplier',
+        amount: 0.25
+      },
+      {
+        hustleId: 'surveySprint',
+        hustleName: 'Micro Survey Dash',
+        type: 'flat',
+        amount: 1.5
+      }
+    ]
   }
 };
 
