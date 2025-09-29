@@ -3,14 +3,13 @@ import setText from './dom.js';
 import { formatHours, formatList, formatMoney } from '../core/helpers.js';
 import { registry } from '../game/registry.js';
 import { getAssetState, getUpgradeState } from '../core/state.js';
-import {
-  SKILL_DEFINITIONS,
-  SKILL_LEVELS,
-  CHARACTER_LEVELS
-} from '../game/skills/data.js';
+import { SKILL_DEFINITIONS } from '../game/skills/data.js';
 import { KNOWLEDGE_TRACKS, getKnowledgeProgress } from '../game/requirements.js';
-
-const numberFormatter = new Intl.NumberFormat('en-US');
+import {
+  describeCharacter,
+  describeSkill,
+  formatXp
+} from './skills/helpers.js';
 
 function formatXp(value) {
   return numberFormatter.format(Math.max(0, Math.round(Number(value) || 0)));
@@ -60,6 +59,11 @@ function describeSkill(definition, stateEntry = {}) {
     progressPercent: Math.round(progress * 100),
     remainingXp: remaining
   };
+}
+
+function setText(element, value) {
+  if (!element) return;
+  element.textContent = value;
 }
 
 function renderSummary(state, summary) {

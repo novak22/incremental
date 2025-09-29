@@ -10,7 +10,7 @@
 
 **Data plumbing**
 - Time categories: `setup`, `maintenance`, `hustle`, `study`, `general`.
-- Earnings: `passive`, `offline`, `hustle`, `delayed`, `sale`.
+- Earnings: `passive`, `offline`, `hustle`, `sale`.
 - Spending: `maintenance`, `payroll`, `setup`, `investment`, `upgrade`, `consumable`.
 - Metrics reset inside `endDay` after the recap renders; helpers in `renderDailyList` cap each list at three rows.
 

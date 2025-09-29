@@ -18,4 +18,4 @@
 - Requirement chips and ROI filters gain more meaning with this variety.
 
 **Next checks**
-- Monitor ROI ordering and consider delayed gig variants if players want longer arcs.
+- Monitor ROI ordering and explore new instant gig twists if players want longer arcs.
