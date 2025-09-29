@@ -36,9 +36,8 @@ const hustleUi = new Map();
 const assetUi = new Map();
 const upgradeUi = new Map();
 const upgradeSections = new Map();
-const upgradeCategoryChips = new Map();
+const upgradeLaneItems = new Map();
 const studyUi = new Map();
-let activeUpgradeCategory = 'all';
 let currentUpgradeDefinitions = [];
 
 const UPGRADE_CATEGORY_ORDER = ['tech', 'house', 'infra', 'support', 'misc'];
@@ -1620,15 +1619,6 @@ function getFamilyCopy(id) {
   };
 }
 
-function syncUpgradeCategoryChips() {
-  if (elements.upgradeCategoryChips) {
-    elements.upgradeCategoryChips.dataset.active = activeUpgradeCategory;
-  }
-  upgradeCategoryChips.forEach((button, id) => {
-    button.setAttribute('aria-pressed', id === activeUpgradeCategory ? 'true' : 'false');
-  });
-}
-
 function buildUpgradeDetails(definition) {
   const detailBuilders = Array.isArray(definition.details) ? definition.details.slice(0, 3) : [];
   if (!detailBuilders.length) {
@@ -1773,6 +1763,110 @@ function buildUpgradeCategories(definitions) {
     });
 }
 
+function renderUpgradeLaneMap(categories) {
+  const list = elements.upgradeLaneList;
+  if (!list) return;
+
+  list.innerHTML = '';
+  upgradeLaneItems.clear();
+
+  const lanes = [
+    {
+      id: 'all',
+      copy: {
+        label: 'All lanes',
+        note: 'Browse every upgrade in one sweep.'
+      }
+    },
+    ...(Array.isArray(categories) ? categories : [])
+  ];
+
+  lanes.forEach(lane => {
+    if (!lane?.id || upgradeLaneItems.has(lane.id)) return;
+    const item = document.createElement('li');
+    item.className = 'upgrade-rail__item';
+    item.dataset.category = lane.id;
+
+    const block = document.createElement('div');
+    block.className = 'upgrade-rail__button';
+    block.setAttribute('role', 'presentation');
+
+    const heading = document.createElement('div');
+    heading.className = 'upgrade-rail__heading';
+    const label = document.createElement('span');
+    label.className = 'upgrade-rail__label';
+    label.textContent = lane.copy?.label || lane.id;
+    const count = document.createElement('span');
+    count.className = 'upgrade-rail__count';
+    heading.append(label, count);
+    block.appendChild(heading);
+
+    const stats = document.createElement('div');
+    stats.className = 'upgrade-rail__stats';
+    const ready = document.createElement('span');
+    ready.className = 'upgrade-rail__stat upgrade-rail__stat--ready';
+    const owned = document.createElement('span');
+    owned.className = 'upgrade-rail__stat';
+    stats.append(ready, owned);
+    block.appendChild(stats);
+
+    item.appendChild(block);
+    list.appendChild(item);
+    upgradeLaneItems.set(lane.id, { item, count, ready, owned });
+  });
+
+  if (!list.childElementCount) {
+    const empty = document.createElement('li');
+    empty.className = 'upgrade-rail__empty';
+    empty.textContent = 'Discover upgrades to populate this map.';
+    list.appendChild(empty);
+    return;
+  }
+
+  updateUpgradeLaneMap();
+}
+
+function updateUpgradeLaneMap() {
+  if (!upgradeLaneItems.size) return;
+  const state = getState();
+  if (!state) return;
+
+  upgradeLaneItems.forEach((entry, categoryId) => {
+    if (!entry) return;
+    const definitions = categoryId === 'all'
+      ? currentUpgradeDefinitions
+      : currentUpgradeDefinitions.filter(def => getUpgradeCategory(def) === categoryId);
+
+    const total = definitions.length;
+    let readyCount = 0;
+    let ownedCount = 0;
+
+    definitions.forEach(definition => {
+      const snapshot = getUpgradeSnapshot(definition, state);
+      if (snapshot.ready) readyCount += 1;
+      if (snapshot.purchased) ownedCount += 1;
+    });
+
+    if (entry.count) {
+      entry.count.textContent = total ? `${total} upgrades` : 'No upgrades yet';
+    }
+
+    if (entry.ready) {
+      entry.ready.textContent = readyCount > 0 ? `${readyCount} ready` : 'No ready picks';
+      entry.ready.classList.toggle('upgrade-rail__stat--empty', readyCount === 0);
+    }
+
+    if (entry.owned) {
+      entry.owned.textContent = total ? `${ownedCount}/${total} owned` : '0 owned';
+    }
+
+    if (entry.item) {
+      entry.item.dataset.ready = readyCount > 0 ? 'true' : 'false';
+      entry.item.dataset.empty = total === 0 ? 'true' : 'false';
+    }
+  });
+}
+
 function emitUIEvent(name) {
   if (typeof document?.createEvent === 'function') {
     const event = document.createEvent('Event');
@@ -1824,44 +1918,6 @@ function renderUpgradeOverview(definitions) {
   }
 }
 
-function renderUpgradeCategoryFilters(categories) {
-  const container = elements.upgradeCategoryChips;
-  if (!container) return;
-
-  const totals = categories.reduce((sum, category) => sum + (category?.total ?? 0), 0);
-  const availableIds = categories.map(category => category.id);
-  if (activeUpgradeCategory !== 'all' && !availableIds.includes(activeUpgradeCategory)) {
-    activeUpgradeCategory = 'all';
-  }
-
-  container.innerHTML = '';
-  upgradeCategoryChips.clear();
-
-  const createChip = (id, label, count) => {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.dataset.category = id;
-    button.textContent = count != null ? `${label} (${count})` : label;
-    button.addEventListener('click', () => {
-      const next = activeUpgradeCategory === id && id !== 'all' ? 'all' : id;
-      if (next === activeUpgradeCategory) return;
-      activeUpgradeCategory = next;
-      syncUpgradeCategoryChips();
-      emitUIEvent('upgrades:category-changed');
-    });
-    container.appendChild(button);
-    upgradeCategoryChips.set(id, button);
-  };
-
-  createChip('all', 'All upgrades', totals);
-  categories.forEach(category => {
-    const { id, copy, total } = category;
-    createChip(id, copy.label, total);
-  });
-
-  syncUpgradeCategoryChips();
-}
-
 export function refreshUpgradeSections() {
   const emptyNote = elements.upgradeEmpty;
   let visibleTotal = 0;
@@ -1895,6 +1951,8 @@ export function refreshUpgradeSections() {
   if (emptyNote) {
     emptyNote.hidden = visibleTotal > 0;
   }
+
+  updateUpgradeLaneMap();
 }
 
 document.addEventListener('upgrades:filtered', () => {
@@ -2040,7 +2098,7 @@ function renderUpgrades(definitions) {
   upgradeSections.clear();
 
   const categories = buildUpgradeCategories(definitions);
-  renderUpgradeCategoryFilters(categories);
+  renderUpgradeLaneMap(categories);
 
   const fragment = document.createDocumentFragment();
   categories.forEach(category => {

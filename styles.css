@@ -1017,7 +1017,22 @@ body {
   flex-wrap: wrap;
 }
 
+.chips--stacked {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.chips--stacked button {
+  width: 100%;
+  justify-content: space-between;
+  text-align: left;
+}
+
 .chips button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   border: 1px solid var(--border);
   background: var(--surface-muted);
   border-radius: 999px;
@@ -1275,9 +1290,143 @@ body {
 
 .upgrade-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 280px;
+  grid-template-columns: 260px minmax(0, 1fr) 280px;
   gap: 24px;
   align-items: flex-start;
+}
+
+.upgrade-rail {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  padding: 20px;
+  display: grid;
+  gap: 20px;
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  box-shadow: var(--shadow-sm);
+}
+
+.upgrade-rail__section {
+  display: grid;
+  gap: 12px;
+}
+
+.upgrade-rail__header {
+  display: grid;
+  gap: 4px;
+}
+
+.upgrade-rail__header h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.upgrade-rail__header p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-subtle);
+}
+
+.upgrade-rail__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.upgrade-rail__empty {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-subtle);
+  text-align: center;
+}
+
+.upgrade-rail__item {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-muted);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.upgrade-rail__item[data-ready='true'] {
+  border-color: rgba(124, 92, 255, 0.45);
+  box-shadow: 0 8px 22px -18px rgba(124, 92, 255, 0.75);
+}
+
+.upgrade-rail__item[data-active='true'] {
+  border-color: rgba(124, 92, 255, 0.65);
+  background: rgba(124, 92, 255, 0.18);
+}
+
+.upgrade-rail__item[data-empty='true'] {
+  opacity: 0.75;
+}
+
+.upgrade-rail__button {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  padding: 12px 14px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+}
+
+.upgrade-rail__button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--focus);
+  border-radius: inherit;
+}
+
+.upgrade-rail__button:hover {
+  background: rgba(124, 92, 255, 0.08);
+  border-radius: inherit;
+}
+
+.upgrade-rail__heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.upgrade-rail__label {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.upgrade-rail__count {
+  font-size: 12px;
+  color: var(--text-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.upgrade-rail__stats {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--text-subtle);
+}
+
+.upgrade-rail__stat {
+  font-weight: 500;
+}
+
+.upgrade-rail__stat--ready {
+  color: var(--accent-strong);
+  font-weight: 600;
+}
+
+.upgrade-rail__stat--empty {
+  color: rgba(148, 163, 184, 0.8);
+  font-weight: 500;
 }
 
 .upgrade-main {
@@ -1348,6 +1497,57 @@ body {
 .upgrade-list {
   display: grid;
   gap: 28px;
+}
+
+.upgrade-section__families {
+  display: grid;
+  gap: 18px;
+}
+
+.upgrade-family {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  padding: 18px 20px;
+  display: grid;
+  gap: 16px;
+}
+
+.upgrade-family__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.upgrade-family__header h4 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.upgrade-family__count {
+  font-size: 12px;
+  text-transform: uppercase;
+  color: var(--text-subtle);
+  letter-spacing: 0.08em;
+}
+
+.upgrade-family__note {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-subtle);
+}
+
+.upgrade-family__list {
+  display: grid;
+  gap: 16px;
+}
+
+.upgrade-family__empty {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-subtle);
+  font-style: italic;
 }
 
 .upgrade-section {
@@ -1598,6 +1798,29 @@ body {
   text-align: center;
   color: var(--text-subtle);
   border-style: dashed;
+}
+
+@media (max-width: 1280px) {
+  .upgrade-layout {
+    grid-template-columns: minmax(0, 1fr) 280px;
+  }
+
+  .upgrade-rail {
+    position: static;
+    grid-column: 1 / -1;
+    order: -1;
+  }
+}
+
+@media (max-width: 960px) {
+  .upgrade-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .upgrade-dock {
+    position: static;
+    order: 3;
+  }
 }
 
 .study-queue {
