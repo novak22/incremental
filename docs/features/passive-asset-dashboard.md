@@ -11,14 +11,14 @@ The passive asset workspace now presents each asset as a management card that hi
 
 ## Player Impact
 - Faster comparisons: stat tiles on each card summarize launches, payouts, and upkeep so players can pick the next investment without cross-referencing logs.
-- Smoother upgrades: inline "Support boosts" hints highlight pending equipment and study paths so players know which upgrades will unlock the next payout bump, and dedicated quick-buy buttons sit beside each instance to trigger the next one or two upgrades immediately.
+- Smoother upgrades: inline "Support boosts" hints highlight pending equipment and study paths so players know which upgrades will unlock the next payout bump, and dedicated quick-buy buttons sit beside each instance to trigger the next one or two upgrades immediately. The dashboard card now lists a scrollable queue of upgrade nudges and calls out the percentage still needed for each quality milestone so players can celebrate progress at a glance.
 - Clearer oversight: category rosters list upkeep obligations, yesterday's payout, net gain per upkeep hour, and one-click sell controls for every active instance in a familiar table format.
 - Sharper next steps: the instance modal highlights current quality level, progress toward the next milestone, and direct quality actions so players can immediately invest in the build they opened, with quality upgrades now pinned to the top of the scrollable modal.
 - Confident launches: the briefing modal reuses live detail renderers, ensuring setup costs, maintenance, and quality roadmaps stay accurate as modifiers shift.
 
 ## Implementation Notes
 - Asset cards keep the existing category structure but use a dedicated layout (`asset-card__*` classes) for stats, actions, and instance management.
-- The dashboard now includes an "Asset upgrade" card that calls out the next quality actions for struggling builds, prioritising low-yield instances that still owe progress toward their upcoming quality tier.
+- The dashboard now includes an "Asset upgrade" card that calls out the next quality actions for struggling builds, prioritising low-yield instances that still owe progress toward their upcoming quality tier. The list now scrolls to surface up to eight recommendations at once and each entry highlights the percentage remaining alongside the existing effort notes.
 - Instance rows now expose both the previous day's payout and inline sell buttons so liquidation is always one click away.
 - Each instance row can render up to two quick-purchase buttons for the next required equipment upgrades, deferring to existing upgrade action handlers for cost checks and logging. Quick actions now sit directly beside the sell button in the instance list so players can invest or liquidate without leaving the modal. Active builds in the slide-over now include a dedicated stat strip with payout, ROI, and upkeep details above the action row, plus inline shortcuts for pending equipment upgrades.
 - Category-level "View launched assets" toggles render aggregated tables populated by `assetCategoryView`, which now highlights the first couple of supporting upgrades directly under each instance's actions. Upgrade shortcut helpers live in `src/ui/assetUpgrades.js` so both the category roster and the slide-over reuse identical button logic.
