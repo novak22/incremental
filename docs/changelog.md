@@ -1,7 +1,7 @@
 # Changelog
 
 ## [Unreleased]
-- Added an "Asset upgrade boosts" dashboard card that spotlights quality pushes for low-yield assets while trimming Daily Stats lists to the top three highlights for a tighter fit.
+- Added an "Asset upgrade" dashboard card that spotlights quality pushes for low-yield assets while trimming Daily Stats lists to the top three highlights for a tighter fit.
 - Streamlined the header pulse to spotlight daily flow and time stats in a single tidy row.
 - Centered the shell header around a "Daily pulse" band that highlights daily earnings and spend, lifetime cash flow, and the remaining versus committed hours for the current day.
 - Expanded the hustle catalog with eight new instant gigs ranging from 15-minute surveys to asset-specific pop-up events, adding more scheduling variety and requirement-driven payouts.
