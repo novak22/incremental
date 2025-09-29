@@ -75,10 +75,29 @@ export function getHustleRequirements(definition) {
   return Array.isArray(definition.requirements) ? definition.requirements : [];
 }
 
+function describeDailyLimit(definition, state = getState()) {
+  if (!definition || typeof definition.getDailyUsage !== 'function') return [];
+  const usage = definition.getDailyUsage(state);
+  if (!usage || !Number.isFinite(usage.limit) || usage.limit <= 0) return [];
+  const used = Math.max(0, Number(usage.used) || 0);
+  const remaining = Math.max(0, Number(usage.remaining ?? (usage.limit - used)));
+  return [
+    {
+      type: 'limit',
+      label: `Daily runs left: ${remaining}/${usage.limit}`,
+      met: remaining > 0,
+      progress: {
+        used,
+        remaining,
+        limit: usage.limit
+      }
+    }
+  ];
+}
+
 export function describeHustleRequirements(definition, state = getState()) {
   const requirements = getHustleRequirements(definition);
-  if (!requirements.length) return [];
-  return requirements.map(req => {
+  const descriptors = requirements.map(req => {
     const assetDefinition = getAssetDefinition(req.assetId);
     const label = assetDefinition?.singular || assetDefinition?.name || req.assetId;
     const need = Number(req.count) || 1;
@@ -91,12 +110,36 @@ export function describeHustleRequirements(definition, state = getState()) {
       progress: { have, need }
     };
   });
+  return [...descriptors, ...describeDailyLimit(definition, state)];
 }
 
 export function areHustleRequirementsMet(definition, state = getState()) {
   const requirements = getHustleRequirements(definition);
-  if (!requirements.length) return true;
-  return requirements.every(req => countActiveAssetInstances(req.assetId, state) >= (Number(req.count) || 1));
+  const assetsMet = requirements.every(req => countActiveAssetInstances(req.assetId, state) >= (Number(req.count) || 1));
+  if (!assetsMet) return false;
+  if (definition && typeof definition.getDailyUsage === 'function') {
+    const usage = definition.getDailyUsage(state);
+    if (usage && Number.isFinite(usage.limit) && usage.limit > 0 && Math.max(0, Number(usage.remaining)) <= 0) {
+      return false;
+    }
+  }
+  return true;
+}
+
+export function getHustleDailyUsage(definition, state = getState()) {
+  if (!definition || typeof definition.getDailyUsage !== 'function') return null;
+  const usage = definition.getDailyUsage(state);
+  if (!usage || !Number.isFinite(usage.limit) || usage.limit <= 0) {
+    return null;
+  }
+  const used = Math.max(0, Number(usage.used) || 0);
+  const remaining = Math.max(0, Number(usage.remaining ?? (usage.limit - used)));
+  return {
+    limit: usage.limit,
+    used,
+    remaining,
+    day: Number(state?.day) || usage.currentDay || 1
+  };
 }
 
 const freelanceWriting = createInstantHustle({
@@ -131,6 +174,7 @@ const audienceCall = createInstantHustle({
   description: 'Host a 60-minute livestream for your blog readers and pitch a premium checklist.',
   time: 1,
   requirements: AUDIENCE_CALL_REQUIREMENTS,
+  dailyLimit: 1,
   payout: {
     amount: 12,
     logType: 'hustle',
@@ -182,6 +226,7 @@ const surveySprint = createInstantHustle({
   tag: { label: 'Instant', type: 'instant' },
   description: 'Knock out a 15-minute feedback survey while your coffee is still warm.',
   time: 0.25,
+  dailyLimit: 4,
   payout: {
     amount: 1,
     logType: 'hustle',

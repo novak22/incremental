@@ -20,8 +20,9 @@ Online Hustle Simulator is a browser-based incremental game about orchestrating 
 
 ### Hustles & Study Tracks
 - **Freelance Writing** – Spend 2h to earn $18 instantly (Outline Mastery grads earn +25%).
-- **Audience Q&A Blast** – Spend 1h with at least one active blog to earn $12 from checklist upsells (+$4 after Brand Voice Lab).
+- **Audience Q&A Blast** – Spend 1h with at least one active blog to earn $12 from checklist upsells (+$4 after Brand Voice Lab). Limited to one spotlight stream per day, so pick your prime time.
 - **Bundle Promo Push** – Spend 2.5h once you have two active blogs plus an e-book to pocket $48 immediately (+$6 after E-Commerce Playbook).
+- **Micro Survey Dash** – Fire off 15-minute surveys for $1 a pop (up to four per day; Guerrilla Buzz Workshop adds +$1.50 each) to keep pockets of time profitable.
 - **Outline Mastery Workshop** – Pay $140 upfront; 2h/day for 5 days auto-reserve to unlock e-book production chops and boost writing/narration gigs.
 - **Photo Catalog Curation** – Pay $95 upfront; 1.5h/day for 4 days auto-reserve to polish your stock gallery workflow and increase Event Photo Gig payouts by 20%.
 - **E-Commerce Playbook** – Pay $260 upfront; 2.5h/day for 7 days auto-reserve to prep dropshipping ventures (+$6 Bundle Promo Push, +20% Dropship Pack Party).

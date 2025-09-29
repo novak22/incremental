@@ -1087,6 +1087,12 @@ body {
   color: var(--text-subtle);
 }
 
+.hustle-card__limit {
+  font-size: 14px;
+  color: var(--text-subtle);
+  margin: -6px 0 0;
+}
+
 .hustle-card__actions {
   display: flex;
   justify-content: flex-end;

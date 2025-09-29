@@ -7,10 +7,11 @@ const {
   stateModule,
   hustlesModule,
   requirementsModule,
-  offlineModule
+  offlineModule,
+  lifecycleModule
 } = harness;
 
-const { getState, getAssetState } = stateModule;
+const { getState, getAssetState, getHustleState } = stateModule;
 const { KNOWLEDGE_TRACKS, getKnowledgeProgress } = requirementsModule;
 
 const {
@@ -18,6 +19,7 @@ const {
 } = hustlesModule;
 
 const { handleOfflineProgress } = offlineModule;
+const { endDay } = lifecycleModule;
 
 const resetState = () => harness.resetState();
 
@@ -111,4 +113,73 @@ test('offline progress adds a friendly reminder when nothing resolves', () => {
 
   assert.equal(state.log.length, beforeLogLength + 1);
   assert.match(state.log.at(-1).message, /While you were away, the clock paused/);
+});
+
+test('audience call can only run once per day', () => {
+  resetState();
+
+  const state = getState();
+  state.money = 0;
+  state.timeLeft = 10;
+  getAssetState('blog', state).instances = [{ status: 'active' }];
+
+  const audience = HUSTLES.find(hustle => hustle.id === 'audienceCall');
+  audience.action.onClick();
+
+  assert.equal(state.money, 12, 'first run should pay out');
+  assert.equal(getHustleState('audienceCall').runsToday, 1, 'daily counter should increment after the first run');
+
+  const beforeLogLength = state.log.length;
+  audience.action.onClick();
+
+  assert.equal(state.money, 12, 'second run should be blocked by the daily limit');
+  assert.equal(getHustleState('audienceCall').runsToday, 1, 'daily counter should not increase after hitting the cap');
+  assert.equal(state.log.length, beforeLogLength + 1, 'player should receive a log warning when capped');
+  assert.match(state.log.at(-1).message, /Daily limit/, 'log should mention the daily limit reason');
+
+  state.timeLeft = 0;
+  endDay(false);
+
+  assert.equal(getHustleState('audienceCall').runsToday, 0, 'usage should reset after a new day begins');
+
+  const beforeMoney = state.money;
+  audience.action.onClick();
+  assert.equal(state.money, beforeMoney + 12, 'limit should reset the following day');
+  assert.equal(getHustleState('audienceCall').runsToday, 1, 'counter should start over on the new day');
+});
+
+test('survey sprint caps at four runs per day', () => {
+  resetState();
+
+  const state = getState();
+  state.money = 0;
+  state.timeLeft = 10;
+
+  const survey = HUSTLES.find(hustle => hustle.id === 'surveySprint');
+
+  for (let index = 0; index < 4; index += 1) {
+    survey.action.onClick();
+  }
+
+  assert.equal(state.money, 4, 'four successful runs should pay out $4 total');
+  assert.equal(getHustleState('surveySprint').runsToday, 4, 'counter should reflect four completed runs');
+
+  const beforeMoney = state.money;
+  const beforeLog = state.log.length;
+  survey.action.onClick();
+
+  assert.equal(state.money, beforeMoney, 'fifth attempt should not pay out');
+  assert.equal(getHustleState('surveySprint').runsToday, 4, 'counter should remain at the cap');
+  assert.equal(state.log.length, beforeLog + 1, 'players should see a log entry explaining the limit');
+  assert.match(state.log.at(-1).message, /Daily limit/, 'limit warning should mention the daily cap');
+
+  state.timeLeft = 0;
+  endDay(false);
+
+  assert.equal(getHustleState('surveySprint').runsToday, 0, 'counter should clear at the start of a new day');
+
+  const afterResetMoney = state.money;
+  survey.action.onClick();
+  assert.equal(state.money, afterResetMoney + 1, 'new day should allow survey sprint again');
+  assert.equal(getHustleState('surveySprint').runsToday, 1, 'counter should restart after reset');
 });

@@ -1,7 +1,7 @@
 import elements from './elements.js';
 import { getAssetState, getState } from '../core/state.js';
 import { formatDays, formatHours, formatMoney } from '../core/helpers.js';
-import { describeHustleRequirements } from '../game/hustles.js';
+import { describeHustleRequirements, getHustleDailyUsage } from '../game/hustles.js';
 import { describeRequirement, getDefinitionRequirements, KNOWLEDGE_TRACKS, KNOWLEDGE_REWARDS, getKnowledgeProgress } from '../game/requirements.js';
 import { getTimeCap } from '../game/time.js';
 import {
@@ -1033,6 +1033,10 @@ function renderHustleCard(definition, container) {
   meta.textContent = requirementLabel;
   card.appendChild(meta);
 
+  const limitDetail = document.createElement('p');
+  limitDetail.className = 'hustle-card__limit';
+  card.appendChild(limitDetail);
+
   const actions = document.createElement('div');
   actions.className = 'hustle-card__actions';
   let queueButton = null;
@@ -1060,7 +1064,7 @@ function renderHustleCard(definition, container) {
   card.appendChild(actions);
   container.appendChild(card);
 
-  hustleUi.set(definition.id, { card, queueButton });
+  hustleUi.set(definition.id, { card, queueButton, limitDetail });
   updateHustleCard(definition);
 }
 
@@ -1077,6 +1081,23 @@ function updateHustleCard(definition) {
       ? definition.action.label(state)
       : definition.action?.label || 'Queue';
   }
+
+  ui.card.dataset.available = disabled ? 'false' : 'true';
+  if (ui.limitDetail) {
+    const usage = getHustleDailyUsage(definition, state);
+    if (usage) {
+      ui.limitDetail.hidden = false;
+      ui.limitDetail.textContent = usage.remaining > 0
+        ? `${usage.remaining}/${usage.limit} runs left today`
+        : 'Daily limit reached for today. Resets tomorrow.';
+      ui.card.dataset.limitRemaining = String(usage.remaining);
+    } else {
+      ui.limitDetail.hidden = true;
+      ui.limitDetail.textContent = '';
+      delete ui.card.dataset.limitRemaining;
+    }
+  }
+
   const nextAvailability = disabled ? 'false' : 'true';
   const availabilityChanged = ui.card.dataset.available !== nextAvailability;
   ui.card.dataset.available = nextAvailability;
@@ -1092,26 +1113,40 @@ function openHustleDetails(definition) {
   const body = document.createElement('div');
   body.className = 'hustle-detail';
 
+  const usage = getHustleDailyUsage(definition, state);
+
   if (definition.description) {
     const intro = document.createElement('p');
     intro.textContent = definition.description;
     body.appendChild(intro);
   }
 
-  body.appendChild(
-    createDefinitionSummary('Stats', [
-      { label: 'Time', value: formatHours(time) },
-      { label: 'Payout', value: payout > 0 ? `$${formatMoney(payout)}` : 'Varies' }
-    ])
-  );
+  const stats = [
+    { label: 'Time', value: formatHours(time) },
+    { label: 'Payout', value: payout > 0 ? `$${formatMoney(payout)}` : 'Varies' }
+  ];
+  if (usage) {
+    stats.push({
+      label: 'Daily limit',
+      value: usage.remaining > 0
+        ? `${usage.remaining}/${usage.limit} runs left today`
+        : 'Maxed out today — resets tomorrow'
+    });
+  }
+
+  body.appendChild(createDefinitionSummary('Stats', stats));
 
   const requirements = describeHustleRequirements(definition, state) || [];
   const reqRows = requirements.length
     ? requirements.map(req => ({
-        label: req.label,
-        value: req.met
-          ? 'Ready'
-          : `${req.progress?.have ?? 0}/${req.progress?.need ?? 1}`
+        label: req.type === 'limit' ? 'Daily limit' : req.label,
+        value: req.type === 'limit'
+          ? (req.met
+              ? `${req.progress?.remaining ?? 0}/${req.progress?.limit ?? 0} runs left today`
+              : 'Maxed out today — resets tomorrow')
+          : req.met
+            ? 'Ready'
+            : `${req.progress?.have ?? 0}/${req.progress?.need ?? 1}`
       }))
     : [{ label: 'Requirements', value: 'None' }];
   body.appendChild(createDefinitionSummary('Requirements', reqRows));
