@@ -1,254 +1,212 @@
 import elements from './elements.js';
 
 export function initLayoutControls() {
-  setupSectionNavigation();
-  setupStatsPanel();
-  setupTimeLegendToggle();
-  setupLogToggle();
-  setupGlobalFilters();
-  setupHustleFilter();
-  setupEducationFilters();
-  setupAssetFilters();
-  setupUpgradeSearch();
-  applyCardFilters();
+  setupTabs();
+  setupEventLog();
+  setupSlideOver();
+  setupCommandPalette();
+  setupFilterHandlers();
 }
 
 export function applyCardFilters() {
-  applyHustleFilter();
-  applyEducationFilters();
-  applyUpgradeSearchFilter();
+  applyHustleFilters();
+  applyUpgradeFilters();
+  applyStudyFilters();
+  applyAssetFilters();
 }
 
-function setupSectionNavigation() {
-  const links = elements.sectionNavLinks || [];
-  const sections = elements.workspaceSections || [];
-  if (!links.length || !sections.length) return;
+function setupTabs() {
+  const { shellTabs, panels } = elements;
+  if (!shellTabs.length || !panels.length) return;
 
-  const sectionsById = new Map(sections.map(section => [section.id, section]));
-
-  const activateLink = targetId => {
-    for (const link of links) {
-      const href = link.getAttribute('href') || '';
-      const id = href.startsWith('#') ? href.slice(1) : href;
-      const isMatch = id === targetId;
-      link.classList.toggle('is-active', isMatch);
-      link.setAttribute('aria-current', isMatch ? 'true' : 'false');
+  const activate = targetId => {
+    for (const tab of shellTabs) {
+      const isActive = tab.getAttribute('aria-controls') === targetId;
+      tab.classList.toggle('is-active', isActive);
+      tab.setAttribute('aria-selected', String(isActive));
+      tab.tabIndex = isActive ? 0 : -1;
+    }
+    for (const panel of panels) {
+      const match = panel.id === targetId;
+      panel.classList.toggle('is-active', match);
+      panel.hidden = !match;
     }
   };
 
-  for (const link of links) {
-    link.addEventListener('click', event => {
-      const href = link.getAttribute('href') || '';
-      if (!href.startsWith('#')) return;
-      const id = href.slice(1);
-      const section = sectionsById.get(id);
-      if (!section) return;
+  shellTabs.forEach(tab => {
+    tab.addEventListener('click', () => activate(tab.getAttribute('aria-controls')));
+  });
+
+  activate('panel-dashboard');
+}
+
+function setupEventLog() {
+  const { openEventLog, eventLogPanel, eventLogClose } = elements;
+  if (!openEventLog || !eventLogPanel) return;
+
+  const toggle = visible => {
+    eventLogPanel.hidden = !visible;
+    if (visible) {
+      eventLogPanel.querySelector('button')?.focus({ preventScroll: true });
+    }
+  };
+
+  openEventLog.addEventListener('click', () => toggle(true));
+  eventLogClose?.addEventListener('click', () => toggle(false));
+  eventLogPanel.addEventListener('click', event => {
+    if (event.target.dataset.close === 'event-log') {
+      toggle(false);
+    }
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && !eventLogPanel.hidden) {
+      toggle(false);
+    }
+  });
+}
+
+function setupSlideOver() {
+  const { slideOver, slideOverBackdrop, slideOverClose } = elements;
+  if (!slideOver) return;
+
+  const hide = () => {
+    slideOver.hidden = true;
+    slideOver.dataset.mode = '';
+  };
+
+  slideOverBackdrop?.addEventListener('click', hide);
+  slideOverClose?.addEventListener('click', hide);
+  slideOver.addEventListener('keydown', event => {
+    if (event.key === 'Escape') hide();
+  });
+
+  slideOver.hidePanel = hide;
+}
+
+function setupCommandPalette() {
+  const {
+    commandPalette,
+    commandPaletteTrigger,
+    commandPaletteBackdrop,
+    commandPaletteSearch
+  } = elements;
+  if (!commandPalette || !commandPaletteTrigger) return;
+
+  const show = () => {
+    commandPalette.hidden = false;
+    commandPaletteSearch?.focus({ preventScroll: true });
+  };
+
+  const hide = () => {
+    commandPalette.hidden = true;
+    commandPaletteSearch.value = '';
+  };
+
+  commandPaletteTrigger.addEventListener('click', show);
+  commandPaletteBackdrop?.addEventListener('click', hide);
+  document.addEventListener('keydown', event => {
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
       event.preventDefault();
-      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      activateLink(id);
-    });
+      show();
+    }
+    if (event.key === 'Escape' && !commandPalette.hidden) {
+      hide();
+    }
+  });
+
+  commandPalette.hidePalette = hide;
+}
+
+function setupFilterHandlers() {
+  elements.hustleAvailableToggle?.addEventListener('change', applyHustleFilters);
+  elements.hustleSort?.addEventListener('change', applyHustleFilters);
+  elements.hustleSearch?.addEventListener('input', debounce(applyHustleFilters, 120));
+
+  elements.assetFilters.activeOnly?.addEventListener('change', applyAssetFilters);
+  elements.assetFilters.maintenance?.addEventListener('change', applyAssetFilters);
+  elements.assetFilters.lowRisk?.addEventListener('change', applyAssetFilters);
+
+  elements.upgradeFilters.affordable?.addEventListener('change', applyUpgradeFilters);
+  elements.upgradeFilters.favorites?.addEventListener('change', applyUpgradeFilters);
+  elements.upgradeSearch?.addEventListener('input', debounce(applyUpgradeFilters, 150));
+
+  elements.studyFilters.activeOnly?.addEventListener('change', applyStudyFilters);
+  elements.studyFilters.hideComplete?.addEventListener('change', applyStudyFilters);
+}
+
+function applyHustleFilters() {
+  const cards = Array.from(elements.hustleList?.querySelectorAll('[data-hustle]') || []);
+  const availableOnly = Boolean(elements.hustleAvailableToggle?.checked);
+  const sortValue = elements.hustleSort?.value || 'roi';
+  const query = (elements.hustleSearch?.value || '').trim().toLowerCase();
+
+  cards.forEach(card => {
+    const matchesSearch = !query || card.dataset.search?.includes(query);
+    const matchesAvailability = !availableOnly || card.dataset.available === 'true';
+    card.hidden = !(matchesSearch && matchesAvailability);
+  });
+
+  if (sortValue === 'payout') {
+    cards.sort((a, b) => Number(b.dataset.payout || 0) - Number(a.dataset.payout || 0));
+  } else if (sortValue === 'time') {
+    cards.sort((a, b) => Number(a.dataset.time || 0) - Number(b.dataset.time || 0));
+  } else {
+    cards.sort((a, b) => Number(b.dataset.roi || 0) - Number(a.dataset.roi || 0));
   }
 
-  activateLink(sections[0]?.id);
-
-  if (typeof IntersectionObserver !== 'function') return;
-
-  const observer = new IntersectionObserver(entries => {
-    const visible = entries
-      .filter(entry => entry.isIntersecting)
-      .sort((a, b) => sections.indexOf(a.target) - sections.indexOf(b.target));
-    if (visible.length === 0) return;
-    const topSection = visible[0].target.id;
-    activateLink(topSection);
-  }, {
-    rootMargin: '-40% 0px -40% 0px',
-    threshold: [0.25, 0.6]
-  });
-
-  sections.forEach(section => observer.observe(section));
+  const fragment = document.createDocumentFragment();
+  cards.forEach(card => fragment.appendChild(card));
+  elements.hustleList?.appendChild(fragment);
 }
 
-function setupStatsPanel() {
-  const panel = elements.summaryPanel;
-  const toggle = elements.statsToggle;
-  if (!panel || !toggle) return;
+function applyAssetFilters() {
+  const rows = Array.from(elements.assetTableBody?.querySelectorAll('tr') || []);
+  const activeOnly = Boolean(elements.assetFilters.activeOnly?.checked);
+  const maintenanceOnly = Boolean(elements.assetFilters.maintenance?.checked);
+  const hideRisk = Boolean(elements.assetFilters.lowRisk?.checked);
 
-  const update = expanded => {
-    panel.dataset.collapsed = expanded ? 'false' : 'true';
-    toggle.setAttribute('aria-expanded', String(expanded));
-    toggle.textContent = expanded ? 'Collapse breakdowns' : 'Expand breakdowns';
-    const details = panel.querySelectorAll('details');
-    details.forEach(detail => {
-      detail.open = expanded;
-    });
-  };
-
-  toggle.addEventListener('click', () => {
-    const expanded = toggle.getAttribute('aria-expanded') === 'true';
-    update(!expanded);
-  });
-
-  update(false);
-}
-
-function setupTimeLegendToggle() {
-  const toggle = elements.timeLegendToggle;
-  const legend = elements.timeLegend;
-  if (!toggle || !legend) return;
-  const header = legend.closest('.dashboard-header') || toggle.closest('.dashboard-header');
-
-  const syncHeaderState = () => {
-    if (!header) return;
-    header.classList.toggle('legend-collapsed', legend.hidden);
-  };
-
-  const setExpanded = expanded => {
-    toggle.setAttribute('aria-expanded', String(expanded));
-    toggle.textContent = expanded ? 'Hide timeline legend' : 'Show timeline legend';
-    legend.hidden = !expanded;
-    syncHeaderState();
-  };
-
-  toggle.addEventListener('click', () => {
-    const expanded = toggle.getAttribute('aria-expanded') === 'true';
-    setExpanded(!expanded);
-  });
-
-  setExpanded(false);
-}
-
-function setupLogToggle() {
-  const toggle = elements.logToggle;
-  const feed = elements.logFeed;
-  if (!toggle || !feed) return;
-  const panel = feed.closest('.log');
-  if (!panel) return;
-
-  const update = expanded => {
-    toggle.setAttribute('aria-expanded', String(expanded));
-    toggle.textContent = expanded ? 'Summary view' : 'Detailed view';
-    panel.classList.toggle('summary', !expanded);
-  };
-
-  toggle.addEventListener('click', () => {
-    const expanded = toggle.getAttribute('aria-expanded') === 'true';
-    update(!expanded);
-  });
-
-  update(false);
-}
-
-function setupGlobalFilters() {
-  const filters = elements.globalFilters;
-  const container = elements.workspacePanels;
-  if (!filters || !container) return;
-
-  const apply = () => {
-    container.classList.toggle('hide-locked', Boolean(filters.hideLocked?.checked));
-    container.classList.toggle('hide-completed', Boolean(filters.hideCompleted?.checked));
-    container.classList.toggle('show-active-only', Boolean(filters.showActive?.checked));
-    applyCardFilters();
-  };
-
-  Object.values(filters).forEach(input => {
-    if (!input) return;
-    input.addEventListener('change', apply);
-  });
-
-  apply();
-}
-
-function setupHustleFilter() {
-  const checkbox = elements.hustlesFilters?.availableOnly;
-  if (!checkbox) return;
-  checkbox.addEventListener('change', applyHustleFilter);
-}
-
-function applyHustleFilter() {
-  const checkbox = elements.hustlesFilters?.availableOnly;
-  const shouldFilter = Boolean(checkbox?.checked);
-  const cards = elements.hustleGrid?.querySelectorAll('.card') || [];
-  cards.forEach(card => {
-    if (!shouldFilter) {
-      card.classList.remove('is-filtered');
-      return;
-    }
-    const button = card.querySelector('button');
-    const available = button ? !button.disabled : true;
-    card.classList.toggle('is-filtered', !available);
-  });
-}
-
-function setupEducationFilters() {
-  const { activeOnly, hideComplete } = elements.educationFilters || {};
-  if (activeOnly) activeOnly.addEventListener('change', applyEducationFilters);
-  if (hideComplete) hideComplete.addEventListener('change', applyEducationFilters);
-}
-
-function applyEducationFilters() {
-  const cards = elements.educationGrid?.querySelectorAll('.card') || [];
-  const activeOnly = Boolean(elements.educationFilters?.activeOnly?.checked);
-  const hideComplete = Boolean(elements.educationFilters?.hideComplete?.checked);
-
-  cards.forEach(card => {
+  rows.forEach(row => {
     let hidden = false;
-    const completed = card.classList.contains('completed');
-    const inProgress = card.dataset.inProgress === 'true';
-
-    if (hideComplete && completed) {
-      hidden = true;
-    }
-    if (activeOnly && !inProgress) {
-      hidden = true;
-    }
-
-    card.classList.toggle('is-filtered', hidden);
+    if (activeOnly && row.dataset.state !== 'active') hidden = true;
+    if (maintenanceOnly && row.dataset.needsMaintenance !== 'true') hidden = true;
+    if (hideRisk && row.dataset.risk === 'high') hidden = true;
+    row.hidden = hidden;
   });
 }
 
-function setupAssetFilters() {
-  const { collapsed, hideLocked } = elements.assetsFilters || {};
-  const section = elements.assetSection;
-  if (!section) return;
+function applyUpgradeFilters() {
+  const cards = Array.from(elements.upgradeList?.querySelectorAll('[data-upgrade]') || []);
+  const affordableOnly = Boolean(elements.upgradeFilters.affordable?.checked);
+  const favoritesOnly = Boolean(elements.upgradeFilters.favorites?.checked);
+  const query = (elements.upgradeSearch?.value || '').trim().toLowerCase();
 
-  const apply = () => {
-    if (collapsed) {
-      section.classList.toggle('is-collapsed', Boolean(collapsed.checked));
-    }
-    if (hideLocked) {
-      section.classList.toggle('hide-locked', Boolean(hideLocked.checked));
-    }
+  cards.forEach(card => {
+    const matchesSearch = !query || card.dataset.search?.includes(query);
+    const matchesAffordable = !affordableOnly || card.dataset.affordable === 'true';
+    const matchesFavorites = !favoritesOnly || card.dataset.favorite === 'true';
+    card.hidden = !(matchesSearch && matchesAffordable && matchesFavorites);
+  });
+}
+
+function applyStudyFilters() {
+  const tracks = Array.from(elements.studyTrackList?.querySelectorAll('[data-track]') || []);
+  const activeOnly = Boolean(elements.studyFilters.activeOnly?.checked);
+  const hideComplete = Boolean(elements.studyFilters.hideComplete?.checked);
+
+  tracks.forEach(track => {
+    const isActive = track.dataset.active === 'true';
+    const isComplete = track.dataset.complete === 'true';
+    let hidden = false;
+    if (activeOnly && !isActive) hidden = true;
+    if (hideComplete && isComplete) hidden = true;
+    track.hidden = hidden;
+  });
+}
+
+function debounce(fn, wait = 120) {
+  let timer = null;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), wait);
   };
-
-  if (collapsed) collapsed.addEventListener('change', apply);
-  if (hideLocked) hideLocked.addEventListener('change', apply);
-
-  apply();
-}
-
-function setupUpgradeSearch() {
-  const input = elements.upgradeSearch;
-  if (!input) return;
-  input.addEventListener('input', applyUpgradeSearchFilter);
-}
-
-function applyUpgradeSearchFilter() {
-  const term = (elements.upgradeSearch?.value || '').trim().toLowerCase();
-  const containers = elements.upgradeGroupGrids ? Object.values(elements.upgradeGroupGrids) : [];
-
-  containers.forEach(container => {
-    if (!container) return;
-    const cards = container.querySelectorAll('.card');
-    let visibleCount = 0;
-    cards.forEach(card => {
-      const text = card.textContent.toLowerCase();
-      const match = !term || text.includes(term);
-      card.classList.toggle('is-filtered', !match);
-      if (match) visibleCount += 1;
-    });
-    const group = container.closest('.upgrade-group');
-    if (group) {
-      group.classList.toggle('is-empty', visibleCount === 0);
-    }
-  });
 }

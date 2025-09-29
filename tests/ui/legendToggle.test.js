@@ -2,29 +2,23 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { ensureTestDom } from '../helpers/setupDom.js';
 
-test('timeline legend toggle hides legend and collapses the header', async () => {
+test('event log panel toggles visibility from dashboard shortcut', async () => {
   ensureTestDom();
 
   const { initLayoutControls } = await import('../../src/ui/layout.js');
   initLayoutControls();
 
-  const toggle = document.getElementById('time-legend-toggle');
-  const legend = document.getElementById('time-legend');
-  const header = document.querySelector('.dashboard-header');
+  const trigger = document.getElementById('open-event-log');
+  const panel = document.getElementById('event-log-panel');
 
-  assert.equal(toggle.getAttribute('aria-expanded'), 'false');
-  assert.equal(legend.hidden, true);
-  assert.ok(header.classList.contains('legend-collapsed'));
+  assert.ok(trigger, 'expected event log trigger');
+  assert.ok(panel, 'expected event log panel');
+  assert.equal(panel.hidden, true);
 
-  toggle.click();
+  trigger.click();
+  assert.equal(panel.hidden, false);
 
-  assert.equal(toggle.getAttribute('aria-expanded'), 'true');
-  assert.equal(legend.hidden, false);
-  assert.ok(!header.classList.contains('legend-collapsed'));
-
-  toggle.click();
-
-  assert.equal(toggle.getAttribute('aria-expanded'), 'false');
-  assert.equal(legend.hidden, true);
-  assert.ok(header.classList.contains('legend-collapsed'));
+  const close = document.getElementById('event-log-close');
+  close.click();
+  assert.equal(panel.hidden, true);
 });

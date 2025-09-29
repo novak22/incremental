@@ -1,103 +1,89 @@
 const elements = {
   money: document.getElementById('money'),
-  time: document.getElementById('time'),
-  timeProgress: document.getElementById('time-progress'),
-  assistantSupport: document.getElementById('assistant-support'),
-  assistantProgress: document.getElementById('assistant-progress'),
-  assistantNote: document.getElementById('assistant-note'),
-  timeLegend: document.getElementById('time-legend'),
-  timeLegendToggle: document.getElementById('time-legend-toggle'),
-  timeNote: document.getElementById('time-note'),
-  day: document.getElementById('day'),
+  sessionStatus: document.getElementById('session-status'),
+  endDayButton: document.getElementById('end-day'),
+  shellTabs: Array.from(document.querySelectorAll('.shell__tab')),
+  panels: Array.from(document.querySelectorAll('.panel')),
+  kpis: {
+    cash: document.getElementById('kpi-cash'),
+    net: document.getElementById('kpi-net'),
+    hours: document.getElementById('kpi-hours'),
+    upkeep: document.getElementById('kpi-upkeep'),
+    assets: document.getElementById('kpi-assets'),
+    study: document.getElementById('kpi-study')
+  },
+  kpiNotes: {
+    cash: document.getElementById('kpi-cash-note'),
+    net: document.getElementById('kpi-net-note'),
+    hours: document.getElementById('kpi-hours-note'),
+    upkeep: document.getElementById('kpi-upkeep-note'),
+    assets: document.getElementById('kpi-assets-note'),
+    study: document.getElementById('kpi-study-note')
+  },
+  kpiValues: {
+    net: document.getElementById('kpi-net-value'),
+    hours: document.getElementById('kpi-hours-value'),
+    upkeep: document.getElementById('kpi-upkeep-value'),
+    assets: document.getElementById('kpi-assets-value'),
+    study: document.getElementById('kpi-study-value')
+  },
+  actionQueue: document.getElementById('action-queue'),
+  queuePause: document.getElementById('queue-pause'),
+  queueCancel: document.getElementById('queue-cancel'),
+  quickActions: document.getElementById('quick-actions'),
+  notifications: document.getElementById('notification-list'),
+  eventLogPreview: document.getElementById('event-log-preview'),
+  openEventLog: document.getElementById('open-event-log'),
+  eventLogPanel: document.getElementById('event-log-panel'),
+  eventLogClose: document.getElementById('event-log-close'),
   logFeed: document.getElementById('log-feed'),
   logTemplate: document.getElementById('log-template'),
   logTip: document.getElementById('log-tip'),
-  hustleGrid: document.getElementById('hustle-grid'),
-  educationGrid: document.getElementById('education-grid'),
-  assetGridRoot: document.getElementById('asset-grid'),
-  assetCategoryGrids: {
-    foundation: document.getElementById('asset-grid-foundation'),
-    creative: document.getElementById('asset-grid-creative'),
-    commerce: document.getElementById('asset-grid-commerce'),
-    advanced: document.getElementById('asset-grid-advanced')
+  hustleSearch: document.getElementById('hustle-search'),
+  hustleCategoryChips: document.getElementById('hustle-category-chips'),
+  hustleRequirementChips: document.getElementById('hustle-req-chips'),
+  hustleAvailableToggle: document.getElementById('hustle-available-toggle'),
+  hustleSort: document.getElementById('hustle-sort'),
+  hustleList: document.getElementById('hustle-list'),
+  assetFilters: {
+    activeOnly: document.getElementById('asset-active-toggle'),
+    maintenance: document.getElementById('asset-maintenance-toggle'),
+    lowRisk: document.getElementById('asset-risk-toggle')
   },
-  assetCategoryLists: {
-    foundation: document.getElementById('asset-list-foundation'),
-    creative: document.getElementById('asset-list-creative'),
-    commerce: document.getElementById('asset-list-commerce'),
-    advanced: document.getElementById('asset-list-advanced')
+  assetTableBody: document.getElementById('asset-table-body'),
+  assetSelectionNote: document.getElementById('asset-selection-note'),
+  assetBatchButtons: {
+    maintain: document.getElementById('asset-batch-maintain'),
+    pause: document.getElementById('asset-batch-pause'),
+    preset: document.getElementById('asset-batch-preset')
   },
-  assetCategoryToggles: {
-    foundation: document.querySelector('[data-asset-category-toggle="foundation"]'),
-    creative: document.querySelector('[data-asset-category-toggle="creative"]'),
-    commerce: document.querySelector('[data-asset-category-toggle="commerce"]'),
-    advanced: document.querySelector('[data-asset-category-toggle="advanced"]')
+  upgradeFilters: {
+    affordable: document.getElementById('upgrade-affordable-toggle'),
+    favorites: document.getElementById('upgrade-favorites-toggle')
   },
-  assetSection: document.getElementById('section-assets'),
-  upgradeGrid: document.getElementById('upgrade-grid'),
-  upgradeGroupGrids: {
-    equipment: document.getElementById('upgrade-grid-equipment'),
-    automation: document.getElementById('upgrade-grid-automation'),
-    consumables: document.getElementById('upgrade-grid-consumables'),
-    misc: document.getElementById('upgrade-grid')
-  },
-  endDayButton: document.getElementById('end-day'),
-  summaryPanel: document.getElementById('stats-panel'),
-  summaryTime: document.getElementById('summary-time'),
-  summaryTimeCaption: document.getElementById('summary-time-caption'),
-  summaryTimeBreakdown: document.getElementById('summary-time-breakdown'),
-  summaryIncome: document.getElementById('summary-income'),
-  summaryIncomeCaption: document.getElementById('summary-income-caption'),
-  summaryIncomeBreakdown: document.getElementById('summary-income-breakdown'),
-  summaryCost: document.getElementById('summary-cost'),
-  summaryCostCaption: document.getElementById('summary-cost-caption'),
-  summaryCostBreakdown: document.getElementById('summary-cost-breakdown'),
-  summaryStudy: document.getElementById('summary-study'),
-  summaryStudyCaption: document.getElementById('summary-study-caption'),
-  summaryStudyBreakdown: document.getElementById('summary-study-breakdown'),
-  statsToggle: document.getElementById('stats-toggle'),
-  logToggle: document.getElementById('log-toggle'),
-  sectionNavLinks: Array.from(document.querySelectorAll('.section-nav .section-link')),
-  workspaceSections: Array.from(document.querySelectorAll('.workspace-section')),
-  workspacePanels: document.getElementById('workspace-panels'),
-  globalFilters: {
-    hideLocked: document.getElementById('filter-hide-locked'),
-    hideCompleted: document.getElementById('filter-hide-completed'),
-    showActive: document.getElementById('filter-show-active')
-  },
-  hustlesFilters: {
-    availableOnly: document.getElementById('filter-hustles-available')
-  },
-  educationFilters: {
-    activeOnly: document.getElementById('filter-education-active'),
-    hideComplete: document.getElementById('filter-education-hide-complete')
-  },
-  assetsFilters: {
-    collapsed: document.getElementById('filter-assets-collapsed'),
-    hideLocked: document.getElementById('filter-assets-hide-locked')
-  },
-  assetInfoTrigger: document.getElementById('asset-info-trigger'),
-  assetInfoModal: document.getElementById('asset-info-modal'),
-  assetInfoEyebrow: document.getElementById('asset-info-eyebrow'),
-  assetInfoTitle: document.getElementById('asset-info-title'),
-  assetInfoDescription: document.getElementById('asset-info-description'),
-  assetInfoContent: document.getElementById('asset-info-content'),
-  assetInfoDetails: document.getElementById('asset-info-details'),
-  assetInfoDefinition: document.getElementById('asset-info-definition'),
-  assetInfoInstance: document.getElementById('asset-info-instance'),
-  assetInfoInstanceStatus: document.getElementById('asset-info-instance-status'),
-  assetInfoInstanceQuality: document.getElementById('asset-info-instance-quality'),
-  assetInfoInstanceUpkeep: document.getElementById('asset-info-instance-upkeep'),
-  assetInfoInstancePayout: document.getElementById('asset-info-instance-payout'),
-  assetInfoInstanceRoi: document.getElementById('asset-info-instance-roi'),
-  assetInfoQualityProgress: document.getElementById('asset-info-quality-progress'),
-  assetInfoQualityActions: document.getElementById('asset-info-quality-actions'),
-  assetInfoSupportUpgrades: document.getElementById('asset-info-support-upgrades'),
-  assetInfoClose: document.getElementById('asset-info-close'),
+  upgradeCategoryChips: document.getElementById('upgrade-category-chips'),
   upgradeSearch: document.getElementById('upgrade-search'),
-  debugActionCatalog: document.getElementById('debug-action-catalog'),
-  debugActionCatalogSummary: document.getElementById('debug-action-catalog-summary'),
-  debugActionCatalogList: document.getElementById('debug-action-catalog-list')
+  upgradeList: document.getElementById('upgrade-list'),
+  upgradeDockList: document.getElementById('upgrade-dock-list'),
+  studyFilters: {
+    activeOnly: document.getElementById('study-active-toggle'),
+    hideComplete: document.getElementById('study-hide-complete')
+  },
+  studyQueueList: document.getElementById('study-queue-list'),
+  studyQueueEta: document.getElementById('study-queue-eta'),
+  studyQueueCap: document.getElementById('study-queue-cap'),
+  studyTrackList: document.getElementById('study-track-list'),
+  slideOver: document.getElementById('slide-over'),
+  slideOverBackdrop: document.querySelector('#slide-over .slide-over__backdrop'),
+  slideOverClose: document.getElementById('slide-over-close'),
+  slideOverTitle: document.getElementById('slide-over-title'),
+  slideOverEyebrow: document.getElementById('slide-over-eyebrow'),
+  slideOverContent: document.getElementById('slide-over-content'),
+  commandPalette: document.getElementById('command-palette'),
+  commandPaletteTrigger: document.getElementById('command-palette-trigger'),
+  commandPaletteBackdrop: document.querySelector('#command-palette .command-palette__backdrop'),
+  commandPaletteSearch: document.getElementById('command-palette-search'),
+  commandPaletteResults: document.getElementById('command-palette-results')
 };
 
 export default elements;

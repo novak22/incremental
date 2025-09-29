@@ -1,127 +1,302 @@
 import elements from './elements.js';
 import { formatHours, formatMoney } from '../core/helpers.js';
+import { getAssetState, getState } from '../core/state.js';
+import { registry } from '../game/registry.js';
+import { KNOWLEDGE_TRACKS, getKnowledgeProgress } from '../game/requirements.js';
 
-function setText(element, text) {
+function setText(element, value) {
   if (!element) return;
-  element.textContent = text;
+  element.textContent = value;
 }
 
-function renderBreakdown(listElement, items = []) {
-  if (!listElement) return;
-  listElement.innerHTML = '';
-  if (!items.length) {
+function describeQueue(summary) {
+  const entries = Array.isArray(summary?.timeBreakdown) ? summary.timeBreakdown : [];
+  if (!entries.length) {
+    return [
+      {
+        label: 'Nothing queued yet',
+        detail: 'Open hustles to schedule your next move.',
+        hours: 0,
+        state: 'idle'
+      }
+    ];
+  }
+
+  return entries.slice(0, 6).map(entry => ({
+    id: entry.key,
+    label: entry.label,
+    detail: entry.value,
+    hours: Number(entry.hours) || 0,
+    state: entry.category === 'maintenance' ? 'maintenance' : 'active'
+  }));
+}
+
+function buildQuickActions(state) {
+  const items = [];
+  for (const hustle of registry.hustles) {
+    if (!hustle?.action?.onClick) continue;
+    const disabled = typeof hustle.action.disabled === 'function'
+      ? hustle.action.disabled(state)
+      : Boolean(hustle.action.disabled);
+    if (disabled) continue;
+    const payout = Number(hustle.payout?.amount) || 0;
+    const time = Number(hustle.time || hustle.action?.timeCost) || 1;
+    const roi = time > 0 ? payout / time : payout;
+    items.push({
+      id: hustle.id,
+      label: hustle.name,
+      primaryLabel: typeof hustle.action.label === 'function'
+        ? hustle.action.label(state)
+        : hustle.action.label || 'Queue',
+      description: `${formatMoney(payout)} payout • ${formatHours(time)}`,
+      onClick: hustle.action.onClick,
+      roi
+    });
+  }
+
+  items.sort((a, b) => b.roi - a.roi);
+  return items.slice(0, 4);
+}
+
+function buildNotifications(state) {
+  const notifications = [];
+
+  for (const asset of registry.assets) {
+    const assetState = getAssetState(asset.id, state);
+    const instances = Array.isArray(assetState?.instances) ? assetState.instances : [];
+    const maintenanceDue = instances.filter(instance => instance.status === 'active' && !instance.maintenanceFundedToday);
+    if (maintenanceDue.length) {
+      notifications.push({
+        id: `${asset.id}:maintenance`,
+        label: `${asset.name} needs upkeep`,
+        message: `${maintenanceDue.length} build${maintenanceDue.length === 1 ? '' : 's'} waiting for maintenance`,
+        action: () => {
+          elements.shellTabs.find(tab => tab.id === 'tab-assets')?.click();
+        }
+      });
+    }
+  }
+
+  const affordableUpgrades = registry.upgrades.filter(upgrade => {
+    const cost = Number(upgrade.cost) || 0;
+    if (cost <= 0) return false;
+    const owned = getState()?.upgrades?.[upgrade.id]?.purchased;
+    if (owned && !upgrade.repeatable) return false;
+    return getState()?.money >= cost;
+  });
+
+  affordableUpgrades.slice(0, 3).forEach(upgrade => {
+    notifications.push({
+      id: `${upgrade.id}:upgrade`,
+      label: `${upgrade.name} is affordable`,
+      message: `$${formatMoney(upgrade.cost)} ready to invest`,
+      action: () => {
+        elements.shellTabs.find(tab => tab.id === 'tab-upgrades')?.click();
+      }
+    });
+  });
+
+  return notifications;
+}
+
+function renderQueue(summary) {
+  const container = elements.actionQueue;
+  if (!container) return;
+  container.innerHTML = '';
+  const items = describeQueue(summary);
+  for (const item of items) {
+    const li = document.createElement('li');
+    li.dataset.state = item.state;
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.className = 'queue__select';
+    checkbox.disabled = true;
+    const label = document.createElement('div');
+    label.className = 'queue__meta';
+    const title = document.createElement('strong');
+    title.textContent = item.label;
+    const detail = document.createElement('span');
+    detail.textContent = item.detail;
+    label.append(title, detail);
+    const hours = document.createElement('span');
+    hours.textContent = formatHours(item.hours);
+    li.append(checkbox, label, hours);
+    container.appendChild(li);
+  }
+}
+
+function renderQuickActions(state) {
+  const container = elements.quickActions;
+  if (!container) return;
+  container.innerHTML = '';
+  const suggestions = buildQuickActions(state);
+  if (!suggestions.length) {
     const empty = document.createElement('li');
-    empty.textContent = 'No details to show yet.';
-    listElement.appendChild(empty);
+    empty.textContent = 'No ready actions. Check upgrades or assets.';
+    container.appendChild(empty);
     return;
   }
 
-  for (const item of items) {
-    const li = document.createElement('li');
-    if (item.value) {
-      const label = document.createElement('span');
-      label.textContent = item.label;
-      const value = document.createElement('span');
-      value.textContent = item.value;
-      li.append(label, value);
-    } else {
-      li.textContent = item.label;
-    }
-    listElement.appendChild(li);
-  }
+  suggestions.forEach(action => {
+    const item = document.createElement('li');
+    const info = document.createElement('div');
+    info.className = 'quick-actions__info';
+    const title = document.createElement('span');
+    title.textContent = action.label;
+    const subtitle = document.createElement('span');
+    subtitle.textContent = action.description;
+    subtitle.className = 'quick-actions__subtitle';
+    info.append(title, subtitle);
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'primary';
+    button.textContent = action.primaryLabel || 'Queue';
+    button.addEventListener('click', () => action.onClick?.());
+    item.append(info, button);
+    container.appendChild(item);
+  });
 }
 
-export function renderSummary(summary) {
-  if (!elements.summaryPanel) return;
+function renderNotifications(state) {
+  const container = elements.notifications;
+  if (!container) return;
+  container.innerHTML = '';
+  const entries = buildNotifications(state);
+  if (!entries.length) {
+    const empty = document.createElement('li');
+    empty.textContent = 'All clear. Nothing urgent on deck.';
+    container.appendChild(empty);
+    return;
+  }
 
-  const {
-    totalTime,
-    setupHours,
-    maintenanceHours,
-    otherTimeHours,
-    totalEarnings,
-    passiveEarnings,
-    activeEarnings,
-    totalSpend,
-    upkeepSpend,
-    investmentSpend,
-    knowledgeInProgress,
-    knowledgePendingToday,
-    timeBreakdown,
-    earningsBreakdown,
-    spendBreakdown,
-    passiveBreakdown = [],
-    studyBreakdown
-  } = summary;
+  entries.slice(0, 4).forEach(entry => {
+    const item = document.createElement('li');
+    const info = document.createElement('div');
+    info.className = 'notifications__info';
+    const title = document.createElement('span');
+    title.textContent = entry.label;
+    const message = document.createElement('span');
+    message.textContent = entry.message;
+    message.className = 'notifications__message';
+    info.append(title, message);
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'ghost';
+    button.textContent = 'Open';
+    button.addEventListener('click', () => entry.action?.());
+    item.append(info, button);
+    container.appendChild(item);
+  });
+}
 
-  setText(elements.summaryTime, `${formatHours(totalTime)} invested`);
-  const timeSegments = [];
-  if (setupHours > 0) timeSegments.push(`Setup ${formatHours(setupHours)}`);
-  if (maintenanceHours > 0) timeSegments.push(`Upkeep ${formatHours(maintenanceHours)}`);
-  if (otherTimeHours > 0) timeSegments.push(`Extras ${formatHours(otherTimeHours)}`);
-  setText(
-    elements.summaryTimeCaption,
-    timeSegments.length ? timeSegments.join(' • ') : 'No time spent yet today'
-  );
-  renderBreakdown(elements.summaryTimeBreakdown, timeBreakdown);
+function renderEventPreview(state) {
+  const container = elements.eventLogPreview;
+  if (!container) return;
+  container.innerHTML = '';
+  const log = Array.isArray(state?.log) ? [...state.log] : [];
+  if (!log.length) {
+    const empty = document.createElement('p');
+    empty.textContent = 'Log is quiet. Run a hustle or buy an upgrade.';
+    container.appendChild(empty);
+    return;
+  }
 
-  setText(elements.summaryIncome, `$${formatMoney(totalEarnings)} today`);
-  const earningsSegments = [];
-  if (passiveEarnings > 0) {
-    const passiveHighlights = passiveBreakdown
-      .slice(0, 3)
-      .map(entry => {
-        if (!entry?.label || !entry?.value) return null;
-        const amount = entry.value.replace(/\s*today$/i, '');
-        const label = entry.label.replace(/^💰\s*/, '');
-        return `${label} ${amount}`;
-      })
-      .filter(Boolean);
-    if (passiveBreakdown.length > 3) {
-      passiveHighlights.push(`+${passiveBreakdown.length - 3} more`);
+  log
+    .sort((a, b) => b.timestamp - a.timestamp)
+    .slice(0, 4)
+    .forEach(entry => {
+      const block = document.createElement('article');
+      block.className = 'event-preview__item';
+      const time = document.createElement('span');
+      time.className = 'event-preview__time';
+      time.textContent = new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const message = document.createElement('p');
+      message.className = 'event-preview__message';
+      message.textContent = entry.message;
+      block.append(time, message);
+      container.appendChild(block);
+    });
+}
+
+function computeAssetMetrics(state) {
+  let activeAssets = 0;
+  let upkeepDue = 0;
+
+  for (const asset of registry.assets) {
+    const assetState = getAssetState(asset.id, state);
+    const instances = Array.isArray(assetState?.instances) ? assetState.instances : [];
+    instances.forEach(instance => {
+      if (instance.status === 'active') {
+        activeAssets += 1;
+        if (!instance.maintenanceFundedToday) {
+          upkeepDue += Number(asset.maintenance?.cost) || 0;
+        }
+      }
+    });
+  }
+
+  return { activeAssets, upkeepDue };
+}
+
+function computeStudyProgress(state) {
+  const tracks = Object.values(KNOWLEDGE_TRACKS);
+  if (!tracks.length) {
+    return { percent: 0, summary: 'No study tracks unlocked yet.' };
+  }
+  let enrolled = 0;
+  let completed = 0;
+  let totalProgress = 0;
+  tracks.forEach(track => {
+    const progress = getKnowledgeProgress(track.id, state);
+    if (!progress.enrolled) return;
+    enrolled += 1;
+    if (progress.completed) {
+      completed += 1;
+      totalProgress += 1;
+    } else {
+      const fraction = Math.min(1, progress.daysCompleted / Math.max(1, track.days));
+      totalProgress += fraction;
     }
-    const passiveSummary = passiveHighlights.length ? ` (${passiveHighlights.join(', ')})` : '';
-    earningsSegments.push(`Passive streams $${formatMoney(passiveEarnings)}${passiveSummary}`);
-  }
-  if (activeEarnings > 0) earningsSegments.push(`Active hustles $${formatMoney(activeEarnings)}`);
-  setText(
-    elements.summaryIncomeCaption,
-    earningsSegments.length ? earningsSegments.join(' • ') : 'No earnings logged yet today'
-  );
-  const combinedIncomeBreakdown = [];
-  if (passiveBreakdown.length) {
-    combinedIncomeBreakdown.push({
-      label: 'Passive income',
-      value: `$${formatMoney(passiveEarnings)} today`
-    });
-    combinedIncomeBreakdown.push(...passiveBreakdown);
-  }
-  if (earningsBreakdown.length) {
-    combinedIncomeBreakdown.push({
-      label: 'Active wins',
-      value: `$${formatMoney(activeEarnings)} today`
-    });
-    combinedIncomeBreakdown.push(...earningsBreakdown);
-  }
-  renderBreakdown(elements.summaryIncomeBreakdown, combinedIncomeBreakdown);
+  });
+  const percent = enrolled > 0 ? Math.round((totalProgress / enrolled) * 100) : 0;
+  const summary = enrolled
+    ? `${completed}/${enrolled} finished • ${percent}% average progress`
+    : 'No active study tracks.';
+  return { percent, summary };
+}
 
-  setText(elements.summaryCost, `$${formatMoney(totalSpend)} today`);
-  const spendSegments = [];
-  if (upkeepSpend > 0) spendSegments.push(`Upkeep & payroll $${formatMoney(upkeepSpend)}`);
-  if (investmentSpend > 0) spendSegments.push(`Investments & boosts $${formatMoney(investmentSpend)}`);
-  setText(
-    elements.summaryCostCaption,
-    spendSegments.length ? spendSegments.join(' • ') : 'No spending logged yet today'
-  );
-  renderBreakdown(elements.summaryCostBreakdown, spendBreakdown);
+export function renderDashboard(summary) {
+  const state = getState();
+  if (!state) return;
 
-  const studyLabel = knowledgeInProgress === 1 ? 'track' : 'tracks';
-  setText(elements.summaryStudy, `${knowledgeInProgress} ${studyLabel}`);
+  const hoursLeft = Math.max(0, Number(state.timeLeft) || 0);
   setText(
-    elements.summaryStudyCaption,
-    knowledgePendingToday
-      ? `${knowledgePendingToday} waiting for study time today`
-      : 'All study goals are on track'
+    elements.sessionStatus,
+    `Day ${state.day} • ${formatHours(hoursLeft)} remaining`
   );
-  renderBreakdown(elements.summaryStudyBreakdown, studyBreakdown);
+
+  setText(elements.money, `$${formatMoney(state.money)}`);
+
+  const net = summary.totalEarnings - summary.totalSpend;
+  setText(elements.kpiValues.net, `$${formatMoney(net)}`);
+  setText(elements.kpiNotes.net, `${formatMoney(summary.totalEarnings)} earned • ${formatMoney(summary.totalSpend)} spent`);
+
+  setText(elements.kpiValues.hours, `${formatHours(hoursLeft)}`);
+  setText(elements.kpiNotes.hours, hoursLeft > 0 ? 'Plenty of hustle hours left.' : 'Day is tapped out.');
+
+  const { activeAssets, upkeepDue } = computeAssetMetrics(state);
+  setText(elements.kpiValues.upkeep, `$${formatMoney(upkeepDue)}`);
+  setText(elements.kpiNotes.upkeep, upkeepDue > 0 ? 'Maintain assets soon.' : 'Upkeep funded.');
+
+  setText(elements.kpiValues.assets, String(activeAssets));
+  setText(elements.kpiNotes.assets, activeAssets > 0 ? 'Streams humming.' : 'Launch your first asset.');
+
+  const { percent, summary: studySummary } = computeStudyProgress(state);
+  setText(elements.kpiValues.study, `${percent}%`);
+  setText(elements.kpiNotes.study, studySummary);
+
+  renderQueue(summary);
+  renderQuickActions(state);
+  renderNotifications(state);
+  renderEventPreview(state);
 }
