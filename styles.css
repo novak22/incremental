@@ -1093,6 +1093,11 @@ body {
   gap: 12px;
 }
 
+.asset-detail__instance.is-highlighted {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.35);
+}
+
 .asset-detail__instance-stats {
   display: grid;
   gap: 8px;
@@ -1171,6 +1176,52 @@ body {
   gap: 8px 12px;
   font-size: 12px;
   color: var(--text-subtle);
+}
+
+.asset-detail__progress-entry {
+  background: rgba(148, 163, 184, 0.12);
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+}
+
+.asset-detail__progress-entry.is-pending {
+  color: var(--accent);
+  background: rgba(129, 140, 248, 0.18);
+}
+
+.asset-detail__progress-entry.is-complete {
+  color: var(--success);
+}
+
+.asset-detail__next-level {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: baseline;
+  font-size: 12px;
+  color: var(--text-subtle);
+}
+
+.asset-detail__next-level-title {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.asset-detail__next-level-summary {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.asset-category__next-level {
+  display: block;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--text-subtle);
+}
+
+.asset-category__next-level.is-complete {
+  color: var(--success);
 }
 
 .asset-detail__actions {

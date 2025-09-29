@@ -14,7 +14,8 @@ import {
   calculateInstanceNetHourly,
   describeInstance,
   describeInstanceEarnings,
-  describeInstanceNetHourly
+  describeInstanceNetHourly,
+  describeNextQualityRequirements
 } from './assetInstances.js';
 import {
   getPendingEquipmentUpgrades,
@@ -208,6 +209,11 @@ function renderCategoryList(key) {
       actionsWrap.appendChild(upgradeHints);
     }
 
+    const nextHint = createNextLevelHint(row.definition, row.instance);
+    if (nextHint) {
+      actionsWrap.appendChild(nextHint);
+    }
+
     actionsCell.appendChild(actionsWrap);
     tr.appendChild(actionsCell);
     tbody.appendChild(tr);
@@ -345,6 +351,33 @@ function createUpgradeHints(definition, skipUpgrades = []) {
   }
 
   return container;
+}
+
+function createNextLevelHint(definition, instance) {
+  if (!definition || !instance || instance.status !== 'active') {
+    return null;
+  }
+
+  const requirements = describeNextQualityRequirements(definition, instance);
+  if (!requirements.length) {
+    return null;
+  }
+
+  const pending = requirements.filter(entry => !entry.met);
+  const entries = (pending.length ? pending : requirements)
+    .map(entry => `${entry.label}: ${entry.current}/${entry.target}`);
+
+  if (!entries.length) {
+    return null;
+  }
+
+  const note = document.createElement('span');
+  note.className = 'asset-category__next-level';
+  if (pending.length === 0) {
+    note.classList.add('is-complete');
+  }
+  note.textContent = `Next quality: ${entries.join(' • ')}`;
+  return note;
 }
 
 function formatMaintenance(definition) {

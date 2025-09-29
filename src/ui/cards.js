@@ -3,9 +3,11 @@ import { getAssetState, getState, getUpgradeState } from '../core/state.js';
 import { formatHours, formatMoney } from '../core/helpers.js';
 import { describeHustleRequirements } from '../game/hustles.js';
 import { KNOWLEDGE_TRACKS, getKnowledgeProgress } from '../game/requirements.js';
+import { configureCategoryView, updateCategoryView } from './assetCategoryView.js';
 import {
   describeInstance,
-  describeInstanceNetHourly
+  describeInstanceNetHourly,
+  describeNextQualityRequirements
 } from './assetInstances.js';
 import {
   calculateAssetSalePrice,
@@ -314,16 +316,46 @@ function createInstanceCard(definition, instance, index, state) {
     const progressWrap = document.createElement('div');
     progressWrap.className = 'asset-detail__progress';
     const progress = instance.quality?.progress || {};
+    const nextRequirements = describeNextQualityRequirements(definition, instance);
+    const requirementMap = new Map(nextRequirements.map(req => [req.key, req]));
     Object.entries(tracks).forEach(([key, track]) => {
       const label = track?.shortLabel || track?.label || key;
       const current = Number(progress?.[key]) || 0;
       const row = document.createElement('span');
       row.className = 'asset-detail__progress-entry';
-      row.textContent = `${label}: ${current}`;
+      const requirement = requirementMap.get(key);
+      if (requirement) {
+        row.textContent = `${label}: ${requirement.current}/${requirement.target}`;
+        if (!requirement.met) {
+          row.classList.add('is-pending');
+        } else {
+          row.classList.add('is-complete');
+        }
+      } else {
+        row.textContent = `${label}: ${current}`;
+      }
       progressWrap.appendChild(row);
     });
     if (progressWrap.childElementCount) {
       item.appendChild(progressWrap);
+    }
+
+    if (nextRequirements.length) {
+      const pending = nextRequirements.filter(req => !req.met);
+      const entries = (pending.length ? pending : nextRequirements)
+        .map(req => `${req.label}: ${req.current}/${req.target}`);
+      if (entries.length) {
+        const next = document.createElement('div');
+        next.className = 'asset-detail__next-level';
+        const title = document.createElement('span');
+        title.className = 'asset-detail__next-level-title';
+        title.textContent = 'Next quality goal';
+        const summary = document.createElement('span');
+        summary.className = 'asset-detail__next-level-summary';
+        summary.textContent = entries.join(' • ');
+        next.append(title, summary);
+        item.appendChild(next);
+      }
     }
   }
 
@@ -645,6 +677,18 @@ function renderHustles(definitions) {
   definitions.forEach(definition => renderHustleCard(definition, container));
 }
 
+function groupAssetsByCategory(definitions = []) {
+  const map = new Map();
+  definitions.forEach(definition => {
+    const category = definition?.tag?.category || definition?.tag?.label || definition?.tag?.type || 'Other';
+    if (!map.has(category)) {
+      map.set(category, []);
+    }
+    map.get(category).push(definition);
+  });
+  return map;
+}
+
 function renderAssetRow(definition, tbody) {
   const state = getState();
   const assetState = getAssetState(definition.id, state);
@@ -652,6 +696,8 @@ function renderAssetRow(definition, tbody) {
   const activeInstances = instances.filter(instance => instance.status === 'active');
   const pausedInstances = instances.filter(instance => instance.status !== 'active');
   const lastIncome = activeInstances.reduce((total, instance) => total + Number(instance.lastIncome || 0), 0);
+  const focusInstance = activeInstances[0] || instances[0] || null;
+  const nextRequirements = focusInstance ? describeNextQualityRequirements(definition, focusInstance) : [];
   const upkeepCost = Number(definition.maintenance?.cost) || 0;
   const upkeepHours = Number(definition.maintenance?.hours) || 0;
 
@@ -703,10 +749,29 @@ function renderAssetRow(definition, tbody) {
   const details = document.createElement('button');
   details.type = 'button';
   details.className = 'ghost';
-  details.textContent = 'Details';
+  const hasInstances = instances.length > 0;
+  details.textContent = hasInstances ? 'Instances' : 'Details';
+  details.dataset.focusSection = hasInstances ? 'instances' : 'overview';
+  if (focusInstance?.id) {
+    details.dataset.focusInstanceId = focusInstance.id;
+  }
+  if (nextRequirements.length) {
+    details.title = `Next quality: ${nextRequirements
+      .map(req => `${req.label}: ${req.current}/${req.target}`)
+      .join(' • ')}`;
+  } else if (hasInstances) {
+    details.title = 'Review launched builds';
+  } else {
+    details.title = 'Preview asset blueprint';
+  }
   details.addEventListener('click', event => {
     event.stopPropagation();
-    openAssetDetails(definition);
+    const focusSection = details.dataset.focusSection || 'overview';
+    const focusInstanceId = details.dataset.focusInstanceId || '';
+    openAssetDetails(definition, {
+      focusSection,
+      focusInstanceId: focusInstanceId || null
+    });
   });
   actions.appendChild(details);
   if (definition.action?.onClick) {
@@ -722,9 +787,18 @@ function renderAssetRow(definition, tbody) {
       definition.action.onClick();
     });
     actions.appendChild(primary);
-    assetUi.set(definition.id, { row, primary, cells: { state: stateCell, yield: yieldCell, upkeep: upkeepCell } });
+    assetUi.set(definition.id, {
+      row,
+      primary,
+      details,
+      cells: { state: stateCell, yield: yieldCell, upkeep: upkeepCell }
+    });
   } else {
-    assetUi.set(definition.id, { row, cells: { state: stateCell, yield: yieldCell, upkeep: upkeepCell } });
+    assetUi.set(definition.id, {
+      row,
+      details,
+      cells: { state: stateCell, yield: yieldCell, upkeep: upkeepCell }
+    });
   }
   actionsCell.appendChild(actions);
   row.appendChild(actionsCell);
@@ -769,6 +843,25 @@ function refreshAssetRow(definition) {
     if (upkeepHours > 0) upkeepParts.push(`${formatHours(upkeepHours)}`);
     ui.cells.upkeep.textContent = upkeepParts.join(' • ') || 'None';
   }
+  if (ui.details) {
+    const hasInstances = instances.length > 0;
+    ui.details.textContent = hasInstances ? 'Instances' : 'Details';
+    ui.details.dataset.focusSection = hasInstances ? 'instances' : 'overview';
+    if (focusInstance?.id) {
+      ui.details.dataset.focusInstanceId = focusInstance.id;
+    } else {
+      delete ui.details.dataset.focusInstanceId;
+    }
+    if (nextRequirements.length) {
+      ui.details.title = `Next quality: ${nextRequirements
+        .map(req => `${req.label}: ${req.current}/${req.target}`)
+        .join(' • ')}`;
+    } else if (hasInstances) {
+      ui.details.title = 'Review launched builds';
+    } else {
+      ui.details.title = 'Preview asset blueprint';
+    }
+  }
   if (ui.primary) {
     ui.primary.textContent = typeof definition.action?.label === 'function'
       ? definition.action.label(state)
@@ -780,7 +873,7 @@ function refreshAssetRow(definition) {
   }
 }
 
-function openAssetDetails(definition) {
+function openAssetDetails(definition, { focusSection, focusInstanceId } = {}) {
   const state = getState();
   const body = document.createElement('div');
   body.className = 'asset-detail';
@@ -806,9 +899,28 @@ function openAssetDetails(definition) {
   ];
   body.appendChild(createDefinitionSummary('Roster snapshot', summaryRows));
 
-  body.appendChild(createInstanceListSection(definition, state));
+  const instanceSection = createInstanceListSection(definition, state);
+  body.appendChild(instanceSection);
 
   showSlideOver({ eyebrow: 'Asset', title: definition.name, body });
+
+  if (focusSection === 'instances' && instanceSection) {
+    requestAnimationFrame(() => {
+      const targetSelector = focusInstanceId
+        ? `[data-instance-id="${focusInstanceId}"]`
+        : '.asset-detail__instance';
+      const target = instanceSection.querySelector(targetSelector);
+      if (target) {
+        target.classList.add('is-highlighted');
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => {
+          target.classList.remove('is-highlighted');
+        }, 1600);
+      } else {
+        instanceSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  }
 }
 
 function renderAssets(definitions) {
@@ -817,6 +929,15 @@ function renderAssets(definitions) {
   tbody.innerHTML = '';
   assetUi.clear();
   definitions.forEach(def => renderAssetRow(def, tbody));
+  configureCategoryView({
+    definitionsByCategory: groupAssetsByCategory(definitions),
+    openInstanceDetails: (definition, instance) => {
+      openAssetDetails(definition, {
+        focusSection: 'instances',
+        focusInstanceId: instance?.id || null
+      });
+    }
+  });
 }
 
 function renderUpgradeCard(definition, container) {
@@ -1140,6 +1261,7 @@ export function updateCard(definition) {
 export function updateAllCards({ hustles, education, assets, upgrades }) {
   hustles.forEach(updateHustleCard);
   assets.forEach(def => updateCard(def));
+  updateCategoryView();
   upgrades.forEach(updateUpgradeCard);
   education.forEach(def => {
     if (def.tag?.type === 'study' || KNOWLEDGE_TRACKS[def.id]) {

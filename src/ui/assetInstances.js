@@ -1,6 +1,7 @@
 import { formatMoney } from '../core/helpers.js';
 import { getAssetState } from '../core/state.js';
 import { calculateAssetSalePrice, instanceLabel, sellAssetInstance } from '../game/assets/helpers.js';
+import { getQualityNextRequirements, getQualityTracks } from '../game/assets/quality.js';
 
 export function describeInstance(definition, instance) {
   if (instance.status === 'setup') {
@@ -52,6 +53,39 @@ export function describeInstanceNetHourly(definition, instance) {
   const formatted = formatMoney(Math.round(absolute * 100) / 100);
   const prefix = netHourly < 0 ? '-$' : '$';
   return `${prefix}${formatted}/hr`;
+}
+
+export function describeNextQualityRequirements(definition, instance) {
+  if (!definition || !instance || instance.status !== 'active') {
+    return [];
+  }
+
+  const nextRequirements = getQualityNextRequirements(definition, Number(instance.quality?.level) || 0);
+  if (!nextRequirements) {
+    return [];
+  }
+
+  const tracks = getQualityTracks(definition);
+  const progress = instance.quality?.progress || {};
+
+  return Object.entries(nextRequirements)
+    .map(([key, target]) => {
+      const numericTarget = Number(target);
+      if (!Number.isFinite(numericTarget) || numericTarget <= 0) {
+        return null;
+      }
+      const current = Number(progress?.[key]) || 0;
+      const track = tracks?.[key] || {};
+      const label = track.shortLabel || track.label || key;
+      return {
+        key,
+        label,
+        current,
+        target: numericTarget,
+        met: current >= numericTarget
+      };
+    })
+    .filter(Boolean);
 }
 
 function renderInstanceList(definition, state, ui) {
