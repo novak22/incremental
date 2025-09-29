@@ -1,6 +1,7 @@
 import { formatDays, formatHours, formatList, formatMoney } from '../core/helpers.js';
 import { addLog } from '../core/log.js';
 import {
+  countActiveAssetInstances,
   getAssetDefinition,
   getAssetState,
   getState,
@@ -207,8 +208,8 @@ function hasExperience(requirement, state = getState()) {
   if (!requirement?.assetId) return true;
   const targetCount = Number(requirement.count) || 0;
   if (targetCount <= 0) return true;
-  const assetState = getAssetState(requirement.assetId, state);
-  return (assetState.instances || []).filter(instance => instance.status === 'active').length >= targetCount;
+  const owned = countActiveAssetInstances(requirement.assetId, state);
+  return owned >= targetCount;
 }
 
 export function isRequirementMet(requirement, state = getState()) {
@@ -271,8 +272,7 @@ export function describeRequirement(requirement, state = getState()) {
 
   if (requirement.type === 'experience') {
     const assetDef = getAssetDefinition(requirement.assetId);
-    const assetState = getAssetState(requirement.assetId, state);
-    const owned = (assetState.instances || []).filter(instance => instance.status === 'active').length;
+    const owned = countActiveAssetInstances(requirement.assetId, state);
     const target = Number(requirement.count) || 0;
     const baseLabel = assetDef?.singular || assetDef?.name || requirement.assetId;
     const label = `${target} ${baseLabel}${target === 1 ? '' : 's'}`;
@@ -370,8 +370,7 @@ export function listAssetRequirementDescriptors(definitionOrId, state = getState
       case 'experience': {
         const assetDef = getAssetDefinition(req.assetId);
         const need = Number(req.count) || 0;
-        const assetState = getAssetState(req.assetId, state);
-        const have = (assetState.instances || []).filter(instance => instance.status === 'active').length;
+        const have = countActiveAssetInstances(req.assetId, state);
         return {
           type: 'experience',
           assetId: req.assetId,
