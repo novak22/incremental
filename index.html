@@ -138,15 +138,6 @@
               </div>
             </article>
 
-            <article class="card dashboard-card" aria-labelledby="queue-heading">
-              <header>
-                <h2 id="queue-heading">Action queue</h2>
-                <p>A snapshot of the work you’ve already teed up for today.</p>
-              </header>
-              <ol id="action-queue" class="queue" aria-live="polite"></ol>
-              <p class="queue__note">We’ll keep this rolling automatically—manual scheduling unlocks in a future update.</p>
-            </article>
-
             <article class="card dashboard-card" aria-labelledby="quick-actions-heading">
               <header>
                 <h2 id="quick-actions-heading">Quick actions</h2>
@@ -178,6 +169,15 @@
               </header>
               <div id="event-log-preview" class="event-preview" aria-live="polite"></div>
               <button id="open-event-log" class="ghost" type="button" aria-haspopup="dialog" aria-controls="event-log-panel">Open full log</button>
+            </article>
+
+            <article class="card dashboard-card" aria-labelledby="queue-heading">
+              <header>
+                <h2 id="queue-heading">Action queue</h2>
+                <p>A snapshot of the work you’ve already teed up for today.</p>
+              </header>
+              <ol id="action-queue" class="queue" aria-live="polite"></ol>
+              <p class="queue__note">We’ll keep this rolling automatically—manual scheduling unlocks in a future update.</p>
             </article>
           </section>
         </div>

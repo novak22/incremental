@@ -309,17 +309,6 @@ function renderAssetUpgradeActions(state) {
   container.innerHTML = '';
 
   const suggestions = buildAssetUpgradeRecommendations(state);
-  const assetCard = container.closest('.dashboard-card');
-  const queueCard = elements.actionQueue?.closest('.dashboard-card');
-  const parent = assetCard?.parentElement;
-  if (parent && queueCard && assetCard && parent.isSameNode(queueCard.parentElement)) {
-    if (suggestions.length) {
-      parent.insertBefore(assetCard, queueCard);
-    } else {
-      parent.insertBefore(queueCard, assetCard);
-    }
-  }
-
   if (!suggestions.length) {
     const empty = document.createElement('li');
     empty.textContent = 'Every asset is humming along. Check back after today’s upkeep.';
