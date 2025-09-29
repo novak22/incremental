@@ -112,12 +112,18 @@ test('closing out the day advances setup and pays income when funded', () => {
     const refreshedBlog = getAssetState('blog');
     const refreshedActive = refreshedBlog.instances.find(instance => instance.id === activeId);
     const upkeepCost = Number(blogDefinition.maintenance?.cost) || 0;
-    const maintenanceFunded = refreshedActive.maintenanceFundedToday;
-    const expectedNet = maintenanceFunded
-      ? Math.max(0, refreshedActive.lastIncome - upkeepCost)
-      : refreshedActive.lastIncome;
-    assert.equal(state.money, expectedNet, 'queued income should credit before evaluating upkeep requirements');
-    assert.equal(refreshedActive.pendingIncome, 0, 'payout queue should clear after the maintenance sweep');
+    if (refreshedActive.maintenanceFundedToday) {
+      const expectedNet = Math.max(0, refreshedActive.lastIncome - upkeepCost);
+      assert.equal(state.money, expectedNet, 'queued income should credit when upkeep is funded');
+      assert.equal(refreshedActive.pendingIncome, 0, 'payout queue should clear after the maintenance sweep');
+    } else {
+      assert.equal(state.money, 0, 'queued income should stay pending when upkeep is skipped');
+      assert.equal(
+        refreshedActive.pendingIncome,
+        refreshedActive.lastIncome,
+        'payout queue should persist when upkeep cannot run'
+      );
+    }
   } finally {
     Math.random = originalRandom;
   }

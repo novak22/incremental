@@ -60,32 +60,36 @@ export function allocateAssetMaintenance() {
       if (instance.status === 'active') {
         const label = instanceLabel(definition, index);
         const pendingIncome = Math.max(0, Number(instance.pendingIncome) || 0);
-          if (pendingIncome > 0) {
-            const incomeMessage = definition.messages?.income
-              ? definition.messages.income(pendingIncome, label, instance, assetState)
-              : `${definition.name} generated $${formatMoney(pendingIncome)} today.`;
-            addMoney(pendingIncome, incomeMessage, definition.income?.logType || 'passive');
-            recordPayoutContribution({
-              key: getAssetMetricId(definition, 'payout', 'payout'),
-              label: `💰 ${definition.singular || definition.name}`,
-              amount: pendingIncome,
-              category: 'passive'
-            });
+
+        const potentialAssistantHours = Math.min(assistantHoursRemaining, maintenanceHours);
+        const manualHoursRequired = Math.max(0, maintenanceHours - potentialAssistantHours);
+        const lacksTime = manualHoursRequired > 0 && state.timeLeft < manualHoursRequired;
+        const availableMoney = state.money + pendingIncome;
+        const lacksMoney = maintenanceCost > 0 && availableMoney < maintenanceCost;
+
+        if (lacksTime || lacksMoney) {
+          if (lacksTime) maintenanceSkippedTime.push(label);
+          if (lacksMoney) maintenanceSkippedFunds.push(label);
+          return;
+        }
+
+        if (pendingIncome > 0) {
+          const incomeMessage = definition.messages?.income
+            ? definition.messages.income(pendingIncome, label, instance, assetState)
+            : `${definition.name} generated $${formatMoney(pendingIncome)} today.`;
+          addMoney(pendingIncome, incomeMessage, definition.income?.logType || 'passive');
+          recordPayoutContribution({
+            key: getAssetMetricId(definition, 'payout', 'payout'),
+            label: `💰 ${definition.singular || definition.name}`,
+            amount: pendingIncome,
+            category: 'passive'
+          });
           instance.pendingIncome = 0;
         }
 
         instance.maintenanceFundedToday = false;
         if (maintenanceHours <= 0 && maintenanceCost <= 0) {
           instance.maintenanceFundedToday = true;
-          return;
-        }
-        const potentialAssistantHours = Math.min(assistantHoursRemaining, maintenanceHours);
-        const manualHoursRequired = Math.max(0, maintenanceHours - potentialAssistantHours);
-        const lacksTime = manualHoursRequired > 0 && state.timeLeft < manualHoursRequired;
-        const lacksMoney = maintenanceCost > 0 && state.money < maintenanceCost;
-        if (lacksTime || lacksMoney) {
-          if (lacksTime) maintenanceSkippedTime.push(label);
-          if (lacksMoney) maintenanceSkippedFunds.push(label);
           return;
         }
 
