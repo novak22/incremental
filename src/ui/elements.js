@@ -13,14 +13,6 @@ const elements = {
       value: document.getElementById('header-daily-minus'),
       note: document.getElementById('header-daily-minus-note')
     },
-    totalPlus: {
-      value: document.getElementById('header-total-plus'),
-      note: document.getElementById('header-total-plus-note')
-    },
-    totalMinus: {
-      value: document.getElementById('header-total-minus'),
-      note: document.getElementById('header-total-minus-note')
-    },
     timeAvailable: {
       value: document.getElementById('header-time-available'),
       note: document.getElementById('header-time-available-note')
