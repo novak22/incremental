@@ -10,6 +10,7 @@
 - Each skill levels from **Novice** to **Master**, unlocking celebratory log lines that highlight specialisation progress.
 - Character XP aggregates all earned skill XP and promotes the player through five creative tiers, spotlighting momentum even when dabbling across disciplines.
 - Completing education tracks grants a lump-sum skill boost tied to the curriculum, making study days feel immediately valuable.
+- A "Skill constellation" widget on the dashboard and education screen makes current progress visible at a glance.
 
 ## Key Systems & Tuning
 - **Skill Taxonomy** – Ten skills cover the current content surface: Writing & Storycraft, Audience Engagement & Teaching, Promotion & Funnel Strategy, Market Research & Analytics, Visual Production, Editing & Post-Production, Commerce Operations & Fulfillment, Software Development & Automation, Infrastructure & Reliability, and Audio Production & Performance.
@@ -18,7 +19,10 @@
 - **Education Rewards** – Outline Mastery focuses on Writing, Photo Catalog splits between Visual and Editing, E-Commerce Playbook splits between Research and Commerce, and Automation Architecture leans on Software with a nod to Infrastructure.
 - **State & Persistence** – Skill progress and character level are stored on the save state, auto-initialised for existing saves, and surfaced to other systems for future UI hooks.
 
+## UI Surfacing
+- The dashboard hosts a dedicated "Skill constellation" card that lists every discipline, tier, and XP-to-next marker alongside the overall creator level.
+- The education tab mirrors the widget so study planning happens beside the skills it advances.
+
 ## Follow-Up Ideas
-- Surface skill summaries on the dashboard or a dedicated "Character Sheet" panel.
 - Gate upcoming perks or narrative beats behind specific skill tiers to give mid-game targets.
 - Explore assistants or upgrades that temporarily boost skill XP gain for themed playstyles.
