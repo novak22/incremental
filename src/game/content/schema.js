@@ -332,6 +332,23 @@ function upgradeRequirementsMet(requirements) {
   return requirements.every(req => upgradeRequirementMet(req));
 }
 
+function normalizeSupportedAssets(value) {
+  if (!value) return [];
+  const list = Array.isArray(value) ? value : [value];
+  return list
+    .map(entry => {
+      if (!entry) return null;
+      if (typeof entry === 'string') {
+        return entry.trim();
+      }
+      if (typeof entry === 'object') {
+        return (entry.id || entry.assetId || entry.value || entry.key || '').trim();
+      }
+      return null;
+    })
+    .filter(Boolean);
+}
+
 export function createUpgrade(config) {
   const requirements = normalizeUpgradeRequirements(config.requires || []);
   const definition = {
@@ -340,6 +357,7 @@ export function createUpgrade(config) {
     defaultState: config.defaultState || { purchased: false }
   };
   definition.requirements = requirements;
+  definition.supportsAssets = normalizeSupportedAssets(config.supportsAssets || config.supports);
 
   const details = [];
   if (config.cost) {

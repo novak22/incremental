@@ -77,6 +77,7 @@ const camera = createUpgrade({
   description: 'Unlocks video production gear so you can start vlogs and shoot stock photos.',
   cost: 200,
   unlocks: 'Weekly Vlog Channel & Stock Photo Galleries',
+  supports: ['vlog', 'stockPhotos'],
   actionClassName: 'secondary',
   actionLabel: 'Purchase Camera',
   labels: {
@@ -96,6 +97,7 @@ const studio = createUpgrade({
   description: 'Soft boxes, reflectors, and editing presets for glossier stock photos.',
   cost: 220,
   unlocks: 'Stock Photo Galleries',
+  supports: ['stockPhotos'],
   actionClassName: 'secondary',
   actionLabel: 'Build Studio',
   labels: {
@@ -116,6 +118,7 @@ const cameraPro = createUpgrade({
   cost: 480,
   requires: ['camera'],
   boosts: 'Higher vlog quality payouts',
+  supports: ['vlog'],
   actionClassName: 'secondary',
   actionLabel: 'Install Cinema Gear',
   labels: {
@@ -137,6 +140,7 @@ const studioExpansion = createUpgrade({
   cost: 540,
   requires: ['studio'],
   boosts: 'Stock photo session efficiency',
+  supports: ['stockPhotos'],
   actionClassName: 'secondary',
   actionLabel: 'Expand Studio',
   labels: {
@@ -157,6 +161,7 @@ const serverRack = createUpgrade({
   description: 'Spin up a reliable rack with monitoring so prototypes stay online.',
   cost: 650,
   unlocks: 'Stable environments for advanced products',
+  supports: ['saas'],
   actionClassName: 'secondary',
   actionLabel: 'Install Rack',
   labels: {
@@ -177,6 +182,7 @@ const serverCluster = createUpgrade({
   cost: 1150,
   requires: ['serverRack'],
   unlocks: 'SaaS deployments',
+  supports: ['saas'],
   actionClassName: 'secondary',
   actionLabel: 'Deploy Cluster',
   labels: {
@@ -198,6 +204,7 @@ const serverEdge = createUpgrade({
   cost: 1450,
   requires: ['serverCluster'],
   boosts: 'SaaS subscriber trust',
+  supports: ['saas'],
   actionClassName: 'secondary',
   actionLabel: 'Activate Edge Network',
   labels: {
@@ -261,6 +268,7 @@ const course = createUpgrade({
       detail: 'Requires: <strong>At least one active blog</strong>'
     }
   ],
+  supports: ['blog'],
   actionClassName: 'secondary',
   actionLabel: 'Study Up',
   labels: {
@@ -292,3 +300,10 @@ export const UPGRADES = [
   coffee,
   course
 ];
+
+export function listUpgradesSupportingAsset(assetId) {
+  if (!assetId) return [];
+  return UPGRADES.filter(
+    upgrade => Array.isArray(upgrade.supportsAssets) && upgrade.supportsAssets.includes(assetId)
+  );
+}

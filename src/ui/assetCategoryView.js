@@ -6,6 +6,7 @@ import {
   instanceLabel,
   sellAssetInstance
 } from '../game/assets/helpers.js';
+import { listUpgradesSupportingAsset } from '../game/upgrades.js';
 import {
   describeRequirement,
   getDefinitionRequirements
@@ -220,7 +221,7 @@ function buildInstanceRows(definitions) {
     const instances = assetState?.instances || [];
     instances.forEach((instance, index) => {
       const netHourly = calculateInstanceNetHourly(definition, instance);
-      const pendingUpgrades = getPendingEquipmentUpgrades(definition, state);
+      const pendingUpgrades = getPendingAssetUpgrades(definition, state);
       rows.push({
         definition,
         instance,
@@ -365,24 +366,31 @@ function createUpgradeHints(definition, skipUpgrades = []) {
   return container;
 }
 
-function getPendingEquipmentUpgrades(definition, state = getState()) {
+function getPendingAssetUpgrades(definition, state = getState()) {
   if (!definition) return [];
   const requirements = getDefinitionRequirements(definition);
   const equipment = requirements?.byType?.equipment || [];
-  if (!equipment.length) return [];
 
   const seen = new Set();
   const pending = [];
-  equipment.forEach(entry => {
-    const id = entry?.id;
-    if (!id || seen.has(id)) return;
-    seen.add(id);
-    const upgrade = getUpgradeDefinition(id);
+
+  function addUpgrade(entry, fallback) {
+    const id = typeof entry === 'string' ? entry : entry?.id;
+    const key = id || fallback?.id;
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    const upgrade = fallback || getUpgradeDefinition(key);
     if (!upgrade?.action) return;
-    const upgradeState = getUpgradeState(id, state);
+    const upgradeState = getUpgradeState(key, state);
     if (upgradeState?.purchased) return;
     pending.push(upgrade);
-  });
+  }
+
+  equipment.forEach(entry => addUpgrade(entry));
+
+  const supporting = listUpgradesSupportingAsset(definition.id);
+  supporting.forEach(upgrade => addUpgrade(upgrade?.id, upgrade));
+
   return pending;
 }
 
