@@ -1,4 +1,5 @@
 import elements from './elements.js';
+import setText from './dom.js';
 import { formatHours, formatList, formatMoney } from '../core/helpers.js';
 import { registry } from '../game/registry.js';
 import { getAssetState, getUpgradeState } from '../core/state.js';
@@ -10,11 +11,60 @@ import {
   formatXp
 } from './skills/helpers.js';
 
+function formatXp(value) {
+  return numberFormatter.format(Math.max(0, Math.round(Number(value) || 0)));
+}
+
+function describeCharacter(character = {}) {
+  const xp = Math.max(0, Number(character.xp) || 0);
+  const level = Math.max(1, Number(character.level) || 1);
+  const tier = CHARACTER_LEVELS.find(entry => entry.level === level) || CHARACTER_LEVELS[0];
+  const nextTier = CHARACTER_LEVELS.find(entry => entry.level === level + 1) || null;
+  const remaining = nextTier ? Math.max(0, nextTier.xp - xp) : 0;
+  const note = nextTier
+    ? `${formatXp(xp)} XP logged • ${formatXp(remaining)} XP to ${nextTier.title}`
+    : `${formatXp(xp)} XP logged • Top tier achieved—legendary!`;
+  return {
+    label: `${tier.title} · Level ${level}`,
+    note
+  };
+}
+
+function findSkillTier(level) {
+  return SKILL_LEVELS.find(tier => tier.level === level) || SKILL_LEVELS[0];
+}
+
+function findNextSkillTier(level) {
+  return SKILL_LEVELS.find(tier => tier.level === level + 1) || null;
+}
+
+function describeSkill(definition, stateEntry = {}) {
+  const xp = Math.max(0, Number(stateEntry.xp) || 0);
+  const level = Math.max(0, Number(stateEntry.level) || 0);
+  const tier = findSkillTier(level);
+  const nextTier = findNextSkillTier(level);
+  const currentFloor = tier?.xp ?? 0;
+  const nextFloor = nextTier?.xp ?? currentFloor;
+  const range = Math.max(1, nextFloor - currentFloor);
+  const progress = nextTier ? Math.min(1, Math.max(0, (xp - currentFloor) / range)) : 1;
+  const remaining = nextTier ? Math.max(0, nextFloor - xp) : 0;
+
+  return {
+    id: definition.id,
+    name: definition.name,
+    xp,
+    level,
+    tierTitle: tier?.title || `Level ${level}`,
+    nextTier,
+    progressPercent: Math.round(progress * 100),
+    remainingXp: remaining
+  };
+}
+
 function setText(element, value) {
   if (!element) return;
   element.textContent = value;
 }
-
 
 function renderSummary(state, summary) {
   const target = elements.player?.summary;

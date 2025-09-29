@@ -1,4 +1,5 @@
 import elements from './elements.js';
+import setText from './dom.js';
 import { formatHours, formatMoney } from '../core/helpers.js';
 import { getAssetState, getState } from '../core/state.js';
 import { registry } from '../game/registry.js';
@@ -12,11 +13,6 @@ import {
 import { instanceLabel } from '../game/assets/helpers.js';
 import { KNOWLEDGE_TRACKS, getKnowledgeProgress } from '../game/requirements.js';
 import { getTimeCap } from '../game/time.js';
-
-function setText(element, value) {
-  if (!element) return;
-  element.textContent = value;
-}
 
 function createDailyListItem(entry) {
   const li = document.createElement('li');
