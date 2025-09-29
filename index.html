@@ -89,110 +89,114 @@
           </section>
 
           <section class="dashboard__grid">
-            <article class="card dashboard-card dashboard-card--wide" aria-labelledby="daily-stats-heading">
-              <header>
-                <h2 id="daily-stats-heading">Daily stats</h2>
-                <p>Celebrate where today’s hustle hours and dollars landed.</p>
-              </header>
-              <div class="daily-stats">
-                <section class="daily-stats__section" aria-labelledby="daily-time-heading">
-                  <div class="daily-stats__header">
-                    <h3 id="daily-time-heading">Time allocation</h3>
-                    <p id="daily-time-summary" class="daily-stats__summary">No hours logged yet. Queue a hustle to get moving.</p>
-                  </div>
-                  <ul id="daily-time-list" class="daily-stats__list" aria-live="polite"></ul>
-                </section>
-
-                <section class="daily-stats__section" aria-labelledby="daily-earnings-heading">
-                  <div class="daily-stats__header">
-                    <h3 id="daily-earnings-heading">Cash earned</h3>
-                    <p id="daily-earnings-summary" class="daily-stats__summary">Payouts will appear once you start closing deals.</p>
-                  </div>
-                  <div class="daily-stats__columns">
-                    <div class="daily-stats__column">
-                      <h4 id="daily-earnings-active-heading">Active bursts</h4>
-                      <ul id="daily-earnings-active" class="daily-stats__list" aria-labelledby="daily-earnings-active-heading" aria-live="polite"></ul>
+            <div class="dashboard__top-row">
+              <article class="card dashboard-card dashboard-card--wide" aria-labelledby="daily-stats-heading">
+                <header>
+                  <h2 id="daily-stats-heading">Daily stats</h2>
+                  <p>Celebrate where today’s hustle hours and dollars landed.</p>
+                </header>
+                <div class="daily-stats">
+                  <section class="daily-stats__section" aria-labelledby="daily-time-heading">
+                    <div class="daily-stats__header">
+                      <h3 id="daily-time-heading">Time allocation</h3>
+                      <p id="daily-time-summary" class="daily-stats__summary">No hours logged yet. Queue a hustle to get moving.</p>
                     </div>
-                    <div class="daily-stats__column">
-                      <h4 id="daily-earnings-passive-heading">Passive streams</h4>
-                      <ul id="daily-earnings-passive" class="daily-stats__list" aria-labelledby="daily-earnings-passive-heading" aria-live="polite"></ul>
+                    <ul id="daily-time-list" class="daily-stats__list" aria-live="polite"></ul>
+                  </section>
+
+                  <section class="daily-stats__section" aria-labelledby="daily-earnings-heading">
+                    <div class="daily-stats__header">
+                      <h3 id="daily-earnings-heading">Cash earned</h3>
+                      <p id="daily-earnings-summary" class="daily-stats__summary">Payouts will appear once you start closing deals.</p>
                     </div>
-                  </div>
-                </section>
+                    <div class="daily-stats__columns">
+                      <div class="daily-stats__column">
+                        <h4 id="daily-earnings-active-heading">Active bursts</h4>
+                        <ul id="daily-earnings-active" class="daily-stats__list" aria-labelledby="daily-earnings-active-heading" aria-live="polite"></ul>
+                      </div>
+                      <div class="daily-stats__column">
+                        <h4 id="daily-earnings-passive-heading">Passive streams</h4>
+                        <ul id="daily-earnings-passive" class="daily-stats__list" aria-labelledby="daily-earnings-passive-heading" aria-live="polite"></ul>
+                      </div>
+                    </div>
+                  </section>
 
-                <section class="daily-stats__section" aria-labelledby="daily-spend-heading">
-                  <div class="daily-stats__header">
-                    <h3 id="daily-spend-heading">Cash spent</h3>
-                    <p id="daily-spend-summary" class="daily-stats__summary">Outflows land here when upkeep and investments fire.</p>
-                  </div>
-                  <ul id="daily-spend-list" class="daily-stats__list" aria-live="polite"></ul>
-                </section>
+                  <section class="daily-stats__section" aria-labelledby="daily-spend-heading">
+                    <div class="daily-stats__header">
+                      <h3 id="daily-spend-heading">Cash spent</h3>
+                      <p id="daily-spend-summary" class="daily-stats__summary">Outflows land here when upkeep and investments fire.</p>
+                    </div>
+                    <ul id="daily-spend-list" class="daily-stats__list" aria-live="polite"></ul>
+                  </section>
 
-                <section class="daily-stats__section" aria-labelledby="daily-study-heading">
-                  <div class="daily-stats__header">
-                    <h3 id="daily-study-heading">Study momentum</h3>
-                    <p id="daily-study-summary" class="daily-stats__summary">Enroll in a track to kickstart your learning streak.</p>
-                  </div>
-                  <ul id="daily-study-list" class="daily-stats__list" aria-live="polite"></ul>
-                </section>
-              </div>
-            </article>
-
-            <article class="card dashboard-card" aria-labelledby="quick-actions-heading">
-              <header>
-                <h2 id="quick-actions-heading">Quick actions</h2>
-                <p>High-impact moves you can trigger now.</p>
-              </header>
-              <ul id="quick-actions" class="quick-actions" aria-live="polite"></ul>
-            </article>
-
-            <article class="card dashboard-card" aria-labelledby="skills-heading">
-              <header>
-                <h2 id="skills-heading">Skill constellation</h2>
-                <p>Watch every discipline climb as you ship and study.</p>
-              </header>
-              <div id="dashboard-skills" class="skills-widget">
-                <div class="skills-widget__summary">
-                  <span id="dashboard-skills-tier" class="skills-widget__summary-tier">Rising Creator</span>
-                  <span id="dashboard-skills-progress" class="skills-widget__summary-note">0 XP logged so far.</span>
+                  <section class="daily-stats__section" aria-labelledby="daily-study-heading">
+                    <div class="daily-stats__header">
+                      <h3 id="daily-study-heading">Study momentum</h3>
+                      <p id="daily-study-summary" class="daily-stats__summary">Enroll in a track to kickstart your learning streak.</p>
+                    </div>
+                    <ul id="daily-study-list" class="daily-stats__list" aria-live="polite"></ul>
+                  </section>
                 </div>
-                <ul id="dashboard-skills-list" class="skills-widget__list" aria-live="polite"></ul>
-              </div>
-            </article>
+              </article>
 
-            <article class="card dashboard-card" aria-labelledby="asset-upgrades-heading">
-              <header>
-                <h2 id="asset-upgrades-heading">Asset upgrade</h2>
-                <p>Cheer on underperformers with the next quality-friendly push.</p>
-              </header>
-              <ul id="asset-upgrade-actions" class="quick-actions upgrade-actions" aria-live="polite"></ul>
-            </article>
+              <article class="card dashboard-card" aria-labelledby="quick-actions-heading">
+                <header>
+                  <h2 id="quick-actions-heading">Quick actions</h2>
+                  <p>High-impact moves you can trigger now.</p>
+                </header>
+                <ul id="quick-actions" class="quick-actions" aria-live="polite"></ul>
+              </article>
 
-            <article class="card dashboard-card" aria-labelledby="notifications-heading">
-              <header>
-                <h2 id="notifications-heading">Notifications</h2>
-                <p>Alerts for upkeep, upgrades, and opportunities.</p>
-              </header>
-              <ul id="notification-list" class="notifications" aria-live="polite"></ul>
-            </article>
+              <article class="card dashboard-card" aria-labelledby="asset-upgrades-heading">
+                <header>
+                  <h2 id="asset-upgrades-heading">Asset upgrade</h2>
+                  <p>Cheer on underperformers with the next quality-friendly push.</p>
+                </header>
+                <ul id="asset-upgrade-actions" class="quick-actions upgrade-actions" aria-live="polite"></ul>
+              </article>
+            </div>
 
-            <article class="card dashboard-card" aria-labelledby="event-log-heading">
-              <header>
-                <h2 id="event-log-heading">Event log</h2>
-                <p>Recent highlights from the grind.</p>
-              </header>
-              <div id="event-log-preview" class="event-preview" aria-live="polite"></div>
-              <button id="open-event-log" class="ghost" type="button" aria-haspopup="dialog" aria-controls="event-log-panel">Open full log</button>
-            </article>
+            <div class="dashboard__scroll">
+              <article class="card dashboard-card" aria-labelledby="skills-heading">
+                <header>
+                  <h2 id="skills-heading">Skill constellation</h2>
+                  <p>Watch every discipline climb as you ship and study.</p>
+                </header>
+                <div id="dashboard-skills" class="skills-widget">
+                  <div class="skills-widget__summary">
+                    <span id="dashboard-skills-tier" class="skills-widget__summary-tier">Rising Creator</span>
+                    <span id="dashboard-skills-progress" class="skills-widget__summary-note">0 XP logged so far.</span>
+                  </div>
+                  <ul id="dashboard-skills-list" class="skills-widget__list" aria-live="polite"></ul>
+                </div>
+              </article>
 
-            <article class="card dashboard-card" aria-labelledby="queue-heading">
-              <header>
-                <h2 id="queue-heading">Action queue</h2>
-                <p>A snapshot of the work you’ve already teed up for today.</p>
-              </header>
-              <ol id="action-queue" class="queue" aria-live="polite"></ol>
-              <p class="queue__note">We’ll keep this rolling automatically—manual scheduling unlocks in a future update.</p>
-            </article>
+              <article class="card dashboard-card" aria-labelledby="notifications-heading">
+                <header>
+                  <h2 id="notifications-heading">Notifications</h2>
+                  <p>Alerts for upkeep, upgrades, and opportunities.</p>
+                </header>
+                <ul id="notification-list" class="notifications" aria-live="polite"></ul>
+              </article>
+
+              <article class="card dashboard-card" aria-labelledby="event-log-heading">
+                <header>
+                  <h2 id="event-log-heading">Event log</h2>
+                  <p>Recent highlights from the grind.</p>
+                </header>
+                <div id="event-log-preview" class="event-preview" aria-live="polite"></div>
+                <button id="open-event-log" class="ghost" type="button" aria-haspopup="dialog" aria-controls="event-log-panel">Open full log</button>
+              </article>
+
+              <article class="card dashboard-card" aria-labelledby="queue-heading">
+                <header>
+                  <h2 id="queue-heading">Action queue</h2>
+                  <p>A snapshot of the work you’ve already teed up for today.</p>
+                </header>
+                <ol id="action-queue" class="queue" aria-live="polite"></ol>
+                <p class="queue__note">We’ll keep this rolling automatically—manual scheduling unlocks in a future update.</p>
+              </article>
+            </div>
           </section>
         </div>
       </section>
