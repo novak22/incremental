@@ -2,7 +2,7 @@ import elements from './elements.js';
 import { getAssetState, getState, getUpgradeState } from '../core/state.js';
 import { formatDays, formatHours, formatMoney } from '../core/helpers.js';
 import { describeHustleRequirements } from '../game/hustles.js';
-import { KNOWLEDGE_TRACKS, KNOWLEDGE_REWARDS, getKnowledgeProgress } from '../game/requirements.js';
+import { describeRequirement, getDefinitionRequirements, KNOWLEDGE_TRACKS, KNOWLEDGE_REWARDS, getKnowledgeProgress } from '../game/requirements.js';
 import { getTimeCap } from '../game/time.js';
 import {
   describeInstance,
@@ -23,6 +23,7 @@ import {
   getQualityActionCooldown,
   getQualityActions,
   getQualityLevel,
+  getQualityLevelSummary,
   getQualityNextRequirements,
   getQualityTracks,
   getNextQualityLevel,
@@ -161,48 +162,182 @@ function describeSkillWeight(weight = 0) {
 }
 
 function createAssetDetailHighlights(definition) {
-  const detailBuilders = Array.isArray(definition.details) ? definition.details : [];
-  const details = detailBuilders
-    .map(builder => {
-      if (typeof builder === 'function') {
-        try {
-          return builder();
-        } catch (error) {
-          console.error('Failed to render asset detail', error);
-          return null;
+  const entries = Array.isArray(definition.detailEntries)
+    ? definition.detailEntries
+    : Array.isArray(definition.details)
+      ? definition.details.map((render, index) => ({ key: `detail-${index}`, render }))
+      : [];
+
+  const renderedDetails = entries
+    .map((entry, index) => {
+      const render = typeof entry.render === 'function' ? entry.render : entry;
+      if (typeof render !== 'function') return null;
+      try {
+        const value = render();
+        if (!value) return null;
+        if (typeof value === 'string') {
+          const trimmed = value.trim();
+          if (!trimmed) return null;
+          return { key: entry.key || `detail-${index}`, value: trimmed };
         }
+        if (value instanceof Node) {
+          return { key: entry.key || `detail-${index}`, value };
+        }
+        return null;
+      } catch (error) {
+        console.error('Failed to render asset detail', error);
+        return null;
       }
-      return builder;
     })
-    .filter(detail => {
-      if (!detail) return false;
-      if (typeof detail === 'string') {
-        return detail.trim().length > 0;
-      }
-      return detail instanceof Node;
-    });
+    .filter(Boolean);
 
-  if (!details.length) return null;
+  const detailByKey = new Map();
+  renderedDetails.forEach(detail => {
+    if (!detailByKey.has(detail.key)) {
+      detailByKey.set(detail.key, []);
+    }
+    detailByKey.get(detail.key).push(detail.value);
+  });
 
+  const requirements = getDefinitionRequirements(definition);
   const section = document.createElement('section');
-  section.className = 'asset-detail__section';
+  section.className = 'asset-detail__section asset-detail__section--blueprint';
   const heading = document.createElement('h3');
   heading.textContent = 'Launch blueprint';
   section.appendChild(heading);
 
-  const list = document.createElement('ul');
-  list.className = 'asset-detail__highlights';
-  details.forEach(detail => {
+  const grid = document.createElement('div');
+  grid.className = 'asset-detail__summary-grid';
+  section.appendChild(grid);
+
+  // Requirements column
+  const requirementsCard = document.createElement('article');
+  requirementsCard.className = 'asset-detail__summary-card asset-detail__summary-card--requirements';
+  const requirementsTitle = document.createElement('h4');
+  requirementsTitle.textContent = 'Requirements';
+  requirementsCard.appendChild(requirementsTitle);
+  const requirementsList = document.createElement('ul');
+  requirementsList.className = 'asset-detail__summary-list';
+  if (requirements?.hasAny) {
+    requirements.all.forEach(req => {
+      const descriptor = describeRequirement(req);
+      const item = document.createElement('li');
+      item.className = 'asset-detail__summary-item';
+      item.innerHTML = descriptor?.detail || '❔ <strong>Requirement</strong>';
+      requirementsList.appendChild(item);
+    });
+  } else {
+    const fallbackItem = document.createElement('li');
+    fallbackItem.className = 'asset-detail__summary-item';
+    const fallbackDetail = detailByKey.get('requirements')?.[0] || '🔓 Requirements: <strong>None</strong>';
+    if (typeof fallbackDetail === 'string') {
+      fallbackItem.innerHTML = fallbackDetail;
+    } else if (fallbackDetail instanceof Node) {
+      fallbackItem.appendChild(fallbackDetail);
+    }
+    requirementsList.appendChild(fallbackItem);
+  }
+  requirementsCard.appendChild(requirementsList);
+  grid.appendChild(requirementsCard);
+
+  // Quality column
+  const qualityCard = document.createElement('article');
+  qualityCard.className = 'asset-detail__summary-card asset-detail__summary-card--quality';
+  const qualityTitle = document.createElement('h4');
+  qualityTitle.textContent = 'Quality journey';
+  qualityCard.appendChild(qualityTitle);
+
+  const qualitySummary = detailByKey.get('qualitySummary')?.[0];
+  const summaryCopy = document.createElement('p');
+  summaryCopy.className = 'asset-detail__summary-copy';
+  if (typeof qualitySummary === 'string') {
+    summaryCopy.innerHTML = qualitySummary;
+  } else if (qualitySummary instanceof Node) {
+    summaryCopy.appendChild(qualitySummary);
+  } else {
+    summaryCopy.textContent = '✨ Quality boosts unlock as you invest in specialty tracks.';
+  }
+  qualityCard.appendChild(summaryCopy);
+
+  const qualityList = document.createElement('ul');
+  qualityList.className = 'asset-detail__summary-list asset-detail__summary-list--quality';
+  const tracks = getQualityTracks(definition);
+  const levels = getQualityLevelSummary(definition);
+  levels.forEach(level => {
     const item = document.createElement('li');
-    item.className = 'asset-detail__highlight';
-    if (typeof detail === 'string') {
-      item.innerHTML = detail;
-    } else if (detail instanceof Node) {
+    item.className = 'asset-detail__summary-item';
+    const title = document.createElement('div');
+    title.className = 'asset-detail__summary-line';
+    title.innerHTML = `<strong>Quality ${level.level}:</strong> ${level.name}`;
+    item.appendChild(title);
+    const requirementEntries = Object.entries(level.requirements || {});
+    if (requirementEntries.length) {
+      const detail = document.createElement('div');
+      detail.className = 'asset-detail__summary-subtext';
+      const parts = requirementEntries.map(([key, value]) => {
+        const label = tracks[key]?.shortLabel || tracks[key]?.label || key;
+        return `${value} ${label}`;
+      });
+      detail.textContent = parts.join(' • ');
+      item.appendChild(detail);
+    } else {
+      const detail = document.createElement('div');
+      detail.className = 'asset-detail__summary-subtext';
+      detail.textContent = 'Entry tier — no prep required.';
       item.appendChild(detail);
     }
-    list.appendChild(item);
+    qualityList.appendChild(item);
   });
-  section.appendChild(list);
+  qualityCard.appendChild(qualityList);
+  grid.appendChild(qualityCard);
+
+  // Roadmap / stats column
+  const roadmapCard = document.createElement('article');
+  roadmapCard.className = 'asset-detail__summary-card asset-detail__summary-card--roadmap';
+  const roadmapTitle = document.createElement('h4');
+  roadmapTitle.textContent = 'Roadmap & stats';
+  roadmapCard.appendChild(roadmapTitle);
+
+  const roadmapList = document.createElement('ul');
+  roadmapList.className = 'asset-detail__summary-list';
+  const roadmapKeys = ['owned', 'setup', 'setupCost', 'maintenance', 'income', 'latestYield'];
+  roadmapKeys.forEach(key => {
+    const values = detailByKey.get(key) || [];
+    values.forEach(value => {
+      const item = document.createElement('li');
+      item.className = 'asset-detail__summary-item';
+      if (typeof value === 'string') {
+        item.innerHTML = value;
+      } else if (value instanceof Node) {
+        item.appendChild(value);
+      }
+      roadmapList.appendChild(item);
+    });
+  });
+
+  const consumedKeys = new Set(['requirements', 'qualitySummary', 'qualityProgress', ...roadmapKeys]);
+  const extraDetails = renderedDetails.filter(detail => !consumedKeys.has(detail.key));
+  extraDetails.forEach(detail => {
+    const item = document.createElement('li');
+    item.className = 'asset-detail__summary-item';
+    if (typeof detail.value === 'string') {
+      item.innerHTML = detail.value;
+    } else if (detail.value instanceof Node) {
+      item.appendChild(detail.value);
+    }
+    roadmapList.appendChild(item);
+  });
+
+  if (!roadmapList.children.length) {
+    const empty = document.createElement('li');
+    empty.className = 'asset-detail__summary-item';
+    empty.textContent = 'No roadmap details available yet.';
+    roadmapList.appendChild(empty);
+  }
+
+  roadmapCard.appendChild(roadmapList);
+  grid.appendChild(roadmapCard);
+
   return section;
 }
 
