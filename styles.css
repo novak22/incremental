@@ -693,6 +693,10 @@ body {
   cursor: pointer;
 }
 
+.asset-table tbody tr.is-expanded {
+  background: rgba(124, 92, 255, 0.12);
+}
+
 .asset-table tbody tr[data-state='paused'] td {
   color: rgba(248, 113, 113, 0.8);
 }
@@ -704,6 +708,34 @@ body {
 .asset-row-actions {
   display: inline-flex;
   gap: 8px;
+}
+
+.asset-row-builds td {
+  background: var(--surface-muted);
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.asset-row-builds:hover {
+  background: none;
+  cursor: default;
+}
+
+.asset-builds {
+  display: grid;
+  gap: 12px;
+}
+
+.asset-builds__summary {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-subtle);
+}
+
+.asset-builds__empty {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-subtle);
 }
 
 .asset-batch {

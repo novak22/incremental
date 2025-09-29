@@ -18,6 +18,8 @@ The passive asset workspace now presents each asset as a management card that hi
 
 ## Implementation Notes
 - Asset cards keep the existing category structure but use a dedicated layout (`asset-card__*` classes) for stats, actions, and instance management.
+- Asset rows now offer a dedicated "Builds" toggle that expands the inline roster while the "Details" button focuses on the slide-over briefing.
+- The dashboard now includes an "Asset upgrade" card that calls out the next quality actions for struggling builds, prioritising low-yield instances that still owe progress toward their upcoming quality tier.
 - The dashboard now includes an "Asset upgrade" card that calls out the next quality actions for struggling builds, prioritising low-yield instances that still owe progress toward their upcoming quality tier. The list now scrolls to surface up to eight recommendations at once and each entry highlights the percentage remaining alongside the existing effort notes.
 - Instance rows now expose both the previous day's payout and inline sell buttons so liquidation is always one click away.
 - Each instance row can render up to two quick-purchase buttons for the next required equipment upgrades, deferring to existing upgrade action handlers for cost checks and logging. Quick actions now sit directly beside the sell button in the instance list so players can invest or liquidate without leaving the modal. Active builds in the slide-over now include a dedicated stat strip with payout, ROI, and upkeep details above the action row, plus inline shortcuts for pending equipment upgrades.
