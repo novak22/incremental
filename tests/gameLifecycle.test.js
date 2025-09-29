@@ -86,20 +86,26 @@ test('maintenance funding yields end-of-day payouts', () => {
 
     let updatedInstance = getAssetState('blog').instances.find(item => item.id === instanceId);
     assert.equal(updatedInstance.maintenanceFundedToday, true, 'maintenance should be funded when hours remain');
-    assert.equal(state.timeLeft, 9, 'maintenance should consume daily hours');
-    assert.equal(state.money, 5, 'maintenance should deduct upkeep cash');
+    assert.equal(state.timeLeft, 9.25, 'maintenance should consume daily hours');
+    assert.equal(state.money, 7, 'maintenance should deduct upkeep cash');
 
     closeOutDay();
 
     const expectedMinimumIncome = getIncomeRangeForDisplay('blog').min;
     updatedInstance = getAssetState('blog').instances.find(item => item.id === instanceId);
     assert.equal(updatedInstance.lastIncome, expectedMinimumIncome, 'lastIncome should reflect deterministic payout');
-    assert.equal(state.money, 5, 'payout should queue until the next maintenance cycle');
+    assert.equal(state.money, 7, 'payout should queue until the next maintenance cycle');
 
+    const beforeMaintenanceMoney = state.money;
+    const upkeepCost = Number(blogDefinition.maintenance?.cost) || 0;
     allocateAssetMaintenance();
 
     updatedInstance = getAssetState('blog').instances.find(item => item.id === instanceId);
-    assert.equal(state.money, expectedMinimumIncome, 'queued payout should credit before new upkeep is deducted');
+    assert.equal(
+      state.money,
+      beforeMaintenanceMoney - upkeepCost + expectedMinimumIncome,
+      'queued payout should credit before new upkeep is deducted'
+    );
     assert.equal(updatedInstance.pendingIncome, 0, 'payout queue should clear after maintenance runs');
   } finally {
     Math.random = originalRandom;
@@ -117,14 +123,14 @@ test('maintenance stalls when upkeep cash is unavailable', () => {
   })];
 
   state.timeLeft = 10;
-  state.money = 4; // below the $5 upkeep requirement
+  state.money = 2; // below the $3 upkeep requirement
 
   allocateAssetMaintenance();
 
   const updatedInstance = getAssetState('blog').instances[0];
   assert.equal(updatedInstance.maintenanceFundedToday, false, 'maintenance should not fund without cash');
   assert.equal(state.timeLeft, 10, 'time should remain untouched when upkeep fails');
-  assert.equal(state.money, 4, 'money should not be deducted when upkeep fails');
+  assert.equal(state.money, 2, 'money should not be deducted when upkeep fails');
 });
 
 test('knowledge tracks auto-advance after enrollment when time is available', () => {

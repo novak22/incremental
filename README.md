@@ -29,9 +29,9 @@ Online Hustle Simulator is a browser-based incremental game about orchestrating 
 ### Passive Assets (Daily Payouts)
 Each asset supports multiple instances, tracks setup progress, and rolls a daily income range once active. Quality actions unique to each asset increase payouts and stability, and you can liquidate any instance directly from the card—or from the category roster—for three times its previous day payout. The asset briefing modal doubles as an instance inspector, outlining status, upkeep, yesterday’s earnings, and which upgrades are owned or still locked.
 - Select quality actions now include a visible cooldown so big-impact moves (SEO sprints, ad bursts, and marketplace pitches) can only be run every few in-game days, nudging players to rotate through their portfolio.
-- **Personal Blog Network** – Setup 3 days × 3h ($180). Requires 1h/day + $5 maintenance. Quality actions include drafting posts, SEO sprints, and backlink outreach; Quality 0 drips $1–$3/day while Quality 3 now lands at $28–$38/day (Automation Course still adds +50%).
+- **Personal Blog Network** – Setup 3 days × 3h ($180). Requires 0.75h/day + $3 maintenance. Quality actions include drafting posts, SEO sprints, and backlink outreach; the first tier now delivers $3–$6/day and Quality 1 jumps to $9–$15/day with lighter post/SEO requirements so upkeep stays covered even before the Automation Course bonus pushes payouts another 50%.
 - **Weekly Vlog Channel** – Setup 4 days × 4h ($420) with Camera upgrade. Maintenance 1.5h/day + $9. Record episodes, polish edits, and run promo blasts to climb from $2–$5/day at Quality 0 to $32–$40/day at Quality 3, with viral spikes possible at higher tiers.
-- **Digital E-Book Series** – Setup 4 days × 3h ($260) after completing Outline Mastery. Maintenance 0.75h/day + $3. Write chapters, commission cover art, and rally reviews to move from $2–$4/day drafts to $28–$38/day fandom favorites.
+- **Digital E-Book Series** – Setup 4 days × 3h ($260) after completing Outline Mastery. Maintenance 0.75h/day + $3. Faster chapter drafting (2.5h) and cheaper cover/review pushes mean Quality 0 now earns $3–$6/day and Quality 1 leaps to $12–$20/day so the workshop unlock hits modest profitability immediately, with late tiers capping out around $30–$42/day.
 - **Stock Photo Gallery** – Setup 4 days × 2.5h ($240) with Camera + Lighting Kit and Photo Catalog knowledge. Maintenance 1h/day + $4. Shoot themed packs, keyword them, and pitch marketplaces; quality progression raises royalties from $3–$6/day to $26–$36/day.
 - **Dropshipping Storefront** – Setup 5 days × 4h ($650) after E-Commerce Playbook and two active blogs. Maintenance 1.5h/day + $9. Add listings, tune pages, and run ad bursts so profits scale from $6–$10/day to $32–$40/day.
 - **SaaS Micro-App** – Setup 7 days × 5h ($1600) after Automation Architecture, a Cloud Cluster upgrade, and experience running a dropshipping store and e-book line. Maintenance 2.5h/day + $12. Squash bugs, ship features, and host support sprints to grow subscriptions from $8–$14/day to $34–$42/day.
@@ -71,6 +71,7 @@ Each asset supports multiple instances, tracks setup progress, and rolls a daily
 1. Install dev dependencies with `npm install`.
 2. Run the Node-based suite with `npm test` to exercise the day scheduler, maintenance flow, and knowledge tracks.
 3. A GitHub Actions workflow runs the same command on every push and pull request targeting `main`.
+4. Manual spot-check: launch a blog and e-book after Outline Mastery, advance several days, and confirm Quality 0–1 payouts exceed upkeep before and after buying the Automation Course.
 
 ## Roadmap
 - Expand hustle variety (recurring retainers, seasonal gigs) to diversify daily decision making.
