@@ -13,6 +13,11 @@
 - When time is insufficient, the scheduler logs the affected course and tries again the next day without penalising progress.
 - Completion marks the course finished, clears the enrollment flag, and surfaces a celebratory log entry.
 
+## Interface Updates
+- The Education tab now pulls countdowns, tuition, and daily load straight from the canonical track definitions, so every card mirrors the in-game requirements exactly.
+- Each course card displays upbeat status badges (Ready to enroll, Enrolled, Logged today, Graduated) alongside a friendly reminder about today’s study momentum.
+- A refreshed progress strip pairs the percent bar with "days complete" and "days left" callouts, helping players see how close graduation is at a glance.
+
 ## Tuning Notes
 - Tuition prices align with mid-game savings (roughly 3–5 days of early hustles) so players plan purchases.
 - Automatic scheduling consumes hours before asset maintenance, ensuring study promises stay consistent.

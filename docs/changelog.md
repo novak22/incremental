@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- Revamped the Education tab with accurate countdowns, celebratory badges, and tuition/daily load summaries so enrolling in a course feels clear and motivating.
 - Replaced the static "End Day" button with a dynamic "Next" recommendation that fires the top asset upgrade or quick action, favouring longer time commitments before ending the day when no tasks remain.
 - Extended the "Asset upgrade" dashboard card with a scrollable list, up to eight recommendations, and percent-to-go callouts for each quality milestone.
 - Added an "Asset upgrade" dashboard card that spotlights quality pushes for low-yield assets while trimming Daily Stats lists to the top three highlights for a tighter fit.

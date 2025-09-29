@@ -1,6 +1,6 @@
 import elements from './elements.js';
 import { getAssetState, getState, getUpgradeState } from '../core/state.js';
-import { formatHours, formatMoney } from '../core/helpers.js';
+import { formatDays, formatHours, formatMoney } from '../core/helpers.js';
 import { describeHustleRequirements } from '../game/hustles.js';
 import { KNOWLEDGE_TRACKS, getKnowledgeProgress } from '../game/requirements.js';
 import { getTimeCap } from '../game/time.js';
@@ -1165,18 +1165,135 @@ function renderUpgradeDock() {
 }
 
 function resolveTrack(definition) {
-  const info = KNOWLEDGE_TRACKS[definition.id];
-  if (info) {
-    return { ...info, action: definition.action };
+  if (!definition) {
+    return {
+      id: '',
+      name: '',
+      summary: '',
+      description: '',
+      days: 1,
+      hoursPerDay: 1,
+      tuition: 0,
+      action: null
+    };
   }
+
+  const canonicalId = definition.studyTrackId || definition.id;
+  const canonical = KNOWLEDGE_TRACKS[canonicalId];
+
+  const summary = definition.description || canonical?.description || '';
+  const description = canonical?.description || definition.description || '';
+  const days = Number(canonical?.days ?? definition.days ?? definition.action?.durationDays) || 1;
+  const hoursPerDay = Number(
+    canonical?.hoursPerDay ?? definition.hoursPerDay ?? definition.time ?? definition.action?.timeCost
+  ) || 1;
+  const tuition = Number(canonical?.tuition ?? definition.tuition ?? definition.action?.moneyCost) || 0;
+
   return {
-    id: definition.id,
-    name: definition.name,
-    summary: definition.description || '',
-    days: Number(definition.days) || 1,
-    hoursPerDay: Number(definition.time || definition.action?.timeCost) || 1,
+    id: canonical?.id || canonicalId,
+    name: canonical?.name || definition.name || canonicalId,
+    summary,
+    description,
+    days,
+    hoursPerDay,
+    tuition,
     action: definition.action
   };
+}
+
+function formatStudyCountdown(trackInfo, progress) {
+  if (progress.completed) {
+    return 'Diploma earned';
+  }
+
+  if (!progress.enrolled) {
+    return `${formatDays(trackInfo.days)}`;
+  }
+
+  const remainingDays = Math.max(0, trackInfo.days - progress.daysCompleted);
+  if (remainingDays === 0) {
+    return 'Graduation tomorrow';
+  }
+  if (remainingDays === 1) {
+    return '1 day remaining';
+  }
+  return `${remainingDays} days remaining`;
+}
+
+function describeStudyMomentum(trackInfo, progress) {
+  if (progress.completed) {
+    return 'Knowledge unlocked for every requirement. Toast your success!';
+  }
+  if (!progress.enrolled) {
+    const tuitionNote = trackInfo.tuition > 0 ? `Pay $${formatMoney(trackInfo.tuition)} upfront and` : 'Just';
+    return `${tuitionNote} we’ll reserve ${formatHours(trackInfo.hoursPerDay)} each day once you enroll.`;
+  }
+  if (progress.studiedToday) {
+    return '✅ Today’s session is logged. Keep the streak cozy until sundown.';
+  }
+  return `Reserve ${formatHours(trackInfo.hoursPerDay)} today to keep momentum humming.`;
+}
+
+function buildStudyBadges(progress) {
+  const badges = [];
+  if (progress.completed) {
+    badges.push(createBadge('Graduated'));
+  } else if (progress.enrolled) {
+    badges.push(createBadge('Enrolled'));
+    badges.push(createBadge(progress.studiedToday ? 'Logged today' : 'Study pending'));
+  } else {
+    badges.push(createBadge('Ready to enroll'));
+  }
+  return badges;
+}
+
+function applyStudyTrackState(track, trackInfo, progress) {
+  track.dataset.active = progress.enrolled ? 'true' : 'false';
+  track.dataset.complete = progress.completed ? 'true' : 'false';
+
+  const countdown = track.querySelector('.study-track__countdown');
+  if (countdown) {
+    countdown.textContent = formatStudyCountdown(trackInfo, progress);
+  }
+
+  const status = track.querySelector('.study-track__status');
+  if (status) {
+    status.innerHTML = '';
+    buildStudyBadges(progress).forEach(badge => status.appendChild(badge));
+  }
+
+  const note = track.querySelector('.study-track__note');
+  if (note) {
+    note.textContent = describeStudyMomentum(trackInfo, progress);
+  }
+
+  const remainingDays = Math.max(0, trackInfo.days - progress.daysCompleted);
+  const percent = Math.min(100, Math.round((progress.daysCompleted / Math.max(1, trackInfo.days)) * 100));
+  const fill = track.querySelector('.study-track__progress span');
+  if (fill) {
+    fill.style.width = `${percent}%`;
+    fill.setAttribute('aria-valuenow', String(percent));
+  }
+
+  const progressLabel = track.querySelector('.study-track__progress');
+  if (progressLabel) {
+    progressLabel.setAttribute('aria-label', `${trackInfo.name} progress: ${percent}%`);
+  }
+
+  const remaining = track.querySelector('.study-track__remaining');
+  if (remaining) {
+    const daysComplete = progress.completed ? trackInfo.days : progress.daysCompleted;
+    remaining.textContent = `${daysComplete}/${trackInfo.days} days complete`;
+  }
+
+  const countdownValue = track.querySelector('.study-track__remaining-days');
+  if (countdownValue) {
+    countdownValue.textContent = progress.completed
+      ? 'Course complete'
+      : remainingDays === 1
+        ? '1 day left'
+        : `${remainingDays} days left`;
+  }
 }
 
 function renderStudyTrack(definition) {
@@ -1186,31 +1303,75 @@ function renderStudyTrack(definition) {
   const track = document.createElement('article');
   track.className = 'study-track';
   track.dataset.track = trackInfo.id;
-  track.dataset.active = progress.enrolled ? 'true' : 'false';
-  track.dataset.complete = progress.completed ? 'true' : 'false';
+  track.setAttribute('aria-label', `${trackInfo.name} study track`);
 
-  const header = document.createElement('div');
+  const header = document.createElement('header');
   header.className = 'study-track__header';
+
+  const titleGroup = document.createElement('div');
+  titleGroup.className = 'study-track__title-group';
+
   const title = document.createElement('h3');
   title.textContent = trackInfo.name;
-  header.appendChild(title);
-  const eta = document.createElement('span');
-  const remainingDays = Math.max(0, trackInfo.days - progress.daysCompleted);
-  eta.textContent = `${remainingDays} day${remainingDays === 1 ? '' : 's'} remaining`;
-  header.appendChild(eta);
+  titleGroup.appendChild(title);
+
+  const status = document.createElement('div');
+  status.className = 'study-track__status badges';
+  titleGroup.appendChild(status);
+
+  header.appendChild(titleGroup);
+
+  const countdown = document.createElement('span');
+  countdown.className = 'study-track__countdown';
+  header.appendChild(countdown);
   track.appendChild(header);
 
   const summary = document.createElement('p');
+  summary.className = 'study-track__summary';
   summary.textContent = trackInfo.summary || '';
   track.appendChild(summary);
 
+  const meta = document.createElement('dl');
+  meta.className = 'study-track__meta';
+  const metaItems = [
+    { label: 'Daily load', value: `${formatHours(trackInfo.hoursPerDay)} / day` },
+    { label: 'Course length', value: formatDays(trackInfo.days) },
+    { label: 'Tuition', value: trackInfo.tuition > 0 ? `$${formatMoney(trackInfo.tuition)}` : 'Free' }
+  ];
+  metaItems.forEach(item => {
+    const dt = document.createElement('dt');
+    dt.textContent = item.label;
+    meta.appendChild(dt);
+    const dd = document.createElement('dd');
+    dd.textContent = item.value;
+    meta.appendChild(dd);
+  });
+  track.appendChild(meta);
+
+  const progressWrap = document.createElement('div');
+  progressWrap.className = 'study-track__progress-wrap';
+
+  const remaining = document.createElement('span');
+  remaining.className = 'study-track__remaining';
+  progressWrap.appendChild(remaining);
+
   const bar = document.createElement('div');
   bar.className = 'study-track__progress';
+  bar.setAttribute('role', 'progressbar');
+  bar.setAttribute('aria-valuemin', '0');
+  bar.setAttribute('aria-valuemax', '100');
   const fill = document.createElement('span');
-  const percent = Math.min(100, Math.round((progress.daysCompleted / Math.max(1, trackInfo.days)) * 100));
-  fill.style.width = `${percent}%`;
   bar.appendChild(fill);
-  track.appendChild(bar);
+  progressWrap.appendChild(bar);
+
+  const remainingDays = document.createElement('span');
+  remainingDays.className = 'study-track__remaining-days';
+  progressWrap.appendChild(remainingDays);
+  track.appendChild(progressWrap);
+
+  const note = document.createElement('p');
+  note.className = 'study-track__note';
+  track.appendChild(note);
 
   const actions = document.createElement('div');
   actions.className = 'hustle-card__actions';
@@ -1232,7 +1393,9 @@ function renderStudyTrack(definition) {
   actions.appendChild(details);
   track.appendChild(actions);
 
-  return { track, percent };
+  applyStudyTrackState(track, trackInfo, progress);
+
+  return { track };
 }
 
 function openStudyDetails(definition) {
@@ -1258,9 +1421,9 @@ function renderEducation(definitions) {
   list.innerHTML = '';
   studyUi.clear();
   definitions.forEach(def => {
-    const { track, percent } = renderStudyTrack(def);
+    const { track } = renderStudyTrack(def);
     list.appendChild(track);
-    studyUi.set(resolveTrack(def).id, { track, percent });
+    studyUi.set(resolveTrack(def).id, { track });
   });
   renderStudyQueue(definitions);
 }
@@ -1285,10 +1448,15 @@ function renderStudyQueue(definitions) {
     empty.textContent = 'No study queued today.';
     queue.appendChild(empty);
   }
-  elements.studyQueueEta.textContent = `Total ETA: ${formatHours(totalHours)}`;
-  const state = getState();
-  const cap = state ? getTimeCap() : 0;
-  elements.studyQueueCap.textContent = `Daily cap: ${formatHours(cap)}`;
+  if (elements.studyQueueEta) {
+    elements.studyQueueEta.textContent = `Total ETA: ${formatHours(totalHours)}`;
+  }
+
+  if (elements.studyQueueCap) {
+    const state = getState();
+    const cap = state ? getTimeCap() : 0;
+    elements.studyQueueCap.textContent = `Daily cap: ${formatHours(cap)}`;
+  }
 }
 
 export function renderCardCollections({ hustles, education, assets, upgrades }) {
@@ -1338,8 +1506,5 @@ function updateStudyTrack(definition) {
   if (!ui) return;
   const state = getState();
   const progress = getKnowledgeProgress(info.id, state);
-  ui.track.dataset.active = progress.enrolled ? 'true' : 'false';
-  ui.track.dataset.complete = progress.completed ? 'true' : 'false';
-  const percent = Math.min(100, Math.round((progress.daysCompleted / Math.max(1, info.days)) * 100));
-  ui.track.querySelector('.study-track__progress span').style.width = `${percent}%`;
+  applyStudyTrackState(ui.track, info, progress);
 }
