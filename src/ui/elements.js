@@ -133,7 +133,25 @@ const elements = {
   commandPaletteTrigger: document.getElementById('command-palette-trigger'),
   commandPaletteBackdrop: document.querySelector('#command-palette .command-palette__backdrop'),
   commandPaletteSearch: document.getElementById('command-palette-search'),
-  commandPaletteResults: document.getElementById('command-palette-results')
+  commandPaletteResults: document.getElementById('command-palette-results'),
+  player: {
+    summary: {
+      tier: document.getElementById('player-summary-tier'),
+      note: document.getElementById('player-summary-note'),
+      money: document.getElementById('player-summary-money'),
+      earned: document.getElementById('player-summary-earned'),
+      spent: document.getElementById('player-summary-spent'),
+      day: document.getElementById('player-summary-day'),
+      time: document.getElementById('player-summary-time')
+    },
+    skills: {
+      list: document.getElementById('player-skills-list'),
+      summary: document.getElementById('player-skills-summary')
+    },
+    educationList: document.getElementById('player-education-list'),
+    equipmentList: document.getElementById('player-equipment-list'),
+    statsList: document.getElementById('player-stats-list')
+  }
 };
 
 export default elements;
