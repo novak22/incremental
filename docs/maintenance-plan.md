@@ -1,6 +1,6 @@
 # Maintenance Brief
 
-For the full historical analysis and detailed recommendations, see the [Maintenance Review Archive](docs/archive/maintenance-review.md).
+For the full historical analysis and detailed recommendations, see the [Maintenance Review Archive](archive/maintenance-review.md).
 
 ## Loop Snapshot
 - Players start each day with fixed hours and cash, investing time in hustles, asset setup, upkeep, and study before ending the day.

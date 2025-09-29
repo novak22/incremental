@@ -1,14 +1,12 @@
 # Content Schema Builders
 
-## Goal
-Provide a declarative pipeline so new hustles, assets, and upgrades can be described entirely through configuration objects. The builders ensure consistent UI rendering, action wiring, and metrics tracking while reducing copy-pasted logic across modules.
+**Why they exist**
+- Designers define hustles, passive assets, and upgrades with plain objects so UI, requirements, and metrics stay consistent.
 
-## Player Impact
-- Faster iteration on new content keeps the game fresh without risking regressions in core systems.
-- Consistent card layouts, requirement messaging, and action behavior make each addition feel polished and predictable.
-- Designers can tune payouts, costs, and requirements directly, enabling more frequent balancing updates.
+**Builder cheatsheet**
+- `createInstantHustle`: set `time`, `cost`, `payout` (amount + delay), and `requirements` to shape quick or delayed gigs.
+- `createAssetDefinition`: provide `setup`, `maintenance`, `income`, and `quality.levels` to map long-term arcs.
+- `createUpgrade`: configure `cost`, `requires`, optional `labels`, and `onPurchase` hooks for special effects.
 
-## Tuning Parameters
-- `createInstantHustle`: adjust `time`, `cost`, `payout.amount`, `payout.delaySeconds`, and `requirements` arrays to define effort and rewards.
-- `createAssetDefinition`: modify `setup`, `maintenance`, `income`, and `quality.levels` to shape passive production arcs.
-- `createUpgrade`: set `cost`, `requires`, and `labels` for pacing, and use `onPurchase` callbacks for custom effects.
+**Player upside**
+- Faster iteration keeps card layouts, copy, and availability rules aligned while we ship new content.

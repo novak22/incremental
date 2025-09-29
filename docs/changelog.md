@@ -1,59 +1,16 @@
 # Changelog
 
-## [Unreleased]
-- Balanced passive income mainstays by tuning Personal Blog Network upkeep, smoothing Stock Photo, Dropshipping, and Micro SaaS payouts, and ensuring new upgrade tiers feel rewarding once unlocked.
-- Debuted a character skill progression loop, linking course work to gig bonuses while refreshing study scheduling, countdowns, and celebratory education UI moments.
-- Streamlined daily flow through the dynamic "Next" recommendation, a revitalized Daily Stats card, and a consolidated header pulse that keeps schedules and priorities front and center.
-- Reimagined asset management with richer upgrade recommendations, reorganized detail panels, inline sell controls, and clearer ROI cues for every launched build.
-- Expanded hustles and automation systems with new instant gigs, smarter assistant workload handling, and schema-driven builders that make future content easier to ship.
-- Upgraded passive infrastructure via new cinema/studio and server tiers, late-game quality ladders, and roster-level surfacing of upkeep, payouts, and upgrade shortcuts.
+## Unreleased
+- Passive economy rebalance: smoother upkeep for blogs, stock photos, dropshipping, and SaaS so late tiers feel rewarding without micromanagement spikes.
+- Progression refresh: character skills, study scheduling, and celebratory UI now guide players through course-driven bonuses and countdowns.
+- Flow helpers: the "Next" action, Daily Stats card, and header pulse now keep priorities, earnings, and schedules visible at a glance.
+- Asset stewardship: detail panels, sell controls, and recommendations highlight ROI, upkeep costs, and upgrade shortcuts for each build.
+- Automation & infrastructure: broader instant gigs, smarter assistant load balancing, and new studio/server tiers expand long-term play.
 
-## [Detailed historical notes now live in the - changelog archive](archive/changelog-archive.md).
-- Extended every passive asset with new Quality 4–5 milestones, raising top-end payouts (blogs now reach $84/day, vlogs $82/day, e-books $78/day, stock photos $150/day, dropshipping $176/day, SaaS $220/day) and refreshing viral modifiers plus documentation to match.
-- Corrected the Personal Blog Network upkeep to its 0.75h/$3 tuning so maintenance consumes the intended time budget and queued payouts behave consistently.
-- Retuned Stock Photo Galleries, Dropshipping Labs, and Micro SaaS payouts with lighter upkeep and lower quality hurdles, and wired the Cinema Camera, Studio Expansion, and Edge Delivery upgrades into tangible income and progress boosts.
-- Introduced a character skill system with ten themed disciplines, action-driven XP awards, education bonuses, and overall creator levels that log celebratory progress.
-- Added a "Skill constellation" widget to the dashboard and education tab so current skill tiers and XP-to-next goals stay front and centre.
-- Expanded the Micro SaaS quality ladder with an Edge-powered Quality 4 tier, fresh action gating, and UI messaging so late-game payouts highlight the Edge Delivery Network upgrade.
-- Retuned Stock Photo Galleries, Dropshipping Labs, and Micro SaaS payouts with lighter upkeep and lower quality hurdles, and wired the Cinema Camera, Studio Expansion, and Edge Delivery upgrades into tangible income and progress boosts.
-- Rebalanced the Personal Blog Network and Digital E-Book Series so Quality 0–1 payouts cover their maintenance, trimmed early post/chapter requirements, and sped up support actions while keeping the Automation Course perk impactful.
-- Linked study tracks to instant gig payouts with course-specific multipliers/bonuses and added two new workshops (Brand Voice Lab, Guerrilla Buzz Workshop) to diversify study plans.
-- Revamped the Education tab with accurate countdowns, celebratory badges, and tuition/daily load summaries so enrolling in a course feels clear and motivating.
-- Replaced the static "End Day" button with a dynamic "Next" recommendation that fires the top asset upgrade or quick action, favouring longer time commitments before ending the day when no tasks remain.
-- Extended the "Asset upgrade" dashboard card with a scrollable list, up to eight recommendations, and percent-to-go callouts for each quality milestone.
-- Added an "Asset upgrade" dashboard card that spotlights quality pushes for low-yield assets while trimming Daily Stats lists to the top three highlights for a tighter fit.
-- Streamlined the header pulse to spotlight daily flow and time stats in a single tidy row.
-- Centered the shell header around a "Daily pulse" band that highlights daily earnings and spend, lifetime cash flow, and the remaining versus committed hours for the current day.
-- Expanded the hustle catalog with eight new instant gigs ranging from 15-minute surveys to asset-specific pop-up events, adding more scheduling variety and requirement-driven payouts.
-- Grouped the asset detail slide-over into Active builds and Launch queue sections with scrollable stat strips, highlighting last payout, net hourly returns, upkeep, and inline upgrade shortcuts for every launched build.
-- Restored the Daily Stats dashboard card with refreshed breakdowns for time, earnings, spending, and study activity so the latest day’s flow is visible at a glance.
-- Restored the asset briefing modal with a launch blueprint checklist plus per-instance upgrade quick actions paired with sell controls.
-- Reimagined the dashboard clock as a forward-moving 24h day tracker with colour-coded segments for sleep, upkeep, setup, and logged actions plus an at-a-glance legend.
-- Rebalanced assistant upkeep allocation so helper hours are consumed before tasks bounce to the player, with overflow now failing when both pools are spent.
-- Introduced schema-driven builders for hustles, assets, and upgrades so new content can be configured declaratively with shared UI details and metrics hooks.
-- Added a centralized action catalog with selectors plus an optional debug panel that lists availability, costs, and requirement gaps across hustles, assets, upgrades, and quality actions.
-- Unified asset and upgrade requirement schema so unlock conditions share consistent evaluation and UI messaging.
-- Revamped education tracks with upfront tuition costs, longer course lengths, and an automatic daily study scheduler that reserves hours until graduation.
-- Added cinema/studio upgrade tiers and a three-step server infrastructure ladder culminating in a Cloud Cluster requirement for SaaS launches.
-- Added instant hustles that reward active blogs/e-books, complete with live requirement summaries and one-hour payouts, plus per-instance cooldowns for high-impact passive quality actions.
-- Added a net-per-hour ROI column to passive asset rosters and refreshed the instance briefing modal with asset-specific quality progress and upgrade actions.
-- Added quick-buy buttons for the next passive asset upgrades alongside each launched instance and made the asset briefing modal scrollable with quality actions pinned near the top.
-- Replaced dormant passive upgrade buttons with inline "Support boosts" hints so category rosters call out the next helpful equipment or study unlocks.
-- Added category-level asset rosters with upkeep, payout, and upgrade/sell shortcuts, plus an instance-aware briefing modal that surfaces owned and locked upgrades.
-- Added a dedicated "Builds" toggle to passive asset rows so the inline roster expands without opening the detail briefing.
-- Shifted passive asset payouts to credit during the morning maintenance sweep so earnings persist in the new day’s snapshot.
-- Highlighted passive asset payouts in the Daily Snapshot caption and breakdown, including instance counts for each earning stream.
-- Overhauled the passive asset board with stat-rich cards, upgrade shortcuts, per-instance earnings, and a briefing modal for nailing new launches.
-- Replaced the tabbed workspace with a sticky header navigation that scrolls to each section, refreshed section styling, and removed duplicate passive asset cards.
-- Major UI redesign with a collapsible daily snapshot, tabbed workspace, asset categories, filter toggles, and upgrade search for smoother planning.
-- Shifted passive asset income to a day-driven scheduler with multi-day setup tracking and maintenance allocation.
-- Added expanded asset catalog (Blogs, Vlog Channels, E-Book Series, Stock Photo Galleries, Dropshipping Storefronts, SaaS Micro-App) with per-instance state and dynamic income ranges.
-- Introduced knowledge study tracks with daily commitments that gate advanced assets alongside equipment and experience requirements.
-- Refreshed UI copy, card details, and styling to surface asset counts, income bands, and requirement progress.
-- Reworked upgrades (camera, lighting kit, automation course) to align with the new asset ecosystem.
-- Expanded the virtual assistant upgrade into a four-person team with daily payroll, hire/fire controls, and log messaging.
-- Added cash-based maintenance costs for blogs ($2/day) and vlogs ($5/day) that block payouts when funds are unavailable.
-- Wired a daily metrics ledger into the snapshot so time invested, money earned (with passive streams called out), and spending breakdowns reflect the current day’s actions.
-- Introduced an asset quality ladder with bespoke actions, UI panels, and level-based payout scaling for every passive income stream.
-- Added instance-level asset lists with one-click liquidation; selling pays three times yesterday’s payout and logs the cash in the new daily ledger.
-- Recalibrated passive asset setup costs, maintenance, and quality payouts so Quality 3 earnings fall between $20–$40/day and take multiple weeks of upkeep to recoup, with documentation refreshed to match.
+## Recent Highlights
+- Passive assets gained Quality 4–5 milestones with higher payouts and refreshed modifiers.
+- Education and hustle systems link courses to gig bonuses while workshops diversify study plans.
+- Dashboard upgrades centralize upgrade recommendations, daily stats, and schedule messaging.
+
+## Archive
+The full historical log lives in the [changelog archive](archive/changelog-archive.md).
