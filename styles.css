@@ -309,10 +309,15 @@ body {
 
 .dashboard__top-row .quick-actions,
 .dashboard__top-row .upgrade-actions {
+  --dashboard-action-item-height: 72px;
+  --dashboard-action-gap: 12px;
+  --dashboard-action-button-width: 148px;
   flex: 1 1 auto;
   height: 100%;
+  max-height: calc((var(--dashboard-action-item-height) * 5) + (var(--dashboard-action-gap) * 4));
   overflow-y: auto;
   padding-right: 4px;
+  scrollbar-gutter: stable both-edges;
 }
 
 .dashboard-card {
@@ -404,6 +409,12 @@ body {
   border-radius: var(--radius-md);
   padding: 12px 16px;
   border: 1px solid transparent;
+}
+
+.quick-actions li {
+  gap: var(--dashboard-action-gap, 12px);
+  align-items: stretch;
+  min-height: var(--dashboard-action-item-height, 64px);
 }
 
 .skills-widget {
@@ -504,7 +515,6 @@ body {
 }
 
 .upgrade-actions {
-  max-height: 320px;
   overflow-y: auto;
   padding-right: 4px;
   scrollbar-gutter: stable both-edges;
@@ -518,6 +528,8 @@ body {
 .notifications__info {
   display: grid;
   gap: 4px;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .daily-stats {
@@ -613,6 +625,18 @@ body {
 .quick-actions li button,
 .notifications li button {
   margin-left: 12px;
+}
+
+.quick-actions li button {
+  flex: 0 0 var(--dashboard-action-button-width, 140px);
+  inline-size: var(--dashboard-action-button-width, 140px);
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  white-space: normal;
+  line-height: 1.25;
 }
 
 .event-preview {
