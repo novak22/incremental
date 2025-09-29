@@ -1,6 +1,13 @@
 import { formatHours, formatMoney, toNumber } from '../../core/helpers.js';
 import { addLog } from '../../core/log.js';
-import { getAssetDefinition, getAssetState, getState, getUpgradeDefinition, getUpgradeState } from '../../core/state.js';
+import {
+  countActiveAssetInstances,
+  getAssetDefinition,
+  getAssetState,
+  getState,
+  getUpgradeDefinition,
+  getUpgradeState
+} from '../../core/state.js';
 import { executeAction } from '../actions.js';
 import { addMoney, spendMoney } from '../currency.js';
 import { checkDayEnd } from '../lifecycle.js';
@@ -44,29 +51,22 @@ function formatPayoutDetail(payout) {
   return base;
 }
 
-function countActiveAssets(assetId) {
-  if (!assetId) return 0;
-  const state = getAssetState(assetId);
-  if (!state?.instances?.length) return 0;
-  return state.instances.filter(instance => instance.status === 'active').length;
-}
-
-function renderRequirementSummary(requirements = []) {
+function renderRequirementSummary(requirements = [], state = getState()) {
   if (!requirements.length) return 'None';
   return requirements
     .map(req => {
       const definition = getAssetDefinition(req.assetId);
       const label = definition?.singular || definition?.name || req.assetId;
       const need = toNumber(req.count, 1);
-      const have = countActiveAssets(req.assetId);
+      const have = countActiveAssetInstances(req.assetId, state);
       return `${label}: ${have}/${need} active`;
     })
     .join(' • ');
 }
 
-function requirementsMet(requirements = []) {
+function meetsAssetRequirements(requirements = [], state = getState()) {
   if (!requirements?.length) return true;
-  return requirements.every(req => countActiveAssets(req.assetId) >= toNumber(req.count, 1));
+  return requirements.every(req => countActiveAssetInstances(req.assetId, state) >= toNumber(req.count, 1));
 }
 
 function buildMetricConfig(id, prefix, overrides = {}, defaults = {}) {
@@ -221,8 +221,8 @@ export function createInstantHustle(config) {
     if (metadata.cost > 0 && state.money < metadata.cost) {
       return `You need $${formatMoney(metadata.cost)} before funding ${definition.name}.`;
     }
-    if (!requirementsMet(metadata.requirements)) {
-      return `You still need: ${renderRequirementSummary(metadata.requirements)}.`;
+    if (!meetsAssetRequirements(metadata.requirements, state)) {
+      return `You still need: ${renderRequirementSummary(metadata.requirements, state)}.`;
     }
     return null;
   }
@@ -549,5 +549,5 @@ export function renderHustleRequirementSummary(requirements) {
 }
 
 export function hustleRequirementsMet(requirements) {
-  return requirementsMet(requirements);
+  return meetsAssetRequirements(requirements);
 }

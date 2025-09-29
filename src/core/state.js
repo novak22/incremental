@@ -325,6 +325,13 @@ export function getAssetState(id, target = state) {
   return target.assets[id];
 }
 
+export function countActiveAssetInstances(assetId, target = state) {
+  if (!assetId) return 0;
+  const assetState = getAssetState(assetId, target);
+  const instances = Array.isArray(assetState?.instances) ? assetState.instances : [];
+  return instances.filter(instance => instance?.status === 'active').length;
+}
+
 export function getUpgradeState(id, target = state) {
   target.upgrades = target.upgrades || {};
   if (!target.upgrades[id]) {

@@ -1,5 +1,5 @@
 import { formatDays, formatHours, formatMoney } from '../core/helpers.js';
-import { getAssetDefinition, getAssetState, getHustleDefinition, getState } from '../core/state.js';
+import { countActiveAssetInstances, getAssetDefinition, getHustleDefinition, getState } from '../core/state.js';
 import { executeAction } from './actions.js';
 import { checkDayEnd } from './lifecycle.js';
 import { createInstantHustle } from './content/schema.js';
@@ -57,17 +57,6 @@ function recordHustlePayout(hustleId, { label, amount, category }) {
   recordPayoutContribution({ key, label, amount, category });
 }
 
-function countActiveAssets(assetId, state = getState()) {
-  const assetState = getAssetState(assetId, state);
-  if (!assetState?.instances) return 0;
-  return assetState.instances.filter(instance => instance.status === 'active').length;
-}
-
-function requirementsMet(requirements = [], state = getState()) {
-  if (!requirements?.length) return true;
-  return requirements.every(req => countActiveAssets(req.assetId, state) >= (Number(req.count) || 1));
-}
-
 function renderRequirementSummary(requirements = [], state = getState()) {
   if (!requirements.length) return 'None';
   return requirements
@@ -75,7 +64,7 @@ function renderRequirementSummary(requirements = [], state = getState()) {
       const definition = getAssetDefinition(req.assetId);
       const label = definition?.singular || definition?.name || req.assetId;
       const need = Number(req.count) || 1;
-      const have = countActiveAssets(req.assetId, state);
+      const have = countActiveAssetInstances(req.assetId, state);
       return `${label}: ${have}/${need} active`;
     })
     .join(' • ');
@@ -93,7 +82,7 @@ export function describeHustleRequirements(definition, state = getState()) {
     const assetDefinition = getAssetDefinition(req.assetId);
     const label = assetDefinition?.singular || assetDefinition?.name || req.assetId;
     const need = Number(req.count) || 1;
-    const have = countActiveAssets(req.assetId, state);
+    const have = countActiveAssetInstances(req.assetId, state);
     return {
       type: 'asset',
       assetId: req.assetId,
@@ -105,7 +94,9 @@ export function describeHustleRequirements(definition, state = getState()) {
 }
 
 export function areHustleRequirementsMet(definition, state = getState()) {
-  return requirementsMet(getHustleRequirements(definition), state);
+  const requirements = getHustleRequirements(definition);
+  if (!requirements.length) return true;
+  return requirements.every(req => countActiveAssetInstances(req.assetId, state) >= (Number(req.count) || 1));
 }
 
 const freelanceWriting = createInstantHustle({
