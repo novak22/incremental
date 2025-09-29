@@ -413,7 +413,7 @@ body {
 
 .quick-actions li {
   gap: var(--dashboard-action-gap, 12px);
-  align-items: stretch;
+  align-items: center;
   min-height: var(--dashboard-action-item-height, 64px);
 }
 
@@ -628,15 +628,17 @@ body {
 }
 
 .quick-actions li button {
-  flex: 0 0 var(--dashboard-action-button-width, 140px);
-  inline-size: var(--dashboard-action-button-width, 140px);
-  min-height: 44px;
+  flex: 0 0 auto;
+  inline-size: min(var(--dashboard-action-button-width, 140px), 100%);
+  min-height: 36px;
+  padding: 6px 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
   white-space: normal;
   line-height: 1.25;
+  align-self: center;
 }
 
 .event-preview {
