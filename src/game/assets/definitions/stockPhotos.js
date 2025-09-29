@@ -10,6 +10,13 @@ const stockPhotosDefinition = createAssetDefinition({
   description: 'Stage props, shoot themed collections, and list them across marketplaces.',
   setup: { days: 5, hoursPerDay: 4, cost: 560 },
   maintenance: { hours: 1.2, cost: 10 },
+  skills: {
+    setup: [
+      'visual',
+      { id: 'editing', weight: 0.6 },
+      { id: 'promotion', weight: 0.4 }
+    ]
+  },
   income: {
     base: 58,
     variance: 0.35,
@@ -68,6 +75,7 @@ const stockPhotosDefinition = createAssetDefinition({
         cost: 22,
         progressKey: 'shoots',
         progressAmount: context => (context.upgrade('studioExpansion')?.purchased ? 2 : 1),
+        skills: ['visual'],
         log: ({ label }) => `${label} staged a dazzling shoot. Props now live rent-free in your studio.`
       },
       {
@@ -77,6 +85,7 @@ const stockPhotosDefinition = createAssetDefinition({
         cost: 14,
         progressKey: 'editing',
         progressAmount: context => (context.upgrade('studioExpansion')?.purchased ? 2 : 1),
+        skills: ['editing'],
         log: ({ label }) => `${label} batch-edited a gallery. Clients cheer at the crisp exports!`
       },
       {
@@ -86,6 +95,7 @@ const stockPhotosDefinition = createAssetDefinition({
         cost: 16,
         progressKey: 'marketing',
         progressAmount: context => (context.upgrade('studioExpansion')?.purchased ? 2 : 1),
+        skills: ['promotion'],
         log: ({ label }) => `${label} ran a marketplace feature promo. Download counters spin faster!`
       }
     ],

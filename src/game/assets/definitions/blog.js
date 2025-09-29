@@ -9,7 +9,13 @@ const blogDefinition = createAssetDefinition({
   tag: { label: 'Foundation', type: 'passive' },
   description: 'Launch cozy blogs that drip ad revenue once the posts are polished.',
   setup: { days: 3, hoursPerDay: 3, cost: 180 },
-  maintenance: { hours: 0.75, cost: 3 },
+  maintenance: { hours: 1, cost: 5 },
+  skills: {
+    setup: [
+      'writing',
+      { id: 'promotion', weight: 0.5 }
+    ]
+  },
   income: {
     base: 30,
     variance: 0.2,
@@ -63,6 +69,7 @@ const blogDefinition = createAssetDefinition({
         time: 3,
         progressKey: 'posts',
         progressAmount: context => (context.upgrade('course')?.purchased ? 2 : 1),
+        skills: ['writing'],
         log: ({ label }) => `${label} published a sparkling post. Subscribers sip the fresh ideas!`
       },
       {
@@ -72,6 +79,7 @@ const blogDefinition = createAssetDefinition({
         cost: 16,
         cooldownDays: 1,
         progressKey: 'seo',
+        skills: ['promotion'],
         log: ({ label }) => `${label} ran an SEO tune-up. Keywords now shimmy to the top.`
       },
       {
@@ -81,6 +89,7 @@ const blogDefinition = createAssetDefinition({
         cost: 16,
         cooldownDays: 2,
         progressKey: 'outreach',
+        skills: ['audience', { id: 'promotion', weight: 0.5 }],
         log: ({ label }) => `${label} charmed partners into fresh backlinks. Authority climbs!`
       }
     ],

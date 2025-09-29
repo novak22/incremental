@@ -10,6 +10,13 @@ const saasDefinition = createAssetDefinition({
   description: 'Design lean software services, onboard early users, and ship updates that keep churn low.',
   setup: { days: 8, hoursPerDay: 4, cost: 960 },
   maintenance: { hours: 2.2, cost: 24 },
+  skills: {
+    setup: [
+      'software',
+      { id: 'infrastructure', weight: 0.75 },
+      { id: 'promotion', weight: 0.5 }
+    ]
+  },
   income: {
     base: 108,
     variance: 0.4,
@@ -80,6 +87,7 @@ const saasDefinition = createAssetDefinition({
         cost: 32,
         progressKey: 'features',
         progressAmount: context => (context.upgrade('serverEdge')?.purchased ? 2 : 1),
+        skills: ['software'],
         log: ({ label }) => `${label} shipped a delightful feature. Beta users erupt in emoji reactions!`
       },
       {
@@ -89,6 +97,7 @@ const saasDefinition = createAssetDefinition({
         cost: 36,
         progressKey: 'stability',
         progressAmount: context => (context.upgrade('serverEdge')?.purchased ? 2 : 1),
+        skills: ['infrastructure'],
         log: ({ label }) => `${label} patched outages and bolstered uptime. Pager alerts stay quiet.`
       },
       {
@@ -98,6 +107,7 @@ const saasDefinition = createAssetDefinition({
         cost: 44,
         progressKey: 'marketing',
         progressAmount: context => (context.upgrade('serverEdge')?.purchased ? 2 : 1),
+        skills: ['promotion'],
         log: ({ label }) => `${label} launched a marketing sprint. Sign-ups trickle in all night.`
       },
       {

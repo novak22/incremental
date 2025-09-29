@@ -1,6 +1,12 @@
 import { DEFAULT_DAY_HOURS } from './constants.js';
 import { structuredClone } from './helpers.js';
 import { attachRegistryMetricIds, buildMetricIndex } from '../game/schema/metrics.js';
+import {
+  createEmptyCharacterState,
+  createEmptySkillState,
+  normalizeCharacterState,
+  normalizeSkillState
+} from '../game/skills/data.js';
 
 let registry = { hustles: [], assets: [], upgrades: [] };
 let hustleMap = new Map();
@@ -213,6 +219,9 @@ export function ensureStateShape(target = state) {
   target.progress = target.progress || {};
   target.progress.knowledge = target.progress.knowledge || {};
 
+  target.skills = normalizeSkillState(target.skills);
+  target.character = normalizeCharacterState(target.character);
+
   ensureDailyMetrics(target);
 }
 
@@ -227,6 +236,8 @@ export function buildBaseState() {
     hustles: {},
     assets: {},
     upgrades: {},
+    skills: createEmptySkillState(),
+    character: createEmptyCharacterState(),
     totals: {
       earned: 0,
       spent: 0

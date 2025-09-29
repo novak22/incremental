@@ -77,6 +77,7 @@ const camera = createUpgrade({
   description: 'Unlocks video production gear so you can start vlogs and shoot stock photos.',
   cost: 200,
   unlocks: 'Weekly Vlog Channel & Stock Photo Galleries',
+  skills: ['visual'],
   actionClassName: 'secondary',
   actionLabel: 'Purchase Camera',
   labels: {
@@ -96,6 +97,7 @@ const studio = createUpgrade({
   description: 'Soft boxes, reflectors, and editing presets for glossier stock photos.',
   cost: 220,
   unlocks: 'Stock Photo Galleries',
+  skills: ['visual'],
   actionClassName: 'secondary',
   actionLabel: 'Build Studio',
   labels: {
@@ -120,6 +122,7 @@ const cameraPro = createUpgrade({
     () => '🎞️ Vlog quality actions count double progress once the cinema rig is live.',
     () => '💰 Daily vlog income jumps by roughly +25% and viral bursts spike harder.'
   ],
+  skills: ['visual'],
   actionClassName: 'secondary',
   actionLabel: 'Install Cinema Gear',
   labels: {
@@ -145,6 +148,7 @@ const studioExpansion = createUpgrade({
     () => '📸 Stock photo quality actions earn double progress with the expanded studio.',
     () => '💵 Galleries pick up roughly +20% daily income thanks to premium staging.'
   ],
+  skills: ['visual'],
   actionClassName: 'secondary',
   actionLabel: 'Expand Studio',
   labels: {
@@ -165,6 +169,7 @@ const serverRack = createUpgrade({
   description: 'Spin up a reliable rack with monitoring so prototypes stay online.',
   cost: 650,
   unlocks: 'Stable environments for advanced products',
+  skills: ['infrastructure'],
   actionClassName: 'secondary',
   actionLabel: 'Install Rack',
   labels: {
@@ -185,6 +190,7 @@ const serverCluster = createUpgrade({
   cost: 1150,
   requires: ['serverRack'],
   unlocks: 'SaaS deployments',
+  skills: ['infrastructure'],
   actionClassName: 'secondary',
   actionLabel: 'Deploy Cluster',
   labels: {
@@ -210,6 +216,7 @@ const serverEdge = createUpgrade({
     () => '⚙️ SaaS feature, stability, and marketing pushes count double progress once edge nodes hum.',
     () => '📈 Subscriptions pay roughly +35% more each day with the global edge footprint.'
   ],
+  skills: ['infrastructure'],
   actionClassName: 'secondary',
   actionLabel: 'Activate Edge Network',
   labels: {
@@ -273,6 +280,7 @@ const course = createUpgrade({
       detail: 'Requires: <strong>At least one active blog</strong>'
     }
   ],
+  skills: ['software'],
   actionClassName: 'secondary',
   actionLabel: 'Study Up',
   labels: {

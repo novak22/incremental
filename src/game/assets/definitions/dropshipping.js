@@ -9,6 +9,13 @@ const dropshippingDefinition = createAssetDefinition({
   description: 'Prototype products, source suppliers, and automate fulfillment funnels.',
   setup: { days: 6, hoursPerDay: 4, cost: 720 },
   maintenance: { hours: 1.5, cost: 12 },
+  skills: {
+    setup: [
+      'commerce',
+      'research',
+      { id: 'promotion', weight: 0.5 }
+    ]
+  },
   income: {
     base: 84,
     variance: 0.35,
@@ -61,6 +68,7 @@ const dropshippingDefinition = createAssetDefinition({
         label: 'Research Product',
         time: 3,
         progressKey: 'research',
+        skills: ['research'],
         log: ({ label }) => `${label} spotted a trending micro-niche. Suppliers start calling back!`
       },
       {
@@ -69,6 +77,7 @@ const dropshippingDefinition = createAssetDefinition({
         time: 1.8,
         cost: 28,
         progressKey: 'listing',
+        skills: ['promotion', { id: 'commerce', weight: 0.6 }],
         log: ({ label }) => `${label} revamped copy and photos. Conversion rates begin to pop.`
       },
       {
@@ -77,6 +86,7 @@ const dropshippingDefinition = createAssetDefinition({
         time: 2.2,
         cost: 34,
         progressKey: 'ads',
+        skills: ['promotion', { id: 'research', weight: 0.5 }],
         log: ({ label }) => `${label} tested lookalike audiences. Click-through rates jump!`
       }
     ],

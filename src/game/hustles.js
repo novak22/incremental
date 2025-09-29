@@ -137,6 +137,7 @@ const freelanceWriting = createInstantHustle({
     time: { label: '⚡ Freelance writing time', category: 'hustle' },
     payout: { label: '💼 Freelance writing payout', category: 'hustle' }
   },
+  skills: ['writing'],
   actionLabel: 'Write Now'
 });
 
@@ -162,6 +163,7 @@ const audienceCall = createInstantHustle({
     time: { label: '🎤 Audience Q&A prep', category: 'hustle' },
     payout: { label: '🎤 Audience Q&A payout', category: 'hustle' }
   },
+  skills: ['audience'],
   actionLabel: 'Go Live'
 });
 
@@ -187,6 +189,7 @@ const bundlePush = createInstantHustle({
     time: { label: '🧺 Bundle promo planning', category: 'hustle' },
     payout: { label: '🧺 Bundle promo payout', category: 'hustle' }
   },
+  skills: ['promotion'],
   actionLabel: 'Launch Bundle'
 });
 
@@ -211,6 +214,7 @@ const surveySprint = createInstantHustle({
     time: { label: '📝 Survey dash time', category: 'hustle' },
     payout: { label: '🪙 Survey dash payout', category: 'hustle' }
   },
+  skills: ['research'],
   actionLabel: 'Start Survey'
 });
 
@@ -236,6 +240,7 @@ const eventPhotoGig = createInstantHustle({
     time: { label: '📸 Event shoot time', category: 'hustle' },
     payout: { label: '📸 Event shoot payout', category: 'hustle' }
   },
+  skills: ['visual'],
   actionLabel: 'Pack the Camera Bag'
 });
 
@@ -261,6 +266,7 @@ const popUpWorkshop = createInstantHustle({
     time: { label: '🎓 Workshop facilitation', category: 'hustle' },
     payout: { label: '🎓 Workshop payout', category: 'hustle' }
   },
+  skills: ['audience', { id: 'writing', weight: 0.5 }],
   actionLabel: 'Set the Agenda'
 });
 
@@ -286,6 +292,7 @@ const vlogEditRush = createInstantHustle({
     time: { label: '🎬 Vlog edit time', category: 'hustle' },
     payout: { label: '🎬 Vlog edit payout', category: 'hustle' }
   },
+  skills: ['editing'],
   actionLabel: 'Launch Edit Sprint'
 });
 
@@ -313,6 +320,7 @@ const dropshipPackParty = createInstantHustle({
     cost: { label: '📦 Packing party supplies', category: 'investment' },
     payout: { label: '📦 Packing party payout', category: 'hustle' }
   },
+  skills: ['commerce'],
   actionLabel: 'Queue Shipments'
 });
 
@@ -338,6 +346,7 @@ const saasBugSquash = createInstantHustle({
     time: { label: '🧰 Bug fix time', category: 'hustle' },
     payout: { label: '🧰 Bug fix payout', category: 'hustle' }
   },
+  skills: ['software', { id: 'infrastructure', weight: 0.5 }],
   actionLabel: 'Patch the Glitch'
 });
 
@@ -363,6 +372,7 @@ const audiobookNarration = createInstantHustle({
     time: { label: '🎙️ Narration booth time', category: 'hustle' },
     payout: { label: '🎙️ Narration payout', category: 'hustle' }
   },
+  skills: ['audio'],
   actionLabel: 'Warm Up Vocals'
 });
 
@@ -390,6 +400,7 @@ const streetPromoSprint = createInstantHustle({
     cost: { label: '🚀 Street promo stickers', category: 'investment' },
     payout: { label: '🚀 Street promo payout', category: 'hustle' }
   },
+  skills: ['promotion'],
   actionLabel: 'Deploy Street Team'
 });
 
@@ -414,6 +425,10 @@ const flips = createInstantHustle({
     pending: []
   },
   actionLabel: 'Start Flip',
+  skills: [
+    { id: 'research', weight: 0.7 },
+    { id: 'commerce', weight: 0.7 }
+  ],
   onExecute: context => {
     context.skipDefaultPayout();
     scheduleFlip();

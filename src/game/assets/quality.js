@@ -6,6 +6,7 @@ import { spendMoney } from '../currency.js';
 import { checkDayEnd } from '../lifecycle.js';
 import { recordCostContribution, recordTimeContribution } from '../metrics.js';
 import { spendTime } from '../time.js';
+import { awardSkillProgress } from '../skills/index.js';
 
 function ensureCooldownMap(instance) {
   if (!instance.cooldowns || typeof instance.cooldowns !== 'object') {
@@ -285,6 +286,13 @@ function runQualityAction(definition, instanceId, actionId) {
       quality.progress[progressKey] = Math.max(0, current + amount);
     }
   }
+
+  awardSkillProgress({
+    skills: action.skills,
+    timeSpentHours: timeCost,
+    moneySpent: moneyCost,
+    label: `${definition.singular || definition.name} quality work`
+  });
 
   if (typeof action.onComplete === 'function') {
     action.onComplete({ state, definition, instance, quality });

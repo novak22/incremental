@@ -7,6 +7,7 @@ import { checkDayEnd } from '../lifecycle.js';
 import { recordCostContribution, recordPayoutContribution, recordTimeContribution } from '../metrics.js';
 import { renderAssetRequirementDetail, updateAssetCardLock } from '../requirements.js';
 import { spendTime } from '../time.js';
+import { awardSkillProgress } from '../skills/index.js';
 import {
   buildAssetAction,
   incomeDetail,
@@ -173,14 +174,16 @@ export function createInstantHustle(config) {
           message: config.payout.message
         }
       : null,
-    metrics: normalizeHustleMetrics(config.id, config.metrics || {})
+    metrics: normalizeHustleMetrics(config.id, config.metrics || {}),
+    skills: config.skills
   };
 
   const definition = {
     ...config,
     type: 'hustle',
     tag: config.tag || { label: 'Instant', type: 'instant' },
-    defaultState: config.defaultState || {}
+    defaultState: config.defaultState || {},
+    skills: metadata.skills
   };
 
   const baseDetails = [];
@@ -233,6 +236,15 @@ export function createInstantHustle(config) {
     };
 
     config.onExecute?.(context);
+
+    if (metadata.skills) {
+      context.skillXpAwarded = awardSkillProgress({
+        skills: metadata.skills,
+        timeSpentHours: metadata.time,
+        moneySpent: metadata.cost,
+        label: definition.name
+      });
+    }
 
     if (metadata.payout && metadata.payout.grantOnAction && !context.__skipDefaultPayout) {
       const basePayout = metadata.payout.amount;
@@ -477,6 +489,14 @@ export function createUpgrade(config) {
         if (!config.repeatable) {
           context.upgradeState.purchased = true;
         }
+        const skillLabel = typeof definition.name === 'string' ? definition.name : config.id;
+        const skillXp = awardSkillProgress({
+          skills: config.skills,
+          moneySpent: config.cost,
+          label: skillLabel,
+          state: context.state
+        });
+        context.skillXpAwarded = skillXp;
         config.onPurchase?.(context);
         if (config.logMessage) {
           addLog(
