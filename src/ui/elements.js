@@ -108,14 +108,12 @@ const elements = {
     content: document.getElementById('asset-launched-content')
   },
   upgradeFilters: {
-    affordable: document.getElementById('upgrade-affordable-toggle'),
-    favorites: document.getElementById('upgrade-favorites-toggle')
+    affordable: document.getElementById('upgrade-affordable-toggle')
   },
   upgradeOverview: {
     container: document.getElementById('upgrade-overview'),
     purchased: document.getElementById('upgrade-overview-owned'),
     ready: document.getElementById('upgrade-overview-ready'),
-    favorites: document.getElementById('upgrade-overview-favorites'),
     note: document.getElementById('upgrade-overview-note')
   },
   upgradeEmpty: document.getElementById('upgrade-empty'),
