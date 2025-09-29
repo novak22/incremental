@@ -1,5 +1,5 @@
 import { formatDays, formatHours, formatMoney } from '../core/helpers.js';
-import { countActiveAssetInstances, getAssetDefinition, getHustleDefinition, getState } from '../core/state.js';
+import { countActiveAssetInstances, getHustleDefinition, getState } from '../core/state.js';
 import { executeAction } from './actions.js';
 import { checkDayEnd } from './lifecycle.js';
 import { createInstantHustle } from './content/schema.js';
@@ -7,7 +7,8 @@ import {
   KNOWLEDGE_TRACKS,
   enrollInKnowledgeTrack,
   getKnowledgeProgress,
-  summarizeAssetRequirements
+  summarizeAssetRequirements,
+  buildAssetRequirementDescriptor
 } from './requirements.js';
 import { recordPayoutContribution } from './metrics.js';
 import { describeTrackEducationBonuses } from './educationEffects.js';
@@ -114,19 +115,7 @@ function describeDailyLimit(definition, state = getState()) {
 
 export function describeHustleRequirements(definition, state = getState()) {
   const requirements = getHustleRequirements(definition);
-  const descriptors = requirements.map(req => {
-    const assetDefinition = getAssetDefinition(req.assetId);
-    const label = assetDefinition?.singular || assetDefinition?.name || req.assetId;
-    const need = Number(req.count) || 1;
-    const have = countActiveAssetInstances(req.assetId, state);
-    return {
-      type: 'asset',
-      assetId: req.assetId,
-      label: `${need} ${label}${need === 1 ? '' : 's'}`,
-      met: have >= need,
-      progress: { have, need }
-    };
-  });
+  const descriptors = requirements.map(req => buildAssetRequirementDescriptor(req, state, 'asset'));
   return [...descriptors, ...describeDailyLimit(definition, state)];
 }
 
