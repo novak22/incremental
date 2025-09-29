@@ -1,16 +1,23 @@
 # Passive Asset Quality System
 
 ## Goals
-- Add a progression ladder inside each passive asset so players choose between launching breadth and deepening quality.
-- Tie quality upgrades to thematic actions (posts, edits, bug fixes) instead of generic "upgrade" clicks.
-- Surface quality requirements and actions directly on asset cards with encouraging UI copy.
+- Layer a clear quality ladder inside each passive asset so players balance breadth versus depth.
+- Anchor upgrades to themed actions (posts, edits, bug fixes) that reinforce each asset’s fantasy.
+- Surface requirements and actions on the asset card with upbeat, confidence-boosting copy.
 
 ## Player Impact
-- Every new asset instance starts at Quality 0 and earns a tiny trickle until the player invests in quality actions.
-- Quality actions consume daily hours (and sometimes cash), forcing trade-offs against maintenance, hustles, or study time.
-- Reaching a new quality tier bumps payout ranges, triggers celebratory log lines, and unlocks asset-specific perks (e.g., vlog viral chances, course synergy for blogs).
+- Assets start at Quality 0 with minimal income until the player invests in quality actions.
+- Spending hours (and occasional cash) on actions forces trade-offs against other daily plans.
+- Each tier upgrade widens payouts, adds celebratory logs, and unlocks asset-specific perks.
 
 ## Key Systems & Tuning
+
+- Quality data defines tracks, tier requirements, and flavourful actions per asset.
+- Daily income draws from the current tier’s band before applying existing modifiers and variance.
+- Asset cards host a Quality Actions panel with progress meters, gated buttons, and positive feedback.
+- Quality efforts log time/cash spend and broadcast milestone messages when levels rise.
+
+Historical playtest data lives in [Passive Asset Quality – May 2024](../playtests/passive-asset-quality.md).
 - **Quality Definitions** – Each asset definition now includes:
   - `tracks`: named progress counters (e.g., `posts`, `seo`, `support`).
   - `levels`: ordered tiers with income ranges and cumulative requirements. Example: blogs climb from $3–$6/day at Quality 0 to $64–$84/day at Quality 5.
@@ -30,9 +37,14 @@
 - Micro SaaS platforms now unlock an Ecosystem Powerhouse tier worth $168–$220/day when features, stability, marketing, and edge deployments all reach late-game thresholds.
 
 ## Open Questions / Next Steps
-- Tune hour/cash costs once broader playtest data arrives (particularly for late-game SaaS quality actions).
-- Explore assistant or upgrade interactions that automate specific quality actions or reduce requirements.
-- Consider diminishing returns or prestige bonuses for maintaining multiple high-quality instances in the same asset family.
+- Tune time and cash costs once broader playtest data arrives (especially SaaS late-game loops).
+- Explore assistants or upgrades that automate certain actions or soften requirements.
+- Consider diminishing returns or prestige bonuses for running multiple top-tier instances.
+
+### Implementation Checklist
+- [ ] Quality tiers, tracks, and requirements defined per passive asset.
+- [ ] Action costs, rewards, and log copy aligned with themed progression.
+- [ ] UI shows current quality, progress, and disabled states for insufficient resources.
 
 ## Playtest Notes – Passive ROI Tightening (May 2024)
 _Legacy observations below reflect the pre-extension baseline but remain useful for pacing comparisons._
