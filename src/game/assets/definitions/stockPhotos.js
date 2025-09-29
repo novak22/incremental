@@ -110,6 +110,7 @@ const stockPhotosDefinition = createAssetDefinition({
         label: 'Plan Shoot',
         time: 3.5,
         cost: 22,
+        dailyLimit: 1,
         progressKey: 'shoots',
         progressAmount: context => (context.upgrade('studioExpansion')?.purchased ? 2 : 1),
         skills: ['visual'],
@@ -120,6 +121,7 @@ const stockPhotosDefinition = createAssetDefinition({
         label: 'Batch Edit',
         time: 2,
         cost: 14,
+        dailyLimit: 1,
         progressKey: 'editing',
         progressAmount: context => (context.upgrade('studioExpansion')?.purchased ? 2 : 1),
         skills: ['editing'],
@@ -130,6 +132,7 @@ const stockPhotosDefinition = createAssetDefinition({
         label: 'Run Promo',
         time: 2,
         cost: 16,
+        dailyLimit: 1,
         progressKey: 'marketing',
         progressAmount: context => {
           let amount = context.upgrade('studioExpansion')?.purchased ? 2 : 1;
