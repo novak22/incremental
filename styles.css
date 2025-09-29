@@ -504,7 +504,7 @@ body {
 }
 
 .upgrade-actions {
-  max-height: 320px;
+  max-height: none;
   overflow-y: auto;
   padding-right: 4px;
   scrollbar-gutter: stable both-edges;
@@ -613,6 +613,12 @@ body {
 .quick-actions li button,
 .notifications li button {
   margin-left: 12px;
+}
+
+.quick-actions li button {
+  min-inline-size: var(--quick-action-button-width, 11.5rem);
+  text-align: center;
+  white-space: nowrap;
 }
 
 .event-preview {
