@@ -402,9 +402,10 @@ body {
 
 .quick-actions li,
 .notifications li {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
   background: var(--surface-muted);
   border-radius: var(--radius-md);
   padding: 12px 16px;
@@ -413,8 +414,11 @@ body {
 
 .quick-actions li {
   gap: var(--dashboard-action-gap, 12px);
-  align-items: center;
   min-height: var(--dashboard-action-item-height, 64px);
+}
+
+.notifications li {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .skills-widget {
@@ -527,9 +531,14 @@ body {
 .quick-actions__info,
 .notifications__info {
   display: grid;
-  gap: 4px;
-  flex: 1 1 auto;
+  gap: 6px;
   min-width: 0;
+}
+
+.quick-actions__info > span,
+.notifications__info > span,
+.upgrade-actions__meta {
+  line-height: 1.4;
 }
 
 .daily-stats {
@@ -622,14 +631,9 @@ body {
   color: var(--text-subtle);
 }
 
-.quick-actions li button,
-.notifications li button {
-  margin-left: 12px;
-}
-
 .quick-actions li button {
-  flex: 0 0 auto;
   inline-size: auto;
+  justify-self: end;
   max-inline-size: min(100%, var(--dashboard-action-button-width, 140px));
   min-height: 32px;
   padding: 4px 10px;
@@ -639,7 +643,23 @@ body {
   text-align: center;
   white-space: normal;
   line-height: 1.25;
-  align-self: center;
+  align-self: start;
+}
+
+.notifications li button {
+  justify-self: end;
+  align-self: start;
+}
+
+@media (max-width: 720px) {
+  .quick-actions li {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .quick-actions li button {
+    justify-self: stretch;
+    width: 100%;
+  }
 }
 
 .event-preview {
