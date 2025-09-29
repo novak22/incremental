@@ -817,6 +817,8 @@ function refreshAssetRow(definition) {
   const activeInstances = instances.filter(instance => instance.status === 'active');
   const pausedInstances = instances.filter(instance => instance.status !== 'active');
   const lastIncome = activeInstances.reduce((total, instance) => total + Number(instance.lastIncome || 0), 0);
+  const focusInstance = activeInstances[0] || instances[0] || null;
+  const nextRequirements = focusInstance ? describeNextQualityRequirements(definition, focusInstance) : [];
   ui.row.dataset.state = activeInstances.length > 0 ? 'active' : 'idle';
   ui.row.dataset.needsMaintenance = activeInstances.some(instance => !instance.maintenanceFundedToday)
     ? 'true'
