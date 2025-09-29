@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- Centered the shell header around a "Daily pulse" band that highlights daily earnings and spend, lifetime cash flow, and the remaining versus committed hours for the current day.
 - Expanded the hustle catalog with eight new instant gigs ranging from 15-minute surveys to asset-specific pop-up events, adding more scheduling variety and requirement-driven payouts.
 - Grouped the asset detail slide-over into Active builds and Launch queue sections with scrollable stat strips, highlighting last payout, net hourly returns, upkeep, and inline upgrade shortcuts for every launched build.
 - Restored the Daily Stats dashboard card with refreshed breakdowns for time, earnings, spending, and study activity so the latest day’s flow is visible at a glance.

@@ -51,6 +51,13 @@ export function recordPayoutContribution({ key, label, amount, category = 'gener
   entry.amount += value;
   entry.label = label;
   entry.category = category || entry.category || 'general';
+
+  const state = getState();
+  if (state) {
+    state.totals = state.totals || {};
+    const current = Number(state.totals.earned);
+    state.totals.earned = (Number.isFinite(current) ? current : 0) + value;
+  }
 }
 
 export function recordCostContribution({ key, label, amount, category = 'general' }) {
@@ -68,6 +75,13 @@ export function recordCostContribution({ key, label, amount, category = 'general
   entry.amount += value;
   entry.label = label;
   entry.category = category || entry.category || 'general';
+
+  const state = getState();
+  if (state) {
+    state.totals = state.totals || {};
+    const current = Number(state.totals.spent);
+    state.totals.spent = (Number.isFinite(current) ? current : 0) + value;
+  }
 }
 
 export function resetDailyMetrics(target = getState()) {

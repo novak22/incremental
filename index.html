@@ -16,6 +16,38 @@
         <h1>Online Hustle Simulator</h1>
         <p id="session-status" class="shell__status" aria-live="polite">Keep the flywheel spinning.</p>
       </div>
+      <div class="shell__pulse" aria-label="Daily pulse">
+        <div class="shell-metric" data-tone="positive">
+          <span class="shell-metric__label">Daily +</span>
+          <span class="shell-metric__value" id="header-daily-plus">$0</span>
+          <span class="shell-metric__note" id="header-daily-plus-note">Active + passive inflow</span>
+        </div>
+        <div class="shell-metric" data-tone="negative">
+          <span class="shell-metric__label">Daily -</span>
+          <span class="shell-metric__value" id="header-daily-minus">$0</span>
+          <span class="shell-metric__note" id="header-daily-minus-note">Upkeep + investments</span>
+        </div>
+        <div class="shell-metric" data-tone="accent">
+          <span class="shell-metric__label">Total +</span>
+          <span class="shell-metric__value" id="header-total-plus">$0</span>
+          <span class="shell-metric__note" id="header-total-plus-note">Lifetime earnings</span>
+        </div>
+        <div class="shell-metric" data-tone="muted">
+          <span class="shell-metric__label">Total -</span>
+          <span class="shell-metric__value" id="header-total-minus">$0</span>
+          <span class="shell-metric__note" id="header-total-minus-note">Lifetime spend</span>
+        </div>
+        <div class="shell-metric" data-tone="time">
+          <span class="shell-metric__label">Time left</span>
+          <span class="shell-metric__value" id="header-time-available">0h</span>
+          <span class="shell-metric__note" id="header-time-available-note">Daily cap ready</span>
+        </div>
+        <div class="shell-metric" data-tone="time">
+          <span class="shell-metric__label">Time booked</span>
+          <span class="shell-metric__value" id="header-time-reserved">0h</span>
+          <span class="shell-metric__note" id="header-time-reserved-note">Setup + upkeep</span>
+        </div>
+      </div>
       <div class="shell__controls">
         <button id="command-palette-trigger" class="ghost" type="button" aria-haspopup="dialog" aria-controls="command-palette">⌘K</button>
         <button id="end-day" class="primary" type="button">End Day</button>

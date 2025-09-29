@@ -3,6 +3,7 @@ import { formatHours, formatMoney } from '../core/helpers.js';
 import { getAssetState, getState } from '../core/state.js';
 import { registry } from '../game/registry.js';
 import { KNOWLEDGE_TRACKS, getKnowledgeProgress } from '../game/requirements.js';
+import { getTimeCap } from '../game/time.js';
 
 function setText(element, value) {
   if (!element) return;
@@ -368,6 +369,97 @@ export function renderDashboard(summary) {
   );
 
   setText(elements.money, `$${formatMoney(state.money)}`);
+
+  const headerStats = elements.headerStats || {};
+  const dailyEarnings = Math.max(0, Number(summary.totalEarnings) || 0);
+  const activeEarnings = Math.max(0, Number(summary.activeEarnings) || 0);
+  const passiveEarnings = Math.max(0, Number(summary.passiveEarnings) || 0);
+  const dailySpend = Math.max(0, Number(summary.totalSpend) || 0);
+  const upkeepSpend = Math.max(0, Number(summary.upkeepSpend) || 0);
+  const investmentSpend = Math.max(0, Number(summary.investmentSpend) || 0);
+  const lifetimeEarned = Math.max(0, Number(state.totals?.earned) || 0);
+  const lifetimeSpent = Math.max(0, Number(state.totals?.spent) || 0);
+  const lifetimeNet = lifetimeEarned - lifetimeSpent;
+  const timeCap = getTimeCap();
+  const reservedHours = Math.max(0, timeCap - hoursLeft);
+  const setupHours = Math.max(0, Number(summary.setupHours) || 0);
+  const maintenanceHours = Math.max(0, Number(summary.maintenanceHours) || 0);
+  const flexHours = Math.max(0, reservedHours - setupHours - maintenanceHours);
+
+  setText(headerStats.dailyPlus?.value, `$${formatMoney(dailyEarnings)}`);
+  const incomeSegments = [];
+  if (activeEarnings > 0) {
+    incomeSegments.push(`$${formatMoney(activeEarnings)} active`);
+  }
+  if (passiveEarnings > 0) {
+    incomeSegments.push(`$${formatMoney(passiveEarnings)} passive`);
+  }
+  setText(
+    headerStats.dailyPlus?.note,
+    incomeSegments.length
+      ? incomeSegments.join(' • ')
+      : 'Waiting on payouts'
+  );
+
+  setText(headerStats.dailyMinus?.value, `$${formatMoney(dailySpend)}`);
+  const spendSegments = [];
+  if (upkeepSpend > 0) {
+    spendSegments.push(`$${formatMoney(upkeepSpend)} upkeep`);
+  }
+  if (investmentSpend > 0) {
+    spendSegments.push(`$${formatMoney(investmentSpend)} invest`);
+  }
+  const dailyNet = dailyEarnings - dailySpend;
+  if (dailyNet !== 0) {
+    const netLabel = `${dailyNet >= 0 ? 'Net +' : 'Net -'}$${formatMoney(Math.abs(dailyNet))}`;
+    spendSegments.push(netLabel);
+  }
+  setText(
+    headerStats.dailyMinus?.note,
+    spendSegments.length ? spendSegments.join(' • ') : 'No cash out yet'
+  );
+
+  setText(headerStats.totalPlus?.value, `$${formatMoney(lifetimeEarned)}`);
+  const lifetimeSegments = [];
+  if (lifetimeEarned > 0 || lifetimeSpent > 0) {
+    lifetimeSegments.push(
+      `${lifetimeNet >= 0 ? 'Net +' : 'Net -'}$${formatMoney(Math.abs(lifetimeNet))}`
+    );
+  }
+  setText(
+    headerStats.totalPlus?.note,
+    lifetimeSegments.length ? lifetimeSegments.join(' • ') : 'Fresh ledger'
+  );
+
+  setText(headerStats.totalMinus?.value, `$${formatMoney(lifetimeSpent)}`);
+  const spanDays = state.day || 1;
+  setText(
+    headerStats.totalMinus?.note,
+    lifetimeSpent > 0
+      ? `Across ${spanDays} day${spanDays === 1 ? '' : 's'}`
+      : 'No lifetime spend yet'
+  );
+
+  setText(headerStats.timeAvailable?.value, formatHours(hoursLeft));
+  setText(
+    headerStats.timeAvailable?.note,
+    `Cap ${formatHours(timeCap)}`
+  );
+  setText(headerStats.timeReserved?.value, formatHours(reservedHours));
+  const reservedSegments = [];
+  if (setupHours > 0) {
+    reservedSegments.push(`${formatHours(setupHours)} setup`);
+  }
+  if (maintenanceHours > 0) {
+    reservedSegments.push(`${formatHours(maintenanceHours)} upkeep`);
+  }
+  if (flexHours > 0) {
+    reservedSegments.push(`${formatHours(flexHours)} hustle`);
+  }
+  setText(
+    headerStats.timeReserved?.note,
+    reservedSegments.length ? reservedSegments.join(' • ') : 'Queue is wide open'
+  );
 
   const net = summary.totalEarnings - summary.totalSpend;
   setText(elements.kpiValues.net, `$${formatMoney(net)}`);

@@ -13,6 +13,32 @@ export function ensureTestDom() {
             <h1>Test Shell</h1>
             <p id="session-status"></p>
           </div>
+          <div class="shell__pulse">
+            <div class="shell-metric">
+              <span id="header-daily-plus"></span>
+              <span id="header-daily-plus-note"></span>
+            </div>
+            <div class="shell-metric">
+              <span id="header-daily-minus"></span>
+              <span id="header-daily-minus-note"></span>
+            </div>
+            <div class="shell-metric">
+              <span id="header-total-plus"></span>
+              <span id="header-total-plus-note"></span>
+            </div>
+            <div class="shell-metric">
+              <span id="header-total-minus"></span>
+              <span id="header-total-minus-note"></span>
+            </div>
+            <div class="shell-metric">
+              <span id="header-time-available"></span>
+              <span id="header-time-available-note"></span>
+            </div>
+            <div class="shell-metric">
+              <span id="header-time-reserved"></span>
+              <span id="header-time-reserved-note"></span>
+            </div>
+          </div>
           <div class="shell__controls">
             <button id="command-palette-trigger"></button>
             <button id="end-day"></button>

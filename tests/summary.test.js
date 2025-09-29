@@ -113,3 +113,25 @@ test('daily summary attaches definition references for canonical metrics', () =>
   assert.ok(maintenanceEntry?.definition, 'spend entry should include definition metadata');
   assert.equal(maintenanceEntry.definition.category, 'maintenance');
 });
+
+test('lifetime totals accumulate alongside daily metrics', () => {
+  configureRegistry(registry);
+  const state = initializeState();
+  resetDailyMetrics(state);
+
+  recordPayoutContribution({
+    key: 'test:lifetime:income',
+    label: '💰 Bonus windfall',
+    amount: 120,
+    category: 'bonus'
+  });
+  recordCostContribution({
+    key: 'test:lifetime:cost',
+    label: '🛠 Tool refresh',
+    amount: 45,
+    category: 'maintenance'
+  });
+
+  assert.equal(state.totals.earned, 120, 'earned totals should track payout contributions');
+  assert.equal(state.totals.spent, 45, 'spent totals should track cost contributions');
+});
