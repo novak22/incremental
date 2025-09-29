@@ -377,9 +377,6 @@ export function renderDashboard(summary) {
   const dailySpend = Math.max(0, Number(summary.totalSpend) || 0);
   const upkeepSpend = Math.max(0, Number(summary.upkeepSpend) || 0);
   const investmentSpend = Math.max(0, Number(summary.investmentSpend) || 0);
-  const lifetimeEarned = Math.max(0, Number(state.totals?.earned) || 0);
-  const lifetimeSpent = Math.max(0, Number(state.totals?.spent) || 0);
-  const lifetimeNet = lifetimeEarned - lifetimeSpent;
   const timeCap = getTimeCap();
   const reservedHours = Math.max(0, timeCap - hoursLeft);
   const setupHours = Math.max(0, Number(summary.setupHours) || 0);
@@ -417,27 +414,6 @@ export function renderDashboard(summary) {
   setText(
     headerStats.dailyMinus?.note,
     spendSegments.length ? spendSegments.join(' • ') : 'No cash out yet'
-  );
-
-  setText(headerStats.totalPlus?.value, `$${formatMoney(lifetimeEarned)}`);
-  const lifetimeSegments = [];
-  if (lifetimeEarned > 0 || lifetimeSpent > 0) {
-    lifetimeSegments.push(
-      `${lifetimeNet >= 0 ? 'Net +' : 'Net -'}$${formatMoney(Math.abs(lifetimeNet))}`
-    );
-  }
-  setText(
-    headerStats.totalPlus?.note,
-    lifetimeSegments.length ? lifetimeSegments.join(' • ') : 'Fresh ledger'
-  );
-
-  setText(headerStats.totalMinus?.value, `$${formatMoney(lifetimeSpent)}`);
-  const spanDays = state.day || 1;
-  setText(
-    headerStats.totalMinus?.note,
-    lifetimeSpent > 0
-      ? `Across ${spanDays} day${spanDays === 1 ? '' : 's'}`
-      : 'No lifetime spend yet'
   );
 
   setText(headerStats.timeAvailable?.value, formatHours(hoursLeft));
