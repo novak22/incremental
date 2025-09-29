@@ -1094,6 +1094,7 @@ function updateHustleCard(definition) {
       ui.limitDetail.textContent = '';
       delete ui.card.dataset.limitRemaining;
     }
+  }
 
   const nextAvailability = disabled ? 'false' : 'true';
   const availabilityChanged = ui.card.dataset.available !== nextAvailability;
