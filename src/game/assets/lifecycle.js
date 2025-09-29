@@ -5,6 +5,7 @@ import { addMoney, spendMoney } from '../currency.js';
 import { spendTime } from '../time.js';
 import { ASSETS } from './registry.js';
 import { getAssetMetricId, instanceLabel, rollDailyIncome } from './helpers.js';
+import { ASSISTANT_CONFIG, getAssistantCount } from '../assistant.js';
 import {
   recordCostContribution,
   recordPayoutContribution,
@@ -14,6 +15,12 @@ import {
 export function allocateAssetMaintenance() {
   const state = getState();
   if (!state) return;
+
+  const assistantCount = getAssistantCount(state);
+  let assistantHoursRemaining = Math.max(
+    0,
+    assistantCount * ASSISTANT_CONFIG.hoursPerAssistant
+  );
 
   const setupFunded = [];
   const setupMissed = [];
@@ -72,28 +79,42 @@ export function allocateAssetMaintenance() {
           instance.maintenanceFundedToday = true;
           return;
         }
-        const lacksTime = maintenanceHours > 0 && state.timeLeft < maintenanceHours;
+        const potentialAssistantHours = Math.min(assistantHoursRemaining, maintenanceHours);
+        const manualHoursRequired = Math.max(0, maintenanceHours - potentialAssistantHours);
+        const lacksTime = manualHoursRequired > 0 && state.timeLeft < manualHoursRequired;
         const lacksMoney = maintenanceCost > 0 && state.money < maintenanceCost;
         if (lacksTime || lacksMoney) {
           if (lacksTime) maintenanceSkippedTime.push(label);
           if (lacksMoney) maintenanceSkippedFunds.push(label);
           return;
         }
-        if (maintenanceHours > 0) {
-          spendTime(maintenanceHours);
-          recordTimeContribution({
-            key: getAssetMetricId(definition, 'maintenance', 'time'),
-            label: `🛠️ ${definition.singular || definition.name} upkeep`,
-            hours: maintenanceHours,
-            category: 'maintenance'
-          });
-        }
+
         if (maintenanceCost > 0) {
           spendMoney(maintenanceCost);
           recordCostContribution({
             key: getAssetMetricId(definition, 'maintenance', 'cost'),
             label: `🔧 ${definition.singular || definition.name} upkeep`,
             amount: maintenanceCost,
+            category: 'maintenance'
+          });
+        }
+
+        if (potentialAssistantHours > 0) {
+          assistantHoursRemaining = Math.max(0, assistantHoursRemaining - potentialAssistantHours);
+          recordTimeContribution({
+            key: `${getAssetMetricId(definition, 'maintenance', 'time')}:assistant`,
+            label: `🤖 ${definition.singular || definition.name} upkeep`,
+            hours: potentialAssistantHours,
+            category: 'maintenance:assistant'
+          });
+        }
+
+        if (manualHoursRequired > 0) {
+          spendTime(manualHoursRequired);
+          recordTimeContribution({
+            key: getAssetMetricId(definition, 'maintenance', 'time'),
+            label: `🛠️ ${definition.singular || definition.name} upkeep`,
+            hours: manualHoursRequired,
             category: 'maintenance'
           });
         }

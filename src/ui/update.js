@@ -140,6 +140,10 @@ function renderTimeProgress(summary) {
 
   const playerSegments = [];
   const assistantSegments = [];
+  const assistantCapacity = Math.max(
+    0,
+    getAssistantCount(state) * ASSISTANT_CONFIG.hoursPerAssistant
+  );
 
   if (sleepHours > HOURS_EPSILON) {
     playerSegments.push({
@@ -147,6 +151,7 @@ function renderTimeProgress(summary) {
       label: 'Sleep',
       hours: sleepHours,
       category: 'sleep',
+      rawCategory: 'sleep',
       style: getSegmentStyle('sleep'),
       owner: 'player'
     });
@@ -163,15 +168,26 @@ function renderTimeProgress(summary) {
         label: entry.label || entry.key || `Activity ${index + 1}`,
         hours,
         category: normalized,
+        rawCategory: entry.category || entry.definition?.category || normalized,
         style: getSegmentStyle(category)
       };
-      if (normalized === 'maintenance') {
+
+      const rawCategory = segment.rawCategory;
+      const isAssistantSegment =
+        typeof rawCategory === 'string' && rawCategory.includes('assistant');
+
+      if (isAssistantSegment) {
         assistantSegments.push({ ...segment, owner: 'assistant' });
       } else {
         playerSegments.push({ ...segment, owner: 'player' });
       }
     });
   }
+
+  const manualMaintenanceHours = playerSegments
+    .filter(segment => segment.owner === 'player' && segment.rawCategory?.startsWith('maintenance'))
+    .reduce((total, segment) => total + segment.hours, 0);
+  const assistantOverflowHours = assistantCapacity > HOURS_EPSILON ? manualMaintenanceHours : 0;
 
   const playerUsedHours = Math.max(0, Math.min(timeCap, timeCap - timeLeft));
   const trackedPlayerHours = playerSegments
@@ -184,6 +200,7 @@ function renderTimeProgress(summary) {
       label: 'Untracked time',
       hours: untrackedHours,
       category: 'general',
+      rawCategory: 'general',
       style: getSegmentStyle('general'),
       owner: 'player',
       isSummary: true
@@ -197,6 +214,7 @@ function renderTimeProgress(summary) {
       label: 'Unscheduled',
       hours: remainingHours,
       style: getSegmentStyle('remaining'),
+      rawCategory: 'remaining',
       owner: 'player',
       isRemaining: true
     });
@@ -223,10 +241,6 @@ function renderTimeProgress(summary) {
   renderSegments(elements.timeProgress, playerSegments, { ownerPrefix: '' });
 
   const assistantWrapper = elements.assistantSupport;
-  const assistantCapacity = Math.max(
-    0,
-    getAssistantCount(state) * ASSISTANT_CONFIG.hoursPerAssistant
-  );
   const assistantUsed = assistantSegments.reduce((total, segment) => total + segment.hours, 0);
   const assistantBarSegments = [...assistantSegments];
   const assistantIdle = Math.max(0, assistantCapacity - assistantUsed);
@@ -236,6 +250,7 @@ function renderTimeProgress(summary) {
       label: 'Idle capacity',
       hours: assistantIdle,
       style: getSegmentStyle('remaining'),
+      rawCategory: 'remaining',
       owner: 'assistant',
       isRemaining: true
     });
@@ -249,7 +264,17 @@ function renderTimeProgress(summary) {
         ownerPrefix: 'Assistants'
       });
       if (elements.assistantNote) {
-        if (assistantUsed <= HOURS_EPSILON) {
+        if (assistantOverflowHours > HOURS_EPSILON) {
+          if (assistantCapacity > HOURS_EPSILON) {
+            elements.assistantNote.textContent = `Assistants are maxed out — ${formatHours(
+              assistantOverflowHours
+            )} bounced back to you.`;
+          } else {
+            elements.assistantNote.textContent = `${formatHours(
+              assistantOverflowHours
+            )} of upkeep still needs your personal touch.`;
+          }
+        } else if (assistantUsed <= HOURS_EPSILON) {
           elements.assistantNote.textContent = assistantCapacity > 0
             ? 'Idle and ready for upkeep.'
             : 'No upkeep logged yet.';
