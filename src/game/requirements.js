@@ -17,6 +17,34 @@ import {
 import { buildRequirementBundle, resolveRequirementConfig } from './schema/requirements.js';
 import { awardSkillProgress } from './skills/index.js';
 
+export function buildAssetRequirementDescriptor(requirement, state = getState(), typeOverride) {
+  if (!requirement || !requirement.assetId) {
+    return {
+      type: typeOverride ?? requirement?.type ?? 'unknown',
+      label: 'Unknown requirement',
+      met: false
+    };
+  }
+
+  const assetDefinition = getAssetDefinition(requirement.assetId);
+  const baseLabel = assetDefinition?.singular || assetDefinition?.name || requirement.assetId;
+  const parsedCount = Number(requirement.count);
+  const defaultNeed = requirement?.type === 'experience' ? 0 : 1;
+  const normalizedNeed = Number.isFinite(parsedCount)
+    ? Math.max(0, parsedCount)
+    : defaultNeed;
+  const need = normalizedNeed || defaultNeed;
+  const have = countActiveAssetInstances(requirement.assetId, state);
+
+  return {
+    type: typeOverride ?? requirement?.type ?? 'experience',
+    assetId: requirement.assetId,
+    label: `${need} ${baseLabel}${need === 1 ? '' : 's'}`,
+    met: have >= need,
+    progress: { have, need }
+  };
+}
+
 export const KNOWLEDGE_TRACKS = {
   outlineMastery: {
     id: 'outlineMastery',
@@ -381,16 +409,7 @@ export function listAssetRequirementDescriptors(definitionOrId, state = getState
         };
       }
       case 'experience': {
-        const assetDef = getAssetDefinition(req.assetId);
-        const need = Number(req.count) || 0;
-        const have = countActiveAssetInstances(req.assetId, state);
-        return {
-          type: 'experience',
-          assetId: req.assetId,
-          label: `${need} ${(assetDef?.singular || assetDef?.name || req.assetId)}${need === 1 ? '' : 's'}`,
-          met: have >= need,
-          progress: { have, need }
-        };
+        return buildAssetRequirementDescriptor(req, state);
       }
       default:
         return { type: req.type || 'unknown', label: 'Unknown requirement', met: false };
