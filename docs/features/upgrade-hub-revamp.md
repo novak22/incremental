@@ -10,7 +10,7 @@
 - Sectioned layouts cluster upgrades into unlocks, boosts, and support lanes with per-section availability notes.
 - Ready upgrades automatically populate the dock with their current label and price for one-click purchasing.
 - Each card now carries tag/status badges, refreshed copy, and rotating detail bullets that stay current with game state.
-- A friendly "Ready to install" toggle hides locked upgrades so players can zero in on what’s actionable.
+- A friendly "Ready to install" toggle hides anything you can’t fire up yet—whether you’re short on cash or still chasing prerequisites.
 
 ## Structured taxonomy & stacking (Update)
 - Tech, House, Infra, and Support tabs organise the catalog into breezy, high-level lanes so players can zero in on the gear they crave.
@@ -21,6 +21,7 @@
 ## Lane navigator & quick stats (Update)
 - A sticky rail on the left now spotlights the lane map, offering glanceable totals without extra toggles.
 - Each lane entry broadcasts total discoveries, owned counts, and ready-to-buy picks so players can triage sprawling catalogs without scanning every card.
+- Clicking a lane instantly scrolls the main list to that section, turning the map into a quick navigation companion.
 - Family groupings render inside bordered pods with local counts and notes, giving the new automation and infrastructure tiers breathing room as more upgrade options arrive.
 - The dock still anchors on the right, mirroring button states from cards, so the three-column layout keeps filters, catalog, and purchase-ready picks visible together.
 

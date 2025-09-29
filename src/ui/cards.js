@@ -1763,6 +1763,32 @@ function buildUpgradeCategories(definitions) {
     });
 }
 
+function scrollUpgradeLaneIntoView(categoryId) {
+  if (!categoryId) return;
+
+  if (categoryId === 'all') {
+    const container = elements.upgradeList;
+    if (container) {
+      container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      container.focus?.({ preventScroll: true });
+    }
+    return;
+  }
+
+  const entry = upgradeSections.get(categoryId);
+  if (entry?.section) {
+    entry.section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    entry.section.focus?.({ preventScroll: true });
+    return;
+  }
+
+  const fallback = Array.from(upgradeSections.values()).find(({ section }) => section?.dataset.category === categoryId);
+  if (fallback?.section) {
+    fallback.section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    fallback.section.focus?.({ preventScroll: true });
+  }
+}
+
 function renderUpgradeLaneMap(categories) {
   const list = elements.upgradeLaneList;
   if (!list) return;
@@ -1789,7 +1815,8 @@ function renderUpgradeLaneMap(categories) {
 
     const block = document.createElement('div');
     block.className = 'upgrade-rail__button';
-    block.setAttribute('role', 'presentation');
+    block.setAttribute('role', 'button');
+    block.tabIndex = 0;
 
     const heading = document.createElement('div');
     heading.className = 'upgrade-rail__heading';
@@ -1809,6 +1836,18 @@ function renderUpgradeLaneMap(categories) {
     owned.className = 'upgrade-rail__stat';
     stats.append(ready, owned);
     block.appendChild(stats);
+
+    const activateLane = event => {
+      event?.preventDefault?.();
+      scrollUpgradeLaneIntoView(lane.id);
+    };
+
+    block.addEventListener('click', activateLane);
+    block.addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        activateLane(event);
+      }
+    });
 
     item.appendChild(block);
     list.appendChild(item);
@@ -2092,6 +2131,7 @@ function updateUpgradeCard(definition) {
 function renderUpgrades(definitions) {
   const list = elements.upgradeList;
   if (!list) return;
+  list.tabIndex = -1;
   currentUpgradeDefinitions = Array.isArray(definitions) ? [...definitions] : [];
   list.innerHTML = '';
   upgradeUi.clear();
@@ -2105,6 +2145,7 @@ function renderUpgrades(definitions) {
     const section = document.createElement('section');
     section.className = 'upgrade-section';
     section.dataset.category = category.id;
+    section.tabIndex = -1;
 
     const header = document.createElement('header');
     header.className = 'upgrade-section__header';

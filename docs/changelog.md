@@ -13,6 +13,7 @@
 - Commerce ladder: fulfillment automation, global supply mesh, and white-label alliances stack payouts for thriving dropshipping empires.
 - Education clarity: finished courses now show 100% progress and list the XP-rich skills they elevate.
 - Upgrade hub redesign: roadmap stats, lane map quick-read counts, and a "Ready to install" toggle make reinvestment planning faster and more celebratory.
+- Upgrade hub polish: lane map buttons now jump to their sections and the "Ready to install" filter hides anything you can’t buy yet.
 - Hustle pacing: retired the eBay flip queue and delayed payouts so every gig pays out the moment you wrap it.
 - Hustle caps: Audience Q&A now runs once per day and Micro Survey Dash allows four bursts, with UI cues showing remaining slots.
 - Creative upgrade ladder: editorial pipeline, syndication suite, and immersive story worlds stack payouts and progress boosts across blogs, e-books, and vlogs.
