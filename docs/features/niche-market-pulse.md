@@ -9,7 +9,7 @@ The niche system links every passive asset to an audience segment with a daily p
 - Keep the mechanic opt-in; unassigned assets continue to earn their baseline quality payouts.
 
 ## Mechanics
-- **Niche definitions** live in `src/game/assets/nicheData.js`. Each niche specifies a whimsical description plus compatible asset tags.
+- **Niche definitions** live in `src/game/assets/nicheData.js`. Each niche now represents a real-world audience segment with an upbeat description plus compatible asset tags.
 - **Popularity rolls** live on `state.niches.popularity`. At the end of every day (`endDay`) the game re-rolls a 25–95 score for each niche, storing yesterday’s value for delta messaging.
 - **Payout multiplier**: The current score maps to a 0.75×–1.3× multiplier. `rollDailyIncome` applies the multiplier before upgrade boosts and records the contribution in the income breakdown.
 - **Assignment**: Asset instances store `nicheId`. Players can pick a niche (or go unassigned) from the instance detail panel. Invalid IDs are scrubbed when state loads.
