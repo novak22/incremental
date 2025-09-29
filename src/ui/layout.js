@@ -146,9 +146,9 @@ function setupFilterHandlers() {
   elements.assetFilters.lowRisk?.addEventListener('change', applyAssetFilters);
 
   elements.upgradeFilters.affordable?.addEventListener('change', applyUpgradeFilters);
+  elements.upgradeFilters.available?.addEventListener('change', applyUpgradeFilters);
   elements.upgradeSearch?.addEventListener('input', debounce(applyUpgradeFilters, 150));
 
-  document.addEventListener('upgrades:category-changed', applyUpgradeFilters);
   document.addEventListener('upgrades:state-updated', applyUpgradeFilters);
   document.addEventListener('hustles:availability-updated', applyHustleFilters);
 
@@ -215,14 +215,14 @@ function applyAssetFilters() {
 function applyUpgradeFilters() {
   const cards = Array.from(elements.upgradeList?.querySelectorAll('[data-upgrade]') || []);
   const affordableOnly = Boolean(elements.upgradeFilters.affordable?.checked);
+  const availableOnly = Boolean(elements.upgradeFilters.available?.checked);
   const query = (elements.upgradeSearch?.value || '').trim().toLowerCase();
-  const activeCategory = elements.upgradeCategoryChips?.dataset.active || 'all';
 
   cards.forEach(card => {
     const matchesSearch = !query || card.dataset.search?.includes(query);
     const matchesAffordable = !affordableOnly || card.dataset.affordable === 'true';
-    const matchesCategory = activeCategory === 'all' || card.dataset.category === activeCategory;
-    card.hidden = !(matchesSearch && matchesAffordable && matchesCategory);
+    const matchesAvailability = !availableOnly || card.dataset.available === 'true';
+    card.hidden = !(matchesSearch && matchesAffordable && matchesAvailability);
   });
 
   emitLayoutEvent('upgrades:filtered');

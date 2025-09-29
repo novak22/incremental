@@ -36,10 +36,8 @@ const hustleUi = new Map();
 const assetUi = new Map();
 const upgradeUi = new Map();
 const upgradeSections = new Map();
-const upgradeCategoryChips = new Map();
 const upgradeLaneItems = new Map();
 const studyUi = new Map();
-let activeUpgradeCategory = 'all';
 let currentUpgradeDefinitions = [];
 
 const UPGRADE_CATEGORY_ORDER = ['tech', 'house', 'infra', 'support', 'misc'];
@@ -1621,37 +1619,6 @@ function getFamilyCopy(id) {
   };
 }
 
-function syncUpgradeCategoryChips() {
-  if (elements.upgradeCategoryChips) {
-    elements.upgradeCategoryChips.dataset.active = activeUpgradeCategory;
-  }
-  upgradeCategoryChips.forEach((button, id) => {
-    button.setAttribute('aria-pressed', id === activeUpgradeCategory ? 'true' : 'false');
-  });
-  syncUpgradeLaneSelection();
-}
-
-function syncUpgradeLaneSelection() {
-  upgradeLaneItems.forEach(({ item, button }, id) => {
-    const isActive = activeUpgradeCategory === id || (activeUpgradeCategory === 'all' && id === 'all');
-    if (item) {
-      item.dataset.active = isActive ? 'true' : 'false';
-    }
-    if (button) {
-      button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
-    }
-  });
-}
-
-function changeUpgradeCategory(id) {
-  const target = id || 'all';
-  const next = target === 'all' ? 'all' : activeUpgradeCategory === target ? 'all' : target;
-  if (next === activeUpgradeCategory) return;
-  activeUpgradeCategory = next;
-  syncUpgradeCategoryChips();
-  emitUIEvent('upgrades:category-changed');
-}
-
 function buildUpgradeDetails(definition) {
   const detailBuilders = Array.isArray(definition.details) ? definition.details.slice(0, 3) : [];
   if (!detailBuilders.length) {
@@ -1820,17 +1787,9 @@ function renderUpgradeLaneMap(categories) {
     item.className = 'upgrade-rail__item';
     item.dataset.category = lane.id;
 
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'upgrade-rail__button';
-    button.setAttribute('aria-pressed', 'false');
-    button.addEventListener('click', () => {
-      changeUpgradeCategory(lane.id);
-      const target = lane.id === 'all'
-        ? elements.upgradeList
-        : upgradeSections.get(lane.id)?.section;
-      target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
+    const block = document.createElement('div');
+    block.className = 'upgrade-rail__button';
+    block.setAttribute('role', 'presentation');
 
     const heading = document.createElement('div');
     heading.className = 'upgrade-rail__heading';
@@ -1840,7 +1799,7 @@ function renderUpgradeLaneMap(categories) {
     const count = document.createElement('span');
     count.className = 'upgrade-rail__count';
     heading.append(label, count);
-    button.appendChild(heading);
+    block.appendChild(heading);
 
     const stats = document.createElement('div');
     stats.className = 'upgrade-rail__stats';
@@ -1849,11 +1808,11 @@ function renderUpgradeLaneMap(categories) {
     const owned = document.createElement('span');
     owned.className = 'upgrade-rail__stat';
     stats.append(ready, owned);
-    button.appendChild(stats);
+    block.appendChild(stats);
 
-    item.appendChild(button);
+    item.appendChild(block);
     list.appendChild(item);
-    upgradeLaneItems.set(lane.id, { item, button, count, ready, owned });
+    upgradeLaneItems.set(lane.id, { item, count, ready, owned });
   });
 
   if (!list.childElementCount) {
@@ -1865,7 +1824,6 @@ function renderUpgradeLaneMap(categories) {
   }
 
   updateUpgradeLaneMap();
-  syncUpgradeLaneSelection();
 }
 
 function updateUpgradeLaneMap() {
@@ -1958,38 +1916,6 @@ function renderUpgradeOverview(definitions) {
   if (overview.note) {
     overview.note.textContent = describeOverviewNote(stats);
   }
-}
-
-function renderUpgradeCategoryFilters(categories) {
-  const container = elements.upgradeCategoryChips;
-  if (!container) return;
-
-  const totals = categories.reduce((sum, category) => sum + (category?.total ?? 0), 0);
-  const availableIds = categories.map(category => category.id);
-  if (activeUpgradeCategory !== 'all' && !availableIds.includes(activeUpgradeCategory)) {
-    activeUpgradeCategory = 'all';
-  }
-
-  container.innerHTML = '';
-  upgradeCategoryChips.clear();
-
-  const createChip = (id, label, count) => {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.dataset.category = id;
-    button.textContent = count != null ? `${label} (${count})` : label;
-    button.addEventListener('click', () => changeUpgradeCategory(id));
-    container.appendChild(button);
-    upgradeCategoryChips.set(id, button);
-  };
-
-  createChip('all', 'All upgrades', totals);
-  categories.forEach(category => {
-    const { id, copy, total } = category;
-    createChip(id, copy.label, total);
-  });
-
-  syncUpgradeCategoryChips();
 }
 
 export function refreshUpgradeSections() {
@@ -2172,7 +2098,6 @@ function renderUpgrades(definitions) {
   upgradeSections.clear();
 
   const categories = buildUpgradeCategories(definitions);
-  renderUpgradeCategoryFilters(categories);
   renderUpgradeLaneMap(categories);
 
   const fragment = document.createDocumentFragment();

@@ -376,22 +376,19 @@
               <input id="upgrade-affordable-toggle" type="checkbox" />
               <span>Affordable</span>
             </label>
+            <label class="filter-toggle">
+              <input id="upgrade-available-toggle" type="checkbox" />
+              <span>Ready to install</span>
+            </label>
             <input id="upgrade-search" type="search" placeholder="Search upgrades" aria-label="Search upgrades" />
           </div>
         </header>
         <div class="upgrade-layout">
           <aside class="upgrade-rail" aria-label="Upgrade lanes">
-            <section class="upgrade-rail__section">
-              <header class="upgrade-rail__header">
-                <h3>Lane filters</h3>
-                <p>Toggle a lane to focus or browse the full list.</p>
-              </header>
-              <div id="upgrade-category-chips" class="chips chips--stacked" role="listbox" aria-label="Categories"></div>
-            </section>
             <section class="upgrade-rail__section upgrade-rail__section--map" aria-live="polite">
               <header class="upgrade-rail__header">
                 <h3>Lane map</h3>
-                <p>Glanceable counts for each upgrade lane.</p>
+                <p>Glanceable counts for each upgrade lane, with every card shown below.</p>
               </header>
               <ul id="upgrade-lane-list" class="upgrade-rail__list"></ul>
             </section>
@@ -413,7 +410,7 @@
                 </div>
               </dl>
             </section>
-            <p id="upgrade-empty" class="upgrade-empty" hidden>No upgrades match these filters yet. Try another category or clear the toggles.</p>
+            <p id="upgrade-empty" class="upgrade-empty" hidden>No upgrades match these filters yet. Tweak the toggles or clear search.</p>
             <div id="upgrade-list" class="upgrade-list" aria-live="polite"></div>
           </div>
           <aside class="upgrade-dock" aria-label="Upgrade dock">
