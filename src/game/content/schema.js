@@ -57,7 +57,7 @@ function renderRequirementSummary(requirements = [], state = getState()) {
     .map(req => {
       const definition = getAssetDefinition(req.assetId);
       const label = definition?.singular || definition?.name || req.assetId;
-      const need = asNumber(req.count, 1);
+      const need = toNumber(req.count, 1);
       const have = countActiveAssetInstances(req.assetId, state);
       return `${label}: ${have}/${need} active`;
     })
@@ -66,7 +66,7 @@ function renderRequirementSummary(requirements = [], state = getState()) {
 
 function meetsAssetRequirements(requirements = [], state = getState()) {
   if (!requirements?.length) return true;
-  return requirements.every(req => countActiveAssetInstances(req.assetId, state) >= asNumber(req.count, 1));
+  return requirements.every(req => countActiveAssetInstances(req.assetId, state) >= toNumber(req.count, 1));
 }
 
 function buildMetricConfig(id, prefix, overrides = {}, defaults = {}) {
