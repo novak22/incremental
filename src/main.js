@@ -1,14 +1,13 @@
 import { addLog, renderLog } from './core/log.js';
 import { configureRegistry } from './core/state.js';
 import { loadState, saveState } from './core/storage.js';
-import elements from './ui/elements.js';
 import { renderCards, updateUI } from './ui/update.js';
 import { initLayoutControls } from './ui/layout.js';
 import { initActionCatalogDebug } from './ui/debugCatalog.js';
 import { registry } from './game/registry.js';
-import { endDay } from './game/lifecycle.js';
 import { resetTick, startGameLoop } from './game/loop.js';
 import { handleOfflineProgress } from './game/offline.js';
+import { initHeaderActionControls } from './ui/headerAction.js';
 
 configureRegistry(registry);
 const { returning, lastSaved } = loadState();
@@ -20,10 +19,9 @@ renderLog();
 renderCards();
 updateUI();
 initLayoutControls();
+initHeaderActionControls();
 initActionCatalogDebug();
 startGameLoop();
-
-elements.endDayButton.addEventListener('click', () => endDay(false));
 
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
