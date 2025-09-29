@@ -50,7 +50,7 @@ body {
 
 .shell__header {
   display: grid;
-  grid-template-columns: minmax(0, 260px) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 260px) minmax(0, 1fr) clamp(220px, 28%, 340px);
   align-items: stretch;
   gap: 24px;
 }
@@ -150,7 +150,8 @@ body {
   grid-template-columns: auto 1fr;
   align-items: stretch;
   gap: 12px;
-  width: clamp(220px, 28%, 340px);
+  justify-self: stretch;
+  width: 100%;
 }
 
 .shell__controls #command-palette-trigger {
