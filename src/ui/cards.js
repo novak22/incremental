@@ -1828,7 +1828,7 @@ function renderUpgradeCategoryFilters(categories) {
   const container = elements.upgradeCategoryChips;
   if (!container) return;
 
-  const totals = categories.reduce((sum, category) => sum + category.definitions.length, 0);
+  const totals = categories.reduce((sum, category) => sum + (category?.total ?? 0), 0);
   const availableIds = categories.map(category => category.id);
   if (activeUpgradeCategory !== 'all' && !availableIds.includes(activeUpgradeCategory)) {
     activeUpgradeCategory = 'all';
