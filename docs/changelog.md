@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- Restored the Daily Stats dashboard card with refreshed breakdowns for time, earnings, spending, and study activity so the latest day’s flow is visible at a glance.
 - Restored the asset briefing modal with a launch blueprint checklist plus per-instance upgrade quick actions paired with sell controls.
 - Reimagined the dashboard clock as a forward-moving 24h day tracker with colour-coded segments for sleep, upkeep, setup, and logged actions plus an at-a-glance legend.
 - Rebalanced assistant upkeep allocation so helper hours are consumed before tasks bounce to the player, with overflow now failing when both pools are spent.

@@ -27,6 +27,17 @@ const elements = {
     assets: document.getElementById('kpi-assets-value'),
     study: document.getElementById('kpi-study-value')
   },
+  dailyStats: {
+    timeSummary: document.getElementById('daily-time-summary'),
+    timeList: document.getElementById('daily-time-list'),
+    earningsSummary: document.getElementById('daily-earnings-summary'),
+    earningsActive: document.getElementById('daily-earnings-active'),
+    earningsPassive: document.getElementById('daily-earnings-passive'),
+    spendSummary: document.getElementById('daily-spend-summary'),
+    spendList: document.getElementById('daily-spend-list'),
+    studySummary: document.getElementById('daily-study-summary'),
+    studyList: document.getElementById('daily-study-list')
+  },
   actionQueue: document.getElementById('action-queue'),
   queuePause: document.getElementById('queue-pause'),
   queueCancel: document.getElementById('queue-cancel'),

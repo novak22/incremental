@@ -67,6 +67,55 @@
           </section>
 
           <section class="dashboard__grid">
+            <article class="card dashboard-card dashboard-card--wide" aria-labelledby="daily-stats-heading">
+              <header>
+                <h2 id="daily-stats-heading">Daily stats</h2>
+                <p>Celebrate where today’s hustle hours and dollars landed.</p>
+              </header>
+              <div class="daily-stats">
+                <section class="daily-stats__section" aria-labelledby="daily-time-heading">
+                  <div class="daily-stats__header">
+                    <h3 id="daily-time-heading">Time allocation</h3>
+                    <p id="daily-time-summary" class="daily-stats__summary">No hours logged yet. Queue a hustle to get moving.</p>
+                  </div>
+                  <ul id="daily-time-list" class="daily-stats__list" aria-live="polite"></ul>
+                </section>
+
+                <section class="daily-stats__section" aria-labelledby="daily-earnings-heading">
+                  <div class="daily-stats__header">
+                    <h3 id="daily-earnings-heading">Cash earned</h3>
+                    <p id="daily-earnings-summary" class="daily-stats__summary">Payouts will appear once you start closing deals.</p>
+                  </div>
+                  <div class="daily-stats__columns">
+                    <div class="daily-stats__column">
+                      <h4 id="daily-earnings-active-heading">Active bursts</h4>
+                      <ul id="daily-earnings-active" class="daily-stats__list" aria-labelledby="daily-earnings-active-heading" aria-live="polite"></ul>
+                    </div>
+                    <div class="daily-stats__column">
+                      <h4 id="daily-earnings-passive-heading">Passive streams</h4>
+                      <ul id="daily-earnings-passive" class="daily-stats__list" aria-labelledby="daily-earnings-passive-heading" aria-live="polite"></ul>
+                    </div>
+                  </div>
+                </section>
+
+                <section class="daily-stats__section" aria-labelledby="daily-spend-heading">
+                  <div class="daily-stats__header">
+                    <h3 id="daily-spend-heading">Cash spent</h3>
+                    <p id="daily-spend-summary" class="daily-stats__summary">Outflows land here when upkeep and investments fire.</p>
+                  </div>
+                  <ul id="daily-spend-list" class="daily-stats__list" aria-live="polite"></ul>
+                </section>
+
+                <section class="daily-stats__section" aria-labelledby="daily-study-heading">
+                  <div class="daily-stats__header">
+                    <h3 id="daily-study-heading">Study momentum</h3>
+                    <p id="daily-study-summary" class="daily-stats__summary">Enroll in a track to kickstart your learning streak.</p>
+                  </div>
+                  <ul id="daily-study-list" class="daily-stats__list" aria-live="polite"></ul>
+                </section>
+              </div>
+            </article>
+
             <article class="card dashboard-card" aria-labelledby="queue-heading">
               <header>
                 <h2 id="queue-heading">Action queue</h2>
