@@ -95,11 +95,18 @@ function setupTimeLegendToggle() {
   const toggle = elements.timeLegendToggle;
   const legend = elements.timeLegend;
   if (!toggle || !legend) return;
+  const header = legend.closest('.dashboard-header') || toggle.closest('.dashboard-header');
+
+  const syncHeaderState = () => {
+    if (!header) return;
+    header.classList.toggle('legend-collapsed', legend.hidden);
+  };
 
   const setExpanded = expanded => {
     toggle.setAttribute('aria-expanded', String(expanded));
     toggle.textContent = expanded ? 'Hide timeline legend' : 'Show timeline legend';
     legend.hidden = !expanded;
+    syncHeaderState();
   };
 
   toggle.addEventListener('click', () => {

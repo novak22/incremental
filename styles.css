@@ -271,6 +271,10 @@ body.modal-open {
   color: var(--muted);
 }
 
+.time-legend[hidden] {
+  display: none;
+}
+
 .time-legend li {
   display: inline-flex;
   align-items: center;
@@ -287,6 +291,10 @@ body.modal-open {
   border-radius: 50%;
   background: var(--legend-color, var(--muted));
   box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.35);
+}
+
+.dashboard-header.legend-collapsed .time-wrapper {
+  gap: 0.35rem;
 }
 
 .end-day {
