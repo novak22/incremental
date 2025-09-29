@@ -1,14 +1,9 @@
-import { formatMoney } from '../core/helpers.js';
+import { formatMoney, toNumber } from '../core/helpers.js';
 import { getState } from '../core/state.js';
 import { KNOWLEDGE_TRACKS, getKnowledgeProgress } from './requirements.js';
 
-function asNumber(value, fallback = 0) {
-  const numeric = Number(value);
-  return Number.isFinite(numeric) ? numeric : fallback;
-}
-
 function formatPercent(value) {
-  const percent = asNumber(value) * 100;
+  const percent = toNumber(value) * 100;
   if (!Number.isFinite(percent)) return '0%';
   if (Math.abs(percent - Math.round(percent)) < 0.01) {
     return `${Math.round(percent)}%`;
@@ -18,7 +13,7 @@ function formatPercent(value) {
 
 function normalizeBoost(track, raw) {
   if (!raw || !raw.hustleId) return null;
-  const amount = asNumber(raw.amount ?? raw.value ?? raw.bonus, 0);
+  const amount = toNumber(raw.amount ?? raw.value ?? raw.bonus, 0);
   if (amount === 0) return null;
   const type = raw.type === 'flat' ? 'flat' : 'multiplier';
   return {
@@ -98,7 +93,7 @@ export function describeTrackEducationBonuses(trackId) {
 }
 
 export function applyInstantHustleEducationBonus({ hustleId, baseAmount, state = getState() }) {
-  const base = asNumber(baseAmount, 0);
+  const base = toNumber(baseAmount, 0);
   const boosts = getInstantHustleEducationBonuses(hustleId);
   if (!boosts.length) {
     return { amount: base, applied: [], boosts: [] };
