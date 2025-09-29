@@ -2,6 +2,16 @@ import { formatMoney } from '../../../core/helpers.js';
 import { getUpgradeState } from '../../../core/state.js';
 import { createAssetDefinition } from '../../content/schema.js';
 
+function hasUpgrade(context, id) {
+  if (!id) return false;
+  if (context && typeof context.upgrade === 'function') {
+    const upgrade = context.upgrade(id);
+    if (upgrade) return Boolean(upgrade.purchased);
+  }
+  const state = getUpgradeState(id);
+  return Boolean(state?.purchased);
+}
+
 const blogDefinition = createAssetDefinition({
   id: 'blog',
   name: 'Personal Blog Network',
@@ -21,16 +31,28 @@ const blogDefinition = createAssetDefinition({
     variance: 0.2,
     logType: 'passive',
     modifier: (amount, context = {}) => {
-      const automation = getUpgradeState('course').purchased ? 1.5 : 1;
-      const total = amount * automation;
-      if (automation > 1 && typeof context.recordModifier === 'function') {
-        context.recordModifier('Automation course boost', total - amount, {
-          id: 'course',
-          type: 'upgrade',
-          percent: automation - 1
-        });
+      const steps = [];
+      if (hasUpgrade(context, 'course')) {
+        steps.push({ id: 'course', label: 'Automation course boost', percent: 0.5 });
       }
-      return total;
+      if (hasUpgrade(context, 'editorialPipeline')) {
+        steps.push({ id: 'editorialPipeline', label: 'Editorial pipeline boost', percent: 0.2 });
+      }
+      if (hasUpgrade(context, 'syndicationSuite')) {
+        steps.push({ id: 'syndicationSuite', label: 'Syndication suite boost', percent: 0.25 });
+      }
+      return steps.reduce((total, step) => {
+        const before = total;
+        const after = total * (1 + step.percent);
+        if (typeof context.recordModifier === 'function') {
+          context.recordModifier(step.label, after - before, {
+            id: step.id,
+            type: 'upgrade',
+            percent: step.percent
+          });
+        }
+        return after;
+      }, amount);
     }
   },
   quality: {
@@ -90,7 +112,13 @@ const blogDefinition = createAssetDefinition({
         label: 'Write Post',
         time: 3,
         progressKey: 'posts',
-        progressAmount: context => (context.upgrade('course')?.purchased ? 2 : 1),
+        progressAmount: context => {
+          let progress = 1;
+          if (hasUpgrade(context, 'course')) progress += 1;
+          if (hasUpgrade(context, 'editorialPipeline')) progress += 1;
+          if (hasUpgrade(context, 'syndicationSuite')) progress += 1;
+          return progress;
+        },
         skills: ['writing'],
         log: ({ label }) => `${label} published a sparkling post. Subscribers sip the fresh ideas!`
       },

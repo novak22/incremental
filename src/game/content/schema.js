@@ -1,6 +1,13 @@
-import { formatHours, formatMoney } from '../../core/helpers.js';
+import { formatHours, formatMoney, toNumber } from '../../core/helpers.js';
 import { addLog } from '../../core/log.js';
-import { getAssetDefinition, getAssetState, getState, getUpgradeDefinition, getUpgradeState } from '../../core/state.js';
+import {
+  countActiveAssetInstances,
+  getAssetDefinition,
+  getAssetState,
+  getState,
+  getUpgradeDefinition,
+  getUpgradeState
+} from '../../core/state.js';
 import { executeAction } from '../actions.js';
 import { addMoney, spendMoney } from '../currency.js';
 import { checkDayEnd } from '../lifecycle.js';
@@ -25,11 +32,6 @@ import {
   formatEducationBonusSummary
 } from '../educationEffects.js';
 
-function asNumber(value, fallback = 0) {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : fallback;
-}
-
 function formatHourDetail(hours) {
   if (!hours) return '⏳ Time: <strong>Instant</strong>';
   return `⏳ Time: <strong>${formatHours(hours)}</strong>`;
@@ -49,29 +51,22 @@ function formatPayoutDetail(payout) {
   return base;
 }
 
-function countActiveAssets(assetId) {
-  if (!assetId) return 0;
-  const state = getAssetState(assetId);
-  if (!state?.instances?.length) return 0;
-  return state.instances.filter(instance => instance.status === 'active').length;
-}
-
-function renderRequirementSummary(requirements = []) {
+function renderRequirementSummary(requirements = [], state = getState()) {
   if (!requirements.length) return 'None';
   return requirements
     .map(req => {
       const definition = getAssetDefinition(req.assetId);
       const label = definition?.singular || definition?.name || req.assetId;
-      const need = asNumber(req.count, 1);
-      const have = countActiveAssets(req.assetId);
+      const need = toNumber(req.count, 1);
+      const have = countActiveAssetInstances(req.assetId, state);
       return `${label}: ${have}/${need} active`;
     })
     .join(' • ');
 }
 
-function requirementsMet(requirements = []) {
+function meetsAssetRequirements(requirements = [], state = getState()) {
   if (!requirements?.length) return true;
-  return requirements.every(req => countActiveAssets(req.assetId) >= asNumber(req.count, 1));
+  return requirements.every(req => countActiveAssetInstances(req.assetId, state) >= toNumber(req.count, 1));
 }
 
 function buildMetricConfig(id, prefix, overrides = {}, defaults = {}) {
@@ -173,13 +168,13 @@ function applyMetric(recordFn, metric, payload) {
 export function createInstantHustle(config) {
   const metadata = {
     id: config.id,
-    time: asNumber(config.time, 0),
-    cost: asNumber(config.cost, 0),
+    time: toNumber(config.time, 0),
+    cost: toNumber(config.cost, 0),
     requirements: config.requirements || [],
     payout: config.payout
       ? {
-          amount: asNumber(config.payout.amount, 0),
-          delaySeconds: asNumber(config.payout.delaySeconds, 0) || undefined,
+          amount: toNumber(config.payout.amount, 0),
+          delaySeconds: toNumber(config.payout.delaySeconds, 0) || undefined,
           grantOnAction: config.payout.grantOnAction !== false,
           logType: config.payout.logType || 'hustle',
           message: config.payout.message
@@ -226,8 +221,8 @@ export function createInstantHustle(config) {
     if (metadata.cost > 0 && state.money < metadata.cost) {
       return `You need $${formatMoney(metadata.cost)} before funding ${definition.name}.`;
     }
-    if (!requirementsMet(metadata.requirements)) {
-      return `You still need: ${renderRequirementSummary(metadata.requirements)}.`;
+    if (!meetsAssetRequirements(metadata.requirements, state)) {
+      return `You still need: ${renderRequirementSummary(metadata.requirements, state)}.`;
     }
     return null;
   }
@@ -352,9 +347,9 @@ function upgradeRequirementMet(requirement) {
       const state = getAssetState(requirement.id);
       const instances = state?.instances || [];
       if (requirement.active) {
-        return instances.filter(instance => instance.status === 'active').length >= asNumber(requirement.count, 1);
+        return instances.filter(instance => instance.status === 'active').length >= toNumber(requirement.count, 1);
       }
-      return instances.length >= asNumber(requirement.count, 1);
+      return instances.length >= toNumber(requirement.count, 1);
     }
     case 'custom':
       return requirement.met ? requirement.met() : true;
@@ -374,7 +369,7 @@ function renderUpgradeRequirement(requirement) {
     case 'asset': {
       const asset = getAssetDefinition(requirement.id);
       const label = asset?.singular || asset?.name || requirement.id;
-      const count = asNumber(requirement.count, 1);
+      const count = toNumber(requirement.count, 1);
       const adjective = requirement.active ? 'active ' : '';
       return `Requires: <strong>${count} ${adjective}${label}${count === 1 ? '' : 's'}</strong>`;
     }
@@ -554,5 +549,5 @@ export function renderHustleRequirementSummary(requirements) {
 }
 
 export function hustleRequirementsMet(requirements) {
-  return requirementsMet(requirements);
+  return meetsAssetRequirements(requirements);
 }

@@ -2,7 +2,7 @@ import elements from './elements.js';
 import setText from './dom.js';
 import { formatHours, formatList, formatMoney } from '../core/helpers.js';
 import { registry } from '../game/registry.js';
-import { getAssetState, getUpgradeState } from '../core/state.js';
+import { countActiveAssetInstances, getUpgradeState } from '../core/state.js';
 import { SKILL_DEFINITIONS } from '../game/skills/data.js';
 import { KNOWLEDGE_TRACKS, getKnowledgeProgress } from '../game/requirements.js';
 import {
@@ -203,13 +203,10 @@ function renderEducation(state) {
 }
 
 function countActiveAssets(state) {
-  let count = 0;
-  for (const asset of registry.assets) {
-    const assetState = getAssetState(asset.id, state);
-    const instances = Array.isArray(assetState?.instances) ? assetState.instances : [];
-    count += instances.filter(instance => instance.status === 'active').length;
-  }
-  return count;
+  return registry.assets.reduce(
+    (total, asset) => total + countActiveAssetInstances(asset.id, state),
+    0
+  );
 }
 
 function renderStats(state, summary) {

@@ -1,5 +1,5 @@
 import { DEFAULT_DAY_HOURS } from './constants.js';
-import { structuredClone } from './helpers.js';
+import { createId, structuredClone } from './helpers.js';
 import { attachRegistryMetricIds, buildMetricIndex } from '../game/schema/metrics.js';
 import {
   createEmptyCharacterState,
@@ -61,7 +61,7 @@ export function getMetricDefinition(metricId) {
 export function normalizeAssetInstance(definition, instance = {}) {
   const normalized = { ...instance };
   if (!normalized.id) {
-    normalized.id = cryptoId();
+    normalized.id = createId();
   }
 
   const setupDays = Math.max(0, Number(definition?.setup?.days) || 0);
@@ -325,6 +325,13 @@ export function getAssetState(id, target = state) {
   return target.assets[id];
 }
 
+export function countActiveAssetInstances(assetId, target = state) {
+  if (!assetId) return 0;
+  const assetState = getAssetState(assetId, target);
+  const instances = Array.isArray(assetState?.instances) ? assetState.instances : [];
+  return instances.filter(instance => instance?.status === 'active').length;
+}
+
 export function getUpgradeState(id, target = state) {
   target.upgrades = target.upgrades || {};
   if (!target.upgrades[id]) {
@@ -334,9 +341,3 @@ export function getUpgradeState(id, target = state) {
   return target.upgrades[id];
 }
 
-function cryptoId() {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return crypto.randomUUID();
-  }
-  return Math.random().toString(36).slice(2);
-}
