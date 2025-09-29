@@ -6,7 +6,6 @@ import { executeAction } from './actions.js';
 import { checkDayEnd } from './lifecycle.js';
 import { createUpgrade } from './content/schema.js';
 import { gainTime } from './time.js';
-import { getKnowledgeProgress } from './requirements.js';
 import {
   ASSISTANT_CONFIG,
   canFireAssistant,
