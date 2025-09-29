@@ -9,7 +9,7 @@ const blogDefinition = createAssetDefinition({
   tag: { label: 'Foundation', type: 'passive' },
   description: 'Launch cozy blogs that drip ad revenue once the posts are polished.',
   setup: { days: 3, hoursPerDay: 3, cost: 180 },
-  maintenance: { hours: 1, cost: 5 },
+  maintenance: { hours: 0.75, cost: 3 },
   skills: {
     setup: [
       'writing',
