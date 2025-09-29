@@ -74,6 +74,58 @@ function ensureInstanceQuality(definition, instance) {
   return instance.quality;
 }
 
+function createActionContext(definition, instance, state = getState()) {
+  const quality = ensureInstanceQuality(definition, instance);
+  return {
+    state,
+    definition,
+    instance,
+    quality,
+    upgrade: id => getUpgradeState(id)
+  };
+}
+
+function evaluateActionAvailability(action, context) {
+  if (!action) {
+    return { unlocked: false, reason: '' };
+  }
+
+  if (typeof action.available === 'function') {
+    const available = action.available(context);
+    if (!available) {
+      const reason = typeof action.unavailableMessage === 'function'
+        ? action.unavailableMessage(context)
+        : action.unavailableMessage || action.lockedMessage || 'Requirements not yet met.';
+      return { unlocked: false, reason };
+    }
+  }
+
+  const upgradeRequirement = action.requiresUpgrades ?? action.requiresUpgrade;
+  if (upgradeRequirement) {
+    const ids = Array.isArray(upgradeRequirement) ? upgradeRequirement : [upgradeRequirement];
+    for (const upgradeId of ids) {
+      const purchased = context.upgrade(upgradeId)?.purchased;
+      if (!purchased) {
+        const reasonContext = { ...context, missingUpgrade: upgradeId };
+        const reason = typeof action.unavailableMessage === 'function'
+          ? action.unavailableMessage(reasonContext)
+          : typeof action.lockedMessage === 'function'
+            ? action.lockedMessage(reasonContext)
+            : action.lockedMessage || action.unavailableMessage || 'Upgrade required first.';
+        return { unlocked: false, reason };
+      }
+    }
+  }
+
+  return { unlocked: true, reason: '' };
+}
+
+function getQualityActionAvailabilityInternal(definition, instance, action, state = getState()) {
+  const context = createActionContext(definition, instance, state);
+  const availability = evaluateActionAvailability(action, context);
+  return { ...availability };
+}
+
 export function getQualityConfig(definition) {
   return definition?.quality || null;
 }
@@ -174,6 +226,17 @@ function runQualityAction(definition, instanceId, actionId) {
   const action = config?.actions?.find(entry => entry.id === actionId);
   if (!action) return;
 
+  const context = createActionContext(definition, instance, state);
+  const availability = evaluateActionAvailability(action, context);
+  if (!availability.unlocked) {
+    const label = getActionLabel(definition, assetState, instance);
+    const message = availability.reason
+      ? `${label} can’t run that move yet: ${availability.reason}`
+      : `${label} can’t run that move yet.`;
+    addLog(message, 'info');
+    return;
+  }
+
   const cooldown = getCooldownStatus(instance, action, state);
   if (cooldown.onCooldown) {
     const label = getActionLabel(definition, assetState, instance);
@@ -214,16 +277,10 @@ function runQualityAction(definition, instanceId, actionId) {
     });
   }
 
-  const quality = ensureInstanceQuality(definition, instance);
+  const quality = context.quality;
   const progressKey = action.progressKey;
   if (progressKey) {
-    const amount = resolveProgressAmount(action, {
-      state,
-      definition,
-      instance,
-      quality,
-      upgrade: id => getUpgradeState(id)
-    });
+    const amount = resolveProgressAmount(action, context);
     if (amount !== 0) {
       const current = Number(quality.progress[progressKey]) || 0;
       quality.progress[progressKey] = Math.max(0, current + amount);
@@ -343,6 +400,8 @@ export function canPerformQualityAction(definition, instance, action, state = ge
   if (!definition || !instance || !action) return false;
   if (!state) return false;
   if (instance.status !== 'active') return false;
+  const availability = getQualityActionAvailabilityInternal(definition, instance, action, state);
+  if (!availability.unlocked) return false;
   const cooldown = getCooldownStatus(instance, action, state);
   if (cooldown.onCooldown) return false;
   const timeCost = Math.max(0, Number(action.time) || 0);
@@ -355,6 +414,10 @@ export function canPerformQualityAction(definition, instance, action, state = ge
 export function getQualityActions(definition) {
   const config = getQualityConfig(definition);
   return config?.actions || [];
+}
+
+export function getQualityActionAvailability(definition, instance, action, state = getState()) {
+  return getQualityActionAvailabilityInternal(definition, instance, action, state);
 }
 
 export function getQualityTracks(definition) {

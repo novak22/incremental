@@ -37,29 +37,29 @@ const blogDefinition = createAssetDefinition({
         level: 0,
         name: 'Skeleton Drafts',
         description: 'Bare pages with placeholder copy and sleepy earnings.',
-        income: { min: 1, max: 3 },
+        income: { min: 3, max: 6 },
         requirements: {}
       },
       {
         level: 1,
         name: 'Content Sprout',
         description: 'Three polished posts that finally catch organic clicks.',
-        income: { min: 6, max: 12 },
-        requirements: { posts: 4 }
+        income: { min: 9, max: 15 },
+        requirements: { posts: 3 }
       },
       {
         level: 2,
         name: 'SEO Groove',
         description: 'Evergreen articles plus SEO sweeps pull in steady readers.',
-        income: { min: 14, max: 22 },
-        requirements: { posts: 12, seo: 3 }
+        income: { min: 16, max: 24 },
+        requirements: { posts: 9, seo: 2 }
       },
       {
         level: 3,
         name: 'Authority Hub',
         description: 'Backlinks and authority content turn ad clicks into a gush.',
-        income: { min: 28, max: 38 },
-        requirements: { posts: 24, seo: 6, outreach: 4 }
+        income: { min: 30, max: 42 },
+        requirements: { posts: 18, seo: 5, outreach: 3 }
       }
     ],
     actions: [
@@ -75,8 +75,8 @@ const blogDefinition = createAssetDefinition({
       {
         id: 'seoSprint',
         label: 'SEO Sprint',
-        time: 2.5,
-        cost: 18,
+        time: 2,
+        cost: 16,
         cooldownDays: 1,
         progressKey: 'seo',
         skills: ['promotion'],
@@ -85,8 +85,8 @@ const blogDefinition = createAssetDefinition({
       {
         id: 'outreachPush',
         label: 'Backlink Outreach',
-        time: 2,
-        cost: 18,
+        time: 1.5,
+        cost: 16,
         cooldownDays: 2,
         progressKey: 'outreach',
         skills: ['audience', { id: 'promotion', weight: 0.5 }],

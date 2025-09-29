@@ -1,22 +1,24 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { JSDOM } from 'jsdom';
+import { ensureTestDom } from './helpers/setupDom.js';
 
-const dom = new JSDOM(`<!DOCTYPE html><body>
-  <div id="study-track-list"></div>
-  <ol id="study-queue-list"></ol>
-  <span id="study-queue-eta"></span>
-  <span id="study-queue-cap"></span>
-</body>`);
-
-globalThis.window = dom.window;
-globalThis.document = dom.window.document;
-globalThis.Node = dom.window.Node;
-globalThis.HTMLElement = dom.window.HTMLElement;
-globalThis.navigator = dom.window.navigator;
-globalThis.crypto ??= dom.window.crypto;
+const dom = ensureTestDom();
+const { document } = dom.window;
 
 test('education tracks reflect canonical study data', async () => {
+  const trackList = document.getElementById('study-track-list');
+  const queueList = document.getElementById('study-queue-list');
+  const queueEta = document.getElementById('study-queue-eta');
+  const queueCap = document.getElementById('study-queue-cap');
+  assert.ok(trackList, 'study track list should exist in test DOM');
+  assert.ok(queueList, 'study queue list should exist in test DOM');
+  assert.ok(queueEta, 'study queue ETA should exist in test DOM');
+  assert.ok(queueCap, 'study queue cap should exist in test DOM');
+  trackList.innerHTML = '';
+  queueList.innerHTML = '';
+  queueEta.textContent = '';
+  queueCap.textContent = '';
+
   const stateModule = await import('../src/core/state.js');
   const { configureRegistry, initializeState, getState } = stateModule;
 

@@ -3,6 +3,10 @@
 ## [Unreleased]
 - Retuned Stock Photo Galleries, Dropshipping Labs, and Micro SaaS payouts with lighter upkeep and lower quality hurdles, and wired the Cinema Camera, Studio Expansion, and Edge Delivery upgrades into tangible income and progress boosts.
 - Introduced a character skill system with ten themed disciplines, action-driven XP awards, education bonuses, and overall creator levels that log celebratory progress.
+- Expanded the Micro SaaS quality ladder with an Edge-powered Quality 4 tier, fresh action gating, and UI messaging so late-game payouts highlight the Edge Delivery Network upgrade.
+- Retuned Stock Photo Galleries, Dropshipping Labs, and Micro SaaS payouts with lighter upkeep and lower quality hurdles, and wired the Cinema Camera, Studio Expansion, and Edge Delivery upgrades into tangible income and progress boosts.
+- Rebalanced the Personal Blog Network and Digital E-Book Series so Quality 0–1 payouts cover their maintenance, trimmed early post/chapter requirements, and sped up support actions while keeping the Automation Course perk impactful.
+- Linked study tracks to instant gig payouts with course-specific multipliers/bonuses and added two new workshops (Brand Voice Lab, Guerrilla Buzz Workshop) to diversify study plans.
 - Revamped the Education tab with accurate countdowns, celebratory badges, and tuition/daily load summaries so enrolling in a course feels clear and motivating.
 - Replaced the static "End Day" button with a dynamic "Next" recommendation that fires the top asset upgrade or quick action, favouring longer time commitments before ending the day when no tasks remain.
 - Extended the "Asset upgrade" dashboard card with a scrollable list, up to eight recommendations, and percent-to-go callouts for each quality milestone.

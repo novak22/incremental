@@ -10,7 +10,7 @@ const {
   offlineModule
 } = harness;
 
-const { getState, getHustleState } = stateModule;
+const { getState, getHustleState, getAssetState } = stateModule;
 const { KNOWLEDGE_TRACKS, getKnowledgeProgress } = requirementsModule;
 
 const {
@@ -82,6 +82,62 @@ test('study hustles charge tuition and auto-schedule class time', () => {
   assert.equal(state.money, beforeMoney - tuition, 'tuition should be deducted upfront');
   assert.equal(state.timeLeft, 2, 'daily study hours should be consumed automatically');
   assert.match(state.log.at(-1).message, /Study sessions reserved|Class time booked/, 'log should mention scheduled study');
+});
+
+test('education multipliers boost freelance writing payout once mastered', () => {
+  resetState();
+
+  const baseState = getState();
+  baseState.money = 0;
+  baseState.timeLeft = 10;
+  const baseFreelance = HUSTLES.find(hustle => hustle.id === 'freelance');
+  baseFreelance.action.onClick();
+  assert.equal(baseState.money, 18, 'baseline freelance payout should be unchanged without study');
+
+  resetState();
+
+  const boostedState = getState();
+  boostedState.money = 0;
+  boostedState.timeLeft = 10;
+  const mastery = getKnowledgeProgress('outlineMastery', boostedState);
+  mastery.completed = true;
+  const boostedFreelance = HUSTLES.find(hustle => hustle.id === 'freelance');
+  boostedFreelance.action.onClick();
+
+  assert.equal(boostedState.money, 22.5, 'outline mastery should add a 25% payout boost');
+  assert.match(
+    boostedState.log.at(-1).message,
+    /Outline Mastery Workshop/,
+    'log should summarize applied education bonus'
+  );
+});
+
+test('education flat bonuses add to audience call payouts', () => {
+  resetState();
+
+  const baseState = getState();
+  baseState.money = 0;
+  baseState.timeLeft = 10;
+  getAssetState('blog', baseState).instances = [{ status: 'active' }];
+  HUSTLES.find(hustle => hustle.id === 'audienceCall').action.onClick();
+  assert.equal(baseState.money, 12, 'baseline Q&A payout should be $12 without training');
+
+  resetState();
+
+  const boostedState = getState();
+  boostedState.money = 0;
+  boostedState.timeLeft = 10;
+  getAssetState('blog', boostedState).instances = [{ status: 'active' }];
+  const brandVoice = getKnowledgeProgress('brandVoiceLab', boostedState);
+  brandVoice.completed = true;
+  HUSTLES.find(hustle => hustle.id === 'audienceCall').action.onClick();
+
+  assert.equal(boostedState.money, 16, 'brand voice lab should add a $4 tip boost');
+  assert.match(
+    boostedState.log.at(-1).message,
+    /Brand Voice Lab/,
+    'log should call out the brand voice bonus'
+  );
 });
 
 test('offline progress processes completed flips and logs summary', () => {

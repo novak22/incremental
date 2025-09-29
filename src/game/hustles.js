@@ -17,6 +17,7 @@ import {
   getKnowledgeProgress
 } from './requirements.js';
 import { recordPayoutContribution } from './metrics.js';
+import { describeTrackEducationBonuses } from './educationEffects.js';
 
 const AUDIENCE_CALL_REQUIREMENTS = [{ assetId: 'blog', count: 1 }];
 const BUNDLE_PUSH_REQUIREMENTS = [
@@ -124,7 +125,13 @@ const freelanceWriting = createInstantHustle({
   payout: {
     amount: 18,
     logType: 'hustle',
-    message: () => 'You hustled an article for $18. Not Pulitzer material, but it pays the bills!'
+    message: context => {
+      const payout = context?.finalPayout ?? context?.payoutGranted ?? 18;
+      const bonusNote = context?.appliedEducationBoosts?.length
+        ? ' Your storytelling drills juiced the rate!'
+        : '';
+      return `You hustled an article for $${formatMoney(payout)}. Not Pulitzer material, but it pays the bills!${bonusNote}`;
+    }
   },
   metrics: {
     time: { label: '⚡ Freelance writing time', category: 'hustle' },
@@ -144,7 +151,13 @@ const audienceCall = createInstantHustle({
   payout: {
     amount: 12,
     logType: 'hustle',
-    message: () => 'Your audience Q&A tipped $12 in template sales. Small wins add up!'
+    message: context => {
+      const payout = context?.finalPayout ?? context?.payoutGranted ?? 12;
+      const bonusNote = context?.appliedEducationBoosts?.length
+        ? ' Spotlight-ready banter brought in extra tips.'
+        : '';
+      return `Your audience Q&A tipped $${formatMoney(payout)} in template sales. Small wins add up!${bonusNote}`;
+    }
   },
   metrics: {
     time: { label: '🎤 Audience Q&A prep', category: 'hustle' },
@@ -164,7 +177,13 @@ const bundlePush = createInstantHustle({
   payout: {
     amount: 48,
     logType: 'hustle',
-    message: () => 'Your flash bundle moved $48 in upsells. Subscribers love the combo!'
+    message: context => {
+      const payout = context?.finalPayout ?? context?.payoutGranted ?? 48;
+      const bonusNote = context?.appliedEducationBoosts?.length
+        ? ' Funnel math mastery made every upsell sparkle.'
+        : '';
+      return `Your flash bundle moved $${formatMoney(payout)} in upsells. Subscribers love the combo!${bonusNote}`;
+    }
   },
   metrics: {
     time: { label: '🧺 Bundle promo planning', category: 'hustle' },
@@ -183,7 +202,13 @@ const surveySprint = createInstantHustle({
   payout: {
     amount: 1,
     logType: 'hustle',
-    message: () => 'You breezed through a micro survey for $1. It all counts toward the dream!'
+    message: context => {
+      const payout = context?.finalPayout ?? context?.payoutGranted ?? 1;
+      const bonusNote = context?.appliedEducationBoosts?.length
+        ? ' Guerrilla research savvy bumped the stipend.'
+        : '';
+      return `You breezed through a micro survey for $${formatMoney(payout)}. It all counts toward the dream!${bonusNote}`;
+    }
   },
   metrics: {
     time: { label: '📝 Survey dash time', category: 'hustle' },
@@ -203,7 +228,13 @@ const eventPhotoGig = createInstantHustle({
   payout: {
     amount: 72,
     logType: 'hustle',
-    message: () => 'Your lenses caught the event buzz! $72 in photo packages just dropped.'
+    message: context => {
+      const payout = context?.finalPayout ?? context?.payoutGranted ?? 72;
+      const bonusNote = context?.appliedEducationBoosts?.length
+        ? ' Curated portfolios impressed every client.'
+        : '';
+      return `Your lenses caught the event buzz! $${formatMoney(payout)} in photo packages just dropped.${bonusNote}`;
+    }
   },
   metrics: {
     time: { label: '📸 Event shoot time', category: 'hustle' },
@@ -223,7 +254,13 @@ const popUpWorkshop = createInstantHustle({
   payout: {
     amount: 38,
     logType: 'hustle',
-    message: () => 'Your pop-up workshop wrapped with $38 in sign-ups and smiling grads.'
+    message: context => {
+      const payout = context?.finalPayout ?? context?.payoutGranted ?? 38;
+      const bonusNote = context?.appliedEducationBoosts?.length
+        ? ' Teaching polish turned browsers into buyers.'
+        : '';
+      return `Your pop-up workshop wrapped with $${formatMoney(payout)} in sign-ups and smiling grads.${bonusNote}`;
+    }
   },
   metrics: {
     time: { label: '🎓 Workshop facilitation', category: 'hustle' },
@@ -243,7 +280,13 @@ const vlogEditRush = createInstantHustle({
   payout: {
     amount: 24,
     logType: 'hustle',
-    message: () => 'You polished a collab vlog for $24. Their subscribers are already bingeing!'
+    message: context => {
+      const payout = context?.finalPayout ?? context?.payoutGranted ?? 24;
+      const bonusNote = context?.appliedEducationBoosts?.length
+        ? ' Post-production precision shaved hours off the deadline.'
+        : '';
+      return `You polished a collab vlog for $${formatMoney(payout)}. Their subscribers are already bingeing!${bonusNote}`;
+    }
   },
   metrics: {
     time: { label: '🎬 Vlog edit time', category: 'hustle' },
@@ -264,7 +307,13 @@ const dropshipPackParty = createInstantHustle({
   payout: {
     amount: 28,
     logType: 'hustle',
-    message: () => 'Packing party complete! $28 cleared after shipping labels and sparkle tape.'
+    message: context => {
+      const payout = context?.finalPayout ?? context?.payoutGranted ?? 28;
+      const bonusNote = context?.appliedEducationBoosts?.length
+        ? ' Logistics drills kept the conveyor humming.'
+        : '';
+      return `Packing party complete! $${formatMoney(payout)} cleared after shipping labels and sparkle tape.${bonusNote}`;
+    }
   },
   metrics: {
     time: { label: '📦 Packing party time', category: 'hustle' },
@@ -285,7 +334,13 @@ const saasBugSquash = createInstantHustle({
   payout: {
     amount: 30,
     logType: 'hustle',
-    message: () => 'Customers cheered your hotfix! $30 in retention credits landed instantly.'
+    message: context => {
+      const payout = context?.finalPayout ?? context?.payoutGranted ?? 30;
+      const bonusNote = context?.appliedEducationBoosts?.length
+        ? ' Architectural insights made debugging a breeze.'
+        : '';
+      return `Customers cheered your hotfix! $${formatMoney(payout)} in retention credits landed instantly.${bonusNote}`;
+    }
   },
   metrics: {
     time: { label: '🧰 Bug fix time', category: 'hustle' },
@@ -305,7 +360,13 @@ const audiobookNarration = createInstantHustle({
   payout: {
     amount: 44,
     logType: 'hustle',
-    message: () => 'Your narration melted ears and earned $44 in audio bundle preorders.'
+    message: context => {
+      const payout = context?.finalPayout ?? context?.payoutGranted ?? 44;
+      const bonusNote = context?.appliedEducationBoosts?.length
+        ? ' Narrative confidence kept the script soaring.'
+        : '';
+      return `Your narration melted ears and earned $${formatMoney(payout)} in audio bundle preorders.${bonusNote}`;
+    }
   },
   metrics: {
     time: { label: '🎙️ Narration booth time', category: 'hustle' },
@@ -326,7 +387,13 @@ const streetPromoSprint = createInstantHustle({
   payout: {
     amount: 18,
     logType: 'hustle',
-    message: () => 'Your sticker swarm paid off! $18 in rush sales chimed in on the go.'
+    message: context => {
+      const payout = context?.finalPayout ?? context?.payoutGranted ?? 18;
+      const bonusNote = context?.appliedEducationBoosts?.length
+        ? ' Guerrilla tactics drew a bigger crowd.'
+        : '';
+      return `Your sticker swarm paid off! $${formatMoney(payout)} in rush sales chimed in on the go.${bonusNote}`;
+    }
   },
   metrics: {
     time: { label: '🚀 Street promo time', category: 'hustle' },
@@ -497,7 +564,8 @@ function createKnowledgeHustles() {
           return `📚 Status: <strong>${remaining} day${remaining === 1 ? '' : 's'} remaining</strong>`;
         }
         return '🚀 Status: <strong>Ready to enroll</strong>';
-      }
+      },
+      ...describeTrackEducationBonuses(track.id)
     ],
     action: {
       id: `enroll-${track.id}`,
