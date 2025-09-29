@@ -1,4 +1,5 @@
 import elements from './elements.js';
+import setText from './dom.js';
 import { formatHours, formatList, formatMoney } from '../core/helpers.js';
 import { registry } from '../game/registry.js';
 import { getAssetState, getUpgradeState } from '../core/state.js';
@@ -10,11 +11,6 @@ import {
 import { KNOWLEDGE_TRACKS, getKnowledgeProgress } from '../game/requirements.js';
 
 const numberFormatter = new Intl.NumberFormat('en-US');
-
-function setText(element, value) {
-  if (!element) return;
-  element.textContent = value;
-}
 
 function formatXp(value) {
   return numberFormatter.format(Math.max(0, Math.round(Number(value) || 0)));
