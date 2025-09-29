@@ -225,12 +225,17 @@ body {
 
 .player-overview {
   padding-inline: 8px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .player-overview__grid {
-  display: grid;
+  display: flex;
   gap: 20px;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  padding-block: 4px 12px;
+  min-width: max-content;
+  scroll-snap-type: x proximity;
 }
 
 .player-card {
@@ -242,6 +247,8 @@ body {
   flex-direction: column;
   gap: 16px;
   min-height: 0;
+  flex: 0 0 clamp(280px, 80vw, 360px);
+  scroll-snap-align: start;
 }
 
 .player-card header h3 {
@@ -256,7 +263,7 @@ body {
 }
 
 .player-card--summary {
-  grid-column: 1 / -1;
+  flex-basis: clamp(320px, 88vw, 440px);
 }
 
 .player-summary {
@@ -347,6 +354,10 @@ body {
   color: #5eead4;
   border-radius: 999px;
   padding: 4px 10px;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .player-skill__tier {

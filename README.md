@@ -43,7 +43,7 @@ Each asset supports multiple instances, tracks setup progress, and rolls a daily
 ### Upgrades & Boosts
 - **Hire Virtual Assistant** – $180 per hire, up to four assistants. Each adds +2h daily but costs $30/day in payroll; fire assistants anytime to cut wages (and hours).
 - **Turbo Coffee** – $40 per cup, up to three per day, each adding +1h for the current day.
-- **Buy Camera** – $200, unlocks Vlog Channels and Stock Photo Galleries.
+- **Camera** – $200, unlocks Vlog Channels and Stock Photo Galleries.
 - **Cinema Camera Upgrade** – $480, requires the base camera and promises richer vlog production value.
 - **Lighting Kit** – $220, unlocks Stock Photo Galleries after you buy the camera.
 - **Studio Expansion** – $540, requires the Lighting Kit and outfits your studio for rapid-fire shoots.
