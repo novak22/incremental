@@ -9,6 +9,12 @@ const ebookDefinition = createAssetDefinition({
   description: 'Package your expertise into downloadable page-turners that sell while you snooze.',
   setup: { days: 4, hoursPerDay: 3, cost: 260 },
   maintenance: { hours: 0.75, cost: 3 },
+  skills: {
+    setup: [
+      'writing',
+      { id: 'editing', weight: 0.75 }
+    ]
+  },
   income: {
     base: 30,
     variance: 0.2,
@@ -60,6 +66,7 @@ const ebookDefinition = createAssetDefinition({
         label: 'Write Chapter',
         time: 3,
         progressKey: 'chapters',
+        skills: ['writing'],
         log: ({ label }) => `${label} gained another gripping chapter. Cliffhangers everywhere!`
       },
       {
@@ -69,6 +76,7 @@ const ebookDefinition = createAssetDefinition({
         cost: 70,
         cooldownDays: 2,
         progressKey: 'cover',
+        skills: ['visual', { id: 'editing', weight: 0.6 }],
         log: ({ label }) => `${label} unveiled a shiny cover mockup. Bookstores swoon.`
       },
       {
@@ -78,6 +86,7 @@ const ebookDefinition = createAssetDefinition({
         cost: 12,
         cooldownDays: 1,
         progressKey: 'reviews',
+        skills: ['audience'],
         log: ({ label }) => `${label} nudged superfans for reviews. Star ratings climb skyward!`
       }
     ],

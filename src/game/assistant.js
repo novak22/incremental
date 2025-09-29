@@ -4,6 +4,7 @@ import { getState, getUpgradeState } from '../core/state.js';
 import { spendMoney } from './currency.js';
 import { gainTime } from './time.js';
 import { recordCostContribution } from './metrics.js';
+import { awardSkillProgress } from './skills/index.js';
 
 export const ASSISTANT_CONFIG = {
   hiringCost: 180,
@@ -54,6 +55,11 @@ export function hireAssistant() {
     label: '🤝 Assistant onboarding',
     amount: ASSISTANT_CONFIG.hiringCost,
     category: 'investment'
+  });
+  awardSkillProgress({
+    skills: ['commerce'],
+    moneySpent: ASSISTANT_CONFIG.hiringCost,
+    label: 'hiring a Virtual Assistant'
   });
   upgrade.count = currentCount + 1;
   state.bonusTime += ASSISTANT_CONFIG.hoursPerAssistant;

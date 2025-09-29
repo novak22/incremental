@@ -9,6 +9,13 @@ const saasDefinition = createAssetDefinition({
   description: 'Design lean software services, onboard early users, and ship updates that keep churn low.',
   setup: { days: 8, hoursPerDay: 4, cost: 960 },
   maintenance: { hours: 2.5, cost: 28 },
+  skills: {
+    setup: [
+      'software',
+      { id: 'infrastructure', weight: 0.75 },
+      { id: 'promotion', weight: 0.5 }
+    ]
+  },
   income: {
     base: 68,
     variance: 0.35,
@@ -66,6 +73,7 @@ const saasDefinition = createAssetDefinition({
         time: 4,
         cost: 34,
         progressKey: 'features',
+        skills: ['software'],
         log: ({ label }) => `${label} shipped a delightful feature. Beta users erupt in emoji reactions!`
       },
       {
@@ -74,6 +82,7 @@ const saasDefinition = createAssetDefinition({
         time: 3,
         cost: 40,
         progressKey: 'stability',
+        skills: ['infrastructure'],
         log: ({ label }) => `${label} patched outages and bolstered uptime. Pager alerts stay quiet.`
       },
       {
@@ -82,6 +91,7 @@ const saasDefinition = createAssetDefinition({
         time: 2.5,
         cost: 48,
         progressKey: 'marketing',
+        skills: ['promotion'],
         log: ({ label }) => `${label} launched a marketing sprint. Sign-ups trickle in all night.`
       }
     ],

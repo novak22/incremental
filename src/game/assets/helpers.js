@@ -22,6 +22,7 @@ import {
   getQualityLevelSummary,
   getQualityTracks
 } from './quality.js';
+import { awardSkillProgress } from '../skills/index.js';
 
 function fallbackAssetMetricId(definitionId, scope, type) {
   if (!definitionId) return null;
@@ -113,6 +114,13 @@ function startAsset(definition) {
         category: 'setup'
       });
     }
+
+    awardSkillProgress({
+      skills: definition.skills?.setup,
+      timeSpentHours: setupHours,
+      moneySpent: setupCost,
+      label: definition.name
+    });
 
     const assetState = getAssetState(definition.id);
     const instance = createAssetInstance(definition, {

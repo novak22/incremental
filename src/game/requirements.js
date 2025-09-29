@@ -14,6 +14,7 @@ import {
   recordTimeContribution
 } from './metrics.js';
 import { buildRequirementBundle, resolveRequirementConfig } from './schema/requirements.js';
+import { awardSkillProgress } from './skills/index.js';
 
 export const KNOWLEDGE_TRACKS = {
   outlineMastery: {
@@ -47,6 +48,31 @@ export const KNOWLEDGE_TRACKS = {
     hoursPerDay: 3,
     days: 10,
     tuition: 540
+  }
+};
+
+const KNOWLEDGE_REWARDS = {
+  outlineMastery: { baseXp: 120, skills: ['writing'] },
+  photoLibrary: {
+    baseXp: 120,
+    skills: [
+      { id: 'visual', weight: 0.5 },
+      { id: 'editing', weight: 0.5 }
+    ]
+  },
+  ecomPlaybook: {
+    baseXp: 120,
+    skills: [
+      { id: 'research', weight: 0.5 },
+      { id: 'commerce', weight: 0.5 }
+    ]
+  },
+  automationCourse: {
+    baseXp: 120,
+    skills: [
+      { id: 'software', weight: 0.6 },
+      { id: 'infrastructure', weight: 0.4 }
+    ]
   }
 };
 
@@ -285,7 +311,8 @@ export function getKnowledgeProgress(id, target = getState()) {
       totalDays: track?.days ?? 0,
       hoursPerDay: track?.hoursPerDay ?? 0,
       tuitionCost: track?.tuition ?? 0,
-      enrolledOnDay: null
+      enrolledOnDay: null,
+      skillRewarded: false
     };
   }
   const track = KNOWLEDGE_TRACKS[id];
@@ -296,6 +323,7 @@ export function getKnowledgeProgress(id, target = getState()) {
     progress.tuitionCost = track.tuition ?? 0;
     progress.completed = progress.completed || progress.daysCompleted >= track.days;
   }
+  progress.skillRewarded = Boolean(progress.skillRewarded);
   return progress;
 }
 
@@ -429,6 +457,17 @@ export function advanceKnowledgeTracks() {
       if (progress.daysCompleted >= track.days) {
         progress.completed = true;
         progress.enrolled = false;
+        if (!progress.skillRewarded) {
+          const reward = KNOWLEDGE_REWARDS[id];
+          if (reward) {
+            awardSkillProgress({
+              skills: reward.skills,
+              baseXp: reward.baseXp,
+              label: track.name
+            });
+          }
+          progress.skillRewarded = true;
+        }
         completedToday.push(track.name);
       }
     } else if (progress.daysCompleted > 0 || progress.enrolled) {

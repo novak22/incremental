@@ -9,6 +9,12 @@ const vlogDefinition = createAssetDefinition({
   description: 'Film upbeat vlogs, edit late-night montages, and ride the algorithmic rollercoaster.',
   setup: { days: 4, hoursPerDay: 4, cost: 420 },
   maintenance: { hours: 1.5, cost: 9 },
+  skills: {
+    setup: [
+      'visual',
+      { id: 'editing', weight: 0.5 }
+    ]
+  },
   income: {
     base: 34,
     variance: 0.2,
@@ -67,6 +73,7 @@ const vlogDefinition = createAssetDefinition({
         label: 'Film Episode',
         time: 5,
         progressKey: 'videos',
+        skills: ['visual'],
         log: ({ label }) => `${label} filmed an energetic episode. B-roll glitter everywhere!`
       },
       {
@@ -75,6 +82,7 @@ const vlogDefinition = createAssetDefinition({
         time: 2.5,
         cost: 16,
         progressKey: 'edits',
+        skills: ['editing'],
         log: ({ label }) => `${label} tightened jump cuts and color graded every frame.`
       },
       {
@@ -83,6 +91,7 @@ const vlogDefinition = createAssetDefinition({
         time: 2,
         cost: 24,
         progressKey: 'promotion',
+        skills: ['promotion'],
         log: ({ label }) => `${label} teased the drop on socials. Chat bubbles explode with hype!`
       }
     ],

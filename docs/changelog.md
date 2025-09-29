@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- Introduced a character skill system with ten themed disciplines, action-driven XP awards, education bonuses, and overall creator levels that log celebratory progress.
 - Revamped the Education tab with accurate countdowns, celebratory badges, and tuition/daily load summaries so enrolling in a course feels clear and motivating.
 - Replaced the static "End Day" button with a dynamic "Next" recommendation that fires the top asset upgrade or quick action, favouring longer time commitments before ending the day when no tasks remain.
 - Extended the "Asset upgrade" dashboard card with a scrollable list, up to eight recommendations, and percent-to-go callouts for each quality milestone.
