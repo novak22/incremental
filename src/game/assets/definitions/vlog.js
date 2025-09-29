@@ -23,8 +23,20 @@ const vlogDefinition = createAssetDefinition({
     modifier: (amount, { instance }) => {
       const hasCinemaGear = getUpgradeState('cameraPro').purchased;
       const qualityLevel = instance?.quality?.level || 0;
-      const viralChance = hasCinemaGear ? 0.24 : 0.18;
-      const viralMultiplier = hasCinemaGear ? 3.5 : 3;
+      const viralChance = hasCinemaGear
+        ? qualityLevel >= 4
+          ? 0.3
+          : 0.24
+        : qualityLevel >= 4
+          ? 0.24
+          : 0.18;
+      const viralMultiplier = hasCinemaGear
+        ? qualityLevel >= 4
+          ? 4
+          : 3.5
+        : qualityLevel >= 4
+          ? 3.5
+          : 3;
       let payout = amount;
       if (qualityLevel >= 3 && Math.random() < viralChance) {
         payout = Math.round(payout * viralMultiplier);
@@ -71,6 +83,20 @@ const vlogDefinition = createAssetDefinition({
         description: 'Hyped launches and collaborations unlock viral bursts.',
         income: { min: 32, max: 40 },
         requirements: { videos: 18, edits: 7, promotion: 5 }
+      },
+      {
+        level: 4,
+        name: 'Prime Time Partner',
+        description: 'Sponsorship suites, editors, and co-hosts keep audiences glued.',
+        income: { min: 45, max: 58 },
+        requirements: { videos: 26, edits: 11, promotion: 9 }
+      },
+      {
+        level: 5,
+        name: 'Network Phenomenon',
+        description: 'Streaming deals and global tours make every drop an event.',
+        income: { min: 62, max: 82 },
+        requirements: { videos: 38, edits: 16, promotion: 14 }
       }
     ],
     actions: [

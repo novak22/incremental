@@ -58,6 +58,20 @@ const ebookDefinition = createAssetDefinition({
         description: 'Glowing reviews lock in bestseller status.',
         income: { min: 30, max: 42 },
         requirements: { chapters: 18, cover: 2, reviews: 6 }
+      },
+      {
+        level: 4,
+        name: 'Box Set Sensation',
+        description: 'Expanded universes and deluxe art bundles keep royalties rolling.',
+        income: { min: 44, max: 58 },
+        requirements: { chapters: 24, cover: 3, reviews: 10 }
+      },
+      {
+        level: 5,
+        name: 'Fandom Universe',
+        description: 'Merch tie-ins and superfans push the series into evergreen bestseller lists.',
+        income: { min: 60, max: 78 },
+        requirements: { chapters: 32, cover: 4, reviews: 16 }
       }
     ],
     actions: [
