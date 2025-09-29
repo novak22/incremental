@@ -94,6 +94,12 @@ const elements = {
     pause: document.getElementById('asset-batch-pause'),
     preset: document.getElementById('asset-batch-preset')
   },
+  assetLaunched: {
+    container: document.getElementById('asset-launched'),
+    title: document.getElementById('asset-launched-title'),
+    note: document.getElementById('asset-launched-note'),
+    content: document.getElementById('asset-launched-content')
+  },
   upgradeFilters: {
     affordable: document.getElementById('upgrade-affordable-toggle'),
     favorites: document.getElementById('upgrade-favorites-toggle')
