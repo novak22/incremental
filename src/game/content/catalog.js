@@ -2,7 +2,7 @@ import { registry } from '../registry.js';
 import { getState, getAssetState, getUpgradeState, getUpgradeDefinition, getAssetDefinition } from '../../core/state.js';
 import { toNumber } from '../../core/helpers.js';
 import { assetRequirementsMet, listAssetRequirementDescriptors, KNOWLEDGE_TRACKS, getKnowledgeProgress } from '../requirements.js';
-import { getQualityActions, canPerformQualityAction } from '../assets/quality.js';
+import { getQualityActions, canPerformQualityAction, getQualityActionUsage } from '../assets/quality.js';
 import { describeHustleRequirements, areHustleRequirementsMet } from '../hustles.js';
 import { canHireAssistant, getAssistantCount, ASSISTANT_CONFIG } from '../assistant.js';
 import { COFFEE_LIMIT } from '../../core/constants.js';
@@ -30,6 +30,10 @@ function describeQualityRequirements(definition, action, state) {
   const assetState = getAssetState(definition.id, state);
   const totalInstances = assetState.instances?.length || 0;
   const activeInstances = (assetState.instances || []).filter(instance => instance.status === 'active');
+  const usageEntries = activeInstances.map(instance => ({
+    instance,
+    usage: getQualityActionUsage(definition, instance, action)
+  }));
   const availableInstances = activeInstances.filter(instance => canPerformQualityAction(definition, instance, action, state));
   const descriptors = [
     {
@@ -41,9 +45,17 @@ function describeQualityRequirements(definition, action, state) {
     }
   ];
   if (activeInstances.length > 0) {
+    const totalRemaining = usageEntries.reduce((sum, entry) => sum + entry.usage.remainingUses, 0);
+    const totalLimit = usageEntries.reduce((sum, entry) => sum + entry.usage.dailyLimit, 0);
     descriptors.push({
-      type: 'cooldown',
-      label: 'Cooldown ready',
+      type: 'dailyUsage',
+      label: 'Daily juice left',
+      met: totalRemaining > 0,
+      progress: { remaining: totalRemaining, total: totalLimit }
+    });
+    descriptors.push({
+      type: 'availability',
+      label: 'Ready right now',
       met: availableInstances.length > 0,
       progress: { available: availableInstances.length, total: activeInstances.length }
     });

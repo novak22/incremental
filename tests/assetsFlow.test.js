@@ -29,6 +29,13 @@ const { spendMoney } = currencyModule;
 
 const resetState = () => harness.resetState();
 
+const advanceToNextDay = () => {
+  closeOutDay();
+  const state = getState();
+  state.day += 1;
+  state.timeLeft = 24;
+};
+
 const blogDefinition = getAssetDefinition('blog');
 const vlogDefinition = getAssetDefinition('vlog');
 
@@ -165,12 +172,14 @@ test('quality actions invest resources and unlock stronger income tiers', () => 
 
     // Invest in posts to reach Quality 1
     performQualityAction('blog', instanceId, 'writePost');
+    advanceToNextDay();
     performQualityAction('blog', instanceId, 'writePost');
+    advanceToNextDay();
     performQualityAction('blog', instanceId, 'writePost');
 
     updatedInstance = getAssetState('blog').instances.find(item => item.id === instanceId);
     assert.equal(updatedInstance.quality.level, 1);
-    assert.equal(state.timeLeft, 24 - 9, 'quality actions should spend time');
+    assert.equal(state.timeLeft, 24 - 3, 'daily-limited quality actions should spend time once per day');
 
     // Next payout reflects new tier
     updatedInstance.maintenanceFundedToday = true;
@@ -183,7 +192,7 @@ test('quality actions invest resources and unlock stronger income tiers', () => 
   }
 });
 
-test('quality action cooldown blocks repeat work until the next day', () => {
+test('quality action daily limit blocks repeat work until the next day', () => {
   const state = getState();
   state.money = 500;
   state.timeLeft = 24;
@@ -200,12 +209,11 @@ test('quality action cooldown blocks repeat work until the next day', () => {
 
   const afterFirstSprint = state.timeLeft;
   performQualityAction('blog', instanceId, 'seoSprint');
-  assert.ok(Math.abs(state.timeLeft - afterFirstSprint) < 1e-6, 'cooldown should block repeat time spend');
+  assert.ok(Math.abs(state.timeLeft - afterFirstSprint) < 1e-6, 'daily limit should block repeat time spend');
 
-  state.day += 1;
-  state.timeLeft = 24;
+  advanceToNextDay();
   performQualityAction('blog', instanceId, 'seoSprint');
-  assert.ok(Math.abs(state.timeLeft - (24 - 2)) < 1e-6, 'cooldown should clear on the next day');
+  assert.ok(Math.abs(state.timeLeft - (24 - 2)) < 1e-6, 'daily limit should reset on the next day');
 });
 
 test('selling an asset instance removes it and scales by quality multiplier', () => {
