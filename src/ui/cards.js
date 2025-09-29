@@ -23,7 +23,10 @@ import {
   getQualityActionCooldown,
   getQualityActions,
   getQualityLevel,
+  getQualityNextRequirements,
   getQualityTracks,
+  getNextQualityLevel,
+  getInstanceQualityRange,
   performQualityAction
 } from '../game/assets/quality.js';
 
@@ -312,6 +315,11 @@ function createInstanceCard(definition, instance, index, state) {
   header.appendChild(status);
   item.appendChild(header);
 
+  const overview = buildInstanceOverview(definition, instance);
+  if (overview) {
+    item.appendChild(overview);
+  }
+
   const stats = buildInstanceStats(definition, instance);
   if (stats) {
     item.appendChild(stats);
@@ -322,12 +330,23 @@ function createInstanceCard(definition, instance, index, state) {
     const progressWrap = document.createElement('div');
     progressWrap.className = 'asset-detail__progress';
     const progress = instance.quality?.progress || {};
+    const nextRequirements = getQualityNextRequirements(definition, Number(instance.quality?.level) || 0) || {};
     Object.entries(tracks).forEach(([key, track]) => {
       const label = track?.shortLabel || track?.label || key;
       const current = Number(progress?.[key]) || 0;
       const row = document.createElement('span');
       row.className = 'asset-detail__progress-entry';
-      row.textContent = `${label}: ${current}`;
+      const target = Number(nextRequirements[key]) || 0;
+      if (target > 0) {
+        row.textContent = `${label}: ${current} / ${target}`;
+        if (current < target) {
+          row.classList.add('is-pending');
+        } else {
+          row.classList.add('is-complete');
+        }
+      } else {
+        row.textContent = `${label}: ${current}`;
+      }
       progressWrap.appendChild(row);
     });
     if (progressWrap.childElementCount) {
@@ -364,6 +383,223 @@ function createInstanceCard(definition, instance, index, state) {
 
   item.appendChild(actions);
   return item;
+}
+
+function buildInstanceOverview(definition, instance) {
+  const sections = [];
+  const quality = buildQualityInsight(definition, instance);
+  if (quality) {
+    sections.push(quality);
+  }
+  if (instance.status === 'active') {
+    const milestone = buildNextQualityInsight(definition, instance);
+    if (milestone) {
+      sections.push(milestone);
+    }
+    const payout = buildPayoutInsight(definition, instance);
+    if (payout) {
+      sections.push(payout);
+    }
+  }
+  if (!sections.length) {
+    return null;
+  }
+  const wrapper = document.createElement('div');
+  wrapper.className = 'asset-detail__instance-overview';
+  sections.forEach(section => wrapper.appendChild(section));
+  return wrapper;
+}
+
+function buildQualityInsight(definition, instance) {
+  const level = Number(instance.quality?.level) || 0;
+  const levelInfo = getQualityLevel(definition, level);
+  const container = document.createElement('div');
+  container.className = 'asset-detail__insight';
+
+  const title = document.createElement('h4');
+  title.className = 'asset-detail__insight-title';
+  title.textContent = 'Current quality';
+  container.appendChild(title);
+
+  const summary = document.createElement('p');
+  summary.className = 'asset-detail__insight-body';
+  const tierName = levelInfo?.name ? ` — ${levelInfo.name}` : '';
+  summary.textContent = `Quality ${level}${tierName}`;
+  container.appendChild(summary);
+
+  if (levelInfo?.description) {
+    const detail = document.createElement('p');
+    detail.className = 'asset-detail__insight-note';
+    detail.textContent = levelInfo.description;
+    container.appendChild(detail);
+  }
+
+  return container;
+}
+
+function buildNextQualityInsight(definition, instance) {
+  const level = Number(instance.quality?.level) || 0;
+  const nextRequirements = getQualityNextRequirements(definition, level);
+  const container = document.createElement('div');
+  container.className = 'asset-detail__insight';
+
+  const title = document.createElement('h4');
+  title.className = 'asset-detail__insight-title';
+  title.textContent = 'Next milestone';
+  container.appendChild(title);
+
+  if (!nextRequirements) {
+    const complete = document.createElement('p');
+    complete.className = 'asset-detail__insight-body';
+    complete.textContent = 'Top tier unlocked — keep collecting those dreamy payouts!';
+    container.appendChild(complete);
+    return container;
+  }
+
+  const nextLevel = getNextQualityLevel(definition, level);
+  if (nextLevel) {
+    const heading = document.createElement('p');
+    heading.className = 'asset-detail__insight-body';
+    const tierName = nextLevel.name ? ` — ${nextLevel.name}` : '';
+    heading.textContent = `Quality ${nextLevel.level}${tierName}`;
+    container.appendChild(heading);
+  }
+
+  const tracks = getQualityTracks(definition);
+  const progress = instance.quality?.progress || {};
+  const entries = Object.entries(nextRequirements)
+    .map(([key, target]) => {
+      const label = tracks[key]?.shortLabel || tracks[key]?.label || key;
+      const goal = Number(target) || 0;
+      if (goal <= 0) return null;
+      const current = Number(progress?.[key]) || 0;
+      const remaining = Math.max(0, goal - current);
+      if (remaining <= 0) return null;
+      return { label, current, goal, remaining };
+    })
+    .filter(Boolean);
+
+  if (!entries.length) {
+    const ready = document.createElement('p');
+    ready.className = 'asset-detail__insight-note';
+    ready.textContent = 'All requirements met! Run a quality action to celebrate the rank up.';
+    container.appendChild(ready);
+    return container;
+  }
+
+  const list = document.createElement('ul');
+  list.className = 'asset-detail__requirement-list';
+  entries.forEach(entry => {
+    const item = document.createElement('li');
+    item.className = 'asset-detail__requirement-entry';
+    const label = document.createElement('span');
+    label.className = 'asset-detail__requirement-label';
+    label.textContent = entry.label;
+    const value = document.createElement('span');
+    value.className = 'asset-detail__requirement-value';
+    value.textContent = `${entry.current} / ${entry.goal} (${entry.remaining} to go)`;
+    item.append(label, value);
+    list.appendChild(item);
+  });
+  container.appendChild(list);
+  return container;
+}
+
+function buildPayoutInsight(definition, instance) {
+  const container = document.createElement('div');
+  container.className = 'asset-detail__insight';
+
+  const title = document.createElement('h4');
+  title.className = 'asset-detail__insight-title';
+  title.textContent = 'Latest payout';
+  container.appendChild(title);
+
+  if (instance.status !== 'active') {
+    const note = document.createElement('p');
+    note.className = 'asset-detail__insight-body';
+    note.textContent = 'Launch the build to start logging daily payouts.';
+    container.appendChild(note);
+    return container;
+  }
+
+  const breakdown = instance.lastIncomeBreakdown;
+  const total = Number(breakdown?.total) || Number(instance.lastIncome) || 0;
+  const entries = Array.isArray(breakdown?.entries) ? breakdown.entries : [];
+
+  if (!entries.length || total <= 0) {
+    const range = getInstanceQualityRange(definition, instance);
+    const message = document.createElement('p');
+    message.className = 'asset-detail__insight-body';
+    const min = Math.max(0, Number(range?.min) || 0);
+    const max = Math.max(min, Number(range?.max) || 0);
+    message.textContent = `No payout logged yesterday. Fund upkeep to roll $${formatMoney(min)}–$${formatMoney(max)} per day.`;
+    container.appendChild(message);
+    return container;
+  }
+
+  const summary = document.createElement('p');
+  summary.className = 'asset-detail__insight-body';
+  summary.textContent = `Earned $${formatMoney(Math.max(0, Math.round(total)))} yesterday.`;
+  container.appendChild(summary);
+
+  const list = document.createElement('ul');
+  list.className = 'asset-detail__payout-breakdown';
+
+  entries.forEach(entry => {
+    if (!entry?.label) return;
+    const amount = Math.round(Number(entry.amount) || 0);
+    if (entry.type !== 'base' && amount === 0) {
+      return;
+    }
+    const item = document.createElement('li');
+    item.className = 'asset-detail__payout-entry';
+    if (entry.type === 'base') {
+      item.classList.add('is-base');
+    } else if (amount >= 0) {
+      item.classList.add('is-positive');
+    } else {
+      item.classList.add('is-negative');
+    }
+    const label = document.createElement('span');
+    label.className = 'asset-detail__payout-label';
+    label.textContent = entry.label;
+    if (entry.percent !== null && entry.percent !== undefined) {
+      const formattedPercent = formatPercent(entry.percent);
+      if (formattedPercent) {
+        const percent = document.createElement('span');
+        percent.className = 'asset-detail__payout-percent';
+        percent.textContent = ` (${formattedPercent})`;
+        label.appendChild(percent);
+      }
+    }
+    const value = document.createElement('span');
+    value.className = 'asset-detail__payout-value';
+    if (entry.type === 'base') {
+      value.textContent = `$${formatMoney(Math.abs(amount))}`;
+    } else {
+      const sign = amount >= 0 ? '+' : '\u2212';
+      value.textContent = `${sign}$${formatMoney(Math.abs(amount))}`;
+    }
+    item.append(label, value);
+    list.appendChild(item);
+  });
+
+  container.appendChild(list);
+  return container;
+}
+
+function formatPercent(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return '';
+  const percent = numeric * 100;
+  if (Math.abs(percent) < 0.05) {
+    return '0%';
+  }
+  const rounded = Math.round(percent);
+  const difference = Math.abs(percent - rounded);
+  const base = difference < 0.1 ? rounded : percent.toFixed(1);
+  const prefix = percent > 0 && !String(base).startsWith('+') ? '+' : '';
+  return `${prefix}${base}%`;
 }
 
 function buildInstanceStats(definition, instance) {

@@ -5,6 +5,7 @@
 - Progression refresh: character skills, study scheduling, and celebratory UI now guide players through course-driven bonuses and countdowns.
 - Flow helpers: the "Next" action, Daily Stats card, and header pulse now keep priorities, earnings, and schedules visible at a glance.
 - Asset stewardship: detail panels, sell controls, and recommendations highlight ROI, upkeep costs, and upgrade shortcuts for each build.
+- Active build cards surface quality tiers, remaining steps to the next milestone, and yesterday’s payout breakdown so upgrades feel tangible.
 - Automation & infrastructure: broader instant gigs, smarter assistant load balancing, and new studio/server tiers expand long-term play.
 
 ## Recent Highlights

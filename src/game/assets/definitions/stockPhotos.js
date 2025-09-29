@@ -21,9 +21,17 @@ const stockPhotosDefinition = createAssetDefinition({
     base: 58,
     variance: 0.35,
     logType: 'passive',
-    modifier: amount => {
+    modifier: (amount, context = {}) => {
       const expansion = getUpgradeState('studioExpansion').purchased ? 1.2 : 1;
-      return Math.round(amount * expansion);
+      const total = amount * expansion;
+      if (expansion > 1 && typeof context.recordModifier === 'function') {
+        context.recordModifier('Studio expansion boost', total - amount, {
+          id: 'studioExpansion',
+          type: 'upgrade',
+          percent: expansion - 1
+        });
+      }
+      return total;
     }
   },
   requirements: {

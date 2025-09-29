@@ -21,9 +21,17 @@ const saasDefinition = createAssetDefinition({
     base: 108,
     variance: 0.4,
     logType: 'passive',
-    modifier: amount => {
+    modifier: (amount, context = {}) => {
       const edge = getUpgradeState('serverEdge').purchased ? 1.35 : 1;
-      return Math.round(amount * edge);
+      const total = amount * edge;
+      if (edge > 1 && typeof context.recordModifier === 'function') {
+        context.recordModifier('Edge delivery boost', total - amount, {
+          id: 'serverEdge',
+          type: 'upgrade',
+          percent: edge - 1
+        });
+      }
+      return total;
     }
   },
   requirements: {

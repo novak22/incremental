@@ -20,9 +20,17 @@ const blogDefinition = createAssetDefinition({
     base: 30,
     variance: 0.2,
     logType: 'passive',
-    modifier: amount => {
+    modifier: (amount, context = {}) => {
       const automation = getUpgradeState('course').purchased ? 1.5 : 1;
-      return amount * automation;
+      const total = amount * automation;
+      if (automation > 1 && typeof context.recordModifier === 'function') {
+        context.recordModifier('Automation course boost', total - amount, {
+          id: 'course',
+          type: 'upgrade',
+          percent: automation - 1
+        });
+      }
+      return total;
     }
   },
   quality: {
