@@ -6,6 +6,7 @@
 - Flow helpers: the "Next" action, Daily Stats card, and header pulse now keep priorities, earnings, and schedules visible at a glance.
 - Asset stewardship: detail panels, sell controls, and recommendations highlight ROI, upkeep costs, and upgrade shortcuts for each build.
 - Automation & infrastructure: broader instant gigs, smarter assistant load balancing, and new studio/server tiers expand long-term play.
+- Education clarity: finished courses now show 100% progress and list the XP-rich skills they elevate.
 
 ## Recent Highlights
 - Passive assets gained Quality 4–5 milestones with higher payouts and refreshed modifiers.

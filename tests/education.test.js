@@ -62,3 +62,73 @@ test('education tracks reflect canonical study data', async () => {
   const note = track.querySelector('.study-track__note');
   assert.equal(note?.textContent, 'Reserve 2h today to keep momentum humming.');
 });
+
+test('completed study tracks celebrate progress and skills', async () => {
+  const trackList = document.getElementById('study-track-list');
+  const queueList = document.getElementById('study-queue-list');
+  const queueEta = document.getElementById('study-queue-eta');
+  const queueCap = document.getElementById('study-queue-cap');
+  trackList.innerHTML = '';
+  queueList.innerHTML = '';
+  queueEta.textContent = '';
+  queueCap.textContent = '';
+
+  const stateModule = await import('../src/core/state.js');
+  const { configureRegistry, initializeState, getState } = stateModule;
+
+  const { registry } = await import('../src/game/registry.js');
+  configureRegistry(registry);
+  initializeState();
+
+  const requirements = await import('../src/game/requirements.js');
+  const { getKnowledgeProgress } = requirements;
+
+  const { renderCardCollections, updateAllCards } = await import('../src/ui/cards.js');
+  renderCardCollections({
+    hustles: [],
+    education: registry.hustles.filter(hustle => hustle.tag?.type === 'study'),
+    assets: [],
+    upgrades: []
+  });
+
+  const state = getState();
+  const progress = getKnowledgeProgress('outlineMastery', state);
+  progress.daysCompleted = progress.totalDays;
+  progress.completed = true;
+  progress.enrolled = false;
+  progress.studiedToday = false;
+
+  updateAllCards({
+    hustles: [],
+    education: registry.hustles.filter(hustle => hustle.tag?.type === 'study'),
+    assets: [],
+    upgrades: []
+  });
+
+  const track = document.querySelector("[data-track='outlineMastery']");
+  assert.ok(track, 'study track should remain visible after completion');
+  assert.equal(track?.dataset.complete, 'true');
+
+  const fill = track?.querySelector('.study-track__progress span');
+  assert.equal(fill?.style.width, '100%');
+
+  const remaining = track?.querySelector('.study-track__remaining');
+  assert.equal(remaining?.textContent, '5/5 days complete');
+
+  const remainingDays = track?.querySelector('.study-track__remaining-days');
+  assert.equal(remainingDays?.textContent, 'Course complete');
+
+  const skillHeading = track?.querySelector('.study-track__skills-heading');
+  assert.equal(skillHeading?.textContent, 'Skill rewards');
+
+  const skillItems = Array.from(track?.querySelectorAll('.study-track__skills-item strong') || []).map(
+    node => node.textContent
+  );
+  assert.ok(
+    skillItems.includes('Writing & Storycraft'),
+    'skill rewards should list Writing & Storycraft focus'
+  );
+
+  const xpNote = track?.querySelector('.study-track__skills-note');
+  assert.equal(xpNote?.textContent, 'Graduates collect +120 XP across these disciplines.');
+});
