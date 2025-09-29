@@ -32,7 +32,7 @@ Online Hustle Simulator is a browser-based incremental game about orchestrating 
 
 ### Passive Assets (Daily Payouts)
 Each asset supports multiple instances, tracks setup progress, and rolls a daily income range once active. Quality actions unique to each asset increase payouts and stability, and you can liquidate any instance directly from the card—or from the category roster—for three times its previous day payout. The asset briefing modal doubles as an instance inspector, outlining status, upkeep, yesterday’s earnings, and which upgrades are owned or still locked.
-- Select quality actions now include a visible cooldown so big-impact moves (SEO sprints, ad bursts, and marketplace pitches) can only be run every few in-game days, nudging players to rotate through their portfolio.
+- Quality actions now display daily-use counters so big-impact moves (SEO sprints, ad bursts, and marketplace pitches) can only run a set number of times per day, nudging players to rotate through their portfolio.
 - **Personal Blog Network** – Setup 3 days × 3h ($180). Requires 0.75h/day + $3 maintenance. Quality actions include drafting posts, SEO sprints, and backlink outreach; the ladder now climbs from $3–$6/day at Quality 0 to $64–$84/day at Quality 5 once backlinks, SEO, and outreach hum in unison (Automation Course still boosts payouts another 50%).
 
 - **Weekly Vlog Channel** – Setup 4 days × 4h ($420) with Camera upgrade. Maintenance 1.5h/day + $9. Record episodes, polish edits, and run promo blasts to climb from $2–$5/day at Quality 0 to $62–$82/day at Quality 5, with viral spikes getting juicier at the new top tiers.

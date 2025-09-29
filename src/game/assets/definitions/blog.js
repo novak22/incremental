@@ -111,6 +111,7 @@ const blogDefinition = createAssetDefinition({
         id: 'writePost',
         label: 'Write Post',
         time: 3,
+        dailyLimit: 1,
         progressKey: 'posts',
         progressAmount: context => {
           let progress = 1;
@@ -127,7 +128,7 @@ const blogDefinition = createAssetDefinition({
         label: 'SEO Sprint',
         time: 2,
         cost: 16,
-        cooldownDays: 1,
+        dailyLimit: 1,
         progressKey: 'seo',
         skills: ['promotion'],
         log: ({ label }) => `${label} ran an SEO tune-up. Keywords now shimmy to the top.`
@@ -137,7 +138,7 @@ const blogDefinition = createAssetDefinition({
         label: 'Backlink Outreach',
         time: 1.5,
         cost: 16,
-        cooldownDays: 2,
+        dailyLimit: 1,
         progressKey: 'outreach',
         skills: ['audience', { id: 'promotion', weight: 0.5 }],
         log: ({ label }) => `${label} charmed partners into fresh backlinks. Authority climbs!`

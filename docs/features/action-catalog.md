@@ -4,7 +4,7 @@
 - Keep every action (hustles, upgrades, quality pushes) in one schema so availability logic stays consistent.
 
 **What exists today**
-- Catalog selectors check time, money, requirements, cooldowns, and emit why an action is locked.
+- Catalog selectors check time, money, requirements, daily limits, and emit why an action is locked.
 - A debug toggle (`?debugActions=1` or `#debug-actions`) lists the catalog in-game for rapid balancing.
 
 **Why it matters**

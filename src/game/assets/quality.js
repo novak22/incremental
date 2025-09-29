@@ -8,52 +8,45 @@ import { recordCostContribution, recordTimeContribution } from '../metrics.js';
 import { spendTime } from '../time.js';
 import { awardSkillProgress } from '../skills/index.js';
 
-function ensureCooldownMap(instance) {
-  if (!instance.cooldowns || typeof instance.cooldowns !== 'object') {
-    instance.cooldowns = {};
+function ensureUsageMap(instance) {
+  if (!instance.dailyUsage || typeof instance.dailyUsage !== 'object') {
+    instance.dailyUsage = {};
   }
-  return instance.cooldowns;
+  return instance.dailyUsage;
 }
 
-function getActionAvailableDay(instance, actionId) {
-  if (!instance?.cooldowns) return 0;
-  const value = Number(instance.cooldowns[actionId]);
+function getDailyLimit(action) {
+  const limit = Number(action?.dailyLimit);
+  if (!Number.isFinite(limit) || limit <= 0) {
+    return 1;
+  }
+  return Math.max(1, Math.floor(limit));
+}
+
+function getUsageCount(instance, actionId) {
+  if (!instance?.dailyUsage) return 0;
+  const value = Number(instance.dailyUsage[actionId]);
   if (!Number.isFinite(value)) return 0;
   return Math.max(0, Math.floor(value));
 }
 
-function getCurrentDay(state = getState()) {
-  const day = Number(state?.day);
-  return Number.isFinite(day) ? Math.max(0, Math.floor(day)) : 0;
-}
-
-function getCooldownStatus(instance, action, state = getState()) {
-  const cooldownDays = Number(action?.cooldownDays) || 0;
-  if (cooldownDays <= 0) {
-    return {
-      cooldownDays: 0,
-      onCooldown: false,
-      remainingDays: 0,
-      availableDay: 0
-    };
-  }
-  const availableDay = getActionAvailableDay(instance, action.id);
-  const currentDay = getCurrentDay(state);
-  const remainingDays = Math.max(0, availableDay - currentDay);
+function getUsageStatus(instance, action) {
+  const dailyLimit = getDailyLimit(action);
+  const usedToday = Math.min(dailyLimit, getUsageCount(instance, action.id));
+  const remainingUses = Math.max(0, dailyLimit - usedToday);
   return {
-    cooldownDays,
-    onCooldown: availableDay > currentDay,
-    remainingDays: availableDay > currentDay ? remainingDays : 0,
-    availableDay
+    dailyLimit,
+    usedToday,
+    remainingUses,
+    exhausted: remainingUses <= 0
   };
 }
 
-function scheduleCooldown(instance, action, state = getState()) {
-  const cooldownDays = Number(action?.cooldownDays) || 0;
-  if (cooldownDays <= 0) return;
-  const map = ensureCooldownMap(instance);
-  const currentDay = getCurrentDay(state);
-  map[action.id] = Math.max(0, currentDay + Math.max(0, Math.floor(cooldownDays)));
+function trackUsage(instance, action) {
+  const map = ensureUsageMap(instance);
+  const dailyLimit = getDailyLimit(action);
+  const current = getUsageCount(instance, action.id);
+  map[action.id] = Math.min(dailyLimit, current + 1);
 }
 
 const QUALITY_LEVEL_CACHE = new WeakMap();
@@ -237,13 +230,10 @@ function runQualityAction(definition, instanceId, actionId) {
     return;
   }
 
-  const cooldown = getCooldownStatus(instance, action, state);
-  if (cooldown.onCooldown) {
+  const usage = getUsageStatus(instance, action);
+  if (usage.exhausted) {
     const label = getActionLabel(definition, assetState, instance);
-    const waitLabel = cooldown.remainingDays === 1
-      ? 'tomorrow'
-      : `in ${cooldown.remainingDays} days`;
-    addLog(`${label} needs a breather before repeating that move. Try again ${waitLabel}.`, 'info');
+    addLog(`${label} already used that move today. Fresh inspiration returns tomorrow.`, 'info');
     return;
   }
 
@@ -298,7 +288,7 @@ function runQualityAction(definition, instanceId, actionId) {
     action.onComplete({ state, definition, instance, quality });
   }
 
-  scheduleCooldown(instance, action, state);
+  trackUsage(instance, action);
 
   const label = getActionLabel(definition, assetState, instance);
   if (typeof action.log === 'function') {
@@ -402,8 +392,8 @@ export function canPerformQualityAction(definition, instance, action, state = ge
   if (instance.status !== 'active') return false;
   const availability = getQualityActionAvailabilityInternal(definition, instance, action, state);
   if (!availability.unlocked) return false;
-  const cooldown = getCooldownStatus(instance, action, state);
-  if (cooldown.onCooldown) return false;
+  const usage = getUsageStatus(instance, action);
+  if (usage.exhausted) return false;
   const timeCost = Math.max(0, Number(action.time) || 0);
   const moneyCost = Math.max(0, Number(action.cost) || 0);
   if (timeCost > 0 && state.timeLeft < timeCost) return false;
@@ -425,16 +415,16 @@ export function getQualityTracks(definition) {
   return config?.tracks || {};
 }
 
-export function getQualityActionCooldown(definition, instance, action, state = getState()) {
+export function getQualityActionUsage(definition, instance, action) {
   if (!definition || !instance || !action) {
     return {
-      cooldownDays: 0,
-      onCooldown: false,
-      remainingDays: 0,
-      availableDay: 0
+      dailyLimit: 1,
+      usedToday: 0,
+      remainingUses: 1,
+      exhausted: false
     };
   }
-  return getCooldownStatus(instance, action, state);
+  return getUsageStatus(instance, action);
 }
 
 export function getQualityLevelSummary(definition) {
