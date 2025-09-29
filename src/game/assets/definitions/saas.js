@@ -68,15 +68,22 @@ const saasDefinition = createAssetDefinition({
         level: 3,
         name: 'Scaling Flywheel',
         description: 'Marketing pushes and infrastructure unlock bigger accounts.',
-        income: { min: 54, max: 74 },
+        income: { min: 84, max: 120 },
         requirements: { features: 24, stability: 8, marketing: 6 }
       },
       {
         level: 4,
         name: 'Global Edge Authority',
         description: 'Edge coverage, uptime bragging rights, and enterprise case studies pour gasoline on growth.',
-        income: { min: 82, max: 110 },
+        income: { min: 120, max: 168 },
         requirements: { features: 34, stability: 12, marketing: 10, edge: 4 }
+      },
+      {
+        level: 5,
+        name: 'Ecosystem Powerhouse',
+        description: 'A thriving partner marketplace and integrations make churn basically mythical.',
+        income: { min: 168, max: 220 },
+        requirements: { features: 48, stability: 18, marketing: 15, edge: 8 }
       }
     ],
     actions: [
@@ -124,6 +131,9 @@ const saasDefinition = createAssetDefinition({
     ],
     messages: {
       levelUp: ({ label, level, levelDef }) => {
+        if (levelDef?.level >= 5) {
+          return `${label} rocketed to Quality ${level}: ${levelDef?.name || 'ecosystem tier'}! Integrations rain down marquee clients.`;
+        }
         if (levelDef?.level >= 4) {
           return `${label} achieved Quality ${level}: ${levelDef?.name || 'global tier'}! Worldwide subscribers rave about the instant response times.`;
         }

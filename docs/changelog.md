@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- Extended every passive asset with new Quality 4–5 milestones, raising top-end payouts (blogs now reach $84/day, vlogs $82/day, e-books $78/day, stock photos $150/day, dropshipping $176/day, SaaS $220/day) and refreshing viral modifiers plus documentation to match.
 - Corrected the Personal Blog Network upkeep to its 0.75h/$3 tuning so maintenance consumes the intended time budget and queued payouts behave consistently.
 - Retuned Stock Photo Galleries, Dropshipping Labs, and Micro SaaS payouts with lighter upkeep and lower quality hurdles, and wired the Cinema Camera, Studio Expansion, and Edge Delivery upgrades into tangible income and progress boosts.
 - Introduced a character skill system with ten themed disciplines, action-driven XP awards, education bonuses, and overall creator levels that log celebratory progress.

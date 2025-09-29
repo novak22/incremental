@@ -60,6 +60,20 @@ const blogDefinition = createAssetDefinition({
         description: 'Backlinks and authority content turn ad clicks into a gush.',
         income: { min: 30, max: 42 },
         requirements: { posts: 18, seo: 5, outreach: 3 }
+      },
+      {
+        level: 4,
+        name: 'Syndication Dynamo',
+        description: 'Guest post swaps and sponsor bundles send payouts soaring.',
+        income: { min: 46, max: 62 },
+        requirements: { posts: 28, seo: 9, outreach: 6 }
+      },
+      {
+        level: 5,
+        name: 'Constellation Network',
+        description: 'An interlinked brand empire showers you in evergreen commissions.',
+        income: { min: 64, max: 84 },
+        requirements: { posts: 40, seo: 14, outreach: 10 }
       }
     ],
     actions: [
