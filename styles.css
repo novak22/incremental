@@ -854,6 +854,170 @@ body {
   font-weight: 600;
 }
 
+.asset-detail {
+  display: grid;
+  gap: 20px;
+  padding-bottom: 8px;
+}
+
+.asset-detail__intro {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-subtle);
+}
+
+.asset-detail__section {
+  display: grid;
+  gap: 12px;
+}
+
+.asset-detail__section h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.asset-detail__highlights {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.asset-detail__highlight {
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  line-height: 1.5;
+}
+
+.asset-detail__instances {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.asset-detail__instance {
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.asset-detail__instance-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.asset-detail__instance-header strong {
+  font-size: 16px;
+}
+
+.asset-detail__instance-status {
+  color: var(--text-subtle);
+  font-size: 13px;
+}
+
+.asset-detail__instance-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  font-size: 13px;
+  color: var(--text-subtle);
+}
+
+.asset-detail__instance-earnings {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.asset-detail__instance-roi {
+  color: var(--success);
+  font-weight: 600;
+}
+
+.asset-detail__instance-roi.is-negative {
+  color: var(--danger);
+}
+
+.asset-detail__progress {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  font-size: 12px;
+  color: var(--text-subtle);
+}
+
+.asset-detail__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.asset-detail__quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.asset-detail__action-button {
+  border: 1px solid var(--accent);
+  background: var(--accent-soft);
+  color: var(--text);
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.asset-detail__action-button:disabled {
+  border-color: var(--border);
+  background: rgba(148, 163, 184, 0.16);
+  color: var(--text-subtle);
+  cursor: not-allowed;
+}
+
+.asset-detail__action-button:not(:disabled):hover {
+  background: rgba(124, 92, 255, 0.28);
+}
+
+.asset-detail__action-note {
+  font-size: 13px;
+  color: var(--text-subtle);
+  align-self: center;
+}
+
+.asset-detail__sell {
+  margin-left: auto;
+}
+
+.asset-detail__sell[disabled] {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.asset-detail__empty {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  background: rgba(148, 163, 184, 0.12);
+  color: var(--text-subtle);
+  font-size: 14px;
+}
+
 button:focus-visible,
 a:focus-visible {
   outline: none;

@@ -3,6 +3,24 @@ import { getAssetState, getState, getUpgradeState } from '../core/state.js';
 import { formatHours, formatMoney } from '../core/helpers.js';
 import { describeHustleRequirements } from '../game/hustles.js';
 import { KNOWLEDGE_TRACKS, getKnowledgeProgress } from '../game/requirements.js';
+import {
+  describeInstance,
+  describeInstanceEarnings,
+  describeInstanceNetHourly
+} from './assetInstances.js';
+import {
+  calculateAssetSalePrice,
+  instanceLabel,
+  sellAssetInstance
+} from '../game/assets/helpers.js';
+import {
+  canPerformQualityAction,
+  getQualityActionCooldown,
+  getQualityActions,
+  getQualityLevel,
+  getQualityTracks,
+  performQualityAction
+} from '../game/assets/quality.js';
 
 const hustleUi = new Map();
 const assetUi = new Map();
@@ -58,6 +76,230 @@ function createDefinitionSummary(title, rows = []) {
     }
     list.appendChild(item);
   });
+  section.appendChild(list);
+  return section;
+}
+
+function createAssetDetailHighlights(definition) {
+  const detailBuilders = Array.isArray(definition.details) ? definition.details : [];
+  const details = detailBuilders
+    .map(builder => {
+      if (typeof builder === 'function') {
+        try {
+          return builder();
+        } catch (error) {
+          console.error('Failed to render asset detail', error);
+          return null;
+        }
+      }
+      return builder;
+    })
+    .filter(detail => {
+      if (!detail) return false;
+      if (typeof detail === 'string') {
+        return detail.trim().length > 0;
+      }
+      return detail instanceof Node;
+    });
+
+  if (!details.length) return null;
+
+  const section = document.createElement('section');
+  section.className = 'asset-detail__section';
+  const heading = document.createElement('h3');
+  heading.textContent = 'Launch blueprint';
+  section.appendChild(heading);
+
+  const list = document.createElement('ul');
+  list.className = 'asset-detail__highlights';
+  details.forEach(detail => {
+    const item = document.createElement('li');
+    item.className = 'asset-detail__highlight';
+    if (typeof detail === 'string') {
+      item.innerHTML = detail;
+    } else if (detail instanceof Node) {
+      item.appendChild(detail);
+    }
+    list.appendChild(item);
+  });
+  section.appendChild(list);
+  return section;
+}
+
+function createInstanceQuickActions(definition, instance, state) {
+  const container = document.createElement('div');
+  container.className = 'asset-detail__quick-actions';
+
+  if (instance.status !== 'active') {
+    const note = document.createElement('span');
+    note.className = 'asset-detail__action-note';
+    note.textContent = 'Upgrades unlock after launch.';
+    container.appendChild(note);
+    return container;
+  }
+
+  const actions = getQualityActions(definition);
+  if (!actions.length) {
+    const note = document.createElement('span');
+    note.className = 'asset-detail__action-note';
+    note.textContent = 'No quality actions configured yet.';
+    container.appendChild(note);
+    return container;
+  }
+
+  const prioritized = [...actions].sort((a, b) => {
+    const aAvailable = canPerformQualityAction(definition, instance, a, state) ? 1 : 0;
+    const bAvailable = canPerformQualityAction(definition, instance, b, state) ? 1 : 0;
+    return bAvailable - aAvailable;
+  });
+
+  const limit = Math.min(prioritized.length, 3);
+  for (let index = 0; index < limit; index += 1) {
+    const action = prioritized[index];
+    if (!action) continue;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'asset-detail__action-button';
+    button.textContent = action.label || 'Upgrade';
+    const disabled = !canPerformQualityAction(definition, instance, action, state);
+    button.disabled = disabled;
+    const details = [];
+    if (action.time) {
+      details.push(`⏳ ${formatHours(action.time)}`);
+    }
+    if (action.cost) {
+      details.push(`💵 $${formatMoney(action.cost)}`);
+    }
+    const cooldown = getQualityActionCooldown(definition, instance, action, state);
+    if (cooldown.onCooldown) {
+      const days = cooldown.remainingDays;
+      const label = days === 1 ? 'Ready tomorrow' : `Ready in ${days} days`;
+      details.push(`🕒 ${label}`);
+    }
+    if (details.length) {
+      button.title = details.join(' · ');
+    }
+    button.addEventListener('click', event => {
+      event.preventDefault();
+      if (button.disabled) return;
+      performQualityAction(definition.id, instance.id, action.id);
+    });
+    container.appendChild(button);
+  }
+
+  if (prioritized.length > limit) {
+    const more = document.createElement('span');
+    more.className = 'asset-detail__action-note';
+    more.textContent = `+${prioritized.length - limit} more upgrades available`;
+    container.appendChild(more);
+  }
+
+  return container;
+}
+
+function createInstanceListSection(definition, state) {
+  const assetState = getAssetState(definition.id, state);
+  const instances = Array.isArray(assetState?.instances) ? assetState.instances : [];
+
+  const section = document.createElement('section');
+  section.className = 'asset-detail__section asset-detail__section--instances';
+  const heading = document.createElement('h3');
+  heading.textContent = 'Launched builds';
+  section.appendChild(heading);
+
+  if (!instances.length) {
+    const empty = document.createElement('p');
+    empty.className = 'asset-detail__empty';
+    empty.textContent = 'No builds launched yet. Spin one up to start earning.';
+    section.appendChild(empty);
+    return section;
+  }
+
+  const tracks = getQualityTracks(definition);
+  const list = document.createElement('ul');
+  list.className = 'asset-detail__instances';
+
+  instances.forEach((instance, index) => {
+    const item = document.createElement('li');
+    item.className = 'asset-detail__instance';
+    item.dataset.instanceId = instance.id;
+
+    const header = document.createElement('div');
+    header.className = 'asset-detail__instance-header';
+    const name = document.createElement('strong');
+    name.textContent = instanceLabel(definition, index);
+    header.appendChild(name);
+
+    const status = document.createElement('span');
+    status.className = 'asset-detail__instance-status';
+    const statusText = describeInstance(definition, instance);
+    if (instance.status === 'active') {
+      const level = Number(instance.quality?.level) || 0;
+      const levelInfo = getQualityLevel(definition, level);
+      const label = levelInfo?.name ? ` • ${levelInfo.name}` : '';
+      status.textContent = `${statusText}${label}`;
+    } else {
+      status.textContent = statusText;
+    }
+    header.appendChild(status);
+    item.appendChild(header);
+
+    const meta = document.createElement('div');
+    meta.className = 'asset-detail__instance-meta';
+    const earnings = document.createElement('span');
+    earnings.className = 'asset-detail__instance-earnings';
+    earnings.textContent = describeInstanceEarnings(instance);
+    meta.appendChild(earnings);
+    if (instance.status === 'active') {
+      const roi = document.createElement('span');
+      roi.className = 'asset-detail__instance-roi';
+      const roiText = describeInstanceNetHourly(definition, instance);
+      roi.textContent = `Net: ${roiText}`;
+      if (roiText.startsWith('-')) {
+        roi.classList.add('is-negative');
+      }
+      meta.appendChild(roi);
+    }
+    item.appendChild(meta);
+
+    if (instance.status === 'active') {
+      const progressWrap = document.createElement('div');
+      progressWrap.className = 'asset-detail__progress';
+      const progress = instance.quality?.progress || {};
+      Object.entries(tracks).forEach(([key, track]) => {
+        const label = track?.shortLabel || track?.label || key;
+        const current = Number(progress?.[key]) || 0;
+        const row = document.createElement('span');
+        row.className = 'asset-detail__progress-entry';
+        row.textContent = `${label}: ${current}`;
+        progressWrap.appendChild(row);
+      });
+      if (progressWrap.childElementCount) {
+        item.appendChild(progressWrap);
+      }
+    }
+
+    const actions = document.createElement('div');
+    actions.className = 'asset-detail__actions';
+    actions.appendChild(createInstanceQuickActions(definition, instance, state));
+
+    const sellButton = document.createElement('button');
+    sellButton.type = 'button';
+    sellButton.className = 'asset-detail__sell secondary';
+    const price = calculateAssetSalePrice(instance);
+    sellButton.textContent = price > 0 ? `Sell for $${formatMoney(price)}` : 'No buyer yet';
+    sellButton.disabled = price <= 0;
+    sellButton.addEventListener('click', event => {
+      event.preventDefault();
+      if (sellButton.disabled) return;
+      sellAssetInstance(definition, instance.id);
+    });
+    actions.appendChild(sellButton);
+
+    item.appendChild(actions);
+    list.appendChild(item);
+  });
+
   section.appendChild(list);
   return section;
 }
@@ -334,36 +576,31 @@ function refreshAssetRow(definition) {
 
 function openAssetDetails(definition) {
   const state = getState();
-  const assetState = getAssetState(definition.id, state);
-  const instances = Array.isArray(assetState?.instances) ? assetState.instances : [];
-
   const body = document.createElement('div');
   body.className = 'asset-detail';
 
+  if (definition.description) {
+    const intro = document.createElement('p');
+    intro.className = 'asset-detail__intro';
+    intro.textContent = definition.description;
+    body.appendChild(intro);
+  }
+
+  const highlights = createAssetDetailHighlights(definition);
+  if (highlights) {
+    body.appendChild(highlights);
+  }
+
+  const assetState = getAssetState(definition.id, state);
+  const instances = Array.isArray(assetState?.instances) ? assetState.instances : [];
   const summaryRows = [
     { label: 'Active builds', value: String(instances.filter(i => i.status === 'active').length) },
     { label: 'Setup builds', value: String(instances.filter(i => i.status === 'setup').length) },
     { label: 'Maintenance hours', value: formatHours(Number(definition.maintenance?.hours) || 0) }
   ];
-  body.appendChild(createDefinitionSummary('Overview', summaryRows));
+  body.appendChild(createDefinitionSummary('Roster snapshot', summaryRows));
 
-  const logList = document.createElement('ul');
-  logList.className = 'definition-list';
-  instances.slice(0, 6).forEach((instance, index) => {
-    const item = document.createElement('li');
-    item.textContent = `Build ${index + 1} • ${instance.status} • Last payout $${formatMoney(Number(instance.lastIncome) || 0)}`;
-    logList.appendChild(item);
-  });
-  if (!logList.childElementCount) {
-    const item = document.createElement('li');
-    item.textContent = 'No builds launched yet.';
-    logList.appendChild(item);
-  }
-  const instancesSection = document.createElement('section');
-  const instancesHeading = document.createElement('h3');
-  instancesHeading.textContent = 'Instances';
-  instancesSection.append(instancesHeading, logList);
-  body.appendChild(instancesSection);
+  body.appendChild(createInstanceListSection(definition, state));
 
   showSlideOver({ eyebrow: 'Asset', title: definition.name, body });
 }
