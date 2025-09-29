@@ -240,6 +240,53 @@ function createAssetDetailHighlights(definition) {
   requirementsCard.appendChild(requirementsList);
   grid.appendChild(requirementsCard);
 
+  // Roadmap / stats column
+  const roadmapCard = document.createElement('article');
+  roadmapCard.className = 'asset-detail__summary-card asset-detail__summary-card--roadmap';
+  const roadmapTitle = document.createElement('h4');
+  roadmapTitle.textContent = 'Roadmap & stats';
+  roadmapCard.appendChild(roadmapTitle);
+
+  const roadmapList = document.createElement('ul');
+  roadmapList.className = 'asset-detail__summary-list';
+  const roadmapKeys = ['owned', 'setup', 'setupCost', 'maintenance', 'income', 'latestYield'];
+  roadmapKeys.forEach(key => {
+    const values = detailByKey.get(key) || [];
+    values.forEach(value => {
+      const item = document.createElement('li');
+      item.className = 'asset-detail__summary-item';
+      if (typeof value === 'string') {
+        item.innerHTML = value;
+      } else if (value instanceof Node) {
+        item.appendChild(value);
+      }
+      roadmapList.appendChild(item);
+    });
+  });
+
+  const consumedKeys = new Set(['requirements', 'qualitySummary', 'qualityProgress', ...roadmapKeys]);
+  const extraDetails = renderedDetails.filter(detail => !consumedKeys.has(detail.key));
+  extraDetails.forEach(detail => {
+    const item = document.createElement('li');
+    item.className = 'asset-detail__summary-item';
+    if (typeof detail.value === 'string') {
+      item.innerHTML = detail.value;
+    } else if (detail.value instanceof Node) {
+      item.appendChild(detail.value);
+    }
+    roadmapList.appendChild(item);
+  });
+
+  if (!roadmapList.children.length) {
+    const empty = document.createElement('li');
+    empty.className = 'asset-detail__summary-item';
+    empty.textContent = 'No roadmap details available yet.';
+    roadmapList.appendChild(empty);
+  }
+
+  roadmapCard.appendChild(roadmapList);
+  grid.appendChild(roadmapCard);
+
   // Quality column
   const qualityCard = document.createElement('article');
   qualityCard.className = 'asset-detail__summary-card asset-detail__summary-card--quality';
@@ -290,53 +337,6 @@ function createAssetDetailHighlights(definition) {
   });
   qualityCard.appendChild(qualityList);
   grid.appendChild(qualityCard);
-
-  // Roadmap / stats column
-  const roadmapCard = document.createElement('article');
-  roadmapCard.className = 'asset-detail__summary-card asset-detail__summary-card--roadmap';
-  const roadmapTitle = document.createElement('h4');
-  roadmapTitle.textContent = 'Roadmap & stats';
-  roadmapCard.appendChild(roadmapTitle);
-
-  const roadmapList = document.createElement('ul');
-  roadmapList.className = 'asset-detail__summary-list';
-  const roadmapKeys = ['owned', 'setup', 'setupCost', 'maintenance', 'income', 'latestYield'];
-  roadmapKeys.forEach(key => {
-    const values = detailByKey.get(key) || [];
-    values.forEach(value => {
-      const item = document.createElement('li');
-      item.className = 'asset-detail__summary-item';
-      if (typeof value === 'string') {
-        item.innerHTML = value;
-      } else if (value instanceof Node) {
-        item.appendChild(value);
-      }
-      roadmapList.appendChild(item);
-    });
-  });
-
-  const consumedKeys = new Set(['requirements', 'qualitySummary', 'qualityProgress', ...roadmapKeys]);
-  const extraDetails = renderedDetails.filter(detail => !consumedKeys.has(detail.key));
-  extraDetails.forEach(detail => {
-    const item = document.createElement('li');
-    item.className = 'asset-detail__summary-item';
-    if (typeof detail.value === 'string') {
-      item.innerHTML = detail.value;
-    } else if (detail.value instanceof Node) {
-      item.appendChild(detail.value);
-    }
-    roadmapList.appendChild(item);
-  });
-
-  if (!roadmapList.children.length) {
-    const empty = document.createElement('li');
-    empty.className = 'asset-detail__summary-item';
-    empty.textContent = 'No roadmap details available yet.';
-    roadmapList.appendChild(empty);
-  }
-
-  roadmapCard.appendChild(roadmapList);
-  grid.appendChild(roadmapCard);
 
   return section;
 }
@@ -1413,15 +1413,6 @@ function openAssetDetails(definition) {
   if (highlights) {
     body.appendChild(highlights);
   }
-
-  const assetState = getAssetState(definition.id, state);
-  const instances = Array.isArray(assetState?.instances) ? assetState.instances : [];
-  const summaryRows = [
-    { label: 'Active builds', value: String(instances.filter(i => i.status === 'active').length) },
-    { label: 'Setup builds', value: String(instances.filter(i => i.status === 'setup').length) },
-    { label: 'Maintenance hours', value: formatHours(Number(definition.maintenance?.hours) || 0) }
-  ];
-  body.appendChild(createDefinitionSummary('Roster snapshot', summaryRows));
 
   showSlideOver({ eyebrow: 'Asset', title: definition.name, body });
 }
