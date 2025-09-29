@@ -65,6 +65,20 @@ const stockPhotosDefinition = createAssetDefinition({
         description: 'Marketing funnels keep cash flowing.',
         income: { min: 54, max: 78 },
         requirements: { shoots: 16, editing: 7, marketing: 5 }
+      },
+      {
+        level: 4,
+        name: 'Agency Mainstay',
+        description: 'Every campaign brief leans on your polished libraries.',
+        income: { min: 80, max: 108 },
+        requirements: { shoots: 24, editing: 11, marketing: 9 }
+      },
+      {
+        level: 5,
+        name: 'Global Brand Kit',
+        description: 'Exclusive partnerships and licensing deals rain down premium royalties.',
+        income: { min: 112, max: 150 },
+        requirements: { shoots: 36, editing: 16, marketing: 14 }
       }
     ],
     actions: [
