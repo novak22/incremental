@@ -5,7 +5,6 @@ import { describeHustleRequirements } from '../game/hustles.js';
 import { KNOWLEDGE_TRACKS, getKnowledgeProgress } from '../game/requirements.js';
 import {
   describeInstance,
-  describeInstanceEarnings,
   describeInstanceNetHourly
 } from './assetInstances.js';
 import {
@@ -13,6 +12,11 @@ import {
   instanceLabel,
   sellAssetInstance
 } from '../game/assets/helpers.js';
+import {
+  getPendingEquipmentUpgrades,
+  getUpgradeButtonLabel,
+  isUpgradeDisabled
+} from './assetUpgrades.js';
 import {
   canPerformQualityAction,
   getQualityActionCooldown,
@@ -215,93 +219,295 @@ function createInstanceListSection(definition, state) {
     return section;
   }
 
-  const tracks = getQualityTracks(definition);
-  const list = document.createElement('ul');
-  list.className = 'asset-detail__instances';
-
+  const activeCards = [];
+  const queuedCards = [];
   instances.forEach((instance, index) => {
-    const item = document.createElement('li');
-    item.className = 'asset-detail__instance';
-    item.dataset.instanceId = instance.id;
-
-    const header = document.createElement('div');
-    header.className = 'asset-detail__instance-header';
-    const name = document.createElement('strong');
-    name.textContent = instanceLabel(definition, index);
-    header.appendChild(name);
-
-    const status = document.createElement('span');
-    status.className = 'asset-detail__instance-status';
-    const statusText = describeInstance(definition, instance);
+    const card = createInstanceCard(definition, instance, index, state);
+    if (!card) return;
     if (instance.status === 'active') {
-      const level = Number(instance.quality?.level) || 0;
-      const levelInfo = getQualityLevel(definition, level);
-      const label = levelInfo?.name ? ` • ${levelInfo.name}` : '';
-      status.textContent = `${statusText}${label}`;
+      activeCards.push(card);
     } else {
-      status.textContent = statusText;
+      queuedCards.push(card);
     }
-    header.appendChild(status);
-    item.appendChild(header);
-
-    const meta = document.createElement('div');
-    meta.className = 'asset-detail__instance-meta';
-    const earnings = document.createElement('span');
-    earnings.className = 'asset-detail__instance-earnings';
-    earnings.textContent = describeInstanceEarnings(instance);
-    meta.appendChild(earnings);
-    if (instance.status === 'active') {
-      const roi = document.createElement('span');
-      roi.className = 'asset-detail__instance-roi';
-      const roiText = describeInstanceNetHourly(definition, instance);
-      roi.textContent = `Net: ${roiText}`;
-      if (roiText.startsWith('-')) {
-        roi.classList.add('is-negative');
-      }
-      meta.appendChild(roi);
-    }
-    item.appendChild(meta);
-
-    if (instance.status === 'active') {
-      const progressWrap = document.createElement('div');
-      progressWrap.className = 'asset-detail__progress';
-      const progress = instance.quality?.progress || {};
-      Object.entries(tracks).forEach(([key, track]) => {
-        const label = track?.shortLabel || track?.label || key;
-        const current = Number(progress?.[key]) || 0;
-        const row = document.createElement('span');
-        row.className = 'asset-detail__progress-entry';
-        row.textContent = `${label}: ${current}`;
-        progressWrap.appendChild(row);
-      });
-      if (progressWrap.childElementCount) {
-        item.appendChild(progressWrap);
-      }
-    }
-
-    const actions = document.createElement('div');
-    actions.className = 'asset-detail__actions';
-    actions.appendChild(createInstanceQuickActions(definition, instance, state));
-
-    const sellButton = document.createElement('button');
-    sellButton.type = 'button';
-    sellButton.className = 'asset-detail__sell secondary';
-    const price = calculateAssetSalePrice(instance);
-    sellButton.textContent = price > 0 ? `Sell for $${formatMoney(price)}` : 'No buyer yet';
-    sellButton.disabled = price <= 0;
-    sellButton.addEventListener('click', event => {
-      event.preventDefault();
-      if (sellButton.disabled) return;
-      sellAssetInstance(definition, instance.id);
-    });
-    actions.appendChild(sellButton);
-
-    item.appendChild(actions);
-    list.appendChild(item);
   });
 
-  section.appendChild(list);
+  if (activeCards.length) {
+    section.appendChild(
+      createInstanceGroup(
+        'Active builds',
+        'These crews are live — keep tuning upgrades to lift your payouts.',
+        activeCards
+      )
+    );
+  }
+
+  if (queuedCards.length) {
+    section.appendChild(
+      createInstanceGroup(
+        'Launch queue',
+        'Setup runs are staging here until they’re ready to go live.',
+        queuedCards
+      )
+    );
+  }
+
   return section;
+}
+
+function createInstanceGroup(title, subtitle, items) {
+  const group = document.createElement('div');
+  group.className = 'asset-detail__instance-group';
+
+  const header = document.createElement('div');
+  header.className = 'asset-detail__group-header';
+  const groupTitle = document.createElement('h4');
+  groupTitle.className = 'asset-detail__group-title';
+  groupTitle.textContent = title;
+  header.appendChild(groupTitle);
+  if (subtitle) {
+    const note = document.createElement('p');
+    note.className = 'asset-detail__group-subtitle';
+    note.textContent = subtitle;
+    header.appendChild(note);
+  }
+  group.appendChild(header);
+
+  const list = document.createElement('ul');
+  list.className = 'asset-detail__instances';
+  items.forEach(item => list.appendChild(item));
+  group.appendChild(list);
+  return group;
+}
+
+function createInstanceCard(definition, instance, index, state) {
+  const item = document.createElement('li');
+  item.className = 'asset-detail__instance';
+  item.dataset.instanceId = instance.id;
+
+  const header = document.createElement('div');
+  header.className = 'asset-detail__instance-header';
+  const name = document.createElement('strong');
+  name.textContent = instanceLabel(definition, index);
+  header.appendChild(name);
+
+  const status = document.createElement('span');
+  status.className = 'asset-detail__instance-status';
+  const statusText = describeInstance(definition, instance);
+  if (instance.status === 'active') {
+    const level = Number(instance.quality?.level) || 0;
+    const levelInfo = getQualityLevel(definition, level);
+    const label = levelInfo?.name ? ` • ${levelInfo.name}` : '';
+    status.textContent = `${statusText}${label}`;
+  } else {
+    status.textContent = statusText;
+  }
+  header.appendChild(status);
+  item.appendChild(header);
+
+  const stats = buildInstanceStats(definition, instance);
+  if (stats) {
+    item.appendChild(stats);
+  }
+
+  if (instance.status === 'active') {
+    const tracks = getQualityTracks(definition);
+    const progressWrap = document.createElement('div');
+    progressWrap.className = 'asset-detail__progress';
+    const progress = instance.quality?.progress || {};
+    Object.entries(tracks).forEach(([key, track]) => {
+      const label = track?.shortLabel || track?.label || key;
+      const current = Number(progress?.[key]) || 0;
+      const row = document.createElement('span');
+      row.className = 'asset-detail__progress-entry';
+      row.textContent = `${label}: ${current}`;
+      progressWrap.appendChild(row);
+    });
+    if (progressWrap.childElementCount) {
+      item.appendChild(progressWrap);
+    }
+  }
+
+  const actions = document.createElement('div');
+  actions.className = 'asset-detail__actions';
+
+  const actionColumns = document.createElement('div');
+  actionColumns.className = 'asset-detail__action-columns';
+  actionColumns.appendChild(createInstanceQuickActions(definition, instance, state));
+  const equipmentShortcuts = instance.status === 'active'
+    ? createEquipmentShortcuts(definition, state)
+    : null;
+  if (equipmentShortcuts) {
+    actionColumns.appendChild(equipmentShortcuts);
+  }
+  actions.appendChild(actionColumns);
+
+  const sellButton = document.createElement('button');
+  sellButton.type = 'button';
+  sellButton.className = 'asset-detail__sell secondary';
+  const price = calculateAssetSalePrice(instance);
+  sellButton.textContent = price > 0 ? `Sell for $${formatMoney(price)}` : 'No buyer yet';
+  sellButton.disabled = price <= 0;
+  sellButton.addEventListener('click', event => {
+    event.preventDefault();
+    if (sellButton.disabled) return;
+    sellAssetInstance(definition, instance.id);
+  });
+  actions.appendChild(sellButton);
+
+  item.appendChild(actions);
+  return item;
+}
+
+function buildInstanceStats(definition, instance) {
+  const stats = document.createElement('div');
+  stats.className = 'asset-detail__instance-stats';
+
+  const lastPayout = instance.status === 'active' ? formatInstanceLastPayout(instance) : '';
+  if (lastPayout) {
+    stats.appendChild(createInstanceStat('Last payout', lastPayout));
+  }
+
+  if (instance.status === 'active') {
+    const roiText = describeInstanceNetHourly(definition, instance);
+    if (roiText) {
+      let variant = '';
+      if (roiText.startsWith('-')) {
+        variant = 'negative';
+      } else if (roiText.startsWith('$')) {
+        variant = 'positive';
+      }
+      const stat = createInstanceStat('Net / hour', roiText, variant ? { variant } : {});
+      if (stat) {
+        stats.appendChild(stat);
+      }
+    }
+  }
+
+  const upkeep = formatInstanceUpkeep(definition);
+  if (upkeep) {
+    const label = instance.status === 'active' ? 'Upkeep' : 'Planned upkeep';
+    stats.appendChild(createInstanceStat(label, upkeep));
+  }
+
+  if (instance.status !== 'active') {
+    const launchEta = formatLaunchEta(instance);
+    if (launchEta) {
+      stats.appendChild(createInstanceStat('Launch ETA', launchEta));
+    }
+  }
+
+  if (!stats.childElementCount) {
+    return null;
+  }
+  return stats;
+}
+
+function createInstanceStat(label, value, { variant } = {}) {
+  if (!value) return null;
+  const stat = document.createElement('div');
+  stat.className = 'asset-detail__instance-stat';
+  if (variant) {
+    stat.classList.add(`is-${variant}`);
+  }
+  const statLabel = document.createElement('span');
+  statLabel.className = 'asset-detail__instance-stat-label';
+  statLabel.textContent = label;
+  const statValue = document.createElement('span');
+  statValue.className = 'asset-detail__instance-stat-value';
+  statValue.textContent = value;
+  stat.append(statLabel, statValue);
+  return stat;
+}
+
+function formatInstanceLastPayout(instance) {
+  if (!instance || instance.status !== 'active') {
+    return '';
+  }
+  const lastIncome = Math.max(0, Number(instance.lastIncome) || 0);
+  if (lastIncome > 0) {
+    return `$${formatMoney(lastIncome)} yesterday`;
+  }
+  return 'None yesterday';
+}
+
+function formatInstanceUpkeep(definition) {
+  if (!definition) return '';
+  const parts = [];
+  const cost = Number(definition.maintenance?.cost) || 0;
+  if (cost > 0) {
+    parts.push(`$${formatMoney(cost)}/day`);
+  }
+  const hours = Number(definition.maintenance?.hours) || 0;
+  if (hours > 0) {
+    parts.push(`${formatHours(hours)}/day`);
+  }
+  return parts.join(' • ');
+}
+
+function formatLaunchEta(instance) {
+  if (!instance) return '';
+  const remaining = Number(instance.daysRemaining);
+  if (!Number.isFinite(remaining)) {
+    return 'Ready soon';
+  }
+  if (remaining <= 0) {
+    return 'Ready tomorrow';
+  }
+  if (remaining === 1) {
+    return '1 day';
+  }
+  return `${remaining} days`;
+}
+
+function createEquipmentShortcuts(definition, state) {
+  const pending = getPendingEquipmentUpgrades(definition, state);
+  if (!Array.isArray(pending) || pending.length === 0) {
+    return null;
+  }
+
+  const limit = Math.min(2, pending.length);
+  if (limit <= 0) return null;
+
+  const container = document.createElement('div');
+  container.className = 'asset-detail__upgrade-shortcuts';
+
+  const title = document.createElement('span');
+  title.className = 'asset-detail__upgrade-title';
+  title.textContent = pending.length > 1 ? 'Equipment boosts' : 'Equipment boost';
+  container.appendChild(title);
+
+  const buttonRow = document.createElement('div');
+  buttonRow.className = 'asset-detail__upgrade-buttons';
+  container.appendChild(buttonRow);
+
+  for (let index = 0; index < limit; index += 1) {
+    const upgrade = pending[index];
+    if (!upgrade) continue;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'asset-detail__upgrade-button';
+    button.dataset.upgradeId = upgrade.id;
+    button.textContent = getUpgradeButtonLabel(upgrade);
+    button.disabled = isUpgradeDisabled(upgrade);
+    if (upgrade.description) {
+      button.title = upgrade.description;
+    }
+    button.addEventListener('click', event => {
+      event.preventDefault();
+      if (button.disabled) return;
+      upgrade.action?.onClick?.();
+    });
+    buttonRow.appendChild(button);
+  }
+
+  if (pending.length > limit) {
+    const more = document.createElement('span');
+    more.className = 'asset-detail__upgrade-more';
+    more.textContent = `+${pending.length - limit} more`;
+    container.appendChild(more);
+  }
+
+  return container;
 }
 
 function renderHustleCard(definition, container) {
