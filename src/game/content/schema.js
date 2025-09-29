@@ -258,7 +258,7 @@ export function createInstantHustle(config) {
     if (!metadata.time) return metadata.time;
     const { multiplier } = getHustleEffectMultiplier(definition, 'setup_time_mult', {
       state,
-      actionType: 'run'
+      actionType: 'setup'
     });
     const adjusted = metadata.time * (Number.isFinite(multiplier) ? multiplier : 1);
     return Number.isFinite(adjusted) ? Math.max(0, adjusted) : metadata.time;
