@@ -11,6 +11,7 @@
 - Education clarity: finished courses now show 100% progress and list the XP-rich skills they elevate.
 - Upgrade hub redesign: roadmap stats, category chips, and a refreshed dock make reinvestment planning faster and more celebratory.
 - Hustle pacing: retired the eBay flip queue and delayed payouts so every gig pays out the moment you wrap it.
+- Creative upgrade ladder: editorial pipeline, syndication suite, and immersive story worlds stack payouts and progress boosts across blogs, e-books, and vlogs.
 
 ## Recent Highlights
 - Passive assets gained Quality 4–5 milestones with higher payouts and refreshed modifiers.
