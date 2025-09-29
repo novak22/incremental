@@ -113,17 +113,28 @@ export function createAssetDefinition(config) {
     latestYield: () => latestYieldDetail(definition)
   };
 
-  definition.details = detailKeys
-    .map(detail => {
-      if (typeof detail === 'function') {
-        return () => detail(definition);
-      }
-      if (typeof detail === 'string' && builders[detail]) {
-        return () => builders[detail]();
-      }
-      return () => detail;
-    })
-    .concat((config.details || []).map(detail => () => detail(definition)));
+  const baseDetailEntries = detailKeys.map((detail, index) => {
+    if (typeof detail === 'function') {
+      return { key: typeof detail.key === 'string' ? detail.key : `custom-${index}`, render: () => detail(definition) };
+    }
+    if (typeof detail === 'string' && builders[detail]) {
+      return { key: detail, render: () => builders[detail]() };
+    }
+    return { key: typeof detail === 'string' ? detail : `custom-${index}`, render: () => detail };
+  });
+
+  const extraDetailEntries = (config.details || []).map((detail, index) => {
+    const key = typeof detail === 'object' && detail?.key
+      ? String(detail.key)
+      : `extra-${index}`;
+    if (typeof detail === 'function') {
+      return { key, render: () => detail(definition) };
+    }
+    return { key, render: () => detail };
+  });
+
+  definition.detailEntries = [...baseDetailEntries, ...extraDetailEntries];
+  definition.details = definition.detailEntries.map(entry => entry.render);
 
   definition.action = buildAssetAction(definition, config.actionLabels);
 
