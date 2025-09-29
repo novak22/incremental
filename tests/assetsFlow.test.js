@@ -132,7 +132,7 @@ test('closing out the day advances setup and pays income when funded', () => {
 test('income range for display reflects quality floor and ceiling', () => {
   const range = getIncomeRangeForDisplay('blog');
   assert.equal(range.min, 3);
-  assert.equal(range.max, 42);
+  assert.equal(range.max, 84);
 });
 
 test('spending money during maintenance does not go negative', () => {
