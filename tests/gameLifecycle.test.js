@@ -133,6 +133,29 @@ test('maintenance stalls when upkeep cash is unavailable', () => {
   assert.equal(state.money, 2, 'money should not be deducted when upkeep fails');
 });
 
+test('pending income stays queued when upkeep resources fall short', () => {
+  const blogDefinition = getAssetDefinition('blog');
+  const blogState = getAssetState('blog');
+  blogState.instances = [createAssetInstance(blogDefinition, {
+    status: 'active',
+    daysRemaining: 0,
+    daysCompleted: blogDefinition.setup.days,
+    maintenanceFundedToday: false,
+    pendingIncome: 3
+  })];
+
+  const state = getState();
+  state.timeLeft = 10;
+  state.money = 1;
+
+  allocateAssetMaintenance();
+
+  const updatedInstance = getAssetState('blog').instances[0];
+  assert.equal(state.money, 1, 'money should not change when upkeep fails');
+  assert.equal(updatedInstance.pendingIncome, 3, 'queued income should remain for future days');
+  assert.equal(updatedInstance.maintenanceFundedToday, false, 'maintenance should remain unfunded');
+});
+
 test('knowledge tracks auto-advance after enrollment when time is available', () => {
   const trackDef = KNOWLEDGE_TRACKS.outlineMastery;
   const progress = getKnowledgeProgress('outlineMastery');
