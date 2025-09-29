@@ -11,7 +11,7 @@ The passive asset workspace now presents each asset as a management card that hi
 
 ## Player Impact
 - Faster comparisons: stat tiles on each card summarize launches, payouts, and upkeep so players can pick the next investment without cross-referencing logs.
-- Smoother upgrades: inline "Support boosts" hints highlight pending equipment and study paths so players know which upgrades will unlock the next payout bump, and dedicated quick-buy buttons sit beside each instance to trigger the next one or two upgrades immediately.
+- Smoother upgrades: inline "Support boosts" hints highlight pending equipment and study paths so players know which upgrades will unlock the next payout bump, and dedicated quick-buy buttons sit beside each instance to trigger the next one or two upgrades immediately, prioritizing the upgrades you can afford right now.
 - Clearer oversight: category rosters list upkeep obligations, yesterday's payout, net gain per upkeep hour, and one-click sell controls for every active instance in a familiar table format.
 - Sharper next steps: the instance modal highlights current quality level, progress toward the next milestone, and direct quality actions so players can immediately invest in the build they opened, with quality upgrades now pinned to the top of the scrollable modal.
 - Confident launches: the briefing modal reuses live detail renderers, ensuring setup costs, maintenance, and quality roadmaps stay accurate as modifiers shift.
@@ -19,7 +19,7 @@ The passive asset workspace now presents each asset as a management card that hi
 ## Implementation Notes
 - Asset cards keep the existing category structure but use a dedicated layout (`asset-card__*` classes) for stats, actions, and instance management.
 - Instance rows now expose both the previous day's payout and inline sell buttons so liquidation is always one click away.
-- Each instance row can render up to two quick-purchase buttons for the next required equipment upgrades, deferring to existing upgrade action handlers for cost checks and logging.
+- Each instance row can render up to two quick-purchase buttons for the next required equipment upgrades, deferring to existing upgrade action handlers for cost checks and logging while sorting currently purchasable upgrades ahead of longer-term goals.
 - Category-level "View launched assets" toggles render aggregated tables populated by `assetCategoryView`, which now highlights the first couple of supporting upgrades directly under each instance's actions.
 - The briefing modal now switches between the legacy definition view and an instance-specific overview that highlights status, upkeep, yesterday's payout, net hourly return, and quality progress/upgrade actions tailored to that build, with the quality upgrades section pinned above the stat summary and the content area scrollable for long descriptions.
 - ROI rows in the category roster use last income minus upkeep costs divided by upkeep hours to surface a quick dollars-per-hour snapshot for active builds.

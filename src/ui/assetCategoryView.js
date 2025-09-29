@@ -244,7 +244,25 @@ function createUpgradeShortcuts(upgrades = []) {
     return null;
   }
 
-  const limit = Math.min(upgrades.length, 2);
+  const entries = upgrades
+    .map(upgrade => {
+      if (!upgrade) return null;
+      return {
+        upgrade,
+        disabled: isUpgradeDisabled(upgrade)
+      };
+    })
+    .filter(Boolean);
+
+  if (!entries.length) {
+    return null;
+  }
+
+  const available = entries.filter(entry => !entry.disabled);
+  const locked = entries.filter(entry => entry.disabled);
+  const ordered = available.length > 0 ? [...available, ...locked] : entries;
+
+  const limit = Math.min(ordered.length, 2);
   if (limit <= 0) return null;
 
   const container = document.createElement('div');
@@ -252,7 +270,11 @@ function createUpgradeShortcuts(upgrades = []) {
 
   const title = document.createElement('span');
   title.className = 'asset-category__upgrade-title';
-  title.textContent = limit > 1 ? 'Next upgrades' : 'Next upgrade';
+  if (available.length > 0) {
+    title.textContent = available.length > 1 ? 'Available upgrades' : 'Available upgrade';
+  } else {
+    title.textContent = limit > 1 ? 'Next upgrades' : 'Next upgrade';
+  }
   container.appendChild(title);
 
   const buttonRow = document.createElement('div');
@@ -260,14 +282,15 @@ function createUpgradeShortcuts(upgrades = []) {
   container.appendChild(buttonRow);
 
   for (let index = 0; index < limit; index += 1) {
-    const upgrade = upgrades[index];
-    if (!upgrade) continue;
+    const entry = ordered[index];
+    if (!entry?.upgrade) continue;
+    const { upgrade, disabled } = entry;
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'asset-category__upgrade-button';
     button.dataset.upgradeId = upgrade.id;
     button.textContent = getUpgradeButtonLabel(upgrade);
-    button.disabled = isUpgradeDisabled(upgrade);
+    button.disabled = disabled;
     if (upgrade.description) {
       button.title = upgrade.description;
     }
@@ -279,7 +302,7 @@ function createUpgradeShortcuts(upgrades = []) {
     buttonRow.appendChild(button);
   }
 
-  const remaining = upgrades.length - limit;
+  const remaining = ordered.length - limit;
   if (remaining > 0) {
     const more = document.createElement('span');
     more.className = 'asset-category__upgrade-more';

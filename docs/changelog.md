@@ -11,6 +11,7 @@
 - Added instant hustles that reward active blogs/e-books, complete with live requirement summaries and one-hour payouts, plus per-instance cooldowns for high-impact passive quality actions.
 - Added a net-per-hour ROI column to passive asset rosters and refreshed the instance briefing modal with asset-specific quality progress and upgrade actions.
 - Added quick-buy buttons for the next passive asset upgrades alongside each launched instance and made the asset briefing modal scrollable with quality actions pinned near the top.
+- Prioritized ready-to-buy passive asset upgrades in roster shortcuts so the first buttons always launch the upgrades you can afford now.
 - Replaced dormant passive upgrade buttons with inline "Support boosts" hints so category rosters call out the next helpful equipment or study unlocks.
 - Added category-level asset rosters with upkeep, payout, and upgrade/sell shortcuts, plus an instance-aware briefing modal that surfaces owned and locked upgrades.
 - Shifted passive asset payouts to credit during the morning maintenance sweep so earnings persist in the new day’s snapshot.
