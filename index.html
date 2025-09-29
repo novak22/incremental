@@ -219,55 +219,71 @@
             <h2>Assets</h2>
             <p>Passive plays that need smart upkeep.</p>
           </div>
-          <div class="filter-bar" role="group" aria-label="Asset filters">
-            <label class="filter-toggle">
-              <input id="asset-active-toggle" type="checkbox" />
-              <span>Active only</span>
-            </label>
-            <label class="filter-toggle">
-              <input id="asset-maintenance-toggle" type="checkbox" />
-              <span>Needs maintenance</span>
-            </label>
-            <label class="filter-toggle">
-              <input id="asset-risk-toggle" type="checkbox" />
-              <span>Hide high risk</span>
-            </label>
+          <div class="panel__tools">
+            <div class="filter-bar" role="group" aria-label="Asset filters">
+              <label class="filter-toggle">
+                <input id="asset-active-toggle" type="checkbox" />
+                <span>Active only</span>
+              </label>
+              <label class="filter-toggle">
+                <input id="asset-maintenance-toggle" type="checkbox" />
+                <span>Needs maintenance</span>
+              </label>
+              <label class="filter-toggle">
+                <input id="asset-risk-toggle" type="checkbox" />
+                <span>Hide high risk</span>
+              </label>
+            </div>
+            <button id="asset-open-builds" class="ghost" type="button">New builds</button>
           </div>
         </header>
-        <div class="asset-table-wrapper">
-          <table class="asset-table" aria-describedby="asset-table-caption">
-            <caption id="asset-table-caption">Passive assets overview</caption>
-            <thead>
-              <tr>
-                <th scope="col">Name</th>
-                <th scope="col">State</th>
-                <th scope="col">Yield / day</th>
-                <th scope="col">Upkeep</th>
-                <th scope="col">Risk</th>
-                <th scope="col">Modifiers</th>
-                <th scope="col" class="actions-col">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="asset-table-body"></tbody>
-          </table>
+        <div class="asset-panel">
+          <div class="asset-panel__tabs" role="tablist" aria-label="Asset views">
+            <button id="asset-tab-overview" class="asset-panel__tab is-active" role="tab" aria-selected="true" aria-controls="asset-panel-overview">Overview</button>
+            <button id="asset-tab-builds" class="asset-panel__tab" role="tab" aria-selected="false" aria-controls="asset-panel-builds">Builds</button>
+          </div>
+          <section id="asset-panel-overview" class="asset-panel__section is-active" role="tabpanel" aria-labelledby="asset-tab-overview">
+            <div class="asset-table-wrapper">
+              <table class="asset-table" aria-describedby="asset-table-caption">
+                <caption id="asset-table-caption">Passive assets overview</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Name</th>
+                    <th scope="col">State</th>
+                    <th scope="col">Yield / day</th>
+                    <th scope="col">Upkeep</th>
+                    <th scope="col">Risk</th>
+                    <th scope="col">Modifiers</th>
+                    <th scope="col" class="actions-col">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="asset-table-body"></tbody>
+              </table>
+            </div>
+            <footer class="asset-batch" aria-live="polite">
+              <div class="asset-batch__selection" id="asset-selection-note">No assets selected.</div>
+              <div class="asset-batch__actions">
+                <button id="asset-batch-maintain" class="ghost" type="button">Maintain</button>
+                <button id="asset-batch-pause" class="ghost" type="button">Pause</button>
+                <button id="asset-batch-preset" class="ghost" type="button">Apply preset</button>
+              </div>
+            </footer>
+            <section id="asset-launched" class="asset-launched" aria-live="polite">
+              <header class="asset-launched__header">
+                <h2 id="asset-launched-title">Launched builds</h2>
+                <p id="asset-launched-note">Select an asset to explore active and queued builds.</p>
+              </header>
+              <div id="asset-launched-content" class="asset-launched__content">
+                <p class="asset-launched__empty">No asset selected yet. Tap a row to review its build roster.</p>
+              </div>
+            </section>
+          </section>
+          <section id="asset-panel-builds" class="asset-panel__section" role="tabpanel" aria-labelledby="asset-tab-builds" hidden>
+            <div id="asset-builds-container" class="asset-builds" aria-live="polite">
+              <p class="asset-builds__empty" id="asset-builds-empty">No passive assets unlocked yet.</p>
+            </div>
+          </section>
         </div>
-        <footer class="asset-batch" aria-live="polite">
-          <div class="asset-batch__selection" id="asset-selection-note">No assets selected.</div>
-          <div class="asset-batch__actions">
-            <button id="asset-batch-maintain" class="ghost" type="button">Maintain</button>
-            <button id="asset-batch-pause" class="ghost" type="button">Pause</button>
-            <button id="asset-batch-preset" class="ghost" type="button">Apply preset</button>
-          </div>
-        </footer>
-        <section id="asset-launched" class="asset-launched" aria-live="polite">
-          <header class="asset-launched__header">
-            <h2 id="asset-launched-title">Launched builds</h2>
-            <p id="asset-launched-note">Select an asset to explore active and queued builds.</p>
-          </header>
-          <div id="asset-launched-content" class="asset-launched__content">
-            <p class="asset-launched__empty">No asset selected yet. Tap a row to review its build roster.</p>
-          </div>
-        </section>
       </section>
 
       <section id="panel-upgrades" class="panel" role="tabpanel" aria-labelledby="tab-upgrades" hidden>

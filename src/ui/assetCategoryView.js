@@ -177,6 +177,7 @@ function renderCategoryList(key) {
 
     const detailsButton = document.createElement('button');
     detailsButton.type = 'button';
+    detailsButton.className = 'ghost';
     detailsButton.textContent = 'Details';
     detailsButton.addEventListener('click', event => {
       event.preventDefault();
@@ -188,6 +189,7 @@ function renderCategoryList(key) {
 
     const sellButton = document.createElement('button');
     sellButton.type = 'button';
+    sellButton.className = 'secondary';
     const price = calculateAssetSalePrice(row.instance);
     sellButton.textContent = price > 0 ? `Sell ($${formatMoney(price)})` : 'Sell (no buyer)';
     sellButton.disabled = price <= 0;

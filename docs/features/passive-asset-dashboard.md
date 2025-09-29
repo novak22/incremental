@@ -3,6 +3,8 @@
 ## Summary
 The passive asset workspace now presents each asset as a management card that highlights ownership counts, yesterday's earnings, income potential, upkeep, and net return per upkeep hour at a glance. Cards surface quick actions to launch new builds and sell individual instances without digging through secondary panels. Category toggles also roll up every launched instance into a single management list so upkeep, payouts, supporting upgrades, and liquidation stay reachable even when the compact card view is enabled. The instance briefing modal now focuses on the selected build, showcasing its quality track progress, ROI, and relevant upgrade actions, while quick-purchase upgrade buttons and a scrollable layout keep next steps visible without crowding the screen. Active builds are grouped at the top of the slide-over with stat tiles for last payout, net per hour, upkeep, and inline upgrade shortcuts so players can tune performance instantly. The briefing now opens with a "Launch blueprint" checklist that calls out setup time, upfront costs, upkeep, and income ranges before you commit, and every launched instance lists upgrade quick actions beside the sell shortcut.
 
+The Assets workspace also includes a Builds tab reachable from a "New builds" shortcut. Category headers now call out active and queued counts above the roster tables so players spot running crews without crowding the Details actions.
+
 ## Goals
 - Give players immediate insight into how every passive build performed yesterday, what it costs to maintain, and whether upkeep hours are paying off.
 - Reduce the click depth for upkeep decisions by embedding sell controls and upgrade guidance into each instance row.

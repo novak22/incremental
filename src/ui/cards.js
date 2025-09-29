@@ -7,6 +7,7 @@ import {
   describeInstance,
   describeInstanceNetHourly
 } from './assetInstances.js';
+import { configureCategoryView, updateCategoryView } from './assetCategoryView.js';
 import {
   calculateAssetSalePrice,
   instanceLabel,
@@ -30,6 +31,8 @@ const hustleUi = new Map();
 const assetUi = new Map();
 const upgradeUi = new Map();
 const studyUi = new Map();
+const assetCategorySummaryState = new Map();
+let assetBuildDefinitionIds = new Set();
 
 function showSlideOver({ eyebrow, title, body }) {
   const { slideOver, slideOverContent, slideOverEyebrow, slideOverTitle } = elements;
@@ -201,7 +204,7 @@ function createInstanceQuickActions(definition, instance, state) {
   return container;
 }
 
-function createInstanceListSection(definition, state) {
+function createInstanceListSection(definition, state, { selectedInstanceId } = {}) {
   const assetState = getAssetState(definition.id, state);
   const instances = Array.isArray(assetState?.instances) ? assetState.instances : [];
 
@@ -222,7 +225,7 @@ function createInstanceListSection(definition, state) {
   const activeCards = [];
   const queuedCards = [];
   instances.forEach((instance, index) => {
-    const card = createInstanceCard(definition, instance, index, state);
+    const card = createInstanceCard(definition, instance, index, state, { selectedInstanceId });
     if (!card) return;
     if (instance.status === 'active') {
       activeCards.push(card);
@@ -279,10 +282,15 @@ function createInstanceGroup(title, subtitle, items) {
   return group;
 }
 
-function createInstanceCard(definition, instance, index, state) {
+function createInstanceCard(definition, instance, index, state, { selectedInstanceId } = {}) {
   const item = document.createElement('li');
   item.className = 'asset-detail__instance';
   item.dataset.instanceId = instance.id;
+
+  if (selectedInstanceId && instance.id === selectedInstanceId) {
+    item.classList.add('is-highlighted');
+    item.setAttribute('aria-current', 'true');
+  }
 
   const header = document.createElement('div');
   header.className = 'asset-detail__instance-header';
@@ -780,7 +788,7 @@ function refreshAssetRow(definition) {
   }
 }
 
-function openAssetDetails(definition) {
+function openAssetDetails(definition, { instanceId } = {}) {
   const state = getState();
   const body = document.createElement('div');
   body.className = 'asset-detail';
@@ -807,6 +815,12 @@ function openAssetDetails(definition) {
   body.appendChild(createDefinitionSummary('Roster snapshot', summaryRows));
 
   showSlideOver({ eyebrow: 'Asset', title: definition.name, body });
+  if (instanceId) {
+    requestAnimationFrame(() => {
+      const highlighted = body.querySelector(`[data-instance-id="${instanceId}"]`);
+      highlighted?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    });
+  }
   renderLaunchedBuilds(definition, state);
 }
 
@@ -863,6 +877,160 @@ function renderAssets(definitions) {
   tbody.innerHTML = '';
   assetUi.clear();
   definitions.forEach(def => renderAssetRow(def, tbody));
+}
+
+function buildAssetCategoryMap(definitions = []) {
+  const categories = new Map();
+  definitions.forEach(definition => {
+    if (!definition) return;
+    const label = definition.tag?.label || 'Other assets';
+    const type = definition.tag?.type || 'asset';
+    const slugSource = `${type}-${label}`.toLowerCase();
+    const key = slugSource.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || definition.id;
+    if (!categories.has(key)) {
+      categories.set(key, { label, definitions: [] });
+    }
+    categories.get(key).definitions.push(definition);
+  });
+  return categories;
+}
+
+function renderAssetBuilds(definitions = []) {
+  const container = elements.assetBuildsContainer;
+  if (!container) return;
+
+  const emptyTemplate = elements.assetBuildsEmpty;
+  container.innerHTML = '';
+  assetCategorySummaryState.clear();
+
+  const categories = buildAssetCategoryMap(definitions);
+  assetBuildDefinitionIds = new Set(definitions.map(def => def?.id).filter(Boolean));
+
+  if (!categories.size) {
+    if (emptyTemplate) {
+      container.appendChild(emptyTemplate);
+    } else {
+      const empty = document.createElement('p');
+      empty.className = 'asset-builds__empty';
+      empty.textContent = 'No passive assets unlocked yet.';
+      container.appendChild(empty);
+    }
+    elements.assetCategoryToggles = {};
+    elements.assetCategoryLists = {};
+    configureCategoryView({ definitionsByCategory: new Map(), openInstanceDetails: null });
+    return;
+  }
+
+  const toggles = {};
+  const lists = {};
+  const definitionsByCategory = new Map();
+
+  categories.forEach(({ label, definitions: defs }, key) => {
+    definitionsByCategory.set(key, defs);
+
+    const section = document.createElement('section');
+    section.className = 'asset-category';
+    container.appendChild(section);
+
+    const header = document.createElement('header');
+    header.className = 'asset-category__header';
+    section.appendChild(header);
+
+    const info = document.createElement('div');
+    info.className = 'asset-category__info';
+    header.appendChild(info);
+
+    const title = document.createElement('h3');
+    title.textContent = `${label} builds`;
+    info.appendChild(title);
+
+    const counts = document.createElement('p');
+    counts.className = 'asset-category__counts';
+    info.appendChild(counts);
+
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'ghost asset-category__toggle';
+    toggle.dataset.category = key;
+    header.appendChild(toggle);
+
+    const body = document.createElement('div');
+    body.className = 'asset-category__body';
+    body.hidden = true;
+    section.appendChild(body);
+
+    toggles[key] = toggle;
+    lists[key] = body;
+    assetCategorySummaryState.set(key, { label, definitions: defs, counts });
+  });
+
+  elements.assetCategoryToggles = toggles;
+  elements.assetCategoryLists = lists;
+
+  configureCategoryView({
+    definitionsByCategory: new Map(
+      Array.from(categories.entries()).map(([key, value]) => [key, value.definitions])
+    ),
+    openInstanceDetails: (definition, instance) => {
+      openAssetDetails(definition, { instanceId: instance?.id });
+    }
+  });
+
+  updateAssetCategorySummaries();
+}
+
+function updateAssetBuilds(definitions = []) {
+  const container = elements.assetBuildsContainer;
+  if (!container) return;
+
+  const nextIds = new Set(definitions.map(def => def?.id).filter(Boolean));
+  const definitionsChanged =
+    nextIds.size !== assetBuildDefinitionIds.size
+    || Array.from(nextIds).some(id => !assetBuildDefinitionIds.has(id));
+
+  if (definitionsChanged || !assetCategorySummaryState.size) {
+    renderAssetBuilds(definitions);
+    return;
+  }
+
+  updateAssetCategorySummaries();
+  updateCategoryView();
+}
+
+function countCategoryInstances(definitions = [], state) {
+  let active = 0;
+  let queued = 0;
+  definitions.forEach(definition => {
+    if (!definition) return;
+    const assetState = getAssetState(definition.id, state);
+    const instances = Array.isArray(assetState?.instances) ? assetState.instances : [];
+    instances.forEach(instance => {
+      if (instance?.status === 'active') {
+        active += 1;
+      } else {
+        queued += 1;
+      }
+    });
+  });
+  return { active, queued };
+}
+
+function updateAssetCategorySummaries() {
+  const state = getState();
+  assetCategorySummaryState.forEach(entry => {
+    if (!entry?.counts) return;
+    const { active, queued } = countCategoryInstances(entry.definitions, state);
+    let message = 'No builds launched yet.';
+    if (active > 0) {
+      message = `${active} active build${active === 1 ? '' : 's'}`;
+      if (queued > 0) {
+        message += ` • ${queued} queued`;
+      }
+    } else if (queued > 0) {
+      message = `${queued} queued build${queued === 1 ? '' : 's'}`;
+    }
+    entry.counts.textContent = message;
+  });
 }
 
 function renderUpgradeCard(definition, container) {
@@ -1157,6 +1325,7 @@ function renderStudyQueue(definitions) {
 export function renderCardCollections({ hustles, education, assets, upgrades }) {
   renderHustles(hustles);
   renderAssets(assets);
+  renderAssetBuilds(assets);
   renderUpgrades(upgrades);
   renderEducation(education);
 }
@@ -1186,6 +1355,7 @@ export function updateCard(definition) {
 export function updateAllCards({ hustles, education, assets, upgrades }) {
   hustles.forEach(updateHustleCard);
   assets.forEach(def => updateCard(def));
+  updateAssetBuilds(assets);
   upgrades.forEach(updateUpgradeCard);
   education.forEach(def => {
     if (def.tag?.type === 'study' || KNOWLEDGE_TRACKS[def.id]) {

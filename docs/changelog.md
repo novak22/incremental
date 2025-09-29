@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- Added a Builds tab to the Assets workspace with a "New builds" shortcut, relocating active build counts into category headers so the roster summary sits away from the Details controls.
 - Added an "Asset upgrade boosts" dashboard card that spotlights quality pushes for low-yield assets while trimming Daily Stats lists to the top three highlights for a tighter fit.
 - Streamlined the header pulse to spotlight daily flow and time stats in a single tidy row.
 - Centered the shell header around a "Daily pulse" band that highlights daily earnings and spend, lifetime cash flow, and the remaining versus committed hours for the current day.

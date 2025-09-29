@@ -2,6 +2,7 @@ import elements from './elements.js';
 
 export function initLayoutControls() {
   setupTabs();
+  setupAssetPanels();
   setupEventLog();
   setupSlideOver();
   setupCommandPalette();
@@ -38,6 +39,38 @@ function setupTabs() {
   });
 
   activate('panel-dashboard');
+}
+
+function setupAssetPanels() {
+  const { assetPanelTabs = [], assetPanelSections = [], assetOpenBuilds } = elements;
+  if (!assetPanelTabs.length || !assetPanelSections.length) return;
+
+  const activate = targetId => {
+    assetPanelTabs.forEach(tab => {
+      const controls = tab.getAttribute('aria-controls');
+      const isActive = controls === targetId;
+      tab.classList.toggle('is-active', isActive);
+      tab.setAttribute('aria-selected', String(isActive));
+      tab.tabIndex = isActive ? 0 : -1;
+    });
+    assetPanelSections.forEach(section => {
+      const match = section.id === targetId;
+      section.classList.toggle('is-active', match);
+      section.hidden = !match;
+    });
+  };
+
+  assetPanelTabs.forEach(tab => {
+    tab.addEventListener('click', () => activate(tab.getAttribute('aria-controls')));
+  });
+
+  assetOpenBuilds?.addEventListener('click', () => {
+    activate('asset-panel-builds');
+    elements.assetBuildsContainer?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  activate('asset-panel-overview');
+  elements.assetPanelActivate = activate;
 }
 
 function setupEventLog() {

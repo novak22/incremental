@@ -80,6 +80,9 @@ const elements = {
     maintenance: document.getElementById('asset-maintenance-toggle'),
     lowRisk: document.getElementById('asset-risk-toggle')
   },
+  assetPanelTabs: Array.from(document.querySelectorAll('.asset-panel__tab')),
+  assetPanelSections: Array.from(document.querySelectorAll('.asset-panel__section')),
+  assetOpenBuilds: document.getElementById('asset-open-builds'),
   assetTableBody: document.getElementById('asset-table-body'),
   assetSelectionNote: document.getElementById('asset-selection-note'),
   assetBatchButtons: {
@@ -87,6 +90,11 @@ const elements = {
     pause: document.getElementById('asset-batch-pause'),
     preset: document.getElementById('asset-batch-preset')
   },
+  assetBuildsContainer: document.getElementById('asset-builds-container'),
+  assetBuildsEmpty: document.getElementById('asset-builds-empty'),
+  assetCategoryToggles: {},
+  assetCategoryLists: {},
+  assetCategorySummaries: {},
   assetLaunched: {
     container: document.getElementById('asset-launched'),
     title: document.getElementById('asset-launched-title'),

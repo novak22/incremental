@@ -473,6 +473,22 @@ body {
   gap: 24px;
 }
 
+.panel__tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+}
+
+.panel__tools .filter-bar {
+  flex: 1 1 auto;
+}
+
+.panel__tools button {
+  white-space: nowrap;
+}
+
 .panel__header h2 {
   margin: 0;
   font-size: 24px;
@@ -686,6 +702,210 @@ body {
 .asset-row-actions {
   display: inline-flex;
   gap: 8px;
+}
+
+.asset-panel {
+  display: grid;
+  gap: 20px;
+}
+
+.asset-panel__tabs {
+  display: inline-flex;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+}
+
+.asset-panel__tab {
+  border: none;
+  background: transparent;
+  padding: 8px 14px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-subtle);
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.asset-panel__tab.is-active {
+  background: var(--surface-muted);
+  color: var(--text);
+}
+
+.asset-panel__tab:focus-visible {
+  box-shadow: 0 0 0 3px var(--focus);
+}
+
+.asset-panel__section {
+  display: grid;
+  gap: 20px;
+}
+
+.asset-builds {
+  display: grid;
+  gap: 16px;
+}
+
+.asset-builds__empty {
+  margin: 0;
+  padding: 16px 18px;
+  border-radius: var(--radius-md);
+  background: rgba(148, 163, 184, 0.12);
+  color: var(--text-subtle);
+  font-size: 14px;
+}
+
+.asset-category {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+  display: grid;
+  gap: 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+.asset-category__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.asset-category__info h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.asset-category__counts {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: var(--text-subtle);
+}
+
+.asset-category__toggle {
+  align-self: flex-start;
+}
+
+.asset-category__body {
+  display: grid;
+  gap: 16px;
+}
+
+.asset-category__empty {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-subtle);
+}
+
+.asset-category__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.asset-category__table th,
+.asset-category__table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.asset-category__name {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.asset-category__status {
+  color: var(--text-subtle);
+  font-size: 13px;
+}
+
+.asset-category__upkeep {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text-subtle);
+}
+
+.asset-category__earnings {
+  color: var(--success);
+  font-weight: 600;
+}
+
+.asset-category__loss {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.asset-category__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.asset-category__upgrade-shortcuts {
+  display: grid;
+  gap: 6px;
+  align-self: stretch;
+}
+
+.asset-category__upgrade-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-subtle);
+}
+
+.asset-category__upgrade-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.asset-category__upgrade-button {
+  border: 1px solid var(--accent);
+  background: var(--accent-soft);
+  color: var(--text);
+  padding: 6px 10px;
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.asset-category__upgrade-button:disabled {
+  border-color: var(--border);
+  background: rgba(148, 163, 184, 0.16);
+  color: var(--text-subtle);
+  cursor: not-allowed;
+}
+
+.asset-category__upgrade-button:not(:disabled):hover {
+  background: rgba(124, 92, 255, 0.28);
+}
+
+.asset-category__upgrade-more {
+  font-size: 12px;
+  color: var(--text-subtle);
+}
+
+.asset-category__upgrade-hints {
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text-subtle);
+}
+
+.asset-category__upgrade-entry.is-pending {
+  color: var(--text);
+  font-weight: 600;
 }
 
 .asset-batch {
@@ -1140,6 +1360,11 @@ body {
   gap: 12px;
 }
 
+.asset-detail__instance.is-highlighted {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.25);
+}
+
 .asset-detail__instance-stats {
   display: grid;
   gap: 8px;
@@ -1393,5 +1618,10 @@ a:focus-visible {
   .panel__header {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .panel__tools {
+    width: 100%;
+    justify-content: flex-start;
   }
 }
