@@ -1,4 +1,5 @@
 import { formatMoney } from '../../../core/helpers.js';
+import { getUpgradeState } from '../../../core/state.js';
 import { createAssetDefinition } from '../../content/schema.js';
 
 const saasDefinition = createAssetDefinition({
@@ -8,11 +9,15 @@ const saasDefinition = createAssetDefinition({
   tag: { label: 'Tech', type: 'passive' },
   description: 'Design lean software services, onboard early users, and ship updates that keep churn low.',
   setup: { days: 8, hoursPerDay: 4, cost: 960 },
-  maintenance: { hours: 2.5, cost: 28 },
+  maintenance: { hours: 2.2, cost: 24 },
   income: {
-    base: 68,
-    variance: 0.35,
-    logType: 'passive'
+    base: 108,
+    variance: 0.4,
+    logType: 'passive',
+    modifier: amount => {
+      const edge = getUpgradeState('serverEdge').purchased ? 1.35 : 1;
+      return Math.round(amount * edge);
+    }
   },
   requirements: {
     knowledge: ['automationCourse'],
@@ -34,54 +39,57 @@ const saasDefinition = createAssetDefinition({
         level: 0,
         name: 'Beta Sandbox',
         description: 'Tiny user base and messy bugs limit revenue.',
-        income: { min: 4, max: 8 },
+        income: { min: 6, max: 12 },
         requirements: {}
       },
       {
         level: 1,
         name: 'Early Traction',
         description: 'Feature roadmap clicks with early adopters.',
-        income: { min: 22, max: 34 },
-        requirements: { features: 6 }
+        income: { min: 32, max: 48 },
+        requirements: { features: 5 }
       },
       {
         level: 2,
         name: 'Reliable Service',
         description: 'Reliability boosts and updates reduce churn.',
-        income: { min: 36, max: 50 },
-        requirements: { features: 14, stability: 4 }
+        income: { min: 54, max: 74 },
+        requirements: { features: 12, stability: 5 }
       },
       {
         level: 3,
         name: 'Scaling Flywheel',
         description: 'Marketing pushes and infrastructure unlock bigger accounts.',
-        income: { min: 54, max: 74 },
-        requirements: { features: 24, stability: 8, marketing: 6 }
+        income: { min: 82, max: 110 },
+        requirements: { features: 20, stability: 9, marketing: 7 }
       }
     ],
     actions: [
       {
         id: 'shipFeature',
         label: 'Ship Feature',
-        time: 4,
-        cost: 34,
+        time: 3.5,
+        cost: 32,
         progressKey: 'features',
+        progressAmount: context => (context.upgrade('serverEdge')?.purchased ? 2 : 1),
         log: ({ label }) => `${label} shipped a delightful feature. Beta users erupt in emoji reactions!`
       },
       {
         id: 'improveStability',
         label: 'Improve Stability',
-        time: 3,
-        cost: 40,
+        time: 2.5,
+        cost: 36,
         progressKey: 'stability',
+        progressAmount: context => (context.upgrade('serverEdge')?.purchased ? 2 : 1),
         log: ({ label }) => `${label} patched outages and bolstered uptime. Pager alerts stay quiet.`
       },
       {
         id: 'launchCampaign',
         label: 'Launch Campaign',
         time: 2.5,
-        cost: 48,
+        cost: 44,
         progressKey: 'marketing',
+        progressAmount: context => (context.upgrade('serverEdge')?.purchased ? 2 : 1),
         log: ({ label }) => `${label} launched a marketing sprint. Sign-ups trickle in all night.`
       }
     ],

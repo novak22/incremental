@@ -14,7 +14,10 @@
 - Cinema Camera Upgrade costs $480 and requires the base camera before purchase. Studio Expansion costs $540 and requires the Lighting Kit.
 - Server Rack - Starter costs $650 and unlocks foundational infrastructure. Cloud Cluster costs $1,150, requires the rack, and is the new SaaS prerequisite. Edge Delivery Network costs $1,450 and requires the cluster.
 - All upgrades log celebratory flavour text and contribute spending data to the daily metrics ledger.
+- Cinema Camera now doubles vlog quality progress, bumps daily payouts by roughly 25%, and adds a juicier viral spike chance at Quality 3.
+- Studio Expansion doubles stock photo quality action progress and lifts gallery payouts by about 20% to offset the larger marketing pushes.
+- Edge Delivery Network doubles SaaS quality action progress across all tracks and increases subscription payouts by roughly 35%.
 
 ## Follow-Up Ideas
-- Wire the new boosts into asset payout calculations so higher-tier equipment improves actual revenue rather than flavour only.
+- Explore prestige-tier upgrades that convert the doubled progress into passive automation for late-game scaling.
 - Introduce maintenance costs or downtime events that encourage balancing infrastructure investments against daily upkeep budgets.
