@@ -1746,6 +1746,8 @@ function updateUpgradeCard(definition) {
   }
 
   ui.updateDetails?.();
+}
+
 function renderUpgrades(definitions) {
   const list = elements.upgradeList;
   if (!list) return;
