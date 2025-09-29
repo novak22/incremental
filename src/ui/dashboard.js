@@ -252,20 +252,21 @@ function renderQueue(summary) {
   for (const item of items) {
     const li = document.createElement('li');
     li.dataset.state = item.state;
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.className = 'queue__select';
-    checkbox.disabled = true;
     const label = document.createElement('div');
     label.className = 'queue__meta';
     const title = document.createElement('strong');
     title.textContent = item.label;
-    const detail = document.createElement('span');
-    detail.textContent = item.detail;
-    label.append(title, detail);
+    label.appendChild(title);
+    if (item.detail) {
+      const detail = document.createElement('span');
+      detail.className = 'queue__detail';
+      detail.textContent = item.detail;
+      label.appendChild(detail);
+    }
     const hours = document.createElement('span');
+    hours.className = 'queue__hours';
     hours.textContent = formatHours(item.hours);
-    li.append(checkbox, label, hours);
+    li.append(label, hours);
     container.appendChild(li);
   }
 }
