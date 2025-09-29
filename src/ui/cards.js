@@ -3,6 +3,7 @@ import { getAssetState, getState, getUpgradeState } from '../core/state.js';
 import { formatHours, formatMoney } from '../core/helpers.js';
 import { describeHustleRequirements } from '../game/hustles.js';
 import { KNOWLEDGE_TRACKS, getKnowledgeProgress } from '../game/requirements.js';
+import { getTimeCap } from '../game/time.js';
 import {
   describeInstance,
   describeInstanceNetHourly
@@ -1285,7 +1286,9 @@ function renderStudyQueue(definitions) {
     queue.appendChild(empty);
   }
   elements.studyQueueEta.textContent = `Total ETA: ${formatHours(totalHours)}`;
-  elements.studyQueueCap.textContent = 'Daily cap: 6h';
+  const state = getState();
+  const cap = state ? getTimeCap() : 0;
+  elements.studyQueueCap.textContent = `Daily cap: ${formatHours(cap)}`;
 }
 
 export function renderCardCollections({ hustles, education, assets, upgrades }) {

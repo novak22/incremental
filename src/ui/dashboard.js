@@ -105,8 +105,6 @@ function buildQuickActions(state) {
   return items.slice(0, 4);
 }
 
-const MAX_UPGRADE_RECOMMENDATIONS = 3;
-
 function buildAssetUpgradeRecommendations(state) {
   if (!state) return [];
 
@@ -150,6 +148,8 @@ function buildAssetUpgradeRecommendations(state) {
         if (!canPerformQualityAction(asset, instance, action, state)) return;
 
         const completion = target > 0 ? Math.min(1, current / target) : 1;
+        const percentComplete = Math.max(0, Math.min(100, Math.round(completion * 100)));
+        const percentRemaining = Math.max(0, 100 - percentComplete);
         const track = tracks?.[key] || {};
         const requirementLabel = track.shortLabel || track.label || key;
         const timeCost = Math.max(0, Number(action.time) || 0);
@@ -161,7 +161,7 @@ function buildAssetUpgradeRecommendations(state) {
         if (moneyCost > 0) {
           effortParts.push(`$${formatMoney(moneyCost)}`);
         }
-        const progressNote = `${Math.min(current, target)}/${target} logged`;
+        const progressNote = `${Math.min(current, target)}/${target} logged (${percentComplete}% complete)`;
         const meta = effortParts.length ? `${progressNote} • ${effortParts.join(' • ')}` : progressNote;
         const actionLabel = typeof action.label === 'function'
           ? action.label({ definition: asset, instance, state })
@@ -171,7 +171,7 @@ function buildAssetUpgradeRecommendations(state) {
         suggestions.push({
           id: `asset-upgrade:${asset.id}:${instance.id}:${action.id}:${key}`,
           title: `${label} · ${buttonLabel}`,
-          subtitle: `${remaining} ${requirementLabel} to go for Quality ${nextLevel.level}.`,
+          subtitle: `${remaining} ${requirementLabel} to go for Quality ${nextLevel.level} (${percentRemaining}% to go).`,
           meta,
           buttonLabel,
           onClick: () => performQualityAction(asset.id, instance.id, action.id),
@@ -200,7 +200,7 @@ function buildAssetUpgradeRecommendations(state) {
     return a.title.localeCompare(b.title);
   });
 
-  return suggestions.slice(0, MAX_UPGRADE_RECOMMENDATIONS);
+  return suggestions;
 }
 
 function buildNotifications(state) {
@@ -252,20 +252,21 @@ function renderQueue(summary) {
   for (const item of items) {
     const li = document.createElement('li');
     li.dataset.state = item.state;
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.className = 'queue__select';
-    checkbox.disabled = true;
     const label = document.createElement('div');
     label.className = 'queue__meta';
     const title = document.createElement('strong');
     title.textContent = item.label;
-    const detail = document.createElement('span');
-    detail.textContent = item.detail;
-    label.append(title, detail);
+    label.appendChild(title);
+    if (item.detail) {
+      const detail = document.createElement('span');
+      detail.className = 'queue__detail';
+      detail.textContent = item.detail;
+      label.appendChild(detail);
+    }
     const hours = document.createElement('span');
+    hours.className = 'queue__hours';
     hours.textContent = formatHours(item.hours);
-    li.append(checkbox, label, hours);
+    li.append(label, hours);
     container.appendChild(li);
   }
 }
