@@ -146,7 +146,6 @@ function setupFilterHandlers() {
   elements.assetFilters.lowRisk?.addEventListener('change', applyAssetFilters);
 
   elements.upgradeFilters.affordable?.addEventListener('change', applyUpgradeFilters);
-  elements.upgradeFilters.favorites?.addEventListener('change', applyUpgradeFilters);
   elements.upgradeSearch?.addEventListener('input', debounce(applyUpgradeFilters, 150));
 
   document.addEventListener('upgrades:category-changed', applyUpgradeFilters);
@@ -199,16 +198,14 @@ function applyAssetFilters() {
 function applyUpgradeFilters() {
   const cards = Array.from(elements.upgradeList?.querySelectorAll('[data-upgrade]') || []);
   const affordableOnly = Boolean(elements.upgradeFilters.affordable?.checked);
-  const favoritesOnly = Boolean(elements.upgradeFilters.favorites?.checked);
   const query = (elements.upgradeSearch?.value || '').trim().toLowerCase();
   const activeCategory = elements.upgradeCategoryChips?.dataset.active || 'all';
 
   cards.forEach(card => {
     const matchesSearch = !query || card.dataset.search?.includes(query);
     const matchesAffordable = !affordableOnly || card.dataset.affordable === 'true';
-    const matchesFavorites = !favoritesOnly || card.dataset.favorite === 'true';
     const matchesCategory = activeCategory === 'all' || card.dataset.category === activeCategory;
-    card.hidden = !(matchesSearch && matchesAffordable && matchesFavorites && matchesCategory);
+    card.hidden = !(matchesSearch && matchesAffordable && matchesCategory);
   });
 
   emitLayoutEvent('upgrades:filtered');

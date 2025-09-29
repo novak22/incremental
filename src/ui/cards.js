@@ -1,5 +1,5 @@
 import elements from './elements.js';
-import { getAssetState, getState, getUpgradeState } from '../core/state.js';
+import { getAssetState, getState } from '../core/state.js';
 import { formatDays, formatHours, formatMoney } from '../core/helpers.js';
 import { describeHustleRequirements } from '../game/hustles.js';
 import { describeRequirement, getDefinitionRequirements, KNOWLEDGE_TRACKS, KNOWLEDGE_REWARDS, getKnowledgeProgress } from '../game/requirements.js';
@@ -1553,13 +1553,11 @@ function getUpgradeSnapshot(definition, state = getState()) {
   const affordable = cost <= 0 || money >= cost;
   const disabled = isUpgradeDisabled(definition);
   const purchased = Boolean(upgradeState.purchased);
-  const favorite = Boolean(upgradeState.favorite);
   const ready = !purchased && affordable && !disabled;
   return {
     cost,
     affordable,
     disabled,
-    favorite,
     name: definition.name || definition.id,
     purchased,
     ready
@@ -1583,9 +1581,8 @@ function sortUpgradesForCategory(definitions, state = getState()) {
 
       const score = snapshot => {
         if (snapshot.ready) return 0;
-        if (snapshot.favorite && !snapshot.purchased) return 1;
-        if (!snapshot.purchased && snapshot.affordable) return 2;
-        if (snapshot.purchased) return 4;
+        if (!snapshot.purchased && snapshot.affordable) return 1;
+        if (!snapshot.purchased) return 2;
         return 3;
       };
 
@@ -1667,16 +1664,14 @@ function renderUpgradeOverview(definitions) {
       const snapshot = getUpgradeSnapshot(definition, state);
       if (snapshot.purchased) acc.purchased += 1;
       if (snapshot.ready) acc.ready += 1;
-      if (snapshot.favorite) acc.favorites += 1;
       acc.total += 1;
       return acc;
     },
-    { purchased: 0, ready: 0, favorites: 0, total: 0 }
+    { purchased: 0, ready: 0, total: 0 }
   );
 
   overview.purchased.textContent = `${stats.purchased}/${stats.total}`;
   overview.ready.textContent = String(stats.ready);
-  overview.favorites.textContent = String(stats.favorites);
   if (overview.note) {
     overview.note.textContent = describeOverviewNote(stats);
   }
@@ -1825,22 +1820,9 @@ function renderUpgradeCard(definition, container, categoryId) {
     actions.appendChild(buyButton);
   }
 
-  const favoriteButton = document.createElement('button');
-  favoriteButton.type = 'button';
-  favoriteButton.dataset.role = 'favorite-upgrade';
-  favoriteButton.className = 'ghost';
-  favoriteButton.textContent = 'Save';
-  favoriteButton.title = 'Toggle favorite to pin this upgrade in the dock.';
-  favoriteButton.addEventListener('click', () => toggleUpgradeFavorite(definition));
-  actions.appendChild(favoriteButton);
-
-  const detailsButton = document.createElement('button');
-  detailsButton.type = 'button';
-  detailsButton.className = 'ghost';
-  detailsButton.textContent = 'Details';
-  detailsButton.addEventListener('click', () => openUpgradeDetails(definition));
-  actions.appendChild(detailsButton);
-  card.appendChild(actions);
+  if (actions.childElementCount > 0) {
+    card.appendChild(actions);
+  }
 
   let extra = null;
   if (typeof definition.extraContent === 'function') {
@@ -1851,7 +1833,6 @@ function renderUpgradeCard(definition, container, categoryId) {
   upgradeUi.set(definition.id, {
     card,
     buyButton,
-    favoriteButton,
     status,
     price,
     updateDetails: details?.update,
@@ -1867,7 +1848,6 @@ function updateUpgradeCard(definition) {
   const snapshot = getUpgradeSnapshot(definition, state);
 
   ui.card.dataset.affordable = snapshot.affordable ? 'true' : 'false';
-  ui.card.dataset.favorite = snapshot.favorite ? 'true' : 'false';
   ui.card.dataset.purchased = snapshot.purchased ? 'true' : 'false';
   ui.card.dataset.ready = snapshot.ready ? 'true' : 'false';
 
@@ -1877,11 +1857,6 @@ function updateUpgradeCard(definition) {
     ui.buyButton.textContent = typeof definition.action?.label === 'function'
       ? definition.action.label(state)
       : definition.action?.label || 'Buy';
-  }
-
-  if (ui.favoriteButton) {
-    ui.favoriteButton.setAttribute('aria-pressed', snapshot.favorite ? 'true' : 'false');
-    ui.favoriteButton.textContent = snapshot.favorite ? 'Saved' : 'Save';
   }
 
   if (ui.status) {
@@ -1906,45 +1881,6 @@ function updateUpgradeCard(definition) {
   }
 
   ui.updateDetails?.();
-}
-
-function toggleUpgradeFavorite(definition) {
-  const state = getState();
-  if (!state) return;
-  state.upgrades = state.upgrades || {};
-  state.upgrades[definition.id] = state.upgrades[definition.id] || {};
-  const current = Boolean(state.upgrades[definition.id].favorite);
-  state.upgrades[definition.id].favorite = !current;
-  updateUpgradeCard(definition);
-  renderUpgradeDock();
-  if (!currentUpgradeDefinitions.length) {
-    currentUpgradeDefinitions = [definition];
-  }
-  renderUpgradeOverview(currentUpgradeDefinitions);
-  refreshUpgradeSections();
-  emitUIEvent('upgrades:state-updated');
-}
-
-function openUpgradeDetails(definition) {
-  const state = getState();
-  const body = document.createElement('div');
-  body.className = 'upgrade-detail';
-
-  if (definition.description) {
-    const intro = document.createElement('p');
-    intro.textContent = definition.description;
-    body.appendChild(intro);
-  }
-
-  const cost = Number(definition.cost) || 0;
-  body.appendChild(
-    createDefinitionSummary('Investment', [
-      { label: 'Price', value: cost > 0 ? `$${formatMoney(cost)}` : 'No cost' },
-      { label: 'Owned', value: getUpgradeState(definition.id, state)?.purchased ? 'Yes' : 'No' }
-    ])
-  );
-
-  showSlideOver({ eyebrow: 'Upgrade', title: definition.name, body });
 }
 
 function renderUpgrades(definitions) {
@@ -2010,16 +1946,12 @@ function renderUpgradeDock() {
   dock.innerHTML = '';
 
   const cards = Array.from(upgradeUi.values()).map(ui => ui.card);
-  const readyCards = cards.filter(card => card.dataset.ready === 'true');
-  const favoriteCards = cards.filter(
-    card => card.dataset.favorite === 'true' && card.dataset.purchased !== 'true'
-  );
-  const pool = readyCards.length ? readyCards : favoriteCards;
+  const pool = cards.filter(card => card.dataset.ready === 'true');
 
   if (!pool.length) {
     const empty = document.createElement('li');
     empty.className = 'dock-item dock-item--empty';
-    empty.textContent = 'No standout upgrades yet. Favor a card or meet a prerequisite to populate this list.';
+    empty.textContent = 'No standout upgrades yet. Meet a prerequisite or stack more cash to populate this list.';
     dock.appendChild(empty);
     return;
   }

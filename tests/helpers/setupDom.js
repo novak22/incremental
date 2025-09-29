@@ -105,7 +105,6 @@ export function ensureTestDom() {
           <section id="panel-upgrades" class="panel" hidden>
             <input id="upgrade-search" />
             <input id="upgrade-affordable-toggle" type="checkbox" />
-            <input id="upgrade-favorites-toggle" type="checkbox" />
             <div id="upgrade-category-chips"></div>
             <div id="upgrade-list"></div>
             <aside>
