@@ -383,11 +383,6 @@ const globalOpsCenter = createUpgrade({
     'serverEdge',
     {
       type: 'custom',
-      met: () => Boolean(getUpgradeState('fulfillmentAutomation')?.purchased),
-      detail: 'Requires: <strong>Fulfillment Automation upgrade</strong>'
-    },
-    {
-      type: 'custom',
       met: () => automationCourseComplete(),
       detail: 'Requires: <strong>Automation Architecture Course completed</strong>'
     },
@@ -426,11 +421,6 @@ const predictiveInsights = createUpgrade({
     'globalOpsCenter',
     {
       type: 'custom',
-      met: () => Boolean(getUpgradeState('fulfillmentAutomation')?.purchased),
-      detail: 'Requires: <strong>Fulfillment Automation upgrade</strong>'
-    },
-    {
-      type: 'custom',
       met: () => automationCourseComplete(),
       detail: 'Requires: <strong>Automation Architecture Course completed</strong>'
     },
@@ -467,11 +457,6 @@ const autonomousSupport = createUpgrade({
   cost: 2400,
   requires: [
     'predictiveInsights',
-    {
-      type: 'custom',
-      met: () => Boolean(getUpgradeState('fulfillmentAutomation')?.purchased),
-      detail: 'Requires: <strong>Fulfillment Automation upgrade</strong>'
-    },
     {
       type: 'custom',
       met: () => automationCourseComplete(),

@@ -25,7 +25,6 @@ test('global ops center unlocks once SaaS prerequisites are satisfied', () => {
   assert.ok(globalOps.action.disabled(), 'should be disabled with missing requirements');
 
   getUpgradeState('serverEdge').purchased = true;
-  getUpgradeState('fulfillmentAutomation').purchased = true;
   const automation = getKnowledgeProgress('automationCourse');
   automation.completed = true;
   const saasState = getAssetState('saas');

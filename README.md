@@ -52,7 +52,7 @@ Each asset supports multiple instances, tracks setup progress, and rolls a daily
 - **Server Rack - Starter** – $650, unlocks infrastructure foundations for advanced projects.
 - **Cloud Cluster** – $1,150, requires the rack and unlocks SaaS deployments.
 - **Edge Delivery Network** – $1,450, requires the cluster, keeps your micro-app snappy worldwide, and unlocks the Quality 4 edge deployment pushes for SaaS builds.
-- **Global Ops Center** – $1,550, requires Fulfillment Automation, Automation Architecture, Edge Delivery, and two active SaaS builds; adds a ~40% SaaS income bump and +1 edge progress.
+- **Global Ops Center** – $1,550, requires Automation Architecture, Edge Delivery, and two active SaaS builds; adds a ~40% SaaS income bump and +1 edge progress.
 - **Predictive Insights Engine** – $1,950, follows the Ops Center and three active SaaS apps; grants +1 feature/stability/marketing progress plus another ~20% income multiplier.
 - **Autonomous Support Mesh** – $2,400, unlocks with four active SaaS apps after Predictive Insights; adds +1 stability and edge progress, trims edge cooldowns to one day, and lifts SaaS revenue by roughly 25%.
 - **Automation Course** – $260 once you have an active blog; permanently boosts blog daily payouts by +50%.
