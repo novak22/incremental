@@ -150,6 +150,7 @@ function setupFilterHandlers() {
 
   document.addEventListener('upgrades:category-changed', applyUpgradeFilters);
   document.addEventListener('upgrades:state-updated', applyUpgradeFilters);
+  document.addEventListener('hustles:availability-updated', applyHustleFilters);
 
   elements.studyFilters.activeOnly?.addEventListener('change', applyStudyFilters);
   elements.studyFilters.hideComplete?.addEventListener('change', applyStudyFilters);
@@ -161,22 +162,38 @@ function applyHustleFilters() {
   const sortValue = elements.hustleSort?.value || 'roi';
   const query = (elements.hustleSearch?.value || '').trim().toLowerCase();
 
-  cards.forEach(card => {
+  const comparators = {
+    roi: (a, b) => Number(b.card.dataset.roi || 0) - Number(a.card.dataset.roi || 0),
+    payout: (a, b) => Number(b.card.dataset.payout || 0) - Number(a.card.dataset.payout || 0),
+    time: (a, b) => Number(a.card.dataset.time || 0) - Number(b.card.dataset.time || 0)
+  };
+  const selectedComparator = comparators[sortValue] || comparators.roi;
+  const payoutComparator = comparators.payout;
+
+  const meta = cards.map(card => {
+    const available = card.dataset.available === 'true';
     const matchesSearch = !query || card.dataset.search?.includes(query);
-    const matchesAvailability = !availableOnly || card.dataset.available === 'true';
+    const matchesAvailability = !availableOnly || available;
     card.hidden = !(matchesSearch && matchesAvailability);
+    return { card, available };
   });
 
-  if (sortValue === 'payout') {
-    cards.sort((a, b) => Number(b.dataset.payout || 0) - Number(a.dataset.payout || 0));
-  } else if (sortValue === 'time') {
-    cards.sort((a, b) => Number(a.dataset.time || 0) - Number(b.dataset.time || 0));
-  } else {
-    cards.sort((a, b) => Number(b.dataset.roi || 0) - Number(a.dataset.roi || 0));
-  }
+  meta.sort((a, b) => {
+    if (a.available !== b.available) {
+      return a.available ? -1 : 1;
+    }
+    if (a.available) {
+      const primary = selectedComparator(a, b);
+      if (primary !== 0) return primary;
+      return payoutComparator(a, b);
+    }
+    const fallback = payoutComparator(a, b);
+    if (fallback !== 0) return fallback;
+    return selectedComparator(a, b);
+  });
 
   const fragment = document.createDocumentFragment();
-  cards.forEach(card => fragment.appendChild(card));
+  meta.forEach(entry => fragment.appendChild(entry.card));
   elements.hustleList?.appendChild(fragment);
 }
 
