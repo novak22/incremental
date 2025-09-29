@@ -355,35 +355,6 @@ function createInstanceCard(definition, instance, index, state) {
     item.appendChild(stats);
   }
 
-  if (instance.status === 'active') {
-    const tracks = getQualityTracks(definition);
-    const progressWrap = document.createElement('div');
-    progressWrap.className = 'asset-detail__progress';
-    const progress = instance.quality?.progress || {};
-    const nextRequirements = getQualityNextRequirements(definition, Number(instance.quality?.level) || 0) || {};
-    Object.entries(tracks).forEach(([key, track]) => {
-      const label = track?.shortLabel || track?.label || key;
-      const current = Number(progress?.[key]) || 0;
-      const row = document.createElement('span');
-      row.className = 'asset-detail__progress-entry';
-      const target = Number(nextRequirements[key]) || 0;
-      if (target > 0) {
-        row.textContent = `${label}: ${current} / ${target}`;
-        if (current < target) {
-          row.classList.add('is-pending');
-        } else {
-          row.classList.add('is-complete');
-        }
-      } else {
-        row.textContent = `${label}: ${current}`;
-      }
-      progressWrap.appendChild(row);
-    });
-    if (progressWrap.childElementCount) {
-      item.appendChild(progressWrap);
-    }
-  }
-
   const actions = document.createElement('div');
   actions.className = 'asset-detail__actions';
 
@@ -471,64 +442,99 @@ function buildNextQualityInsight(definition, instance) {
   const level = Number(instance.quality?.level) || 0;
   const nextRequirements = getQualityNextRequirements(definition, level);
   const container = document.createElement('div');
-  container.className = 'asset-detail__insight';
+  container.className = 'asset-detail__insight asset-detail__insight--milestone';
 
-  const title = document.createElement('h4');
-  title.className = 'asset-detail__insight-title';
-  title.textContent = 'Next milestone';
-  container.appendChild(title);
+  const hero = document.createElement('div');
+  hero.className = 'asset-detail__milestone-hero';
+
+  const label = document.createElement('span');
+  label.className = 'asset-detail__milestone-label';
+  label.textContent = 'Next milestone';
+  hero.appendChild(label);
 
   if (!nextRequirements) {
     const complete = document.createElement('p');
-    complete.className = 'asset-detail__insight-body';
+    complete.className = 'asset-detail__milestone-message';
     complete.textContent = 'Top tier unlocked — keep collecting those dreamy payouts!';
-    container.appendChild(complete);
+    hero.appendChild(complete);
+    container.appendChild(hero);
     return container;
   }
 
   const nextLevel = getNextQualityLevel(definition, level);
   if (nextLevel) {
     const heading = document.createElement('p');
-    heading.className = 'asset-detail__insight-body';
+    heading.className = 'asset-detail__milestone-target';
     const tierName = nextLevel.name ? ` — ${nextLevel.name}` : '';
     heading.textContent = `Quality ${nextLevel.level}${tierName}`;
-    container.appendChild(heading);
+    hero.appendChild(heading);
+    if (nextLevel.description) {
+      const description = document.createElement('p');
+      description.className = 'asset-detail__milestone-message';
+      description.textContent = nextLevel.description;
+      hero.appendChild(description);
+    }
   }
+
+  container.appendChild(hero);
 
   const tracks = getQualityTracks(definition);
   const progress = instance.quality?.progress || {};
   const entries = Object.entries(nextRequirements)
     .map(([key, target]) => {
-      const label = tracks[key]?.shortLabel || tracks[key]?.label || key;
+      const track = tracks[key];
+      const labelText = track?.shortLabel || track?.label || key;
       const goal = Number(target) || 0;
       if (goal <= 0) return null;
       const current = Number(progress?.[key]) || 0;
       const remaining = Math.max(0, goal - current);
       if (remaining <= 0) return null;
-      return { label, current, goal, remaining };
+      const percent = goal > 0 ? Math.max(0, Math.min(1, current / goal)) : 0;
+      return { label: labelText, current, goal, remaining, percent };
     })
     .filter(Boolean);
 
   if (!entries.length) {
     const ready = document.createElement('p');
-    ready.className = 'asset-detail__insight-note';
+    ready.className = 'asset-detail__milestone-message';
     ready.textContent = 'All requirements met! Run a quality action to celebrate the rank up.';
     container.appendChild(ready);
     return container;
   }
 
   const list = document.createElement('ul');
-  list.className = 'asset-detail__requirement-list';
+  list.className = 'asset-detail__requirement-list asset-detail__requirement-list--milestone';
   entries.forEach(entry => {
     const item = document.createElement('li');
-    item.className = 'asset-detail__requirement-entry';
-    const label = document.createElement('span');
-    label.className = 'asset-detail__requirement-label';
-    label.textContent = entry.label;
+    item.className = 'asset-detail__requirement-entry asset-detail__requirement-entry--milestone';
+
+    const labelEl = document.createElement('span');
+    labelEl.className = 'asset-detail__requirement-label';
+    labelEl.textContent = entry.label;
+    item.appendChild(labelEl);
+
+    const progressWrap = document.createElement('div');
+    progressWrap.className = 'asset-detail__requirement-progress';
+
     const value = document.createElement('span');
-    value.className = 'asset-detail__requirement-value';
-    value.textContent = `${entry.current} / ${entry.goal} (${entry.remaining} to go)`;
-    item.append(label, value);
+    value.className = 'asset-detail__requirement-value asset-detail__requirement-value--milestone';
+    value.textContent = `${entry.current} / ${entry.goal}`;
+    progressWrap.appendChild(value);
+
+    const meter = document.createElement('span');
+    meter.className = 'asset-detail__requirement-meter';
+    const fill = document.createElement('span');
+    fill.className = 'asset-detail__requirement-meter-fill';
+    fill.style.width = `${Math.round(entry.percent * 100)}%`;
+    meter.appendChild(fill);
+    progressWrap.appendChild(meter);
+
+    const remaining = document.createElement('span');
+    remaining.className = 'asset-detail__requirement-remaining';
+    remaining.textContent = `${entry.remaining} to go`;
+    progressWrap.appendChild(remaining);
+
+    item.appendChild(progressWrap);
     list.appendChild(item);
   });
   container.appendChild(list);
@@ -733,6 +739,24 @@ function formatLaunchEta(instance) {
   return `${remaining} days`;
 }
 
+function getUpgradeTimeEstimate(upgrade) {
+  if (!upgrade) return 0;
+  const candidates = [
+    upgrade.installTime,
+    upgrade.timeCost,
+    upgrade.duration,
+    upgrade.metrics?.time?.hours,
+    upgrade.action?.timeCost
+  ];
+  for (const candidate of candidates) {
+    const hours = Number(candidate);
+    if (Number.isFinite(hours) && hours > 0) {
+      return hours;
+    }
+  }
+  return 2;
+}
+
 function createEquipmentShortcuts(definition, state) {
   const pending = getPendingEquipmentUpgrades(definition, state);
   if (!Array.isArray(pending) || pending.length === 0) {
@@ -761,10 +785,13 @@ function createEquipmentShortcuts(definition, state) {
     button.type = 'button';
     button.className = 'asset-detail__upgrade-button';
     button.dataset.upgradeId = upgrade.id;
-    button.textContent = getUpgradeButtonLabel(upgrade);
+    const timeEstimate = getUpgradeTimeEstimate(upgrade);
+    const baseLabel = getUpgradeButtonLabel(upgrade);
+    button.textContent = timeEstimate > 0 ? `${baseLabel} (${formatHours(timeEstimate)})` : baseLabel;
     button.disabled = isUpgradeDisabled(upgrade);
     if (upgrade.description) {
-      button.title = upgrade.description;
+      const timeLabel = timeEstimate > 0 ? ` • ≈${formatHours(timeEstimate)} install` : '';
+      button.title = `${upgrade.description}${timeLabel}`;
     }
     button.addEventListener('click', event => {
       event.preventDefault();
