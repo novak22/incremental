@@ -127,6 +127,11 @@ function renderTimeLegend(playerSegments, assistantSegments = []) {
   } else {
     legend.hidden = !hasEntries;
   }
+
+  const header = legend.closest('.dashboard-header');
+  if (header) {
+    header.classList.toggle('legend-collapsed', legend.hidden);
+  }
 }
 
 function renderTimeProgress(summary) {
