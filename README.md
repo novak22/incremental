@@ -36,7 +36,7 @@ Each asset supports multiple instances, tracks setup progress, and rolls a daily
 - **Digital E-Book Series** – Setup 4 days × 3h ($260) after completing Outline Mastery. Maintenance 0.75h/day + $3. Faster chapter drafting (2.5h) and cheaper cover/review pushes mean Quality 0 now earns $3–$6/day and Quality 1 leaps to $12–$20/day so the workshop unlock hits modest profitability immediately, with late tiers capping out around $30–$42/day.
 - **Stock Photo Gallery** – Setup 4 days × 2.5h ($240) with Camera + Lighting Kit and Photo Catalog knowledge. Maintenance 1h/day + $4. Shoot themed packs, keyword them, and pitch marketplaces; quality progression raises royalties from $3–$6/day to $26–$36/day.
 - **Dropshipping Storefront** – Setup 5 days × 4h ($650) after E-Commerce Playbook and two active blogs. Maintenance 1.5h/day + $9. Add listings, tune pages, and run ad bursts so profits scale from $6–$10/day to $32–$40/day.
-- **SaaS Micro-App** – Setup 7 days × 5h ($1600) after Automation Architecture, a Cloud Cluster upgrade, and experience running a dropshipping store and e-book line. Maintenance 2.5h/day + $12. Squash bugs, ship features, and host support sprints to grow subscriptions from $8–$14/day to $34–$42/day.
+- **SaaS Micro-App** – Setup 7 days × 5h ($1600) after Automation Architecture, a Cloud Cluster upgrade, and experience running a dropshipping store and e-book line. Maintenance 2.5h/day + $12. Squash bugs, ship features, and host support sprints to grow subscriptions from $4–$8/day to $82–$110/day once the Edge Delivery Network powers Quality 4 deployments.
 
 ### Upgrades & Boosts
 - **Hire Virtual Assistant** – $180 per hire, up to four assistants. Each adds +2h daily but costs $30/day in payroll; fire assistants anytime to cut wages (and hours).
@@ -47,7 +47,7 @@ Each asset supports multiple instances, tracks setup progress, and rolls a daily
 - **Studio Expansion** – $540, requires the Lighting Kit and outfits your studio for rapid-fire shoots.
 - **Server Rack - Starter** – $650, unlocks infrastructure foundations for advanced projects.
 - **Cloud Cluster** – $1,150, requires the rack and unlocks SaaS deployments.
-- **Edge Delivery Network** – $1,450, requires the cluster and keeps your micro-app snappy worldwide.
+- **Edge Delivery Network** – $1,450, requires the cluster, keeps your micro-app snappy worldwide, and unlocks the Quality 4 edge deployment pushes for SaaS builds.
 - **Automation Course** – $260 once you have an active blog; permanently boosts blog daily payouts by +50%.
 
 ### Persistence & Offline Behaviour

@@ -2,6 +2,7 @@ import { formatHours, formatMoney } from '../core/helpers.js';
 import { getAssetState, getState } from '../core/state.js';
 import {
   canPerformQualityAction,
+  getQualityActionAvailability,
   getQualityActionCooldown,
   getQualityActions,
   getQualityLevel,
@@ -127,15 +128,22 @@ export function updateQualityPanel(definition, panelState) {
         }
         const suffix = details.length ? ` (${details.join(' · ')})` : '';
         button.textContent = `${action.label}${suffix}`;
+        const availability = getQualityActionAvailability(definition, instance, action, state);
         const cooldown = getQualityActionCooldown(definition, instance, action, state);
-        button.disabled = !canPerformQualityAction(definition, instance, action, state);
-        if (cooldown.onCooldown) {
+        const canRun = availability.unlocked && canPerformQualityAction(definition, instance, action, state);
+        button.disabled = !canRun;
+        if (!availability.unlocked) {
+          button.title = availability.reason || 'Unlock supporting upgrades to use this action.';
+          button.classList.add('is-locked');
+        } else if (cooldown.onCooldown) {
           const wait = cooldown.remainingDays === 1
             ? 'Ready tomorrow'
             : `Ready in ${cooldown.remainingDays} days`;
           button.title = wait;
+          button.classList.remove('is-locked');
         } else {
           button.title = '';
+          button.classList.remove('is-locked');
         }
         button.addEventListener('click', () => {
           if (button.disabled) return;

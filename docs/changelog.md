@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- Expanded the Micro SaaS quality ladder with an Edge-powered Quality 4 tier, fresh action gating, and UI messaging so late-game payouts highlight the Edge Delivery Network upgrade.
 - Retuned Stock Photo Galleries, Dropshipping Labs, and Micro SaaS payouts with lighter upkeep and lower quality hurdles, and wired the Cinema Camera, Studio Expansion, and Edge Delivery upgrades into tangible income and progress boosts.
 - Rebalanced the Personal Blog Network and Digital E-Book Series so Quality 0–1 payouts cover their maintenance, trimmed early post/chapter requirements, and sped up support actions while keeping the Automation Course perk impactful.
 - Linked study tracks to instant gig payouts with course-specific multipliers/bonuses and added two new workshops (Brand Voice Lab, Guerrilla Buzz Workshop) to diversify study plans.
