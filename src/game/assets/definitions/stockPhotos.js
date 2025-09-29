@@ -1,4 +1,5 @@
 import { formatMoney } from '../../../core/helpers.js';
+import { getUpgradeState } from '../../../core/state.js';
 import { createAssetDefinition } from '../../content/schema.js';
 
 const stockPhotosDefinition = createAssetDefinition({
@@ -8,11 +9,15 @@ const stockPhotosDefinition = createAssetDefinition({
   tag: { label: 'Creative', type: 'passive' },
   description: 'Stage props, shoot themed collections, and list them across marketplaces.',
   setup: { days: 5, hoursPerDay: 4, cost: 560 },
-  maintenance: { hours: 1.5, cost: 12 },
+  maintenance: { hours: 1.2, cost: 10 },
   income: {
-    base: 42,
-    variance: 0.25,
-    logType: 'passive'
+    base: 58,
+    variance: 0.35,
+    logType: 'passive',
+    modifier: amount => {
+      const expansion = getUpgradeState('studioExpansion').purchased ? 1.2 : 1;
+      return Math.round(amount * expansion);
+    }
   },
   requirements: {
     equipment: ['camera', 'studio'],
@@ -30,54 +35,57 @@ const stockPhotosDefinition = createAssetDefinition({
         level: 0,
         name: 'Camera Roll Chaos',
         description: 'Unsorted shoots drip pennies.',
-        income: { min: 2, max: 5 },
+        income: { min: 4, max: 9 },
         requirements: {}
       },
       {
         level: 1,
         name: 'Curated Collections',
-        description: 'Five themed shoots win daily sales.',
-        income: { min: 12, max: 20 },
-        requirements: { shoots: 5 }
+        description: 'Four themed shoots unlock daily bundles.',
+        income: { min: 18, max: 30 },
+        requirements: { shoots: 4 }
       },
       {
         level: 2,
         name: 'Marketplace Darling',
         description: 'Batch edits make downloads soar.',
-        income: { min: 22, max: 32 },
-        requirements: { shoots: 12, editing: 4 }
+        income: { min: 34, max: 52 },
+        requirements: { shoots: 10, editing: 4 }
       },
       {
         level: 3,
         name: 'Brand Staple',
         description: 'Marketing funnels keep cash flowing.',
-        income: { min: 30, max: 44 },
-        requirements: { shoots: 18, editing: 7, marketing: 5 }
+        income: { min: 54, max: 78 },
+        requirements: { shoots: 16, editing: 7, marketing: 5 }
       }
     ],
     actions: [
       {
         id: 'planShoot',
         label: 'Plan Shoot',
-        time: 4,
-        cost: 24,
+        time: 3.5,
+        cost: 22,
         progressKey: 'shoots',
+        progressAmount: context => (context.upgrade('studioExpansion')?.purchased ? 2 : 1),
         log: ({ label }) => `${label} staged a dazzling shoot. Props now live rent-free in your studio.`
       },
       {
         id: 'batchEdit',
         label: 'Batch Edit',
-        time: 2.5,
-        cost: 16,
+        time: 2,
+        cost: 14,
         progressKey: 'editing',
+        progressAmount: context => (context.upgrade('studioExpansion')?.purchased ? 2 : 1),
         log: ({ label }) => `${label} batch-edited a gallery. Clients cheer at the crisp exports!`
       },
       {
         id: 'runPromo',
         label: 'Run Promo',
         time: 2,
-        cost: 18,
+        cost: 16,
         progressKey: 'marketing',
+        progressAmount: context => (context.upgrade('studioExpansion')?.purchased ? 2 : 1),
         log: ({ label }) => `${label} ran a marketplace feature promo. Download counters spin faster!`
       }
     ],

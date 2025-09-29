@@ -8,10 +8,10 @@ const dropshippingDefinition = createAssetDefinition({
   tag: { label: 'Commerce', type: 'passive' },
   description: 'Prototype products, source suppliers, and automate fulfillment funnels.',
   setup: { days: 6, hoursPerDay: 4, cost: 720 },
-  maintenance: { hours: 2, cost: 14 },
+  maintenance: { hours: 1.5, cost: 12 },
   income: {
-    base: 52,
-    variance: 0.3,
+    base: 84,
+    variance: 0.35,
     logType: 'passive'
   },
   requirements: {
@@ -30,52 +30,52 @@ const dropshippingDefinition = createAssetDefinition({
         level: 0,
         name: 'Prototype Pile',
         description: 'Inconsistent suppliers mean sporadic payouts.',
-        income: { min: 3, max: 6 },
+        income: { min: 5, max: 9 },
         requirements: {}
       },
       {
         level: 1,
         name: 'Optimized Listings',
         description: 'Top products have polished listings and reviews.',
-        income: { min: 16, max: 26 },
-        requirements: { research: 5 }
+        income: { min: 24, max: 38 },
+        requirements: { research: 4 }
       },
       {
         level: 2,
         name: 'Automation Groove',
         description: 'Fulfillment and ad funnels make sales steady.',
-        income: { min: 28, max: 40 },
-        requirements: { research: 12, listing: 4 }
+        income: { min: 44, max: 62 },
+        requirements: { research: 11, listing: 5 }
       },
       {
         level: 3,
         name: 'Scaled Flywheel',
         description: 'Paid campaigns bring consistent high-ticket orders.',
-        income: { min: 42, max: 58 },
-        requirements: { research: 18, listing: 7, ads: 6 }
+        income: { min: 68, max: 92 },
+        requirements: { research: 18, listing: 8, ads: 7 }
       }
     ],
     actions: [
       {
         id: 'researchProduct',
         label: 'Research Product',
-        time: 3.5,
+        time: 3,
         progressKey: 'research',
         log: ({ label }) => `${label} spotted a trending micro-niche. Suppliers start calling back!`
       },
       {
         id: 'optimizeListing',
         label: 'Optimize Listing',
-        time: 2,
-        cost: 32,
+        time: 1.8,
+        cost: 28,
         progressKey: 'listing',
         log: ({ label }) => `${label} revamped copy and photos. Conversion rates begin to pop.`
       },
       {
         id: 'experimentAds',
         label: 'Experiment With Ads',
-        time: 2.5,
-        cost: 38,
+        time: 2.2,
+        cost: 34,
         progressKey: 'ads',
         log: ({ label }) => `${label} tested lookalike audiences. Click-through rates jump!`
       }
