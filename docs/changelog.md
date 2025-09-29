@@ -8,6 +8,7 @@
 - Active build cards surface quality tiers, remaining steps to the next milestone, and yesterday’s payout breakdown so upgrades feel tangible.
 - Automation & infrastructure: broader instant gigs, smarter assistant load balancing, and new studio/server tiers expand long-term play.
 - Education clarity: finished courses now show 100% progress and list the XP-rich skills they elevate.
+- Upgrade hub redesign: roadmap stats, category chips, and a refreshed dock make reinvestment planning faster and more celebratory.
 
 ## Recent Highlights
 - Passive assets gained Quality 4–5 milestones with higher payouts and refreshed modifiers.

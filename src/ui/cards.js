@@ -34,7 +34,46 @@ import { getSkillDefinition, normalizeSkillList } from '../game/skills/data.js';
 const hustleUi = new Map();
 const assetUi = new Map();
 const upgradeUi = new Map();
+const upgradeSections = new Map();
+const upgradeCategoryChips = new Map();
 const studyUi = new Map();
+let activeUpgradeCategory = 'all';
+let currentUpgradeDefinitions = [];
+
+const UPGRADE_CATEGORY_ORDER = ['unlock', 'boost', 'automation', 'support', 'sustain', 'misc'];
+
+const UPGRADE_CATEGORY_COPY = {
+  unlock: {
+    label: 'Unlocks',
+    title: 'Unlock new ventures',
+    note: 'Open fresh money loops, actions, and production tiers.'
+  },
+  boost: {
+    label: 'Boosts',
+    title: 'Amplify payouts',
+    note: 'Tune quality, dial up income, and sharpen daily routines.'
+  },
+  automation: {
+    label: 'Automation',
+    title: 'Delegate the busywork',
+    note: 'Hand repetitive tasks to bots, assistants, or scripts.'
+  },
+  support: {
+    label: 'Support',
+    title: 'Sustain the squad',
+    note: 'Protect uptime, maintain rigs, and nourish your team.'
+  },
+  sustain: {
+    label: 'Sustain',
+    title: 'Keep momentum rolling',
+    note: 'Lightweight boosters that steady the daily grind.'
+  },
+  misc: {
+    label: 'Special',
+    title: 'Signature perks',
+    note: 'One-off upgrades with quirky, high-impact twists.'
+  }
+};
 let studyElementsDocument = null;
 
 let expandedAssetId = null;
@@ -1294,12 +1333,319 @@ function renderAssets(definitions) {
   definitions.forEach(def => renderAssetRow(def, tbody));
 }
 
-function renderUpgradeCard(definition, container) {
+function getUpgradeCategory(definition) {
+  return definition?.tag?.type || 'misc';
+}
+
+function getCategoryCopy(id) {
+  if (UPGRADE_CATEGORY_COPY[id]) {
+    return UPGRADE_CATEGORY_COPY[id];
+  }
+  const label = (id || 'special')
+    .toString()
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/^./, match => match.toUpperCase())
+    .trim() || 'Special';
+  return {
+    label,
+    title: `${label} upgrades`,
+    note: 'Specialized boosters that defy tidy labels.'
+  };
+}
+
+function syncUpgradeCategoryChips() {
+  if (elements.upgradeCategoryChips) {
+    elements.upgradeCategoryChips.dataset.active = activeUpgradeCategory;
+  }
+  upgradeCategoryChips.forEach((button, id) => {
+    button.setAttribute('aria-pressed', id === activeUpgradeCategory ? 'true' : 'false');
+  });
+}
+
+function buildUpgradeDetails(definition) {
+  const detailBuilders = Array.isArray(definition.details) ? definition.details.slice(0, 3) : [];
+  if (!detailBuilders.length) {
+    return null;
+  }
+
+  const list = document.createElement('ul');
+  list.className = 'upgrade-card__details';
+  const items = detailBuilders.map(() => {
+    const item = document.createElement('li');
+    item.className = 'upgrade-card__detail';
+    list.appendChild(item);
+    return item;
+  });
+
+  const update = () => {
+    items.forEach((item, index) => {
+      const builder = detailBuilders[index];
+      try {
+        const detail = typeof builder === 'function' ? builder() : builder;
+        if (!detail) {
+          item.hidden = true;
+          item.innerHTML = '';
+          return;
+        }
+        if (typeof detail === 'string') {
+          const trimmed = detail.trim();
+          item.hidden = trimmed.length === 0;
+          item.innerHTML = trimmed;
+        } else if (detail instanceof Node) {
+          item.hidden = false;
+          item.innerHTML = '';
+          item.appendChild(detail);
+        } else {
+          item.hidden = true;
+          item.innerHTML = '';
+        }
+      } catch (error) {
+        console.error('Failed to render upgrade detail', error);
+        item.hidden = true;
+        item.innerHTML = '';
+      }
+    });
+  };
+
+  update();
+  return { list, update };
+}
+
+function getUpgradeSnapshot(definition, state = getState()) {
+  const upgradeState = state?.upgrades?.[definition.id] || {};
+  const cost = Number(definition.cost) || 0;
+  const money = Number(state?.money) || 0;
+  const affordable = cost <= 0 || money >= cost;
+  const disabled = isUpgradeDisabled(definition);
+  const purchased = Boolean(upgradeState.purchased);
+  const favorite = Boolean(upgradeState.favorite);
+  const ready = !purchased && affordable && !disabled;
+  return {
+    cost,
+    affordable,
+    disabled,
+    favorite,
+    name: definition.name || definition.id,
+    purchased,
+    ready
+  };
+}
+
+function describeUpgradeStatus({ purchased, ready, affordable, disabled }) {
+  if (purchased) return 'Owned and active';
+  if (ready) return 'Ready to launch';
+  if (disabled) return 'Requires prerequisites';
+  if (!affordable) return 'Save up to unlock';
+  return 'Progress for this soon';
+}
+
+function sortUpgradesForCategory(definitions, state = getState()) {
+  return definitions
+    .slice()
+    .sort((a, b) => {
+      const aSnapshot = getUpgradeSnapshot(a, state);
+      const bSnapshot = getUpgradeSnapshot(b, state);
+
+      const score = snapshot => {
+        if (snapshot.ready) return 0;
+        if (snapshot.favorite && !snapshot.purchased) return 1;
+        if (!snapshot.purchased && snapshot.affordable) return 2;
+        if (snapshot.purchased) return 4;
+        return 3;
+      };
+
+      const scoreDiff = score(aSnapshot) - score(bSnapshot);
+      if (scoreDiff !== 0) return scoreDiff;
+
+      if (aSnapshot.cost !== bSnapshot.cost) {
+        return aSnapshot.cost - bSnapshot.cost;
+      }
+
+      return aSnapshot.name.localeCompare(bSnapshot.name);
+    });
+}
+
+function buildUpgradeCategories(definitions) {
+  const grouped = new Map();
+  definitions.forEach(definition => {
+    const category = getUpgradeCategory(definition);
+    if (!grouped.has(category)) {
+      grouped.set(category, []);
+    }
+    grouped.get(category).push(definition);
+  });
+
+  const seen = new Set();
+  const orderedKeys = [
+    ...UPGRADE_CATEGORY_ORDER,
+    ...Array.from(grouped.keys()).filter(key => !UPGRADE_CATEGORY_ORDER.includes(key))
+  ];
+
+  return orderedKeys
+    .filter(key => {
+      if (seen.has(key) || !grouped.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .map(id => ({
+      id,
+      copy: getCategoryCopy(id),
+      definitions: grouped.get(id)
+    }));
+}
+
+function emitUIEvent(name) {
+  if (typeof document?.createEvent === 'function') {
+    const event = document.createEvent('Event');
+    event.initEvent(name, true, true);
+    document.dispatchEvent(event);
+    return;
+  }
+  if (typeof Event === 'function') {
+    document.dispatchEvent(new Event(name));
+  }
+}
+
+function describeOverviewNote({ total, purchased, ready }) {
+  if (!total) {
+    return 'Upgrades unlock as you build new assets and story beats.';
+  }
+  if (total === purchased) {
+    return 'Every upgrade is owned! Keep stacking cash for the next content drop.';
+  }
+  if (ready > 0) {
+    return ready === 1
+      ? 'One upgrade is ready to install right now.'
+      : `${ready} upgrades are ready to install right now.`;
+  }
+  return 'Meet the prerequisites or save up to line up your next power spike.';
+}
+
+function renderUpgradeOverview(definitions) {
+  const overview = elements.upgradeOverview;
+  if (!overview?.container) return;
+  const state = getState();
+  if (!state) return;
+
+  const stats = definitions.reduce(
+    (acc, definition) => {
+      const snapshot = getUpgradeSnapshot(definition, state);
+      if (snapshot.purchased) acc.purchased += 1;
+      if (snapshot.ready) acc.ready += 1;
+      if (snapshot.favorite) acc.favorites += 1;
+      acc.total += 1;
+      return acc;
+    },
+    { purchased: 0, ready: 0, favorites: 0, total: 0 }
+  );
+
+  overview.purchased.textContent = `${stats.purchased}/${stats.total}`;
+  overview.ready.textContent = String(stats.ready);
+  overview.favorites.textContent = String(stats.favorites);
+  if (overview.note) {
+    overview.note.textContent = describeOverviewNote(stats);
+  }
+}
+
+function renderUpgradeCategoryFilters(categories) {
+  const container = elements.upgradeCategoryChips;
+  if (!container) return;
+
+  const totals = categories.reduce((sum, category) => sum + category.definitions.length, 0);
+  const availableIds = categories.map(category => category.id);
+  if (activeUpgradeCategory !== 'all' && !availableIds.includes(activeUpgradeCategory)) {
+    activeUpgradeCategory = 'all';
+  }
+
+  container.innerHTML = '';
+  upgradeCategoryChips.clear();
+
+  const createChip = (id, label, count) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.dataset.category = id;
+    button.textContent = count != null ? `${label} (${count})` : label;
+    button.addEventListener('click', () => {
+      const next = activeUpgradeCategory === id && id !== 'all' ? 'all' : id;
+      if (next === activeUpgradeCategory) return;
+      activeUpgradeCategory = next;
+      syncUpgradeCategoryChips();
+      emitUIEvent('upgrades:category-changed');
+    });
+    container.appendChild(button);
+    upgradeCategoryChips.set(id, button);
+  };
+
+  createChip('all', 'All upgrades', totals);
+  categories.forEach(category => {
+    const { id, copy, definitions } = category;
+    createChip(id, copy.label, definitions.length);
+  });
+
+  syncUpgradeCategoryChips();
+}
+
+export function refreshUpgradeSections() {
+  const emptyNote = elements.upgradeEmpty;
+  let visibleTotal = 0;
+
+  upgradeSections.forEach(({ section, list, count, emptyMessage }) => {
+    const cards = Array.from(list?.querySelectorAll('[data-upgrade]') || []);
+    const visible = cards.filter(card => !card.hidden);
+    visibleTotal += visible.length;
+
+    if (count) {
+      if (!cards.length) {
+        count.textContent = 'No upgrades yet';
+      } else if (!visible.length) {
+        count.textContent = 'No matches';
+      } else if (visible.length === cards.length) {
+        count.textContent = `${cards.length} total`;
+      } else {
+        count.textContent = `${visible.length}/${cards.length} showing`;
+      }
+    }
+
+    if (section) {
+      section.dataset.empty = visible.length === 0 ? 'true' : 'false';
+    }
+
+    if (emptyMessage) {
+      emptyMessage.hidden = visible.length > 0;
+    }
+  });
+
+  if (emptyNote) {
+    emptyNote.hidden = visibleTotal > 0;
+  }
+}
+
+document.addEventListener('upgrades:filtered', () => {
+  refreshUpgradeSections();
+});
+
+function renderUpgradeCard(definition, container, categoryId) {
   const state = getState();
   const card = document.createElement('article');
   card.className = 'upgrade-card';
   card.dataset.upgrade = definition.id;
-  card.dataset.search = `${definition.name} ${definition.description}`.toLowerCase();
+  card.dataset.category = categoryId;
+  const searchPieces = [definition.name, definition.description, definition.tag?.label]
+    .filter(Boolean)
+    .join(' ');
+  card.dataset.search = searchPieces.toLowerCase();
+  card.tabIndex = -1;
+
+  const eyebrow = document.createElement('div');
+  eyebrow.className = 'upgrade-card__eyebrow';
+  const tag = document.createElement('span');
+  tag.className = 'upgrade-card__tag';
+  tag.textContent = definition.tag?.label || 'Upgrade';
+  eyebrow.appendChild(tag);
+  const status = document.createElement('span');
+  status.className = 'upgrade-card__status';
+  eyebrow.appendChild(status);
+  card.appendChild(eyebrow);
 
   const header = document.createElement('div');
   header.className = 'upgrade-card__header';
@@ -1308,6 +1654,7 @@ function renderUpgradeCard(definition, container) {
   title.textContent = definition.name;
   header.appendChild(title);
   const price = document.createElement('span');
+  price.className = 'upgrade-card__price';
   const cost = Number(definition.cost) || 0;
   price.textContent = cost > 0 ? `$${formatMoney(cost)}` : 'No cost';
   header.appendChild(price);
@@ -1315,23 +1662,24 @@ function renderUpgradeCard(definition, container) {
 
   if (definition.description) {
     const copy = document.createElement('p');
+    copy.className = 'upgrade-card__description';
     copy.textContent = definition.description;
     card.appendChild(copy);
   }
 
-  const meta = document.createElement('div');
-  meta.className = 'upgrade-card__meta';
-  meta.textContent = definition.boosts || definition.unlocks || 'Passive boost';
-  card.appendChild(meta);
+  const details = buildUpgradeDetails(definition);
+  if (details) {
+    card.appendChild(details.list);
+  }
 
   const actions = document.createElement('div');
   actions.className = 'upgrade-card__actions';
   let buyButton = null;
-  let favoriteButton = null;
   if (definition.action?.onClick) {
     buyButton = document.createElement('button');
     buyButton.type = 'button';
-    buyButton.className = 'primary';
+    buyButton.dataset.role = 'buy-upgrade';
+    buyButton.className = definition.action.className || 'primary';
     buyButton.textContent = typeof definition.action.label === 'function'
       ? definition.action.label(state)
       : definition.action.label || 'Buy';
@@ -1341,22 +1689,39 @@ function renderUpgradeCard(definition, container) {
     });
     actions.appendChild(buyButton);
   }
-  favoriteButton = document.createElement('button');
+
+  const favoriteButton = document.createElement('button');
   favoriteButton.type = 'button';
+  favoriteButton.dataset.role = 'favorite-upgrade';
   favoriteButton.className = 'ghost';
-  favoriteButton.textContent = '★';
+  favoriteButton.textContent = 'Save';
+  favoriteButton.title = 'Toggle favorite to pin this upgrade in the dock.';
   favoriteButton.addEventListener('click', () => toggleUpgradeFavorite(definition));
   actions.appendChild(favoriteButton);
-  const details = document.createElement('button');
-  details.type = 'button';
-  details.className = 'ghost';
-  details.textContent = 'Details';
-  details.addEventListener('click', () => openUpgradeDetails(definition));
-  actions.appendChild(details);
+
+  const detailsButton = document.createElement('button');
+  detailsButton.type = 'button';
+  detailsButton.className = 'ghost';
+  detailsButton.textContent = 'Details';
+  detailsButton.addEventListener('click', () => openUpgradeDetails(definition));
+  actions.appendChild(detailsButton);
   card.appendChild(actions);
 
+  let extra = null;
+  if (typeof definition.extraContent === 'function') {
+    extra = definition.extraContent(card) || null;
+  }
+
   container.appendChild(card);
-  upgradeUi.set(definition.id, { card, buyButton, favoriteButton });
+  upgradeUi.set(definition.id, {
+    card,
+    buyButton,
+    favoriteButton,
+    status,
+    price,
+    updateDetails: details?.update,
+    extra
+  });
   updateUpgradeCard(definition);
 }
 
@@ -1364,24 +1729,48 @@ function updateUpgradeCard(definition) {
   const ui = upgradeUi.get(definition.id);
   if (!ui) return;
   const state = getState();
-  const upgradeState = state?.upgrades?.[definition.id] || {};
-  const cost = Number(definition.cost) || 0;
-  const affordable = cost <= 0 || state.money >= cost;
-  const purchased = Boolean(upgradeState.purchased);
-  ui.card.dataset.affordable = affordable ? 'true' : 'false';
-  ui.card.dataset.favorite = upgradeState.favorite ? 'true' : 'false';
+  const snapshot = getUpgradeSnapshot(definition, state);
+
+  ui.card.dataset.affordable = snapshot.affordable ? 'true' : 'false';
+  ui.card.dataset.favorite = snapshot.favorite ? 'true' : 'false';
+  ui.card.dataset.purchased = snapshot.purchased ? 'true' : 'false';
+  ui.card.dataset.ready = snapshot.ready ? 'true' : 'false';
+
   if (ui.buyButton) {
-    const disabled = typeof definition.action?.disabled === 'function'
-      ? definition.action.disabled(state)
-      : Boolean(definition.action?.disabled);
-    ui.buyButton.disabled = disabled || !affordable;
+    ui.buyButton.className = definition.action?.className || 'primary';
+    ui.buyButton.disabled = snapshot.disabled || !snapshot.affordable;
     ui.buyButton.textContent = typeof definition.action?.label === 'function'
       ? definition.action.label(state)
       : definition.action?.label || 'Buy';
   }
+
   if (ui.favoriteButton) {
-    ui.favoriteButton.setAttribute('aria-pressed', upgradeState.favorite ? 'true' : 'false');
+    ui.favoriteButton.setAttribute('aria-pressed', snapshot.favorite ? 'true' : 'false');
+    ui.favoriteButton.textContent = snapshot.favorite ? 'Saved' : 'Save';
   }
+
+  if (ui.status) {
+    ui.status.textContent = describeUpgradeStatus(snapshot);
+    ui.status.dataset.state = snapshot.ready
+      ? 'ready'
+      : snapshot.purchased
+        ? 'owned'
+        : snapshot.disabled
+          ? 'blocked'
+          : snapshot.affordable
+            ? 'saving'
+            : 'locked';
+  }
+
+  if (typeof definition.cardState === 'function') {
+    definition.cardState(state, ui.card);
+  }
+
+  if (typeof definition.update === 'function') {
+    definition.update(state, ui);
+  }
+
+  ui.updateDetails?.();
 }
 
 function toggleUpgradeFavorite(definition) {
@@ -1393,6 +1782,12 @@ function toggleUpgradeFavorite(definition) {
   state.upgrades[definition.id].favorite = !current;
   updateUpgradeCard(definition);
   renderUpgradeDock();
+  if (!currentUpgradeDefinitions.length) {
+    currentUpgradeDefinitions = [definition];
+  }
+  renderUpgradeOverview(currentUpgradeDefinitions);
+  refreshUpgradeSections();
+  emitUIEvent('upgrades:state-updated');
 }
 
 function openUpgradeDetails(definition) {
@@ -1420,40 +1815,114 @@ function openUpgradeDetails(definition) {
 function renderUpgrades(definitions) {
   const list = elements.upgradeList;
   if (!list) return;
+  currentUpgradeDefinitions = Array.isArray(definitions) ? [...definitions] : [];
   list.innerHTML = '';
   upgradeUi.clear();
-  definitions.forEach(def => renderUpgradeCard(def, list));
+  upgradeSections.clear();
+
+  const categories = buildUpgradeCategories(definitions);
+  renderUpgradeCategoryFilters(categories);
+
+  const fragment = document.createDocumentFragment();
+  categories.forEach(category => {
+    const section = document.createElement('section');
+    section.className = 'upgrade-section';
+    section.dataset.category = category.id;
+
+    const header = document.createElement('header');
+    header.className = 'upgrade-section__header';
+    const headingGroup = document.createElement('div');
+    headingGroup.className = 'upgrade-section__heading';
+    const eyebrow = document.createElement('span');
+    eyebrow.className = 'upgrade-section__eyebrow';
+    eyebrow.textContent = category.copy.label;
+    const title = document.createElement('h3');
+    title.textContent = category.copy.title;
+    const note = document.createElement('p');
+    note.textContent = category.copy.note;
+    headingGroup.append(eyebrow, title, note);
+
+    const count = document.createElement('span');
+    count.className = 'upgrade-section__count';
+    header.append(headingGroup, count);
+    section.appendChild(header);
+
+    const categoryList = document.createElement('div');
+    categoryList.className = 'upgrade-section__list';
+    const sorted = sortUpgradesForCategory(category.definitions);
+    sorted.forEach(def => renderUpgradeCard(def, categoryList, category.id));
+    section.appendChild(categoryList);
+
+    const empty = document.createElement('p');
+    empty.className = 'upgrade-section__empty';
+    empty.textContent = 'Nothing matches this lane yet. Progress other goals or adjust filters.';
+    empty.hidden = true;
+    section.appendChild(empty);
+
+    fragment.appendChild(section);
+    upgradeSections.set(category.id, { section, list: categoryList, count, emptyMessage: empty });
+  });
+
+  list.appendChild(fragment);
+  renderUpgradeOverview(currentUpgradeDefinitions);
   renderUpgradeDock();
+  refreshUpgradeSections();
 }
 
 function renderUpgradeDock() {
   const dock = elements.upgradeDockList;
   if (!dock) return;
   dock.innerHTML = '';
-  const suggestions = Array.from(upgradeUi.values())
-    .map(ui => ui.card)
-    .filter(card => card.dataset.affordable === 'true')
-    .slice(0, 6);
-  if (!suggestions.length) {
+
+  const cards = Array.from(upgradeUi.values()).map(ui => ui.card);
+  const readyCards = cards.filter(card => card.dataset.ready === 'true');
+  const favoriteCards = cards.filter(
+    card => card.dataset.favorite === 'true' && card.dataset.purchased !== 'true'
+  );
+  const pool = readyCards.length ? readyCards : favoriteCards;
+
+  if (!pool.length) {
     const empty = document.createElement('li');
-    empty.textContent = 'No standout upgrades yet.';
+    empty.className = 'dock-item dock-item--empty';
+    empty.textContent = 'No standout upgrades yet. Favor a card or meet a prerequisite to populate this list.';
     dock.appendChild(empty);
     return;
   }
-  suggestions.forEach(card => {
+
+  pool.slice(0, 5).forEach(card => {
     const item = document.createElement('li');
     item.className = 'dock-item';
+    const header = document.createElement('div');
+    header.className = 'dock-item__header';
     const label = document.createElement('strong');
     label.textContent = card.querySelector('.upgrade-card__title')?.textContent || '';
     const price = document.createElement('span');
-    price.textContent = card.querySelector('.upgrade-card__header span')?.textContent || '';
+    price.className = 'dock-item__price';
+    price.textContent = card.querySelector('.upgrade-card__price')?.textContent || '';
+    header.append(label, price);
+
+    const note = document.createElement('span');
+    note.className = 'dock-item__note';
+    note.textContent = card.querySelector('.upgrade-card__status')?.textContent || 'Queued upgrade';
+
     const button = document.createElement('button');
     button.type = 'button';
-    button.className = 'primary';
-    button.textContent = card.querySelector('.upgrade-card__actions .primary')?.textContent || 'Buy';
-    button.disabled = card.querySelector('.upgrade-card__actions .primary')?.disabled;
-    button.addEventListener('click', () => card.querySelector('.upgrade-card__actions .primary')?.click());
-    item.append(label, price, button);
+    const source = card.querySelector('[data-role="buy-upgrade"]');
+    if (source) {
+      button.className = source.className;
+      button.textContent = source.textContent || 'Buy';
+      button.disabled = source.disabled;
+      button.addEventListener('click', () => source.click());
+    } else {
+      button.className = 'secondary';
+      button.textContent = 'View card';
+      button.addEventListener('click', () => {
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        card.focus?.({ preventScroll: true });
+      });
+    }
+
+    item.append(header, note, button);
     dock.appendChild(item);
   });
 }
@@ -1852,6 +2321,12 @@ export function updateCard(definition) {
   if (upgradeUi.has(definition.id)) {
     updateUpgradeCard(definition);
     renderUpgradeDock();
+    if (!currentUpgradeDefinitions.length) {
+      currentUpgradeDefinitions = [definition];
+    }
+    renderUpgradeOverview(currentUpgradeDefinitions);
+    refreshUpgradeSections();
+    emitUIEvent('upgrades:state-updated');
     return;
   }
   if (definition.tag?.type === 'study' || KNOWLEDGE_TRACKS[definition.id]) {
@@ -1871,7 +2346,13 @@ export function updateAllCards({ hustles, education, assets, upgrades }) {
       updateStudyTrack(def);
     }
   });
+  if (!currentUpgradeDefinitions.length && Array.isArray(upgrades)) {
+    currentUpgradeDefinitions = [...upgrades];
+  }
+  renderUpgradeOverview(currentUpgradeDefinitions.length ? currentUpgradeDefinitions : upgrades);
   renderUpgradeDock();
+  refreshUpgradeSections();
+  emitUIEvent('upgrades:state-updated');
 }
 
 function updateStudyTrack(definition) {
