@@ -3,7 +3,7 @@ import { getAssetState, getState } from '../core/state.js';
 import {
   canPerformQualityAction,
   getQualityActionAvailability,
-  getQualityActionCooldown,
+  getQualityActionUsage,
   getQualityActions,
   getQualityLevel,
   getQualityNextRequirements,
@@ -121,25 +121,20 @@ export function updateQualityPanel(definition, panelState) {
         if (action.cost) {
           details.push(`💵 $${formatMoney(action.cost)}`);
         }
-        if (action.cooldownDays) {
-          const days = Number(action.cooldownDays);
-          const cooldownLabel = days === 1 ? '1 day' : `${days} days`;
-          details.push(`🕒 Cooldown: ${cooldownLabel}`);
+        const usage = getQualityActionUsage(definition, instance, action);
+        if (usage.dailyLimit > 0) {
+          details.push(`🔁 ${usage.remainingUses}/${usage.dailyLimit} today`);
         }
         const suffix = details.length ? ` (${details.join(' · ')})` : '';
         button.textContent = `${action.label}${suffix}`;
         const availability = getQualityActionAvailability(definition, instance, action, state);
-        const cooldown = getQualityActionCooldown(definition, instance, action, state);
         const canRun = availability.unlocked && canPerformQualityAction(definition, instance, action, state);
         button.disabled = !canRun;
         if (!availability.unlocked) {
           button.title = availability.reason || 'Unlock supporting upgrades to use this action.';
           button.classList.add('is-locked');
-        } else if (cooldown.onCooldown) {
-          const wait = cooldown.remainingDays === 1
-            ? 'Ready tomorrow'
-            : `Ready in ${cooldown.remainingDays} days`;
-          button.title = wait;
+        } else if (usage.exhausted) {
+          button.title = 'Daily limit reached. Tomorrow brings another chance to push quality forward!';
           button.classList.remove('is-locked');
         } else {
           button.title = '';

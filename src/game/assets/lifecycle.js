@@ -188,6 +188,7 @@ export function closeOutDay() {
           addLog(message, 'warning');
         }
         instance.setupFundedToday = false;
+        instance.dailyUsage = {};
         return;
       }
 
@@ -208,6 +209,7 @@ export function closeOutDay() {
           addLog(message, 'warning');
         }
         instance.maintenanceFundedToday = false;
+        instance.dailyUsage = {};
       }
     });
   }

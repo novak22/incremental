@@ -20,7 +20,7 @@ import {
 } from './assetUpgrades.js';
 import {
   canPerformQualityAction,
-  getQualityActionCooldown,
+  getQualityActionUsage,
   getQualityActions,
   getQualityLevel,
   getQualityLevelSummary,
@@ -385,14 +385,16 @@ function createInstanceQuickActions(definition, instance, state) {
     if (action.cost) {
       details.push(`💵 $${formatMoney(action.cost)}`);
     }
-    const cooldown = getQualityActionCooldown(definition, instance, action, state);
-    if (cooldown.onCooldown) {
-      const days = cooldown.remainingDays;
-      const label = days === 1 ? 'Ready tomorrow' : `Ready in ${days} days`;
-      details.push(`🕒 ${label}`);
+    const usage = getQualityActionUsage(definition, instance, action);
+    if (usage.dailyLimit > 0) {
+      details.push(`🔁 ${usage.remainingUses}/${usage.dailyLimit} today`);
     }
-    if (details.length) {
-      button.title = details.join(' · ');
+    let tooltip = details.join(' · ');
+    if (usage.exhausted) {
+      tooltip = `${tooltip ? `${tooltip} · ` : ''}All uses spent today. Come back tomorrow for a fresh charge.`;
+    }
+    if (tooltip) {
+      button.title = tooltip;
     }
     button.addEventListener('click', event => {
       event.preventDefault();
