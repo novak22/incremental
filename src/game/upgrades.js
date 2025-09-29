@@ -6,6 +6,7 @@ import { executeAction } from './actions.js';
 import { checkDayEnd } from './lifecycle.js';
 import { createUpgrade } from './content/schema.js';
 import { gainTime } from './time.js';
+import { getKnowledgeProgress } from './requirements.js';
 import {
   ASSISTANT_CONFIG,
   canFireAssistant,
@@ -160,6 +161,138 @@ const studioExpansion = createUpgrade({
     cost: { label: '🏗️ Studio expansion build-out', category: 'upgrade' }
   },
   logMessage: 'Studio expansion complete! You now glide through photo shoots with cinematic flair.',
+  logType: 'upgrade'
+});
+
+function countActive(assetId) {
+  const state = getAssetState(assetId);
+  const instances = state?.instances || [];
+  return instances.filter(instance => instance.status === 'active').length;
+}
+
+function formatKnowledgeProgress(id) {
+  const progress = getKnowledgeProgress(id);
+  const totalDays = progress?.totalDays || 0;
+  const completed = Boolean(progress?.completed);
+  const daysCompleted = progress?.daysCompleted || 0;
+  if (completed) {
+    return 'Completed';
+  }
+  if (totalDays > 0) {
+    const percent = Math.min(100, Math.round((daysCompleted / totalDays) * 100));
+    return `${percent}% complete (${daysCompleted}/${totalDays} days)`;
+  }
+  return 'Not started';
+}
+
+const editorialPipeline = createUpgrade({
+  id: 'editorialPipeline',
+  name: 'Editorial Pipeline Suite',
+  tag: { label: 'Boost', type: 'boost' },
+  description: 'Stand up pro-grade editorial calendars so every blog post ships polished and on schedule.',
+  cost: 360,
+  requires: [
+    'course',
+    { type: 'asset', id: 'blog', active: true, count: 1 },
+    {
+      type: 'custom',
+      met: () => getKnowledgeProgress('outlineMastery').completed,
+      detail: 'Requires: <strong>Outline Mastery Workshop completed</strong>'
+    }
+  ],
+  boosts: 'Stacks new blog and e-book bonuses across every publishing push',
+  skills: ['writing', { id: 'promotion', weight: 0.5 }],
+  actionClassName: 'secondary',
+  actionLabel: 'Build Editorial Suite',
+  labels: {
+    purchased: 'Editorial Suite Ready',
+    missing: () => 'Requires Publishing Momentum'
+  },
+  metrics: {
+    cost: { label: '🧠 Editorial pipeline build-out', category: 'upgrade' }
+  },
+  details: [
+    () => `🧾 Active blogs ready: <strong>${countActive('blog')}</strong>`,
+    () => `📚 Outline Mastery progress: <strong>${formatKnowledgeProgress('outlineMastery')}</strong>`
+  ],
+  logMessage: 'Editorial pipeline humming! Your posts now glide from outline to publish without bottlenecks.',
+  logType: 'upgrade'
+});
+
+const syndicationSuite = createUpgrade({
+  id: 'syndicationSuite',
+  name: 'Syndication Suite',
+  tag: { label: 'Boost', type: 'boost' },
+  description: 'Spin up partner feeds, guest slots, and cross-promotions to syndicate your best work everywhere.',
+  cost: 720,
+  requires: [
+    'editorialPipeline',
+    { type: 'asset', id: 'blog', active: true, count: 1 },
+    { type: 'asset', id: 'ebook', active: true, count: 1 },
+    {
+      type: 'custom',
+      met: () => getKnowledgeProgress('brandVoiceLab').completed,
+      detail: 'Requires: <strong>Brand Voice Lab completed</strong>'
+    }
+  ],
+  boosts: 'Energises blogs, e-books, and vlogs with syndicated promos and bigger payouts',
+  skills: ['audience', { id: 'promotion', weight: 0.5 }],
+  actionClassName: 'secondary',
+  actionLabel: 'Launch Syndication Suite',
+  labels: {
+    purchased: 'Syndication Live',
+    missing: () => 'Requires Cross-Media Presence'
+  },
+  metrics: {
+    cost: { label: '🌐 Syndication suite rollout', category: 'upgrade' }
+  },
+  details: [
+    () => `🧾 Active blogs ready: <strong>${countActive('blog')}</strong>`,
+    () => `📚 Outline Mastery progress: <strong>${formatKnowledgeProgress('outlineMastery')}</strong>`,
+    () => `🎙️ Brand Voice Lab progress: <strong>${formatKnowledgeProgress('brandVoiceLab')}</strong>`,
+    () => `📚 Active e-books in market: <strong>${countActive('ebook')}</strong>`
+  ],
+  logMessage: 'Syndication suite secured! Partner feeds now echo your stories across the web.',
+  logType: 'upgrade'
+});
+
+const immersiveStoryWorlds = createUpgrade({
+  id: 'immersiveStoryWorlds',
+  name: 'Immersive Story Worlds',
+  tag: { label: 'Boost', type: 'boost' },
+  description: 'Blend blogs, books, and vlogs into one living universe with AR teasers and fan quests.',
+  cost: 1080,
+  requires: [
+    'syndicationSuite',
+    { type: 'asset', id: 'blog', active: true, count: 1 },
+    { type: 'asset', id: 'ebook', active: true, count: 1 },
+    { type: 'asset', id: 'vlog', active: true, count: 1 },
+    {
+      type: 'custom',
+      met: () =>
+        getKnowledgeProgress('outlineMastery').completed && getKnowledgeProgress('brandVoiceLab').completed,
+      detail: 'Requires: <strong>Outline Mastery & Brand Voice Lab completed</strong>'
+    }
+  ],
+  boosts: 'Adds premium payouts and faster progress for every creative asset',
+  skills: ['visual', { id: 'writing', weight: 0.5 }],
+  actionClassName: 'secondary',
+  actionLabel: 'Launch Story Worlds',
+  labels: {
+    purchased: 'Story Worlds Live',
+    missing: () => 'Requires Immersive Audience'
+  },
+  metrics: {
+    cost: { label: '🌌 Story world immersion build', category: 'upgrade' }
+  },
+  details: [
+    () => `🧾 Active blogs ready: <strong>${countActive('blog')}</strong>`,
+    () => `📚 Active e-books in market: <strong>${countActive('ebook')}</strong>`,
+    () => `🎬 Active vlogs broadcasting: <strong>${countActive('vlog')}</strong>`,
+    () => `📚 Outline Mastery progress: <strong>${formatKnowledgeProgress('outlineMastery')}</strong>`,
+    () => `🎙️ Brand Voice Lab progress: <strong>${formatKnowledgeProgress('brandVoiceLab')}</strong>`
+  ],
+  logMessage: 'Immersive story worlds unlocked! Fans now explore your universe across every channel.',
   logType: 'upgrade'
 });
 
@@ -413,6 +546,9 @@ export const UPGRADES = [
   studio,
   cameraPro,
   studioExpansion,
+  editorialPipeline,
+  syndicationSuite,
+  immersiveStoryWorlds,
   serverRack,
   fulfillmentAutomation,
   serverCluster,

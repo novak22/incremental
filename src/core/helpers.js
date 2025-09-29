@@ -9,6 +9,11 @@ export function createId() {
   return Math.random().toString(36).slice(2);
 }
 
+export function toNumber(value, fallback = 0) {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : fallback;
+}
+
 export function formatMoney(value) {
   return Number(value).toLocaleString(undefined, {
     minimumFractionDigits: value % 1 === 0 ? 0 : 2,
