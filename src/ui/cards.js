@@ -22,7 +22,6 @@ import {
   getKnowledgeProgress,
   listAssetRequirementDescriptors
 } from '../game/requirements.js';
-import { getTimeCap } from '../game/time.js';
 import {
   describeInstance,
   describeInstanceNetHourly
@@ -60,8 +59,6 @@ import { applyCardFilters } from './layout.js';
 import { createAssetUpgradeShortcuts } from './assetUpgradeShortcuts.js';
 import {
   buildAssetGroups,
-  buildEducationModels,
-  buildHustleModels,
   buildUpgradeCategories,
   getUpgradeCategory,
   describeAssetCardSummary,
@@ -75,6 +72,7 @@ import {
   getUpgradeSnapshot,
   resolveTrack
 } from './cards/model.js';
+import { getActiveView } from './viewManager.js';
 
 const hustleUi = new Map();
 const upgradeUi = new Map();
@@ -84,6 +82,29 @@ const studyUi = new Map();
 let currentAssetDefinitions = [];
 let currentUpgradeDefinitions = [];
 let assetLaunchPanelExpanded = false;
+
+const hustleModelCache = new Map();
+let educationModelCache = null;
+
+function indexModelsById(list = []) {
+  const map = new Map();
+  list.forEach(model => {
+    if (model?.id) {
+      map.set(model.id, model);
+    }
+  });
+  return map;
+}
+
+function cacheCardModels(models = {}) {
+  hustleModelCache.clear();
+  (models?.hustles ?? []).forEach(model => {
+    if (model?.id) {
+      hustleModelCache.set(model.id, model);
+    }
+  });
+  educationModelCache = models?.education ?? null;
+}
 
 
 function showSlideOver({ eyebrow, title, body }) {
@@ -973,9 +994,8 @@ function createEquipmentShortcuts(definition, state) {
   });
 }
 
-function renderHustleCard(definition, container) {
-  const [model] = buildHustleModels([definition]);
-  if (!model) return;
+function renderHustleCard(definition, model, container) {
+  if (!definition || !model) return;
 
   const card = document.createElement('article');
   card.className = 'hustle-card';
@@ -1054,11 +1074,9 @@ function renderHustleCard(definition, container) {
   hustleUi.set(definition.id, { card, queueButton, limitDetail });
 }
 
-function updateHustleCard(definition) {
+function updateHustleCard(definition, model) {
   const ui = hustleUi.get(definition.id);
-  if (!ui) return;
-  const [model] = buildHustleModels([definition]);
-  if (!model) return;
+  if (!ui || !model) return;
 
   const previousAvailability = ui.card.dataset.available;
 
@@ -1143,13 +1161,17 @@ function openHustleDetails(definition) {
   showSlideOver({ eyebrow: 'Hustle', title: definition.name, body });
 }
 
-function renderHustles(definitions) {
+function renderHustles(definitions, hustleModels = []) {
   const { hustleList } = getHustleControls() || {};
   const container = hustleList;
   if (!container) return;
   container.innerHTML = '';
   hustleUi.clear();
-  definitions.forEach(definition => renderHustleCard(definition, container));
+  const modelMap = indexModelsById(hustleModels);
+  definitions.forEach(definition => {
+    const model = modelMap.get(definition.id) || hustleModelCache.get(definition.id);
+    renderHustleCard(definition, model, container);
+  });
 }
 function calculateInstanceProgress(definition, instance) {
   const level = Number(instance.quality?.level) || 0;
@@ -2922,7 +2944,7 @@ function openStudyDetails(definition) {
   showSlideOver({ eyebrow: 'Study track', title: definition.name, body });
 }
 
-function renderEducation(definitions) {
+function renderEducation(definitions, educationModels) {
   const list = getStudyTrackList();
   if (!list) return;
   list.innerHTML = '';
@@ -2932,20 +2954,15 @@ function renderEducation(definitions) {
     list.appendChild(track);
     studyUi.set(resolveTrack(def).id, { track });
   });
-  renderStudyQueue(definitions);
+  renderStudyQueue(educationModels);
 }
 
-function renderStudyQueue(definitions) {
+function renderStudyQueue(educationModels) {
   const { list: queue, eta: queueEta, cap: capNode } = getStudyQueue() || {};
   if (!queue) return;
   queue.innerHTML = '';
-  const state = getState();
-  const models = buildEducationModels(definitions, {
-    getState: () => state,
-    getKnowledgeProgress,
-    getTimeCap
-  });
-  models.queue.entries.forEach(entry => {
+  const queueModel = educationModels?.queue;
+  (queueModel?.entries ?? []).forEach(entry => {
     const item = document.createElement('li');
     item.textContent = `${entry.name} • ${formatHours(entry.hoursPerDay)} per day`;
     queue.appendChild(item);
@@ -2956,24 +2973,46 @@ function renderStudyQueue(definitions) {
     queue.appendChild(empty);
   }
   if (queueEta) {
-    queueEta.textContent = models.queue.totalLabel;
+    queueEta.textContent = queueModel?.totalLabel || '';
   }
 
   if (capNode) {
-    capNode.textContent = models.queue.capLabel;
+    capNode.textContent = queueModel?.capLabel || '';
   }
 }
 
-export function renderCardCollections({ hustles, education, assets, upgrades }) {
-  renderHustles(hustles);
+function legacyRenderCardCollections(registries, models) {
+  const { hustles = [], education = [], assets = [], upgrades = [] } = registries;
+  renderHustles(hustles, models?.hustles ?? []);
   renderAssets(assets);
   renderUpgrades(upgrades);
-  renderEducation(education);
+  renderEducation(education, models?.education ?? educationModelCache);
+}
+
+export function renderCardCollections(registries = {}, models = {}) {
+  const normalized = {
+    hustles: Array.isArray(registries?.hustles) ? registries.hustles : [],
+    education: Array.isArray(registries?.education) ? registries.education : [],
+    assets: Array.isArray(registries?.assets) ? registries.assets : [],
+    upgrades: Array.isArray(registries?.upgrades) ? registries.upgrades : []
+  };
+
+  cacheCardModels(models);
+
+  const presenter = getActiveView()?.presenters?.cards;
+  const payload = { registries: normalized, models };
+  if (presenter?.render) {
+    presenter.render(payload);
+    return;
+  }
+
+  legacyRenderCardCollections(normalized, models);
 }
 
 export function updateCard(definition) {
   if (hustleUi.has(definition.id)) {
-    updateHustleCard(definition);
+    const model = hustleModelCache.get(definition.id);
+    updateHustleCard(definition, model);
     return;
   }
   if (currentAssetDefinitions.some(def => def.id === definition.id)) {
@@ -2999,8 +3038,13 @@ export function updateCard(definition) {
   }
 }
 
-export function updateAllCards({ hustles, education, assets, upgrades }) {
-  hustles.forEach(updateHustleCard);
+function legacyUpdateAllCards(registries, models) {
+  const { hustles = [], education = [], assets = [], upgrades = [] } = registries;
+  const hustleModels = indexModelsById(models?.hustles ?? []);
+  hustles.forEach(definition => {
+    const model = hustleModels.get(definition.id) || hustleModelCache.get(definition.id);
+    updateHustleCard(definition, model);
+  });
   assets.forEach(def => updateCard(def));
   upgrades.forEach(updateUpgradeCard);
   education.forEach(def => {
@@ -3008,6 +3052,7 @@ export function updateAllCards({ hustles, education, assets, upgrades }) {
       updateStudyTrack(def);
     }
   });
+  renderStudyQueue(models?.education ?? educationModelCache);
   if (!currentUpgradeDefinitions.length && Array.isArray(upgrades)) {
     currentUpgradeDefinitions = [...upgrades];
   }
@@ -3015,6 +3060,26 @@ export function updateAllCards({ hustles, education, assets, upgrades }) {
   renderUpgradeDock();
   refreshUpgradeSections();
   emitUIEvent('upgrades:state-updated');
+}
+
+export function updateAllCards(registries = {}, models = {}) {
+  const normalized = {
+    hustles: Array.isArray(registries?.hustles) ? registries.hustles : [],
+    education: Array.isArray(registries?.education) ? registries.education : [],
+    assets: Array.isArray(registries?.assets) ? registries.assets : [],
+    upgrades: Array.isArray(registries?.upgrades) ? registries.upgrades : []
+  };
+
+  cacheCardModels(models);
+
+  const presenter = getActiveView()?.presenters?.cards;
+  const payload = { registries: normalized, models };
+  if (presenter?.update) {
+    presenter.update(payload);
+    return;
+  }
+
+  legacyUpdateAllCards(normalized, models);
 }
 
 function updateStudyTrack(definition) {
