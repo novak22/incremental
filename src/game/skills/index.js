@@ -40,11 +40,6 @@ function ensureSkillContainers(state) {
   }
 }
 
-export function ensureSkills(state = getState()) {
-  if (!state) return;
-  ensureSkillContainers(state);
-}
-
 function logSkillLevelUp(skillId, level) {
   const skill = getSkillDefinition(skillId) || { name: skillId };
   const tier = findSkillTier(level);

@@ -4,7 +4,7 @@ import { getUpgradeDefinition, getAssetDefinition } from '../../core/state/regis
 import { toNumber } from '../../core/helpers.js';
 import { assetRequirementsMet, listAssetRequirementDescriptors, KNOWLEDGE_TRACKS, getKnowledgeProgress } from '../requirements.js';
 import { getQualityActions, canPerformQualityAction, getQualityActionUsage } from '../assets/quality.js';
-import { describeHustleRequirements, areHustleRequirementsMet } from '../hustles.js';
+import { describeHustleRequirements, areHustleRequirementsMet } from '../hustles/helpers.js';
 import { canHireAssistant, getAssistantCount, ASSISTANT_CONFIG } from '../assistant.js';
 import { COFFEE_LIMIT } from '../../core/constants.js';
 

@@ -194,7 +194,6 @@ export default stateManager;
 export const createEmptyDailyMetrics = (...args) => stateManager.createEmptyDailyMetrics(...args);
 export const ensureDailyMetrics = (...args) => stateManager.ensureDailyMetrics(...args);
 export const ensureStateShape = (...args) => stateManager.ensureStateShape(...args);
-export const buildBaseState = (...args) => stateManager.buildBaseState(...args);
 export const buildDefaultState = (...args) => stateManager.buildDefaultState(...args);
 export const initializeState = (...args) => stateManager.initializeState(...args);
 export const replaceState = (...args) => stateManager.replaceState(...args);

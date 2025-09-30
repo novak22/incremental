@@ -1,7 +1,7 @@
 import elements from './elements.js';
 import { getAssetState, getState } from '../core/state.js';
 import { formatDays, formatHours, formatMoney } from '../core/helpers.js';
-import { describeHustleRequirements, getHustleDailyUsage } from '../game/hustles.js';
+import { describeHustleRequirements, getHustleDailyUsage } from '../game/hustles/helpers.js';
 import {
   assetRequirementsMetById,
   describeRequirement,
