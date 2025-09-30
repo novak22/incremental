@@ -10,10 +10,15 @@ const AUTO_FORWARD_INTERVALS = {
   current: 2000,
   double: 1000
 };
+const AUTO_FORWARD_ICONS = {
+  paused: '⏸',
+  current: '▶',
+  double: '⏩'
+};
 const AUTO_FORWARD_LABELS = {
   paused: 'Auto Forward: Paused',
-  current: 'Auto Forward: Current',
-  double: 'Auto Forward: 2× Current'
+  current: 'Auto Forward: Current speed',
+  double: 'Auto Forward: Double speed'
 };
 const AUTO_FORWARD_TITLES = {
   paused: 'Tap to let auto forward queue the next action for you.',
@@ -126,7 +131,8 @@ function applyAutoForwardState(mode) {
   if (toggle) {
     toggle.classList.toggle('is-active', isActive);
     toggle.setAttribute('aria-pressed', String(isActive));
-    toggle.textContent = AUTO_FORWARD_LABELS[nextMode];
+    toggle.textContent = AUTO_FORWARD_ICONS[nextMode];
+    toggle.setAttribute('aria-label', AUTO_FORWARD_LABELS[nextMode]);
     toggle.title = AUTO_FORWARD_TITLES[nextMode];
   }
 

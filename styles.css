@@ -1259,6 +1259,16 @@ body {
   color: var(--text-subtle);
 }
 
+.ghost--icon {
+  padding: 6px 10px;
+  font-size: 18px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+}
+
 .ghost.is-active {
   color: var(--accent-light);
   border-color: rgba(124, 92, 255, 0.6);
