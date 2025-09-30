@@ -159,6 +159,166 @@ export const KNOWLEDGE_TRACKS = {
         amount: 1.5
       }
     ]
+  },
+  curriculumDesignStudio: {
+    id: 'curriculumDesignStudio',
+    name: 'Curriculum Design Studio',
+    description: 'Prototype interactive lesson plans for 6 days (2.5h/day) with veteran educators.',
+    hoursPerDay: 2.5,
+    days: 6,
+    tuition: 280,
+    instantBoosts: [
+      {
+        hustleId: 'popUpWorkshop',
+        hustleName: 'Pop-Up Workshop',
+        type: 'multiplier',
+        amount: 0.3
+      },
+      {
+        hustleId: 'bundlePush',
+        hustleName: 'Bundle Promo Push',
+        type: 'multiplier',
+        amount: 0.15
+      }
+    ]
+  },
+  postProductionPipelineLab: {
+    id: 'postProductionPipelineLab',
+    name: 'Post-Production Pipeline Lab',
+    description: 'Run edit bays for 8 days (3h/day) to master color, captions, and delivery workflows.',
+    hoursPerDay: 3,
+    days: 8,
+    tuition: 360,
+    instantBoosts: [
+      {
+        hustleId: 'vlogEditRush',
+        hustleName: 'Vlog Edit Rush',
+        type: 'multiplier',
+        amount: 0.35
+      },
+      {
+        assetId: 'vlog',
+        assetName: 'Weekly Vlog Channel',
+        type: 'multiplier',
+        amount: 0.18
+      }
+    ]
+  },
+  fulfillmentOpsMasterclass: {
+    id: 'fulfillmentOpsMasterclass',
+    name: 'Fulfillment Ops Masterclass',
+    description: 'Shadow a 7-day (2h/day) logistics crew to automate pick, pack, and ship perfection.',
+    hoursPerDay: 2,
+    days: 7,
+    tuition: 320,
+    instantBoosts: [
+      {
+        hustleId: 'dropshipPackParty',
+        hustleName: 'Dropship Pack Party',
+        type: 'multiplier',
+        amount: 0.25
+      },
+      {
+        assetId: 'dropshipping',
+        assetName: 'Dropshipping Product Lab',
+        type: 'multiplier',
+        amount: 0.35
+      }
+    ]
+  },
+  customerRetentionClinic: {
+    id: 'customerRetentionClinic',
+    name: 'Customer Retention Clinic',
+    description: 'Coach subscription success teams for 5 days (2h/day) to keep churn near zero.',
+    hoursPerDay: 2,
+    days: 5,
+    tuition: 210,
+    instantBoosts: [
+      {
+        hustleId: 'saasBugSquash',
+        hustleName: 'SaaS Bug Squash',
+        type: 'flat',
+        amount: 8
+      },
+      {
+        assetId: 'saas',
+        assetName: 'SaaS Micro-App',
+        type: 'multiplier',
+        amount: 0.25
+      }
+    ]
+  },
+  narrationPerformanceWorkshop: {
+    id: 'narrationPerformanceWorkshop',
+    name: 'Narration Performance Workshop',
+    description: 'Spend 4 days (1.75h/day) with vocal coaches to perfect audiobook cadence.',
+    hoursPerDay: 1.75,
+    days: 4,
+    tuition: 190,
+    instantBoosts: [
+      {
+        hustleId: 'audiobookNarration',
+        hustleName: 'Audiobook Narration',
+        type: 'multiplier',
+        amount: 0.3
+      },
+      {
+        assetId: 'ebook',
+        assetName: 'Digital E-Book Series',
+        type: 'multiplier',
+        amount: 0.15
+      }
+    ]
+  },
+  galleryLicensingSummit: {
+    id: 'galleryLicensingSummit',
+    name: 'Gallery Licensing Summit',
+    description: 'Pitch curators for 5 days (2.25h/day) to secure premium gallery licensing deals.',
+    hoursPerDay: 2.25,
+    days: 5,
+    tuition: 240,
+    instantBoosts: [
+      {
+        hustleId: 'eventPhotoGig',
+        hustleName: 'Event Photo Gig',
+        type: 'multiplier',
+        amount: 0.3
+      },
+      {
+        assetId: 'stockPhotos',
+        assetName: 'Stock Photo Gallery',
+        type: 'multiplier',
+        amount: 0.22
+      }
+    ]
+  },
+  syndicationResidency: {
+    id: 'syndicationResidency',
+    name: 'Syndication Residency',
+    description: 'Curate partnerships for 6 days (2h/day) to syndicate your flagship content network.',
+    hoursPerDay: 2,
+    days: 6,
+    tuition: 300,
+    instantBoosts: [
+      {
+        hustleId: 'freelance',
+        hustleName: 'Freelance Writing',
+        type: 'multiplier',
+        amount: 0.2
+      },
+      {
+        hustleId: 'streetPromoSprint',
+        hustleName: 'Street Promo Sprint',
+        type: 'flat',
+        amount: 2
+      },
+      {
+        assetId: 'blog',
+        assetName: 'Personal Blog Network',
+        type: 'multiplier',
+        amount: 0.18
+      }
+    ]
   }
 };
 
@@ -197,6 +357,57 @@ export const KNOWLEDGE_REWARDS = {
     skills: [
       { id: 'promotion', weight: 0.6 },
       { id: 'audience', weight: 0.4 }
+    ]
+  },
+  curriculumDesignStudio: {
+    baseXp: 150,
+    skills: [
+      { id: 'audience', weight: 0.6 },
+      { id: 'writing', weight: 0.4 }
+    ]
+  },
+  postProductionPipelineLab: {
+    baseXp: 150,
+    skills: [
+      { id: 'editing', weight: 0.7 },
+      { id: 'visual', weight: 0.3 }
+    ]
+  },
+  fulfillmentOpsMasterclass: {
+    baseXp: 140,
+    skills: [
+      { id: 'commerce', weight: 0.7 },
+      { id: 'promotion', weight: 0.3 }
+    ]
+  },
+  customerRetentionClinic: {
+    baseXp: 140,
+    skills: [
+      { id: 'audience', weight: 0.4 },
+      { id: 'promotion', weight: 0.3 },
+      { id: 'software', weight: 0.3 }
+    ]
+  },
+  narrationPerformanceWorkshop: {
+    baseXp: 130,
+    skills: [
+      { id: 'audio', weight: 0.6 },
+      { id: 'writing', weight: 0.4 }
+    ]
+  },
+  galleryLicensingSummit: {
+    baseXp: 140,
+    skills: [
+      { id: 'visual', weight: 0.6 },
+      { id: 'commerce', weight: 0.4 }
+    ]
+  },
+  syndicationResidency: {
+    baseXp: 150,
+    skills: [
+      { id: 'promotion', weight: 0.5 },
+      { id: 'audience', weight: 0.3 },
+      { id: 'writing', weight: 0.2 }
     ]
   }
 };

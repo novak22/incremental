@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Education curriculum expansion: seven new study programs now award hustle multipliers, passive asset modifiers, and payout log callouts when their bonuses trigger.
 - Dashboard KPIs now jump to their detailed breakdowns, focusing the card, flashing a highlight, and updating the session status so the context change is announced.
 - Asset hub polish: launcher hides behind a dedicated button, asset cards always surface payout breakdowns, and upgrade buttons
   clearly show when a boost is ready versus locked.

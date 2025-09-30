@@ -132,3 +132,34 @@ test('completed study tracks celebrate progress and skills', async () => {
   const xpNote = track?.querySelector('.study-track__skills-note');
   assert.equal(xpNote?.textContent, 'Graduates collect +120 XP across these disciplines.');
 });
+
+test('expanded curriculum registers new boosts and passive multipliers', async () => {
+  const { KNOWLEDGE_TRACKS, KNOWLEDGE_REWARDS } = await import('../src/game/requirements.js');
+  assert.ok(KNOWLEDGE_TRACKS.curriculumDesignStudio, 'curriculum design studio track should exist');
+  assert.ok(KNOWLEDGE_TRACKS.postProductionPipelineLab, 'post-production lab track should exist');
+  assert.equal(
+    KNOWLEDGE_REWARDS.galleryLicensingSummit.baseXp,
+    140,
+    'gallery licensing summit should award 140 base XP'
+  );
+  const fulfillmentBoost = KNOWLEDGE_TRACKS.fulfillmentOpsMasterclass.instantBoosts.find(
+    boost => boost.assetId === 'dropshipping'
+  );
+  assert.ok(fulfillmentBoost, 'fulfillment masterclass should reference dropshipping asset');
+  const syndicationBoost = KNOWLEDGE_TRACKS.syndicationResidency.instantBoosts.find(
+    boost => boost.assetId === 'blog'
+  );
+  assert.ok(syndicationBoost, 'syndication residency should reference blog asset');
+
+  const { getAssetEducationBonuses } = await import('../src/game/educationEffects.js');
+  const dropshipBonuses = getAssetEducationBonuses('dropshipping');
+  assert.ok(
+    dropshipBonuses.some(boost => boost.trackId === 'fulfillmentOpsMasterclass'),
+    'dropshipping asset should receive fulfillment ops masterclass boosts'
+  );
+  const vlogBonuses = getAssetEducationBonuses('vlog');
+  assert.ok(
+    vlogBonuses.some(boost => boost.trackId === 'postProductionPipelineLab'),
+    'vlog asset should receive post-production lab boosts'
+  );
+});

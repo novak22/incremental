@@ -12,6 +12,7 @@ import {
   recordTimeContribution
 } from '../metrics.js';
 import { getAssetEffectMultiplier } from '../upgrades/effects.js';
+import { formatEducationBonusSummary } from '../educationEffects.js';
 
 function findAssetDefinition(assetId) {
   return ASSETS.find(entry => entry.id === assetId) || null;
@@ -87,9 +88,13 @@ export function allocateAssetMaintenance() {
         }
 
         if (pendingIncome > 0) {
-          const incomeMessage = definition.messages?.income
+          let incomeMessage = definition.messages?.income
             ? definition.messages.income(pendingIncome, label, instance, assetState)
             : `${definition.name} generated $${formatMoney(pendingIncome)} today.`;
+          const educationSummary = formatEducationBonusSummary(instance.lastEducationBonuses);
+          if (educationSummary) {
+            incomeMessage = `${incomeMessage} 🎓 Study boost: ${educationSummary}.`;
+          }
           addMoney(pendingIncome, incomeMessage, definition.income?.logType || 'passive');
           recordPayoutContribution({
             key: getAssetMetricId(definition, 'payout', 'payout'),
@@ -215,6 +220,7 @@ export function closeOutDay() {
           instance.lastIncome = 0;
           instance.lastIncomeBreakdown = null;
           instance.pendingIncome = 0;
+          instance.lastEducationBonuses = null;
           const label = instanceLabel(definition, index);
           const message = definition.messages?.maintenanceSkipped
             ? definition.messages.maintenanceSkipped(label, assetState, instance)
