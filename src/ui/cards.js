@@ -2054,6 +2054,11 @@ function createAssetInstanceCard(definition, instance, index, state = getState()
   card.dataset.instance = instance.id;
   card.dataset.group = getAssetGroupId(definition);
   card.dataset.state = instance.status === 'active' ? 'active' : 'setup';
+  if (typeof instance.nicheId === 'string') {
+    card.dataset.niche = instance.nicheId;
+  } else {
+    delete card.dataset.niche;
+  }
   const needsMaintenance = instance.status === 'active' && !instance.maintenanceFundedToday;
   card.dataset.needsMaintenance = needsMaintenance ? 'true' : 'false';
   card.dataset.risk = definition.tag?.type === 'advanced' ? 'high' : 'medium';

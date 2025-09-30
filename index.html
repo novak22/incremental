@@ -224,25 +224,25 @@
           <article class="card analytics-card analytics-card--hero" aria-labelledby="analytics-overview-heading">
             <header>
               <h3 id="analytics-overview-heading">Daily outlook</h3>
-              <p>Scan the biggest swings before you queue your next move.</p>
+              <p>Spot the headline niches shaping your empire before you make the next call.</p>
             </header>
             <dl class="analytics-highlight-grid">
               <div class="analytics-highlight">
-                <dt>Hype leader</dt>
+                <dt>Top boost</dt>
                 <dd>
                   <span id="analytics-highlight-hot" class="analytics-highlight__value">No readings yet</span>
                   <p id="analytics-highlight-hot-note" class="analytics-highlight__note">Assign a niche to start tracking buzz.</p>
                 </dd>
               </div>
               <div class="analytics-highlight">
-                <dt>Momentum swing</dt>
+                <dt>Big swing</dt>
                 <dd>
                   <span id="analytics-highlight-swing" class="analytics-highlight__value">Awaiting data</span>
                   <p id="analytics-highlight-swing-note" class="analytics-highlight__note">Fresh deltas will appear after the first reroll.</p>
                 </dd>
               </div>
               <div class="analytics-highlight">
-                <dt>Watch list</dt>
+                <dt>Cooling risk</dt>
                 <dd>
                   <span id="analytics-highlight-risk" class="analytics-highlight__value">All calm</span>
                   <p id="analytics-highlight-risk-note" class="analytics-highlight__note">We’ll flag niches that are cooling off fast.</p>
@@ -251,36 +251,37 @@
             </dl>
           </article>
 
-          <article class="card analytics-card" aria-labelledby="niche-trends-heading">
+          <article class="card analytics-card analytics-card--controls" aria-labelledby="niche-controls-heading">
             <header>
-              <h3 id="niche-trends-heading">Niche pulse</h3>
-              <p>Every assigned audience with today’s hype score and payout impact.</p>
+              <h3 id="niche-controls-heading">Trend controls</h3>
+              <p>Sort niches by what matters right now and filter to zero in on your plays.</p>
             </header>
-            <div class="niche-pulse" aria-live="polite">
-              <div class="niche-pulse__legend" aria-hidden="true">
-                <span>Score</span>
-                <span>Shift</span>
-                <span>Impact</span>
+            <div class="niche-controls" aria-live="polite">
+              <div class="niche-controls__group" role="group" aria-label="Sort niches">
+                <span class="niche-controls__label">Sort by</span>
+                <button type="button" class="ghost niche-controls__button is-active" data-niche-sort="impact" aria-pressed="true">Highest payout impact</button>
+                <button type="button" class="ghost niche-controls__button" data-niche-sort="assets" aria-pressed="false">Most assets invested</button>
+                <button type="button" class="ghost niche-controls__button" data-niche-sort="movement" aria-pressed="false">Fastest trend movement</button>
               </div>
-              <ul id="niche-trends-list" class="niche-pulse__list"></ul>
+              <div class="niche-controls__filters" role="group" aria-label="Niche filters">
+                <label class="niche-controls__toggle">
+                  <input type="checkbox" id="niche-filter-invested" />
+                  <span>Invested niches only</span>
+                </label>
+                <label class="niche-controls__toggle">
+                  <input type="checkbox" id="niche-filter-watchlist" />
+                  <span>Watchlist only</span>
+                </label>
+              </div>
             </div>
           </article>
 
-          <article class="card analytics-card" aria-labelledby="niche-momentum-heading">
+          <article class="card analytics-card analytics-card--board" aria-labelledby="niche-momentum-heading">
             <header>
               <h3 id="niche-momentum-heading">Momentum board</h3>
-              <p>Rising segments hint at quick wins while cooling trends may need a pivot.</p>
+              <p>Each niche gets its own spotlight with today’s hype score, your exposure, and the cash swing from its trend.</p>
             </header>
-            <div class="niche-momentum">
-              <section class="niche-momentum__column" aria-labelledby="niche-momentum-rising">
-                <h4 id="niche-momentum-rising">Heating up</h4>
-                <ul id="niche-momentum-rise" class="niche-momentum__list"></ul>
-              </section>
-              <section class="niche-momentum__column" aria-labelledby="niche-momentum-cooling">
-                <h4 id="niche-momentum-cooling">Cooling off</h4>
-                <ul id="niche-momentum-cool" class="niche-momentum__list"></ul>
-              </section>
-            </div>
+            <div id="niche-board" class="niche-board" role="list" aria-live="polite"></div>
           </article>
         </div>
       </section>
