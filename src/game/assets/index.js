@@ -21,29 +21,6 @@ import {
   rerollNichePopularity
 } from './niches.js';
 
-const assetsSystem = {
-  list: ASSETS,
-  allocateMaintenance: allocateAssetMaintenance,
-  closeOutDay,
-  getIncomeRangeForDisplay,
-  performQualityAction,
-  getQualityLevel,
-  getQualityLevelSummary,
-  getQualityActions,
-  getQualityTracks,
-  sellAssetInstance,
-  calculateSalePrice: calculateAssetSalePrice,
-  niches: {
-    assignInstance: assignInstanceToNiche,
-    getAssignableSummaries: getAssignableNicheSummaries,
-    getInstanceEffect: getInstanceNicheEffect,
-    getPopularity: getNichePopularity,
-    getRoster: getNicheRoster,
-    reroll: rerollNichePopularity
-  }
-};
-
-export default assetsSystem;
 export {
   ASSETS,
   allocateAssetMaintenance,
