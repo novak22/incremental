@@ -60,11 +60,3 @@ export function describeCharacter(character = {}) {
   };
 }
 
-export default {
-  numberFormatter,
-  formatXp,
-  findSkillTier,
-  findNextSkillTier,
-  describeSkill,
-  describeCharacter
-};

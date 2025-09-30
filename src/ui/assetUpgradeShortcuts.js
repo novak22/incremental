@@ -137,6 +137,3 @@ export function createAssetUpgradeShortcuts(upgrades = [], options = {}) {
   return container;
 }
 
-export default {
-  createAssetUpgradeShortcuts
-};

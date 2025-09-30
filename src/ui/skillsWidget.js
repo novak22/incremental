@@ -78,4 +78,3 @@ export function renderSkillWidgets(state = getState()) {
   renderTarget(elements.skills?.education, state);
 }
 
-export default { renderSkillWidgets };

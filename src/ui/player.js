@@ -267,4 +267,3 @@ export function renderPlayerPanel(state, summary) {
   renderStats(state, summary);
 }
 
-export default { renderPlayerPanel };
