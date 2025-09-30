@@ -1,5 +1,7 @@
 import { JSDOM } from 'jsdom';
 import { webcrypto } from 'node:crypto';
+import { setActiveView } from '../../src/ui/viewManager.js';
+import classicView from '../../src/ui/views/classic/index.js';
 
 let dom;
 
@@ -138,6 +140,8 @@ export function ensureTestDom() {
   global.performance = window.performance;
   Object.defineProperty(global, 'crypto', { value: webcrypto, configurable: true });
   Object.defineProperty(window, 'crypto', { value: webcrypto, configurable: true });
+
+  setActiveView(classicView, window.document);
 
   return dom;
 }
