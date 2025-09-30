@@ -9,15 +9,29 @@ import { applyCardFilters } from './layout.js';
 import { refreshActionCatalogDebug } from './debugCatalog.js';
 import { renderPlayerPanel } from './player.js';
 import { getActiveView } from './viewManager.js';
+import {
+  buildAssetModels,
+  buildEducationModels,
+  buildHustleModels,
+  buildUpgradeModels
+} from './cards/model.js';
 
 function buildCollections() {
   const hustles = registry.hustles.filter(hustle => hustle.tag?.type !== 'study');
   const education = registry.hustles.filter(hustle => hustle.tag?.type === 'study');
+  const assets = registry.assets;
+  const upgrades = registry.upgrades;
   return {
     hustles,
     education,
-    assets: registry.assets,
-    upgrades: registry.upgrades
+    assets,
+    upgrades,
+    models: {
+      hustles: buildHustleModels(hustles),
+      education: buildEducationModels(education),
+      assets: buildAssetModels(assets),
+      upgrades: buildUpgradeModels(upgrades)
+    }
   };
 }
 
