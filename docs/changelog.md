@@ -10,6 +10,7 @@
 - Niche realism: swapped in ten real-world audience niches so daily trend chasing mirrors recognizable markets.
 - Upgrade filters: the Upgrades panel now defaults to an "Unlocked now" view so only instant-install picks show until you opt to browse the full catalog.
 - Upgrade taxonomy: tech/house/infra tabs with family sub-sections and slot-aware tooltips make browsing gear lanes intuitive while the new effect engine drives unified payout, time, and quality multipliers.
+- Assistant payroll rebalance: virtual assistants now cover more upkeep hours at a lower $8/hr rate so their freed time beats baseline hustles on value.
 - Player screen: new overview tab spotlights character level, skills, education, gear, and hustle momentum in one place.
 - Asset liquidation rebalance: selling an instance now multiplies the 3× sale value by its quality tier for high-grade exits.
 - Passive economy rebalance: smoother upkeep for blogs, stock photos, dropshipping, and SaaS so late tiers feel rewarding without micromanagement spikes.
