@@ -3,6 +3,8 @@
 ## Unreleased
 - Asset hub polish: launcher hides behind a dedicated button, asset cards always surface payout breakdowns, and upgrade buttons
   clearly show when a boost is ready versus locked.
+- Dashboard quick actions and asset upgrade suggestions now use uniform action cards so critical buttons stay aligned and easy to scan.
+- Introduced an Analytics tab that houses the niche popularity pulse, keeping the dashboard focused on immediate actions.
 - Dashboard quick actions now focus on hustle-ready tasks instead of education enrollment, keeping the header recommendation in sync.
 - Niche realism: swapped in ten real-world audience niches so daily trend chasing mirrors recognizable markets.
 - Upgrade filters: the Upgrades panel now defaults to an "Unlocked now" view so only instant-install picks show until you opt to browse the full catalog.
