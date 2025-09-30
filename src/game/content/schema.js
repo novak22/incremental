@@ -834,6 +834,3 @@ export function renderHustleRequirementSummary(requirements) {
   return summarizeAssetRequirements(requirements);
 }
 
-export function hustleRequirementsMet(requirements) {
-  return meetsAssetRequirements(requirements);
-}
