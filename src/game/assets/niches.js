@@ -35,6 +35,9 @@ function ensureNicheState(target = getState()) {
   }
   const data = target.niches;
   data.popularity = data.popularity || {};
+  if (!Array.isArray(data.watchlist)) {
+    data.watchlist = [];
+  }
 
   const definitions = getNicheDefinitions();
   const knownIds = new Set(definitions.map(entry => entry.id));
@@ -44,6 +47,12 @@ function ensureNicheState(target = getState()) {
       delete data.popularity[id];
     }
   });
+
+  if (Array.isArray(data.watchlist)) {
+    data.watchlist = data.watchlist.filter(id => typeof id === 'string' && knownIds.has(id));
+  } else {
+    data.watchlist = [];
+  }
 
   definitions.forEach(definition => {
     const entry = data.popularity[definition.id] || {};
@@ -176,6 +185,46 @@ export function getNicheRoster(state = getState()) {
       popularity: getNichePopularity(definition.id, state)
     }))
     .sort((a, b) => (b.popularity?.score || 0) - (a.popularity?.score || 0));
+}
+
+export function getNicheWatchlist(state = getState()) {
+  const data = ensureNicheState(state);
+  if (!data) return new Set();
+  const entries = Array.isArray(data.watchlist) ? data.watchlist : [];
+  return new Set(entries.filter(id => typeof id === 'string'));
+}
+
+export function isNicheWatchlisted(nicheId, state = getState()) {
+  if (!nicheId) return false;
+  return getNicheWatchlist(state).has(nicheId);
+}
+
+export function setNicheWatchlist(nicheId, watchlisted) {
+  if (!nicheId) return false;
+  let changed = false;
+  executeAction(() => {
+    const data = ensureNicheState();
+    if (!data) return;
+    const list = new Set(Array.isArray(data.watchlist) ? data.watchlist : []);
+    const hasEntry = list.has(nicheId);
+    if (watchlisted && !hasEntry) {
+      list.add(nicheId);
+      changed = true;
+    } else if (!watchlisted && hasEntry) {
+      list.delete(nicheId);
+      changed = true;
+    }
+    data.watchlist = Array.from(list);
+  });
+  return changed;
+}
+
+export function toggleNicheWatchlist(nicheId) {
+  if (!nicheId) return false;
+  const state = getState();
+  if (!state) return false;
+  const watchlisted = isNicheWatchlisted(nicheId, state);
+  return setNicheWatchlist(nicheId, !watchlisted);
 }
 
 export function getInstanceNicheEffect(instance, state = getState()) {

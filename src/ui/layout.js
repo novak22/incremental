@@ -1,5 +1,7 @@
 import elements from './elements.js';
 
+let activePanelController = null;
+
 function emitLayoutEvent(name) {
   if (typeof document?.createEvent === 'function') {
     const event = document.createEvent('Event');
@@ -46,11 +48,23 @@ function setupTabs() {
     }
   };
 
+  activePanelController = activate;
+
   shellTabs.forEach(tab => {
     tab.addEventListener('click', () => activate(tab.getAttribute('aria-controls')));
   });
 
   activate('panel-dashboard');
+}
+
+export function activateShellPanel(panelId) {
+  if (!panelId) return;
+  if (typeof activePanelController === 'function') {
+    activePanelController(panelId);
+    return;
+  }
+  const tab = (elements.shellTabs || []).find(button => button?.getAttribute('aria-controls') === panelId);
+  tab?.click?.();
 }
 
 function setupEventLog() {
