@@ -204,7 +204,16 @@ export function buildAssetGroups(definitions = [], state = getState()) {
     const assetState = getAssetState(definition.id, state);
     const instances = Array.isArray(assetState?.instances) ? assetState.instances : [];
     instances.forEach((instance, index) => {
-      entry.instances.push({ definition, instance, index });
+      const id = instance?.id ?? `${definition.id}-${index}`;
+      const status = instance?.status || 'setup';
+      entry.instances.push({
+        id,
+        index,
+        status,
+        definitionId: definition.id,
+        definition,
+        instance: instance || null
+      });
     });
   });
   return Array.from(groups.values());

@@ -1448,58 +1448,6 @@ function formatUpkeepTotals(cost, hours) {
   return parts.length ? parts.join(' • ') : 'None';
 }
 
-function hydrateAssetGroups(groups = [], definitions = [], state = getState()) {
-  if (!Array.isArray(groups) || groups.length === 0) {
-    return Array.isArray(groups) ? groups : [];
-  }
-
-  const definitionMap = new Map();
-  const assetStateCache = new Map();
-
-  definitions.forEach(definition => {
-    if (definition?.id) {
-      definitionMap.set(definition.id, definition);
-    }
-  });
-
-  return groups.map(group => {
-    if (!Array.isArray(group?.instances)) {
-      return group;
-    }
-
-    const hydratedInstances = group.instances.map(entry => {
-      if (!entry) return entry;
-      const hasDefinition = Boolean(entry.definition);
-      const hasInstance = Boolean(entry.instance);
-      if (hasDefinition && hasInstance) {
-        return entry;
-      }
-
-      const definitionId = entry.definitionId || entry.definition?.id;
-      const definition = hasDefinition ? entry.definition : definitionMap.get(definitionId);
-
-      let instance = hasInstance ? entry.instance : null;
-      if (!instance && definition?.id) {
-        if (!assetStateCache.has(definition.id)) {
-          assetStateCache.set(definition.id, getAssetState(definition.id, state));
-        }
-        const assetState = assetStateCache.get(definition.id);
-        const list = Array.isArray(assetState?.instances) ? assetState.instances : [];
-        if (entry.id) {
-          instance = list.find(candidate => candidate?.id === entry.id) || null;
-        }
-        if (!instance && Number.isInteger(entry.index)) {
-          instance = list[entry.index] || null;
-        }
-      }
-
-      return { ...entry, definition: definition || null, instance: instance || null };
-    });
-
-    return { ...group, instances: hydratedInstances };
-  });
-}
-
 function buildAssetSummary(groups = []) {
   const totals = groups.reduce(
     (acc, group) => {
@@ -1932,8 +1880,7 @@ function renderAssets(definitions = []) {
   currentAssetDefinitions = Array.isArray(definitions) ? definitions : [];
   gallery.innerHTML = '';
 
-  const rawGroups = buildAssetGroups(currentAssetDefinitions, state);
-  const groups = hydrateAssetGroups(rawGroups, currentAssetDefinitions, state);
+  const groups = buildAssetGroups(currentAssetDefinitions, state);
   const hub = buildAssetHub(currentAssetDefinitions, groups, state);
   if (hub) {
     gallery.appendChild(hub);
@@ -2006,13 +1953,15 @@ function renderAssets(definitions = []) {
     grid.setAttribute('role', 'list');
 
     const sortedInstances = [...group.instances].sort((a, b) => {
-      const aActive = a.instance.status === 'active';
-      const bActive = b.instance.status === 'active';
+      const aStatus = a.instance?.status || a.status || 'setup';
+      const bStatus = b.instance?.status || b.status || 'setup';
+      const aActive = aStatus === 'active';
+      const bActive = bStatus === 'active';
       if (aActive !== bActive) {
         return aActive ? -1 : 1;
       }
-      const aDay = Number(a.instance.createdOnDay) || Number.MAX_SAFE_INTEGER;
-      const bDay = Number(b.instance.createdOnDay) || Number.MAX_SAFE_INTEGER;
+      const aDay = Number(a.instance?.createdOnDay) || Number.MAX_SAFE_INTEGER;
+      const bDay = Number(b.instance?.createdOnDay) || Number.MAX_SAFE_INTEGER;
       return aDay - bDay;
     });
 
