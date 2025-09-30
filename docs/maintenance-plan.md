@@ -4,6 +4,7 @@ For the full historical analysis and detailed recommendations, see the [Maintena
 
 ## Loop Snapshot
 - Players start each day with fixed hours and cash, investing time in hustles, asset setup, upkeep, and study before ending the day.
+- Morning automation now reserves upkeep first and holds back a manual buffer so players can still run hands-on hustles.
 - Passive assets only pay out when their setup is complete and upkeep is funded, making maintenance choices central to income.
 - The schedule summary surfaces projected earnings, costs, and knowledge commitments so players can plan the next day at a glance.
 

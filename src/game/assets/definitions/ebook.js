@@ -9,7 +9,7 @@ const ebookDefinition = createAssetDefinition({
   tags: ['writing', 'product', 'digital'],
   description: 'Package your expertise into downloadable page-turners that sell while you snooze.',
   setup: { days: 4, hoursPerDay: 3, cost: 260 },
-  maintenance: { hours: 0.75, cost: 3 },
+  maintenance: { hours: 0.5, cost: 3 },
   skills: {
     setup: [
       'writing',

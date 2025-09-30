@@ -9,7 +9,7 @@ const vlogDefinition = createAssetDefinition({
   tags: ['video', 'visual', 'content', 'studio'],
   description: 'Film upbeat vlogs, edit late-night montages, and ride the algorithmic rollercoaster.',
   setup: { days: 4, hoursPerDay: 4, cost: 420 },
-  maintenance: { hours: 1.5, cost: 9 },
+  maintenance: { hours: 1.0, cost: 9 },
   skills: {
     setup: [
       'visual',

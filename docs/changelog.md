@@ -2,6 +2,8 @@
 
 ## Unreleased
 - Dashboard KPIs now jump to their detailed breakdowns, focusing the card, flashing a highlight, and updating the session status so the context change is announced.
+- Maintenance rebalance: daily upkeep hours for core passive assets now average just over five hours so a full portfolio still leaves meaningful manual time within the 14-hour day.
+- Study scheduler buffer: `allocateDailyStudy` now reserves time for upkeep and manual work, and the e-commerce plus automation courses eased their daily load.
 - Asset hub polish: launcher hides behind a dedicated button, asset cards always surface payout breakdowns, and upgrade buttons
   clearly show when a boost is ready versus locked.
 - Dashboard quick actions and asset upgrade suggestions now use uniform action cards so critical buttons stay aligned and easy to scan.

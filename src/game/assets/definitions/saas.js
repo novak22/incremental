@@ -9,7 +9,7 @@ const saasDefinition = createAssetDefinition({
   tags: ['software', 'tech', 'product'],
   description: 'Design lean software services, onboard early users, and ship updates that keep churn low.',
   setup: { days: 8, hoursPerDay: 4, cost: 960 },
-  maintenance: { hours: 2.2, cost: 24 },
+  maintenance: { hours: 1.4, cost: 24 },
   skills: {
     setup: [
       'software',
