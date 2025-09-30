@@ -1,10 +1,11 @@
 import elements from './elements.js';
-import { formatHours, formatMoney } from '../core/helpers.js';
+import { formatMoney } from '../core/helpers.js';
 import { getAssetState, getState } from '../core/state.js';
 import {
   calculateAssetSalePrice,
   instanceLabel,
-  sellAssetInstance
+  sellAssetInstance,
+  formatMaintenanceSummary
 } from '../game/assets/helpers.js';
 import {
   describeRequirement,
@@ -348,16 +349,7 @@ function createUpgradeHints(definition, skipUpgrades = []) {
 }
 
 function formatMaintenance(definition) {
-  const hours = Number(definition.maintenance?.hours) || 0;
-  const cost = Number(definition.maintenance?.cost) || 0;
-  const parts = [];
-  if (hours > 0) {
-    parts.push(`${formatHours(hours)}/day`);
-  }
-  if (cost > 0) {
-    parts.push(`$${formatMoney(cost)}/day`);
-  }
-  return parts;
+  return formatMaintenanceSummary(definition).parts;
 }
 
 function formatPayout(instance) {
