@@ -37,7 +37,8 @@ function buildCollections() {
 
 export function renderCards() {
   const collections = buildCollections();
-  renderCardCollections(collections);
+  const { models = {}, ...registries } = collections;
+  renderCardCollections(registries, models);
   applyCardFilters();
 }
 
@@ -57,7 +58,8 @@ export function updateUI() {
   updateHeaderAction(state);
 
   const collections = buildCollections();
-  updateAllCards(collections);
+  const { models = {}, ...registries } = collections;
+  updateAllCards(registries, models);
   applyCardFilters();
   refreshActionCatalogDebug();
 }

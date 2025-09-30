@@ -34,13 +34,19 @@ test('education tracks reflect canonical study data', async () => {
   progress.daysCompleted = 2;
   progress.studiedToday = false;
 
+  const educationDefinitions = registry.hustles.filter(hustle => hustle.tag?.type === 'study');
+  const { buildEducationModels } = await import('../src/ui/cards/model.js');
+  const educationModels = buildEducationModels(educationDefinitions);
   const { renderCardCollections } = await import('../src/ui/cards.js');
-  renderCardCollections({
-    hustles: [],
-    education: registry.hustles.filter(hustle => hustle.tag?.type === 'study'),
-    assets: [],
-    upgrades: []
-  });
+  renderCardCollections(
+    {
+      hustles: [],
+      education: educationDefinitions,
+      assets: [],
+      upgrades: []
+    },
+    { education: educationModels }
+  );
 
   const track = document.querySelector('.study-track');
   assert.ok(track, 'study track should render');
@@ -87,13 +93,19 @@ test('completed study tracks celebrate progress and skills', async () => {
   const requirements = await import('../src/game/requirements.js');
   const { getKnowledgeProgress } = requirements;
 
+  const educationDefinitions = registry.hustles.filter(hustle => hustle.tag?.type === 'study');
+  const { buildEducationModels } = await import('../src/ui/cards/model.js');
   const { renderCardCollections, updateAllCards } = await import('../src/ui/cards.js');
-  renderCardCollections({
-    hustles: [],
-    education: registry.hustles.filter(hustle => hustle.tag?.type === 'study'),
-    assets: [],
-    upgrades: []
-  });
+  const initialModels = buildEducationModels(educationDefinitions);
+  renderCardCollections(
+    {
+      hustles: [],
+      education: educationDefinitions,
+      assets: [],
+      upgrades: []
+    },
+    { education: initialModels }
+  );
 
   const state = getState();
   const progress = getKnowledgeProgress('outlineMastery', state);
@@ -102,12 +114,16 @@ test('completed study tracks celebrate progress and skills', async () => {
   progress.enrolled = false;
   progress.studiedToday = false;
 
-  updateAllCards({
-    hustles: [],
-    education: registry.hustles.filter(hustle => hustle.tag?.type === 'study'),
-    assets: [],
-    upgrades: []
-  });
+  const updatedModels = buildEducationModels(educationDefinitions);
+  updateAllCards(
+    {
+      hustles: [],
+      education: educationDefinitions,
+      assets: [],
+      upgrades: []
+    },
+    { education: updatedModels }
+  );
 
   const track = document.querySelector("[data-track='outlineMastery']");
   assert.ok(track, 'study track should remain visible after completion');
