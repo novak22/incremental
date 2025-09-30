@@ -25,6 +25,7 @@ function estimateManualMaintenanceReserve(state) {
   if (!state) return 0;
   const assets = state.assets || {};
   let upkeepDemand = 0;
+  let assistantHoursRemaining = getAssistantCount(state) * ASSISTANT_CONFIG.hoursPerAssistant;
 
   for (const [assetId, assetState] of Object.entries(assets)) {
     if (!assetState?.instances?.length) continue;
@@ -34,14 +35,17 @@ function estimateManualMaintenanceReserve(state) {
     if (maintenanceHours <= 0) continue;
 
     for (const instance of assetState.instances) {
-      if (instance?.status === 'active') {
-        upkeepDemand += maintenanceHours;
-      }
+      if (instance?.status !== 'active' || instance?.maintenanceFundedToday) continue;
+
+      const assistantHoursApplied = Math.min(assistantHoursRemaining, maintenanceHours);
+      assistantHoursRemaining -= assistantHoursApplied;
+
+      const manualHoursNeeded = Math.max(0, maintenanceHours - assistantHoursApplied);
+      upkeepDemand += manualHoursNeeded;
     }
   }
 
-  const assistantHours = getAssistantCount(state) * ASSISTANT_CONFIG.hoursPerAssistant;
-  return Math.max(0, upkeepDemand - assistantHours);
+  return Math.max(0, upkeepDemand);
 }
 
 export function buildAssetRequirementDescriptor(requirement, state = getState(), typeOverride) {
