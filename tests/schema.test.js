@@ -4,7 +4,7 @@ import { ensureTestDom } from './helpers/setupDom.js';
 
 ensureTestDom();
 
-const { configureRegistry, getAssetDefinition, getHustleDefinition } = await import('../src/core/state.js');
+const { configureRegistry, getAssetDefinition, getHustleDefinition } = await import('../src/core/state/registry.js');
 const { registry } = await import('../src/game/registry.js');
 
 function ensureConfigured() {

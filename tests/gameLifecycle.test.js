@@ -5,21 +5,16 @@ import { ensureTestDom } from './helpers/setupDom.js';
 ensureTestDom();
 
 const stateModule = await import('../src/core/state.js');
+const registryModule = await import('../src/core/state/registry.js');
+const assetStateModule = await import('../src/core/state/assets.js');
 const assetsModule = await import('../src/game/assets/index.js');
 const hustlesModule = await import('../src/game/hustles.js');
 const upgradesModule = await import('../src/game/upgrades.js');
 const requirementsModule = await import('../src/game/requirements.js');
 
-const {
-  configureRegistry,
-  buildDefaultState,
-  initializeState,
-  getState,
-  getAssetDefinition,
-  getAssetState,
-  createAssetInstance,
-  getUpgradeState
-} = stateModule;
+const { buildDefaultState, initializeState, getState, getAssetState, getUpgradeState } = stateModule;
+const { configureRegistry, getAssetDefinition } = registryModule;
+const { createAssetInstance } = assetStateModule;
 const { allocateAssetMaintenance, closeOutDay, ASSETS, getIncomeRangeForDisplay } = assetsModule;
 const { HUSTLES } = hustlesModule;
 const { UPGRADES } = upgradesModule;

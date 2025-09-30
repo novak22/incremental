@@ -3,14 +3,14 @@ import { structuredClone } from './helpers.js';
 import {
   buildDefaultState,
   ensureStateShape,
-  getAssetDefinition,
   getAssetState,
   getState,
   getUpgradeState,
   initializeState,
-  replaceState,
-  createAssetInstance
+  replaceState
 } from './state.js';
+import { getAssetDefinition } from './state/registry.js';
+import { createAssetInstance } from './state/assets.js';
 import { addLog } from './log.js';
 
 export function loadState() {

@@ -4,7 +4,8 @@ import { ensureTestDom } from './helpers/setupDom.js';
 
 ensureTestDom();
 
-const { configureRegistry, initializeState } = await import('../src/core/state.js');
+const { initializeState } = await import('../src/core/state.js');
+const { configureRegistry } = await import('../src/core/state/registry.js');
 const { registry } = await import('../src/game/registry.js');
 const {
   recordCostContribution,

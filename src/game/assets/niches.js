@@ -1,6 +1,7 @@
 import { executeAction } from '../actions.js';
 import { addLog } from '../../core/log.js';
-import { getAssetDefinition, getAssetState, getState } from '../../core/state.js';
+import { getAssetState, getState } from '../../core/state.js';
+import { getAssetDefinition } from '../../core/state/registry.js';
 import { getNicheDefinition, getNicheDefinitions } from './nicheData.js';
 
 const POPULARITY_MIN = 25;

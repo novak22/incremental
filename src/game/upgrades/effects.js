@@ -1,11 +1,10 @@
 import { ensureArray } from '../../core/helpers.js';
+import { getState, getUpgradeState } from '../../core/state.js';
 import {
   getAssetDefinition,
   getHustleDefinition,
-  getState,
-  getUpgradeDefinition,
-  getUpgradeState
-} from '../../core/state.js';
+  getUpgradeDefinition
+} from '../../core/state/registry.js';
 
 const MULTIPLIER_LIMITS = {
   payout_mult: { min: 0.1, max: 10 },

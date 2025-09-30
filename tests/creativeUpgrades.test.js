@@ -6,17 +6,14 @@ import { getAssetEffectMultiplier } from '../src/game/upgrades/effects.js';
 const harness = await getGameTestHarness();
 const {
   stateModule,
+  assetStateModule,
   assetsModule,
   upgradesModule,
   requirementsModule
 } = harness;
 
-const {
-  getState,
-  getAssetState,
-  getUpgradeState,
-  createAssetInstance
-} = stateModule;
+const { getState, getAssetState, getUpgradeState } = stateModule;
+const { createAssetInstance } = assetStateModule;
 const { ASSETS } = assetsModule;
 const { UPGRADES } = upgradesModule;
 const { getKnowledgeProgress } = requirementsModule;

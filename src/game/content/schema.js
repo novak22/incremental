@@ -2,13 +2,12 @@ import { ensureArray, formatHours, formatMoney, toNumber } from '../../core/help
 import { addLog } from '../../core/log.js';
 import {
   countActiveAssetInstances,
-  getAssetDefinition,
   getAssetState,
   getHustleState,
   getState,
-  getUpgradeDefinition,
   getUpgradeState
 } from '../../core/state.js';
+import { getAssetDefinition, getUpgradeDefinition } from '../../core/state/registry.js';
 import { executeAction } from '../actions.js';
 import { addMoney, spendMoney } from '../currency.js';
 import { checkDayEnd } from '../lifecycle.js';

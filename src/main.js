@@ -1,5 +1,5 @@
 import { addLog, renderLog } from './core/log.js';
-import { configureRegistry } from './core/state.js';
+import { configureRegistry } from './core/state/registry.js';
 import { loadState, saveState } from './core/storage.js';
 import { renderCards, updateUI } from './ui/update.js';
 import { initLayoutControls } from './ui/layout.js';

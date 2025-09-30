@@ -8,6 +8,8 @@ export async function getGameTestHarness() {
   ensureTestDom();
 
   const stateModule = await import('../../src/core/state.js');
+  const registryModule = await import('../../src/core/state/registry.js');
+  const assetStateModule = await import('../../src/core/state/assets.js');
   const assetsModule = await import('../../src/game/assets/index.js');
   const hustlesModule = await import('../../src/game/hustles.js');
   const upgradesModule = await import('../../src/game/upgrades.js');
@@ -22,7 +24,7 @@ export async function getGameTestHarness() {
   const offlineModule = await import('../../src/game/offline.js');
   const elementsModule = await import('../../src/ui/elements.js');
 
-  stateModule.configureRegistry({
+  registryModule.configureRegistry({
     assets: assetsModule.ASSETS,
     hustles: hustlesModule.HUSTLES,
     upgrades: upgradesModule.UPGRADES
@@ -52,6 +54,8 @@ export async function getGameTestHarness() {
 
   harness = {
     stateModule,
+    registryModule,
+    assetStateModule,
     assetsModule,
     hustlesModule,
     upgradesModule,

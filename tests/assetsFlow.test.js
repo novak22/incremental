@@ -5,16 +5,15 @@ import { getGameTestHarness } from './helpers/gameTestHarness.js';
 const harness = await getGameTestHarness();
 const {
   stateModule,
+  registryModule,
+  assetStateModule,
   assetsModule,
   currencyModule
 } = harness;
 
-const {
-  getState,
-  getAssetState,
-  getAssetDefinition,
-  createAssetInstance
-} = stateModule;
+const { getState, getAssetState } = stateModule;
+const { getAssetDefinition } = registryModule;
+const { createAssetInstance } = assetStateModule;
 
 const {
   allocateAssetMaintenance,

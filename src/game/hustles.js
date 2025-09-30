@@ -1,5 +1,6 @@
 import { formatDays, formatHours, formatMoney } from '../core/helpers.js';
-import { countActiveAssetInstances, getHustleDefinition, getState } from '../core/state.js';
+import { countActiveAssetInstances, getState } from '../core/state.js';
+import { getHustleDefinition } from '../core/state/registry.js';
 import { executeAction } from './actions.js';
 import { checkDayEnd } from './lifecycle.js';
 import { createInstantHustle } from './content/schema.js';

@@ -3,12 +3,14 @@ import { formatDays, formatHours, formatList, formatMoney, toNumber } from '../c
 import { addLog } from '../core/log.js';
 import {
   countActiveAssetInstances,
-  getAssetDefinition,
   getAssetState,
   getState,
-  getUpgradeDefinition,
   getUpgradeState
 } from '../core/state.js';
+import {
+  getAssetDefinition,
+  getUpgradeDefinition
+} from '../core/state/registry.js';
 import { spendMoney } from './currency.js';
 import { spendTime } from './time.js';
 import {

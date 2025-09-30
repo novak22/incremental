@@ -5,23 +5,26 @@ import { getGameTestHarness } from './helpers/gameTestHarness.js';
 const harness = await getGameTestHarness();
 const {
   stateModule,
+  registryModule,
+  assetStateModule,
   assetsModule,
   hustlesModule,
   upgradesModule
 } = harness;
 
 const {
-  normalizeAssetInstance,
-  normalizeAssetState,
   ensureStateShape,
   buildDefaultState,
   initializeState,
   getState,
   getHustleState,
   getAssetState,
-  getUpgradeState,
-  createAssetInstance
+  getUpgradeState
 } = stateModule;
+const { createAssetInstance, normalizeAssetInstance, normalizeAssetState } = assetStateModule;
+const { getAssetDefinition } = registryModule;
+const nichesModule = await import('../src/core/state/niches.js');
+const { ensureNicheStateShape } = nichesModule;
 
 const { ASSETS } = assetsModule;
 const { HUSTLES } = hustlesModule;
@@ -64,6 +67,17 @@ test('normalizeAssetInstance enforces defaults and clamps values', () => {
   assert.equal(normalized.createdOnDay, 1, 'created day defaults to current day');
 });
 
+test('normalizeAssetInstance respects provided state context for createdOnDay', () => {
+  const contextState = { day: 9 };
+  const instance = normalizeAssetInstance(
+    blogDefinition,
+    { status: 'active' },
+    { state: contextState }
+  );
+
+  assert.equal(instance.createdOnDay, 9);
+});
+
 test('normalizeAssetState hydrates instances and respects active shortcut', () => {
   const state = normalizeAssetState(blogDefinition, {
     instances: [
@@ -77,6 +91,17 @@ test('normalizeAssetState hydrates instances and respects active shortcut', () =
   assert.equal(state.instances.length, 2);
   assert.equal(state.instances[0].status, 'active');
   assert.equal(state.instances[1].status, 'setup');
+});
+
+test('normalizeAssetState seeds active instance using provided context', () => {
+  const normalized = normalizeAssetState(
+    blogDefinition,
+    { active: true, instances: [] },
+    { state: { day: 6 } }
+  );
+
+  assert.equal(normalized.instances.length, 1);
+  assert.equal(normalized.instances[0].createdOnDay, 6);
 });
 
 test('ensureStateShape populates default hustle, asset, and upgrade state', () => {
@@ -95,6 +120,30 @@ test('ensureStateShape populates default hustle, asset, and upgrade state', () =
     const upgradeState = getUpgradeState(upgrade.id, initialized);
     assert.notEqual(upgradeState, undefined, `upgrade state missing for ${upgrade.id}`);
   }
+});
+
+test('ensureNicheStateShape repairs popularity map and fallback day', () => {
+  const state = {
+    day: 4,
+    niches: {
+      popularity: {
+        techInnovators: { score: 120, previousScore: '15' },
+        fake: { score: 999, previousScore: 999 }
+      },
+      lastRollDay: 'oops'
+    }
+  };
+
+  ensureNicheStateShape(state, { fallbackDay: state.day });
+
+  assert.equal(state.niches.lastRollDay, 4);
+  assert.ok(state.niches.popularity.techInnovators, 'known niches should be kept');
+  assert.equal(state.niches.popularity.fake, undefined, 'unknown niches should be removed');
+  assert.equal(state.niches.popularity.techInnovators.previousScore, 15);
+  assert.ok(
+    state.niches.popularity.techInnovators.score >= 0 &&
+      state.niches.popularity.techInnovators.score <= 100
+  );
 });
 
 test('resetState clears runtime progress and log history', () => {
