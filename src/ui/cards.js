@@ -19,7 +19,6 @@ import {
   formatAssetRequirementLabel,
   getDefinitionRequirements,
   KNOWLEDGE_TRACKS,
-  KNOWLEDGE_REWARDS,
   getKnowledgeProgress,
   listAssetRequirementDescriptors
 } from '../game/requirements.js';
@@ -57,9 +56,24 @@ import {
   getInstanceQualityRange,
   performQualityAction
 } from '../game/assets/quality.js';
-import { getSkillDefinition, normalizeSkillList } from '../game/skills/data.js';
 import { applyCardFilters } from './layout.js';
 import { createAssetUpgradeShortcuts } from './assetUpgradeShortcuts.js';
+import {
+  buildAssetGroups,
+  buildEducationModels,
+  buildHustleModels,
+  buildUpgradeCategories,
+  describeAssetCardSummary,
+  describeAssetLaunchAvailability,
+  describeUpgradeStatus,
+  formatInstanceUpkeep,
+  getAssetGroupId,
+  getAssetGroupLabel,
+  getAssetGroupNote,
+  getFamilyCopy,
+  getUpgradeSnapshot,
+  resolveTrack
+} from './cards/model.js';
 
 const hustleUi = new Map();
 const upgradeUi = new Map();
@@ -70,128 +84,6 @@ let currentAssetDefinitions = [];
 let currentUpgradeDefinitions = [];
 let assetLaunchPanelExpanded = false;
 
-const UPGRADE_CATEGORY_ORDER = ['tech', 'house', 'infra', 'support', 'misc'];
-
-const UPGRADE_CATEGORY_COPY = {
-  tech: {
-    label: 'Tech',
-    title: 'Tech gear & gadgets',
-    note: 'Outfit your digital arsenal with rigs, cameras, and clever workflows.'
-  },
-  house: {
-    label: 'House',
-    title: 'House & studio',
-    note: 'Shape the spaces that keep shoots smooth and edits comfy.'
-  },
-  infra: {
-    label: 'Infra',
-    title: 'Infrastructure',
-    note: 'Scale the back-end brains that keep products humming worldwide.'
-  },
-  support: {
-    label: 'Support',
-    title: 'Support boosts',
-    note: 'Quick pick-me-ups and helpers that keep momentum rolling.'
-  },
-  misc: {
-    label: 'Special',
-    title: 'Special upgrades',
-    note: 'One-off perks that refuse to stay in neat boxes.'
-  }
-};
-
-const UPGRADE_FAMILY_COPY = {
-  general: {
-    label: 'Highlights',
-    note: 'Curated upgrades that don’t mind sharing space.'
-  },
-  phone: {
-    label: 'Phone line',
-    note: 'Capture crisp mobile footage and stay responsive on the go.'
-  },
-  pc: {
-    label: 'PC rigs',
-    note: 'Crunch renders, spreadsheets, and creative suites without sweat.'
-  },
-  monitor_hub: {
-    label: 'Monitor hubs',
-    note: 'Dock displays and fan out fresh screen real estate.'
-  },
-  monitor: {
-    label: 'Monitors',
-    note: 'Stack extra displays for editing bays and dashboards.'
-  },
-  storage: {
-    label: 'Storage & scratch',
-    note: 'Keep footage safe and project files lightning fast.'
-  },
-  camera: {
-    label: 'Camera gear',
-    note: 'Level up lenses and rigs so every frame looks cinematic.'
-  },
-  lighting: {
-    label: 'Lighting rigs',
-    note: 'Bathe shoots in flattering glow and zero fuss shadows.'
-  },
-  audio: {
-    label: 'Audio gear',
-    note: 'Capture buttery vocals and clean ambient sound.'
-  },
-  internet: {
-    label: 'Internet plans',
-    note: 'Feed uploads and live drops with consistent bandwidth.'
-  },
-  ergonomics: {
-    label: 'Ergonomics',
-    note: 'Keep posture happy while the hustle runs long hours.'
-  },
-  power_backup: {
-    label: 'Power backup',
-    note: 'Ride through outages without missing a milestone.'
-  },
-  studio: {
-    label: 'Studio spaces',
-    note: 'Build sets and stages tailored to your next shoot.'
-  },
-  workflow: {
-    label: 'Workflow suites',
-    note: 'Coordinate publishing calendars and creative rituals.'
-  },
-  automation: {
-    label: 'Automation',
-    note: 'Let bots and partners handle the repetitive hustle.'
-  },
-  cloud_compute: {
-    label: 'Cloud compute',
-    note: 'Provision serious horsepower for software launches.'
-  },
-  edge_network: {
-    label: 'Edge network',
-    note: 'Beam snappy responses worldwide with low-latency magic.'
-  },
-  commerce_network: {
-    label: 'Commerce alliances',
-    note: 'Bundle storefronts, partners, and licensing deals into one push.'
-  },
-  consumable: {
-    label: 'Daily boosts',
-    note: 'Single-day treats that top up focus right when you need it.'
-  }
-};
-
-const ASSET_GROUP_NOTES = {
-  Foundation: 'Steady launchpads that bankroll the rest of your ventureverse.',
-  Creative: 'Audience magnets that shimmer with story, art, and charisma.',
-  Commerce: 'Commerce engines that keep carts chiming and partners smiling.',
-  Tech: 'High-powered systems with upkeep, but outrageous reach when fueled.'
-};
-
-const ASSET_GROUP_ICONS = {
-  Foundation: '🏗️',
-  Creative: '🎨',
-  Commerce: '🛍️',
-  Tech: '🚀'
-};
 
 function showSlideOver({ eyebrow, title, body }) {
   const {
@@ -253,24 +145,6 @@ function createDefinitionSummary(title, rows = []) {
   });
   section.appendChild(list);
   return section;
-}
-
-function buildSkillRewards(trackId) {
-  const reward = KNOWLEDGE_REWARDS[trackId];
-  if (!reward) {
-    return { xp: 0, skills: [] };
-  }
-  const xp = Number.isFinite(Number(reward.baseXp)) ? Number(reward.baseXp) : 0;
-  const normalized = normalizeSkillList(reward.skills);
-  const skills = normalized.map(entry => {
-    const definition = getSkillDefinition(entry.id);
-    return {
-      id: entry.id,
-      name: definition?.name || entry.id,
-      weight: Number(entry.weight) || 0
-    };
-  });
-  return { xp, skills };
 }
 
 function describeSkillWeight(weight = 0) {
@@ -1048,12 +922,6 @@ function formatInstanceLastPayout(instance) {
   return 'None yesterday';
 }
 
-function formatInstanceUpkeep(definition) {
-  if (!definition) return '';
-  const summary = formatMaintenanceSummary(definition);
-  return summary.parts.join(' • ');
-}
-
 function formatLaunchEta(instance) {
   if (!instance) return '';
   const remaining = Number(instance.daysRemaining);
@@ -1105,65 +973,66 @@ function createEquipmentShortcuts(definition, state) {
 }
 
 function renderHustleCard(definition, container) {
-  const state = getState();
+  const [model] = buildHustleModels([definition]);
+  if (!model) return;
+
   const card = document.createElement('article');
   card.className = 'hustle-card';
-  card.dataset.hustle = definition.id;
-  card.dataset.search = `${definition.name} ${definition.description}`.toLowerCase();
+  card.dataset.hustle = model.id;
+  card.dataset.search = model.filters.search || '';
+  card.dataset.time = String(model.metrics.time.value);
+  card.dataset.payout = String(model.metrics.payout.value);
+  card.dataset.roi = String(model.metrics.roi);
+  card.dataset.available = model.available ? 'true' : 'false';
+  if (model.filters.limitRemaining !== null && model.filters.limitRemaining !== undefined) {
+    card.dataset.limitRemaining = String(model.filters.limitRemaining);
+  }
 
   const header = document.createElement('div');
   header.className = 'hustle-card__header';
   const title = document.createElement('h3');
   title.className = 'hustle-card__title';
-  title.textContent = definition.name;
+  title.textContent = model.name;
   header.appendChild(title);
   const badges = document.createElement('div');
   badges.className = 'badges';
-  const time = Number(definition.time || definition.action?.timeCost) || 0;
-  const payout = Number(definition.payout?.amount || definition.action?.payout) || 0;
-  const roi = time > 0 ? payout / time : payout;
-  card.dataset.time = String(time);
-  card.dataset.payout = String(payout);
-  card.dataset.roi = String(roi);
-  badges.appendChild(createBadge(`${formatHours(time)} time`));
-  if (payout > 0) {
-    badges.appendChild(createBadge(`$${formatMoney(payout)} payout`));
-  }
-  if (definition.tag?.label) {
-    badges.appendChild(createBadge(definition.tag.label));
-  }
+  model.badges.forEach(text => {
+    if (!text) return;
+    badges.appendChild(createBadge(text));
+  });
   header.appendChild(badges);
   card.appendChild(header);
 
-  if (definition.description) {
+  if (model.description) {
     const summary = document.createElement('p');
-    summary.textContent = definition.description;
+    summary.textContent = model.description;
     card.appendChild(summary);
   }
 
   const meta = document.createElement('div');
   meta.className = 'hustle-card__meta';
-  const requirements = describeHustleRequirements(definition, state) || [];
-  const requirementLabel = requirements.length
-    ? requirements.map(req => `${req.label} ${req.met ? '✓' : '•'}`).join('  ')
-    : 'No requirements';
-  meta.textContent = requirementLabel;
+  meta.textContent = model.requirements.summary;
   card.appendChild(meta);
 
   const limitDetail = document.createElement('p');
   limitDetail.className = 'hustle-card__limit';
+  if (model.limit?.summary) {
+    limitDetail.hidden = false;
+    limitDetail.textContent = model.limit.summary;
+  } else {
+    limitDetail.hidden = true;
+  }
   card.appendChild(limitDetail);
 
   const actions = document.createElement('div');
   actions.className = 'hustle-card__actions';
   let queueButton = null;
-  if (definition.action?.onClick) {
+  if (definition.action?.onClick && model.action) {
     queueButton = document.createElement('button');
     queueButton.type = 'button';
-    queueButton.className = 'primary';
-    queueButton.textContent = typeof definition.action.label === 'function'
-      ? definition.action.label(state)
-      : definition.action.label || 'Queue';
+    queueButton.className = model.action.className || 'primary';
+    queueButton.textContent = model.action.label;
+    queueButton.disabled = model.action.disabled;
     queueButton.addEventListener('click', () => {
       if (queueButton.disabled) return;
       definition.action.onClick();
@@ -1182,42 +1051,44 @@ function renderHustleCard(definition, container) {
   container.appendChild(card);
 
   hustleUi.set(definition.id, { card, queueButton, limitDetail });
-  updateHustleCard(definition);
 }
 
 function updateHustleCard(definition) {
   const ui = hustleUi.get(definition.id);
   if (!ui) return;
-  const state = getState();
-  const disabled = typeof definition.action?.disabled === 'function'
-    ? definition.action.disabled(state)
-    : Boolean(definition.action?.disabled);
-  if (ui.queueButton) {
-    ui.queueButton.disabled = disabled;
-    ui.queueButton.textContent = typeof definition.action.label === 'function'
-      ? definition.action.label(state)
-      : definition.action?.label || 'Queue';
+  const [model] = buildHustleModels([definition]);
+  if (!model) return;
+
+  const previousAvailability = ui.card.dataset.available;
+
+  ui.card.dataset.time = String(model.metrics.time.value);
+  ui.card.dataset.payout = String(model.metrics.payout.value);
+  ui.card.dataset.roi = String(model.metrics.roi);
+  ui.card.dataset.available = model.available ? 'true' : 'false';
+
+  if (model.filters.limitRemaining !== null && model.filters.limitRemaining !== undefined) {
+    ui.card.dataset.limitRemaining = String(model.filters.limitRemaining);
+  } else {
+    delete ui.card.dataset.limitRemaining;
   }
 
-  ui.card.dataset.available = disabled ? 'false' : 'true';
+  if (ui.queueButton && model.action) {
+    ui.queueButton.className = model.action.className || 'primary';
+    ui.queueButton.disabled = model.action.disabled;
+    ui.queueButton.textContent = model.action.label;
+  }
+
   if (ui.limitDetail) {
-    const usage = getHustleDailyUsage(definition, state);
-    if (usage) {
+    if (model.limit?.summary) {
       ui.limitDetail.hidden = false;
-      ui.limitDetail.textContent = usage.remaining > 0
-        ? `${usage.remaining}/${usage.limit} runs left today`
-        : 'Daily limit reached for today. Resets tomorrow.';
-      ui.card.dataset.limitRemaining = String(usage.remaining);
+      ui.limitDetail.textContent = model.limit.summary;
     } else {
       ui.limitDetail.hidden = true;
       ui.limitDetail.textContent = '';
-      delete ui.card.dataset.limitRemaining;
     }
   }
 
-  const nextAvailability = disabled ? 'false' : 'true';
-  const availabilityChanged = ui.card.dataset.available !== nextAvailability;
-  ui.card.dataset.available = nextAvailability;
+  const availabilityChanged = previousAvailability !== ui.card.dataset.available;
   if (availabilityChanged) {
     emitUIEvent('hustles:availability-updated');
   }
@@ -1279,28 +1150,6 @@ function renderHustles(definitions) {
   hustleUi.clear();
   definitions.forEach(definition => renderHustleCard(definition, container));
 }
-
-function getAssetGroupId(definition) {
-  const label = getAssetGroupLabel(definition);
-  return label.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-}
-
-function getAssetGroupLabel(definition) {
-  return definition?.tag?.label || 'Special';
-}
-
-function getAssetGroupNote(label) {
-  return ASSET_GROUP_NOTES[label] || 'Bundle kindred builds together to compare potential at a glance.';
-}
-
-function describeAssetCardSummary(definition) {
-  const copy = definition.cardSummary || definition.summary || definition.description;
-  if (!copy) return '';
-  const trimmed = copy.trim();
-  if (trimmed.length <= 140) return trimmed;
-  return `${trimmed.slice(0, 137)}…`;
-}
-
 function calculateInstanceProgress(definition, instance) {
   const level = Number(instance.quality?.level) || 0;
   const nextRequirements = getQualityNextRequirements(definition, level);
@@ -1421,68 +1270,6 @@ function buildSpecialActionButtons(definition, instance, state) {
     buttons.push(button);
   }
   return buttons;
-}
-
-function buildAssetGroups(definitions = [], state = getState()) {
-  const groups = new Map();
-  definitions.forEach(definition => {
-    const groupId = getAssetGroupId(definition);
-    const label = getAssetGroupLabel(definition);
-    if (!groups.has(groupId)) {
-      groups.set(groupId, {
-        id: groupId,
-        label,
-        note: getAssetGroupNote(label),
-        icon: ASSET_GROUP_ICONS[label] || '✨',
-        definitions: [],
-        instances: []
-      });
-    }
-    const entry = groups.get(groupId);
-    entry.definitions.push(definition);
-    const assetState = getAssetState(definition.id, state);
-    const instances = Array.isArray(assetState?.instances) ? assetState.instances : [];
-    instances.forEach((instance, index) => {
-      entry.instances.push({ definition, instance, index });
-    });
-  });
-  return Array.from(groups.values());
-}
-
-function describeAssetLaunchAvailability(definition, state = getState()) {
-  if (!definition) {
-    return { disabled: true, reasons: ['Definition missing.'], hours: 0, cost: 0 };
-  }
-
-  const reasons = [];
-  const requirementsMet = assetRequirementsMetById(definition.id, state);
-  if (!requirementsMet) {
-    const descriptors = listAssetRequirementDescriptors(definition, state).filter(desc => !desc.met);
-    if (descriptors.length) {
-      const names = descriptors.map(desc => desc.label).join(', ');
-      reasons.push(`Requires ${names}`);
-    } else {
-      const label = formatAssetRequirementLabel(definition.id, state);
-      if (label) {
-        reasons.push(label);
-      }
-    }
-  }
-
-  const baseHours = Number(definition.setup?.hoursPerDay) || 0;
-  const effect = getAssetEffectMultiplier(definition, 'setup_time_mult', { actionType: 'setup' });
-  const multiplier = Number.isFinite(effect?.multiplier) ? effect.multiplier : 1;
-  const hours = baseHours > 0 ? baseHours * multiplier : 0;
-  if (hours > 0 && state.timeLeft < hours) {
-    reasons.push(`Need ${formatHours(hours)} free (have ${formatHours(state.timeLeft)})`);
-  }
-
-  const cost = Number(definition.setup?.cost) || 0;
-  if (cost > 0 && state.money < cost) {
-    reasons.push(`Need $${formatMoney(cost)} (have $${formatMoney(Math.max(0, Math.floor(state.money)))})`);
-  }
-
-  return { disabled: reasons.length > 0, reasons, hours, cost };
 }
 
 function buildLaunchFeedbackMessage(definition) {
@@ -2276,51 +2063,6 @@ function openAssetGroupDetails(group) {
   });
 }
 
-function formatLabelFromKey(id, fallback = 'Special') {
-  if (!id) return fallback;
-  return (
-    id
-      .toString()
-      .replace(/[_-]+/g, ' ')
-      .replace(/([a-z])([A-Z])/g, '$1 $2')
-      .replace(/^./, match => match.toUpperCase())
-      .trim() || fallback
-  );
-}
-
-function getUpgradeCategory(definition) {
-  return definition?.category || 'misc';
-}
-
-function getUpgradeFamily(definition) {
-  return definition?.family || 'general';
-}
-
-function getCategoryCopy(id) {
-  if (UPGRADE_CATEGORY_COPY[id]) {
-    return UPGRADE_CATEGORY_COPY[id];
-  }
-  const label = formatLabelFromKey(id, 'Special');
-  return {
-    label,
-    title: `${label} upgrades`,
-    note: 'Specialized boosters that defy tidy labels.'
-  };
-}
-
-function getFamilyCopy(id) {
-  if (!id) {
-    return UPGRADE_FAMILY_COPY.general;
-  }
-  if (UPGRADE_FAMILY_COPY[id]) {
-    return UPGRADE_FAMILY_COPY[id];
-  }
-  return {
-    label: formatLabelFromKey(id, 'Highlights'),
-    note: 'Specialized enhancements for this progression lane.'
-  };
-}
-
 function buildUpgradeDetails(definition) {
   const detailBuilders = Array.isArray(definition.details) ? definition.details.slice(0, 3) : [];
   if (!detailBuilders.length) {
@@ -2368,34 +2110,6 @@ function buildUpgradeDetails(definition) {
 
   update();
   return { list, update };
-}
-
-function getUpgradeSnapshot(definition, state = getState()) {
-  const upgradeState = state?.upgrades?.[definition.id] || {};
-  const cost = Number(definition.cost) || 0;
-  const money = Number(state?.money) || 0;
-  const affordable = cost <= 0 || money >= cost;
-  const disabled = isUpgradeDisabled(definition);
-  const purchased = Boolean(upgradeState.purchased);
-  const ready = !purchased && affordable && !disabled;
-  return {
-    cost,
-    affordable,
-    disabled,
-    name: definition.name || definition.id,
-    purchased,
-    ready
-  };
-}
-
-function describeUpgradeStatus({ purchased, ready, affordable, disabled }) {
-  if (purchased) return 'Owned and active';
-  if (ready) return 'Ready to launch';
-  if (disabled) return 'Requires prerequisites';
-  if (!affordable) return 'Save up to unlock';
-  return 'Progress for this soon';
-}
-
 function sortUpgradesForCategory(definitions, state = getState()) {
   return definitions
     .slice()
@@ -2419,52 +2133,6 @@ function sortUpgradesForCategory(definitions, state = getState()) {
 
       return aSnapshot.name.localeCompare(bSnapshot.name);
     });
-}
-
-function buildUpgradeCategories(definitions) {
-  const grouped = new Map();
-  definitions.forEach(definition => {
-    const categoryId = getUpgradeCategory(definition);
-    if (!grouped.has(categoryId)) {
-      grouped.set(categoryId, new Map());
-    }
-    const families = grouped.get(categoryId);
-    const familyId = getUpgradeFamily(definition);
-    if (!families.has(familyId)) {
-      families.set(familyId, []);
-    }
-    families.get(familyId).push(definition);
-  });
-
-  const seen = new Set();
-  const orderedKeys = [
-    ...UPGRADE_CATEGORY_ORDER,
-    ...Array.from(grouped.keys()).filter(key => !UPGRADE_CATEGORY_ORDER.includes(key))
-  ];
-
-  return orderedKeys
-    .filter(key => {
-      if (seen.has(key) || !grouped.has(key)) return false;
-      seen.add(key);
-      return true;
-    })
-    .map(id => {
-      const families = Array.from(grouped.get(id)?.entries() || []).map(([familyId, defs]) => ({
-        id: familyId,
-        copy: getFamilyCopy(familyId),
-        definitions: defs
-      }));
-      families.sort((a, b) => a.copy.label.localeCompare(b.copy.label, undefined, { sensitivity: 'base' }));
-      const total = families.reduce((sum, family) => sum + family.definitions.length, 0);
-      return {
-        id,
-        copy: getCategoryCopy(id),
-        families,
-        total
-      };
-    });
-}
-
 function scrollUpgradeLaneIntoView(categoryId) {
   if (!categoryId) return;
 
@@ -2986,48 +2654,6 @@ function renderUpgradeDock() {
   });
 }
 
-function resolveTrack(definition) {
-  if (!definition) {
-    return {
-      id: '',
-      name: '',
-      summary: '',
-      description: '',
-      days: 1,
-      hoursPerDay: 1,
-      tuition: 0,
-      action: null,
-      skillXp: 0,
-      skills: []
-    };
-  }
-
-  const canonicalId = definition.studyTrackId || definition.id;
-  const canonical = KNOWLEDGE_TRACKS[canonicalId];
-  const skillRewards = buildSkillRewards(canonical?.id || canonicalId);
-
-  const summary = definition.description || canonical?.description || '';
-  const description = canonical?.description || definition.description || '';
-  const days = Number(canonical?.days ?? definition.days ?? definition.action?.durationDays) || 1;
-  const hoursPerDay = Number(
-    canonical?.hoursPerDay ?? definition.hoursPerDay ?? definition.time ?? definition.action?.timeCost
-  ) || 1;
-  const tuition = Number(canonical?.tuition ?? definition.tuition ?? definition.action?.moneyCost) || 0;
-
-  return {
-    id: canonical?.id || canonicalId,
-    name: canonical?.name || definition.name || canonicalId,
-    summary,
-    description,
-    days,
-    hoursPerDay,
-    tuition,
-    action: definition.action,
-    skillXp: skillRewards.xp,
-    skills: skillRewards.skills
-  };
-}
-
 function formatStudyCountdown(trackInfo, progress) {
   if (progress.completed) {
     return 'Diploma earned';
@@ -3301,15 +2927,15 @@ function renderStudyQueue(definitions) {
   const { list: queue, eta: queueEta, cap: capNode } = getStudyQueue() || {};
   if (!queue) return;
   queue.innerHTML = '';
-  let totalHours = 0;
-  definitions.forEach(def => {
-    const info = resolveTrack(def);
-    if (!info) return;
-    const progress = getKnowledgeProgress(info.id);
-    if (!progress.enrolled || progress.completed) return;
-    totalHours += info.hoursPerDay;
+  const state = getState();
+  const models = buildEducationModels(definitions, {
+    getState: () => state,
+    getKnowledgeProgress,
+    getTimeCap
+  });
+  models.queue.entries.forEach(entry => {
     const item = document.createElement('li');
-    item.textContent = `${info.name} • ${formatHours(info.hoursPerDay)} per day`;
+    item.textContent = `${entry.name} • ${formatHours(entry.hoursPerDay)} per day`;
     queue.appendChild(item);
   });
   if (!queue.childElementCount) {
@@ -3318,13 +2944,11 @@ function renderStudyQueue(definitions) {
     queue.appendChild(empty);
   }
   if (queueEta) {
-    queueEta.textContent = `Total ETA: ${formatHours(totalHours)}`;
+    queueEta.textContent = models.queue.totalLabel;
   }
 
   if (capNode) {
-    const state = getState();
-    const capHours = state ? getTimeCap() : 0;
-    capNode.textContent = `Daily cap: ${formatHours(capHours)}`;
+    capNode.textContent = models.queue.capLabel;
   }
 }
 
