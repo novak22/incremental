@@ -38,6 +38,7 @@
 - Quality system refresh: daily-use counters replace cooldown timers on passive actions, with UI, saves, and docs updated to celebrate remaining uses each day.
 - Niche market pulse: assign each passive asset to a daily-trending niche, gain payout multipliers from hot audiences, and track every niche’s popularity from the dashboard widget.
 - Asset command center: the assets page now opens with a launch hub and refreshed build cards that bundle niche assignment, payout breakdowns, quality progress, and quick category blueprints in one glance.
+- Venture hub celebration: the renamed Ventures tab sports a slim summary strip, gallery-style category sections, showcase venture cards with trend badges, and a festive launcher drawer for new builds.
 
 ## Recent Highlights
 - Passive assets gained Quality 4–5 milestones with higher payouts and refreshed modifiers.

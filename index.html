@@ -59,7 +59,7 @@
       <button id="tab-analytics" class="shell__tab" role="tab" aria-selected="false" aria-controls="panel-analytics">Analytics</button>
       <button id="tab-player" class="shell__tab" role="tab" aria-selected="false" aria-controls="panel-player">Player</button>
       <button id="tab-hustles" class="shell__tab" role="tab" aria-selected="false" aria-controls="panel-hustles">Hustles</button>
-      <button id="tab-assets" class="shell__tab" role="tab" aria-selected="false" aria-controls="panel-assets">Assets</button>
+      <button id="tab-ventures" class="shell__tab" role="tab" aria-selected="false" aria-controls="panel-ventures">Ventures</button>
       <button id="tab-upgrades" class="shell__tab" role="tab" aria-selected="false" aria-controls="panel-upgrades">Upgrades</button>
       <button id="tab-education" class="shell__tab" role="tab" aria-selected="false" aria-controls="panel-education">Education</button>
     </nav>
@@ -88,10 +88,10 @@
               <span class="kpi__value" id="kpi-upkeep-value">$0</span>
               <span class="kpi__sub" id="kpi-upkeep-note">Next 24h</span>
             </button>
-            <button class="kpi" id="kpi-assets" type="button" data-detail="assets">
-              <span class="kpi__label">Active assets</span>
-              <span class="kpi__value" id="kpi-assets-value">0</span>
-              <span class="kpi__sub" id="kpi-assets-note">Making money</span>
+            <button class="kpi" id="kpi-ventures" type="button" data-detail="ventures">
+              <span class="kpi__label">Active ventures</span>
+              <span class="kpi__value" id="kpi-ventures-value">0</span>
+              <span class="kpi__sub" id="kpi-ventures-note">Making money</span>
             </button>
             <button class="kpi" id="kpi-study" type="button" data-detail="study">
               <span class="kpi__label">Study progress</span>
@@ -390,28 +390,28 @@
         <div id="hustle-list" class="list" data-view="cards" aria-live="polite"></div>
       </section>
 
-      <section id="panel-assets" class="panel" role="tabpanel" aria-labelledby="tab-assets" hidden>
-        <header class="panel__header">
-          <div>
-            <h2>Assets</h2>
-            <p>Passive plays that need smart upkeep.</p>
+      <section id="panel-ventures" class="panel" role="tabpanel" aria-labelledby="tab-ventures" hidden>
+        <header class="panel__header venture-panel__header">
+          <div class="venture-panel__intro">
+            <h2>Ventures</h2>
+            <p>Your empire’s living showcase — bask in every build you’ve launched.</p>
           </div>
-          <div class="filter-bar" role="group" aria-label="Asset filters">
+          <div class="filter-bar venture-panel__filters" role="group" aria-label="Venture filters">
             <label class="filter-toggle">
-              <input id="asset-active-toggle" type="checkbox" />
+              <input id="venture-active-toggle" type="checkbox" />
               <span>Active only</span>
             </label>
             <label class="filter-toggle">
-              <input id="asset-maintenance-toggle" type="checkbox" />
-              <span>Needs maintenance</span>
+              <input id="venture-maintenance-toggle" type="checkbox" />
+              <span>Needs upkeep</span>
             </label>
             <label class="filter-toggle">
-              <input id="asset-risk-toggle" type="checkbox" />
+              <input id="venture-risk-toggle" type="checkbox" />
               <span>Hide high risk</span>
             </label>
           </div>
         </header>
-        <div class="asset-gallery" id="asset-gallery" aria-live="polite"></div>
+        <div class="asset-gallery venture-gallery" id="venture-gallery" aria-live="polite"></div>
       </section>
 
       <section id="panel-upgrades" class="panel" role="tabpanel" aria-labelledby="tab-upgrades" hidden>

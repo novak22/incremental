@@ -222,7 +222,7 @@ function renderStats(state, summary) {
   const assistantState = getUpgradeState('assistant', state);
   const stats = [
     {
-      label: 'Active assets',
+      label: 'Active ventures',
       value: String(countActiveAssets(state))
     },
     {

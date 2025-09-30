@@ -47,7 +47,7 @@ export function ensureTestDom() {
         <nav class="shell__tabs" role="tablist">
           <button id="tab-dashboard" class="shell__tab" aria-controls="panel-dashboard"></button>
           <button id="tab-hustles" class="shell__tab" aria-controls="panel-hustles"></button>
-          <button id="tab-assets" class="shell__tab" aria-controls="panel-assets"></button>
+          <button id="tab-ventures" class="shell__tab" aria-controls="panel-ventures"></button>
           <button id="tab-upgrades" class="shell__tab" aria-controls="panel-upgrades"></button>
           <button id="tab-education" class="shell__tab" aria-controls="panel-education"></button>
         </nav>
@@ -58,7 +58,7 @@ export function ensureTestDom() {
               <button id="kpi-net"><span id="kpi-net-value"></span><span id="kpi-net-note"></span></button>
               <button id="kpi-hours"><span id="kpi-hours-value"></span><span id="kpi-hours-note"></span></button>
               <button id="kpi-upkeep"><span id="kpi-upkeep-value"></span><span id="kpi-upkeep-note"></span></button>
-              <button id="kpi-assets"><span id="kpi-assets-value"></span><span id="kpi-assets-note"></span></button>
+              <button id="kpi-ventures"><span id="kpi-ventures-value"></span><span id="kpi-ventures-note"></span></button>
               <button id="kpi-study"><span id="kpi-study-value"></span><span id="kpi-study-note"></span></button>
             </section>
             <section class="dashboard__grid">
@@ -86,10 +86,10 @@ export function ensureTestDom() {
             <select id="hustle-sort"></select>
             <div id="hustle-list"></div>
           </section>
-          <section id="panel-assets" class="panel" hidden>
-            <input id="asset-active-toggle" type="checkbox" />
-            <input id="asset-maintenance-toggle" type="checkbox" />
-            <input id="asset-risk-toggle" type="checkbox" />
+          <section id="panel-ventures" class="panel" hidden>
+            <input id="venture-active-toggle" type="checkbox" />
+            <input id="venture-maintenance-toggle" type="checkbox" />
+            <input id="venture-risk-toggle" type="checkbox" />
             <table>
               <tbody id="asset-table-body"></tbody>
             </table>

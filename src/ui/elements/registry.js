@@ -72,7 +72,7 @@ class ElementRegistry {
       net: root.getElementById('kpi-net'),
       hours: root.getElementById('kpi-hours'),
       upkeep: root.getElementById('kpi-upkeep'),
-      assets: root.getElementById('kpi-assets'),
+      ventures: root.getElementById('kpi-ventures'),
       study: root.getElementById('kpi-study')
     }));
   }
@@ -83,7 +83,7 @@ class ElementRegistry {
       net: root.getElementById('kpi-net-note'),
       hours: root.getElementById('kpi-hours-note'),
       upkeep: root.getElementById('kpi-upkeep-note'),
-      assets: root.getElementById('kpi-assets-note'),
+      ventures: root.getElementById('kpi-ventures-note'),
       study: root.getElementById('kpi-study-note')
     }));
   }
@@ -93,7 +93,7 @@ class ElementRegistry {
       net: root.getElementById('kpi-net-value'),
       hours: root.getElementById('kpi-hours-value'),
       upkeep: root.getElementById('kpi-upkeep-value'),
-      assets: root.getElementById('kpi-assets-value'),
+      ventures: root.getElementById('kpi-ventures-value'),
       study: root.getElementById('kpi-study-value')
     }));
   }
@@ -197,14 +197,14 @@ class ElementRegistry {
 
   getAssetFilters() {
     return this.resolve('assetFilters', root => ({
-      activeOnly: root.getElementById('asset-active-toggle'),
-      maintenance: root.getElementById('asset-maintenance-toggle'),
-      lowRisk: root.getElementById('asset-risk-toggle')
+      activeOnly: root.getElementById('venture-active-toggle'),
+      maintenance: root.getElementById('venture-maintenance-toggle'),
+      lowRisk: root.getElementById('venture-risk-toggle')
     }));
   }
 
   getAssetGallery() {
-    return this.resolve('assetGallery', root => root.getElementById('asset-gallery'));
+    return this.resolve('assetGallery', root => root.getElementById('venture-gallery'));
   }
 
   getUpgradeFilters() {

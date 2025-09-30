@@ -14,7 +14,7 @@ Online Hustle Simulator is a browser-based incremental game about orchestrating 
 
 ### Interface Overview
 - **Top Bar & Snapshot** – Money, time, and day stay pinned at the top. A collapsible Daily Snapshot panel now highlights per-stat breakdowns (time invested, money earned, passive streams, cash spent, study momentum) without overwhelming the main view. Passive earnings even call out which assets (and how many instances) delivered today’s cash, so you can immediately see what worked.
-- **Tabbed Workspace** – Hustles, Education, Passive Assets, and Upgrades each live in their own tab with dedicated copy and per-tab filters. Global toggles hide locked or completed cards, and you can spotlight only actionable options.
+- **Tabbed Workspace** – Hustles, Education, Passive Ventures, and Upgrades each live in their own tab with dedicated copy and per-tab filters. Global toggles hide locked or completed cards, and you can spotlight only actionable options.
 - **Categorised Collections** – Passive assets surface in Foundation, Creative, Commerce, and Advanced groupings with a collapsed-card option for rapid scanning. Each grouping now sports a "View launched assets" toggle that opens a management roster listing upkeep, yesterday’s payout, and upgrade/sell controls for every instance. Upgrades now live inside Tech, House, Infra, and Support tabs, each with friendly family sub-sections (phones, workflow suites, automation chains, daily boosts) so progression lanes read clearly at a glance.
 - **Event Log Controls** – The log dock keeps its running commentary but now includes a summary/detailed toggle when you want a lighter feed during long sessions.
 
@@ -37,7 +37,7 @@ Online Hustle Simulator is a browser-based incremental game about orchestrating 
 - **Gallery Licensing Summit** – Pay $240 upfront; 2.25h/day for 5 days to pitch curators (+30% Event Photo Gig bookings and +22% Stock Photo Gallery passive income).
 - **Syndication Residency** – Pay $300 upfront; 2h/day for 6 days cultivating partnerships (+20% Freelance Writing payouts, +$2 Street Promo Sprint stipends, and +18% Personal Blog Network income).
 
-### Passive Assets (Daily Payouts)
+### Passive Ventures (Daily Payouts)
 Each asset supports multiple instances, tracks setup progress, and rolls a daily income range once active. Quality actions unique to each asset increase payouts and stability, and you can liquidate any instance directly from the card—or from the category roster—for yesterday’s payout ×3 × (Quality level + 1). The asset briefing modal doubles as an instance inspector, outlining status, upkeep, yesterday’s earnings, and which upgrades are owned or still locked.
 - Select quality actions now include a visible cooldown so big-impact moves (SEO sprints, ad bursts, and marketplace pitches) can only be run every few in-game days, nudging players to rotate through their portfolio.
 

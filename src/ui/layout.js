@@ -222,7 +222,7 @@ function setupKpiShortcuts() {
     net: 'Reviewing how today’s inflows and outflows balance.',
     time: 'Hopping down to the time ledger for today.',
     upkeep: 'Checking upkeep reminders and notifications.',
-    assets: 'Spotlighting active assets and upgrade prospects.',
+    assets: 'Spotlighting active ventures and upgrade prospects.',
     study: 'Beaming over to the study progress section.'
   };
 
