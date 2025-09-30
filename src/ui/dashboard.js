@@ -1,4 +1,5 @@
 import {
+  getAssetGallery,
   getAssetUpgradeActionsContainer,
   getDailyStats,
   getEventLogPreviewNode,
@@ -721,7 +722,8 @@ function buildNicheAnalytics(state) {
 function focusAssetsForNiche(nicheId, { hasAssets = false, nicheName = '' } = {}) {
   if (!nicheId) return;
   activateShellPanel('panel-assets');
-  const { assetGallery, sessionStatus } = elements;
+  const assetGallery = getAssetGallery();
+  const sessionStatus = getSessionStatusNode();
   if (!assetGallery) return;
   window.requestAnimationFrame(() => {
     const cards = Array.from(assetGallery.querySelectorAll('[data-asset]'));
