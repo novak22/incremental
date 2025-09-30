@@ -1,4 +1,4 @@
-import elements from './elements.js';
+import { getHeaderActionButtons } from './elements/registry.js';
 import { endDay } from '../game/lifecycle.js';
 import { buildAssetUpgradeRecommendations, buildQuickActions } from './dashboard.js';
 import { formatHours } from '../core/helpers.js';
@@ -30,6 +30,11 @@ const autoForwardState = {
   mode: 'paused',
   timerId: null
 };
+
+function resolveHeaderButtons() {
+  const { endDayButton, autoForwardButton } = getHeaderActionButtons() || {};
+  return { endDayButton, autoForwardButton };
+}
 
 function getNextAutoForwardMode(current) {
   const index = AUTO_FORWARD_MODES.indexOf(current);
@@ -120,8 +125,7 @@ function applyAutoForwardState(mode) {
     autoForwardState.timerId = null;
   }
 
-  const primaryButton = elements.endDayButton;
-  const toggle = elements.autoForwardButton;
+  const { endDayButton: primaryButton, autoForwardButton: toggle } = resolveHeaderButtons();
   const nextMode = AUTO_FORWARD_MODES.includes(mode) ? mode : 'paused';
   autoForwardState.mode = nextMode;
 
@@ -141,7 +145,7 @@ function applyAutoForwardState(mode) {
   }
 
   autoForwardState.timerId = setInterval(() => {
-    const target = elements.endDayButton;
+    const { endDayButton: target } = resolveHeaderButtons();
     if (!target) {
       applyAutoForwardState('paused');
       return;
@@ -154,7 +158,7 @@ function applyAutoForwardState(mode) {
 }
 
 export function initHeaderActionControls() {
-  const button = elements.endDayButton;
+  const { endDayButton: button, autoForwardButton: toggle } = resolveHeaderButtons();
   if (button) {
     button.addEventListener('click', () => {
       if (activeRecommendation?.onClick) {
@@ -165,7 +169,6 @@ export function initHeaderActionControls() {
     });
   }
 
-  const toggle = elements.autoForwardButton;
   if (toggle) {
     toggle.addEventListener('click', () => {
       const nextMode = getNextAutoForwardMode(autoForwardState.mode);
@@ -177,7 +180,7 @@ export function initHeaderActionControls() {
 }
 
 export function updateHeaderAction(state) {
-  const button = elements.endDayButton;
+  const { endDayButton: button } = resolveHeaderButtons();
   if (!button) return;
 
   const recommendation = selectRecommendation(state);

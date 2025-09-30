@@ -1,4 +1,4 @@
-import { ensureTestDom } from './setupDom.js';
+  import { ensureTestDom } from './setupDom.js';
 
 let harness;
 
@@ -22,7 +22,9 @@ export async function getGameTestHarness() {
   const logModule = await import('../../src/core/log.js');
   const storageModule = await import('../../src/core/storage.js');
   const offlineModule = await import('../../src/game/offline.js');
-  const elementsModule = await import('../../src/ui/elements.js');
+  const elementRegistryModule = await import('../../src/ui/elements/registry.js');
+
+  elementRegistryModule.initElementRegistry(document);
 
   registryModule.configureRegistry({
     assets: assetsModule.ASSETS,
@@ -30,18 +32,43 @@ export async function getGameTestHarness() {
     upgrades: upgradesModule.UPGRADES
   });
 
-  const elements = elementsModule.default;
+  const elements = {
+    get money() {
+      return elementRegistryModule.getMoneyNode();
+    },
+    get logFeed() {
+      return (elementRegistryModule.getLogNodes() || {}).logFeed;
+    },
+    get logTip() {
+      return (elementRegistryModule.getLogNodes() || {}).logTip;
+    },
+    get day() {
+      return (elementRegistryModule.getPlayerNodes() || {}).summary?.day;
+    },
+    get time() {
+      return (elementRegistryModule.getPlayerNodes() || {}).summary?.time;
+    }
+  };
 
   const resetState = () => {
     const nextState = stateModule.initializeState(stateModule.buildDefaultState());
-    if (elements.logFeed) {
-      elements.logFeed.innerHTML = '';
+    const logNodes = elementRegistryModule.getLogNodes() || {};
+    if (logNodes.logFeed) {
+      logNodes.logFeed.innerHTML = '';
     }
-    if (elements.logTip) {
-      elements.logTip.style.display = 'block';
+    if (logNodes.logTip) {
+      logNodes.logTip.style.display = 'block';
     }
-    if (elements.money) {
-      elements.money.textContent = '';
+    const moneyNode = elementRegistryModule.getMoneyNode();
+    if (moneyNode) {
+      moneyNode.textContent = '';
+    }
+    const playerSummary = elementRegistryModule.getPlayerNodes()?.summary || {};
+    if (playerSummary.time) {
+      playerSummary.time.textContent = '';
+    }
+    if (playerSummary.day) {
+      playerSummary.day.textContent = '';
     }
     return nextState;
   };

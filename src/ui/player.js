@@ -1,4 +1,4 @@
-import elements from './elements.js';
+import { getPlayerNodes } from './elements/registry.js';
 import setText from './dom.js';
 import { formatHours, formatList, formatMoney } from '../core/helpers.js';
 import { registry } from '../game/registry.js';
@@ -12,7 +12,8 @@ import {
 } from './skills/helpers.js';
 
 function renderSummary(state, summary) {
-  const target = elements.player?.summary;
+  const player = getPlayerNodes() || {};
+  const target = player.summary;
   if (!target) return;
   const info = describeCharacter(state?.character);
   setText(target.tier, info.label);
@@ -25,7 +26,8 @@ function renderSummary(state, summary) {
 }
 
 function renderSkillList(state) {
-  const target = elements.player?.skills;
+  const player = getPlayerNodes() || {};
+  const target = player.skills;
   if (!target?.list) return;
 
   const skills = SKILL_DEFINITIONS.map(def => describeSkill(def, state?.skills?.[def.id]));
@@ -105,7 +107,8 @@ function formatSkillFocus(skills) {
 }
 
 function renderEquipment(state) {
-  const list = elements.player?.equipmentList;
+  const player = getPlayerNodes() || {};
+  const list = player.equipmentList;
   if (!list) return;
   list.innerHTML = '';
 
@@ -154,7 +157,8 @@ function formatEducationStatus(progress) {
 }
 
 function renderEducation(state) {
-  const list = elements.player?.educationList;
+  const player = getPlayerNodes() || {};
+  const list = player.educationList;
   if (!list) return;
   list.innerHTML = '';
 
@@ -210,7 +214,8 @@ function countActiveAssets(state) {
 }
 
 function renderStats(state, summary) {
-  const list = elements.player?.statsList;
+  const player = getPlayerNodes() || {};
+  const list = player.statsList;
   if (!list) return;
   list.innerHTML = '';
 

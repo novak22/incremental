@@ -8,8 +8,10 @@ import { registry } from './game/registry.js';
 import { resetTick, startGameLoop } from './game/loop.js';
 import { handleOfflineProgress } from './game/offline.js';
 import { initHeaderActionControls } from './ui/headerAction.js';
+import { initElementRegistry } from './ui/elements/registry.js';
 
 configureRegistry(registry);
+initElementRegistry(document);
 const { returning, lastSaved } = loadState({
   onFirstLoad: () =>
     addLog('Welcome to Online Hustle Simulator! Time to make that side cash.', 'info'),

@@ -1,4 +1,15 @@
-import elements from './elements.js';
+import {
+  getAssetGallery,
+  getHustleControls,
+  getSlideOverNodes,
+  getStudyQueue,
+  getStudyTrackList,
+  getUpgradeDockList,
+  getUpgradeEmptyNode,
+  getUpgradeLaneList,
+  getUpgradeList,
+  getUpgradeOverview
+} from './elements/registry.js';
 import { getAssetState, getState } from '../core/state.js';
 import { formatDays, formatHours, formatMoney } from '../core/helpers.js';
 import { describeHustleRequirements, getHustleDailyUsage } from '../game/hustles/helpers.js';
@@ -174,10 +185,14 @@ const ASSET_GROUP_NOTES = {
   Commerce: 'Automation loops that keep the checkout bell ringing.',
   Tech: 'Systems and platforms with bigger upkeep but massive reach.'
 };
-let studyElementsDocument = null;
 
 function showSlideOver({ eyebrow, title, body }) {
-  const { slideOver, slideOverContent, slideOverEyebrow, slideOverTitle } = elements;
+  const {
+    slideOver,
+    slideOverContent,
+    slideOverEyebrow,
+    slideOverTitle
+  } = getSlideOverNodes() || {};
   if (!slideOver || !slideOverContent) return;
   slideOverEyebrow.textContent = eyebrow || '';
   slideOverTitle.textContent = title || '';
@@ -1250,7 +1265,8 @@ function openHustleDetails(definition) {
 }
 
 function renderHustles(definitions) {
-  const container = elements.hustleList;
+  const { hustleList } = getHustleControls() || {};
+  const container = hustleList;
   if (!container) return;
   container.innerHTML = '';
   hustleUi.clear();
@@ -2044,7 +2060,7 @@ function createAssetInstanceCard(definition, instance, index, state = getState()
 }
 
 function renderAssets(definitions = []) {
-  const gallery = elements.assetGallery;
+  const gallery = getAssetGallery();
   if (!gallery) return;
   const state = getState();
   currentAssetDefinitions = Array.isArray(definitions) ? definitions : [];
@@ -2426,7 +2442,7 @@ function scrollUpgradeLaneIntoView(categoryId) {
   if (!categoryId) return;
 
   if (categoryId === 'all') {
-    const container = elements.upgradeList;
+    const container = getUpgradeList();
     if (container) {
       container.scrollIntoView({ behavior: 'smooth', block: 'start' });
       container.focus?.({ preventScroll: true });
@@ -2449,7 +2465,7 @@ function scrollUpgradeLaneIntoView(categoryId) {
 }
 
 function renderUpgradeLaneMap(categories) {
-  const list = elements.upgradeLaneList;
+  const list = getUpgradeLaneList();
   if (!list) return;
 
   list.innerHTML = '';
@@ -2593,7 +2609,7 @@ function describeOverviewNote({ total, purchased, ready }) {
 }
 
 function renderUpgradeOverview(definitions) {
-  const overview = elements.upgradeOverview;
+  const overview = getUpgradeOverview();
   if (!overview?.container) return;
   const state = getState();
   if (!state) return;
@@ -2617,7 +2633,7 @@ function renderUpgradeOverview(definitions) {
 }
 
 export function refreshUpgradeSections() {
-  const emptyNote = elements.upgradeEmpty;
+  const emptyNote = getUpgradeEmptyNode();
   let visibleTotal = 0;
 
   upgradeSections.forEach(({ section, list, count, emptyMessage }) => {
@@ -2788,7 +2804,7 @@ function updateUpgradeCard(definition) {
 }
 
 function renderUpgrades(definitions) {
-  const list = elements.upgradeList;
+  const list = getUpgradeList();
   if (!list) return;
   list.tabIndex = -1;
   currentUpgradeDefinitions = Array.isArray(definitions) ? [...definitions] : [];
@@ -2888,7 +2904,7 @@ function renderUpgrades(definitions) {
 }
 
 function renderUpgradeDock() {
-  const dock = elements.upgradeDockList;
+  const dock = getUpgradeDockList();
   if (!dock) return;
   dock.innerHTML = '';
 
@@ -3239,40 +3255,8 @@ function openStudyDetails(definition) {
   showSlideOver({ eyebrow: 'Study track', title: definition.name, body });
 }
 
-function ensureStudyElements() {
-  const doc = document;
-  if (!doc) return;
-
-  let refreshed = studyElementsDocument && studyElementsDocument !== doc;
-
-  const syncElement = (key, id) => {
-    const current = elements[key];
-    if (current && current.ownerDocument === doc && doc.contains(current)) {
-      return current;
-    }
-    const next = doc.getElementById(id);
-    if (elements[key] !== next) {
-      elements[key] = next;
-      refreshed = true;
-    }
-    return next;
-  };
-
-  const trackList = syncElement('studyTrackList', 'study-track-list');
-  syncElement('studyQueueList', 'study-queue-list');
-  syncElement('studyQueueEta', 'study-queue-eta');
-  syncElement('studyQueueCap', 'study-queue-cap');
-
-  if (refreshed) {
-    studyUi.clear();
-  }
-
-  studyElementsDocument = doc;
-}
-
 function renderEducation(definitions) {
-  ensureStudyElements();
-  const list = elements.studyTrackList;
+  const list = getStudyTrackList();
   if (!list) return;
   list.innerHTML = '';
   studyUi.clear();
@@ -3285,8 +3269,7 @@ function renderEducation(definitions) {
 }
 
 function renderStudyQueue(definitions) {
-  ensureStudyElements();
-  const queue = elements.studyQueueList;
+  const { list: queue, eta: queueEta, cap: capNode } = getStudyQueue() || {};
   if (!queue) return;
   queue.innerHTML = '';
   let totalHours = 0;
@@ -3305,14 +3288,14 @@ function renderStudyQueue(definitions) {
     empty.textContent = 'No study queued today.';
     queue.appendChild(empty);
   }
-  if (elements.studyQueueEta) {
-    elements.studyQueueEta.textContent = `Total ETA: ${formatHours(totalHours)}`;
+  if (queueEta) {
+    queueEta.textContent = `Total ETA: ${formatHours(totalHours)}`;
   }
 
-  if (elements.studyQueueCap) {
+  if (capNode) {
     const state = getState();
-    const cap = state ? getTimeCap() : 0;
-    elements.studyQueueCap.textContent = `Daily cap: ${formatHours(cap)}`;
+    const capHours = state ? getTimeCap() : 0;
+    capNode.textContent = `Daily cap: ${formatHours(capHours)}`;
   }
 }
 
