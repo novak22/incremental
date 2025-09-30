@@ -63,6 +63,7 @@ import {
   buildEducationModels,
   buildHustleModels,
   buildUpgradeCategories,
+  getUpgradeCategory,
   describeAssetCardSummary,
   describeAssetLaunchAvailability,
   describeUpgradeStatus,
