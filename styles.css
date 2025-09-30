@@ -138,6 +138,7 @@ body {
   .shell__controls {
     justify-self: stretch;
     width: 100%;
+    grid-template-columns: 1fr;
   }
 
   .shell__controls #end-day {
@@ -147,15 +148,21 @@ body {
 
 .shell__controls {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: minmax(0, auto) 1fr;
   align-items: stretch;
   gap: 12px;
   justify-self: stretch;
   width: 100%;
 }
 
-.shell__controls #command-palette-trigger {
-  align-self: center;
+.shell__controls-stack {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+
+.shell__controls-stack > * {
+  width: 100%;
 }
 
 .shell__controls #end-day {
@@ -1250,6 +1257,13 @@ body {
   border-color: var(--border);
   background: rgba(15, 23, 42, 0.4);
   color: var(--text-subtle);
+}
+
+.ghost.is-active {
+  color: var(--accent-light);
+  border-color: rgba(124, 92, 255, 0.6);
+  box-shadow: 0 0 0 2px rgba(124, 92, 255, 0.25);
+  background: rgba(65, 40, 125, 0.55);
 }
 
 .ghost:hover,

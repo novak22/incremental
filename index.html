@@ -39,7 +39,16 @@
         </div>
       </div>
       <div class="shell__controls">
-        <button id="command-palette-trigger" class="ghost" type="button" aria-haspopup="dialog" aria-controls="command-palette">⌘K</button>
+        <div class="shell__controls-stack">
+          <button
+            id="auto-forward"
+            class="ghost"
+            type="button"
+            aria-pressed="false"
+            title="Toggle auto forward to trigger the next action every 2 seconds."
+          >Auto Forward</button>
+          <button id="command-palette-trigger" class="ghost" type="button" aria-haspopup="dialog" aria-controls="command-palette">⌘K</button>
+        </div>
         <button id="end-day" class="primary" type="button">End Day</button>
       </div>
     </header>

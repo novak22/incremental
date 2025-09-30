@@ -2,6 +2,7 @@ const elements = {
   money: document.getElementById('money'),
   sessionStatus: document.getElementById('session-status'),
   endDayButton: document.getElementById('end-day'),
+  autoForwardButton: document.getElementById('auto-forward'),
   shellTabs: Array.from(document.querySelectorAll('.shell__tab')),
   panels: Array.from(document.querySelectorAll('.panel')),
   headerStats: {

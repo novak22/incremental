@@ -4,6 +4,10 @@ import { buildAssetUpgradeRecommendations, buildQuickActions } from './dashboard
 import { formatHours } from '../core/helpers.js';
 
 let activeRecommendation = null;
+const autoForwardState = {
+  enabled: false,
+  timerId: null
+};
 
 function formatActionLabel(base, timeCost) {
   if (!base) return '';
@@ -82,17 +86,63 @@ function applyButtonState(button, recommendation) {
   button.classList.add('is-recommendation');
 }
 
-export function initHeaderActionControls() {
-  const button = elements.endDayButton;
-  if (!button) return;
+function applyAutoForwardState(enabled) {
+  if (autoForwardState.timerId) {
+    clearInterval(autoForwardState.timerId);
+    autoForwardState.timerId = null;
+  }
 
-  button.addEventListener('click', () => {
-    if (activeRecommendation?.onClick) {
-      activeRecommendation.onClick();
+  const primaryButton = elements.endDayButton;
+  const toggle = elements.autoForwardButton;
+  autoForwardState.enabled = Boolean(enabled && primaryButton && toggle);
+
+  if (toggle) {
+    toggle.classList.toggle('is-active', autoForwardState.enabled);
+    toggle.setAttribute('aria-pressed', String(autoForwardState.enabled));
+    toggle.textContent = autoForwardState.enabled ? 'Auto Forward: On' : 'Auto Forward';
+    toggle.title = autoForwardState.enabled
+      ? 'Auto forward is live and will trigger the next action every 2 seconds.'
+      : 'Toggle auto forward to trigger the next action every 2 seconds.';
+  }
+
+  if (!autoForwardState.enabled) {
+    return;
+  }
+
+  autoForwardState.timerId = setInterval(() => {
+    const target = elements.endDayButton;
+    if (!target) {
+      applyAutoForwardState(false);
       return;
     }
-    endDay(false);
-  });
+    if (target.disabled) {
+      return;
+    }
+    target.click();
+  }, 2000);
+}
+
+export function initHeaderActionControls() {
+  const button = elements.endDayButton;
+  if (button) {
+    button.addEventListener('click', () => {
+      if (activeRecommendation?.onClick) {
+        activeRecommendation.onClick();
+        return;
+      }
+      endDay(false);
+    });
+  }
+
+  const toggle = elements.autoForwardButton;
+  if (toggle) {
+    toggle.addEventListener('click', () => {
+      applyAutoForwardState(!autoForwardState.enabled);
+    });
+    toggle.title = 'Toggle auto forward to trigger the next action every 2 seconds.';
+  }
+
+  applyAutoForwardState(false);
 }
 
 export function updateHeaderAction(state) {
