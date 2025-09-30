@@ -2110,6 +2110,8 @@ function buildUpgradeDetails(definition) {
 
   update();
   return { list, update };
+}
+
 function sortUpgradesForCategory(definitions, state = getState()) {
   return definitions
     .slice()
@@ -2133,6 +2135,7 @@ function sortUpgradesForCategory(definitions, state = getState()) {
 
       return aSnapshot.name.localeCompare(bSnapshot.name);
     });
+}
 function scrollUpgradeLaneIntoView(categoryId) {
   if (!categoryId) return;
 
