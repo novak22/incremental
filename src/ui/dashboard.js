@@ -539,98 +539,318 @@ function renderDailyStats(summary) {
 }
 
 function renderNicheWidget(state) {
-  const list = elements.nicheTrends?.list;
-  if (!list) return;
-  list.innerHTML = '';
+  const refs = elements.nicheTrends || {};
+  const {
+    list,
+    highlightHot,
+    highlightHotNote,
+    highlightSwing,
+    highlightSwingNote,
+    highlightRisk,
+    highlightRiskNote,
+    risingList,
+    coolingList
+  } = refs;
+
+  if (list) list.innerHTML = '';
+  if (risingList) risingList.innerHTML = '';
+  if (coolingList) coolingList.innerHTML = '';
+
+  const setHighlight = (valueEl, noteEl, valueText, noteText) => {
+    if (valueEl) valueEl.textContent = valueText;
+    if (noteEl) noteEl.textContent = noteText;
+  };
 
   const roster = getNicheRoster(state) || [];
   if (!roster.length) {
-    const empty = document.createElement('li');
-    empty.className = 'niche-widget__empty';
-    empty.textContent = 'Assign a niche to an asset to start tracking demand swings.';
-    list.appendChild(empty);
+    setHighlight(
+      highlightHot,
+      highlightHotNote,
+      'No readings yet',
+      'Assign a niche to start tracking buzz.'
+    );
+    setHighlight(
+      highlightSwing,
+      highlightSwingNote,
+      'Awaiting data',
+      'Fresh deltas will appear after the first reroll.'
+    );
+    setHighlight(
+      highlightRisk,
+      highlightRiskNote,
+      'All calm',
+      'We’ll flag niches that are cooling off fast.'
+    );
+
+    if (list) {
+      const empty = document.createElement('li');
+      empty.className = 'niche-pulse__empty';
+      empty.textContent = 'Assign a niche to an asset to start tracking demand swings.';
+      list.appendChild(empty);
+    }
+
+    const emptyMomentum = text => {
+      const item = document.createElement('li');
+      item.className = 'niche-momentum__empty';
+      item.textContent = text;
+      return item;
+    };
+
+    if (risingList) {
+      risingList.appendChild(emptyMomentum('No rising trends yet.')); 
+    }
+    if (coolingList) {
+      coolingList.appendChild(emptyMomentum('No cooling trends yet.'));
+    }
     return;
   }
 
-  roster.forEach(entry => {
-    if (!entry) return;
-    const definition = entry.definition || {};
+  const sanitizeScore = score => {
+    if (!Number.isFinite(score)) return null;
+    return Math.max(0, Math.min(100, Math.round(score)));
+  };
+
+  const formatDelta = delta => {
+    if (!Number.isFinite(delta)) return 'Fresh reading';
+    if (delta === 0) return 'Holding steady';
+    const sign = delta > 0 ? '+' : '';
+    return `${sign}${delta} vs yesterday`;
+  };
+
+  const formatImpact = multiplier => {
+    if (!Number.isFinite(multiplier)) return 'Payout impact ±0%';
+    const percent = Math.round((multiplier - 1) * 100);
+    const sign = percent > 0 ? '+' : '';
+    return `Payout impact ${sign}${percent}%`;
+  };
+
+  const buildSummaryNote = (entry, fallback) => {
+    if (!entry) return fallback;
     const popularity = entry.popularity || {};
-    const item = document.createElement('li');
-    item.className = 'niche-widget__item';
-    if (popularity.tone) {
-      item.dataset.tone = popularity.tone;
-    }
-
-    const header = document.createElement('div');
-    header.className = 'niche-widget__header';
-
-    const name = document.createElement('span');
-    name.className = 'niche-widget__name';
-    name.textContent = definition.name || 'Untitled niche';
-    header.appendChild(name);
-
-    const badge = document.createElement('span');
-    badge.className = 'niche-widget__badge';
-    badge.textContent = popularity.label || 'Unknown';
-    header.appendChild(badge);
-
-    item.appendChild(header);
-
-    const meta = document.createElement('div');
-    meta.className = 'niche-widget__meta';
-
-    const score = document.createElement('span');
-    score.className = 'niche-widget__score';
-    const scoreValue = Number(popularity.score);
-    score.textContent = Number.isFinite(scoreValue)
-      ? `${scoreValue}/100 interest`
-      : 'Interest pending';
-    meta.appendChild(score);
-
-    const deltaValue = Number(popularity.delta);
-    const delta = document.createElement('span');
-    delta.className = 'niche-widget__delta';
-    if (Number.isFinite(deltaValue)) {
-      if (deltaValue === 0) {
-        delta.textContent = 'Holding steady';
-      } else {
-        const sign = deltaValue > 0 ? '+' : '';
-        delta.textContent = `${sign}${deltaValue} vs yesterday`;
-      }
-    } else {
-      delta.textContent = 'Fresh reading';
-    }
-    meta.appendChild(delta);
-
-    const impact = document.createElement('span');
-    impact.className = 'niche-widget__impact';
+    const parts = [];
+    const score = sanitizeScore(popularity.score);
+    if (score !== null) parts.push(`${score}/100 interest`);
+    if (popularity.label) parts.push(popularity.label.toLowerCase());
     const multiplier = Number(popularity.multiplier);
     if (Number.isFinite(multiplier)) {
       const percent = Math.round((multiplier - 1) * 100);
       const sign = percent > 0 ? '+' : '';
-      impact.textContent = `Payout impact ${sign}${percent}%`;
-    } else {
-      impact.textContent = 'Payout impact ±0%';
+      parts.push(`payout ${sign}${percent}%`);
     }
+    const summary = popularity.summary;
+    const text = parts.length ? parts.join(' • ') : null;
+    return summary ? `${text ? `${text}. ` : ''}${summary}` : text || fallback;
+  };
+
+  const hottest = roster.find(entry => Number.isFinite(entry?.popularity?.score)) || roster[0];
+  if (hottest) {
+    const name = hottest.definition?.name || 'Untitled niche';
+    setHighlight(
+      highlightHot,
+      highlightHotNote,
+      name,
+      buildSummaryNote(hottest, 'Popularity data incoming soon.')
+    );
+  }
+
+  const deltaEntries = roster.filter(entry => Number.isFinite(entry?.popularity?.delta));
+  const risingEntries = deltaEntries
+    .filter(entry => Number(entry.popularity.delta) > 0)
+    .sort((a, b) => Number(b.popularity.delta) - Number(a.popularity.delta));
+  const coolingEntries = deltaEntries
+    .filter(entry => Number(entry.popularity.delta) < 0)
+    .sort((a, b) => Number(a.popularity.delta) - Number(b.popularity.delta));
+
+  const swingSource = risingEntries.length
+    ? risingEntries[0]
+    : deltaEntries.sort((a, b) => Number(b.popularity.delta) - Number(a.popularity.delta))[0];
+
+  if (swingSource) {
+    const name = swingSource.definition?.name || 'Untitled niche';
+    const delta = Number(swingSource.popularity?.delta) || 0;
+    const sign = delta > 0 ? '+' : '';
+    setHighlight(
+      highlightSwing,
+      highlightSwingNote,
+      `${name} ${sign}${delta}`,
+      swingSource.popularity?.summary || formatDelta(delta)
+    );
+  } else {
+    setHighlight(
+      highlightSwing,
+      highlightSwingNote,
+      'Awaiting data',
+      'Fresh deltas will appear after the first reroll.'
+    );
+  }
+
+  let riskSource = null;
+  let lowestMultiplier = Infinity;
+  roster.forEach(entry => {
+    const multiplier = Number(entry?.popularity?.multiplier);
+    if (Number.isFinite(multiplier) && multiplier < lowestMultiplier) {
+      lowestMultiplier = multiplier;
+      riskSource = entry;
+    }
+  });
+  if (!riskSource && coolingEntries.length) {
+    riskSource = coolingEntries[0];
+  }
+  if (!riskSource && roster.length) {
+    riskSource = roster[roster.length - 1];
+  }
+
+  if (riskSource) {
+    const name = riskSource.definition?.name || 'Untitled niche';
+    const multiplier = Number(riskSource.popularity?.multiplier);
+    const percent = Number.isFinite(multiplier)
+      ? Math.round((multiplier - 1) * 100)
+      : 0;
+    const sign = percent > 0 ? '+' : '';
+    const value = Number.isFinite(multiplier)
+      ? `${name} ${sign}${percent}%`
+      : name;
+    setHighlight(
+      highlightRisk,
+      highlightRiskNote,
+      value,
+      riskSource.popularity?.summary || formatDelta(Number(riskSource.popularity?.delta))
+    );
+  }
+
+  const createPulseItem = entry => {
+    const definition = entry.definition || {};
+    const popularity = entry.popularity || {};
+    const item = document.createElement('li');
+    item.className = 'niche-pulse__item';
+    if (popularity.tone) {
+      item.dataset.tone = popularity.tone;
+    }
+
+    const row = document.createElement('div');
+    row.className = 'niche-pulse__row';
+
+    const identity = document.createElement('div');
+    identity.className = 'niche-pulse__identity';
+
+    const name = document.createElement('span');
+    name.className = 'niche-pulse__name';
+    name.textContent = definition.name || 'Untitled niche';
+    identity.appendChild(name);
+
+    const badge = document.createElement('span');
+    badge.className = 'niche-pulse__badge';
+    badge.textContent = popularity.label || 'Unknown';
+    identity.appendChild(badge);
+
+    row.appendChild(identity);
+
+    const scoreWrap = document.createElement('div');
+    scoreWrap.className = 'niche-pulse__score';
+
+    const scoreValue = document.createElement('span');
+    scoreValue.className = 'niche-pulse__score-value';
+    const normalizedScore = sanitizeScore(popularity.score);
+    scoreValue.textContent = normalizedScore !== null
+      ? `${normalizedScore}/100 interest`
+      : 'Interest pending';
+    scoreWrap.appendChild(scoreValue);
+
+    const bar = document.createElement('div');
+    bar.className = 'niche-pulse__bar';
+    bar.setAttribute('role', 'presentation');
+    const fill = document.createElement('div');
+    fill.className = 'niche-pulse__bar-fill';
+    const width = normalizedScore !== null ? `${normalizedScore}%` : '0%';
+    fill.style.setProperty('--width', width);
+    bar.appendChild(fill);
+    scoreWrap.appendChild(bar);
+
+    const delta = document.createElement('span');
+    delta.className = 'niche-pulse__delta';
+    delta.textContent = formatDelta(Number(popularity.delta));
+    scoreWrap.appendChild(delta);
+
+    row.appendChild(scoreWrap);
+    item.appendChild(row);
+
+    const meta = document.createElement('div');
+    meta.className = 'niche-pulse__meta';
+
+    const impact = document.createElement('span');
+    impact.className = 'niche-pulse__impact';
+    impact.textContent = formatImpact(Number(popularity.multiplier));
     meta.appendChild(impact);
+
+    const status = document.createElement('span');
+    status.textContent = popularity.summary || 'Popularity data incoming soon.';
+    meta.appendChild(status);
 
     item.appendChild(meta);
 
-    const status = document.createElement('p');
-    status.className = 'niche-widget__status';
-    status.textContent = popularity.summary || 'Popularity data incoming soon.';
-    item.appendChild(status);
-
     if (definition.description) {
       const description = document.createElement('p');
-      description.className = 'niche-widget__description';
+      description.className = 'niche-pulse__description';
       description.textContent = definition.description;
       item.appendChild(description);
     }
 
-    list.appendChild(item);
+    return item;
+  };
+
+  roster.forEach(entry => {
+    if (!entry || !list) return;
+    list.appendChild(createPulseItem(entry));
   });
+
+  const renderMomentum = (target, entries, emptyText, trend) => {
+    if (!target) return;
+    if (!entries.length) {
+      const empty = document.createElement('li');
+      empty.className = 'niche-momentum__empty';
+      empty.textContent = emptyText;
+      target.appendChild(empty);
+      return;
+    }
+
+    entries.slice(0, 4).forEach(entry => {
+      const popularity = entry.popularity || {};
+      const item = document.createElement('li');
+      item.className = 'niche-momentum__item';
+      item.dataset.trend = trend;
+
+      const name = document.createElement('span');
+      name.className = 'niche-momentum__name';
+      name.textContent = entry.definition?.name || 'Untitled niche';
+      item.appendChild(name);
+
+      const change = document.createElement('span');
+      change.className = 'niche-momentum__change';
+      change.textContent = formatDelta(Number(popularity.delta));
+      item.appendChild(change);
+
+      const impact = document.createElement('span');
+      impact.className = 'niche-momentum__impact';
+      impact.textContent = formatImpact(Number(popularity.multiplier));
+      item.appendChild(impact);
+
+      target.appendChild(item);
+    });
+  };
+
+  renderMomentum(
+    risingList,
+    risingEntries,
+    'No rising trends yet.',
+    'up'
+  );
+
+  renderMomentum(
+    coolingList,
+    coolingEntries,
+    'No cooling trends yet.',
+    'down'
+  );
 }
 
 export function renderDashboard(summary) {

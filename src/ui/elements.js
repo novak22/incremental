@@ -58,7 +58,15 @@ const elements = {
     studyList: document.getElementById('daily-study-list')
   },
   nicheTrends: {
-    list: document.getElementById('niche-trends-list')
+    list: document.getElementById('niche-trends-list'),
+    highlightHot: document.getElementById('analytics-highlight-hot'),
+    highlightHotNote: document.getElementById('analytics-highlight-hot-note'),
+    highlightSwing: document.getElementById('analytics-highlight-swing'),
+    highlightSwingNote: document.getElementById('analytics-highlight-swing-note'),
+    highlightRisk: document.getElementById('analytics-highlight-risk'),
+    highlightRiskNote: document.getElementById('analytics-highlight-risk-note'),
+    risingList: document.getElementById('niche-momentum-rise'),
+    coolingList: document.getElementById('niche-momentum-cool')
   },
   skills: {
     dashboard: {

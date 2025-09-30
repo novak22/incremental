@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Analytics makeover: new Daily outlook highlights, redesigned Niche pulse list, and a Momentum board make trend chasing easier to parse.
 - Education curriculum expansion: seven new study programs now award hustle multipliers, passive asset modifiers, and payout log callouts when their bonuses trigger.
 - Dashboard KPIs now jump to their detailed breakdowns, focusing the card, flashing a highlight, and updating the session status so the context change is announced.
 - Maintenance rebalance: daily upkeep hours for core passive assets now average just over five hours so a full portfolio still leaves meaningful manual time within the 14-hour day.
