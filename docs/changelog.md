@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+- Tech refactor: Hustle helpers, definitions, and knowledge flows now live in dedicated modules so new gigs slot in without tou
+  ching core loop logic.
 - Analytics makeover: Daily outlook hero highlights and a sortable niche card grid with watchlist filters surface earnings, asset exposure, and trend swings at a glance.
 - Education curriculum expansion: seven new study programs now award hustle multipliers, passive asset modifiers, and payout log callouts when their bonuses trigger.
 - Dashboard KPIs now jump to their detailed breakdowns, focusing the card, flashing a highlight, and updating the session status so the context change is announced.
