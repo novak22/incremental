@@ -25,6 +25,7 @@ import {
 import { awardSkillProgress } from '../skills/index.js';
 import { getAssetEffectMultiplier } from '../upgrades/effects.js';
 import { getInstanceNicheEffect } from './niches.js';
+import { applyAssetIncomeEducationBonus } from '../educationEffects.js';
 
 function fallbackAssetMetricId(definitionId, scope, type) {
   if (!definitionId) return null;
@@ -358,6 +359,26 @@ export function rollDailyIncome(definition, assetState, instance) {
     }
   }
 
+  const educationResult = applyAssetIncomeEducationBonus({
+    assetId: definition.id,
+    baseAmount: finalAmount,
+    state: getState()
+  });
+
+  if (educationResult?.applied?.length) {
+    finalAmount = educationResult.amount;
+    educationResult.applied.forEach(entry => {
+      if (!entry || !entry.extraAmount) return;
+      contributions.push({
+        id: `education:${entry.trackId}:${entry.assetId || entry.hustleId || 'bonus'}`,
+        label: entry.label || `${entry.trackName} bonus`,
+        amount: entry.extraAmount,
+        type: 'education',
+        percent: entry.type === 'multiplier' ? entry.amount : null
+      });
+    });
+  }
+
   let roundedTotal = 0;
   const baseEntries = contributions.map(entry => {
     const amount = Math.round(Number(entry.amount) || 0);
@@ -434,6 +455,11 @@ export function rollDailyIncome(definition, assetState, instance) {
       total: payoutRounded,
       entries: finalEntries
     };
+    if (educationResult?.applied?.length) {
+      instance.lastEducationBonuses = educationResult.applied;
+    } else {
+      instance.lastEducationBonuses = null;
+    }
   }
 
   return payoutRounded;

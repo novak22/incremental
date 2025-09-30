@@ -8,15 +8,19 @@ const {
   hustlesModule,
   requirementsModule,
   offlineModule,
-  lifecycleModule
+  lifecycleModule,
+  assetsModule
 } = harness;
 
-const { getState, getAssetState, getHustleState } = stateModule;
+const { getState, getAssetState, getHustleState, createAssetInstance } = stateModule;
 const { KNOWLEDGE_TRACKS, getKnowledgeProgress } = requirementsModule;
 
 const {
   HUSTLES,
 } = hustlesModule;
+
+const { ASSETS, allocateAssetMaintenance } = assetsModule;
+const { rollDailyIncome } = await import('../src/game/assets/helpers.js');
 
 const { handleOfflineProgress } = offlineModule;
 const { endDay } = lifecycleModule;
@@ -103,6 +107,76 @@ test('education flat bonuses add to audience call payouts', () => {
     /Brand Voice Lab/,
     'log should call out the brand voice bonus'
   );
+});
+
+test('curriculum design studio multiplies workshop payouts', () => {
+  resetState();
+
+  const baseState = getState();
+  baseState.money = 0;
+  baseState.timeLeft = 10;
+  getAssetState('blog', baseState).instances = [{ status: 'active' }];
+  getAssetState('ebook', baseState).instances = [{ status: 'active' }];
+  HUSTLES.find(hustle => hustle.id === 'popUpWorkshop').action.onClick();
+  assert.equal(baseState.money, 38, 'baseline workshop payout should be $38 without study');
+
+  resetState();
+
+  const boostedState = getState();
+  boostedState.money = 0;
+  boostedState.timeLeft = 10;
+  getAssetState('blog', boostedState).instances = [{ status: 'active' }];
+  getAssetState('ebook', boostedState).instances = [{ status: 'active' }];
+  const curriculum = getKnowledgeProgress('curriculumDesignStudio', boostedState);
+  curriculum.completed = true;
+  HUSTLES.find(hustle => hustle.id === 'popUpWorkshop').action.onClick();
+
+  assert.equal(boostedState.money, 49, 'curriculum design studio should add a 30% multiplier (rounded)');
+  assert.match(
+    boostedState.log.at(-1).message,
+    /Curriculum Design Studio/,
+    'log should reference the curriculum bonus'
+  );
+});
+
+test('fulfillment ops masterclass boosts dropshipping asset payouts and logs the bonus', () => {
+  const dropshippingDef = ASSETS.find(asset => asset.id === 'dropshipping');
+  const originalRandom = Math.random;
+
+  try {
+    Math.random = () => 0;
+
+    resetState();
+    const baseState = getState();
+    const baseAssetState = getAssetState('dropshipping', baseState);
+    const baseInstance = createAssetInstance(dropshippingDef, { status: 'active' });
+    baseAssetState.instances = [baseInstance];
+    const basePayout = rollDailyIncome(dropshippingDef, baseAssetState, baseInstance);
+
+    resetState();
+    const boostedState = getState();
+    const boostedAssetState = getAssetState('dropshipping', boostedState);
+    const boostedInstance = createAssetInstance(dropshippingDef, { status: 'active' });
+    boostedAssetState.instances = [boostedInstance];
+    const mastery = getKnowledgeProgress('fulfillmentOpsMasterclass', boostedState);
+    mastery.completed = true;
+    const boostedPayout = rollDailyIncome(dropshippingDef, boostedAssetState, boostedInstance);
+    assert.ok(boostedPayout > basePayout, 'education should increase dropshipping payouts');
+
+    const beforeLogLength = boostedState.log.length;
+    boostedState.money = 50;
+    boostedState.timeLeft = 24;
+    boostedInstance.pendingIncome = boostedPayout;
+    boostedInstance.maintenanceFundedToday = false;
+    allocateAssetMaintenance();
+    const payoutLog = boostedState.log
+      .slice(beforeLogLength)
+      .find(entry => entry.message.includes('Study boost'));
+    assert.ok(payoutLog, 'payout log should celebrate the study boost');
+    assert.match(payoutLog.message, /Fulfillment Ops Masterclass/, 'log should name the fulfilled course');
+  } finally {
+    Math.random = originalRandom;
+  }
 });
 
 test('offline progress adds a friendly reminder when nothing resolves', () => {
