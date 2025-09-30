@@ -224,13 +224,3 @@ export function assignInstanceToNiche(assetId, instanceId, nicheId) {
   return changed;
 }
 
-export default {
-  assignInstanceToNiche,
-  getAssignableNiches,
-  getAssignableNicheSummaries,
-  getInstanceNicheEffect,
-  getInstanceNicheInfo,
-  getNichePopularity,
-  getNicheRoster,
-  rerollNichePopularity
-};
