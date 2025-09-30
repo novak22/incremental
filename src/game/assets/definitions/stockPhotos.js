@@ -9,7 +9,7 @@ const stockPhotosDefinition = createAssetDefinition({
   tags: ['photo', 'visual', 'content'],
   description: 'Stage props, shoot themed collections, and list them across marketplaces.',
   setup: { days: 5, hoursPerDay: 4, cost: 560 },
-  maintenance: { hours: 1.2, cost: 10 },
+  maintenance: { hours: 0.9, cost: 8 },
   skills: {
     setup: [
       'visual',
@@ -34,7 +34,7 @@ const stockPhotosDefinition = createAssetDefinition({
         level: 0,
         name: 'Camera Roll Chaos',
         description: 'Unsorted shoots drip pennies.',
-        income: { min: 4, max: 9 },
+        income: { min: 8, max: 14 },
         requirements: {}
       },
       {
