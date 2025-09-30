@@ -2,7 +2,16 @@ import elements from './elements.js';
 import { getAssetState, getState } from '../core/state.js';
 import { formatDays, formatHours, formatMoney } from '../core/helpers.js';
 import { describeHustleRequirements, getHustleDailyUsage } from '../game/hustles.js';
-import { describeRequirement, getDefinitionRequirements, KNOWLEDGE_TRACKS, KNOWLEDGE_REWARDS, getKnowledgeProgress } from '../game/requirements.js';
+import {
+  assetRequirementsMetById,
+  describeRequirement,
+  formatAssetRequirementLabel,
+  getDefinitionRequirements,
+  KNOWLEDGE_TRACKS,
+  KNOWLEDGE_REWARDS,
+  getKnowledgeProgress,
+  listAssetRequirementDescriptors
+} from '../game/requirements.js';
 import { getTimeCap } from '../game/time.js';
 import {
   describeInstance,
@@ -24,6 +33,7 @@ import {
   getUpgradeButtonLabel,
   isUpgradeDisabled
 } from './assetUpgrades.js';
+import { getAssetEffectMultiplier } from '../game/upgrades/effects.js';
 import {
   canPerformQualityAction,
   getQualityActionUsage,
@@ -1393,38 +1403,6 @@ function describeAssetCardSummary(definition) {
   return `${trimmed.slice(0, 137)}…`;
 }
 
-function createAssetMetric(label) {
-  const item = document.createElement('div');
-  item.className = 'asset-card__metric';
-  const metricLabel = document.createElement('span');
-  metricLabel.className = 'asset-card__metric-label';
-  metricLabel.textContent = label;
-  const metricValue = document.createElement('span');
-  metricValue.className = 'asset-card__metric-value';
-  item.append(metricLabel, metricValue);
-  return { item, value: metricValue };
-}
-
-function createLaunchButton(definition, state = getState()) {
-  if (!definition?.action?.onClick) return null;
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.className = 'ghost';
-  button.textContent = typeof definition.action.label === 'function'
-    ? definition.action.label(state)
-    : definition.action.label || `Launch ${definition.singular || definition.name}`;
-  const disabled = typeof definition.action.disabled === 'function'
-    ? definition.action.disabled(state)
-    : Boolean(definition.action?.disabled);
-  button.disabled = disabled;
-  button.addEventListener('click', event => {
-    event.preventDefault();
-    if (button.disabled) return;
-    definition.action.onClick();
-  });
-  return button;
-}
-
 function describeInstanceNicheSummary(instance) {
   const info = getInstanceNicheInfo(instance);
   if (!info) {
@@ -1550,191 +1528,6 @@ function buildSpecialActionButtons(definition, instance, state) {
   return buttons;
 }
 
-function createAssetInstanceCard(definition, instance, index, state = getState()) {
-  const card = document.createElement('article');
-  card.className = 'asset-card asset-instance-card';
-  card.dataset.asset = definition.id;
-  card.dataset.instance = instance.id;
-  card.dataset.group = getAssetGroupId(definition);
-  card.dataset.state = instance.status === 'active' ? 'active' : 'setup';
-  const needsMaintenance = instance.status === 'active' && !instance.maintenanceFundedToday;
-  card.dataset.needsMaintenance = needsMaintenance ? 'true' : 'false';
-  card.dataset.risk = definition.tag?.type === 'advanced' ? 'high' : 'medium';
-  card.setAttribute('role', 'listitem');
-  card.tabIndex = 0;
-
-  const header = document.createElement('header');
-  header.className = 'asset-card__header';
-  const badge = document.createElement('span');
-  badge.className = 'asset-card__badge';
-  if (instance.status === 'active') {
-    badge.textContent = needsMaintenance ? 'Active • Upkeep due' : 'Active';
-  } else {
-    const remaining = Number(instance.daysRemaining);
-    if (Number.isFinite(remaining) && remaining > 0) {
-      badge.textContent = `Setup • ${remaining} day${remaining === 1 ? '' : 's'} left`;
-    } else {
-      badge.textContent = 'Setup';
-    }
-  }
-  header.appendChild(badge);
-
-  const heading = document.createElement('div');
-  heading.className = 'asset-card__heading';
-  const title = document.createElement('h3');
-  title.className = 'asset-card__title';
-  title.textContent = instanceLabel(definition, index);
-  heading.appendChild(title);
-  const tagLabel = document.createElement('span');
-  tagLabel.className = 'asset-card__tag';
-  tagLabel.textContent = definition.singular || definition.name;
-  heading.appendChild(tagLabel);
-  header.appendChild(heading);
-  card.appendChild(header);
-
-  const body = document.createElement('div');
-  body.className = 'asset-instance-card__body';
-
-  const nicheInfo = describeInstanceNicheSummary(instance);
-  const nicheField = document.createElement('div');
-  nicheField.className = 'asset-instance-card__field';
-  const nicheLabel = document.createElement('span');
-  nicheLabel.className = 'asset-instance-card__label';
-  nicheLabel.textContent = 'Niche';
-  const nicheValue = document.createElement('span');
-  nicheValue.className = 'asset-instance-card__value';
-  nicheValue.textContent = nicheInfo.value;
-  nicheField.append(nicheLabel, nicheValue);
-  if (nicheInfo.note) {
-    const note = document.createElement('span');
-    note.className = 'asset-instance-card__note';
-    note.textContent = nicheInfo.note;
-    nicheField.appendChild(note);
-  }
-  body.appendChild(nicheField);
-
-  const progressInfo = calculateInstanceProgress(definition, instance);
-  const quality = document.createElement('div');
-  quality.className = 'asset-instance-card__quality';
-  const qualityHeader = document.createElement('div');
-  qualityHeader.className = 'asset-instance-card__quality-header';
-  const qualityCurrent = document.createElement('span');
-  qualityCurrent.className = 'asset-instance-card__quality-current';
-  const tierName = progressInfo.levelInfo?.name ? ` — ${progressInfo.levelInfo.name}` : '';
-  qualityCurrent.textContent = `Quality ${progressInfo.level}${tierName}`;
-  qualityHeader.appendChild(qualityCurrent);
-  quality.appendChild(qualityHeader);
-
-  const nextLine = document.createElement('span');
-  nextLine.className = 'asset-instance-card__quality-next';
-  if (!progressInfo.nextLevel) {
-    nextLine.textContent = 'Top tier reached — keep cashing in!';
-  } else {
-    const nextTierName = progressInfo.nextLevel.name ? ` — ${progressInfo.nextLevel.name}` : '';
-    nextLine.textContent = `Next: Quality ${progressInfo.nextLevel.level}${nextTierName}`;
-  }
-  quality.appendChild(nextLine);
-
-  if (progressInfo.nextLevel) {
-    const progressWrap = document.createElement('div');
-    progressWrap.className = 'asset-instance-card__progress';
-    const track = document.createElement('div');
-    track.className = 'asset-instance-card__progress-track';
-    const fill = document.createElement('div');
-    fill.className = 'asset-instance-card__progress-fill';
-    fill.style.setProperty('--progress', String(Math.max(0, Math.min(1, progressInfo.percent))));
-    track.appendChild(fill);
-    progressWrap.appendChild(track);
-    const label = document.createElement('span');
-    label.className = 'asset-instance-card__progress-label';
-    if (progressInfo.ready) {
-      label.textContent = 'All requirements met! Fire a quality action to rank up.';
-    } else if (progressInfo.summary) {
-      label.textContent = progressInfo.summary;
-    } else {
-      label.textContent = 'Work quality actions to unlock the next tier.';
-    }
-    progressWrap.appendChild(label);
-    quality.appendChild(progressWrap);
-  }
-  body.appendChild(quality);
-
-  const metrics = document.createElement('div');
-  metrics.className = 'asset-card__metrics';
-  const payoutMetric = createAssetMetric('Latest payout');
-  const haulMetric = createAssetMetric('Daily haul');
-  const upkeepMetric = createAssetMetric('Upkeep');
-  const riskMetric = createAssetMetric('Risk');
-  metrics.append(payoutMetric.item, haulMetric.item, upkeepMetric.item, riskMetric.item);
-  payoutMetric.value.textContent = instance.status === 'active'
-    ? formatInstanceLastPayout(instance)
-    : 'Launch pending';
-  haulMetric.value.textContent = formatInstanceDailyAverage(instance, state);
-  upkeepMetric.value.textContent = formatInstanceUpkeep(definition) || 'None';
-  riskMetric.value.textContent = card.dataset.risk === 'high' ? 'High' : 'Moderate';
-  body.appendChild(metrics);
-
-  card.appendChild(body);
-
-  const footer = document.createElement('footer');
-  footer.className = 'asset-instance-card__footer';
-  const primaryActions = document.createElement('div');
-  primaryActions.className = 'asset-instance-card__primary-actions';
-  const secondaryActions = document.createElement('div');
-  secondaryActions.className = 'asset-instance-card__secondary-actions';
-
-  const maintainButton = document.createElement('button');
-  maintainButton.type = 'button';
-  maintainButton.className = 'primary';
-  maintainButton.textContent = 'Maintain';
-  if (instance.status !== 'active') {
-    maintainButton.disabled = true;
-    maintainButton.title = 'Launch this asset before upkeep matters.';
-  } else if (instance.maintenanceFundedToday) {
-    maintainButton.disabled = true;
-    maintainButton.title = 'Upkeep already funded today.';
-  }
-  maintainButton.addEventListener('click', event => {
-    event.preventDefault();
-    if (maintainButton.disabled) return;
-    maintainAssetInstance(definition.id, instance.id);
-    renderAssets(currentAssetDefinitions);
-    applyCardFilters();
-  });
-  primaryActions.appendChild(maintainButton);
-  footer.appendChild(primaryActions);
-
-  const specialButtons = buildSpecialActionButtons(definition, instance, state);
-  specialButtons.forEach(button => secondaryActions.appendChild(button));
-
-  const detailsButton = document.createElement('button');
-  detailsButton.type = 'button';
-  detailsButton.className = 'ghost';
-  detailsButton.textContent = 'Details';
-  detailsButton.addEventListener('click', event => {
-    event.preventDefault();
-    event.stopPropagation();
-    openInstanceDetails(definition, instance, index, state);
-  });
-  secondaryActions.appendChild(detailsButton);
-
-  footer.appendChild(secondaryActions);
-  card.appendChild(footer);
-
-  card.addEventListener('click', event => {
-    if (event.target.closest('button')) return;
-    openInstanceDetails(definition, instance, index, state);
-  });
-  card.addEventListener('keydown', event => {
-    if (event.key === 'Enter' && event.target === card) {
-      event.preventDefault();
-      openInstanceDetails(definition, instance, index, state);
-    }
-  });
-
-  return card;
-}
-
 function buildAssetGroups(definitions = [], state = getState()) {
   const groups = new Map();
   definitions.forEach(definition => {
@@ -1760,6 +1553,621 @@ function buildAssetGroups(definitions = [], state = getState()) {
   return Array.from(groups.values());
 }
 
+function describeAssetLaunchAvailability(definition, state = getState()) {
+  if (!definition) {
+    return { disabled: true, reasons: ['Definition missing.'], hours: 0, cost: 0 };
+  }
+
+  const reasons = [];
+  const requirementsMet = assetRequirementsMetById(definition.id, state);
+  if (!requirementsMet) {
+    const descriptors = listAssetRequirementDescriptors(definition, state).filter(desc => !desc.met);
+    if (descriptors.length) {
+      const names = descriptors.map(desc => desc.label).join(', ');
+      reasons.push(`Requires ${names}`);
+    } else {
+      const label = formatAssetRequirementLabel(definition.id, state);
+      if (label) {
+        reasons.push(label);
+      }
+    }
+  }
+
+  const baseHours = Number(definition.setup?.hoursPerDay) || 0;
+  const effect = getAssetEffectMultiplier(definition, 'setup_time_mult', { actionType: 'setup' });
+  const multiplier = Number.isFinite(effect?.multiplier) ? effect.multiplier : 1;
+  const hours = baseHours > 0 ? baseHours * multiplier : 0;
+  if (hours > 0 && state.timeLeft < hours) {
+    reasons.push(`Need ${formatHours(hours)} free (have ${formatHours(state.timeLeft)})`);
+  }
+
+  const cost = Number(definition.setup?.cost) || 0;
+  if (cost > 0 && state.money < cost) {
+    reasons.push(`Need $${formatMoney(cost)} (have $${formatMoney(Math.max(0, Math.floor(state.money)))})`);
+  }
+
+  return { disabled: reasons.length > 0, reasons, hours, cost };
+}
+
+function buildLaunchFeedbackMessage(definition) {
+  const singular = definition.singular || definition.name || 'Asset';
+  return `New ${singular.toLowerCase()} is being set up.`;
+}
+
+function buildAssetLaunchTile(definition, state = getState()) {
+  if (!definition?.action?.onClick) return null;
+
+  const tile = document.createElement('article');
+  tile.className = 'asset-launcher__tile';
+
+  const heading = document.createElement('div');
+  heading.className = 'asset-launcher__heading';
+  const title = document.createElement('h4');
+  title.className = 'asset-launcher__title';
+  title.textContent = definition.name || definition.id || 'Asset';
+  heading.appendChild(title);
+
+  const tag = document.createElement('span');
+  tag.className = 'asset-launcher__type';
+  tag.textContent = definition.singular || 'Passive asset';
+  heading.appendChild(tag);
+  tile.appendChild(heading);
+
+  const summaryCopy = describeAssetCardSummary(definition);
+  if (summaryCopy) {
+    const summary = document.createElement('p');
+    summary.className = 'asset-launcher__summary';
+    summary.textContent = summaryCopy;
+    tile.appendChild(summary);
+  }
+
+  const stats = document.createElement('p');
+  stats.className = 'asset-launcher__meta';
+  const parts = [];
+  const setupDays = Number(definition.setup?.days) || 0;
+  const setupHours = Number(definition.setup?.hoursPerDay) || 0;
+  if (setupDays > 0) {
+    parts.push(`${setupDays} day${setupDays === 1 ? '' : 's'} of prep`);
+  }
+  if (setupHours > 0) {
+    parts.push(`${formatHours(setupHours)}/day`);
+  }
+  const setupCost = Number(definition.setup?.cost) || 0;
+  if (setupCost > 0) {
+    parts.push(`$${formatMoney(setupCost)} upfront`);
+  }
+  const maintenanceText = formatInstanceUpkeep(definition);
+  if (maintenanceText) {
+    parts.push(`Upkeep ${maintenanceText}`);
+  }
+  stats.textContent = parts.join(' • ');
+  tile.appendChild(stats);
+
+  const availability = describeAssetLaunchAvailability(definition, state);
+
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'asset-launcher__button';
+  button.textContent = typeof definition.action.label === 'function'
+    ? definition.action.label(state)
+    : definition.action.label || `Launch ${definition.singular || definition.name}`;
+  button.disabled = availability.disabled;
+  if (availability.reasons.length) {
+    button.title = availability.reasons.join(' • ');
+  } else if (availability.hours > 0 || availability.cost > 0) {
+    const detailParts = [];
+    if (availability.hours > 0) detailParts.push(`Needs ${formatHours(availability.hours)} free today`);
+    if (availability.cost > 0) detailParts.push(`Costs $${formatMoney(availability.cost)}`);
+    button.title = detailParts.join(' • ');
+  }
+  if (button.disabled) {
+    tile.classList.add('is-disabled');
+  }
+
+  const feedback = document.createElement('p');
+  feedback.className = 'asset-launcher__feedback';
+  feedback.hidden = true;
+  tile.appendChild(feedback);
+
+  button.addEventListener('click', event => {
+    event.preventDefault();
+    if (button.disabled) return;
+    const beforeState = getAssetState(definition.id, getState());
+    const beforeCount = Array.isArray(beforeState?.instances) ? beforeState.instances.length : 0;
+    definition.action.onClick();
+    setTimeout(() => {
+      const afterState = getAssetState(definition.id, getState());
+      const afterCount = Array.isArray(afterState?.instances) ? afterState.instances.length : 0;
+      if (afterCount > beforeCount) {
+        feedback.textContent = buildLaunchFeedbackMessage(definition);
+        feedback.hidden = false;
+        tile.classList.add('asset-launcher__tile--success');
+        setTimeout(() => {
+          feedback.hidden = true;
+          tile.classList.remove('asset-launcher__tile--success');
+        }, 2400);
+        renderAssets(currentAssetDefinitions);
+        applyCardFilters();
+      }
+    }, 40);
+  });
+
+  tile.appendChild(button);
+  return tile;
+}
+
+function buildAssetLaunchPanel(definitions = [], state = getState()) {
+  const tiles = definitions
+    .map(definition => buildAssetLaunchTile(definition, state))
+    .filter(Boolean);
+  if (!tiles.length) return null;
+
+  const container = document.createElement('section');
+  container.className = 'asset-launcher';
+
+  const header = document.createElement('div');
+  header.className = 'asset-launcher__header';
+  const title = document.createElement('h3');
+  title.className = 'asset-launcher__heading-title';
+  title.textContent = 'Launch a new asset';
+  header.appendChild(title);
+  const note = document.createElement('p');
+  note.className = 'asset-launcher__note';
+  note.textContent = 'Pick a build to spin up a fresh income stream.';
+  header.appendChild(note);
+  container.appendChild(header);
+
+  const grid = document.createElement('div');
+  grid.className = 'asset-launcher__grid';
+  tiles.forEach(tile => grid.appendChild(tile));
+  container.appendChild(grid);
+  return container;
+}
+
+function formatUpkeepTotals(cost, hours) {
+  const parts = [];
+  if (cost > 0) {
+    parts.push(`$${formatMoney(cost)}/day`);
+  }
+  if (hours > 0) {
+    parts.push(`${formatHours(hours)}/day`);
+  }
+  return parts.length ? parts.join(' • ') : 'None';
+}
+
+function buildAssetSummary(groups = []) {
+  const totals = groups.reduce(
+    (acc, group) => {
+      group.instances.forEach(({ definition, instance }) => {
+        acc.total += 1;
+        if (instance.status === 'active') {
+          acc.active += 1;
+          acc.upkeepCost += Number(definition.maintenance?.cost) || 0;
+          acc.upkeepHours += Number(definition.maintenance?.hours) || 0;
+        } else {
+          acc.setup += 1;
+        }
+      });
+      return acc;
+    },
+    { total: 0, active: 0, setup: 0, upkeepCost: 0, upkeepHours: 0 }
+  );
+
+  if (totals.total === 0) {
+    const empty = document.createElement('section');
+    empty.className = 'asset-hub__summary asset-hub__summary--empty';
+    const message = document.createElement('p');
+    message.className = 'asset-hub__empty';
+    message.textContent = 'No launched assets yet. Kick off a build to start the passive flow!';
+    empty.appendChild(message);
+    return empty;
+  }
+
+  const summary = document.createElement('section');
+  summary.className = 'asset-hub__summary';
+
+  const stats = [
+    { label: 'Total builds', value: totals.total },
+    { label: 'Active & earning', value: totals.active },
+    { label: 'In setup', value: totals.setup },
+    { label: 'Daily upkeep', value: formatUpkeepTotals(totals.upkeepCost, totals.upkeepHours) }
+  ];
+
+  stats.forEach(entry => {
+    const stat = document.createElement('div');
+    stat.className = 'asset-hub__stat';
+    const value = document.createElement('span');
+    value.className = 'asset-hub__stat-value';
+    value.textContent = entry.value;
+    const label = document.createElement('span');
+    label.className = 'asset-hub__stat-label';
+    label.textContent = entry.label;
+    stat.append(value, label);
+    summary.appendChild(stat);
+  });
+
+  return summary;
+}
+
+function buildAssetHub(definitions, groups, state) {
+  const summary = buildAssetSummary(groups);
+  const launchPanel = buildAssetLaunchPanel(definitions, state);
+  if (!summary && !launchPanel) return null;
+
+  const container = document.createElement('div');
+  container.className = 'asset-hub';
+  if (summary) container.appendChild(summary);
+  if (launchPanel) container.appendChild(launchPanel);
+  return container;
+}
+
+function createMetric(label, value) {
+  const metric = document.createElement('div');
+  metric.className = 'asset-overview-card__metric';
+  const metricLabel = document.createElement('span');
+  metricLabel.className = 'asset-overview-card__metric-label';
+  metricLabel.textContent = label;
+  const metricValue = document.createElement('span');
+  metricValue.className = 'asset-overview-card__metric-value';
+  metricValue.textContent = value;
+  metric.append(metricLabel, metricValue);
+  return metric;
+}
+
+function buildMetricsRow(definition, instance, state, riskLabel) {
+  const metrics = document.createElement('div');
+  metrics.className = 'asset-overview-card__metrics';
+  metrics.appendChild(createMetric('Daily haul', formatInstanceDailyAverage(instance, state)));
+  metrics.appendChild(createMetric('Upkeep', formatInstanceUpkeep(definition) || 'None'));
+  metrics.appendChild(createMetric('Risk', riskLabel));
+
+  const netLabel = describeInstanceNetHourly(definition, instance);
+  if (netLabel) {
+    metrics.appendChild(createMetric('Net / hour', netLabel));
+  }
+
+  return metrics;
+}
+
+function buildNicheField(definition, instance, state) {
+  const field = document.createElement('div');
+  field.className = 'asset-overview-card__field asset-overview-card__field--niche';
+
+  const label = document.createElement('span');
+  label.className = 'asset-overview-card__label';
+  label.textContent = 'Niche';
+  field.appendChild(label);
+
+  const info = getInstanceNicheInfo(instance, state);
+  if (info) {
+    const value = document.createElement('span');
+    value.className = 'asset-overview-card__value';
+    value.textContent = info.definition?.name || 'Assigned';
+    field.appendChild(value);
+
+    const impact = Number(info.popularity?.multiplier);
+    const percent = Number.isFinite(impact) ? formatPercent(impact - 1) : null;
+    const summary = info.popularity?.summary || 'Demand shifts update daily.';
+    const note = document.createElement('span');
+    note.className = 'asset-overview-card__note';
+    note.textContent = percent ? `${summary} • Impact ${percent}` : summary;
+    field.appendChild(note);
+    return field;
+  }
+
+  const select = document.createElement('select');
+  select.className = 'asset-overview-card__niche-select';
+  const placeholder = document.createElement('option');
+  placeholder.value = '';
+  placeholder.textContent = 'Assign a niche';
+  select.appendChild(placeholder);
+
+  getAssignableNicheSummaries(definition, state).forEach(entry => {
+    const option = document.createElement('option');
+    option.value = entry.definition.id;
+    const popularity = entry.popularity?.label ? ` — ${entry.popularity.label}` : '';
+    option.textContent = `${entry.definition.name}${popularity}`;
+    select.appendChild(option);
+  });
+
+  select.addEventListener('change', event => {
+    const { value } = event.target;
+    if (!value) return;
+    const assigned = assignInstanceToNiche(definition.id, instance.id, value);
+    if (assigned) {
+      select.disabled = true;
+      renderAssets(currentAssetDefinitions);
+      applyCardFilters();
+    }
+  });
+
+  field.appendChild(select);
+  const hint = document.createElement('span');
+  hint.className = 'asset-overview-card__note';
+  hint.textContent = 'Lock in a niche to tap into daily popularity rolls.';
+  field.appendChild(hint);
+  return field;
+}
+
+function buildQualityBlock(definition, instance) {
+  const progressInfo = calculateInstanceProgress(definition, instance);
+  const container = document.createElement('section');
+  container.className = 'asset-overview-card__quality';
+
+  const heading = document.createElement('div');
+  heading.className = 'asset-overview-card__quality-heading';
+  const title = document.createElement('span');
+  title.className = 'asset-overview-card__quality-level';
+  const tierName = progressInfo.levelInfo?.name ? ` — ${progressInfo.levelInfo.name}` : '';
+  title.textContent = `Quality ${progressInfo.level}${tierName}`;
+  heading.appendChild(title);
+
+  if (progressInfo.nextLevel) {
+    const next = document.createElement('span');
+    next.className = 'asset-overview-card__quality-next';
+    const nextName = progressInfo.nextLevel.name ? ` — ${progressInfo.nextLevel.name}` : '';
+    next.textContent = `Next: Quality ${progressInfo.nextLevel.level}${nextName}`;
+    heading.appendChild(next);
+  } else {
+    const maxed = document.createElement('span');
+    maxed.className = 'asset-overview-card__quality-next';
+    maxed.textContent = 'Top tier reached — bask in the payouts!';
+    heading.appendChild(maxed);
+  }
+
+  container.appendChild(heading);
+
+  if (progressInfo.nextLevel) {
+    const progress = document.createElement('div');
+    progress.className = 'asset-overview-card__progress';
+    const track = document.createElement('div');
+    track.className = 'asset-overview-card__progress-track';
+    const fill = document.createElement('div');
+    fill.className = 'asset-overview-card__progress-fill';
+    fill.style.setProperty('--progress', String(Math.max(0, Math.min(1, progressInfo.percent))));
+    track.appendChild(fill);
+    progress.appendChild(track);
+
+    const label = document.createElement('span');
+    label.className = 'asset-overview-card__progress-label';
+    if (progressInfo.ready) {
+      label.textContent = 'All requirements met! Fire a quality action to rank up.';
+    } else if (progressInfo.summary) {
+      label.textContent = progressInfo.summary;
+    } else {
+      label.textContent = 'Work quality actions to unlock the next tier.';
+    }
+    progress.appendChild(label);
+    container.appendChild(progress);
+  }
+
+  return container;
+}
+
+function buildPayoutBreakdownList(entries) {
+  const list = document.createElement('ul');
+  list.className = 'asset-overview-card__payout-list';
+  entries.forEach(entry => {
+    if (!entry?.label) return;
+    const amount = Math.round(Number(entry.amount) || 0);
+    if (entry.type !== 'base' && amount === 0) return;
+    const item = document.createElement('li');
+    item.className = 'asset-overview-card__payout-item';
+    if (entry.type === 'base') {
+      item.classList.add('is-base');
+    } else if (amount >= 0) {
+      item.classList.add('is-positive');
+    } else {
+      item.classList.add('is-negative');
+    }
+
+    const label = document.createElement('span');
+    label.className = 'asset-overview-card__payout-label';
+    label.textContent = entry.label;
+    if (entry.percent !== null && entry.percent !== undefined) {
+      const formattedPercent = formatPercent(entry.percent);
+      if (formattedPercent) {
+        const percent = document.createElement('span');
+        percent.className = 'asset-overview-card__payout-percent';
+        percent.textContent = ` (${formattedPercent})`;
+        label.appendChild(percent);
+      }
+    }
+
+    const value = document.createElement('span');
+    value.className = 'asset-overview-card__payout-value';
+    if (entry.type === 'base') {
+      value.textContent = `$${formatMoney(Math.abs(amount))}`;
+    } else {
+      const sign = amount >= 0 ? '+' : '\u2212';
+      value.textContent = `${sign}$${formatMoney(Math.abs(amount))}`;
+    }
+
+    item.append(label, value);
+    list.appendChild(item);
+  });
+  return list;
+}
+
+function buildPayoutBlock(definition, instance) {
+  const container = document.createElement('section');
+  container.className = 'asset-overview-card__payout';
+
+  const header = document.createElement('div');
+  header.className = 'asset-overview-card__payout-header';
+  const label = document.createElement('span');
+  label.className = 'asset-overview-card__label';
+  label.textContent = 'Latest payout';
+  header.appendChild(label);
+
+  const toggle = document.createElement('button');
+  toggle.type = 'button';
+  toggle.className = 'asset-overview-card__payout-toggle ghost';
+  toggle.textContent = 'View breakdown';
+  header.appendChild(toggle);
+  container.appendChild(header);
+
+  const summary = document.createElement('p');
+  summary.className = 'asset-overview-card__payout-summary';
+  container.appendChild(summary);
+
+  const breakdown = document.createElement('div');
+  breakdown.className = 'asset-overview-card__payout-details';
+  breakdown.hidden = true;
+  container.appendChild(breakdown);
+
+  if (instance.status !== 'active') {
+    toggle.disabled = true;
+    toggle.textContent = 'Launch pending';
+    summary.textContent = 'Launch the asset to start logging payouts.';
+    return container;
+  }
+
+  const breakdownData = instance.lastIncomeBreakdown;
+  const total = Number(breakdownData?.total) || Number(instance.lastIncome) || 0;
+  const entries = Array.isArray(breakdownData?.entries) ? breakdownData.entries : [];
+
+  if (!entries.length || total <= 0) {
+    toggle.disabled = true;
+    toggle.textContent = 'No breakdown yet';
+    const range = getInstanceQualityRange(definition, instance);
+    const min = Math.max(0, Number(range?.min) || 0);
+    const max = Math.max(min, Number(range?.max) || 0);
+    summary.textContent = `No payout logged yesterday. Fund upkeep to roll $${formatMoney(min)}–$${formatMoney(max)} per day.`;
+    return container;
+  }
+
+  summary.textContent = `Earned $${formatMoney(Math.max(0, Math.round(total)))} yesterday.`;
+  breakdown.appendChild(buildPayoutBreakdownList(entries));
+
+  toggle.addEventListener('click', event => {
+    event.preventDefault();
+    const expanded = breakdown.hidden;
+    breakdown.hidden = !expanded;
+    toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    toggle.textContent = expanded ? 'Hide breakdown' : 'View breakdown';
+  });
+
+  return container;
+}
+
+function createAssetInstanceCard(definition, instance, index, state = getState()) {
+  const card = document.createElement('article');
+  card.className = 'asset-overview-card';
+  card.dataset.asset = definition.id;
+  card.dataset.instance = instance.id;
+  card.dataset.group = getAssetGroupId(definition);
+  card.dataset.state = instance.status === 'active' ? 'active' : 'setup';
+  const needsMaintenance = instance.status === 'active' && !instance.maintenanceFundedToday;
+  card.dataset.needsMaintenance = needsMaintenance ? 'true' : 'false';
+  card.dataset.risk = definition.tag?.type === 'advanced' ? 'high' : 'medium';
+  card.setAttribute('role', 'listitem');
+  card.tabIndex = 0;
+
+  const header = document.createElement('header');
+  header.className = 'asset-overview-card__header';
+
+  const heading = document.createElement('div');
+  heading.className = 'asset-overview-card__heading';
+
+  const status = document.createElement('span');
+  status.className = 'asset-overview-card__status';
+  if (instance.status === 'active') {
+    status.textContent = needsMaintenance ? 'Active • Upkeep due' : 'Active';
+  } else {
+    const remaining = Number(instance.daysRemaining);
+    if (Number.isFinite(remaining) && remaining > 0) {
+      status.textContent = `Setup • ${remaining} day${remaining === 1 ? '' : 's'} left`;
+    } else {
+      status.textContent = 'Setup';
+    }
+  }
+  heading.appendChild(status);
+
+  const title = document.createElement('h3');
+  title.className = 'asset-overview-card__title';
+  title.textContent = instanceLabel(definition, index);
+  heading.appendChild(title);
+
+  const type = document.createElement('span');
+  type.className = 'asset-overview-card__type';
+  type.textContent = definition.singular || definition.name;
+  heading.appendChild(type);
+
+  header.appendChild(heading);
+  card.appendChild(header);
+
+  const body = document.createElement('div');
+  body.className = 'asset-overview-card__body';
+  body.appendChild(buildNicheField(definition, instance, state));
+  body.appendChild(buildQualityBlock(definition, instance));
+  body.appendChild(buildPayoutBlock(definition, instance));
+
+  const riskLabel = card.dataset.risk === 'high' ? 'High' : 'Moderate';
+  body.appendChild(buildMetricsRow(definition, instance, state, riskLabel));
+  card.appendChild(body);
+
+  const footer = document.createElement('footer');
+  footer.className = 'asset-overview-card__footer';
+
+  const actions = document.createElement('div');
+  actions.className = 'asset-overview-card__actions';
+  const maintainButton = document.createElement('button');
+  maintainButton.type = 'button';
+  maintainButton.className = 'primary asset-overview-card__action';
+  maintainButton.textContent = 'Maintain';
+  if (instance.status !== 'active') {
+    maintainButton.disabled = true;
+    maintainButton.title = 'Launch this asset before upkeep matters.';
+  } else if (instance.maintenanceFundedToday) {
+    maintainButton.disabled = true;
+    maintainButton.title = 'Upkeep already funded today.';
+  }
+  maintainButton.addEventListener('click', event => {
+    event.preventDefault();
+    if (maintainButton.disabled) return;
+    maintainAssetInstance(definition.id, instance.id);
+    renderAssets(currentAssetDefinitions);
+    applyCardFilters();
+  });
+  actions.appendChild(maintainButton);
+
+  const specialButtons = buildSpecialActionButtons(definition, instance, state);
+  specialButtons.forEach(button => {
+    button.classList.add('asset-overview-card__action', 'ghost');
+    actions.appendChild(button);
+  });
+  footer.appendChild(actions);
+
+  const links = document.createElement('div');
+  links.className = 'asset-overview-card__links';
+  const detailsButton = document.createElement('button');
+  detailsButton.type = 'button';
+  detailsButton.className = 'ghost';
+  detailsButton.textContent = 'Details';
+  detailsButton.addEventListener('click', event => {
+    event.preventDefault();
+    event.stopPropagation();
+    openInstanceDetails(definition, instance, index, state);
+  });
+  links.appendChild(detailsButton);
+  footer.appendChild(links);
+  card.appendChild(footer);
+
+  card.addEventListener('click', event => {
+    if (event.target.closest('button')) return;
+    openInstanceDetails(definition, instance, index, state);
+  });
+  card.addEventListener('keydown', event => {
+    if (event.key === 'Enter' && event.target === card) {
+      event.preventDefault();
+      openInstanceDetails(definition, instance, index, state);
+    }
+  });
+
+  return card;
+}
+
 function renderAssets(definitions = []) {
   const gallery = elements.assetGallery;
   if (!gallery) return;
@@ -1768,6 +2176,11 @@ function renderAssets(definitions = []) {
   gallery.innerHTML = '';
 
   const groups = buildAssetGroups(currentAssetDefinitions, state);
+  const hub = buildAssetHub(currentAssetDefinitions, groups, state);
+  if (hub) {
+    gallery.appendChild(hub);
+  }
+
   if (!groups.length) {
     const empty = document.createElement('p');
     empty.className = 'asset-gallery__empty';
@@ -1776,63 +2189,58 @@ function renderAssets(definitions = []) {
     return;
   }
 
-  const fragment = document.createDocumentFragment();
+  const portfolio = document.createElement('div');
+  portfolio.className = 'asset-portfolio';
   let totalInstances = 0;
+
   groups.forEach(group => {
     const section = document.createElement('section');
-    section.className = 'asset-group';
+    section.className = 'asset-portfolio__group';
     section.dataset.group = group.id;
 
     const header = document.createElement('header');
-    header.className = 'asset-group__header';
+    header.className = 'asset-portfolio__header';
+
     const heading = document.createElement('div');
-    heading.className = 'asset-group__heading';
+    heading.className = 'asset-portfolio__heading';
     const title = document.createElement('h3');
-    title.className = 'asset-group__title';
+    title.className = 'asset-portfolio__title';
     title.textContent = `${group.label} assets`;
     heading.appendChild(title);
     if (group.note) {
       const note = document.createElement('p');
-      note.className = 'asset-group__note';
+      note.className = 'asset-portfolio__note';
       note.textContent = group.note;
       heading.appendChild(note);
     }
     header.appendChild(heading);
 
-    const actions = document.createElement('div');
-    actions.className = 'asset-group__actions';
-
-    const categoryDetailsButton = document.createElement('button');
-    categoryDetailsButton.type = 'button';
-    categoryDetailsButton.className = 'ghost asset-group__details-button';
-    categoryDetailsButton.textContent = 'Details';
-    categoryDetailsButton.addEventListener('click', event => {
+    const toolbar = document.createElement('div');
+    toolbar.className = 'asset-portfolio__toolbar';
+    const detailButton = document.createElement('button');
+    detailButton.type = 'button';
+    detailButton.className = 'ghost asset-portfolio__detail-button';
+    detailButton.textContent = 'View category details';
+    detailButton.addEventListener('click', event => {
       event.preventDefault();
       openAssetGroupDetails(group);
     });
-    actions.appendChild(categoryDetailsButton);
-
-    group.definitions.forEach(definition => {
-      const button = createLaunchButton(definition, state);
-      if (button) {
-        actions.appendChild(button);
-      }
-    });
-
-    if (actions.childElementCount) {
-      header.appendChild(actions);
-    }
+    toolbar.appendChild(detailButton);
 
     const count = document.createElement('span');
-    count.className = 'asset-group__count';
+    count.className = 'asset-portfolio__count';
     count.textContent = group.instances.length
       ? `${group.instances.length} build${group.instances.length === 1 ? '' : 's'}`
       : 'No builds yet';
-    header.appendChild(count);
+    toolbar.appendChild(count);
+
+    header.appendChild(toolbar);
+    section.appendChild(header);
 
     const grid = document.createElement('div');
-    grid.className = 'asset-group__grid';
+    grid.className = 'asset-portfolio__cards';
     grid.setAttribute('role', 'list');
+
     const sortedInstances = [...group.instances].sort((a, b) => {
       const aActive = a.instance.status === 'active';
       const bActive = b.instance.status === 'active';
@@ -1843,6 +2251,7 @@ function renderAssets(definitions = []) {
       const bDay = Number(b.instance.createdOnDay) || Number.MAX_SAFE_INTEGER;
       return aDay - bDay;
     });
+
     sortedInstances.forEach(entry => {
       const card = createAssetInstanceCard(entry.definition, entry.instance, entry.index, state);
       if (card) {
@@ -1850,24 +2259,27 @@ function renderAssets(definitions = []) {
         totalInstances += 1;
       }
     });
+
     if (!grid.childElementCount) {
-      const empty = document.createElement('p');
-      empty.className = 'asset-group__empty';
-      empty.textContent = 'No launched assets in this category yet.';
-      grid.appendChild(empty);
+      const emptyGroup = document.createElement('p');
+      emptyGroup.className = 'asset-portfolio__empty';
+      emptyGroup.textContent = 'No launched assets in this category yet.';
+      grid.appendChild(emptyGroup);
     }
 
-    section.append(header, grid);
-    fragment.appendChild(section);
+    section.appendChild(grid);
+    portfolio.appendChild(section);
   });
 
-  gallery.appendChild(fragment);
+  gallery.appendChild(portfolio);
+
   if (totalInstances === 0) {
     const empty = document.createElement('p');
     empty.className = 'asset-gallery__empty';
     empty.textContent = 'Launch an asset to see it here. Each build gets its own action card once active.';
     gallery.appendChild(empty);
   }
+
   applyCardFilters();
 }
 

@@ -23,7 +23,7 @@
 - Creative upgrade ladder: editorial pipeline, syndication suite, and immersive story worlds stack payouts and progress boosts across blogs, e-books, and vlogs.
 - Quality system refresh: daily-use counters replace cooldown timers on passive actions, with UI, saves, and docs updated to celebrate remaining uses each day.
 - Niche market pulse: assign each passive asset to a daily-trending niche, gain payout multipliers from hot audiences, and track every niche’s popularity from the dashboard widget.
-- Asset page redesign: category headers now list every build as its own action card with inline maintain, niche, and quality progress so upkeep happens without a secondary panel.
+- Asset command center: the assets page now opens with a launch hub and refreshed build cards that bundle niche assignment, payout breakdowns, quality progress, and quick category blueprints in one glance.
 
 ## Recent Highlights
 - Passive assets gained Quality 4–5 milestones with higher payouts and refreshed modifiers.
