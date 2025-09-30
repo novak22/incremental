@@ -9,7 +9,7 @@ const dropshippingDefinition = createAssetDefinition({
   tags: ['commerce', 'ecommerce', 'fulfillment'],
   description: 'Prototype products, source suppliers, and automate fulfillment funnels.',
   setup: { days: 6, hoursPerDay: 4, cost: 720 },
-  maintenance: { hours: 1.5, cost: 12 },
+  maintenance: { hours: 1.2, cost: 9 },
   skills: {
     setup: [
       'commerce',
@@ -34,7 +34,7 @@ const dropshippingDefinition = createAssetDefinition({
         level: 0,
         name: 'Prototype Pile',
         description: 'Inconsistent suppliers mean sporadic payouts.',
-        income: { min: 5, max: 9 },
+        income: { min: 12, max: 20 },
         requirements: {}
       },
       {
