@@ -5,11 +5,13 @@ import { getGameTestHarness } from './helpers/gameTestHarness.js';
 const harness = await getGameTestHarness();
 const {
   stateModule,
-  storageModule
+  storageModule,
+  logModule
 } = harness;
 
 const { getState, getAssetState, getUpgradeState } = stateModule;
-const { loadState, saveState } = storageModule;
+const { loadState, saveState, getStatePersistence } = storageModule;
+const { addLog } = logModule;
 
 const STORAGE_KEY = 'online-hustle-sim-v2';
 
@@ -21,10 +23,14 @@ test.beforeEach(() => {
 });
 
 test('loadState initializes defaults and welcomes new players', () => {
-  const result = loadState();
+  const result = loadState({
+    onFirstLoad: () =>
+      addLog('Welcome to Online Hustle Simulator! Time to make that side cash.', 'info')
+  });
   assert.equal(result.returning, false);
   assert.ok(result.state);
   assert.match(getState().log.at(-1).message, /Welcome to Online Hustle Simulator/);
+  assert.equal(getState().version, getStatePersistence().version);
 });
 
 test('saveState persists current progress and loadState restores it', () => {
@@ -37,11 +43,13 @@ test('saveState persists current progress and loadState restores it', () => {
   const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
   assert.equal(saved.money, 321);
   assert.ok(saved.assets.blog.instances.length >= 1);
+  assert.equal(saved.version, getStatePersistence().version);
 
   const loaded = loadState();
   assert.equal(loaded.returning, true);
   assert.equal(getState().money, 321);
   assert.ok(getAssetState('blog').instances.length >= 1);
+  assert.equal(getState().version, getStatePersistence().version);
 });
 
 test('legacy saves migrate to new asset structure', () => {
@@ -71,4 +79,5 @@ test('legacy saves migrate to new asset structure', () => {
   assert.equal(getUpgradeState('assistant').count, 1);
   assert.equal(getUpgradeState('coffee').usedToday, 2);
   assert.ok(state.log.some(entry => entry.message === 'Legacy entry'));
+  assert.equal(state.version, getStatePersistence().version);
 });

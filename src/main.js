@@ -10,10 +10,14 @@ import { handleOfflineProgress } from './game/offline.js';
 import { initHeaderActionControls } from './ui/headerAction.js';
 
 configureRegistry(registry);
-const { returning, lastSaved } = loadState();
+const { returning, lastSaved } = loadState({
+  onFirstLoad: () =>
+    addLog('Welcome to Online Hustle Simulator! Time to make that side cash.', 'info'),
+  onReturning: () =>
+    addLog('Welcome back! Your hustles kept buzzing while you were away.', 'info')
+});
 if (returning) {
   handleOfflineProgress(lastSaved);
-  addLog('Welcome back! Your hustles kept buzzing while you were away.', 'info');
 }
 renderLog();
 renderCards();
