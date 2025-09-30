@@ -123,6 +123,7 @@ function describeQueue(summary) {
 export function buildQuickActions(state) {
   const items = [];
   for (const hustle of registry.hustles) {
+    if (hustle?.tag?.type === 'study') continue;
     if (!hustle?.action?.onClick) continue;
     const disabled = typeof hustle.action.disabled === 'function'
       ? hustle.action.disabled(state)
