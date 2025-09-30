@@ -11,3 +11,4 @@
 **Player benefit**
 - Net-positive or upkeep-heavy days are obvious without opening the snapshot.
 - Long-term momentum stays visible even while scrolling away from dashboard cards.
+- KPI buttons double as quick jumps into the matching dashboard sections so players can instantly review the detailed lists the stat hints at.
