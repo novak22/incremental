@@ -29,7 +29,6 @@ import {
 } from '../game/assets/niches.js';
 import {
   getPendingEquipmentUpgrades,
-  getUpgradeButtonLabel,
   isUpgradeDisabled
 } from './assetUpgrades.js';
 import { getAssetEffectMultiplier } from '../game/upgrades/effects.js';
@@ -48,6 +47,7 @@ import {
 } from '../game/assets/quality.js';
 import { getSkillDefinition, normalizeSkillList } from '../game/skills/data.js';
 import { applyCardFilters } from './layout.js';
+import { createAssetUpgradeShortcuts } from './assetUpgradeShortcuts.js';
 
 const hustleUi = new Map();
 const upgradeUi = new Map();
@@ -1156,56 +1156,19 @@ function getUpgradeTimeEstimate(upgrade) {
 
 function createEquipmentShortcuts(definition, state) {
   const pending = getPendingEquipmentUpgrades(definition, state);
-  if (!Array.isArray(pending) || pending.length === 0) {
-    return null;
-  }
-
-  const limit = Math.min(2, pending.length);
-  if (limit <= 0) return null;
-
-  const container = document.createElement('div');
-  container.className = 'asset-detail__upgrade-shortcuts';
-
-  const title = document.createElement('span');
-  title.className = 'asset-detail__upgrade-title';
-  title.textContent = pending.length > 1 ? 'Equipment boosts' : 'Equipment boost';
-  container.appendChild(title);
-
-  const buttonRow = document.createElement('div');
-  buttonRow.className = 'asset-detail__upgrade-buttons';
-  container.appendChild(buttonRow);
-
-  for (let index = 0; index < limit; index += 1) {
-    const upgrade = pending[index];
-    if (!upgrade) continue;
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'asset-detail__upgrade-button';
-    button.dataset.upgradeId = upgrade.id;
-    const timeEstimate = getUpgradeTimeEstimate(upgrade);
-    const baseLabel = getUpgradeButtonLabel(upgrade);
-    button.textContent = timeEstimate > 0 ? `${baseLabel} (${formatHours(timeEstimate)})` : baseLabel;
-    button.disabled = isUpgradeDisabled(upgrade);
-    if (upgrade.description) {
-      const timeLabel = timeEstimate > 0 ? ` • ≈${formatHours(timeEstimate)} install` : '';
-      button.title = `${upgrade.description}${timeLabel}`;
-    }
-    button.addEventListener('click', event => {
-      event.preventDefault();
-      if (button.disabled) return;
-      upgrade.action?.onClick?.();
-    });
-    buttonRow.appendChild(button);
-  }
-
-  if (pending.length > limit) {
-    const more = document.createElement('span');
-    more.className = 'asset-detail__upgrade-more';
-    more.textContent = `+${pending.length - limit} more`;
-    container.appendChild(more);
-  }
-
-  return container;
+  return createAssetUpgradeShortcuts(pending, {
+    containerClass: 'asset-detail__upgrade-shortcuts',
+    titleClass: 'asset-detail__upgrade-title',
+    buttonRowClass: 'asset-detail__upgrade-buttons',
+    buttonClass: 'asset-detail__upgrade-button',
+    moreClass: 'asset-detail__upgrade-more',
+    singularTitle: 'Equipment boost',
+    pluralTitle: 'Equipment boosts',
+    includeTimeEstimate: true,
+    getTimeEstimate: getUpgradeTimeEstimate,
+    formatTimeEstimate: formatHours,
+    moreLabel: count => `+${count} more`
+  });
 }
 
 function renderHustleCard(definition, container) {

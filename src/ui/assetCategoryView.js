@@ -16,11 +16,8 @@ import {
   describeInstanceEarnings,
   describeInstanceNetHourly
 } from './assetInstances.js';
-import {
-  getPendingEquipmentUpgrades,
-  getUpgradeButtonLabel,
-  isUpgradeDisabled
-} from './assetUpgrades.js';
+import { getPendingEquipmentUpgrades } from './assetUpgrades.js';
+import { createAssetUpgradeShortcuts } from './assetUpgradeShortcuts.js';
 
 const categoryState = {
   definitionsByCategory: new Map(),
@@ -245,54 +242,16 @@ function buildInstanceRows(definitions) {
 }
 
 function createUpgradeShortcuts(upgrades = []) {
-  if (!Array.isArray(upgrades) || upgrades.length === 0) {
-    return null;
-  }
-
-  const limit = Math.min(upgrades.length, 2);
-  if (limit <= 0) return null;
-
-  const container = document.createElement('div');
-  container.className = 'asset-category__upgrade-shortcuts';
-
-  const title = document.createElement('span');
-  title.className = 'asset-category__upgrade-title';
-  title.textContent = limit > 1 ? 'Next upgrades' : 'Next upgrade';
-  container.appendChild(title);
-
-  const buttonRow = document.createElement('div');
-  buttonRow.className = 'asset-category__upgrade-buttons';
-  container.appendChild(buttonRow);
-
-  for (let index = 0; index < limit; index += 1) {
-    const upgrade = upgrades[index];
-    if (!upgrade) continue;
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'asset-category__upgrade-button';
-    button.dataset.upgradeId = upgrade.id;
-    button.textContent = getUpgradeButtonLabel(upgrade);
-    button.disabled = isUpgradeDisabled(upgrade);
-    if (upgrade.description) {
-      button.title = upgrade.description;
-    }
-    button.addEventListener('click', event => {
-      event.preventDefault();
-      if (button.disabled) return;
-      upgrade.action?.onClick?.();
-    });
-    buttonRow.appendChild(button);
-  }
-
-  const remaining = upgrades.length - limit;
-  if (remaining > 0) {
-    const more = document.createElement('span');
-    more.className = 'asset-category__upgrade-more';
-    more.textContent = `+${remaining} more upgrades`;
-    container.appendChild(more);
-  }
-
-  return container;
+  return createAssetUpgradeShortcuts(upgrades, {
+    containerClass: 'asset-category__upgrade-shortcuts',
+    titleClass: 'asset-category__upgrade-title',
+    buttonRowClass: 'asset-category__upgrade-buttons',
+    buttonClass: 'asset-category__upgrade-button',
+    moreClass: 'asset-category__upgrade-more',
+    singularTitle: 'Next upgrade',
+    pluralTitle: 'Next upgrades',
+    moreLabel: count => `+${count} more upgrades`
+  });
 }
 
 function createUpgradeHints(definition, skipUpgrades = []) {
