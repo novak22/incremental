@@ -54,13 +54,23 @@ export function updateAllCards({ hustles = [], education = [], assets = [], upgr
   hustles.forEach(hustleCards.update);
   assets.forEach(assetCards.update);
 
-  upgradeCards.ensureCurrentDefinitions(upgrades);
-  upgrades.forEach(upgradeCards.update);
-  const current = upgradeCards.getCurrentDefinitions();
-  const overviewSource = current.length ? current : upgrades;
-  upgradeCards.renderOverview(overviewSource);
-  upgradeCards.renderDock();
-  upgradeCards.refreshSections();
+  const currentDefinitions = upgradeCards.getCurrentDefinitions();
+  const currentIds = new Set(currentDefinitions.map(def => def?.id).filter(Boolean));
+  const nextIds = upgrades.map(def => def?.id).filter(Boolean);
+  const hasDefinitionChanges =
+    nextIds.length !== currentIds.size || nextIds.some(id => !currentIds.has(id));
+
+  if (hasDefinitionChanges) {
+    upgradeCards.render(upgrades);
+  } else {
+    upgradeCards.setCurrentDefinitions(upgrades);
+    upgrades.forEach(upgradeCards.update);
+    const current = upgradeCards.getCurrentDefinitions();
+    const overviewSource = current.length ? current : upgrades;
+    upgradeCards.renderOverview(overviewSource);
+    upgradeCards.renderDock();
+    upgradeCards.refreshSections();
+  }
   emitUIEvent('upgrades:state-updated');
 
   education.forEach(studyCards.update);
