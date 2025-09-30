@@ -32,7 +32,6 @@ const elements = {
     study: document.getElementById('kpi-study')
   },
   kpiNotes: {
-    cash: document.getElementById('kpi-cash-note'),
     net: document.getElementById('kpi-net-note'),
     hours: document.getElementById('kpi-hours-note'),
     upkeep: document.getElementById('kpi-upkeep-note'),
@@ -84,8 +83,6 @@ const elements = {
     }
   },
   actionQueue: document.getElementById('action-queue'),
-  queuePause: document.getElementById('queue-pause'),
-  queueCancel: document.getElementById('queue-cancel'),
   quickActions: document.getElementById('quick-actions'),
   assetUpgradeActions: document.getElementById('asset-upgrade-actions'),
   notifications: document.getElementById('notification-list'),
@@ -97,8 +94,6 @@ const elements = {
   logTemplate: document.getElementById('log-template'),
   logTip: document.getElementById('log-tip'),
   hustleSearch: document.getElementById('hustle-search'),
-  hustleCategoryChips: document.getElementById('hustle-category-chips'),
-  hustleRequirementChips: document.getElementById('hustle-req-chips'),
   hustleAvailableToggle: document.getElementById('hustle-available-toggle'),
   hustleSort: document.getElementById('hustle-sort'),
   hustleList: document.getElementById('hustle-list'),
@@ -139,7 +134,6 @@ const elements = {
   commandPaletteTrigger: document.getElementById('command-palette-trigger'),
   commandPaletteBackdrop: document.querySelector('#command-palette .command-palette__backdrop'),
   commandPaletteSearch: document.getElementById('command-palette-search'),
-  commandPaletteResults: document.getElementById('command-palette-results'),
   player: {
     summary: {
       tier: document.getElementById('player-summary-tier'),
@@ -151,8 +145,7 @@ const elements = {
       time: document.getElementById('player-summary-time')
     },
     skills: {
-      list: document.getElementById('player-skills-list'),
-      summary: document.getElementById('player-skills-summary')
+      list: document.getElementById('player-skills-list')
     },
     educationList: document.getElementById('player-education-list'),
     equipmentList: document.getElementById('player-equipment-list'),

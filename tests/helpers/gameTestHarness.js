@@ -43,12 +43,6 @@ export async function getGameTestHarness() {
     if (elements.money) {
       elements.money.textContent = '';
     }
-    if (elements.time) {
-      elements.time.textContent = '';
-    }
-    if (elements.day) {
-      elements.day.textContent = '';
-    }
     return nextState;
   };
 
