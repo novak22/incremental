@@ -8,6 +8,7 @@ import { updateHeaderAction } from './headerAction.js';
 import { applyCardFilters } from './layout.js';
 import { refreshActionCatalogDebug } from './debugCatalog.js';
 import { renderPlayerPanel } from './player.js';
+import { getActiveView } from './viewManager.js';
 
 function buildCollections() {
   const hustles = registry.hustles.filter(hustle => hustle.tag?.type !== 'study');
@@ -31,7 +32,12 @@ export function updateUI() {
   if (!state) return;
 
   const summary = computeDailySummary(state);
-  renderDashboard(summary);
+  const activeView = getActiveView();
+  if (activeView?.renderDashboard) {
+    activeView.renderDashboard(state, summary);
+  } else {
+    renderDashboard(state, summary);
+  }
   renderSkillWidgets(state);
   renderPlayerPanel(state, summary);
   updateHeaderAction(state);

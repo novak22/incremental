@@ -2696,9 +2696,11 @@ export function refreshUpgradeSections() {
   updateUpgradeLaneMap();
 }
 
-document.addEventListener('upgrades:filtered', () => {
-  refreshUpgradeSections();
-});
+if (typeof document !== 'undefined') {
+  document.addEventListener('upgrades:filtered', () => {
+    refreshUpgradeSections();
+  });
+}
 
 function renderUpgradeCard(definition, container, categoryId, familyId = 'general') {
   const state = getState();

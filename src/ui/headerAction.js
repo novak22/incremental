@@ -1,6 +1,6 @@
 import { getHeaderActionButtons } from './elements/registry.js';
 import { endDay } from '../game/lifecycle.js';
-import { buildAssetUpgradeRecommendations, buildQuickActions } from './dashboard.js';
+import { buildAssetUpgradeRecommendations, buildQuickActions } from './dashboard/model.js';
 import { formatHours } from '../core/helpers.js';
 
 let activeRecommendation = null;
