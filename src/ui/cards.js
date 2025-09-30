@@ -13,6 +13,7 @@ import {
   instanceLabel,
   sellAssetInstance
 } from '../game/assets/helpers.js';
+import { maintainAssetInstance } from '../game/assets/index.js';
 import {
   assignInstanceToNiche,
   getAssignableNicheSummaries,
@@ -36,13 +37,14 @@ import {
   performQualityAction
 } from '../game/assets/quality.js';
 import { getSkillDefinition, normalizeSkillList } from '../game/skills/data.js';
+import { applyCardFilters } from './layout.js';
 
 const hustleUi = new Map();
-const assetUi = new Map();
 const upgradeUi = new Map();
 const upgradeSections = new Map();
 const upgradeLaneItems = new Map();
 const studyUi = new Map();
+let currentAssetDefinitions = [];
 let currentUpgradeDefinitions = [];
 
 const UPGRADE_CATEGORY_ORDER = ['tech', 'house', 'infra', 'support', 'misc'];
@@ -161,8 +163,6 @@ const ASSET_GROUP_NOTES = {
   Tech: 'Systems and platforms with bigger upkeep but massive reach.'
 };
 let studyElementsDocument = null;
-
-let expandedAssetId = null;
 
 function showSlideOver({ eyebrow, title, body }) {
   const { slideOver, slideOverContent, slideOverEyebrow, slideOverTitle } = elements;
@@ -1405,74 +1405,161 @@ function createAssetMetric(label) {
   return { item, value: metricValue };
 }
 
-function selectNextAssetUpgrade(definition, state = getState()) {
-  const pending = getPendingEquipmentUpgrades(definition, state);
-  if (!pending.length) return null;
-  const scored = pending.map(upgrade => {
-    const snapshot = getUpgradeSnapshot(upgrade, state);
-    let score = 3;
-    if (snapshot.ready) {
-      score = 0;
-    } else if (!snapshot.purchased && snapshot.affordable && !snapshot.disabled) {
-      score = 1;
-    } else if (!snapshot.purchased) {
-      score = 2;
-    }
-    return { upgrade, snapshot, score };
+function createLaunchButton(definition, state = getState()) {
+  if (!definition?.action?.onClick) return null;
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'ghost';
+  button.textContent = typeof definition.action.label === 'function'
+    ? definition.action.label(state)
+    : definition.action.label || `Launch ${definition.singular || definition.name}`;
+  const disabled = typeof definition.action.disabled === 'function'
+    ? definition.action.disabled(state)
+    : Boolean(definition.action?.disabled);
+  button.disabled = disabled;
+  button.addEventListener('click', event => {
+    event.preventDefault();
+    if (button.disabled) return;
+    definition.action.onClick();
   });
-  scored.sort((a, b) => {
-    if (a.score !== b.score) return a.score - b.score;
-    if (a.snapshot.cost !== b.snapshot.cost) return a.snapshot.cost - b.snapshot.cost;
-    const aName = a.upgrade.name || a.upgrade.id;
-    const bName = b.upgrade.name || b.upgrade.id;
-    return aName.localeCompare(bName, undefined, { sensitivity: 'base' });
-  });
-  return scored[0];
+  return button;
 }
 
-function updateAssetUpgradeShortcut(definition, ui, state = getState()) {
-  if (!ui?.upgradeButton) return;
-  const selection = selectNextAssetUpgrade(definition, state);
-  ui.nextUpgrade = selection;
-  if (!selection?.upgrade) {
-    ui.upgradeButton.disabled = true;
-    ui.upgradeButton.dataset.state = 'empty';
-    ui.upgradeButton.title = 'No upgrades queued for this asset yet.';
-    ui.upgradeButton.setAttribute('aria-label', 'No upgrades available');
-    return;
+function describeInstanceNicheSummary(instance) {
+  const info = getInstanceNicheInfo(instance);
+  if (!info) {
+    return {
+      value: 'Unassigned',
+      note: 'Set a niche from Details to lock in demand bonuses.'
+    };
   }
-
-  const { upgrade, snapshot } = selection;
-  const status = describeUpgradeStatus(snapshot);
-  ui.upgradeButton.disabled = !snapshot.ready;
-  ui.upgradeButton.dataset.state = snapshot.ready ? 'ready' : 'locked';
-  ui.upgradeButton.title = `${upgrade.name} • ${status}`;
-  ui.upgradeButton.setAttribute(
-    'aria-label',
-    snapshot.ready ? `Install ${upgrade.name}` : `${upgrade.name} (${status})`
-  );
+  const label = info.definition?.name || 'Niche';
+  const mood = info.popularity?.label ? ` — ${info.popularity.label}` : '';
+  const multiplier = Number(info.popularity?.multiplier);
+  let impact = '±0%';
+  if (Number.isFinite(multiplier)) {
+    const percent = Math.round((multiplier - 1) * 100);
+    const sign = percent > 0 ? '+' : '';
+    impact = `${sign}${percent}%`;
+  }
+  const summary = info.popularity?.summary || 'Demand shifts every day.';
+  return {
+    value: `${label}${mood}`,
+    note: `${summary} • Payout impact ${impact}`
+  };
 }
 
-function renderAssetCard(definition, container) {
-  const state = getState();
-  const assetState = getAssetState(definition.id, state);
-  const instances = Array.isArray(assetState?.instances) ? assetState.instances : [];
-  const activeInstances = instances.filter(instance => instance.status === 'active');
-  const pausedInstances = instances.filter(instance => instance.status !== 'active');
-  const lastIncome = activeInstances.reduce((total, instance) => total + Number(instance.lastIncome || 0), 0);
-  const upkeepCost = Number(definition.maintenance?.cost) || 0;
-  const upkeepHours = Number(definition.maintenance?.hours) || 0;
+function calculateInstanceProgress(definition, instance) {
+  const level = Number(instance.quality?.level) || 0;
+  const nextRequirements = getQualityNextRequirements(definition, level);
+  const levelInfo = getQualityLevel(definition, level);
+  if (!nextRequirements) {
+    return {
+      level,
+      levelInfo,
+      nextLevel: null,
+      percent: 1,
+      summary: '',
+      ready: true
+    };
+  }
+  const tracks = getQualityTracks(definition);
+  const progress = instance.quality?.progress || {};
+  let totalGoal = 0;
+  let totalCurrent = 0;
+  const parts = [];
+  Object.entries(nextRequirements).forEach(([key, targetValue]) => {
+    const goal = Number(targetValue) || 0;
+    if (goal <= 0) return;
+    const current = Math.max(0, Number(progress?.[key]) || 0);
+    totalGoal += goal;
+    totalCurrent += Math.min(current, goal);
+    const track = tracks[key];
+    const label = track?.shortLabel || track?.label || key;
+    parts.push(`${Math.min(current, goal)}/${goal} ${label}`);
+  });
+  const percent = totalGoal > 0 ? Math.max(0, Math.min(1, totalCurrent / totalGoal)) : 1;
+  return {
+    level,
+    levelInfo,
+    nextLevel: getNextQualityLevel(definition, level),
+    percent,
+    summary: parts.join(' • '),
+    ready: percent >= 1
+  };
+}
 
+function formatInstanceDailyAverage(instance, state = getState()) {
+  if (!instance || instance.status !== 'active') {
+    return 'Launch pending';
+  }
+  const totalIncome = Math.max(0, Number(instance.totalIncome) || 0);
+  const createdOnDay = Math.max(1, Number(instance.createdOnDay) || 1);
+  const currentDay = Math.max(1, Number(state?.day) || 1);
+  const daysActive = Math.max(1, currentDay - createdOnDay + 1);
+  if (totalIncome <= 0) {
+    return 'No earnings yet';
+  }
+  return `$${formatMoney(totalIncome / daysActive)} avg`;
+}
+
+function buildSpecialActionButtons(definition, instance, state) {
+  if (instance.status !== 'active') return [];
+  const actions = getQualityActions(definition);
+  if (!actions.length) return [];
+  const prioritized = [...actions].sort((a, b) => {
+    const aAvailable = canPerformQualityAction(definition, instance, a, state) ? 1 : 0;
+    const bAvailable = canPerformQualityAction(definition, instance, b, state) ? 1 : 0;
+    return bAvailable - aAvailable;
+  });
+  const limit = Math.min(prioritized.length, 3);
+  const buttons = [];
+  for (let index = 0; index < limit; index += 1) {
+    const action = prioritized[index];
+    if (!action) continue;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'ghost';
+    button.textContent = action.label || 'Upgrade';
+    const disabled = !canPerformQualityAction(definition, instance, action, state);
+    button.disabled = disabled;
+    const details = [];
+    if (action.time) {
+      details.push(`⏳ ${formatHours(action.time)}`);
+    }
+    if (action.cost) {
+      details.push(`💵 $${formatMoney(action.cost)}`);
+    }
+    const usage = getQualityActionUsage(definition, instance, action);
+    if (usage.dailyLimit > 0) {
+      details.push(`🔁 ${usage.remainingUses}/${usage.dailyLimit} today`);
+      if (usage.exhausted) {
+        details.push('All uses spent today');
+      }
+    }
+    if (details.length) {
+      button.title = details.join(' · ');
+    }
+    button.addEventListener('click', event => {
+      event.preventDefault();
+      if (button.disabled) return;
+      performQualityAction(definition.id, instance.id, action.id);
+    });
+    buttons.push(button);
+  }
+  return buttons;
+}
+
+function createAssetInstanceCard(definition, instance, index, state = getState()) {
   const card = document.createElement('article');
-  card.className = 'asset-card';
+  card.className = 'asset-card asset-instance-card';
   card.dataset.asset = definition.id;
+  card.dataset.instance = instance.id;
   card.dataset.group = getAssetGroupId(definition);
-  card.dataset.state = activeInstances.length > 0 ? 'active' : 'idle';
-  card.dataset.needsMaintenance = activeInstances.some(instance => !instance.maintenanceFundedToday)
-    ? 'true'
-    : 'false';
+  card.dataset.state = instance.status === 'active' ? 'active' : 'setup';
+  const needsMaintenance = instance.status === 'active' && !instance.maintenanceFundedToday;
+  card.dataset.needsMaintenance = needsMaintenance ? 'true' : 'false';
   card.dataset.risk = definition.tag?.type === 'advanced' ? 'high' : 'medium';
-  card.dataset.selected = 'false';
   card.setAttribute('role', 'listitem');
   card.tabIndex = 0;
 
@@ -1480,418 +1567,207 @@ function renderAssetCard(definition, container) {
   header.className = 'asset-card__header';
   const badge = document.createElement('span');
   badge.className = 'asset-card__badge';
+  if (instance.status === 'active') {
+    badge.textContent = needsMaintenance ? 'Active • Upkeep due' : 'Active';
+  } else {
+    const remaining = Number(instance.daysRemaining);
+    if (Number.isFinite(remaining) && remaining > 0) {
+      badge.textContent = `Setup • ${remaining} day${remaining === 1 ? '' : 's'} left`;
+    } else {
+      badge.textContent = 'Setup';
+    }
+  }
   header.appendChild(badge);
 
   const heading = document.createElement('div');
   heading.className = 'asset-card__heading';
   const title = document.createElement('h3');
   title.className = 'asset-card__title';
-  title.textContent = definition.name;
+  title.textContent = instanceLabel(definition, index);
   heading.appendChild(title);
   const tagLabel = document.createElement('span');
   tagLabel.className = 'asset-card__tag';
-  tagLabel.textContent = getAssetGroupLabel(definition);
+  tagLabel.textContent = definition.singular || definition.name;
   heading.appendChild(tagLabel);
   header.appendChild(heading);
   card.appendChild(header);
 
-  const summaryCopy = describeAssetCardSummary(definition);
-  if (summaryCopy) {
-    const summary = document.createElement('p');
-    summary.className = 'asset-card__summary';
-    summary.textContent = summaryCopy;
-    card.appendChild(summary);
+  const body = document.createElement('div');
+  body.className = 'asset-instance-card__body';
+
+  const nicheInfo = describeInstanceNicheSummary(instance);
+  const nicheField = document.createElement('div');
+  nicheField.className = 'asset-instance-card__field';
+  const nicheLabel = document.createElement('span');
+  nicheLabel.className = 'asset-instance-card__label';
+  nicheLabel.textContent = 'Niche';
+  const nicheValue = document.createElement('span');
+  nicheValue.className = 'asset-instance-card__value';
+  nicheValue.textContent = nicheInfo.value;
+  nicheField.append(nicheLabel, nicheValue);
+  if (nicheInfo.note) {
+    const note = document.createElement('span');
+    note.className = 'asset-instance-card__note';
+    note.textContent = nicheInfo.note;
+    nicheField.appendChild(note);
   }
+  body.appendChild(nicheField);
+
+  const progressInfo = calculateInstanceProgress(definition, instance);
+  const quality = document.createElement('div');
+  quality.className = 'asset-instance-card__quality';
+  const qualityHeader = document.createElement('div');
+  qualityHeader.className = 'asset-instance-card__quality-header';
+  const qualityCurrent = document.createElement('span');
+  qualityCurrent.className = 'asset-instance-card__quality-current';
+  const tierName = progressInfo.levelInfo?.name ? ` — ${progressInfo.levelInfo.name}` : '';
+  qualityCurrent.textContent = `Quality ${progressInfo.level}${tierName}`;
+  qualityHeader.appendChild(qualityCurrent);
+  quality.appendChild(qualityHeader);
+
+  const nextLine = document.createElement('span');
+  nextLine.className = 'asset-instance-card__quality-next';
+  if (!progressInfo.nextLevel) {
+    nextLine.textContent = 'Top tier reached — keep cashing in!';
+  } else {
+    const nextTierName = progressInfo.nextLevel.name ? ` — ${progressInfo.nextLevel.name}` : '';
+    nextLine.textContent = `Next: Quality ${progressInfo.nextLevel.level}${nextTierName}`;
+  }
+  quality.appendChild(nextLine);
+
+  if (progressInfo.nextLevel) {
+    const progressWrap = document.createElement('div');
+    progressWrap.className = 'asset-instance-card__progress';
+    const track = document.createElement('div');
+    track.className = 'asset-instance-card__progress-track';
+    const fill = document.createElement('div');
+    fill.className = 'asset-instance-card__progress-fill';
+    fill.style.setProperty('--progress', String(Math.max(0, Math.min(1, progressInfo.percent))));
+    track.appendChild(fill);
+    progressWrap.appendChild(track);
+    const label = document.createElement('span');
+    label.className = 'asset-instance-card__progress-label';
+    if (progressInfo.ready) {
+      label.textContent = 'All requirements met! Fire a quality action to rank up.';
+    } else if (progressInfo.summary) {
+      label.textContent = progressInfo.summary;
+    } else {
+      label.textContent = 'Work quality actions to unlock the next tier.';
+    }
+    progressWrap.appendChild(label);
+    quality.appendChild(progressWrap);
+  }
+  body.appendChild(quality);
 
   const metrics = document.createElement('div');
   metrics.className = 'asset-card__metrics';
-  const statusMetric = createAssetMetric('Status');
-  const incomeMetric = createAssetMetric('Daily haul');
+  const payoutMetric = createAssetMetric('Latest payout');
+  const haulMetric = createAssetMetric('Daily haul');
   const upkeepMetric = createAssetMetric('Upkeep');
   const riskMetric = createAssetMetric('Risk');
-  metrics.append(statusMetric.item, incomeMetric.item, upkeepMetric.item, riskMetric.item);
-  card.appendChild(metrics);
+  metrics.append(payoutMetric.item, haulMetric.item, upkeepMetric.item, riskMetric.item);
+  payoutMetric.value.textContent = instance.status === 'active'
+    ? formatInstanceLastPayout(instance)
+    : 'Launch pending';
+  haulMetric.value.textContent = formatInstanceDailyAverage(instance, state);
+  upkeepMetric.value.textContent = formatInstanceUpkeep(definition) || 'None';
+  riskMetric.value.textContent = card.dataset.risk === 'high' ? 'High' : 'Moderate';
+  body.appendChild(metrics);
 
-  const perkHighlight = document.createElement('div');
-  perkHighlight.className = 'asset-card__perk';
-  const perkText = definition.boosts || definition.unlocks || '';
-  if (perkText) {
-    perkHighlight.textContent = perkText;
-    card.appendChild(perkHighlight);
-  } else {
-    perkHighlight.hidden = true;
-    card.appendChild(perkHighlight);
-  }
+  card.appendChild(body);
 
   const footer = document.createElement('footer');
-  footer.className = 'asset-card__footer';
+  footer.className = 'asset-instance-card__footer';
   const primaryActions = document.createElement('div');
-  primaryActions.className = 'asset-card__primary-actions';
+  primaryActions.className = 'asset-instance-card__primary-actions';
   const secondaryActions = document.createElement('div');
-  secondaryActions.className = 'asset-card__secondary-actions';
+  secondaryActions.className = 'asset-instance-card__secondary-actions';
 
-  const upgradeButton = document.createElement('button');
-  upgradeButton.type = 'button';
-  upgradeButton.className = 'asset-card__upgrade';
-  upgradeButton.innerHTML = '<span aria-hidden="true">⇧</span>';
-  upgradeButton.title = 'Next upgrade';
-  upgradeButton.setAttribute('aria-label', 'Next upgrade');
-  upgradeButton.addEventListener('click', event => {
+  const maintainButton = document.createElement('button');
+  maintainButton.type = 'button';
+  maintainButton.className = 'primary';
+  maintainButton.textContent = 'Maintain';
+  if (instance.status !== 'active') {
+    maintainButton.disabled = true;
+    maintainButton.title = 'Launch this asset before upkeep matters.';
+  } else if (instance.maintenanceFundedToday) {
+    maintainButton.disabled = true;
+    maintainButton.title = 'Upkeep already funded today.';
+  }
+  maintainButton.addEventListener('click', event => {
     event.preventDefault();
-    event.stopPropagation();
-    const entry = assetUi.get(definition.id);
-    const selection = entry?.nextUpgrade;
-    if (!selection?.upgrade) return;
-    if (selection.snapshot.ready && typeof selection.upgrade.action?.onClick === 'function') {
-      selection.upgrade.action.onClick();
-      return;
-    }
-    openAssetDetails(definition);
+    if (maintainButton.disabled) return;
+    maintainAssetInstance(definition.id, instance.id);
+    renderAssets(currentAssetDefinitions);
+    applyCardFilters();
   });
-  secondaryActions.appendChild(upgradeButton);
+  primaryActions.appendChild(maintainButton);
+  footer.appendChild(primaryActions);
 
-  const buildsButton = document.createElement('button');
-  buildsButton.type = 'button';
-  buildsButton.className = 'ghost asset-card__action';
-  buildsButton.textContent = 'Builds';
-  buildsButton.setAttribute('aria-expanded', 'false');
-  buildsButton.addEventListener('click', event => {
-    event.preventDefault();
-    event.stopPropagation();
-    toggleAssetBuilds(definition);
-  });
-  secondaryActions.appendChild(buildsButton);
+  const specialButtons = buildSpecialActionButtons(definition, instance, state);
+  specialButtons.forEach(button => secondaryActions.appendChild(button));
 
   const detailsButton = document.createElement('button');
   detailsButton.type = 'button';
-  detailsButton.className = 'ghost asset-card__action';
+  detailsButton.className = 'ghost';
   detailsButton.textContent = 'Details';
   detailsButton.addEventListener('click', event => {
     event.preventDefault();
     event.stopPropagation();
-    openAssetDetails(definition);
+    openInstanceDetails(definition, instance, index, state);
   });
   secondaryActions.appendChild(detailsButton);
 
-  let primaryButton = null;
-  if (definition.action?.onClick) {
-    primaryButton = document.createElement('button');
-    primaryButton.type = 'button';
-    primaryButton.className = 'primary';
-    primaryButton.textContent = typeof definition.action.label === 'function'
-      ? definition.action.label(state)
-      : definition.action.label || 'Launch';
-    primaryButton.addEventListener('click', event => {
-      event.preventDefault();
-      event.stopPropagation();
-      if (primaryButton.disabled) return;
-      definition.action.onClick();
-    });
-    primaryActions.appendChild(primaryButton);
-  }
-
-  if (primaryActions.childElementCount) {
-    footer.appendChild(primaryActions);
-  }
   footer.appendChild(secondaryActions);
   card.appendChild(footer);
 
   card.addEventListener('click', event => {
     if (event.target.closest('button')) return;
-    openAssetDetails(definition);
+    openInstanceDetails(definition, instance, index, state);
   });
   card.addEventListener('keydown', event => {
     if (event.key === 'Enter' && event.target === card) {
       event.preventDefault();
-      openAssetDetails(definition);
+      openInstanceDetails(definition, instance, index, state);
     }
   });
 
-  container.appendChild(card);
-
-  const entry = {
-    card,
-    badge,
-    metrics: {
-      status: statusMetric.value,
-      income: incomeMetric.value,
-      upkeep: upkeepMetric.value,
-      risk: riskMetric.value
-    },
-    perkHighlight,
-    buildsButton,
-    upgradeButton,
-    detailsButton,
-    primary: primaryButton,
-    nextUpgrade: null
-  };
-
-  assetUi.set(definition.id, entry);
-  refreshAssetRow(definition);
+  return card;
 }
 
-function refreshAssetRow(definition) {
-  const ui = assetUi.get(definition.id);
-  if (!ui) return;
-  const state = getState();
-  const assetState = getAssetState(definition.id, state);
-  const instances = Array.isArray(assetState?.instances) ? assetState.instances : [];
-  const activeInstances = instances.filter(instance => instance.status === 'active');
-  const pausedInstances = instances.filter(instance => instance.status !== 'active');
-  const lastIncome = activeInstances.reduce((total, instance) => total + Number(instance.lastIncome || 0), 0);
-  ui.card.dataset.state = activeInstances.length > 0 ? 'active' : 'idle';
-  ui.card.dataset.needsMaintenance = activeInstances.some(instance => !instance.maintenanceFundedToday)
-    ? 'true'
-    : 'false';
-  const risk = ui.card.dataset.risk === 'high' ? 'High' : 'Moderate';
-
-  if (ui.badge) {
-    if (activeInstances.length) {
-      ui.badge.textContent = `${activeInstances.length} active`;
-    } else if (pausedInstances.length) {
-      ui.badge.textContent = `${pausedInstances.length} paused`;
-    } else {
-      ui.badge.textContent = 'Not launched';
-    }
-  }
-
-  if (ui.metrics?.status) {
-    if (activeInstances.length) {
-      const pausedNote = pausedInstances.length ? ` • ${pausedInstances.length} paused` : '';
-      ui.metrics.status.textContent = `${activeInstances.length} active${pausedNote}`;
-    } else if (pausedInstances.length) {
-      ui.metrics.status.textContent = `${pausedInstances.length} paused`;
-    } else {
-      ui.metrics.status.textContent = 'Launch to start earning';
-    }
-  }
-
-  if (ui.metrics?.income) {
-    ui.metrics.income.textContent = activeInstances.length
-      ? `$${formatMoney(Math.max(0, lastIncome))} yesterday`
-      : 'No earnings yet';
-  }
-
-  if (ui.metrics?.upkeep) {
-    const upkeepCost = Number(definition.maintenance?.cost) || 0;
-    const upkeepHours = Number(definition.maintenance?.hours) || 0;
-    const upkeepParts = [];
-    if (upkeepCost > 0) upkeepParts.push(`$${formatMoney(upkeepCost)}`);
-    if (upkeepHours > 0) upkeepParts.push(`${formatHours(upkeepHours)}`);
-    ui.metrics.upkeep.textContent = upkeepParts.join(' • ') || 'None';
-  }
-
-  if (ui.metrics?.risk) {
-    ui.metrics.risk.textContent = risk;
-  }
-
-  if (ui.perkHighlight) {
-    const perkText = definition.boosts || definition.unlocks || '';
-    if (perkText) {
-      ui.perkHighlight.hidden = false;
-      ui.perkHighlight.textContent = perkText;
-    } else {
-      ui.perkHighlight.hidden = true;
-      ui.perkHighlight.textContent = '';
-    }
-  }
-
-  if (ui.primary) {
-    ui.primary.textContent = typeof definition.action?.label === 'function'
-      ? definition.action.label(state)
-      : definition.action?.label || 'Launch';
-    const disabled = typeof definition.action?.disabled === 'function'
-      ? definition.action.disabled(state)
-      : Boolean(definition.action?.disabled);
-    ui.primary.disabled = disabled;
-  }
-
-  if (ui.buildsButton) {
-    const expanded = expandedAssetId === definition.id;
-    ui.buildsButton.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-    ui.buildsButton.textContent = expanded ? 'Hide builds' : 'Builds';
-  }
-
-  updateAssetUpgradeShortcut(definition, ui, state);
-  refreshExpandedAsset(definition);
-}
-
-function getAssetInstances(definition, state) {
-  if (!definition) return [];
-  const assetState = getAssetState(definition.id, state);
-  return Array.isArray(assetState?.instances) ? assetState.instances : [];
-}
-
-function describeAssetBuildRoster(instances = []) {
-  const activeCount = instances.filter(instance => instance?.status === 'active').length;
-  const queuedCount = instances.length - activeCount;
-  if (!instances.length) {
-    return 'Launch a build to start earning and it will show up right here.';
-  }
-  if (activeCount > 0) {
-    const activeLabel = `${activeCount} active build${activeCount === 1 ? '' : 's'} humming along`;
-    return queuedCount > 0
-      ? `${activeLabel} • ${queuedCount} queued.`
-      : `${activeLabel}.`;
-  }
-  return `Queue warming up • ${queuedCount} build${queuedCount === 1 ? '' : 's'} getting ready to launch.`;
-}
-
-function renderAssetBuildsContent(definition, state, container, instances, { includeSummary = false } = {}) {
-  if (!container) return;
-  const rosterNote = describeAssetBuildRoster(instances);
-  container.innerHTML = '';
-  if (includeSummary) {
-    const summary = document.createElement('p');
-    summary.className = 'asset-builds__summary';
-    summary.textContent = rosterNote;
-    container.appendChild(summary);
-  }
-
-  const section = createInstanceListSection(definition, state, instances);
-  if (section) {
-    const heading = section.querySelector('h3');
-    if (heading) {
-      section.removeChild(heading);
-    }
-    while (section.firstChild) {
-      container.appendChild(section.firstChild);
-    }
-  }
-
-  if (!container.childElementCount) {
-    const empty = document.createElement('p');
-    empty.className = 'asset-builds__empty';
-    empty.textContent = rosterNote;
-    container.appendChild(empty);
-  }
-}
-
-function refreshExpandedAsset(definition) {
-  if (!definition || expandedAssetId !== definition.id) return;
-  const state = getState();
-  renderLaunchedBuilds(definition, state);
-}
-
-function toggleAssetBuilds(definition) {
-  if (!definition) return;
-  if (expandedAssetId === definition.id) {
-    collapseAssetBuilds(definition.id);
-    return;
-  }
-  if (expandedAssetId) {
-    collapseAssetBuilds(expandedAssetId, { silent: true });
-  }
-  expandAssetBuilds(definition);
-}
-
-function expandAssetBuilds(definition) {
-  const ui = assetUi.get(definition.id);
-  if (!ui?.card) return;
-  const state = getState();
-  expandedAssetId = definition.id;
-  ui.card.dataset.selected = 'true';
-  ui.card.classList.add('is-selected');
-  if (ui.buildsButton) {
-    ui.buildsButton.textContent = 'Hide builds';
-    ui.buildsButton.setAttribute('aria-expanded', 'true');
-  }
-  renderLaunchedBuilds(definition, state);
-}
-
-function collapseAssetBuilds(assetId, { silent = false } = {}) {
-  if (!assetId) return;
-  const ui = assetUi.get(assetId);
-  if (ui?.card) {
-    ui.card.dataset.selected = 'false';
-    ui.card.classList.remove('is-selected');
-  }
-  if (ui?.buildsButton) {
-    ui.buildsButton.textContent = 'Builds';
-    ui.buildsButton.setAttribute('aria-expanded', 'false');
-  }
-  if (expandedAssetId === assetId) {
-    expandedAssetId = null;
-    if (!silent) {
-      renderLaunchedBuilds(null, getState());
-    }
-  }
-}
-
-function openAssetDetails(definition) {
-  const state = getState();
-  const body = document.createElement('div');
-  body.className = 'asset-detail';
-
-  if (definition.description) {
-    const intro = document.createElement('p');
-    intro.className = 'asset-detail__intro';
-    intro.textContent = definition.description;
-    body.appendChild(intro);
-  }
-
-  const highlights = createAssetDetailHighlights(definition);
-  if (highlights) {
-    body.appendChild(highlights);
-  }
-
-  showSlideOver({ eyebrow: 'Asset', title: definition.name, body });
-}
-
-function renderLaunchedBuilds(definition, state) {
-  const panel = elements.assetLaunched;
-  if (!panel?.content) return;
-
-  const { content, note, title } = panel;
-  content.innerHTML = '';
-
-  if (!definition) {
-    if (title) title.textContent = 'Launched builds';
-    if (note) note.textContent = 'Select an asset to explore active and queued builds.';
-    const empty = document.createElement('p');
-    empty.className = 'asset-launched__empty';
-    empty.textContent = 'No asset selected yet. Tap a card to review its build roster.';
-    content.appendChild(empty);
-    return;
-  }
-
-  const instances = getAssetInstances(definition, state);
-
-  if (title) {
-    title.textContent = `${definition.name} builds`;
-  }
-
-  if (note) {
-    note.textContent = describeAssetBuildRoster(instances);
-  }
-
-  renderAssetBuildsContent(definition, state, content, instances);
-}
-
-function buildAssetGroups(definitions = []) {
+function buildAssetGroups(definitions = [], state = getState()) {
   const groups = new Map();
   definitions.forEach(definition => {
-    const id = getAssetGroupId(definition);
+    const groupId = getAssetGroupId(definition);
     const label = getAssetGroupLabel(definition);
-    if (!groups.has(id)) {
-      groups.set(id, { id, label, note: getAssetGroupNote(label), definitions: [] });
+    if (!groups.has(groupId)) {
+      groups.set(groupId, {
+        id: groupId,
+        label,
+        note: getAssetGroupNote(label),
+        definitions: [],
+        instances: []
+      });
     }
-    groups.get(id).definitions.push(definition);
+    const entry = groups.get(groupId);
+    entry.definitions.push(definition);
+    const assetState = getAssetState(definition.id, state);
+    const instances = Array.isArray(assetState?.instances) ? assetState.instances : [];
+    instances.forEach((instance, index) => {
+      entry.instances.push({ definition, instance, index });
+    });
   });
   return Array.from(groups.values());
 }
 
-function renderAssets(definitions) {
+function renderAssets(definitions = []) {
   const gallery = elements.assetGallery;
   if (!gallery) return;
-  if (expandedAssetId) {
-    collapseAssetBuilds(expandedAssetId);
-  }
+  const state = getState();
+  currentAssetDefinitions = Array.isArray(definitions) ? definitions : [];
   gallery.innerHTML = '';
-  assetUi.clear();
-  expandedAssetId = null;
 
-  const groups = buildAssetGroups(definitions);
+  const groups = buildAssetGroups(currentAssetDefinitions, state);
   if (!groups.length) {
     const empty = document.createElement('p');
     empty.className = 'asset-gallery__empty';
@@ -1901,6 +1777,7 @@ function renderAssets(definitions) {
   }
 
   const fragment = document.createDocumentFragment();
+  let totalInstances = 0;
   groups.forEach(group => {
     const section = document.createElement('section');
     section.className = 'asset-group';
@@ -1921,21 +1798,85 @@ function renderAssets(definitions) {
       heading.appendChild(note);
     }
     header.appendChild(heading);
+
+    const actions = document.createElement('div');
+    actions.className = 'asset-group__actions';
+    group.definitions.forEach(definition => {
+      const button = createLaunchButton(definition, state);
+      if (button) {
+        actions.appendChild(button);
+      }
+    });
+    if (actions.childElementCount) {
+      header.appendChild(actions);
+    }
+
     const count = document.createElement('span');
     count.className = 'asset-group__count';
-    count.textContent = `${group.definitions.length} asset${group.definitions.length === 1 ? '' : 's'}`;
+    count.textContent = group.instances.length
+      ? `${group.instances.length} build${group.instances.length === 1 ? '' : 's'}`
+      : 'No builds yet';
     header.appendChild(count);
 
     const grid = document.createElement('div');
     grid.className = 'asset-group__grid';
     grid.setAttribute('role', 'list');
-    group.definitions.forEach(def => renderAssetCard(def, grid));
+    const sortedInstances = [...group.instances].sort((a, b) => {
+      const aActive = a.instance.status === 'active';
+      const bActive = b.instance.status === 'active';
+      if (aActive !== bActive) {
+        return aActive ? -1 : 1;
+      }
+      const aDay = Number(a.instance.createdOnDay) || Number.MAX_SAFE_INTEGER;
+      const bDay = Number(b.instance.createdOnDay) || Number.MAX_SAFE_INTEGER;
+      return aDay - bDay;
+    });
+    sortedInstances.forEach(entry => {
+      const card = createAssetInstanceCard(entry.definition, entry.instance, entry.index, state);
+      if (card) {
+        grid.appendChild(card);
+        totalInstances += 1;
+      }
+    });
+    if (!grid.childElementCount) {
+      const empty = document.createElement('p');
+      empty.className = 'asset-group__empty';
+      empty.textContent = 'No launched assets in this category yet.';
+      grid.appendChild(empty);
+    }
 
     section.append(header, grid);
     fragment.appendChild(section);
   });
 
   gallery.appendChild(fragment);
+  if (totalInstances === 0) {
+    const empty = document.createElement('p');
+    empty.className = 'asset-gallery__empty';
+    empty.textContent = 'Launch an asset to see it here. Each build gets its own action card once active.';
+    gallery.appendChild(empty);
+  }
+  applyCardFilters();
+}
+
+function openInstanceDetails(definition, instance, index, state = getState()) {
+  const body = document.createElement('div');
+  body.className = 'asset-detail';
+  const section = document.createElement('section');
+  section.className = 'asset-detail__section asset-detail__section--instances';
+  const list = document.createElement('ul');
+  list.className = 'asset-detail__instances';
+  const item = createInstanceCard(definition, instance, index, state);
+  if (item) {
+    list.appendChild(item);
+  }
+  section.appendChild(list);
+  body.appendChild(section);
+  showSlideOver({
+    eyebrow: getAssetGroupLabel(definition),
+    title: instanceLabel(definition, index),
+    body
+  });
 }
 
 function formatLabelFromKey(id, fallback = 'Special') {
@@ -3033,8 +2974,8 @@ export function updateCard(definition) {
     updateHustleCard(definition);
     return;
   }
-  if (assetUi.has(definition.id)) {
-    refreshAssetRow(definition);
+  if (currentAssetDefinitions.some(def => def.id === definition.id)) {
+    renderAssets(currentAssetDefinitions);
     return;
   }
   if (upgradeUi.has(definition.id)) {
