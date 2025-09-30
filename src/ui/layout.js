@@ -1,4 +1,5 @@
 import elements from './elements.js';
+import commandPalette from './commandPalette.js';
 
 function emitLayoutEvent(name) {
   if (typeof document?.createEvent === 'function') {
@@ -17,6 +18,7 @@ export function initLayoutControls() {
   setupEventLog();
   setupSlideOver();
   setupCommandPalette();
+  commandPalette.init();
   setupFilterHandlers();
 }
 
@@ -112,6 +114,7 @@ function setupCommandPalette() {
   if (!commandPalette || !commandPaletteTrigger) return;
 
   const show = () => {
+    commandPalette.prepare();
     commandPalette.hidden = false;
     commandPaletteSearch?.focus({ preventScroll: true });
   };

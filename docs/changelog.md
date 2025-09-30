@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Command palette: searchable, keyboard-friendly command list now surfaces catalog actions and quick hustles with cheerful status updates when you trigger them.
 - Asset hub polish: launcher hides behind a dedicated button, asset cards always surface payout breakdowns, and upgrade buttons
   clearly show when a boost is ready versus locked.
 - Dashboard quick actions and asset upgrade suggestions now use uniform action cards so critical buttons stay aligned and easy to scan.

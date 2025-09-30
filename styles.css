@@ -2891,6 +2891,22 @@ body {
   cursor: pointer;
 }
 
+.command-list__title {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.command-list__detail {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--text-subtle);
+}
+
+.command-list__empty {
+  padding: 10px 20px;
+  color: var(--text-subtle);
+}
+
 .command-list li[aria-selected='true'],
 .command-list li:hover {
   background: rgba(124, 92, 255, 0.18);

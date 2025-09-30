@@ -6,6 +6,7 @@
 **What exists today**
 - Catalog selectors check time, money, requirements, daily limits, and emit why an action is locked.
 - A debug toggle (`?debugActions=1` or `#debug-actions`) lists the catalog in-game for rapid balancing.
+- The command palette now pulls from the catalog and quick-action builders so search and keyboard navigation can trigger any ready move.
 
 **Why it matters**
 - Shared data eliminates drift between cards, unlock messaging, and future recommendation UIs.
