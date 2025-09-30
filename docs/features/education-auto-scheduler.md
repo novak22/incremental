@@ -11,6 +11,7 @@
 **UI cues**
 - Education cards show countdowns, tuition, and daily load straight from definitions with badges like Ready, Enrolled, Logged today, Graduated.
 - Progress strips pair percentage with "days complete / days left" so graduation timing stays obvious.
+- The study queue header spells out the auto-scheduled ordering and flags that manual tweaks are still on deck.
 
 **Design notes**
 - Study time reserves before maintenance, keeping promises consistent.
