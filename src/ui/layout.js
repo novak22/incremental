@@ -18,6 +18,7 @@ export function initLayoutControls() {
   setupSlideOver();
   setupCommandPalette();
   setupFilterHandlers();
+  setupKpiShortcuts();
 }
 
 export function applyCardFilters() {
@@ -152,6 +153,78 @@ function setupFilterHandlers() {
 
   elements.studyFilters.activeOnly?.addEventListener('change', applyStudyFilters);
   elements.studyFilters.hideComplete?.addEventListener('change', applyStudyFilters);
+}
+
+function setupKpiShortcuts() {
+  const buttons = Object.values(elements.kpis || {}).filter(Boolean);
+  if (!buttons.length) return;
+
+  const targetLookup = {
+    cash: () => elements.dailyStats.earningsActive?.closest('.daily-stats__section')
+      || elements.dailyStats.earningsActive
+      || elements.dailyStats.earningsSummary,
+    net: () => elements.dailyStats.spendList?.closest('.daily-stats__section')
+      || elements.dailyStats.spendList
+      || elements.dailyStats.spendSummary,
+    time: () => elements.dailyStats.timeList?.closest('.daily-stats__section')
+      || elements.dailyStats.timeList
+      || elements.dailyStats.timeSummary,
+    upkeep: () => elements.notifications?.closest('.dashboard-card') || elements.notifications,
+    assets: () => elements.assetUpgradeActions?.closest('.dashboard-card') || elements.assetUpgradeActions,
+    study: () => elements.dailyStats.studyList?.closest('.daily-stats__section')
+      || elements.dailyStats.studyList
+      || elements.dailyStats.studySummary
+  };
+
+  const statusMessages = {
+    cash: 'Scooting to the daily earnings breakdown.',
+    net: 'Reviewing how today’s inflows and outflows balance.',
+    time: 'Hopping down to the time ledger for today.',
+    upkeep: 'Checking upkeep reminders and notifications.',
+    assets: 'Spotlighting active assets and upgrade prospects.',
+    study: 'Beaming over to the study progress section.'
+  };
+
+  buttons.forEach(button => {
+    button.addEventListener('click', () => {
+      const detail = button.dataset.detail;
+      const target = targetLookup[detail]?.();
+      if (!target) return;
+
+      focusDashboardSection(target);
+      const message = statusMessages[detail];
+      if (message && elements.sessionStatus) {
+        elements.sessionStatus.textContent = message;
+      }
+    });
+  });
+}
+
+function focusDashboardSection(target) {
+  if (!target) return;
+
+  target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+
+  const highlight = target;
+  const focusable = highlight.matches('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')
+    ? highlight
+    : highlight.querySelector('h2, h3, h4, button, [tabindex]:not([tabindex="-1"]), a, input, select, textarea');
+
+  let cleanup;
+  if (focusable) {
+    focusable.focus({ preventScroll: true });
+  } else {
+    highlight.setAttribute('tabindex', '-1');
+    highlight.focus({ preventScroll: true });
+    cleanup = () => highlight.removeAttribute('tabindex');
+  }
+
+  highlight.classList.add('is-kpi-highlight');
+  window.setTimeout(() => highlight.classList.remove('is-kpi-highlight'), 1400);
+
+  if (cleanup) {
+    window.setTimeout(cleanup, 700);
+  }
 }
 
 function applyHustleFilters() {
