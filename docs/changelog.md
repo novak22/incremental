@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Niche analytics refinement: daily outlook now breaks down player exposure, flags missed opportunities, and niche cards read like mini dashboards with 7-day earnings, trend swings, invested/uninvested grouping, and future hooks for sparklines and auto recommendations.
 - Tech refactor: Hustle helpers, definitions, and knowledge flows now live in dedicated modules so new gigs slot in without tou
   ching core loop logic.
 - Analytics makeover: Daily outlook hero highlights and a sortable niche card grid with watchlist filters surface earnings, asset exposure, and trend swings at a glance.

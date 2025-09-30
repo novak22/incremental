@@ -248,6 +248,13 @@
                   <p id="analytics-highlight-risk-note" class="analytics-highlight__note">We’ll flag niches that are cooling off fast.</p>
                 </dd>
               </div>
+              <div class="analytics-highlight">
+                <dt>Missed opportunity</dt>
+                <dd>
+                  <span id="analytics-highlight-miss" class="analytics-highlight__value">Nothing slipping yet</span>
+                  <p id="analytics-highlight-miss-note" class="analytics-highlight__note">We’ll shout when a hot niche lacks your assets.</p>
+                </dd>
+              </div>
             </dl>
           </article>
 
@@ -262,11 +269,12 @@
                 <button type="button" class="ghost niche-controls__button is-active" data-niche-sort="impact" aria-pressed="true">Highest payout impact</button>
                 <button type="button" class="ghost niche-controls__button" data-niche-sort="assets" aria-pressed="false">Most assets invested</button>
                 <button type="button" class="ghost niche-controls__button" data-niche-sort="movement" aria-pressed="false">Fastest trend movement</button>
+                <button type="button" class="ghost niche-controls__button" data-niche-sort="missed" aria-pressed="false">Largest missed opportunity</button>
               </div>
               <div class="niche-controls__filters" role="group" aria-label="Niche filters">
                 <label class="niche-controls__toggle">
                   <input type="checkbox" id="niche-filter-invested" />
-                  <span>Invested niches only</span>
+                  <span>Show only invested niches</span>
                 </label>
                 <label class="niche-controls__toggle">
                   <input type="checkbox" id="niche-filter-watchlist" />

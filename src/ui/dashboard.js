@@ -556,8 +556,13 @@ function renderDailyStats(summary) {
 
 const nicheViewState = {
   sort: 'impact',
-  investedOnly: false,
-  watchlistOnly: false
+  investedOnly: true,
+  watchlistOnly: false,
+  collapsed: {
+    invested: false,
+    uninvested: true
+  },
+  userSetInvestedFilter: false
 };
 let nicheControlsBound = false;
 let assetHighlightTimer = null;
@@ -583,6 +588,7 @@ function setupNicheControls() {
   });
   refs.filterInvested?.addEventListener('change', event => {
     nicheViewState.investedOnly = Boolean(event.target?.checked);
+    nicheViewState.userSetInvestedFilter = true;
     refreshNicheWidget();
   });
   refs.filterWatchlist?.addEventListener('change', event => {
@@ -592,7 +598,7 @@ function setupNicheControls() {
   nicheControlsBound = true;
 }
 
-function updateNicheControlStates({ watchlistCount = 0 } = {}) {
+function updateNicheControlStates({ watchlistCount = 0, hasInvested = false } = {}) {
   const refs = getNicheTrends() || {};
   const buttons = Array.isArray(refs.sortButtons) ? refs.sortButtons : [];
   buttons.forEach(button => {
@@ -601,7 +607,18 @@ function updateNicheControlStates({ watchlistCount = 0 } = {}) {
     button.setAttribute('aria-pressed', String(isActive));
   });
   if (refs.filterInvested) {
-    refs.filterInvested.checked = nicheViewState.investedOnly;
+    const disableInvested = !hasInvested;
+    refs.filterInvested.checked = disableInvested ? false : nicheViewState.investedOnly;
+    refs.filterInvested.disabled = disableInvested;
+    const investedWrapper = refs.filterInvested.parentElement;
+    if (investedWrapper?.classList) {
+      investedWrapper.classList.toggle('is-disabled', disableInvested);
+    }
+    if (disableInvested) {
+      refs.filterInvested.title = 'Invest in at least one niche to enable this view.';
+    } else {
+      refs.filterInvested.title = '';
+    }
   }
   if (refs.filterWatchlist) {
     const disabled = watchlistCount === 0;
@@ -672,6 +689,8 @@ function buildNicheAnalytics(state) {
       netEarnings: 0,
       trendImpact: 0,
       baselineEarnings: 0,
+      lifetimeEarnings: 0,
+      recentWindowEarnings: 0,
       assetBreakdown: new Map()
     });
   });
@@ -703,17 +722,39 @@ function buildNicheAnalytics(state) {
       target.netEarnings += actual;
       target.trendImpact += trendDelta;
       target.baselineEarnings += Math.max(0, baseline);
+      const lifetime = Number(instance.totalIncome);
+      if (Number.isFinite(lifetime) && lifetime > 0) {
+        target.lifetimeEarnings += lifetime;
+      }
+      const recentIncome = Array.isArray(instance.recentIncome) ? instance.recentIncome : [];
+      const windowTotal = recentIncome.reduce((sum, value) => {
+        const amount = Number(value);
+        return Number.isFinite(amount) ? sum + Math.max(0, amount) : sum;
+      }, 0);
+      if (windowTotal > 0) {
+        target.recentWindowEarnings += windowTotal;
+      }
     });
   });
 
   return Array.from(stats.values()).map(entry => {
     const assetBreakdown = Array.from(entry.assetBreakdown.entries()).map(([name, count]) => ({ name, count }));
+    const multiplier = Number(entry.popularity?.multiplier) || 1;
+    const score = clampScore(entry.popularity?.score) || 0;
+    const delta = Math.abs(Number(entry.popularity?.delta) || 0);
+    const payoutLift = Math.max(0, multiplier - 1);
+    const opportunityScore = entry.assetCount > 0
+      ? 0
+      : Math.round((payoutLift * 100 + delta * 3 + score / 5) * 100) / 100;
     return {
       ...entry,
       assetBreakdown,
       netEarnings: Math.round(entry.netEarnings * 100) / 100,
       trendImpact: Math.round(entry.trendImpact * 100) / 100,
       baselineEarnings: Math.round(entry.baselineEarnings * 100) / 100,
+      lifetimeEarnings: Math.round(entry.lifetimeEarnings * 100) / 100,
+      recentWindowEarnings: Math.round(entry.recentWindowEarnings * 100) / 100,
+      opportunityScore,
       status: describeTrendStatus(entry)
     };
   });
@@ -751,6 +792,21 @@ function focusAssetsForNiche(nicheId, { hasAssets = false, nicheName = '' } = {}
   });
 }
 
+function getTrendGlyph(entry) {
+  if (!entry) return '•';
+  const delta = Number(entry.popularity?.delta);
+  if (Number.isFinite(delta)) {
+    if (delta >= 4) return '↑';
+    if (delta <= -4) return '↓';
+  }
+  const score = Number(entry.popularity?.score);
+  if (Number.isFinite(score)) {
+    if (score >= 70) return '↑';
+    if (score <= 40) return '↓';
+  }
+  return '•';
+}
+
 function createNicheCard(entry) {
   if (!entry) return null;
   const card = document.createElement('article');
@@ -765,134 +821,178 @@ function createNicheCard(entry) {
   const header = document.createElement('header');
   header.className = 'niche-card__header';
 
-  const titleWrap = document.createElement('div');
-  titleWrap.className = 'niche-card__title';
+  const titleRow = document.createElement('div');
+  titleRow.className = 'niche-card__title-row';
+
+  const glyph = document.createElement('span');
+  glyph.className = 'niche-card__status-icon';
+  glyph.textContent = getTrendGlyph(entry);
+  titleRow.appendChild(glyph);
 
   const name = document.createElement('h4');
   name.className = 'niche-card__name';
   name.textContent = entry.definition?.name || 'Untitled niche';
-  titleWrap.appendChild(name);
+  titleRow.appendChild(name);
 
   const status = document.createElement('span');
   status.className = 'niche-card__status';
   status.textContent = entry.status || 'Steady';
-  titleWrap.appendChild(status);
+  titleRow.appendChild(status);
 
-  header.appendChild(titleWrap);
+  header.appendChild(titleRow);
 
-  const score = document.createElement('p');
-  score.className = 'niche-card__score';
   const normalizedScore = clampScore(entry.popularity?.score);
-  score.textContent = normalizedScore !== null ? normalizedScore : '–';
-  header.appendChild(score);
-
-  card.appendChild(header);
-
-  const meter = document.createElement('div');
-  meter.className = 'niche-card__meter';
-  meter.setAttribute('role', 'progressbar');
-  meter.setAttribute('aria-valuemin', '0');
-  meter.setAttribute('aria-valuemax', '100');
-  meter.setAttribute('aria-valuenow', normalizedScore !== null ? String(normalizedScore) : '0');
-  const fill = document.createElement('div');
-  fill.className = 'niche-card__meter-fill';
-  fill.style.setProperty('--fill', normalizedScore !== null ? `${normalizedScore}%` : '0%');
-  meter.appendChild(fill);
-  card.appendChild(meter);
-
-  const globalSection = document.createElement('section');
-  globalSection.className = 'niche-card__section';
-  const globalHeading = document.createElement('h5');
-  globalHeading.textContent = 'Global momentum';
-  globalSection.appendChild(globalHeading);
-
   const multiplier = Number(entry.popularity?.multiplier);
   const payoutText = Number.isFinite(multiplier)
     ? (multiplier === 1 ? 'Baseline payouts' : `${formatPercent(multiplier - 1)} payouts`)
     : 'Payout data pending';
-  const globalStat = document.createElement('p');
-  globalStat.className = 'niche-card__stat';
-  globalStat.textContent = payoutText;
-  globalSection.appendChild(globalStat);
+
+  const impactHighlight = document.createElement('p');
+  impactHighlight.className = 'niche-card__impact';
+  let impactText = 'Trend neutral';
+  let impactClass = 'niche-card__impact--neutral';
+  const swing = Math.round(Math.abs(entry.trendImpact) * 100) / 100;
+  if (entry.assetCount > 0) {
+    if (swing >= 0.5) {
+      const positive = entry.trendImpact >= 0;
+      const prefix = positive ? '+' : '-';
+      impactText = `${prefix}$${formatMoney(swing)} vs baseline`;
+      impactClass = positive ? 'niche-card__impact--positive' : 'niche-card__impact--negative';
+    } else {
+      impactText = 'Tracking baseline';
+    }
+  } else {
+    if (Number.isFinite(multiplier) && multiplier > 1) {
+      impactText = `Missed +${Math.round((multiplier - 1) * 100)}% payouts`; 
+      impactClass = 'niche-card__impact--missed';
+    } else if (Number.isFinite(multiplier) && multiplier < 1) {
+      impactText = 'Protected from slump';
+      impactClass = 'niche-card__impact--positive';
+    } else {
+      impactText = 'No exposure yet';
+    }
+  }
+  impactHighlight.classList.add(impactClass);
+  impactHighlight.textContent = impactText;
+  header.appendChild(impactHighlight);
+
+  card.appendChild(header);
+
+  const overview = document.createElement('div');
+  overview.className = 'niche-card__overview';
+
+  const globalBlock = document.createElement('section');
+  globalBlock.className = 'niche-card__global';
+
+  const globalMetrics = document.createElement('dl');
+  globalMetrics.className = 'niche-card__metrics';
+
+  const payoutTerm = document.createElement('dt');
+  payoutTerm.textContent = 'Global payout';
+  const payoutValue = document.createElement('dd');
+  payoutValue.textContent = payoutText;
+  globalMetrics.appendChild(payoutTerm);
+  globalMetrics.appendChild(payoutValue);
+
+  const scoreTerm = document.createElement('dt');
+  scoreTerm.textContent = 'Momentum score';
+  const scoreValue = document.createElement('dd');
+  scoreValue.textContent = normalizedScore !== null ? `${normalizedScore}/100` : 'Pending';
+  globalMetrics.appendChild(scoreTerm);
+  globalMetrics.appendChild(scoreValue);
+
+  globalBlock.appendChild(globalMetrics);
 
   const globalNote = document.createElement('p');
   globalNote.className = 'niche-card__note';
   const noteParts = [];
-  if (normalizedScore !== null) noteParts.push(`Score ${normalizedScore}`);
   const deltaText = describeDelta(entry.popularity);
   if (deltaText) noteParts.push(deltaText);
   if (entry.popularity?.label) noteParts.push(entry.popularity.label);
   globalNote.textContent = noteParts.join(' • ') || 'Trend scan warming up.';
-  globalSection.appendChild(globalNote);
+  globalBlock.appendChild(globalNote);
 
-  card.appendChild(globalSection);
+  const sparkline = document.createElement('div');
+  sparkline.className = 'niche-card__sparkline';
+  sparkline.setAttribute('aria-hidden', 'true');
+  const sparkPlaceholder = document.createElement('span');
+  sparkPlaceholder.className = 'niche-card__sparkline-placeholder';
+  sparkPlaceholder.textContent = '7-day trend coming soon';
+  sparkline.appendChild(sparkPlaceholder);
+  globalBlock.appendChild(sparkline);
+
+  overview.appendChild(globalBlock);
 
   const playerSection = document.createElement('section');
-  playerSection.className = 'niche-card__section';
+  playerSection.className = 'niche-card__player';
+
   const playerHeading = document.createElement('h5');
-  playerHeading.textContent = 'Your empire';
+  playerHeading.textContent = 'Your position';
   playerSection.appendChild(playerHeading);
 
-  const playerStat = document.createElement('p');
-  playerStat.className = 'niche-card__stat';
+  const playerMetrics = document.createElement('dl');
+  playerMetrics.className = 'niche-card__player-metrics';
+  const addPlayerMetric = (label, value) => {
+    const term = document.createElement('dt');
+    term.textContent = label;
+    const detail = document.createElement('dd');
+    detail.textContent = value;
+    playerMetrics.appendChild(term);
+    playerMetrics.appendChild(detail);
+  };
+
+  const assetLabel = entry.assetCount === 1 ? '1 asset' : `${entry.assetCount} assets`;
   if (entry.assetCount > 0) {
-    playerStat.textContent = entry.assetCount === 1
-      ? '1 asset active'
-      : `${entry.assetCount} assets active`;
+    addPlayerMetric('Assets', `${assetLabel} assigned`);
   } else if (entry.watchlisted) {
-    playerStat.textContent = 'On your watchlist';
+    addPlayerMetric('Assets', 'On your watchlist');
   } else {
-    playerStat.textContent = 'No assets assigned yet';
+    addPlayerMetric('Assets', 'No coverage yet');
   }
-  playerSection.appendChild(playerStat);
 
-  const earningsLine = document.createElement('p');
-  earningsLine.className = 'niche-card__metric';
+  const trailing = entry.recentWindowEarnings > 0
+    ? `$${formatMoney(entry.recentWindowEarnings)} in 7 days`
+    : 'No payouts in window';
+  addPlayerMetric('Trailing earnings', trailing);
+
+  const yesterday = entry.netEarnings > 0
+    ? `$${formatMoney(entry.netEarnings)} yesterday`
+    : 'No earnings yesterday';
+  addPlayerMetric('Latest day', yesterday);
+
+  if (entry.lifetimeEarnings > 0) {
+    addPlayerMetric('Lifetime', `$${formatMoney(entry.lifetimeEarnings)}`);
+  }
+
+  playerSection.appendChild(playerMetrics);
+
   if (entry.assetCount > 0) {
-    earningsLine.textContent = entry.netEarnings > 0
-      ? `$${formatMoney(entry.netEarnings)} earned today`
-      : 'No payouts logged today.';
+    const baselineNote = document.createElement('p');
+    baselineNote.className = 'niche-card__note';
+    baselineNote.textContent = `Baseline payout would land near $${formatMoney(entry.baselineEarnings)}.`;
+    playerSection.appendChild(baselineNote);
   } else {
-    earningsLine.textContent = 'Assign an asset to tap this trend.';
-  }
-  playerSection.appendChild(earningsLine);
-
-  if (entry.assetCount > 0) {
-    const trendLine = document.createElement('p');
-    trendLine.className = 'niche-card__trend';
-    if (Math.abs(entry.trendImpact) >= 0.5) {
-      const prefix = entry.trendImpact >= 0 ? '+' : '-';
-      trendLine.textContent = `${prefix}$${formatMoney(Math.abs(entry.trendImpact))} from today's trend`;
-      trendLine.classList.add(entry.trendImpact >= 0 ? 'niche-card__trend--positive' : 'niche-card__trend--negative');
-      playerSection.appendChild(trendLine);
-
-      const baselineNote = document.createElement('p');
-      baselineNote.className = 'niche-card__note';
-      baselineNote.textContent = `Baseline would land around $${formatMoney(entry.baselineEarnings)}.`;
-      playerSection.appendChild(baselineNote);
-    } else {
-      trendLine.textContent = 'Trend impact is neutral today.';
-      trendLine.classList.add('niche-card__trend--neutral');
-      playerSection.appendChild(trendLine);
-    }
-  } else if (entry.watchlisted) {
-    const watchNote = document.createElement('p');
-    watchNote.className = 'niche-card__note';
-    watchNote.textContent = 'Keep tabs on this niche and pivot when the hype spikes.';
-    playerSection.appendChild(watchNote);
+    const encouragement = document.createElement('p');
+    encouragement.className = 'niche-card__note';
+    encouragement.textContent = multiplier > 1
+      ? 'Catch this wave by assigning a passive asset that fits the niche.'
+      : 'Queue an asset when the timing feels right.';
+    playerSection.appendChild(encouragement);
   }
 
   if (entry.assetBreakdown?.length) {
     const breakdown = document.createElement('p');
     breakdown.className = 'niche-card__note';
-    const parts = entry.assetBreakdown.map(({ name, count }) =>
-      count > 1 ? `${name} (${count})` : name
+    const parts = entry.assetBreakdown.map(({ name: assetName, count }) =>
+      count > 1 ? `${assetName} (${count})` : assetName
     );
     breakdown.textContent = `Assets: ${parts.join(', ')}`;
     playerSection.appendChild(breakdown);
   }
 
-  card.appendChild(playerSection);
+  overview.appendChild(playerSection);
+
+  card.appendChild(overview);
 
   const actions = document.createElement('div');
   actions.className = 'niche-card__actions';
@@ -900,9 +1000,7 @@ function createNicheCard(entry) {
   const viewButton = document.createElement('button');
   viewButton.type = 'button';
   viewButton.className = 'ghost niche-card__action';
-  viewButton.textContent = entry.assetCount > 0
-    ? 'View assets in this niche'
-    : 'Find assets for this niche';
+  viewButton.textContent = 'View assets';
   viewButton.addEventListener('click', () => {
     focusAssetsForNiche(entry.id, {
       hasAssets: entry.assetCount > 0,
@@ -910,6 +1008,18 @@ function createNicheCard(entry) {
     });
   });
   actions.appendChild(viewButton);
+
+  const findButton = document.createElement('button');
+  findButton.type = 'button';
+  findButton.className = 'ghost niche-card__action';
+  findButton.textContent = 'Find assets';
+  findButton.addEventListener('click', () => {
+    focusAssetsForNiche(entry.id, {
+      hasAssets: entry.assetCount > 0,
+      nicheName: entry.definition?.name
+    });
+  });
+  actions.appendChild(findButton);
 
   const watchlistButton = document.createElement('button');
   watchlistButton.type = 'button';
@@ -921,17 +1031,67 @@ function createNicheCard(entry) {
   });
   actions.appendChild(watchlistButton);
 
-  const recommendButton = document.createElement('button');
-  recommendButton.type = 'button';
-  recommendButton.className = 'ghost niche-card__action';
-  recommendButton.textContent = 'Queue recommended hustle';
-  recommendButton.disabled = true;
-  recommendButton.title = 'Coming soon: auto-queue the best hustle for this niche.';
-  actions.appendChild(recommendButton);
-
   card.appendChild(actions);
 
+  const recommendation = document.createElement('footer');
+  recommendation.className = 'niche-card__recommendation';
+  const recommendationHeading = document.createElement('h6');
+  recommendationHeading.textContent = 'Recommendation preview';
+  recommendation.appendChild(recommendationHeading);
+  const recommendationCopy = document.createElement('p');
+  recommendationCopy.textContent = 'Next best hustle coming soon — the simulator will suggest a launch that fits this trend.';
+  recommendation.appendChild(recommendationCopy);
+  card.appendChild(recommendation);
+
   return card;
+}
+
+function renderNicheGroup({ key, label, entries }) {
+  if (!entries || !entries.length) return null;
+  const section = document.createElement('section');
+  section.className = 'niche-board__group';
+  section.dataset.group = key;
+
+  const header = document.createElement('header');
+  header.className = 'niche-board__group-header';
+
+  const title = document.createElement('h4');
+  title.textContent = label;
+  header.appendChild(title);
+
+  const toggle = document.createElement('button');
+  toggle.type = 'button';
+  toggle.className = 'ghost niche-board__group-toggle';
+  const collapsedState = Boolean(nicheViewState.collapsed?.[key]);
+  toggle.textContent = collapsedState ? 'Expand' : 'Collapse';
+  toggle.setAttribute('aria-expanded', String(!collapsedState));
+  const bodyId = `niche-group-${key}`;
+  toggle.setAttribute('aria-controls', bodyId);
+  toggle.addEventListener('click', () => {
+    nicheViewState.collapsed = nicheViewState.collapsed || {};
+    nicheViewState.collapsed[key] = !collapsedState;
+    refreshNicheWidget();
+  });
+  header.appendChild(toggle);
+
+  section.appendChild(header);
+
+  const body = document.createElement('div');
+  body.className = 'niche-board__group-body';
+  body.id = bodyId;
+  body.setAttribute('aria-hidden', String(collapsedState));
+  if (collapsedState) {
+    body.hidden = true;
+  }
+
+  entries.forEach(entry => {
+    const card = createNicheCard(entry);
+    if (card) body.appendChild(card);
+  });
+
+  section.appendChild(body);
+
+  return section;
 }
 
 function updateDailyHighlights(analytics, refs) {
@@ -941,15 +1101,34 @@ function updateDailyHighlights(analytics, refs) {
     highlightSwing,
     highlightSwingNote,
     highlightRisk,
-    highlightRiskNote
+    highlightRiskNote,
+    highlightMiss,
+    highlightMissNote
   } = refs;
 
   const invested = analytics.filter(entry => entry.assetCount > 0);
   const relevant = invested.length ? invested : analytics;
-  const topImpact = relevant.slice().sort((a, b) => Math.abs(b.trendImpact) - Math.abs(a.trendImpact))[0];
+  const topImpact = relevant
+    .filter(entry => entry.trendImpact >= 0)
+    .sort((a, b) => b.trendImpact - a.trendImpact)[0]
+    || relevant.slice().sort((a, b) => Math.abs(b.trendImpact) - Math.abs(a.trendImpact))[0];
   const fastestMove = analytics.slice().sort((a, b) => Math.abs(Number(b.popularity?.delta) || 0) - Math.abs(Number(a.popularity?.delta) || 0))[0];
   const negativePool = (invested.length ? invested : analytics).filter(entry => entry.trendImpact < 0);
   const biggestLoss = negativePool.sort((a, b) => a.trendImpact - b.trendImpact)[0];
+  const missed = analytics
+    .filter(entry => entry.assetCount === 0)
+    .sort((a, b) => (b.opportunityScore || 0) - (a.opportunityScore || 0))[0];
+
+  const formatExposure = entry => {
+    if (!entry) return '';
+    const assetText = entry.assetCount > 0
+      ? `${entry.assetCount} asset${entry.assetCount === 1 ? '' : 's'}`
+      : 'No assets yet';
+    const trailing = entry.recentWindowEarnings > 0
+      ? `$${formatMoney(entry.recentWindowEarnings)} / 7d`
+      : 'No 7d earnings';
+    return `${assetText} • ${trailing}`;
+  };
 
   if (!topImpact) {
     if (highlightHot) highlightHot.textContent = 'No readings yet';
@@ -958,18 +1137,16 @@ function updateDailyHighlights(analytics, refs) {
     const impactValue = Math.abs(topImpact.trendImpact);
     const isPositive = topImpact.trendImpact >= 0;
     const impactLabel = impactValue >= 0.5
-      ? `${isPositive ? '+' : '-'}$${formatMoney(impactValue)} trend ${isPositive ? 'boost' : 'drag'}`
+      ? `${isPositive ? '+' : '-'}$${formatMoney(impactValue)} swing`
       : `${formatPercent((Number(topImpact.popularity?.multiplier) || 1) - 1)} payouts`;
     if (highlightHot) {
       highlightHot.textContent = `${topImpact.definition?.name || 'Untitled niche'} • ${impactLabel}`;
     }
     if (highlightHotNote) {
-      if (topImpact.assetCount > 0) {
-        const payoutText = `$${formatMoney(Math.max(0, topImpact.netEarnings))}`;
-        highlightHotNote.textContent = `Your ${topImpact.assetCount} asset${topImpact.assetCount === 1 ? '' : 's'} made ${payoutText} today with ${formatPercent((Number(topImpact.popularity?.multiplier) || 1) - 1)} payouts.`;
-      } else {
-        highlightHotNote.textContent = `Queue an asset to capture ${formatPercent((Number(topImpact.popularity?.multiplier) || 1) - 1)} payouts from this niche.`;
-      }
+      const exposure = formatExposure(topImpact);
+      highlightHotNote.textContent = topImpact.assetCount > 0
+        ? `${exposure} • Baseline $${formatMoney(topImpact.baselineEarnings)}.`
+        : `${exposure} • Assign coverage to catch the lift.`;
     }
   }
 
@@ -984,8 +1161,9 @@ function updateDailyHighlights(analytics, refs) {
     if (highlightSwingNote) {
       const score = clampScore(fastestMove.popularity?.score);
       const payoutText = formatPercent((Number(fastestMove.popularity?.multiplier) || 1) - 1);
+      const exposure = formatExposure(fastestMove);
       const scoreText = score !== null ? `score ${score}` : 'score pending';
-      highlightSwingNote.textContent = `${payoutText} payouts • ${scoreText}.`;
+      highlightSwingNote.textContent = `${payoutText} • ${scoreText} • ${exposure}`;
     }
   }
 
@@ -995,14 +1173,30 @@ function updateDailyHighlights(analytics, refs) {
   } else {
     const lossValue = Math.abs(biggestLoss.trendImpact);
     if (highlightRisk) {
-      highlightRisk.textContent = `${biggestLoss.definition?.name || 'Untitled niche'} • -$${formatMoney(lossValue)} trend drag`;
+      highlightRisk.textContent = `${biggestLoss.definition?.name || 'Untitled niche'} • -$${formatMoney(lossValue)} drag`;
     }
     if (highlightRiskNote) {
-      if (biggestLoss.assetCount > 0) {
-        highlightRiskNote.textContent = `${biggestLoss.assetCount} asset${biggestLoss.assetCount === 1 ? '' : 's'} lost ${formatPercent((Number(biggestLoss.popularity?.multiplier) || 1) - 1)} vs baseline today.`;
-      } else {
-        highlightRiskNote.textContent = 'No assets invested yet, so you are safe from this downswing.';
-      }
+      const exposure = formatExposure(biggestLoss);
+      highlightRiskNote.textContent = biggestLoss.assetCount > 0
+        ? `${exposure} • Watch for reinvestment.`
+        : 'No assets invested yet, so you are safe from this downswing.';
+    }
+  }
+
+  if (!missed) {
+    if (highlightMiss) highlightMiss.textContent = 'Nothing slipping yet';
+    if (highlightMissNote) highlightMissNote.textContent = 'We’ll shout when a hot niche lacks your assets.';
+  } else {
+    const lift = Number(missed.popularity?.multiplier) || 1;
+    const liftText = lift > 1
+      ? `+${Math.round((lift - 1) * 100)}% payouts`
+      : describeDelta(missed.popularity);
+    if (highlightMiss) {
+      highlightMiss.textContent = `${missed.definition?.name || 'Untitled niche'} • ${liftText}`;
+    }
+    if (highlightMissNote) {
+      const baseline = `$${formatMoney(Math.max(0, missed.baselineEarnings))}`;
+      highlightMissNote.textContent = `No assets yet • Baseline ${baseline} potential.`;
     }
   }
 }
@@ -1016,6 +1210,8 @@ function renderNicheWidget(state) {
     highlightSwingNote,
     highlightRisk,
     highlightRiskNote,
+    highlightMiss,
+    highlightMissNote,
     board
   } = refs;
 
@@ -1041,7 +1237,14 @@ function renderNicheWidget(state) {
   }
 
   const watchlistCount = analytics.filter(entry => entry.watchlisted).length;
-  updateNicheControlStates({ watchlistCount });
+  const hasInvested = analytics.some(entry => entry.assetCount > 0);
+  if (!hasInvested) {
+    nicheViewState.investedOnly = false;
+    nicheViewState.userSetInvestedFilter = false;
+  } else if (!nicheViewState.userSetInvestedFilter) {
+    nicheViewState.investedOnly = true;
+  }
+  updateNicheControlStates({ watchlistCount, hasInvested });
 
   updateDailyHighlights(analytics, {
     highlightHot,
@@ -1049,7 +1252,9 @@ function renderNicheWidget(state) {
     highlightSwing,
     highlightSwingNote,
     highlightRisk,
-    highlightRiskNote
+    highlightRiskNote,
+    highlightMiss,
+    highlightMissNote
   });
 
   let entries = analytics.slice();
@@ -1080,6 +1285,12 @@ function renderNicheWidget(state) {
       const deltaB = Math.abs(Number(b.popularity?.delta) || 0);
       if (deltaB !== deltaA) return deltaB - deltaA;
       return Math.abs(b.trendImpact) - Math.abs(a.trendImpact);
+    },
+    missed: (a, b) => {
+      const scoreA = a.assetCount === 0 ? a.opportunityScore || 0 : -1;
+      const scoreB = b.assetCount === 0 ? b.opportunityScore || 0 : -1;
+      if (scoreB !== scoreA) return scoreB - scoreA;
+      return (clampScore(b.popularity?.score) || 0) - (clampScore(a.popularity?.score) || 0);
     }
   };
 
@@ -1101,10 +1312,33 @@ function renderNicheWidget(state) {
       board.appendChild(empty);
     } else {
       const fragment = document.createDocumentFragment();
-      entries.forEach(entry => {
-        const card = createNicheCard(entry);
-        if (card) fragment.appendChild(card);
+      const groupedInvested = entries.filter(entry => entry.assetCount > 0);
+      const groupedUninvested = entries.filter(entry => entry.assetCount === 0);
+      const groups = [];
+      if (groupedInvested.length) {
+        groups.push({
+          key: 'invested',
+          label: 'Invested niches',
+          entries: groupedInvested
+        });
+      }
+      if (!nicheViewState.investedOnly && groupedUninvested.length) {
+        groups.push({
+          key: 'uninvested',
+          label: 'Not invested yet',
+          entries: groupedUninvested
+        });
+      }
+      groups.forEach(group => {
+        const section = renderNicheGroup(group);
+        if (section) fragment.appendChild(section);
       });
+      if (!groups.length) {
+        entries.forEach(entry => {
+          const card = createNicheCard(entry);
+          if (card) fragment.appendChild(card);
+        });
+      }
       board.appendChild(fragment);
     }
   }

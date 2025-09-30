@@ -84,6 +84,19 @@ export function normalizeAssetInstance(definition, instance = {}, context = {}) 
   const totalIncome = Number(normalized.totalIncome);
   normalized.totalIncome = Number.isFinite(totalIncome) ? totalIncome : 0;
 
+  const recentIncome = Array.isArray(normalized.recentIncome)
+    ? normalized.recentIncome
+        .map(value => {
+          const amount = Number(value);
+          return Number.isFinite(amount) ? Math.max(0, Math.round(amount * 100) / 100) : null;
+        })
+        .filter(value => value !== null)
+    : [];
+  while (recentIncome.length > 7) {
+    recentIncome.shift();
+  }
+  normalized.recentIncome = recentIncome;
+
   const createdOnDay = Number(normalized.createdOnDay);
   normalized.createdOnDay = Number.isFinite(createdOnDay)
     ? Math.max(1, createdOnDay)
@@ -124,6 +137,7 @@ export function createAssetInstance(definition, overrides = {}, context = {}) {
     lastIncomeBreakdown: null,
     pendingIncome: 0,
     totalIncome: 0,
+    recentIncome: [],
     createdOnDay: resolveCurrentDay(context),
     quality: {
       level: 0,

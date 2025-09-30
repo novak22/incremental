@@ -120,6 +120,8 @@ class ElementRegistry {
       highlightSwingNote: root.getElementById('analytics-highlight-swing-note'),
       highlightRisk: root.getElementById('analytics-highlight-risk'),
       highlightRiskNote: root.getElementById('analytics-highlight-risk-note'),
+      highlightMiss: root.getElementById('analytics-highlight-miss'),
+      highlightMissNote: root.getElementById('analytics-highlight-miss-note'),
       board: root.getElementById('niche-board'),
       sortButtons: Array.from(root.querySelectorAll('[data-niche-sort]')),
       filterInvested: root.getElementById('niche-filter-invested'),

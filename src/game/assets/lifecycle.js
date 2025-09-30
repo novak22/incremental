@@ -14,6 +14,20 @@ import {
 import { getAssetEffectMultiplier } from '../upgrades/effects.js';
 import { formatEducationBonusSummary } from '../educationEffects.js';
 
+const RECENT_INCOME_WINDOW = 7;
+
+function pushRecentIncomeSnapshot(instance, amount) {
+  if (!instance) return;
+  const normalized = Number.isFinite(Number(amount)) ? Math.max(0, Math.round(Number(amount) * 100) / 100) : 0;
+  if (!Array.isArray(instance.recentIncome)) {
+    instance.recentIncome = [];
+  }
+  instance.recentIncome.push(normalized);
+  if (instance.recentIncome.length > RECENT_INCOME_WINDOW) {
+    instance.recentIncome.splice(0, instance.recentIncome.length - RECENT_INCOME_WINDOW);
+  }
+}
+
 export function allocateAssetMaintenance() {
   const state = getState();
   if (!state) return;
@@ -212,11 +226,13 @@ export function closeOutDay() {
           instance.lastIncome = payout;
           instance.totalIncome = (instance.totalIncome || 0) + payout;
           instance.pendingIncome = (instance.pendingIncome || 0) + payout;
+          pushRecentIncomeSnapshot(instance, payout);
         } else {
           instance.lastIncome = 0;
           instance.lastIncomeBreakdown = null;
           instance.pendingIncome = 0;
           instance.lastEducationBonuses = null;
+          pushRecentIncomeSnapshot(instance, 0);
           const label = instanceLabel(definition, index);
           const message = definition.messages?.maintenanceSkipped
             ? definition.messages.maintenanceSkipped(label, assetState, instance)
