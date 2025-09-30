@@ -38,7 +38,7 @@ test('study hustles charge tuition and auto-schedule class time', () => {
   const tuition = KNOWLEDGE_TRACKS.outlineMastery.tuition;
 
   state.money = tuition + 500;
-  state.timeLeft = track.hoursPerDay + 2;
+  state.timeLeft = track.hoursPerDay + 8;
 
   const beforeMoney = state.money;
 
@@ -49,7 +49,7 @@ test('study hustles charge tuition and auto-schedule class time', () => {
   assert.equal(updated.enrolled, true, 'enrollment should activate the course');
   assert.ok(updated.studiedToday, 'study time should be booked immediately');
   assert.equal(state.money, beforeMoney - tuition, 'tuition should be deducted upfront');
-  assert.equal(state.timeLeft, 2, 'daily study hours should be consumed automatically');
+  assert.equal(state.timeLeft, 8, 'daily study hours should be consumed automatically');
   assert.match(state.log.at(-1).message, /Study sessions reserved|Class time booked/, 'log should mention scheduled study');
 });
 

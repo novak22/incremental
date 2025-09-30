@@ -111,5 +111,9 @@ test('assistant payroll charges wages and firing removes bonus hours', () => {
   assert.equal(fired, true, 'assistant should fire successfully');
   assert.equal(getAssistantCount(), 0, 'no assistants should remain');
   assert.equal(state.bonusTime, baseBonus, 'bonus time should drop back to baseline');
-  assert.equal(state.timeLeft, -1, 'time left should reflect lost support hours');
+  assert.equal(
+    state.timeLeft,
+    1 - ASSISTANT_CONFIG.hoursPerAssistant,
+    'time left should reflect lost support hours'
+  );
 });

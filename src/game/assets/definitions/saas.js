@@ -9,7 +9,8 @@ const saasDefinition = createAssetDefinition({
   tags: ['software', 'tech', 'product'],
   description: 'Design lean software services, onboard early users, and ship updates that keep churn low.',
   setup: { days: 8, hoursPerDay: 4, cost: 960 },
-  maintenance: { hours: 2.2, cost: 24 },
+  maintenance: { hours: 1.4, cost: 24 },
+  maintenance: { hours: 1.8, cost: 18 },
   skills: {
     setup: [
       'software',
@@ -39,7 +40,7 @@ const saasDefinition = createAssetDefinition({
         level: 0,
         name: 'Beta Sandbox',
         description: 'Tiny user base and messy bugs limit revenue.',
-        income: { min: 6, max: 12 },
+        income: { min: 20, max: 32 },
         requirements: {}
       },
       {
@@ -47,7 +48,7 @@ const saasDefinition = createAssetDefinition({
         name: 'Early Traction',
         description: 'Feature roadmap clicks with early adopters.',
         income: { min: 32, max: 48 },
-        requirements: { features: 5 }
+        requirements: { features: 4 }
       },
       {
         level: 2,
@@ -82,8 +83,8 @@ const saasDefinition = createAssetDefinition({
       {
         id: 'shipFeature',
         label: 'Ship Feature',
-        time: 3.5,
-        cost: 32,
+        time: 3.2,
+        cost: 28,
         dailyLimit: 1,
         progressKey: 'features',
         progressAmount: () => 1,

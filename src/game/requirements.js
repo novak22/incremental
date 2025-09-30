@@ -1,3 +1,4 @@
+import { DEFAULT_DAY_HOURS } from '../core/constants.js';
 import { formatDays, formatHours, formatList, formatMoney, toNumber } from '../core/helpers.js';
 import { addLog } from '../core/log.js';
 import {
@@ -16,6 +17,36 @@ import {
 } from './metrics.js';
 import { buildRequirementBundle, resolveRequirementConfig } from './schema/requirements.js';
 import { awardSkillProgress } from './skills/index.js';
+import { ASSISTANT_CONFIG, getAssistantCount } from './assistant.js';
+
+const MIN_MANUAL_BUFFER_HOURS = Math.max(2, Math.round(DEFAULT_DAY_HOURS * 0.25));
+
+function estimateManualMaintenanceReserve(state) {
+  if (!state) return 0;
+  const assets = state.assets || {};
+  let upkeepDemand = 0;
+  let assistantHoursRemaining = getAssistantCount(state) * ASSISTANT_CONFIG.hoursPerAssistant;
+
+  for (const [assetId, assetState] of Object.entries(assets)) {
+    if (!assetState?.instances?.length) continue;
+    const definition = getAssetDefinition(assetId);
+    if (!definition) continue;
+    const maintenanceHours = Number(definition.maintenance?.hours) || 0;
+    if (maintenanceHours <= 0) continue;
+
+    for (const instance of assetState.instances) {
+      if (instance?.status !== 'active' || instance?.maintenanceFundedToday) continue;
+
+      const assistantHoursApplied = Math.min(assistantHoursRemaining, maintenanceHours);
+      assistantHoursRemaining -= assistantHoursApplied;
+
+      const manualHoursNeeded = Math.max(0, maintenanceHours - assistantHoursApplied);
+      upkeepDemand += manualHoursNeeded;
+    }
+  }
+
+  return Math.max(0, upkeepDemand);
+}
 
 export function buildAssetRequirementDescriptor(requirement, state = getState(), typeOverride) {
   if (!requirement || !requirement.assetId) {
@@ -87,8 +118,8 @@ export const KNOWLEDGE_TRACKS = {
   ecomPlaybook: {
     id: 'ecomPlaybook',
     name: 'E-Commerce Playbook',
-    description: 'Shadow a pro operator for 7 days (2.5h/day) to master funnels and fulfillment math.',
-    hoursPerDay: 2.5,
+    description: 'Shadow a pro operator for 7 days (2h/day) to master funnels and fulfillment math.',
+    hoursPerDay: 2,
     days: 7,
     tuition: 260,
     instantBoosts: [
@@ -109,8 +140,8 @@ export const KNOWLEDGE_TRACKS = {
   automationCourse: {
     id: 'automationCourse',
     name: 'Automation Architecture Course',
-    description: 'Pair-program with mentors for 10 days (3h/day) to architect a reliable micro-app.',
-    hoursPerDay: 3,
+    description: 'Pair-program with mentors for 10 days (~2¼h/day) to architect a reliable micro-app.',
+    hoursPerDay: 2.25,
     days: 10,
     tuition: 540,
     instantBoosts: [
@@ -718,11 +749,15 @@ export function allocateDailyStudy({ trackIds, triggeredByEnrollment = false } =
   if (!state) return;
 
   const studied = [];
-  const skipped = [];
+  const reserveSkipped = [];
+  const timeSkipped = [];
 
   const tracks = trackIds
     ? trackIds.map(id => KNOWLEDGE_TRACKS[id]).filter(Boolean)
     : Object.values(KNOWLEDGE_TRACKS);
+
+  const maintenanceReserve = estimateManualMaintenanceReserve(state);
+  let availableStudyTime = Math.max(0, state.timeLeft - maintenanceReserve - MIN_MANUAL_BUFFER_HOURS);
 
   for (const track of tracks) {
     const progress = getKnowledgeProgress(track.id);
@@ -735,12 +770,18 @@ export function allocateDailyStudy({ trackIds, triggeredByEnrollment = false } =
       continue;
     }
 
+    if (availableStudyTime < hours) {
+      reserveSkipped.push(track.name);
+      continue;
+    }
+
     if (state.timeLeft < hours) {
-      skipped.push(track.name);
+      timeSkipped.push(track.name);
       continue;
     }
 
     spendTime(hours);
+    availableStudyTime = Math.max(0, availableStudyTime - hours);
     recordTimeContribution({
       key: `study:${track.id}:time`,
       label: `📘 ${track.name} study`,
@@ -756,8 +797,15 @@ export function allocateDailyStudy({ trackIds, triggeredByEnrollment = false } =
     addLog(`${prefix} ${formatList(studied)}.`, 'info');
   }
 
-  if (skipped.length) {
-    addLog(`${formatList(skipped)} could not fit into today\'s schedule.`, 'warning');
+  if (reserveSkipped.length) {
+    addLog(
+      `${formatList(reserveSkipped)} were deferred to leave breathing room for upkeep commitments.`,
+      'warning'
+    );
+  }
+
+  if (timeSkipped.length) {
+    addLog(`${formatList(timeSkipped)} could not fit into today\'s schedule.`, 'warning');
   }
 }
 

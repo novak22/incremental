@@ -25,8 +25,8 @@ Online Hustle Simulator is a browser-based incremental game about orchestrating 
 - **Micro Survey Dash** – Fire off 15-minute surveys for $1 a pop (up to four per day; Guerrilla Buzz Workshop adds +$1.50 each) to keep pockets of time profitable.
 - **Outline Mastery Workshop** – Pay $140 upfront; 2h/day for 5 days auto-reserve to unlock e-book production chops and boost writing/narration gigs.
 - **Photo Catalog Curation** – Pay $95 upfront; 1.5h/day for 4 days auto-reserve to polish your stock gallery workflow and increase Event Photo Gig payouts by 20%.
-- **E-Commerce Playbook** – Pay $260 upfront; 2.5h/day for 7 days auto-reserve to prep dropshipping ventures (+$6 Bundle Promo Push, +20% Dropship Pack Party).
-- **Automation Architecture Course** – Pay $540 upfront; 3h/day for 10 days auto-reserve to earn SaaS-ready engineering chops (+$12 SaaS Bug Squash).
+- **E-Commerce Playbook** – Pay $260 upfront; 2h/day for 7 days auto-reserve to prep dropshipping ventures (+$6 Bundle Promo Push, +20% Dropship Pack Party).
+- **Automation Architecture Course** – Pay $540 upfront; ~2¼h/day for 10 days auto-reserve to earn SaaS-ready engineering chops (+$12 SaaS Bug Squash).
 - **Brand Voice Lab** – Pay $120 upfront; 1h/day for 4 days to sharpen livestream charisma and unlock +$4 tips on Audience Q&A gigs.
 - **Guerrilla Buzz Workshop** – Pay $180 upfront; 1.5h/day for 6 days to field-test street marketing hooks (+25% Street Team Promo, +$1.50 Micro Survey Dash).
 - **Curriculum Design Studio** – Pay $280 upfront; 2.5h/day for 6 days to co-design breakout lessons (+30% Pop-Up Workshop payouts, +15% Bundle Promo Push upsells).
@@ -40,8 +40,8 @@ Online Hustle Simulator is a browser-based incremental game about orchestrating 
 ### Passive Assets (Daily Payouts)
 Each asset supports multiple instances, tracks setup progress, and rolls a daily income range once active. Quality actions unique to each asset increase payouts and stability, and you can liquidate any instance directly from the card—or from the category roster—for yesterday’s payout ×3 × (Quality level + 1). The asset briefing modal doubles as an instance inspector, outlining status, upkeep, yesterday’s earnings, and which upgrades are owned or still locked.
 - Select quality actions now include a visible cooldown so big-impact moves (SEO sprints, ad bursts, and marketplace pitches) can only be run every few in-game days, nudging players to rotate through their portfolio.
-- **Personal Blog Network** – Setup 3 days × 3h ($180). Requires 0.75h/day + $3 maintenance. Quality actions include drafting posts, SEO sprints, and backlink outreach; the ladder now climbs from $3–$6/day at Quality 0 to $64–$84/day at Quality 5 once backlinks, SEO, and outreach hum in unison (Automation Course still boosts payouts another 50%, and Syndication Residency alumni layer an additional +18% daily revenue).
 
+- **Personal Blog Network** – Setup 3 days × 3h ($180). Requires 0.75h/day + $3 maintenance. Quality actions include drafting posts, SEO sprints, and backlink outreach; the ladder now climbs from $3–$6/day at Quality 0 to $64–$84/day at Quality 5 once backlinks, SEO, and outreach hum in unison (Automation Course still boosts payouts another 50%, and Syndication Residency alumni layer an additional +18% daily revenue).
 - **Weekly Vlog Channel** – Setup 4 days × 4h ($420) with Camera upgrade. Maintenance 1.5h/day + $9. Record episodes, polish edits, and run promo blasts to climb from $2–$5/day at Quality 0 to $62–$82/day at Quality 5, with viral spikes getting juicier at the new top tiers; Post-Production Pipeline Lab grads add +18% to every passive payout.
 - **Digital E-Book Series** – Setup 4 days × 3h ($260) after completing Outline Mastery. Maintenance 0.75h/day + $3. Faster chapter drafting (2.5h) and cheaper cover/review pushes mean Quality 0 still earns $3–$6/day while the series can now crescendo to $60–$78/day at Quality 5, and Narration Performance Workshop alumni tack on +15% royalties.
 - **Stock Photo Gallery** – Setup 5 days × 4h ($560) with Camera + Studio Expansion upgrades and Photo Catalog knowledge. Maintenance 1.2h/day + $10. Shoot themed packs, keyword them, and pitch marketplaces; sustained quality pushes now raise royalties from $3–$6/day at launch to $112–$150/day at Quality 5, with White-Label Alliance partners layering extra income and marketing progress while Gallery Licensing Summit graduates sprinkle an extra +22% royalty boost.
@@ -49,7 +49,7 @@ Each asset supports multiple instances, tracks setup progress, and rolls a daily
 - **SaaS Micro-App** – Setup 8 days × 4h ($960) after Automation Architecture, the Server Rack → Cloud Cluster → Edge Delivery ladder, and experience running a dropshipping store plus e-book line. Maintenance 2.2h/day + $24. Squash bugs, ship features, and host support sprints to grow subscriptions from $4–$8/day to $168–$220/day after unlocking the Ecosystem Powerhouse tier at Quality 5, with Customer Retention Clinic alumni layering an additional +25% subscription revenue.
 
 ### Upgrades & Boosts
-- **Hire Virtual Assistant** – $180 per hire, up to four assistants. Each adds +2h daily but costs $30/day in payroll; fire assistants anytime to cut wages (and hours).
+- **Hire Virtual Assistant** – $180 per hire, up to four assistants. Each adds +3h daily but costs $24/day in payroll; fire assistants anytime to cut wages (and hours).
 - **Turbo Coffee** – $40 per cup, up to three per day, each adding +1h for the current day.
 - **Camera** – $200, unlocks Vlog Channels and Stock Photo Galleries.
 - **Cinema Camera Upgrade** – $480, requires the base camera; trims setup/maintenance time, adds ~25% vlog payouts, and doubles quality progress for video/photo actions.
