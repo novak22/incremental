@@ -1,4 +1,4 @@
-import elements from './elements.js';
+import { getSkillSections } from './elements/registry.js';
 import { getState } from '../core/state.js';
 import { SKILL_DEFINITIONS } from '../game/skills/data.js';
 import {
@@ -74,7 +74,8 @@ function renderTarget(target, state) {
 
 export function renderSkillWidgets(state = getState()) {
   if (!state) return;
-  renderTarget(elements.skills?.dashboard, state);
-  renderTarget(elements.skills?.education, state);
+  const sections = getSkillSections() || {};
+  renderTarget(sections.dashboard, state);
+  renderTarget(sections.education, state);
 }
 

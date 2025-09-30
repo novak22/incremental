@@ -1,4 +1,21 @@
-import elements from './elements.js';
+import {
+  getAssetFilters,
+  getAssetGallery,
+  getAssetUpgradeActionsContainer,
+  getCommandPaletteNodes,
+  getDailyStats,
+  getEventLogControls,
+  getHustleControls,
+  getKpiNodes,
+  getNotificationsContainer,
+  getSessionStatusNode,
+  getShellNavigation,
+  getSlideOverNodes,
+  getStudyFilters,
+  getStudyTrackList,
+  getUpgradeFilters,
+  getUpgradeList
+} from './elements/registry.js';
 
 let activePanelController = null;
 
@@ -31,7 +48,7 @@ export function applyCardFilters() {
 }
 
 function setupTabs() {
-  const { shellTabs, panels } = elements;
+  const { shellTabs = [], panels = [] } = getShellNavigation() || {};
   if (!shellTabs.length || !panels.length) return;
 
   const activate = targetId => {
@@ -63,12 +80,13 @@ export function activateShellPanel(panelId) {
     activePanelController(panelId);
     return;
   }
-  const tab = (elements.shellTabs || []).find(button => button?.getAttribute('aria-controls') === panelId);
+  const { shellTabs = [] } = getShellNavigation() || {};
+  const tab = shellTabs.find(button => button?.getAttribute('aria-controls') === panelId);
   tab?.click?.();
 }
 
 function setupEventLog() {
-  const { openEventLog, eventLogPanel, eventLogClose } = elements;
+  const { openEventLog, eventLogPanel, eventLogClose } = getEventLogControls() || {};
   if (!openEventLog || !eventLogPanel) return;
 
   const toggle = visible => {
@@ -93,7 +111,7 @@ function setupEventLog() {
 }
 
 function setupSlideOver() {
-  const { slideOver, slideOverBackdrop, slideOverClose } = elements;
+  const { slideOver, slideOverBackdrop, slideOverClose } = getSlideOverNodes() || {};
   if (!slideOver) return;
 
   const hide = () => {
@@ -123,7 +141,7 @@ function setupCommandPalette() {
     commandPaletteTrigger,
     commandPaletteBackdrop,
     commandPaletteSearch
-  } = elements;
+  } = getCommandPaletteNodes() || {};
   if (!commandPalette || !commandPaletteTrigger) return;
 
   const show = () => {
@@ -152,42 +170,51 @@ function setupCommandPalette() {
 }
 
 function setupFilterHandlers() {
-  elements.hustleAvailableToggle?.addEventListener('change', applyHustleFilters);
-  elements.hustleSort?.addEventListener('change', applyHustleFilters);
-  elements.hustleSearch?.addEventListener('input', debounce(applyHustleFilters, 120));
+  const hustleControls = getHustleControls() || {};
+  hustleControls.hustleAvailableToggle?.addEventListener('change', applyHustleFilters);
+  hustleControls.hustleSort?.addEventListener('change', applyHustleFilters);
+  hustleControls.hustleSearch?.addEventListener('input', debounce(applyHustleFilters, 120));
 
-  elements.assetFilters.activeOnly?.addEventListener('change', applyAssetFilters);
-  elements.assetFilters.maintenance?.addEventListener('change', applyAssetFilters);
-  elements.assetFilters.lowRisk?.addEventListener('change', applyAssetFilters);
+  const assetFilters = getAssetFilters() || {};
+  assetFilters.activeOnly?.addEventListener('change', applyAssetFilters);
+  assetFilters.maintenance?.addEventListener('change', applyAssetFilters);
+  assetFilters.lowRisk?.addEventListener('change', applyAssetFilters);
 
-  elements.upgradeFilters.unlocked?.addEventListener('change', applyUpgradeFilters);
+  const upgradeFilters = getUpgradeFilters() || {};
+  upgradeFilters.unlocked?.addEventListener('change', applyUpgradeFilters);
 
   document.addEventListener('upgrades:state-updated', applyUpgradeFilters);
   document.addEventListener('hustles:availability-updated', applyHustleFilters);
 
-  elements.studyFilters.activeOnly?.addEventListener('change', applyStudyFilters);
-  elements.studyFilters.hideComplete?.addEventListener('change', applyStudyFilters);
+  const studyFilters = getStudyFilters() || {};
+  studyFilters.activeOnly?.addEventListener('change', applyStudyFilters);
+  studyFilters.hideComplete?.addEventListener('change', applyStudyFilters);
 }
 
 function setupKpiShortcuts() {
-  const buttons = Object.values(elements.kpis || {}).filter(Boolean);
+  const buttons = Object.values(getKpiNodes() || {}).filter(Boolean);
   if (!buttons.length) return;
 
+  const dailyStats = getDailyStats() || {};
+  const notifications = getNotificationsContainer();
+  const assetUpgradeActions = getAssetUpgradeActionsContainer();
+  const sessionStatus = getSessionStatusNode();
+
   const targetLookup = {
-    cash: () => elements.dailyStats.earningsActive?.closest('.daily-stats__section')
-      || elements.dailyStats.earningsActive
-      || elements.dailyStats.earningsSummary,
-    net: () => elements.dailyStats.spendList?.closest('.daily-stats__section')
-      || elements.dailyStats.spendList
-      || elements.dailyStats.spendSummary,
-    time: () => elements.dailyStats.timeList?.closest('.daily-stats__section')
-      || elements.dailyStats.timeList
-      || elements.dailyStats.timeSummary,
-    upkeep: () => elements.notifications?.closest('.dashboard-card') || elements.notifications,
-    assets: () => elements.assetUpgradeActions?.closest('.dashboard-card') || elements.assetUpgradeActions,
-    study: () => elements.dailyStats.studyList?.closest('.daily-stats__section')
-      || elements.dailyStats.studyList
-      || elements.dailyStats.studySummary
+    cash: () => dailyStats.earningsActive?.closest('.daily-stats__section')
+      || dailyStats.earningsActive
+      || dailyStats.earningsSummary,
+    net: () => dailyStats.spendList?.closest('.daily-stats__section')
+      || dailyStats.spendList
+      || dailyStats.spendSummary,
+    time: () => dailyStats.timeList?.closest('.daily-stats__section')
+      || dailyStats.timeList
+      || dailyStats.timeSummary,
+    upkeep: () => notifications?.closest?.('.dashboard-card') || notifications,
+    assets: () => assetUpgradeActions?.closest?.('.dashboard-card') || assetUpgradeActions,
+    study: () => dailyStats.studyList?.closest('.daily-stats__section')
+      || dailyStats.studyList
+      || dailyStats.studySummary
   };
 
   const statusMessages = {
@@ -207,8 +234,8 @@ function setupKpiShortcuts() {
 
       focusDashboardSection(target);
       const message = statusMessages[detail];
-      if (message && elements.sessionStatus) {
-        elements.sessionStatus.textContent = message;
+      if (message && sessionStatus) {
+        sessionStatus.textContent = message;
       }
     });
   });
@@ -242,10 +269,16 @@ function focusDashboardSection(target) {
 }
 
 function applyHustleFilters() {
-  const cards = Array.from(elements.hustleList?.querySelectorAll('[data-hustle]') || []);
-  const availableOnly = Boolean(elements.hustleAvailableToggle?.checked);
-  const sortValue = elements.hustleSort?.value || 'roi';
-  const query = (elements.hustleSearch?.value || '').trim().toLowerCase();
+  const {
+    hustleList,
+    hustleAvailableToggle,
+    hustleSort,
+    hustleSearch
+  } = getHustleControls() || {};
+  const cards = Array.from(hustleList?.querySelectorAll('[data-hustle]') || []);
+  const availableOnly = Boolean(hustleAvailableToggle?.checked);
+  const sortValue = hustleSort?.value || 'roi';
+  const query = (hustleSearch?.value || '').trim().toLowerCase();
 
   const comparators = {
     roi: (a, b) => Number(b.card.dataset.roi || 0) - Number(a.card.dataset.roi || 0),
@@ -279,14 +312,16 @@ function applyHustleFilters() {
 
   const fragment = document.createDocumentFragment();
   meta.forEach(entry => fragment.appendChild(entry.card));
-  elements.hustleList?.appendChild(fragment);
+  hustleList?.appendChild(fragment);
 }
 
 function applyAssetFilters() {
-  const cards = Array.from(elements.assetGallery?.querySelectorAll('[data-asset]') || []);
-  const activeOnly = Boolean(elements.assetFilters.activeOnly?.checked);
-  const maintenanceOnly = Boolean(elements.assetFilters.maintenance?.checked);
-  const hideRisk = Boolean(elements.assetFilters.lowRisk?.checked);
+  const gallery = getAssetGallery();
+  const filters = getAssetFilters() || {};
+  const cards = Array.from(gallery?.querySelectorAll('[data-asset]') || []);
+  const activeOnly = Boolean(filters.activeOnly?.checked);
+  const maintenanceOnly = Boolean(filters.maintenance?.checked);
+  const hideRisk = Boolean(filters.lowRisk?.checked);
 
   cards.forEach(card => {
     let hidden = false;
@@ -298,8 +333,10 @@ function applyAssetFilters() {
 }
 
 function applyUpgradeFilters() {
-  const cards = Array.from(elements.upgradeList?.querySelectorAll('[data-upgrade]') || []);
-  const unlockedOnly = elements.upgradeFilters.unlocked?.checked !== false;
+  const list = getUpgradeList();
+  const filters = getUpgradeFilters() || {};
+  const cards = Array.from(list?.querySelectorAll('[data-upgrade]') || []);
+  const unlockedOnly = filters.unlocked?.checked !== false;
 
   cards.forEach(card => {
     const matchesUnlocked = !unlockedOnly || card.dataset.ready === 'true';
@@ -310,9 +347,11 @@ function applyUpgradeFilters() {
 }
 
 function applyStudyFilters() {
-  const tracks = Array.from(elements.studyTrackList?.querySelectorAll('[data-track]') || []);
-  const activeOnly = Boolean(elements.studyFilters.activeOnly?.checked);
-  const hideComplete = Boolean(elements.studyFilters.hideComplete?.checked);
+  const trackList = getStudyTrackList();
+  const filters = getStudyFilters() || {};
+  const tracks = Array.from(trackList?.querySelectorAll('[data-track]') || []);
+  const activeOnly = Boolean(filters.activeOnly?.checked);
+  const hideComplete = Boolean(filters.hideComplete?.checked);
 
   tracks.forEach(track => {
     const isActive = track.dataset.active === 'true';

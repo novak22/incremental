@@ -1,7 +1,7 @@
 import { formatHours, formatMoney } from '../core/helpers.js';
 import { getState } from '../core/state.js';
 import { listCatalog } from '../game/content/catalog.js';
-import elements from './elements.js';
+import { getDebugCatalogNodes } from './elements/registry.js';
 
 let debugEnabled = false;
 
@@ -109,7 +109,7 @@ function renderActionRows(table, entries) {
 }
 
 function renderDebugCatalog() {
-  const table = elements.debugActionCatalogList;
+  const { debugActionCatalogList: table, debugActionCatalogSummary: summary } = getDebugCatalogNodes() || {};
   if (!table) return;
   table.textContent = '';
   const state = getState();
@@ -123,7 +123,6 @@ function renderDebugCatalog() {
     return a.sourceType.localeCompare(b.sourceType);
   });
 
-  const summary = elements.debugActionCatalogSummary;
   if (summary) {
     const availableCount = entries.filter(entry => entry.available).length;
     summary.textContent = `${availableCount} of ${entries.length} actions currently available`;
@@ -133,7 +132,7 @@ function renderDebugCatalog() {
 }
 
 function enableDebugPanel() {
-  const panel = elements.debugActionCatalog;
+  const { debugActionCatalog: panel } = getDebugCatalogNodes() || {};
   if (!panel) return;
   debugEnabled = true;
   persistDebugFlag(true);
@@ -143,17 +142,15 @@ function enableDebugPanel() {
 }
 
 function disableDebugPanel() {
-  const panel = elements.debugActionCatalog;
+  const { debugActionCatalog: panel, debugActionCatalogList: table, debugActionCatalogSummary: summary } = getDebugCatalogNodes() || {};
   if (!panel) return;
   debugEnabled = false;
   persistDebugFlag(false);
   panel.hidden = true;
   panel.setAttribute('aria-hidden', 'true');
-  const table = elements.debugActionCatalogList;
   if (table) {
     table.textContent = '';
   }
-  const summary = elements.debugActionCatalogSummary;
   if (summary) {
     summary.textContent = '';
   }
