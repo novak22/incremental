@@ -1801,12 +1801,24 @@ function renderAssets(definitions = []) {
 
     const actions = document.createElement('div');
     actions.className = 'asset-group__actions';
+
+    const categoryDetailsButton = document.createElement('button');
+    categoryDetailsButton.type = 'button';
+    categoryDetailsButton.className = 'ghost asset-group__details-button';
+    categoryDetailsButton.textContent = 'Details';
+    categoryDetailsButton.addEventListener('click', event => {
+      event.preventDefault();
+      openAssetGroupDetails(group);
+    });
+    actions.appendChild(categoryDetailsButton);
+
     group.definitions.forEach(definition => {
       const button = createLaunchButton(definition, state);
       if (button) {
         actions.appendChild(button);
       }
     });
+
     if (actions.childElementCount) {
       header.appendChild(actions);
     }
@@ -1876,6 +1888,61 @@ function openInstanceDetails(definition, instance, index, state = getState()) {
     eyebrow: getAssetGroupLabel(definition),
     title: instanceLabel(definition, index),
     body
+  });
+}
+
+function openAssetGroupDetails(group) {
+  if (!group || !Array.isArray(group.definitions) || !group.definitions.length) {
+    return;
+  }
+
+  const container = document.createElement('div');
+  container.className = 'asset-category-detail';
+
+  if (group.note) {
+    const intro = document.createElement('p');
+    intro.className = 'asset-category-detail__intro';
+    intro.textContent = group.note;
+    container.appendChild(intro);
+  }
+
+  group.definitions.forEach(definition => {
+    if (!definition) return;
+
+    const card = document.createElement('article');
+    card.className = 'asset-category-detail__card';
+
+    const header = document.createElement('header');
+    header.className = 'asset-category-detail__header';
+
+    const title = document.createElement('h3');
+    title.className = 'asset-category-detail__title';
+    title.textContent = definition.name || definition.id || 'Asset';
+    header.appendChild(title);
+
+    const summaryCopy = describeAssetCardSummary(definition);
+    if (summaryCopy) {
+      const summary = document.createElement('p');
+      summary.className = 'asset-category-detail__summary';
+      summary.textContent = summaryCopy;
+      header.appendChild(summary);
+    }
+
+    card.appendChild(header);
+
+    const highlights = createAssetDetailHighlights(definition);
+    if (highlights) {
+      highlights.classList.add('asset-category-detail__blueprint');
+      card.appendChild(highlights);
+    }
+
+    container.appendChild(card);
+  });
+
+  showSlideOver({
+    eyebrow: 'Asset category',
+    title: `${group.label} assets`,
+    body: container
   });
 }
 
