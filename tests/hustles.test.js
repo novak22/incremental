@@ -5,6 +5,7 @@ import { getGameTestHarness } from './helpers/gameTestHarness.js';
 const harness = await getGameTestHarness();
 const {
   stateModule,
+  assetStateModule,
   hustlesModule,
   requirementsModule,
   offlineModule,
@@ -12,7 +13,8 @@ const {
   assetsModule
 } = harness;
 
-const { getState, getAssetState, getHustleState, createAssetInstance } = stateModule;
+const { getState, getAssetState, getHustleState } = stateModule;
+const { createAssetInstance } = assetStateModule;
 const { KNOWLEDGE_TRACKS, getKnowledgeProgress } = requirementsModule;
 
 const {

@@ -1,5 +1,6 @@
 import { registry } from '../registry.js';
-import { getState, getAssetState, getUpgradeState, getUpgradeDefinition, getAssetDefinition } from '../../core/state.js';
+import { getState, getAssetState, getUpgradeState } from '../../core/state.js';
+import { getUpgradeDefinition, getAssetDefinition } from '../../core/state/registry.js';
 import { toNumber } from '../../core/helpers.js';
 import { assetRequirementsMet, listAssetRequirementDescriptors, KNOWLEDGE_TRACKS, getKnowledgeProgress } from '../requirements.js';
 import { getQualityActions, canPerformQualityAction, getQualityActionUsage } from '../assets/quality.js';

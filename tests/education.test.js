@@ -20,7 +20,9 @@ test('education tracks reflect canonical study data', async () => {
   queueCap.textContent = '';
 
   const stateModule = await import('../src/core/state.js');
-  const { configureRegistry, initializeState, getState } = stateModule;
+  const registryModule = await import('../src/core/state/registry.js');
+  const { initializeState, getState } = stateModule;
+  const { configureRegistry } = registryModule;
 
   const { registry } = await import('../src/game/registry.js');
   configureRegistry(registry);
@@ -74,7 +76,9 @@ test('completed study tracks celebrate progress and skills', async () => {
   queueCap.textContent = '';
 
   const stateModule = await import('../src/core/state.js');
-  const { configureRegistry, initializeState, getState } = stateModule;
+  const registryModule = await import('../src/core/state/registry.js');
+  const { initializeState, getState } = stateModule;
+  const { configureRegistry } = registryModule;
 
   const { registry } = await import('../src/game/registry.js');
   configureRegistry(registry);

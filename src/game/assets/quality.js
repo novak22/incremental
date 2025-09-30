@@ -1,6 +1,7 @@
 import { formatHours, formatMoney } from '../../core/helpers.js';
 import { addLog } from '../../core/log.js';
-import { getAssetDefinition, getAssetState, getState, getUpgradeState } from '../../core/state.js';
+import { getAssetState, getState, getUpgradeState } from '../../core/state.js';
+import { getAssetDefinition } from '../../core/state/registry.js';
 import { getAssetEffectMultiplier } from '../upgrades/effects.js';
 import { executeAction } from '../actions.js';
 import { spendMoney } from '../currency.js';

@@ -1,4 +1,5 @@
-import { getState, getUpgradeDefinition, getUpgradeState } from '../core/state.js';
+import { getState, getUpgradeState } from '../core/state.js';
+import { getUpgradeDefinition } from '../core/state/registry.js';
 import { getDefinitionRequirements } from '../game/requirements.js';
 
 export function getPendingEquipmentUpgrades(definition, state = getState()) {

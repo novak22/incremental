@@ -1,11 +1,8 @@
 import { formatDays, formatHours, formatList, formatMoney } from '../../core/helpers.js';
 import { addLog } from '../../core/log.js';
-import {
-  createAssetInstance,
-  getAssetDefinition,
-  getAssetState,
-  getState
-} from '../../core/state.js';
+import { getAssetState, getState } from '../../core/state.js';
+import { createAssetInstance } from '../../core/state/assets.js';
+import { getAssetDefinition } from '../../core/state/registry.js';
 import { addMoney, spendMoney } from '../currency.js';
 import { executeAction } from '../actions.js';
 import { checkDayEnd } from '../lifecycle.js';

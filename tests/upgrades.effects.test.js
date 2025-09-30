@@ -1,11 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import {
-  configureRegistry,
-  getUpgradeDefinition,
-  initializeState
-} from '../src/core/state.js';
+import { initializeState } from '../src/core/state.js';
+import { configureRegistry, getUpgradeDefinition } from '../src/core/state/registry.js';
 import {
   buildSlotLedger,
   describeSlotLedger,

@@ -1,4 +1,5 @@
-import { getState, getAssetState, getMetricDefinition } from '../core/state.js';
+import { getState, getAssetState } from '../core/state.js';
+import { getMetricDefinition } from '../core/state/registry.js';
 import { formatHours, formatMoney } from '../core/helpers.js';
 import { KNOWLEDGE_TRACKS, getKnowledgeProgress } from './requirements.js';
 import { getDailyMetrics } from './metrics.js';
