@@ -97,7 +97,7 @@ const elements = {
     maintenance: document.getElementById('asset-maintenance-toggle'),
     lowRisk: document.getElementById('asset-risk-toggle')
   },
-  assetTableBody: document.getElementById('asset-table-body'),
+  assetGallery: document.getElementById('asset-gallery'),
   assetSelectionNote: document.getElementById('asset-selection-note'),
   assetBatchButtons: {
     maintain: document.getElementById('asset-batch-maintain'),

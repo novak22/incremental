@@ -337,23 +337,7 @@
             </label>
           </div>
         </header>
-        <div class="asset-table-wrapper">
-          <table class="asset-table" aria-describedby="asset-table-caption">
-            <caption id="asset-table-caption">Passive assets overview</caption>
-            <thead>
-              <tr>
-                <th scope="col">Name</th>
-                <th scope="col">State</th>
-                <th scope="col">Yield / day</th>
-                <th scope="col">Upkeep</th>
-                <th scope="col">Risk</th>
-                <th scope="col">Modifiers</th>
-                <th scope="col" class="actions-col">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="asset-table-body"></tbody>
-          </table>
-        </div>
+        <div class="asset-gallery" id="asset-gallery" aria-live="polite"></div>
         <footer class="asset-batch" aria-live="polite">
           <div class="asset-batch__selection" id="asset-selection-note">No assets selected.</div>
           <div class="asset-batch__actions">
@@ -368,7 +352,7 @@
             <p id="asset-launched-note">Select an asset to explore active and queued builds.</p>
           </header>
           <div id="asset-launched-content" class="asset-launched__content">
-            <p class="asset-launched__empty">No asset selected yet. Tap a row to review its build roster.</p>
+            <p class="asset-launched__empty">No asset selected yet. Tap a card to review its build roster.</p>
           </div>
         </section>
       </section>

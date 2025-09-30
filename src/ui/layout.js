@@ -196,17 +196,17 @@ function applyHustleFilters() {
 }
 
 function applyAssetFilters() {
-  const rows = Array.from(elements.assetTableBody?.querySelectorAll('tr') || []);
+  const cards = Array.from(elements.assetGallery?.querySelectorAll('[data-asset]') || []);
   const activeOnly = Boolean(elements.assetFilters.activeOnly?.checked);
   const maintenanceOnly = Boolean(elements.assetFilters.maintenance?.checked);
   const hideRisk = Boolean(elements.assetFilters.lowRisk?.checked);
 
-  rows.forEach(row => {
+  cards.forEach(card => {
     let hidden = false;
-    if (activeOnly && row.dataset.state !== 'active') hidden = true;
-    if (maintenanceOnly && row.dataset.needsMaintenance !== 'true') hidden = true;
-    if (hideRisk && row.dataset.risk === 'high') hidden = true;
-    row.hidden = hidden;
+    if (activeOnly && card.dataset.state !== 'active') hidden = true;
+    if (maintenanceOnly && card.dataset.needsMaintenance !== 'true') hidden = true;
+    if (hideRisk && card.dataset.risk === 'high') hidden = true;
+    card.hidden = hidden;
   });
 }
 
