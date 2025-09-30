@@ -99,7 +99,9 @@ Each asset supports multiple instances, tracks setup progress, and rolls a daily
 
 ## Contribution Notes
 - **Code Structure** – Assets, hustles, and upgrades live in `src/game/` as ES modules; shared helpers and state management are under `src/core/`, while UI utilities live in `src/ui/`.
-- **Adding Hustles** – Extend `HUSTLES` in `src/game/hustles.js`. For study-style hustles, hook into knowledge helpers from `requirements.js`.
+- **Adding Hustles** – Drop new instant gig configs into `src/game/hustles/definitions/` (they should export plain objects consum
+  ed by `createInstantHustle`). Study programs live in `src/game/hustles/knowledgeHustles.js` so education flows evolve on their
+  own cadence.
 - **Adding Assets** – Add new definition modules under `src/game/assets/definitions/` and include them in the registry. Define setup/maintenance data, income ranges, requirement objects, and any custom log messages.
 - **Adding Upgrades** – Update `UPGRADES` in `src/game/upgrades.js` and ensure new upgrade IDs are handled in requirement checks.
 - After modifying content arrays, run through a manual day cycle: start builds, end the day, confirm log messaging, and verify save/load behaviour.
