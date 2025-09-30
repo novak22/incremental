@@ -1,4 +1,19 @@
-import elements from './elements.js';
+import {
+  getAssetGallery,
+  getAssetUpgradeActionsContainer,
+  getDailyStats,
+  getEventLogPreviewNode,
+  getHeaderStats,
+  getKpiNotes,
+  getKpiValues,
+  getMoneyNode,
+  getNicheTrends,
+  getNotificationsContainer,
+  getQueueNodes,
+  getQuickActionsContainer,
+  getSessionStatusNode,
+  getShellNavigation
+} from './elements/registry.js';
 import setText from './dom.js';
 import { formatHours, formatMoney } from '../core/helpers.js';
 import { getAssetState, getState } from '../core/state.js';
@@ -275,6 +290,7 @@ export function buildAssetUpgradeRecommendations(state) {
 
 function buildNotifications(state) {
   const notifications = [];
+  const { shellTabs = [] } = getShellNavigation() || {};
 
   for (const asset of registry.assets) {
     const assetState = getAssetState(asset.id, state);
@@ -286,7 +302,7 @@ function buildNotifications(state) {
         label: `${asset.name} needs upkeep`,
         message: `${maintenanceDue.length} build${maintenanceDue.length === 1 ? '' : 's'} waiting for maintenance`,
         action: () => {
-          elements.shellTabs.find(tab => tab.id === 'tab-assets')?.click();
+          shellTabs.find(tab => tab.id === 'tab-assets')?.click();
         }
       });
     }
@@ -306,7 +322,7 @@ function buildNotifications(state) {
       label: `${upgrade.name} is affordable`,
       message: `$${formatMoney(upgrade.cost)} ready to invest`,
       action: () => {
-        elements.shellTabs.find(tab => tab.id === 'tab-upgrades')?.click();
+        shellTabs.find(tab => tab.id === 'tab-upgrades')?.click();
       }
     });
   });
@@ -315,7 +331,7 @@ function buildNotifications(state) {
 }
 
 function renderQueue(summary) {
-  const container = elements.actionQueue;
+  const container = getQueueNodes()?.actionQueue;
   if (!container) return;
   container.innerHTML = '';
   const items = describeQueue(summary);
@@ -342,7 +358,7 @@ function renderQueue(summary) {
 }
 
 function renderQuickActions(state) {
-  const container = elements.quickActions;
+  const container = getQuickActionsContainer();
   const suggestions = buildQuickActions(state);
   const entries = suggestions.map(action => ({
     title: action.label,
@@ -359,7 +375,7 @@ function renderQuickActions(state) {
 }
 
 function renderAssetUpgradeActions(state) {
-  const container = elements.assetUpgradeActions;
+  const container = getAssetUpgradeActionsContainer();
   const suggestions = buildAssetUpgradeRecommendations(state);
   const entries = suggestions.map(action => ({
     title: action.title,
@@ -378,7 +394,7 @@ function renderAssetUpgradeActions(state) {
 }
 
 function renderNotifications(state) {
-  const container = elements.notifications;
+  const container = getNotificationsContainer();
   if (!container) return;
   container.innerHTML = '';
   const entries = buildNotifications(state);
@@ -410,7 +426,7 @@ function renderNotifications(state) {
 }
 
 function renderEventPreview(state) {
-  const container = elements.eventLogPreview;
+  const container = getEventLogPreviewNode();
   if (!container) return;
   container.innerHTML = '';
   const log = Array.isArray(state?.log) ? [...state.log] : [];
@@ -486,8 +502,7 @@ function computeStudyProgress(state) {
 }
 
 function renderDailyStats(summary) {
-  const refs = elements.dailyStats || {};
-  if (!refs) return;
+  const refs = getDailyStats() || {};
 
   const {
     timeSummary,
@@ -556,7 +571,7 @@ function refreshNicheWidget() {
 
 function setupNicheControls() {
   if (nicheControlsBound) return;
-  const refs = elements.nicheTrends || {};
+  const refs = getNicheTrends() || {};
   const buttons = Array.isArray(refs.sortButtons) ? refs.sortButtons : [];
   buttons.forEach(button => {
     button.addEventListener('click', () => {
@@ -578,7 +593,7 @@ function setupNicheControls() {
 }
 
 function updateNicheControlStates({ watchlistCount = 0 } = {}) {
-  const refs = elements.nicheTrends || {};
+  const refs = getNicheTrends() || {};
   const buttons = Array.isArray(refs.sortButtons) ? refs.sortButtons : [];
   buttons.forEach(button => {
     const isActive = (button.dataset.nicheSort || 'impact') === nicheViewState.sort;
@@ -707,7 +722,8 @@ function buildNicheAnalytics(state) {
 function focusAssetsForNiche(nicheId, { hasAssets = false, nicheName = '' } = {}) {
   if (!nicheId) return;
   activateShellPanel('panel-assets');
-  const { assetGallery, sessionStatus } = elements;
+  const assetGallery = getAssetGallery();
+  const sessionStatus = getSessionStatusNode();
   if (!assetGallery) return;
   window.requestAnimationFrame(() => {
     const cards = Array.from(assetGallery.querySelectorAll('[data-asset]'));
@@ -992,7 +1008,7 @@ function updateDailyHighlights(analytics, refs) {
 }
 
 function renderNicheWidget(state) {
-  const refs = elements.nicheTrends || {};
+  const refs = getNicheTrends() || {};
   const {
     highlightHot,
     highlightHotNote,
@@ -1099,14 +1115,15 @@ export function renderDashboard(summary) {
   if (!state) return;
 
   const hoursLeft = Math.max(0, Number(state.timeLeft) || 0);
+  const sessionStatus = getSessionStatusNode();
   setText(
-    elements.sessionStatus,
+    sessionStatus,
     `Day ${state.day} • ${formatHours(hoursLeft)} remaining`
   );
 
-  setText(elements.money, `$${formatMoney(state.money)}`);
+  setText(getMoneyNode(), `$${formatMoney(state.money)}`);
 
-  const headerStats = elements.headerStats || {};
+  const headerStats = getHeaderStats() || {};
   const dailyEarnings = Math.max(0, Number(summary.totalEarnings) || 0);
   const activeEarnings = Math.max(0, Number(summary.activeEarnings) || 0);
   const passiveEarnings = Math.max(0, Number(summary.passiveEarnings) || 0);
@@ -1173,23 +1190,26 @@ export function renderDashboard(summary) {
     reservedSegments.length ? reservedSegments.join(' • ') : 'Queue is wide open'
   );
 
-  const net = summary.totalEarnings - summary.totalSpend;
-  setText(elements.kpiValues.net, `$${formatMoney(net)}`);
-  setText(elements.kpiNotes.net, `${formatMoney(summary.totalEarnings)} earned • ${formatMoney(summary.totalSpend)} spent`);
+  const kpiValues = getKpiValues() || {};
+  const kpiNotes = getKpiNotes() || {};
 
-  setText(elements.kpiValues.hours, `${formatHours(hoursLeft)}`);
-  setText(elements.kpiNotes.hours, hoursLeft > 0 ? 'Plenty of hustle hours left.' : 'Day is tapped out.');
+  const net = summary.totalEarnings - summary.totalSpend;
+  setText(kpiValues.net, `$${formatMoney(net)}`);
+  setText(kpiNotes.net, `${formatMoney(summary.totalEarnings)} earned • ${formatMoney(summary.totalSpend)} spent`);
+
+  setText(kpiValues.hours, `${formatHours(hoursLeft)}`);
+  setText(kpiNotes.hours, hoursLeft > 0 ? 'Plenty of hustle hours left.' : 'Day is tapped out.');
 
   const { activeAssets, upkeepDue } = computeAssetMetrics(state);
-  setText(elements.kpiValues.upkeep, `$${formatMoney(upkeepDue)}`);
-  setText(elements.kpiNotes.upkeep, upkeepDue > 0 ? 'Maintain assets soon.' : 'Upkeep funded.');
+  setText(kpiValues.upkeep, `$${formatMoney(upkeepDue)}`);
+  setText(kpiNotes.upkeep, upkeepDue > 0 ? 'Maintain assets soon.' : 'Upkeep funded.');
 
-  setText(elements.kpiValues.assets, String(activeAssets));
-  setText(elements.kpiNotes.assets, activeAssets > 0 ? 'Streams humming.' : 'Launch your first asset.');
+  setText(kpiValues.assets, String(activeAssets));
+  setText(kpiNotes.assets, activeAssets > 0 ? 'Streams humming.' : 'Launch your first asset.');
 
   const { percent, summary: studySummary } = computeStudyProgress(state);
-  setText(elements.kpiValues.study, `${percent}%`);
-  setText(elements.kpiNotes.study, studySummary);
+  setText(kpiValues.study, `${percent}%`);
+  setText(kpiNotes.study, studySummary);
 
   renderQueue(summary);
   renderQuickActions(state);
