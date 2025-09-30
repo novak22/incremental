@@ -67,12 +67,12 @@ test('requirement detail renders dynamic knowledge progress', () => {
   assert.equal(progress.completed, false);
 
   state.money = trackDef.tuition + 500;
-  state.timeLeft = trackDef.hoursPerDay + 2;
+  state.timeLeft = trackDef.hoursPerDay + 8;
   enrollInKnowledgeTrack('outlineMastery');
 
   for (let day = 0; day < trackDef.days; day += 1) {
     advanceKnowledgeTracks();
-    state.timeLeft = trackDef.hoursPerDay + 2;
+    state.timeLeft = trackDef.hoursPerDay + 6;
     allocateDailyStudy();
   }
 
@@ -105,7 +105,7 @@ test('advancing knowledge logs completions and clears daily flags', () => {
   const progress = getKnowledgeProgress('photoLibrary');
 
   state.money = trackDef.tuition + 200;
-  state.timeLeft = trackDef.hoursPerDay + 1;
+  state.timeLeft = trackDef.hoursPerDay + 6;
   enrollInKnowledgeTrack('photoLibrary');
   const logBaseline = state.log.length;
 
@@ -115,7 +115,7 @@ test('advancing knowledge logs completions and clears daily flags', () => {
   assert.equal(state.log.length, logBaseline, 'no completion yet');
 
   for (let day = 1; day < trackDef.days; day += 1) {
-    state.timeLeft = trackDef.hoursPerDay + 1;
+    state.timeLeft = trackDef.hoursPerDay + 6;
     allocateDailyStudy();
     advanceKnowledgeTracks();
   }

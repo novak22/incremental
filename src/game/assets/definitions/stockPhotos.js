@@ -9,7 +9,7 @@ const stockPhotosDefinition = createAssetDefinition({
   tags: ['photo', 'visual', 'content'],
   description: 'Stage props, shoot themed collections, and list them across marketplaces.',
   setup: { days: 5, hoursPerDay: 4, cost: 560 },
-  maintenance: { hours: 0.9, cost: 8 },
+  maintenance: { hours: 0.8, cost: 10 },
   skills: {
     setup: [
       'visual',

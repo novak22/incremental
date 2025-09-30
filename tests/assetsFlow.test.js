@@ -64,7 +64,7 @@ test('starting an asset spends resources and queues setup', () => {
 test('maintenance allocation funds available assets and logs skipped ones', () => {
   const state = getState();
   state.money = 1000;
-  state.timeLeft = 2;
+  state.timeLeft = 1.1;
   getAssetState('blog').instances = [createAssetInstance(blogDefinition, { status: 'active' })];
   getAssetState('vlog').instances = [createAssetInstance(vlogDefinition, { status: 'active' })];
 
@@ -74,7 +74,7 @@ test('maintenance allocation funds available assets and logs skipped ones', () =
   const vlogInstance = getAssetState('vlog').instances[0];
   assert.equal(blogInstance.maintenanceFundedToday, true);
   assert.equal(vlogInstance.maintenanceFundedToday, false);
-  assert.ok(state.timeLeft < 2.5, 'time should be spent on maintenance');
+  assert.ok(state.timeLeft < 1.1, 'time should be spent on maintenance');
   const lastTwo = state.log.slice(-2).map(entry => entry.message);
   assert.ok(lastTwo.some(message => /Daily upkeep handled/.test(message)));
   assert.ok(lastTwo.some(message => /missed upkeep/.test(message)));

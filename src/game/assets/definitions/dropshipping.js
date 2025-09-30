@@ -9,7 +9,7 @@ const dropshippingDefinition = createAssetDefinition({
   tags: ['commerce', 'ecommerce', 'fulfillment'],
   description: 'Prototype products, source suppliers, and automate fulfillment funnels.',
   setup: { days: 6, hoursPerDay: 4, cost: 720 },
-  maintenance: { hours: 1.2, cost: 9 },
+  maintenance: { hours: 1.1, cost: 12 },
   skills: {
     setup: [
       'commerce',

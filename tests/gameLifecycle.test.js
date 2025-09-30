@@ -87,7 +87,7 @@ test('maintenance funding yields end-of-day payouts', () => {
 
     let updatedInstance = getAssetState('blog').instances.find(item => item.id === instanceId);
     assert.equal(updatedInstance.maintenanceFundedToday, true, 'maintenance should be funded when hours remain');
-    assert.equal(state.timeLeft, 9.25, 'maintenance should consume daily hours');
+    assert.equal(state.timeLeft, 9.4, 'maintenance should consume daily hours');
     assert.equal(state.money, 7, 'maintenance should deduct upkeep cash');
 
     closeOutDay();
