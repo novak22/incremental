@@ -11,6 +11,7 @@
 - Flow helpers: the "Next" action, Daily Stats card, and header pulse now keep priorities, earnings, and schedules visible at a glance.
 - Auto forward loop: header toggle now cycles through paused, current pace (every two seconds), or a 2× sprint (every second) to keep momentum without constant clicks.
 - Asset stewardship: detail panels, sell controls, and recommendations highlight ROI, upkeep costs, and upgrade shortcuts for each build.
+- Asset category insights: every category header sports a Details slider that surfaces launch requirements, upkeep schedules, payout ranges, and quality ladders for its assets.
 - Active build cards surface quality tiers, remaining steps to the next milestone, and yesterday’s payout breakdown so upgrades feel tangible.
 - Automation & infrastructure: broader instant gigs, smarter assistant load balancing, and new studio/server tiers expand long-term play.
 - Commerce ladder: fulfillment automation, global supply mesh, and white-label alliances stack payouts for thriving dropshipping empires.
