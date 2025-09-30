@@ -56,6 +56,7 @@
 
     <nav class="shell__tabs" role="tablist" aria-label="Primary">
       <button id="tab-dashboard" class="shell__tab is-active" role="tab" aria-selected="true" aria-controls="panel-dashboard">Dashboard</button>
+      <button id="tab-analytics" class="shell__tab" role="tab" aria-selected="false" aria-controls="panel-analytics">Analytics</button>
       <button id="tab-player" class="shell__tab" role="tab" aria-selected="false" aria-controls="panel-player">Player</button>
       <button id="tab-hustles" class="shell__tab" role="tab" aria-selected="false" aria-controls="panel-hustles">Hustles</button>
       <button id="tab-assets" class="shell__tab" role="tab" aria-selected="false" aria-controls="panel-assets">Assets</button>
@@ -155,7 +156,7 @@
                   <h2 id="quick-actions-heading">Quick actions</h2>
                   <p>High-impact moves you can trigger now.</p>
                 </header>
-                <ul id="quick-actions" class="quick-actions" aria-live="polite"></ul>
+                <ul id="quick-actions" class="action-list quick-actions" aria-live="polite"></ul>
               </article>
 
               <article class="card dashboard-card" aria-labelledby="asset-upgrades-heading">
@@ -163,7 +164,7 @@
                   <h2 id="asset-upgrades-heading">Asset upgrade</h2>
                   <p>Cheer on underperformers with the next quality-friendly push.</p>
                 </header>
-                <ul id="asset-upgrade-actions" class="quick-actions upgrade-actions" aria-live="polite"></ul>
+                <ul id="asset-upgrade-actions" class="action-list upgrade-actions" aria-live="polite"></ul>
               </article>
             </div>
 
@@ -180,14 +181,6 @@
                   </div>
                   <ul id="dashboard-skills-list" class="skills-widget__list" aria-live="polite"></ul>
                 </div>
-              </article>
-
-              <article class="card dashboard-card" aria-labelledby="niche-trends-heading">
-                <header>
-                  <h2 id="niche-trends-heading">Niche pulse</h2>
-                  <p>Track which audiences are buzzing today.</p>
-                </header>
-                <ul id="niche-trends-list" class="niche-widget" aria-live="polite"></ul>
               </article>
 
               <article class="card dashboard-card" aria-labelledby="notifications-heading">
@@ -217,6 +210,24 @@
               </article>
             </div>
           </section>
+        </div>
+      </section>
+
+      <section id="panel-analytics" class="panel" role="tabpanel" aria-labelledby="tab-analytics" hidden>
+        <header class="panel__header">
+          <div>
+            <h2>Analytics</h2>
+            <p>Dig into trendlines and popularity pulses to plan your next bet.</p>
+          </div>
+        </header>
+        <div class="analytics-layout">
+          <article class="card analytics-card" aria-labelledby="niche-trends-heading">
+            <header>
+              <h3 id="niche-trends-heading">Niche pulse</h3>
+              <p>Track which audiences are buzzing today.</p>
+            </header>
+            <ul id="niche-trends-list" class="niche-widget" aria-live="polite"></ul>
+          </article>
         </div>
       </section>
 

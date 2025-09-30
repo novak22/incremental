@@ -37,11 +37,13 @@ function createDailyListItem(entry) {
 function renderActionSection(container, entries, { emptyMessage, buttonClass, defaultLabel } = {}) {
   if (!container) return;
   container.innerHTML = '';
+  container.classList.add('action-list');
 
   const list = Array.isArray(entries) ? entries.filter(Boolean) : [];
   if (!list.length) {
     if (!emptyMessage) return;
     const empty = document.createElement('li');
+    empty.className = 'action-list__empty';
     empty.textContent = emptyMessage;
     container.appendChild(empty);
     return;
@@ -49,32 +51,54 @@ function renderActionSection(container, entries, { emptyMessage, buttonClass, de
 
   list.forEach(entry => {
     const item = document.createElement('li');
-    const info = document.createElement('div');
-    info.className = 'quick-actions__info';
+    item.className = 'action-list__item';
+
+    const content = document.createElement('div');
+    content.className = 'action-list__content';
 
     const title = document.createElement('span');
+    title.className = 'action-list__title';
     title.textContent = entry.title || '';
-    const subtitle = document.createElement('span');
-    subtitle.textContent = entry.subtitle || '';
-    subtitle.className = 'quick-actions__subtitle';
-    info.append(title, subtitle);
+    content.appendChild(title);
+
+    if (entry.subtitle) {
+      const subtitle = document.createElement('span');
+      subtitle.className = 'action-list__subtitle';
+      subtitle.textContent = entry.subtitle;
+      content.appendChild(subtitle);
+    }
 
     if (entry.meta) {
       const meta = document.createElement('span');
+      const metaClasses = ['action-list__meta'];
+      if (entry.metaClass) {
+        metaClasses.push(entry.metaClass);
+      }
+      meta.className = metaClasses.join(' ');
       meta.textContent = entry.meta;
-      meta.className = entry.metaClass || 'quick-actions__meta';
-      info.append(meta);
+      content.appendChild(meta);
     }
+
+    const actions = document.createElement('div');
+    actions.className = 'action-list__actions';
 
     const button = document.createElement('button');
     button.type = 'button';
-    button.className = buttonClass || 'primary';
+    const buttonClasses = ['action-list__button'];
+    if (buttonClass) {
+      buttonClasses.push(...String(buttonClass).split(' ').filter(Boolean));
+    } else {
+      buttonClasses.push('primary');
+    }
+    button.className = buttonClasses.join(' ');
     button.textContent = entry.buttonLabel || defaultLabel || 'Select';
     if (typeof entry.onClick === 'function') {
       button.addEventListener('click', () => entry.onClick?.());
     }
 
-    item.append(info, button);
+    actions.appendChild(button);
+
+    item.append(content, actions);
     container.appendChild(item);
   });
 }
