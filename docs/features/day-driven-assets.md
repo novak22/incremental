@@ -10,7 +10,7 @@
 
 **Economy notes**
 - Base payouts use per-asset variance (blogs low volatility; SaaS highest) with quality tiers lifting income.
-- Recent tuning ensures early blogs/e-books cover their $3 upkeep soon after hitting Quality 1; Automation Course still doubles blog post progress.
+- Recent tuning ensures early blogs/e-books cover their $3 upkeep soon after hitting Quality 1, while stock photos, dropshipping labs, and micro SaaS now net a small profit at Quality 0 thanks to lighter upkeep and higher baseline payouts; Automation Course still doubles blog post progress.
 
 **Player value**
 - Daily stats call out which builds paid, stalled, or advanced knowledge, helping players adjust tomorrow’s plan.

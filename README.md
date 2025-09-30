@@ -43,7 +43,7 @@ Each asset supports multiple instances, tracks setup progress, and rolls a daily
 - **SaaS Micro-App** – Setup 8 days × 4h ($960) after Automation Architecture, the Server Rack → Cloud Cluster → Edge Delivery ladder, and experience running a dropshipping store plus e-book line. Maintenance 1.4h/day + $24. Squash bugs, ship features, and host support sprints to grow subscriptions from $4–$8/day to $168–$220/day after unlocking the Ecosystem Powerhouse tier at Quality 5.
 
 ### Upgrades & Boosts
-- **Hire Virtual Assistant** – $180 per hire, up to four assistants. Each adds +2h daily but costs $30/day in payroll; fire assistants anytime to cut wages (and hours).
+- **Hire Virtual Assistant** – $180 per hire, up to four assistants. Each adds +3h daily but costs $24/day in payroll; fire assistants anytime to cut wages (and hours).
 - **Turbo Coffee** – $40 per cup, up to three per day, each adding +1h for the current day.
 - **Camera** – $200, unlocks Vlog Channels and Stock Photo Galleries.
 - **Cinema Camera Upgrade** – $480, requires the base camera; trims setup/maintenance time, adds ~25% vlog payouts, and doubles quality progress for video/photo actions.

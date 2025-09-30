@@ -34,7 +34,7 @@ const dropshippingDefinition = createAssetDefinition({
         level: 0,
         name: 'Prototype Pile',
         description: 'Inconsistent suppliers mean sporadic payouts.',
-        income: { min: 5, max: 9 },
+        income: { min: 12, max: 20 },
         requirements: {}
       },
       {

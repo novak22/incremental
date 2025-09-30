@@ -20,7 +20,7 @@ const assistantUpgrade = createUpgrade({
   id: 'assistant',
   name: 'Hire Virtual Assistant',
   tag: { label: 'Unlock', type: 'unlock' },
-  description: 'Scale your admin squad. Each hire adds hours but expects daily wages.',
+  description: 'Scale your admin squad. Each hire adds hours at a lean $8/hr upkeep.',
   category: 'infra',
   family: 'automation',
   defaultState: {

@@ -34,7 +34,7 @@ const stockPhotosDefinition = createAssetDefinition({
         level: 0,
         name: 'Camera Roll Chaos',
         description: 'Unsorted shoots drip pennies.',
-        income: { min: 4, max: 9 },
+        income: { min: 8, max: 14 },
         requirements: {}
       },
       {
