@@ -20,7 +20,8 @@ import {
 import {
   calculateAssetSalePrice,
   instanceLabel,
-  sellAssetInstance
+  sellAssetInstance,
+  formatMaintenanceSummary
 } from '../game/assets/helpers.js';
 import {
   assignInstanceToNiche,
@@ -1109,16 +1110,8 @@ function formatInstanceLastPayout(instance) {
 
 function formatInstanceUpkeep(definition) {
   if (!definition) return '';
-  const parts = [];
-  const cost = Number(definition.maintenance?.cost) || 0;
-  if (cost > 0) {
-    parts.push(`$${formatMoney(cost)}/day`);
-  }
-  const hours = Number(definition.maintenance?.hours) || 0;
-  if (hours > 0) {
-    parts.push(`${formatHours(hours)}/day`);
-  }
-  return parts.join(' • ');
+  const summary = formatMaintenanceSummary(definition);
+  return summary.parts.join(' • ');
 }
 
 function formatLaunchEta(instance) {

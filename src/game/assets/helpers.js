@@ -178,22 +178,29 @@ export function setupCostDetail(definition) {
   return `💵 Setup Cost: <strong>$${formatMoney(cost)}</strong>`;
 }
 
-export function maintenanceDetail(definition) {
-  const hours = Number(definition.maintenance?.hours) || 0;
-  const cost = Number(definition.maintenance?.cost) || 0;
-  const hasHours = hours > 0;
-  const hasCost = cost > 0;
-  if (!hasHours && !hasCost) {
-    return '🛠 Maintenance: <strong>None</strong>';
-  }
+export function formatMaintenanceSummary(definition) {
+  const maintenance = definition?.maintenance || {};
+  const hours = Number(maintenance.hours) || 0;
+  const cost = Number(maintenance.cost) || 0;
   const parts = [];
-  if (hasHours) {
+  if (hours > 0) {
     parts.push(`${formatHours(hours)}/day`);
   }
-  if (hasCost) {
+  if (cost > 0) {
     parts.push(`$${formatMoney(cost)}/day`);
   }
-  return `🛠 Maintenance: <strong>${parts.join(' + ')}</strong>`;
+  return {
+    parts,
+    hasUpkeep: parts.length > 0
+  };
+}
+
+export function maintenanceDetail(definition) {
+  const summary = formatMaintenanceSummary(definition);
+  if (!summary.hasUpkeep) {
+    return '🛠 Maintenance: <strong>None</strong>';
+  }
+  return `🛠 Maintenance: <strong>${summary.parts.join(' + ')}</strong>`;
 }
 
 export function incomeDetail(definition) {
