@@ -1,4 +1,4 @@
-import { formatList, formatMoney } from '../../core/helpers.js';
+import { formatHours, formatList, formatMoney } from '../../core/helpers.js';
 import { addLog } from '../../core/log.js';
 import { getAssetState, getState } from '../../core/state.js';
 import { addMoney, spendMoney } from '../currency.js';
@@ -12,6 +12,111 @@ import {
   recordTimeContribution
 } from '../metrics.js';
 import { getAssetEffectMultiplier } from '../upgrades/effects.js';
+
+function findAssetDefinition(assetId) {
+  return ASSETS.find(entry => entry.id === assetId) || null;
+}
+
+function describeMaintenanceSkip(definition, label, assetState, instance) {
+  if (typeof definition?.messages?.maintenanceSkipped === 'function') {
+    return definition.messages.maintenanceSkipped(label, assetState, instance);
+  }
+  return `${label} skipped maintenance and stalled out today.`;
+}
+
+export function maintainAssetInstance(assetId, instanceId) {
+  const state = getState();
+  if (!state) {
+    return { success: false, reason: 'no-state' };
+  }
+
+  const definition = findAssetDefinition(assetId);
+  if (!definition) {
+    return { success: false, reason: 'unknown-asset' };
+  }
+
+  const assetState = getAssetState(definition.id, state);
+  const index = assetState.instances.findIndex(entry => entry?.id === instanceId);
+  if (index === -1) {
+    return { success: false, reason: 'missing-instance' };
+  }
+
+  const instance = assetState.instances[index];
+  const label = instanceLabel(definition, index);
+
+  if (instance.status !== 'active') {
+    addLog(`${label} isn’t live yet, so there’s no upkeep to fund.`, 'info');
+    return { success: false, reason: 'inactive' };
+  }
+
+  if (instance.maintenanceFundedToday) {
+    addLog(`${label} already enjoyed its upkeep today.`, 'info');
+    return { success: false, reason: 'already-maintained' };
+  }
+
+  const baseMaintenanceHours = Number(definition.maintenance?.hours) || 0;
+  const maintenanceEffect = getAssetEffectMultiplier(definition, 'maint_time_mult', {
+    actionType: 'maintenance'
+  });
+  const maintenanceHours = baseMaintenanceHours * (Number.isFinite(maintenanceEffect.multiplier)
+    ? maintenanceEffect.multiplier
+    : 1);
+  const maintenanceCost = Number(definition.maintenance?.cost) || 0;
+
+  const pendingIncome = Math.max(0, Number(instance.pendingIncome) || 0);
+  const availableMoney = state.money + pendingIncome;
+
+  if (maintenanceCost > availableMoney) {
+    addLog(describeMaintenanceSkip(definition, label, assetState, instance), 'warning');
+    return { success: false, reason: 'insufficient-money' };
+  }
+
+  if (maintenanceHours > state.timeLeft) {
+    addLog(
+      `${label} needs ${formatHours(maintenanceHours)} today, but you’re out of hours.`,
+      'warning'
+    );
+    return { success: false, reason: 'insufficient-time' };
+  }
+
+  if (pendingIncome > 0) {
+    const incomeMessage = definition.messages?.income
+      ? definition.messages.income(pendingIncome, label, instance, assetState)
+      : `${label} delivered $${formatMoney(pendingIncome)} from yesterday’s grind.`;
+    addMoney(pendingIncome, incomeMessage, definition.income?.logType || 'passive');
+    recordPayoutContribution({
+      key: getAssetMetricId(definition, 'payout', 'payout'),
+      label: `💰 ${definition.singular || definition.name}`,
+      amount: pendingIncome,
+      category: 'passive'
+    });
+    instance.pendingIncome = 0;
+  }
+
+  if (maintenanceCost > 0) {
+    spendMoney(maintenanceCost);
+    recordCostContribution({
+      key: getAssetMetricId(definition, 'maintenance', 'cost'),
+      label: `🔧 ${definition.singular || definition.name} upkeep`,
+      amount: maintenanceCost,
+      category: 'maintenance'
+    });
+  }
+
+  if (maintenanceHours > 0) {
+    spendTime(maintenanceHours);
+    recordTimeContribution({
+      key: getAssetMetricId(definition, 'maintenance', 'time'),
+      label: `🛠️ ${definition.singular || definition.name} upkeep`,
+      hours: maintenanceHours,
+      category: 'maintenance'
+    });
+  }
+
+  instance.maintenanceFundedToday = true;
+  addLog(`${label} is fully maintained and ready to earn.`, 'info');
+  return { success: true };
+}
 
 export function allocateAssetMaintenance() {
   const state = getState();

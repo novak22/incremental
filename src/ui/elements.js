@@ -98,18 +98,6 @@ const elements = {
     lowRisk: document.getElementById('asset-risk-toggle')
   },
   assetGallery: document.getElementById('asset-gallery'),
-  assetSelectionNote: document.getElementById('asset-selection-note'),
-  assetBatchButtons: {
-    maintain: document.getElementById('asset-batch-maintain'),
-    pause: document.getElementById('asset-batch-pause'),
-    preset: document.getElementById('asset-batch-preset')
-  },
-  assetLaunched: {
-    container: document.getElementById('asset-launched'),
-    title: document.getElementById('asset-launched-title'),
-    note: document.getElementById('asset-launched-note'),
-    content: document.getElementById('asset-launched-content')
-  },
   upgradeFilters: {
     unlocked: document.getElementById('upgrade-unlocked-toggle')
   },

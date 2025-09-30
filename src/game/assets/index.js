@@ -1,5 +1,5 @@
 import { ASSETS } from './registry.js';
-import { allocateAssetMaintenance, closeOutDay } from './lifecycle.js';
+import { allocateAssetMaintenance, closeOutDay, maintainAssetInstance } from './lifecycle.js';
 import {
   getIncomeRangeForDisplay,
   calculateAssetSalePrice,
@@ -24,6 +24,7 @@ import {
 const assetsSystem = {
   list: ASSETS,
   allocateMaintenance: allocateAssetMaintenance,
+  maintainInstance: maintainAssetInstance,
   closeOutDay,
   getIncomeRangeForDisplay,
   performQualityAction,
@@ -56,6 +57,7 @@ export {
   getQualityTracks,
   sellAssetInstance,
   calculateAssetSalePrice,
+  maintainAssetInstance,
   assignInstanceToNiche,
   getAssignableNicheSummaries,
   getInstanceNicheEffect,
