@@ -22,7 +22,6 @@ import {
   instanceLabel,
   sellAssetInstance
 } from '../game/assets/helpers.js';
-import { maintainAssetInstance } from '../game/assets/index.js';
 import {
   assignInstanceToNiche,
   getAssignableNicheSummaries,
@@ -36,6 +35,7 @@ import {
 import { getAssetEffectMultiplier } from '../game/upgrades/effects.js';
 import {
   canPerformQualityAction,
+  getQualityActionAvailability,
   getQualityActionUsage,
   getQualityActions,
   getQualityLevel,
@@ -56,6 +56,7 @@ const upgradeLaneItems = new Map();
 const studyUi = new Map();
 let currentAssetDefinitions = [];
 let currentUpgradeDefinitions = [];
+let assetLaunchPanelExpanded = false;
 
 const UPGRADE_CATEGORY_ORDER = ['tech', 'house', 'infra', 'support', 'misc'];
 
@@ -1499,25 +1500,46 @@ function buildSpecialActionButtons(definition, instance, state) {
     button.type = 'button';
     button.className = 'ghost';
     button.textContent = action.label || 'Upgrade';
+    const availability = getQualityActionAvailability(definition, instance, action, state);
     const disabled = !canPerformQualityAction(definition, instance, action, state);
     button.disabled = disabled;
     const details = [];
-    if (action.time) {
-      details.push(`⏳ ${formatHours(action.time)}`);
+    const timeCost = Math.max(0, Number(action.time) || 0);
+    const moneyCost = Math.max(0, Number(action.cost) || 0);
+    if (timeCost > 0) {
+      details.push(`⏳ ${formatHours(timeCost)}`);
     }
-    if (action.cost) {
-      details.push(`💵 $${formatMoney(action.cost)}`);
+    if (moneyCost > 0) {
+      details.push(`💵 $${formatMoney(moneyCost)}`);
     }
     const usage = getQualityActionUsage(definition, instance, action);
     if (usage.dailyLimit > 0) {
       details.push(`🔁 ${usage.remainingUses}/${usage.dailyLimit} today`);
-      if (usage.exhausted) {
-        details.push('All uses spent today');
+    }
+    const timeLeft = Math.max(0, Number(state?.timeLeft) || 0);
+    const moneyAvailable = Math.max(0, Number(state?.money) || 0);
+    const tooltipParts = [...details];
+    if (!availability.unlocked && availability.reason) {
+      tooltipParts.push(availability.reason);
+    }
+    if (usage.exhausted) {
+      tooltipParts.push('All uses spent today. Come back tomorrow for a fresh charge.');
+    }
+    if (disabled && availability.unlocked) {
+      if (timeCost > 0 && timeLeft < timeCost) {
+        tooltipParts.push(`Need ${formatHours(timeCost)} free (have ${formatHours(timeLeft)})`);
+      }
+      if (moneyCost > 0 && moneyAvailable < moneyCost) {
+        tooltipParts.push(
+          `Need $${formatMoney(moneyCost)} (have $${formatMoney(Math.max(0, Math.floor(moneyAvailable)))})`
+        );
       }
     }
-    if (details.length) {
-      button.title = details.join(' · ');
+    if (tooltipParts.length) {
+      button.title = tooltipParts.join(' • ');
     }
+    button.classList.add('asset-overview-card__upgrade-action');
+    button.classList.add(disabled ? 'asset-overview-card__action--locked' : 'asset-overview-card__action--available');
     button.addEventListener('click', event => {
       event.preventDefault();
       if (button.disabled) return;
@@ -1700,10 +1722,30 @@ function buildAssetLaunchPanel(definitions = [], state = getState()) {
   const tiles = definitions
     .map(definition => buildAssetLaunchTile(definition, state))
     .filter(Boolean);
-  if (!tiles.length) return null;
+  if (!tiles.length) {
+    assetLaunchPanelExpanded = false;
+    return null;
+  }
 
   const container = document.createElement('section');
   container.className = 'asset-launcher';
+
+  const trigger = document.createElement('button');
+  trigger.type = 'button';
+  trigger.className = 'asset-launcher__trigger primary';
+  trigger.textContent = assetLaunchPanelExpanded ? 'Hide launch options' : 'Launch a new asset';
+  trigger.setAttribute('aria-expanded', assetLaunchPanelExpanded ? 'true' : 'false');
+  const contentId = 'asset-launcher-options';
+  trigger.setAttribute('aria-controls', contentId);
+  if (assetLaunchPanelExpanded) {
+    trigger.classList.add('is-open');
+  }
+  container.appendChild(trigger);
+
+  const content = document.createElement('div');
+  content.className = 'asset-launcher__content';
+  content.id = contentId;
+  content.hidden = !assetLaunchPanelExpanded;
 
   const header = document.createElement('div');
   header.className = 'asset-launcher__header';
@@ -1715,12 +1757,22 @@ function buildAssetLaunchPanel(definitions = [], state = getState()) {
   note.className = 'asset-launcher__note';
   note.textContent = 'Pick a build to spin up a fresh income stream.';
   header.appendChild(note);
-  container.appendChild(header);
+  content.appendChild(header);
 
   const grid = document.createElement('div');
   grid.className = 'asset-launcher__grid';
   tiles.forEach(tile => grid.appendChild(tile));
-  container.appendChild(grid);
+  content.appendChild(grid);
+  container.appendChild(content);
+
+  trigger.addEventListener('click', event => {
+    event.preventDefault();
+    assetLaunchPanelExpanded = !assetLaunchPanelExpanded;
+    content.hidden = !assetLaunchPanelExpanded;
+    trigger.setAttribute('aria-expanded', assetLaunchPanelExpanded ? 'true' : 'false');
+    trigger.textContent = assetLaunchPanelExpanded ? 'Hide launch options' : 'Launch a new asset';
+    trigger.classList.toggle('is-open', assetLaunchPanelExpanded);
+  });
   return container;
 }
 
@@ -1999,12 +2051,6 @@ function buildPayoutBlock(definition, instance) {
   label.className = 'asset-overview-card__label';
   label.textContent = 'Latest payout';
   header.appendChild(label);
-
-  const toggle = document.createElement('button');
-  toggle.type = 'button';
-  toggle.className = 'asset-overview-card__payout-toggle ghost';
-  toggle.textContent = 'View breakdown';
-  header.appendChild(toggle);
   container.appendChild(header);
 
   const summary = document.createElement('p');
@@ -2013,13 +2059,14 @@ function buildPayoutBlock(definition, instance) {
 
   const breakdown = document.createElement('div');
   breakdown.className = 'asset-overview-card__payout-details';
-  breakdown.hidden = true;
   container.appendChild(breakdown);
 
   if (instance.status !== 'active') {
-    toggle.disabled = true;
-    toggle.textContent = 'Launch pending';
     summary.textContent = 'Launch the asset to start logging payouts.';
+    const note = document.createElement('p');
+    note.className = 'asset-overview-card__payout-note';
+    note.textContent = 'No payout breakdown until the build goes live.';
+    breakdown.appendChild(note);
     return container;
   }
 
@@ -2028,26 +2075,19 @@ function buildPayoutBlock(definition, instance) {
   const entries = Array.isArray(breakdownData?.entries) ? breakdownData.entries : [];
 
   if (!entries.length || total <= 0) {
-    toggle.disabled = true;
-    toggle.textContent = 'No breakdown yet';
     const range = getInstanceQualityRange(definition, instance);
     const min = Math.max(0, Number(range?.min) || 0);
     const max = Math.max(min, Number(range?.max) || 0);
-    summary.textContent = `No payout logged yesterday. Fund upkeep to roll $${formatMoney(min)}–$${formatMoney(max)} per day.`;
+    summary.textContent = 'No payout logged yesterday.';
+    const note = document.createElement('p');
+    note.className = 'asset-overview-card__payout-note';
+    note.textContent = `Fund upkeep to roll $${formatMoney(min)}–$${formatMoney(max)} per day.`;
+    breakdown.appendChild(note);
     return container;
   }
 
   summary.textContent = `Earned $${formatMoney(Math.max(0, Math.round(total)))} yesterday.`;
   breakdown.appendChild(buildPayoutBreakdownList(entries));
-
-  toggle.addEventListener('click', event => {
-    event.preventDefault();
-    const expanded = breakdown.hidden;
-    breakdown.hidden = !expanded;
-    toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-    toggle.textContent = expanded ? 'Hide breakdown' : 'View breakdown';
-  });
-
   return container;
 }
 
@@ -2112,26 +2152,6 @@ function createAssetInstanceCard(definition, instance, index, state = getState()
 
   const actions = document.createElement('div');
   actions.className = 'asset-overview-card__actions';
-  const maintainButton = document.createElement('button');
-  maintainButton.type = 'button';
-  maintainButton.className = 'primary asset-overview-card__action';
-  maintainButton.textContent = 'Maintain';
-  if (instance.status !== 'active') {
-    maintainButton.disabled = true;
-    maintainButton.title = 'Launch this asset before upkeep matters.';
-  } else if (instance.maintenanceFundedToday) {
-    maintainButton.disabled = true;
-    maintainButton.title = 'Upkeep already funded today.';
-  }
-  maintainButton.addEventListener('click', event => {
-    event.preventDefault();
-    if (maintainButton.disabled) return;
-    maintainAssetInstance(definition.id, instance.id);
-    renderAssets(currentAssetDefinitions);
-    applyCardFilters();
-  });
-  actions.appendChild(maintainButton);
-
   const specialButtons = buildSpecialActionButtons(definition, instance, state);
   specialButtons.forEach(button => {
     button.classList.add('asset-overview-card__action', 'ghost');
