@@ -180,10 +180,17 @@ const UPGRADE_FAMILY_COPY = {
 };
 
 const ASSET_GROUP_NOTES = {
-  Foundation: 'Reliable launchpads that get your empire compounding.',
-  Creative: 'Audience magnets that thrive on storytelling and flair.',
-  Commerce: 'Automation loops that keep the checkout bell ringing.',
-  Tech: 'Systems and platforms with bigger upkeep but massive reach.'
+  Foundation: 'Steady launchpads that bankroll the rest of your ventureverse.',
+  Creative: 'Audience magnets that shimmer with story, art, and charisma.',
+  Commerce: 'Commerce engines that keep carts chiming and partners smiling.',
+  Tech: 'High-powered systems with upkeep, but outrageous reach when fueled.'
+};
+
+const ASSET_GROUP_ICONS = {
+  Foundation: '🏗️',
+  Creative: '🎨',
+  Commerce: '🛍️',
+  Tech: '🚀'
 };
 
 function showSlideOver({ eyebrow, title, body }) {
@@ -1426,6 +1433,7 @@ function buildAssetGroups(definitions = [], state = getState()) {
         id: groupId,
         label,
         note: getAssetGroupNote(label),
+        icon: ASSET_GROUP_ICONS[label] || '✨',
         definitions: [],
         instances: []
       });
@@ -1478,7 +1486,7 @@ function describeAssetLaunchAvailability(definition, state = getState()) {
 }
 
 function buildLaunchFeedbackMessage(definition) {
-  const singular = definition.singular || definition.name || 'Asset';
+  const singular = definition.singular || definition.name || 'Venture';
   return `New ${singular.toLowerCase()} is being set up.`;
 }
 
@@ -1486,31 +1494,31 @@ function buildAssetLaunchTile(definition, state = getState()) {
   if (!definition?.action?.onClick) return null;
 
   const tile = document.createElement('article');
-  tile.className = 'asset-launcher__tile';
+  tile.className = 'venture-launcher__tile';
 
   const heading = document.createElement('div');
-  heading.className = 'asset-launcher__heading';
+  heading.className = 'venture-launcher__heading';
   const title = document.createElement('h4');
-  title.className = 'asset-launcher__title';
-  title.textContent = definition.name || definition.id || 'Asset';
+  title.className = 'venture-launcher__title';
+  title.textContent = definition.name || definition.id || 'Venture';
   heading.appendChild(title);
 
   const tag = document.createElement('span');
-  tag.className = 'asset-launcher__type';
-  tag.textContent = definition.singular || 'Passive asset';
+  tag.className = 'venture-launcher__type';
+  tag.textContent = definition.singular || 'Passive venture';
   heading.appendChild(tag);
   tile.appendChild(heading);
 
   const summaryCopy = describeAssetCardSummary(definition);
   if (summaryCopy) {
     const summary = document.createElement('p');
-    summary.className = 'asset-launcher__summary';
+    summary.className = 'venture-launcher__summary';
     summary.textContent = summaryCopy;
     tile.appendChild(summary);
   }
 
   const stats = document.createElement('p');
-  stats.className = 'asset-launcher__meta';
+  stats.className = 'venture-launcher__meta';
   const parts = [];
   const setupDays = Number(definition.setup?.days) || 0;
   const setupHours = Number(definition.setup?.hoursPerDay) || 0;
@@ -1535,10 +1543,10 @@ function buildAssetLaunchTile(definition, state = getState()) {
 
   const button = document.createElement('button');
   button.type = 'button';
-  button.className = 'asset-launcher__button';
+  button.className = 'venture-launcher__button';
   button.textContent = typeof definition.action.label === 'function'
     ? definition.action.label(state)
-    : definition.action.label || `Launch ${definition.singular || definition.name}`;
+    : definition.action.label || `Launch ${definition.singular || definition.name || 'venture'}`;
   button.disabled = availability.disabled;
   if (availability.reasons.length) {
     button.title = availability.reasons.join(' • ');
@@ -1553,7 +1561,7 @@ function buildAssetLaunchTile(definition, state = getState()) {
   }
 
   const feedback = document.createElement('p');
-  feedback.className = 'asset-launcher__feedback';
+  feedback.className = 'venture-launcher__feedback';
   feedback.hidden = true;
   tile.appendChild(feedback);
 
@@ -1569,10 +1577,10 @@ function buildAssetLaunchTile(definition, state = getState()) {
       if (afterCount > beforeCount) {
         feedback.textContent = buildLaunchFeedbackMessage(definition);
         feedback.hidden = false;
-        tile.classList.add('asset-launcher__tile--success');
+        tile.classList.add('venture-launcher__tile--success');
         setTimeout(() => {
           feedback.hidden = true;
-          tile.classList.remove('asset-launcher__tile--success');
+          tile.classList.remove('venture-launcher__tile--success');
         }, 2400);
         renderAssets(currentAssetDefinitions);
         applyCardFilters();
@@ -1594,14 +1602,14 @@ function buildAssetLaunchPanel(definitions = [], state = getState()) {
   }
 
   const container = document.createElement('section');
-  container.className = 'asset-launcher';
+  container.className = 'venture-launcher';
 
   const trigger = document.createElement('button');
   trigger.type = 'button';
-  trigger.className = 'asset-launcher__trigger primary';
-  trigger.textContent = assetLaunchPanelExpanded ? 'Hide launch options' : 'Launch a new asset';
+  trigger.className = 'venture-launcher__trigger primary';
+  trigger.textContent = assetLaunchPanelExpanded ? 'Hide launch options' : 'Launch a new venture';
   trigger.setAttribute('aria-expanded', assetLaunchPanelExpanded ? 'true' : 'false');
-  const contentId = 'asset-launcher-options';
+  const contentId = 'venture-launcher-options';
   trigger.setAttribute('aria-controls', contentId);
   if (assetLaunchPanelExpanded) {
     trigger.classList.add('is-open');
@@ -1609,24 +1617,24 @@ function buildAssetLaunchPanel(definitions = [], state = getState()) {
   container.appendChild(trigger);
 
   const content = document.createElement('div');
-  content.className = 'asset-launcher__content';
+  content.className = 'venture-launcher__content';
   content.id = contentId;
   content.hidden = !assetLaunchPanelExpanded;
 
   const header = document.createElement('div');
-  header.className = 'asset-launcher__header';
+  header.className = 'venture-launcher__header';
   const title = document.createElement('h3');
-  title.className = 'asset-launcher__heading-title';
-  title.textContent = 'Launch a new asset';
+  title.className = 'venture-launcher__heading-title';
+  title.textContent = 'Launch a new venture';
   header.appendChild(title);
   const note = document.createElement('p');
-  note.className = 'asset-launcher__note';
-  note.textContent = 'Pick a build to spin up a fresh income stream.';
+  note.className = 'venture-launcher__note';
+  note.textContent = 'Pick a build to celebrate a brand-new income stream.';
   header.appendChild(note);
   content.appendChild(header);
 
   const grid = document.createElement('div');
-  grid.className = 'asset-launcher__grid';
+  grid.className = 'venture-launcher__grid';
   tiles.forEach(tile => grid.appendChild(tile));
   content.appendChild(grid);
   container.appendChild(content);
@@ -1636,7 +1644,7 @@ function buildAssetLaunchPanel(definitions = [], state = getState()) {
     assetLaunchPanelExpanded = !assetLaunchPanelExpanded;
     content.hidden = !assetLaunchPanelExpanded;
     trigger.setAttribute('aria-expanded', assetLaunchPanelExpanded ? 'true' : 'false');
-    trigger.textContent = assetLaunchPanelExpanded ? 'Hide launch options' : 'Launch a new asset';
+    trigger.textContent = assetLaunchPanelExpanded ? 'Hide launch options' : 'Launch a new venture';
     trigger.classList.toggle('is-open', assetLaunchPanelExpanded);
   });
   return container;
@@ -1673,32 +1681,32 @@ function buildAssetSummary(groups = []) {
 
   if (totals.total === 0) {
     const empty = document.createElement('section');
-    empty.className = 'asset-hub__summary asset-hub__summary--empty';
+    empty.className = 'venture-summary venture-summary--empty';
     const message = document.createElement('p');
-    message.className = 'asset-hub__empty';
-    message.textContent = 'No launched assets yet. Kick off a build to start the passive flow!';
+    message.className = 'venture-summary__empty';
+    message.textContent = 'No ventures launched yet. Spin up your first build to start the passive flow!';
     empty.appendChild(message);
     return empty;
   }
 
   const summary = document.createElement('section');
-  summary.className = 'asset-hub__summary';
+  summary.className = 'venture-summary';
 
   const stats = [
-    { label: 'Total builds', value: totals.total },
-    { label: 'Active & earning', value: totals.active },
-    { label: 'In setup', value: totals.setup },
+    { label: 'Ventures launched', value: totals.total },
+    { label: 'Active & thriving', value: totals.active },
+    { label: 'In incubation', value: totals.setup },
     { label: 'Daily upkeep', value: formatUpkeepTotals(totals.upkeepCost, totals.upkeepHours) }
   ];
 
   stats.forEach(entry => {
     const stat = document.createElement('div');
-    stat.className = 'asset-hub__stat';
+    stat.className = 'venture-summary__stat';
     const value = document.createElement('span');
-    value.className = 'asset-hub__stat-value';
+    value.className = 'venture-summary__value';
     value.textContent = entry.value;
     const label = document.createElement('span');
-    label.className = 'asset-hub__stat-label';
+    label.className = 'venture-summary__label';
     label.textContent = entry.label;
     stat.append(value, label);
     summary.appendChild(stat);
@@ -1713,7 +1721,7 @@ function buildAssetHub(definitions, groups, state) {
   if (!summary && !launchPanel) return null;
 
   const container = document.createElement('div');
-  container.className = 'asset-hub';
+  container.className = 'venture-hub';
   if (summary) container.appendChild(summary);
   if (launchPanel) container.appendChild(launchPanel);
   return container;
@@ -1744,6 +1752,16 @@ function buildMetricsRow(definition, instance, state, riskLabel) {
     metrics.appendChild(createMetric('Net / hour', netLabel));
   }
 
+  const nicheInfo = getInstanceNicheInfo(instance, state);
+  const trend = nicheInfo?.popularity;
+  if (trend) {
+    const impact = Number(trend.multiplier);
+    const impactLabel = Number.isFinite(impact) ? formatPercent(impact - 1) : null;
+    const descriptor = trend.label || (impact > 1 ? 'Hot streak' : impact < 1 ? 'Cooling' : 'Steady');
+    const value = impactLabel ? `${descriptor} • ${impactLabel}` : descriptor;
+    metrics.appendChild(createMetric('Trend', value));
+  }
+
   return metrics;
 }
 
@@ -1758,14 +1776,17 @@ function buildNicheField(definition, instance, state) {
 
   const info = getInstanceNicheInfo(instance, state);
   if (info) {
-    const value = document.createElement('span');
-    value.className = 'asset-overview-card__value';
-    value.textContent = info.definition?.name || 'Assigned';
-    field.appendChild(value);
-
+    field.dataset.locked = 'true';
+    const badge = document.createElement('span');
+    badge.className = 'asset-overview-card__badge';
+    badge.textContent = info.definition?.name || 'Assigned';
     const impact = Number(info.popularity?.multiplier);
     const percent = Number.isFinite(impact) ? formatPercent(impact - 1) : null;
     const summary = info.popularity?.summary || 'Demand shifts update daily.';
+    if (Number.isFinite(impact)) {
+      badge.dataset.trend = impact > 1 ? 'up' : impact < 1 ? 'down' : 'steady';
+    }
+    field.appendChild(badge);
     const note = document.createElement('span');
     note.className = 'asset-overview-card__note';
     note.textContent = percent ? `${summary} • Impact ${percent}` : summary;
@@ -1802,7 +1823,7 @@ function buildNicheField(definition, instance, state) {
   field.appendChild(select);
   const hint = document.createElement('span');
   hint.className = 'asset-overview-card__note';
-  hint.textContent = 'Lock in a niche to tap into daily popularity rolls.';
+  hint.textContent = 'Lock in a niche to let this venture ride daily popularity rolls.';
   field.appendChild(hint);
   return field;
 }
@@ -1928,7 +1949,7 @@ function buildPayoutBlock(definition, instance) {
   container.appendChild(breakdown);
 
   if (instance.status !== 'active') {
-    summary.textContent = 'Launch the asset to start logging payouts.';
+    summary.textContent = 'Launch the venture to start logging payouts.';
     const note = document.createElement('p');
     note.className = 'asset-overview-card__payout-note';
     note.textContent = 'No payout breakdown until the build goes live.';
@@ -1984,13 +2005,13 @@ function createAssetInstanceCard(definition, instance, index, state = getState()
   const status = document.createElement('span');
   status.className = 'asset-overview-card__status';
   if (instance.status === 'active') {
-    status.textContent = needsMaintenance ? 'Active • Upkeep due' : 'Active';
+    status.textContent = needsMaintenance ? 'Earning • upkeep due' : 'Earning';
   } else {
     const remaining = Number(instance.daysRemaining);
     if (Number.isFinite(remaining) && remaining > 0) {
-      status.textContent = `Setup • ${remaining} day${remaining === 1 ? '' : 's'} left`;
+      status.textContent = `Incubating • ${remaining} day${remaining === 1 ? '' : 's'} left`;
     } else {
-      status.textContent = 'Setup';
+      status.textContent = 'Incubating';
     }
   }
   heading.appendChild(status);
@@ -2075,7 +2096,7 @@ function renderAssets(definitions = []) {
   if (!groups.length) {
     const empty = document.createElement('p');
     empty.className = 'asset-gallery__empty';
-    empty.textContent = 'No passive assets discovered yet. Story beats will unlock them soon.';
+    empty.textContent = 'No passive ventures discovered yet. Story beats will unlock them soon.';
     gallery.appendChild(empty);
     return;
   }
@@ -2094,9 +2115,15 @@ function renderAssets(definitions = []) {
 
     const heading = document.createElement('div');
     heading.className = 'asset-portfolio__heading';
+    if (group.icon) {
+      const emblem = document.createElement('span');
+      emblem.className = 'asset-portfolio__icon';
+      emblem.textContent = group.icon;
+      heading.appendChild(emblem);
+    }
     const title = document.createElement('h3');
     title.className = 'asset-portfolio__title';
-    title.textContent = `${group.label} assets`;
+    title.textContent = `${group.label} ventures`;
     heading.appendChild(title);
     if (group.note) {
       const note = document.createElement('p');
@@ -2121,8 +2148,8 @@ function renderAssets(definitions = []) {
     const count = document.createElement('span');
     count.className = 'asset-portfolio__count';
     count.textContent = group.instances.length
-      ? `${group.instances.length} build${group.instances.length === 1 ? '' : 's'}`
-      : 'No builds yet';
+      ? `${group.instances.length} venture${group.instances.length === 1 ? '' : 's'}`
+      : 'No ventures yet';
     toolbar.appendChild(count);
 
     header.appendChild(toolbar);
@@ -2154,7 +2181,7 @@ function renderAssets(definitions = []) {
     if (!grid.childElementCount) {
       const emptyGroup = document.createElement('p');
       emptyGroup.className = 'asset-portfolio__empty';
-      emptyGroup.textContent = 'No launched assets in this category yet.';
+      emptyGroup.textContent = 'No launched ventures in this category yet.';
       grid.appendChild(emptyGroup);
     }
 
@@ -2167,7 +2194,7 @@ function renderAssets(definitions = []) {
   if (totalInstances === 0) {
     const empty = document.createElement('p');
     empty.className = 'asset-gallery__empty';
-    empty.textContent = 'Launch an asset to see it here. Each build gets its own action card once active.';
+    empty.textContent = 'Launch a venture to see it here. Each build gets its own showcase card once active.';
     gallery.appendChild(empty);
   }
 
@@ -2220,7 +2247,7 @@ function openAssetGroupDetails(group) {
 
     const title = document.createElement('h3');
     title.className = 'asset-category-detail__title';
-    title.textContent = definition.name || definition.id || 'Asset';
+    title.textContent = definition.name || definition.id || 'Venture';
     header.appendChild(title);
 
     const summaryCopy = describeAssetCardSummary(definition);
@@ -2243,8 +2270,8 @@ function openAssetGroupDetails(group) {
   });
 
   showSlideOver({
-    eyebrow: 'Asset category',
-    title: `${group.label} assets`,
+    eyebrow: 'Venture category',
+    title: `${group.label} ventures`,
     body: container
   });
 }

@@ -302,7 +302,7 @@ function buildNotifications(state) {
         label: `${asset.name} needs upkeep`,
         message: `${maintenanceDue.length} build${maintenanceDue.length === 1 ? '' : 's'} waiting for maintenance`,
         action: () => {
-          shellTabs.find(tab => tab.id === 'tab-assets')?.click();
+          shellTabs.find(tab => tab.id === 'tab-ventures')?.click();
         }
       });
     }
@@ -368,7 +368,7 @@ function renderQuickActions(state) {
   }));
 
   renderActionSection(container, entries, {
-    emptyMessage: 'No ready actions. Check upgrades or assets.',
+    emptyMessage: 'No ready actions. Check upgrades or ventures.',
     buttonClass: 'primary',
     defaultLabel: 'Queue'
   });
@@ -387,7 +387,7 @@ function renderAssetUpgradeActions(state) {
   }));
 
   renderActionSection(container, entries, {
-    emptyMessage: 'Every asset is humming along. Check back after today’s upkeep.',
+    emptyMessage: 'Every venture is humming along. Check back after today’s upkeep.',
     buttonClass: 'secondary',
     defaultLabel: 'Boost'
   });
@@ -721,7 +721,7 @@ function buildNicheAnalytics(state) {
 
 function focusAssetsForNiche(nicheId, { hasAssets = false, nicheName = '' } = {}) {
   if (!nicheId) return;
-  activateShellPanel('panel-assets');
+  activateShellPanel('panel-ventures');
   const assetGallery = getAssetGallery();
   const sessionStatus = getSessionStatusNode();
   if (!assetGallery) return;
@@ -733,13 +733,13 @@ function focusAssetsForNiche(nicheId, { hasAssets = false, nicheName = '' } = {}
       if (sessionStatus) {
         sessionStatus.textContent = hasAssets
           ? 'No payouts recorded yet. Fund upkeep to roll today\'s earnings.'
-          : 'No assets targeting this niche yet. Open an asset card to assign one.';
+          : 'No ventures targeting this niche yet. Open a venture card to assign one.';
       }
       return;
     }
     if (sessionStatus) {
       const label = nicheName || 'this niche';
-      sessionStatus.textContent = `Spotlighting assets tuned to ${label}.`;
+    sessionStatus.textContent = `Spotlighting ventures tuned to ${label}.`;
     }
     matches.forEach(card => card.classList.add('asset-overview-card--spotlight'));
     const first = matches[0];
@@ -837,12 +837,12 @@ function createNicheCard(entry) {
   playerStat.className = 'niche-card__stat';
   if (entry.assetCount > 0) {
     playerStat.textContent = entry.assetCount === 1
-      ? '1 asset active'
-      : `${entry.assetCount} assets active`;
+      ? '1 venture active'
+      : `${entry.assetCount} ventures active`;
   } else if (entry.watchlisted) {
     playerStat.textContent = 'On your watchlist';
   } else {
-    playerStat.textContent = 'No assets assigned yet';
+    playerStat.textContent = 'No ventures assigned yet';
   }
   playerSection.appendChild(playerStat);
 
@@ -853,7 +853,7 @@ function createNicheCard(entry) {
       ? `$${formatMoney(entry.netEarnings)} earned today`
       : 'No payouts logged today.';
   } else {
-    earningsLine.textContent = 'Assign an asset to tap this trend.';
+  earningsLine.textContent = 'Assign a venture to tap this trend.';
   }
   playerSection.appendChild(earningsLine);
 
@@ -901,8 +901,8 @@ function createNicheCard(entry) {
   viewButton.type = 'button';
   viewButton.className = 'ghost niche-card__action';
   viewButton.textContent = entry.assetCount > 0
-    ? 'View assets in this niche'
-    : 'Find assets for this niche';
+    ? 'View ventures in this niche'
+    : 'Find ventures for this niche';
   viewButton.addEventListener('click', () => {
     focusAssetsForNiche(entry.id, {
       hasAssets: entry.assetCount > 0,
@@ -966,9 +966,9 @@ function updateDailyHighlights(analytics, refs) {
     if (highlightHotNote) {
       if (topImpact.assetCount > 0) {
         const payoutText = `$${formatMoney(Math.max(0, topImpact.netEarnings))}`;
-        highlightHotNote.textContent = `Your ${topImpact.assetCount} asset${topImpact.assetCount === 1 ? '' : 's'} made ${payoutText} today with ${formatPercent((Number(topImpact.popularity?.multiplier) || 1) - 1)} payouts.`;
+        highlightHotNote.textContent = `Your ${topImpact.assetCount} venture${topImpact.assetCount === 1 ? '' : 's'} made ${payoutText} today with ${formatPercent((Number(topImpact.popularity?.multiplier) || 1) - 1)} payouts.`;
       } else {
-        highlightHotNote.textContent = `Queue an asset to capture ${formatPercent((Number(topImpact.popularity?.multiplier) || 1) - 1)} payouts from this niche.`;
+        highlightHotNote.textContent = `Queue a venture to capture ${formatPercent((Number(topImpact.popularity?.multiplier) || 1) - 1)} payouts from this niche.`;
       }
     }
   }
@@ -999,9 +999,9 @@ function updateDailyHighlights(analytics, refs) {
     }
     if (highlightRiskNote) {
       if (biggestLoss.assetCount > 0) {
-        highlightRiskNote.textContent = `${biggestLoss.assetCount} asset${biggestLoss.assetCount === 1 ? '' : 's'} lost ${formatPercent((Number(biggestLoss.popularity?.multiplier) || 1) - 1)} vs baseline today.`;
+        highlightRiskNote.textContent = `${biggestLoss.assetCount} venture${biggestLoss.assetCount === 1 ? '' : 's'} lost ${formatPercent((Number(biggestLoss.popularity?.multiplier) || 1) - 1)} vs baseline today.`;
       } else {
-        highlightRiskNote.textContent = 'No assets invested yet, so you are safe from this downswing.';
+        highlightRiskNote.textContent = 'No ventures invested yet, so you are safe from this downswing.';
       }
     }
   }
@@ -1033,7 +1033,7 @@ function renderNicheWidget(state) {
       board.innerHTML = '';
       const empty = document.createElement('p');
       empty.className = 'niche-board__empty';
-      empty.textContent = 'Assign a niche to an asset to start tracking demand swings.';
+      empty.textContent = 'Assign a niche to a venture to start tracking demand swings.';
       board.appendChild(empty);
     }
     updateNicheControlStates({ watchlistCount: 0 });
@@ -1096,7 +1096,7 @@ function renderNicheWidget(state) {
       } else if (nicheViewState.investedOnly) {
         empty.textContent = 'You haven’t assigned any assets that fit this filter yet.';
       } else {
-        empty.textContent = 'Assign a niche to an asset to start tracking demand swings.';
+        empty.textContent = 'Assign a niche to a venture to start tracking demand swings.';
       }
       board.appendChild(empty);
     } else {
@@ -1202,10 +1202,10 @@ export function renderDashboard(summary) {
 
   const { activeAssets, upkeepDue } = computeAssetMetrics(state);
   setText(kpiValues.upkeep, `$${formatMoney(upkeepDue)}`);
-  setText(kpiNotes.upkeep, upkeepDue > 0 ? 'Maintain assets soon.' : 'Upkeep funded.');
+  setText(kpiNotes.upkeep, upkeepDue > 0 ? 'Maintain ventures soon.' : 'Upkeep funded.');
 
-  setText(kpiValues.assets, String(activeAssets));
-  setText(kpiNotes.assets, activeAssets > 0 ? 'Streams humming.' : 'Launch your first asset.');
+  setText(kpiValues.ventures, String(activeAssets));
+  setText(kpiNotes.ventures, activeAssets > 0 ? 'Streams humming.' : 'Launch your first venture.');
 
   const { percent, summary: studySummary } = computeStudyProgress(state);
   setText(kpiValues.study, `${percent}%`);
