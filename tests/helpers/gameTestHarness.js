@@ -1,4 +1,4 @@
-import { ensureTestDom } from './setupDom.js';
+  import { ensureTestDom } from './setupDom.js';
 
 let harness;
 

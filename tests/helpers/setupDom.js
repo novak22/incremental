@@ -76,8 +76,6 @@ export function ensureTestDom() {
                 </article>
                 <article>
                   <ol id="action-queue"></ol>
-                  <button id="queue-pause"></button>
-                  <button id="queue-cancel"></button>
                 </article>
               </div>
             </section>
@@ -86,8 +84,6 @@ export function ensureTestDom() {
             <input id="hustle-search" />
             <input id="hustle-available-toggle" type="checkbox" />
             <select id="hustle-sort"></select>
-            <div id="hustle-category-chips"></div>
-            <div id="hustle-req-chips"></div>
             <div id="hustle-list"></div>
           </section>
           <section id="panel-assets" class="panel" hidden>
@@ -125,7 +121,7 @@ export function ensureTestDom() {
       <div id="slide-over"><div class="slide-over__backdrop" data-close="slide-over"></div><div class="slide-over__panel"><header><p id="slide-over-eyebrow"></p><h2 id="slide-over-title"></h2><button id="slide-over-close" data-close="slide-over"></button></header><div id="slide-over-content"></div></div></div>
       <aside id="event-log-panel" hidden><button id="event-log-close" data-close="event-log"></button></aside>
       <div id="log-feed"></div>
-      <div id="command-palette"><div class="command-palette__backdrop" data-close="command"></div><div class="command-palette__panel"><header><input id="command-palette-search" /></header><ul id="command-palette-results"></ul></div></div>
+      <div id="command-palette"><div class="command-palette__backdrop" data-close="command"></div><div class="command-palette__panel"><header><input id="command-palette-search" /></header></div></div>
     </body></html>`,
     { url: 'https://example.com' }
   );

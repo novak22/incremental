@@ -3,7 +3,7 @@ import {
   CHARACTER_LEVELS
 } from '../../game/skills/data.js';
 
-export const numberFormatter = new Intl.NumberFormat('en-US');
+const numberFormatter = new Intl.NumberFormat('en-US');
 
 export function formatXp(value) {
   return numberFormatter.format(Math.max(0, Math.round(Number(value) || 0)));
