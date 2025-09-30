@@ -8,8 +8,8 @@ import { awardSkillProgress } from './skills/index.js';
 
 export const ASSISTANT_CONFIG = {
   hiringCost: 180,
-  hourlyRate: 15,
-  hoursPerAssistant: 2,
+  hourlyRate: 8,
+  hoursPerAssistant: 3,
   maxAssistants: 4
 };
 
@@ -102,6 +102,7 @@ export function processAssistantPayroll() {
   if (totalCost <= 0) return;
 
   const hadFunds = state.money >= totalCost;
+  const coveredHours = count * ASSISTANT_CONFIG.hoursPerAssistant;
   spendMoney(totalCost);
   recordCostContribution({
     key: 'assistant:payroll',
@@ -111,10 +112,13 @@ export function processAssistantPayroll() {
   });
   const formatted = formatMoney(totalCost);
   if (hadFunds) {
-    addLog(`Assistant payroll cleared at $${formatted} for ${count} teammate${count === 1 ? '' : 's'}.`, 'info');
+    addLog(
+      `Assistant payroll cleared at $${formatted} for ${count} teammate${count === 1 ? '' : 's'} covering ${coveredHours} upkeep hour${coveredHours === 1 ? '' : 's'}.`,
+      'info'
+    );
   } else {
     addLog(
-      `Assistant payroll of $${formatted} came due, but your balance ran dry. They still handled tasks—just no savings left.`,
+      `Assistant payroll of $${formatted} came due, but your balance ran dry. They still covered ${coveredHours} upkeep hour${coveredHours === 1 ? '' : 's'}—just no cash cushion left.`,
       'warning'
     );
   }
