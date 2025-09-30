@@ -24,10 +24,20 @@ export function ensureSlice(state) {
     const defaults = structuredClone(definition.defaultState || {});
     const existing = state.upgrades[definition.id];
     if (existing) {
-      const merged = { ...defaults, ...existing };
-      Object.assign(existing, merged);
-      if (definition.id === 'assistant') {
-        normalizeAssistantState(existing);
+      const merged = {
+        ...defaults,
+        ...(typeof existing === 'object' && existing !== null ? existing : {})
+      };
+      if (typeof existing === 'object' && existing !== null) {
+        Object.assign(existing, merged);
+        if (definition.id === 'assistant') {
+          normalizeAssistantState(existing);
+        }
+      } else {
+        state.upgrades[definition.id] = merged;
+        if (definition.id === 'assistant') {
+          normalizeAssistantState(state.upgrades[definition.id]);
+        }
       }
     } else {
       const normalized = { ...defaults };
