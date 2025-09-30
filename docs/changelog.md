@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Dashboard quick actions now focus on hustle-ready tasks instead of education enrollment, keeping the header recommendation in sync.
 - Niche realism: swapped in ten real-world audience niches so daily trend chasing mirrors recognizable markets.
 - Upgrade filters: the Upgrades panel now defaults to an "Unlocked now" view so only instant-install picks show until you opt to browse the full catalog.
 - Upgrade taxonomy: tech/house/infra tabs with family sub-sections and slot-aware tooltips make browsing gear lanes intuitive while the new effect engine drives unified payout, time, and quality multipliers.
