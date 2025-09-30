@@ -595,11 +595,6 @@ function renderUpgradeRequirement(requirement) {
   }
 }
 
-function upgradeRequirementsMet(requirements) {
-  if (!requirements?.length) return true;
-  return requirements.every(req => upgradeRequirementMet(req));
-}
-
 export function createUpgrade(config) {
   const rawRequirements = [...ensureArray(config.requires), ...ensureArray(config.prerequisites)];
   const requirements = normalizeUpgradeRequirements(rawRequirements);
@@ -828,8 +823,4 @@ export function createUpgrade(config) {
   }
 
   return definition;
-}
-
-export function hustleRequirementsMet(requirements) {
-  return meetsAssetRequirements(requirements);
 }

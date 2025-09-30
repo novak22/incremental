@@ -587,88 +587,6 @@ function createInstanceNicheSelector(definition, instance) {
   return container;
 }
 
-function createInstanceListSection(definition, state, instancesOverride) {
-  const instances = Array.isArray(instancesOverride)
-    ? instancesOverride
-    : (() => {
-        const assetState = getAssetState(definition.id, state);
-        return Array.isArray(assetState?.instances) ? assetState.instances : [];
-      })();
-
-  const section = document.createElement('section');
-  section.className = 'asset-detail__section asset-detail__section--instances';
-  const heading = document.createElement('h3');
-  heading.textContent = 'Launched builds';
-  section.appendChild(heading);
-
-  if (!instances.length) {
-    const empty = document.createElement('p');
-    empty.className = 'asset-detail__empty';
-    empty.textContent = 'No builds launched yet. Spin one up to start earning.';
-    section.appendChild(empty);
-    return section;
-  }
-
-  const activeCards = [];
-  const queuedCards = [];
-  instances.forEach((instance, index) => {
-    const card = createInstanceCard(definition, instance, index, state);
-    if (!card) return;
-    if (instance.status === 'active') {
-      activeCards.push(card);
-    } else {
-      queuedCards.push(card);
-    }
-  });
-
-  if (activeCards.length) {
-    section.appendChild(
-      createInstanceGroup(
-        'Active builds',
-        'These crews are live — keep tuning upgrades to lift your payouts.',
-        activeCards
-      )
-    );
-  }
-
-  if (queuedCards.length) {
-    section.appendChild(
-      createInstanceGroup(
-        'Launch queue',
-        'Setup runs are staging here until they’re ready to go live.',
-        queuedCards
-      )
-    );
-  }
-
-  return section;
-}
-
-function createInstanceGroup(title, subtitle, items) {
-  const group = document.createElement('div');
-  group.className = 'asset-detail__instance-group';
-
-  const header = document.createElement('div');
-  header.className = 'asset-detail__group-header';
-  const groupTitle = document.createElement('h4');
-  groupTitle.className = 'asset-detail__group-title';
-  groupTitle.textContent = title;
-  header.appendChild(groupTitle);
-  if (subtitle) {
-    const note = document.createElement('p');
-    note.className = 'asset-detail__group-subtitle';
-    note.textContent = subtitle;
-    header.appendChild(note);
-  }
-  group.appendChild(header);
-
-  const list = document.createElement('ul');
-  list.className = 'asset-detail__instances';
-  items.forEach(item => list.appendChild(item));
-  group.appendChild(list);
-  return group;
-}
-
 function createInstanceCard(definition, instance, index, state) {
   const item = document.createElement('li');
   item.className = 'asset-detail__instance';
@@ -1358,30 +1276,6 @@ function describeAssetCardSummary(definition) {
   const trimmed = copy.trim();
   if (trimmed.length <= 140) return trimmed;
   return `${trimmed.slice(0, 137)}…`;
-}
-
-function describeInstanceNicheSummary(instance) {
-  const info = getInstanceNicheInfo(instance);
-  if (!info) {
-    return {
-      value: 'Unassigned',
-      note: 'Set a niche from Details to lock in demand bonuses.'
-    };
-  }
-  const label = info.definition?.name || 'Niche';
-  const mood = info.popularity?.label ? ` — ${info.popularity.label}` : '';
-  const multiplier = Number(info.popularity?.multiplier);
-  let impact = '±0%';
-  if (Number.isFinite(multiplier)) {
-    const percent = Math.round((multiplier - 1) * 100);
-    const sign = percent > 0 ? '+' : '';
-    impact = `${sign}${percent}%`;
-  }
-  const summary = info.popularity?.summary || 'Demand shifts every day.';
-  return {
-    value: `${label}${mood}`,
-    note: `${summary} • Payout impact ${impact}`
-  };
 }
 
 function calculateInstanceProgress(definition, instance) {

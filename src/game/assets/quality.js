@@ -155,11 +155,6 @@ export function getHighestQualityLevel(definition) {
   return levels.at(-1);
 }
 
-export function getQualityProgress(definition, instance) {
-  const quality = ensureInstanceQuality(definition, instance);
-  return quality.progress;
-}
-
 function meetsRequirements(progress, requirements = {}) {
   if (!requirements || !Object.keys(requirements).length) {
     return true;

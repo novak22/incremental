@@ -698,12 +698,6 @@ export function getKnowledgeProgress(id, target = getState()) {
   return progress;
 }
 
-export function markKnowledgeStudied(id) {
-  const progress = getKnowledgeProgress(id);
-  if (progress.completed || !progress.enrolled) return;
-  progress.studiedToday = true;
-}
-
 export function enrollInKnowledgeTrack(id) {
   const state = getState();
   const track = KNOWLEDGE_TRACKS[id];
@@ -809,10 +803,6 @@ export function allocateDailyStudy({ trackIds, triggeredByEnrollment = false } =
   if (timeSkipped.length) {
     addLog(`${formatList(timeSkipped)} could not fit into today\'s schedule.`, 'warning');
   }
-}
-
-export function knowledgeRequirementMet(id) {
-  return isKnowledgeComplete(id);
 }
 
 export function advanceKnowledgeTracks() {
