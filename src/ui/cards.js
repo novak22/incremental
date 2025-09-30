@@ -1448,15 +1448,73 @@ function formatUpkeepTotals(cost, hours) {
   return parts.length ? parts.join(' • ') : 'None';
 }
 
+function hydrateAssetGroups(groups = [], definitions = [], state = getState()) {
+  if (!Array.isArray(groups) || groups.length === 0) {
+    return Array.isArray(groups) ? groups : [];
+  }
+
+  const definitionMap = new Map();
+  const assetStateCache = new Map();
+
+  definitions.forEach(definition => {
+    if (definition?.id) {
+      definitionMap.set(definition.id, definition);
+    }
+  });
+
+  return groups.map(group => {
+    if (!Array.isArray(group?.instances)) {
+      return group;
+    }
+
+    const hydratedInstances = group.instances.map(entry => {
+      if (!entry) return entry;
+      const hasDefinition = Boolean(entry.definition);
+      const hasInstance = Boolean(entry.instance);
+      if (hasDefinition && hasInstance) {
+        return entry;
+      }
+
+      const definitionId = entry.definitionId || entry.definition?.id;
+      const definition = hasDefinition ? entry.definition : definitionMap.get(definitionId);
+
+      let instance = hasInstance ? entry.instance : null;
+      if (!instance && definition?.id) {
+        if (!assetStateCache.has(definition.id)) {
+          assetStateCache.set(definition.id, getAssetState(definition.id, state));
+        }
+        const assetState = assetStateCache.get(definition.id);
+        const list = Array.isArray(assetState?.instances) ? assetState.instances : [];
+        if (entry.id) {
+          instance = list.find(candidate => candidate?.id === entry.id) || null;
+        }
+        if (!instance && Number.isInteger(entry.index)) {
+          instance = list[entry.index] || null;
+        }
+      }
+
+      return { ...entry, definition: definition || null, instance: instance || null };
+    });
+
+    return { ...group, instances: hydratedInstances };
+  });
+}
+
 function buildAssetSummary(groups = []) {
   const totals = groups.reduce(
     (acc, group) => {
-      group.instances.forEach(({ definition, instance }) => {
+      group.instances.forEach(entry => {
+        if (!entry) return;
+        const { definition } = entry;
+        const instance = entry.instance || null;
+        const status = instance?.status || entry.status || 'setup';
+
         acc.total += 1;
-        if (instance.status === 'active') {
+        if (status === 'active') {
           acc.active += 1;
-          acc.upkeepCost += Number(definition.maintenance?.cost) || 0;
-          acc.upkeepHours += Number(definition.maintenance?.hours) || 0;
+          const maintenance = definition?.maintenance || {};
+          acc.upkeepCost += Number(maintenance.cost) || 0;
+          acc.upkeepHours += Number(maintenance.hours) || 0;
         } else {
           acc.setup += 1;
         }
@@ -1874,7 +1932,8 @@ function renderAssets(definitions = []) {
   currentAssetDefinitions = Array.isArray(definitions) ? definitions : [];
   gallery.innerHTML = '';
 
-  const groups = buildAssetGroups(currentAssetDefinitions, state);
+  const rawGroups = buildAssetGroups(currentAssetDefinitions, state);
+  const groups = hydrateAssetGroups(rawGroups, currentAssetDefinitions, state);
   const hub = buildAssetHub(currentAssetDefinitions, groups, state);
   if (hub) {
     gallery.appendChild(hub);
