@@ -1,6 +1,4 @@
 import { countActiveAssetInstances, getState } from '../../core/state.js';
-import { getHustleDefinition } from '../../core/state/registry.js';
-import { recordPayoutContribution } from '../metrics.js';
 import {
   summarizeAssetRequirements,
   buildAssetRequirementDescriptor
@@ -21,36 +19,6 @@ export const PACK_PARTY_REQUIREMENTS = [{ assetId: 'dropshipping', count: 1 }];
 export const BUG_SQUASH_REQUIREMENTS = [{ assetId: 'saas', count: 1 }];
 export const NARRATION_REQUIREMENTS = [{ assetId: 'ebook', count: 1 }];
 export const STREET_PROMO_REQUIREMENTS = [{ assetId: 'blog', count: 2 }];
-
-export function extractMetricKey(metric) {
-  if (!metric) return null;
-  if (typeof metric === 'string') return metric;
-  if (typeof metric === 'object') return metric.key || null;
-  return null;
-}
-
-function getHustleMetricIds(hustleId) {
-  const definition = getHustleDefinition(hustleId);
-  if (!definition) return {};
-  const actionMetrics = definition.action?.metricIds || definition.action?.metrics || {};
-  const definitionMetrics = definition.metricIds || definition.metrics || {};
-  return {
-    time: extractMetricKey(actionMetrics.time) || extractMetricKey(definitionMetrics.time),
-    cost: extractMetricKey(actionMetrics.cost) || extractMetricKey(definitionMetrics.cost),
-    payout: extractMetricKey(actionMetrics.payout) || extractMetricKey(definitionMetrics.payout)
-  };
-}
-
-function fallbackHustleMetricId(hustleId, type) {
-  const suffix = type === 'payout' ? 'payout' : type;
-  return `hustle:${hustleId}:${suffix}`;
-}
-
-export function recordHustlePayout(hustleId, { label, amount, category }) {
-  const metrics = getHustleMetricIds(hustleId);
-  const key = metrics.payout || fallbackHustleMetricId(hustleId, 'payout');
-  recordPayoutContribution({ key, label, amount, category });
-}
 
 export function getHustleRequirements(definition) {
   if (!definition) return [];

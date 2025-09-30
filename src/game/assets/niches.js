@@ -194,11 +194,6 @@ export function getNicheWatchlist(state = getState()) {
   return new Set(entries.filter(id => typeof id === 'string'));
 }
 
-export function isNicheWatchlisted(nicheId, state = getState()) {
-  if (!nicheId) return false;
-  return getNicheWatchlist(state).has(nicheId);
-}
-
 export function setNicheWatchlist(nicheId, watchlisted) {
   if (!nicheId) return false;
   let changed = false;
@@ -217,14 +212,6 @@ export function setNicheWatchlist(nicheId, watchlisted) {
     data.watchlist = Array.from(list);
   });
   return changed;
-}
-
-export function toggleNicheWatchlist(nicheId) {
-  if (!nicheId) return false;
-  const state = getState();
-  if (!state) return false;
-  const watchlisted = isNicheWatchlisted(nicheId, state);
-  return setNicheWatchlist(nicheId, !watchlisted);
 }
 
 export function getInstanceNicheEffect(instance, state = getState()) {

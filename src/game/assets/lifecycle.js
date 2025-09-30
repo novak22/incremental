@@ -14,10 +14,6 @@ import {
 import { getAssetEffectMultiplier } from '../upgrades/effects.js';
 import { formatEducationBonusSummary } from '../educationEffects.js';
 
-function findAssetDefinition(assetId) {
-  return ASSETS.find(entry => entry.id === assetId) || null;
-}
-
 export function allocateAssetMaintenance() {
   const state = getState();
   if (!state) return;
