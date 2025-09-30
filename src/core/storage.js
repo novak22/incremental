@@ -21,14 +21,23 @@ const persistence = new StatePersistence({
   getState
 });
 
+function ensureStorageReference() {
+  if (!persistence.storage && globalThis?.localStorage) {
+    persistence.storage = globalThis.localStorage;
+  }
+}
+
 export function loadState(options = {}) {
+  ensureStorageReference();
   return persistence.load(options);
 }
 
 export function saveState() {
+  ensureStorageReference();
   return persistence.save();
 }
 
 export function getStatePersistence() {
+  ensureStorageReference();
   return persistence;
 }
