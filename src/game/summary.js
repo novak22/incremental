@@ -198,7 +198,3 @@ export function computeDailySummary(state = getState()) {
     studyBreakdown
   };
 }
-
-export function formatTimePair(hours) {
-  return formatHours(Math.max(0, hours));
-}
