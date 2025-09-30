@@ -1,13 +1,15 @@
 const DEFAULT_DOCUMENT = typeof document !== 'undefined' ? document : null;
 
 class ElementRegistry {
-  constructor(root = DEFAULT_DOCUMENT) {
+  constructor(root = DEFAULT_DOCUMENT, resolvers = {}) {
     this.document = root;
+    this.resolvers = resolvers || {};
     this.cache = new Map();
   }
 
-  initialize(root = DEFAULT_DOCUMENT) {
+  initialize(root = DEFAULT_DOCUMENT, resolvers = this.resolvers) {
     this.document = root;
+    this.resolvers = resolvers || {};
     this.cache.clear();
   }
 
@@ -15,303 +17,157 @@ class ElementRegistry {
     return this.document || DEFAULT_DOCUMENT;
   }
 
-  resolve(key, resolver) {
+  resolve(key) {
     if (!this.cache.has(key)) {
+      const resolver = this.resolvers?.[key];
       const root = this.getRoot();
-      this.cache.set(key, root ? resolver(root) : null);
+      const value = resolver && root ? resolver(root) : null;
+      this.cache.set(key, value);
     }
     return this.cache.get(key);
   }
 
   getMoneyNode() {
-    return this.resolve('money', root => root.getElementById('money'));
+    return this.resolve('money');
   }
 
   getSessionStatusNode() {
-    return this.resolve('sessionStatus', root => root.getElementById('session-status'));
+    return this.resolve('sessionStatus');
   }
 
   getHeaderActionButtons() {
-    return this.resolve('headerActionButtons', root => ({
-      endDayButton: root.getElementById('end-day'),
-      autoForwardButton: root.getElementById('auto-forward')
-    }));
+    return this.resolve('headerActionButtons');
   }
 
   getShellNavigation() {
-    return this.resolve('shellNavigation', root => ({
-      shellTabs: Array.from(root.querySelectorAll('.shell__tab')),
-      panels: Array.from(root.querySelectorAll('.panel'))
-    }));
+    return this.resolve('shellNavigation');
   }
 
   getHeaderStats() {
-    return this.resolve('headerStats', root => ({
-      dailyPlus: {
-        value: root.getElementById('header-daily-plus'),
-        note: root.getElementById('header-daily-plus-note')
-      },
-      dailyMinus: {
-        value: root.getElementById('header-daily-minus'),
-        note: root.getElementById('header-daily-minus-note')
-      },
-      timeAvailable: {
-        value: root.getElementById('header-time-available'),
-        note: root.getElementById('header-time-available-note')
-      },
-      timeReserved: {
-        value: root.getElementById('header-time-reserved'),
-        note: root.getElementById('header-time-reserved-note')
-      }
-    }));
+    return this.resolve('headerStats');
   }
 
   getKpiNodes() {
-    return this.resolve('kpis', root => ({
-      cash: root.getElementById('kpi-cash'),
-      net: root.getElementById('kpi-net'),
-      hours: root.getElementById('kpi-hours'),
-      upkeep: root.getElementById('kpi-upkeep'),
-      ventures: root.getElementById('kpi-ventures'),
-      study: root.getElementById('kpi-study')
-    }));
+    return this.resolve('kpis');
   }
 
   getKpiNotes() {
-    return this.resolve('kpiNotes', root => ({
-      cash: root.getElementById('kpi-cash-note'),
-      net: root.getElementById('kpi-net-note'),
-      hours: root.getElementById('kpi-hours-note'),
-      upkeep: root.getElementById('kpi-upkeep-note'),
-      ventures: root.getElementById('kpi-ventures-note'),
-      study: root.getElementById('kpi-study-note')
-    }));
+    return this.resolve('kpiNotes');
   }
 
   getKpiValues() {
-    return this.resolve('kpiValues', root => ({
-      net: root.getElementById('kpi-net-value'),
-      hours: root.getElementById('kpi-hours-value'),
-      upkeep: root.getElementById('kpi-upkeep-value'),
-      ventures: root.getElementById('kpi-ventures-value'),
-      study: root.getElementById('kpi-study-value')
-    }));
+    return this.resolve('kpiValues');
   }
 
   getDailyStats() {
-    return this.resolve('dailyStats', root => ({
-      timeSummary: root.getElementById('daily-time-summary'),
-      timeList: root.getElementById('daily-time-list'),
-      earningsSummary: root.getElementById('daily-earnings-summary'),
-      earningsActive: root.getElementById('daily-earnings-active'),
-      earningsPassive: root.getElementById('daily-earnings-passive'),
-      spendSummary: root.getElementById('daily-spend-summary'),
-      spendList: root.getElementById('daily-spend-list'),
-      studySummary: root.getElementById('daily-study-summary'),
-      studyList: root.getElementById('daily-study-list')
-    }));
+    return this.resolve('dailyStats');
   }
 
   getNicheTrends() {
-    return this.resolve('nicheTrends', root => ({
-      highlightHot: root.getElementById('analytics-highlight-hot'),
-      highlightHotNote: root.getElementById('analytics-highlight-hot-note'),
-      highlightSwing: root.getElementById('analytics-highlight-swing'),
-      highlightSwingNote: root.getElementById('analytics-highlight-swing-note'),
-      highlightRisk: root.getElementById('analytics-highlight-risk'),
-      highlightRiskNote: root.getElementById('analytics-highlight-risk-note'),
-      board: root.getElementById('niche-board'),
-      sortButtons: Array.from(root.querySelectorAll('[data-niche-sort]')),
-      filterInvested: root.getElementById('niche-filter-invested'),
-      filterWatchlist: root.getElementById('niche-filter-watchlist')
-    }));
+    return this.resolve('nicheTrends');
   }
 
   getSkillSections() {
-    return this.resolve('skillSections', root => ({
-      dashboard: {
-        container: root.getElementById('dashboard-skills'),
-        list: root.getElementById('dashboard-skills-list'),
-        tier: root.getElementById('dashboard-skills-tier'),
-        note: root.getElementById('dashboard-skills-progress')
-      },
-      education: {
-        container: root.getElementById('education-skills'),
-        list: root.getElementById('education-skills-list'),
-        tier: root.getElementById('education-skills-tier'),
-        note: root.getElementById('education-skills-progress')
-      }
-    }));
+    return this.resolve('skillSections');
   }
 
   getQueueNodes() {
-    return this.resolve('queueNodes', root => ({
-      actionQueue: root.getElementById('action-queue'),
-      queuePause: root.getElementById('queue-pause'),
-      queueCancel: root.getElementById('queue-cancel')
-    }));
+    return this.resolve('queueNodes');
   }
 
   getQuickActionsContainer() {
-    return this.resolve('quickActions', root => root.getElementById('quick-actions'));
+    return this.resolve('quickActions');
   }
 
   getAssetUpgradeActionsContainer() {
-    return this.resolve('assetUpgradeActions', root => root.getElementById('asset-upgrade-actions'));
+    return this.resolve('assetUpgradeActions');
   }
 
   getNotificationsContainer() {
-    return this.resolve('notifications', root => root.getElementById('notification-list'));
+    return this.resolve('notifications');
   }
 
   getEventLogPreviewNode() {
-    return this.resolve('eventLogPreview', root => root.getElementById('event-log-preview'));
+    return this.resolve('eventLogPreview');
   }
 
   getEventLogControls() {
-    return this.resolve('eventLogControls', root => ({
-      openEventLog: root.getElementById('open-event-log'),
-      eventLogPanel: root.getElementById('event-log-panel'),
-      eventLogClose: root.getElementById('event-log-close')
-    }));
+    return this.resolve('eventLogControls');
   }
 
   getLogNodes() {
-    return this.resolve('logNodes', root => ({
-      logFeed: root.getElementById('log-feed'),
-      logTemplate: root.getElementById('log-template'),
-      logTip: root.getElementById('log-tip')
-    }));
+    return this.resolve('logNodes');
   }
 
   getHustleControls() {
-    return this.resolve('hustleControls', root => ({
-      hustleSearch: root.getElementById('hustle-search'),
-      hustleCategoryChips: root.getElementById('hustle-category-chips'),
-      hustleRequirementChips: root.getElementById('hustle-req-chips'),
-      hustleAvailableToggle: root.getElementById('hustle-available-toggle'),
-      hustleSort: root.getElementById('hustle-sort'),
-      hustleList: root.getElementById('hustle-list')
-    }));
+    return this.resolve('hustleControls');
   }
 
   getAssetFilters() {
-    return this.resolve('assetFilters', root => ({
-      activeOnly: root.getElementById('venture-active-toggle'),
-      maintenance: root.getElementById('venture-maintenance-toggle'),
-      lowRisk: root.getElementById('venture-risk-toggle')
-    }));
+    return this.resolve('assetFilters');
   }
 
   getAssetGallery() {
-    return this.resolve('assetGallery', root => root.getElementById('venture-gallery'));
+    return this.resolve('assetGallery');
   }
 
   getUpgradeFilters() {
-    return this.resolve('upgradeFilters', root => ({
-      unlocked: root.getElementById('upgrade-unlocked-toggle')
-    }));
+    return this.resolve('upgradeFilters');
   }
 
   getUpgradeOverview() {
-    return this.resolve('upgradeOverview', root => ({
-      container: root.getElementById('upgrade-overview'),
-      purchased: root.getElementById('upgrade-overview-owned'),
-      ready: root.getElementById('upgrade-overview-ready'),
-      note: root.getElementById('upgrade-overview-note')
-    }));
+    return this.resolve('upgradeOverview');
   }
 
   getUpgradeEmptyNode() {
-    return this.resolve('upgradeEmpty', root => root.getElementById('upgrade-empty'));
+    return this.resolve('upgradeEmpty');
   }
 
   getUpgradeLaneList() {
-    return this.resolve('upgradeLaneList', root => root.getElementById('upgrade-lane-list'));
+    return this.resolve('upgradeLaneList');
   }
 
   getUpgradeList() {
-    return this.resolve('upgradeList', root => root.getElementById('upgrade-list'));
+    return this.resolve('upgradeList');
   }
 
   getUpgradeDockList() {
-    return this.resolve('upgradeDockList', root => root.getElementById('upgrade-dock-list'));
+    return this.resolve('upgradeDockList');
   }
 
   getStudyFilters() {
-    return this.resolve('studyFilters', root => ({
-      activeOnly: root.getElementById('study-active-toggle'),
-      hideComplete: root.getElementById('study-hide-complete')
-    }));
+    return this.resolve('studyFilters');
   }
 
   getStudyQueue() {
-    return this.resolve('studyQueue', root => ({
-      list: root.getElementById('study-queue-list'),
-      eta: root.getElementById('study-queue-eta'),
-      cap: root.getElementById('study-queue-cap')
-    }));
+    return this.resolve('studyQueue');
   }
 
   getStudyTrackList() {
-    return this.resolve('studyTrackList', root => root.getElementById('study-track-list'));
+    return this.resolve('studyTrackList');
   }
 
   getSlideOverNodes() {
-    return this.resolve('slideOver', root => ({
-      slideOver: root.getElementById('slide-over'),
-      slideOverBackdrop: root.querySelector('#slide-over .slide-over__backdrop'),
-      slideOverClose: root.getElementById('slide-over-close'),
-      slideOverTitle: root.getElementById('slide-over-title'),
-      slideOverEyebrow: root.getElementById('slide-over-eyebrow'),
-      slideOverContent: root.getElementById('slide-over-content')
-    }));
+    return this.resolve('slideOver');
   }
 
   getCommandPaletteNodes() {
-    return this.resolve('commandPalette', root => ({
-      commandPalette: root.getElementById('command-palette'),
-      commandPaletteTrigger: root.getElementById('command-palette-trigger'),
-      commandPaletteBackdrop: root.querySelector('#command-palette .command-palette__backdrop'),
-      commandPaletteSearch: root.getElementById('command-palette-search'),
-      commandPaletteResults: root.getElementById('command-palette-results')
-    }));
+    return this.resolve('commandPalette');
   }
 
   getPlayerNodes() {
-    return this.resolve('playerNodes', root => ({
-      summary: {
-        tier: root.getElementById('player-summary-tier'),
-        note: root.getElementById('player-summary-note'),
-        money: root.getElementById('player-summary-money'),
-        earned: root.getElementById('player-summary-earned'),
-        spent: root.getElementById('player-summary-spent'),
-        day: root.getElementById('player-summary-day'),
-        time: root.getElementById('player-summary-time')
-      },
-      skills: {
-        list: root.getElementById('player-skills-list'),
-        summary: root.getElementById('player-skills-summary')
-      },
-      educationList: root.getElementById('player-education-list'),
-      equipmentList: root.getElementById('player-equipment-list'),
-      statsList: root.getElementById('player-stats-list')
-    }));
+    return this.resolve('playerNodes');
   }
 
   getDebugCatalogNodes() {
-    return this.resolve('debugCatalog', root => ({
-      debugActionCatalog: root.getElementById('debug-action-catalog'),
-      debugActionCatalogList: root.getElementById('debug-action-catalog-list'),
-      debugActionCatalogSummary: root.getElementById('debug-action-catalog-summary')
-    }));
+    return this.resolve('debugCatalog');
   }
 }
 
 const elementRegistry = new ElementRegistry();
 
-export function initElementRegistry(root) {
-  elementRegistry.initialize(root);
+export function initElementRegistry(root, resolvers) {
+  elementRegistry.initialize(root, resolvers);
 }
 
 export function getMoneyNode() {

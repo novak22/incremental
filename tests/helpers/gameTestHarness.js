@@ -23,8 +23,10 @@ export async function getGameTestHarness() {
   const storageModule = await import('../../src/core/storage.js');
   const offlineModule = await import('../../src/game/offline.js');
   const elementRegistryModule = await import('../../src/ui/elements/registry.js');
+  const viewManagerModule = await import('../../src/ui/viewManager.js');
+  const classicViewModule = await import('../../src/ui/views/classic/index.js');
 
-  elementRegistryModule.initElementRegistry(document);
+  viewManagerModule.setActiveView(classicViewModule.default, document);
 
   registryModule.configureRegistry({
     assets: assetsModule.ASSETS,
