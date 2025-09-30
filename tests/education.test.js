@@ -32,7 +32,7 @@ test('education tracks reflect canonical study data', async () => {
   progress.daysCompleted = 2;
   progress.studiedToday = false;
 
-  const { renderCardCollections } = await import('../src/ui/cards.js');
+  const { renderCardCollections } = await import('../src/ui/cards/index.js');
   renderCardCollections({
     hustles: [],
     education: registry.hustles.filter(hustle => hustle.tag?.type === 'study'),
@@ -83,7 +83,7 @@ test('completed study tracks celebrate progress and skills', async () => {
   const requirements = await import('../src/game/requirements.js');
   const { getKnowledgeProgress } = requirements;
 
-  const { renderCardCollections, updateAllCards } = await import('../src/ui/cards.js');
+  const { renderCardCollections, updateAllCards } = await import('../src/ui/cards/index.js');
   renderCardCollections({
     hustles: [],
     education: registry.hustles.filter(hustle => hustle.tag?.type === 'study'),

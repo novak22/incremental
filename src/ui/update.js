@@ -1,4 +1,4 @@
-import { renderCardCollections, updateAllCards } from './cards.js';
+import { renderCardCollections, updateAllCards } from './cards/index.js';
 import { getState } from '../core/state.js';
 import { registry } from '../game/registry.js';
 import { computeDailySummary } from '../game/summary.js';
