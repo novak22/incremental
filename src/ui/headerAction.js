@@ -4,10 +4,33 @@ import { buildAssetUpgradeRecommendations, buildQuickActions } from './dashboard
 import { formatHours } from '../core/helpers.js';
 
 let activeRecommendation = null;
+const AUTO_FORWARD_MODES = ['paused', 'current', 'double'];
+const AUTO_FORWARD_INTERVALS = {
+  paused: null,
+  current: 2000,
+  double: 1000
+};
+const AUTO_FORWARD_LABELS = {
+  paused: 'Auto Forward: Paused',
+  current: 'Auto Forward: Current',
+  double: 'Auto Forward: 2× Current'
+};
+const AUTO_FORWARD_TITLES = {
+  paused: 'Tap to let auto forward queue the next action for you.',
+  current: 'Auto forward is cruising and taps the next action every 2 seconds.',
+  double: 'Auto forward is in turbo mode and taps the next action twice as fast (every 1 second).'
+};
+
 const autoForwardState = {
-  enabled: false,
+  mode: 'paused',
   timerId: null
 };
+
+function getNextAutoForwardMode(current) {
+  const index = AUTO_FORWARD_MODES.indexOf(current);
+  const nextIndex = index >= 0 ? (index + 1) % AUTO_FORWARD_MODES.length : 0;
+  return AUTO_FORWARD_MODES[nextIndex];
+}
 
 function formatActionLabel(base, timeCost) {
   if (!base) return '';
@@ -86,7 +109,7 @@ function applyButtonState(button, recommendation) {
   button.classList.add('is-recommendation');
 }
 
-function applyAutoForwardState(enabled) {
+function applyAutoForwardState(mode) {
   if (autoForwardState.timerId) {
     clearInterval(autoForwardState.timerId);
     autoForwardState.timerId = null;
@@ -94,32 +117,34 @@ function applyAutoForwardState(enabled) {
 
   const primaryButton = elements.endDayButton;
   const toggle = elements.autoForwardButton;
-  autoForwardState.enabled = Boolean(enabled && primaryButton && toggle);
+  const nextMode = AUTO_FORWARD_MODES.includes(mode) ? mode : 'paused';
+  autoForwardState.mode = nextMode;
+
+  const isActive = nextMode !== 'paused';
+  const interval = AUTO_FORWARD_INTERVALS[nextMode];
 
   if (toggle) {
-    toggle.classList.toggle('is-active', autoForwardState.enabled);
-    toggle.setAttribute('aria-pressed', String(autoForwardState.enabled));
-    toggle.textContent = autoForwardState.enabled ? 'Auto Forward: On' : 'Auto Forward';
-    toggle.title = autoForwardState.enabled
-      ? 'Auto forward is live and will trigger the next action every 2 seconds.'
-      : 'Toggle auto forward to trigger the next action every 2 seconds.';
+    toggle.classList.toggle('is-active', isActive);
+    toggle.setAttribute('aria-pressed', String(isActive));
+    toggle.textContent = AUTO_FORWARD_LABELS[nextMode];
+    toggle.title = AUTO_FORWARD_TITLES[nextMode];
   }
 
-  if (!autoForwardState.enabled) {
+  if (!isActive || !interval || !primaryButton) {
     return;
   }
 
   autoForwardState.timerId = setInterval(() => {
     const target = elements.endDayButton;
     if (!target) {
-      applyAutoForwardState(false);
+      applyAutoForwardState('paused');
       return;
     }
     if (target.disabled) {
       return;
     }
     target.click();
-  }, 2000);
+  }, interval);
 }
 
 export function initHeaderActionControls() {
@@ -137,12 +162,12 @@ export function initHeaderActionControls() {
   const toggle = elements.autoForwardButton;
   if (toggle) {
     toggle.addEventListener('click', () => {
-      applyAutoForwardState(!autoForwardState.enabled);
+      const nextMode = getNextAutoForwardMode(autoForwardState.mode);
+      applyAutoForwardState(nextMode);
     });
-    toggle.title = 'Toggle auto forward to trigger the next action every 2 seconds.';
   }
 
-  applyAutoForwardState(false);
+  applyAutoForwardState('paused');
 }
 
 export function updateHeaderAction(state) {

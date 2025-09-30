@@ -5,7 +5,7 @@
 
 **Behavior**
 - Adds an "Auto Forward" toggle above the command palette trigger in the shell header.
-- When enabled, the toggle presses the primary header action every two seconds, whether it's a recommended move or ending the day.
+- Tapping the toggle cycles through paused, current speed (fires every two seconds), and 2× speed (fires every second) modes.
 - The toggle highlights its active state, respects disabled buttons, and shuts itself off gracefully if the primary action becomes unavailable.
 
 **Player effect**

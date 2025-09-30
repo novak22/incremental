@@ -9,7 +9,7 @@
 - Passive economy rebalance: smoother upkeep for blogs, stock photos, dropshipping, and SaaS so late tiers feel rewarding without micromanagement spikes.
 - Progression refresh: character skills, study scheduling, and celebratory UI now guide players through course-driven bonuses and countdowns.
 - Flow helpers: the "Next" action, Daily Stats card, and header pulse now keep priorities, earnings, and schedules visible at a glance.
-- Auto forward loop: header toggle can fire the primary action every two seconds so momentum continues without constant clicks.
+- Auto forward loop: header toggle now cycles through paused, current pace (every two seconds), or a 2× sprint (every second) to keep momentum without constant clicks.
 - Asset stewardship: detail panels, sell controls, and recommendations highlight ROI, upkeep costs, and upgrade shortcuts for each build.
 - Active build cards surface quality tiers, remaining steps to the next milestone, and yesterday’s payout breakdown so upgrades feel tangible.
 - Automation & infrastructure: broader instant gigs, smarter assistant load balancing, and new studio/server tiers expand long-term play.
