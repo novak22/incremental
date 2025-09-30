@@ -7,15 +7,19 @@ import {
   normalizeSkillState
 } from '../game/skills/data.js';
 import { ensureNicheStateShape } from './state/niches.js';
-import { normalizeAssetState } from './state/assets.js';
 import {
-  configureRegistry,
-  getRegistrySnapshot,
-  getHustleDefinition,
-  getAssetDefinition,
-  getUpgradeDefinition,
-  getMetricDefinition
-} from './state/registry.js';
+  ensureSlice as ensureHustleSlice,
+  getSliceState as getHustleSliceState
+} from './state/slices/hustles.js';
+import {
+  ensureSlice as ensureAssetSlice,
+  getSliceState as getAssetSliceState
+} from './state/slices/assets.js';
+import {
+  ensureSlice as ensureUpgradeSlice,
+  getSliceState as getUpgradeSliceState
+} from './state/slices/upgrades.js';
+import { ensureSlice as ensureProgressSlice } from './state/slices/progress.js';
 
 class StateManager {
   constructor() {
@@ -42,50 +46,16 @@ class StateManager {
   ensureStateShape(target = this.state) {
     if (!target) return;
 
-    const registry = getRegistrySnapshot();
-
-    target.hustles = target.hustles || {};
-    for (const def of registry.hustles) {
-      const defaults = structuredClone(def.defaultState || {});
-      const existing = target.hustles[def.id];
-      target.hustles[def.id] = existing ? { ...defaults, ...existing } : defaults;
-    }
-
-    target.assets = target.assets || {};
-    for (const def of registry.assets) {
-      const existing = target.assets[def.id];
-      const normalized = normalizeAssetState(def, existing || {}, { state: target });
-      target.assets[def.id] = normalized;
-    }
-
-    target.upgrades = target.upgrades || {};
-    for (const def of registry.upgrades) {
-      const defaults = structuredClone(def.defaultState || {});
-      const existing = target.upgrades[def.id];
-      target.upgrades[def.id] = existing ? { ...defaults, ...existing } : defaults;
-      if (def.id === 'assistant') {
-        const assistantState = target.upgrades[def.id];
-        const storedCount = Number(assistantState.count);
-        if (!Number.isFinite(storedCount)) {
-          assistantState.count = assistantState.purchased ? 1 : 0;
-        } else {
-          assistantState.count = Math.max(0, storedCount);
-        }
-        if (assistantState.purchased && assistantState.count === 0) {
-          assistantState.count = 1;
-        }
-        delete assistantState.purchased;
-      }
-    }
+    ensureHustleSlice(target);
+    ensureAssetSlice(target);
+    ensureUpgradeSlice(target);
+    ensureProgressSlice(target);
 
     target.totals = target.totals || {};
     const earned = Number(target.totals.earned);
     const spent = Number(target.totals.spent);
     target.totals.earned = Number.isFinite(earned) && earned > 0 ? earned : 0;
     target.totals.spent = Number.isFinite(spent) && spent > 0 ? spent : 0;
-
-    target.progress = target.progress || {};
-    target.progress.knowledge = target.progress.knowledge || {};
 
     target.skills = normalizeSkillState(target.skills);
     target.character = normalizeCharacterState(target.character);
@@ -149,25 +119,11 @@ class StateManager {
   }
 
   getHustleState(id, target = this.state) {
-    target.hustles = target.hustles || {};
-    if (!target.hustles[id]) {
-      const def = getHustleDefinition(id);
-      target.hustles[id] = structuredClone(def?.defaultState || {});
-    }
-    return target.hustles[id];
+    return getHustleSliceState(target, id);
   }
 
   getAssetState(id, target = this.state) {
-    target.assets = target.assets || {};
-    const def = getAssetDefinition(id);
-    if (!def) {
-      if (!target.assets[id]) {
-        target.assets[id] = {};
-      }
-      return target.assets[id];
-    }
-    target.assets[id] = normalizeAssetState(def, target.assets[id] || {}, { state: target });
-    return target.assets[id];
+    return getAssetSliceState(target, id);
   }
 
   countActiveAssetInstances(assetId, target = this.state) {
@@ -178,12 +134,7 @@ class StateManager {
   }
 
   getUpgradeState(id, target = this.state) {
-    target.upgrades = target.upgrades || {};
-    if (!target.upgrades[id]) {
-      const def = getUpgradeDefinition(id);
-      target.upgrades[id] = structuredClone(def?.defaultState || {});
-    }
-    return target.upgrades[id];
+    return getUpgradeSliceState(target, id);
   }
 }
 
@@ -200,8 +151,18 @@ export const replaceState = (...args) => stateManager.replaceState(...args);
 export const getState = (...args) => stateManager.getState(...args);
 export const getHustleState = (...args) => stateManager.getHustleState(...args);
 export const getAssetState = (...args) => stateManager.getAssetState(...args);
-export const countActiveAssetInstances = (...args) => stateManager.countActiveAssetInstances(...args);
 export const getUpgradeState = (...args) => stateManager.getUpgradeState(...args);
+export const countActiveAssetInstances = (...args) => stateManager.countActiveAssetInstances(...args);
+
+export {
+  ensureHustleSlice,
+  getHustleSliceState,
+  ensureAssetSlice,
+  getAssetSliceState,
+  ensureUpgradeSlice,
+  getUpgradeSliceState,
+  ensureProgressSlice
+};
 
 export {
   configureRegistry,
@@ -210,6 +171,6 @@ export {
   getAssetDefinition,
   getUpgradeDefinition,
   getMetricDefinition
-};
+} from './state/registry.js';
 export { createAssetInstance, normalizeAssetInstance, normalizeAssetState } from './state/assets.js';
 export { ensureNicheStateShape } from './state/niches.js';
