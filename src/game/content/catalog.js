@@ -364,10 +364,6 @@ function applyFilters(entry, filters = {}) {
   return true;
 }
 
-export function getActionCatalog() {
-  return getCatalogCache().slice();
-}
-
 export function evaluateCatalogEntry(entry, state = getState()) {
   const label = entry.resolveLabel(state);
   const requirements = entry.describeRequirements ? entry.describeRequirements(state) : [];
@@ -390,16 +386,4 @@ export function listCatalog(state = getState(), filters = {}) {
   return getCatalogCache()
     .filter(entry => applyFilters(entry, filters))
     .map(entry => evaluateCatalogEntry(entry, state));
-}
-
-export function listAvailableActions(state = getState(), filters = {}) {
-  return listCatalog(state, filters).filter(entry => entry.available);
-}
-
-export function findCatalogEntry(sourceType, sourceId, actionId) {
-  return getCatalogCache().find(entry =>
-    entry.sourceType === sourceType &&
-    entry.sourceId === sourceId &&
-    entry.actionId === actionId
-  ) || null;
 }
