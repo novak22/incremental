@@ -5,11 +5,7 @@ import { getRegistry } from '../game/registryService.js';
 import { loadDefaultRegistry } from '../game/registryLoader.js';
 import { computeDailySummary } from '../game/summary.js';
 import { renderDashboard } from './dashboard.js';
-import { renderSkillWidgets } from './skillsWidget.js';
-import { updateHeaderAction } from './headerAction.js';
-import { applyCardFilters } from './layout.js';
 import { refreshActionCatalogDebug } from './debugCatalog.js';
-import { renderPlayerPanel } from './player.js';
 import { getActiveView } from './viewManager.js';
 import {
   buildAssetModels,
@@ -17,6 +13,13 @@ import {
   buildHustleModels,
   buildUpgradeModels
 } from './cards/model.js';
+import { buildPlayerPanelModel } from './player/model.js';
+import { buildSkillsWidgetModel } from './skillsWidget/model.js';
+import { buildHeaderActionModel } from './headerAction/model.js';
+import { renderHeaderAction } from './headerAction/index.js';
+import { applyCardFilters } from './layout/index.js';
+import playerPresenterClassic from './views/classic/playerPresenter.js';
+import skillsWidgetPresenterClassic from './views/classic/skillsWidgetPresenter.js';
 
 function resolveRegistrySnapshot() {
   try {
@@ -61,16 +64,18 @@ export function renderCards() {
 
   if (typeof presenter?.renderAll === 'function') {
     presenter.renderAll(payload);
+    applyCardFilters(models);
     return;
   }
 
   if (typeof presenter?.render === 'function') {
     presenter.render(payload);
+    applyCardFilters(models);
     return;
   }
 
   renderCardCollections(registries, models);
-  applyCardFilters();
+  applyCardFilters(models);
 }
 
 export function updateUI() {
@@ -84,9 +89,17 @@ export function updateUI() {
   } else {
     renderDashboard(state, summary);
   }
-  renderSkillWidgets(state);
-  renderPlayerPanel(state, summary);
-  updateHeaderAction(state);
+  const presenters = activeView?.presenters || {};
+  const playerPresenter = presenters.player || playerPresenterClassic;
+  const skillsPresenter = presenters.skillsWidget || skillsWidgetPresenterClassic;
+  const playerModel = buildPlayerPanelModel(state);
+  playerPresenter?.render?.(playerModel);
+
+  const skillsModel = buildSkillsWidgetModel(state);
+  skillsPresenter?.render?.(skillsModel);
+
+  const headerModel = buildHeaderActionModel(state);
+  renderHeaderAction(headerModel);
 
   const collections = buildCollections();
   const { models = {}, ...registries } = collections;
@@ -97,7 +110,7 @@ export function updateUI() {
     presenter.update(payload);
   } else {
     updateAllCards(registries, models);
-    applyCardFilters();
+    applyCardFilters(models);
   }
   refreshActionCatalogDebug();
 }

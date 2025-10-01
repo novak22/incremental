@@ -38,7 +38,7 @@ import {
   getInstanceQualityRange,
   performQualityAction
 } from '../../../game/assets/quality.js';
-import { applyCardFilters } from '../../layout.js';
+import { applyCardFilters } from '../../layout/index.js';
 import {
   buildAssetModels,
   describeAssetCardSummary,
