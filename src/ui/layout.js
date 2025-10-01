@@ -1,21 +1,4 @@
-import {
-  getAssetFilters,
-  getAssetGallery,
-  getAssetUpgradeActionsContainer,
-  getCommandPaletteNodes,
-  getDailyStats,
-  getEventLogControls,
-  getHustleControls,
-  getKpiNodes,
-  getNotificationsContainer,
-  getSessionStatusNode,
-  getShellNavigation,
-  getSlideOverNodes,
-  getStudyFilters,
-  getStudyTrackList,
-  getUpgradeFilters,
-  getUpgradeList
-} from './elements/registry.js';
+import { getElement } from './elements/registry.js';
 
 let activePanelController = null;
 
@@ -48,7 +31,7 @@ export function applyCardFilters() {
 }
 
 function setupTabs() {
-  const { shellTabs = [], panels = [] } = getShellNavigation() || {};
+  const { shellTabs = [], panels = [] } = getElement('shellNavigation') || {};
   if (!shellTabs.length || !panels.length) return;
 
   const activate = targetId => {
@@ -80,13 +63,13 @@ export function activateShellPanel(panelId) {
     activePanelController(panelId);
     return;
   }
-  const { shellTabs = [] } = getShellNavigation() || {};
+  const { shellTabs = [] } = getElement('shellNavigation') || {};
   const tab = shellTabs.find(button => button?.getAttribute('aria-controls') === panelId);
   tab?.click?.();
 }
 
 function setupEventLog() {
-  const { openEventLog, eventLogPanel, eventLogClose } = getEventLogControls() || {};
+  const { openEventLog, eventLogPanel, eventLogClose } = getElement('eventLogControls') || {};
   if (!openEventLog || !eventLogPanel) return;
 
   const toggle = visible => {
@@ -111,7 +94,7 @@ function setupEventLog() {
 }
 
 function setupSlideOver() {
-  const { slideOver, slideOverBackdrop, slideOverClose } = getSlideOverNodes() || {};
+  const { slideOver, slideOverBackdrop, slideOverClose } = getElement('slideOver') || {};
   if (!slideOver) return;
 
   const hide = () => {
@@ -136,12 +119,8 @@ function setupSlideOver() {
 }
 
 function setupCommandPalette() {
-  const {
-    commandPalette,
-    commandPaletteTrigger,
-    commandPaletteBackdrop,
-    commandPaletteSearch
-  } = getCommandPaletteNodes() || {};
+  const { commandPalette, commandPaletteTrigger, commandPaletteBackdrop, commandPaletteSearch } =
+    getElement('commandPalette') || {};
   if (!commandPalette || !commandPaletteTrigger) return;
 
   const show = () => {
@@ -170,35 +149,35 @@ function setupCommandPalette() {
 }
 
 function setupFilterHandlers() {
-  const hustleControls = getHustleControls() || {};
+  const hustleControls = getElement('hustleControls') || {};
   hustleControls.hustleAvailableToggle?.addEventListener('change', applyHustleFilters);
   hustleControls.hustleSort?.addEventListener('change', applyHustleFilters);
   hustleControls.hustleSearch?.addEventListener('input', debounce(applyHustleFilters, 120));
 
-  const assetFilters = getAssetFilters() || {};
+  const assetFilters = getElement('assetFilters') || {};
   assetFilters.activeOnly?.addEventListener('change', applyAssetFilters);
   assetFilters.maintenance?.addEventListener('change', applyAssetFilters);
   assetFilters.lowRisk?.addEventListener('change', applyAssetFilters);
 
-  const upgradeFilters = getUpgradeFilters() || {};
+  const upgradeFilters = getElement('upgradeFilters') || {};
   upgradeFilters.unlocked?.addEventListener('change', applyUpgradeFilters);
 
   document.addEventListener('upgrades:state-updated', applyUpgradeFilters);
   document.addEventListener('hustles:availability-updated', applyHustleFilters);
 
-  const studyFilters = getStudyFilters() || {};
+  const studyFilters = getElement('studyFilters') || {};
   studyFilters.activeOnly?.addEventListener('change', applyStudyFilters);
   studyFilters.hideComplete?.addEventListener('change', applyStudyFilters);
 }
 
 function setupKpiShortcuts() {
-  const buttons = Object.values(getKpiNodes() || {}).filter(Boolean);
+  const buttons = Object.values(getElement('kpis') || {}).filter(Boolean);
   if (!buttons.length) return;
 
-  const dailyStats = getDailyStats() || {};
-  const notifications = getNotificationsContainer();
-  const assetUpgradeActions = getAssetUpgradeActionsContainer();
-  const sessionStatus = getSessionStatusNode();
+  const dailyStats = getElement('dailyStats') || {};
+  const notifications = getElement('notifications');
+  const assetUpgradeActions = getElement('assetUpgradeActions');
+  const sessionStatus = getElement('sessionStatus');
 
   const targetLookup = {
     cash: () => dailyStats.earningsActive?.closest('.daily-stats__section')
@@ -269,12 +248,8 @@ function focusDashboardSection(target) {
 }
 
 function applyHustleFilters() {
-  const {
-    hustleList,
-    hustleAvailableToggle,
-    hustleSort,
-    hustleSearch
-  } = getHustleControls() || {};
+  const { hustleList, hustleAvailableToggle, hustleSort, hustleSearch } =
+    getElement('hustleControls') || {};
   const cards = Array.from(hustleList?.querySelectorAll('[data-hustle]') || []);
   const availableOnly = Boolean(hustleAvailableToggle?.checked);
   const sortValue = hustleSort?.value || 'roi';
@@ -316,8 +291,8 @@ function applyHustleFilters() {
 }
 
 function applyAssetFilters() {
-  const gallery = getAssetGallery();
-  const filters = getAssetFilters() || {};
+  const gallery = getElement('assetGallery');
+  const filters = getElement('assetFilters') || {};
   const cards = Array.from(gallery?.querySelectorAll('[data-asset]') || []);
   const activeOnly = Boolean(filters.activeOnly?.checked);
   const maintenanceOnly = Boolean(filters.maintenance?.checked);
@@ -333,8 +308,8 @@ function applyAssetFilters() {
 }
 
 function applyUpgradeFilters() {
-  const list = getUpgradeList();
-  const filters = getUpgradeFilters() || {};
+  const list = getElement('upgradeList');
+  const filters = getElement('upgradeFilters') || {};
   const cards = Array.from(list?.querySelectorAll('[data-upgrade]') || []);
   const unlockedOnly = filters.unlocked?.checked !== false;
 
@@ -347,8 +322,8 @@ function applyUpgradeFilters() {
 }
 
 function applyStudyFilters() {
-  const trackList = getStudyTrackList();
-  const filters = getStudyFilters() || {};
+  const trackList = getElement('studyTrackList');
+  const filters = getElement('studyFilters') || {};
   const tracks = Array.from(trackList?.querySelectorAll('[data-track]') || []);
   const activeOnly = Boolean(filters.activeOnly?.checked);
   const hideComplete = Boolean(filters.hideComplete?.checked);

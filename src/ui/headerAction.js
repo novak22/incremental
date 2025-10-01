@@ -1,4 +1,4 @@
-import { getHeaderActionButtons } from './elements/registry.js';
+import { getElement } from './elements/registry.js';
 import { endDay } from '../game/lifecycle.js';
 import { buildAssetUpgradeRecommendations, buildQuickActions } from './dashboard/model.js';
 import { formatHours } from '../core/helpers.js';
@@ -32,7 +32,7 @@ const autoForwardState = {
 };
 
 function resolveHeaderButtons() {
-  const { endDayButton, autoForwardButton } = getHeaderActionButtons() || {};
+  const { endDayButton, autoForwardButton } = getElement('headerActionButtons') || {};
   return { endDayButton, autoForwardButton };
 }
 

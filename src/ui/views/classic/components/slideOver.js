@@ -1,4 +1,4 @@
-import { getSlideOverNodes } from '../../../elements/registry.js';
+import { getElement } from '../../../elements/registry.js';
 
 export function showSlideOver({ eyebrow, title, body }) {
   const {
@@ -6,7 +6,7 @@ export function showSlideOver({ eyebrow, title, body }) {
     slideOverContent,
     slideOverEyebrow,
     slideOverTitle
-  } = getSlideOverNodes() || {};
+  } = getElement('slideOver') || {};
   if (!slideOver || !slideOverContent) return;
   slideOverEyebrow.textContent = eyebrow || '';
   slideOverTitle.textContent = title || '';

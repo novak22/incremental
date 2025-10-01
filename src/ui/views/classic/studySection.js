@@ -1,4 +1,4 @@
-import { getStudyQueue, getStudyTrackList } from '../../elements/registry.js';
+import { getElement } from '../../elements/registry.js';
 import { getState } from '../../../core/state.js';
 import { formatDays, formatHours, formatMoney } from '../../../core/helpers.js';
 import { KNOWLEDGE_TRACKS, getKnowledgeProgress } from '../../../game/requirements.js';
@@ -285,7 +285,7 @@ function renderStudyTrack(definition) {
 
 function renderStudyQueue(educationModels) {
   const models = ensureEducationModels(educationModels);
-  const { list: queue, eta: queueEta, cap: capNode } = getStudyQueue() || {};
+  const { list: queue, eta: queueEta, cap: capNode } = getElement('studyQueue') || {};
   if (!queue) return;
   queue.innerHTML = '';
   const queueModel = models?.queue;
@@ -309,7 +309,7 @@ function renderStudyQueue(educationModels) {
 }
 
 export function renderStudySection(definitions, educationModels) {
-  const list = getStudyTrackList();
+  const list = getElement('studyTrackList');
   if (!list) return;
   ensureEducationModels(educationModels);
   list.innerHTML = '';
