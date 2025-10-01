@@ -1167,9 +1167,16 @@ export function buildFinanceModel(registries = {}, helpers = {}) {
   const pulse = buildPulseSummary(summary);
   const topEarner = computeTopEarner(summary);
 
+  const currentBalance = toCurrency(state.money);
+  const dailyIncome = toCurrency(summary.totalEarnings);
+  const dailySpend = toCurrency(summary.totalSpend);
+  const netDaily = toCurrency(summary.totalEarnings - summary.totalSpend);
+
   const header = {
-    cashOnHand: toCurrency(state.money),
-    netDaily: toCurrency(summary.totalEarnings - summary.totalSpend),
+    currentBalance,
+    netDaily,
+    dailyIncome,
+    dailySpend,
     lifetimeEarned: toCurrency(state.totals?.earned),
     lifetimeSpent: toCurrency(state.totals?.spent),
     pulse,
@@ -1177,8 +1184,8 @@ export function buildFinanceModel(registries = {}, helpers = {}) {
     topEarner
   };
 
-  const meta = header.netDaily !== 0
-    ? `${header.netDaily >= 0 ? '+' : '-'}$${formatMoney(Math.abs(header.netDaily))} net today`
+  const meta = netDaily !== 0
+    ? `${netDaily >= 0 ? '+' : '-'}$${formatMoney(Math.abs(netDaily))} net today`
     : 'Cashflow steady today';
 
   return {

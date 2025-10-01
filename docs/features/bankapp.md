@@ -14,5 +14,9 @@
 ## Implementation Notes
 - `buildFinanceModel` in `src/ui/cards/model.js` synthesizes cash summaries, ledger groups, obligations, pending income, asset ROI, and study data from the existing state selectors.
 - `renderFinancePage` in `src/ui/views/browser/cardsPresenter.js` assembles the new banking layout with reusable helper sections and styles, feeding the site list meta string for the BankApp tile.
+- The header summary reuses the classic dashboard totals to show Current balance, Net / Day, Daily +, and Daily - so both shells stay in sync.
 - `styles/browser.css` gained a `bankapp` design system (header summary strip, ledger grid, obligation cards, tables) so future browser apps can share the visual language.
 - BankApp registers as a new service page in `src/ui/views/browser/config.js`, allowing the browser shell navigation and history stacks to treat it like any other site.
+
+## Future Work
+- Income/spend metrics only cover the current in-game day—there’s no historical ledger stored in state or surfaced by selectors yet. Once we add an archive, BankApp can grow a timeline module without changing today’s contracts.

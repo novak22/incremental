@@ -895,6 +895,13 @@ a {
   border: 1px solid var(--browser-panel-border);
 }
 
+.bankapp-summary__footnote {
+  margin: 0;
+  margin-top: 0.25rem;
+  font-size: 0.85rem;
+  color: var(--browser-muted);
+}
+
 .bankapp-summary__label {
   font-size: 0.8rem;
   text-transform: uppercase;
@@ -905,6 +912,14 @@ a {
 .bankapp-summary__value {
   font-size: 1.55rem;
   font-weight: 700;
+}
+
+.bankapp-summary__value.is-positive {
+  color: var(--browser-positive);
+}
+
+.bankapp-summary__value.is-negative {
+  color: var(--browser-danger);
 }
 
 .bankapp-pulse {
