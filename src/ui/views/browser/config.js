@@ -6,7 +6,8 @@ export const SERVICE_PAGES = [
     slug: 'blogpress',
     label: 'BlogPress',
     headline: 'BlogPress Creator Hub',
-    tagline: 'Queue hustles, stack ROI, and keep your streak sizzling.',
+    tagline: 'Publish posts, tweak monetization, and celebrate streaks.',
+    icon: '📝',
     type: 'hustles'
   },
   {
@@ -14,7 +15,8 @@ export const SERVICE_PAGES = [
     slug: 'videotube',
     label: 'VideoTube',
     headline: 'VideoTube Venture Studio',
-    tagline: 'Survey every venture, fund upkeep, and celebrate new launches.',
+    tagline: 'Schedule drops, review analytics, and amplify fans.',
+    icon: '📺',
     type: 'assets'
   },
   {
@@ -22,7 +24,8 @@ export const SERVICE_PAGES = [
     slug: 'shopstack',
     label: 'ShopStack',
     headline: 'ShopStack Upgrade Arcade',
-    tagline: 'Install power-ups, clear prerequisites, and line up the next spike.',
+    tagline: 'Install upgrades, stock products, and plan the next spike.',
+    icon: '🛍️',
     type: 'upgrades'
   },
   {
@@ -30,7 +33,8 @@ export const SERVICE_PAGES = [
     slug: 'learnly',
     label: 'Learnly',
     headline: 'Learnly Study Hall',
-    tagline: 'Stay sharp with daily study loops and celebratory completions.',
+    tagline: 'Study new skills, finish tracks, and unlock perks.',
+    icon: '🎓',
     type: 'education'
   }
 ];
