@@ -1,19 +1,17 @@
-export function ensureSlice(state) {
-  if (!state) return {};
-  state.progress = state.progress || {};
-  state.progress.knowledge = state.progress.knowledge || {};
-  return state.progress;
-}
+import { createRegistrySliceManager } from './factory.js';
 
-export function getSliceState(state, id) {
-  if (!state) return {};
-  const progress = ensureSlice(state);
-  if (!id) {
-    return progress;
+const { ensureSlice, getSliceState } = createRegistrySliceManager({
+  sliceKey: 'progress',
+  defaultFactory: () => ({}),
+  normalizer: (_, entry = {}) => (typeof entry === 'object' && entry !== null ? entry : {}),
+  ensureHook: ({ sliceState }) => {
+    if (!sliceState.knowledge || typeof sliceState.knowledge !== 'object') {
+      sliceState.knowledge = {};
+    }
   }
-  progress[id] = progress[id] || {};
-  return progress[id];
-}
+});
+
+export { ensureSlice, getSliceState };
 
 export default {
   ensureSlice,
