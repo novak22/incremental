@@ -8,7 +8,7 @@
 - BankApp finance portal now pipes the classic dashboard totals into a bank-style header (Current balance, Net / Day, Daily +, Daily -) and mirrors the daily ledger inside the browser shell.
 - Browser shell entry experiments ship a homepage chrome with pinned sites and dedicated widgets while sharing the core game lo
 op with the classic dashboard.
-- Browser chrome now renders dashboard KPIs, quick actions, notifications, and the BlogPress/VideoTube/ShopStack/Learnly surfaces through dedicated presenters that reuse the shared models.
+- Browser chrome now renders dashboard KPIs, quick actions, notifications, and the DownWork/VideoTube/ShopStack/Learnly surfaces through dedicated presenters that reuse the shared models.
 - Modular UI view-model builders keep player overview, skills, header actions, and layout filters aligned while making alternate shells easy to drop in.
 - Passive asset economy has lower upkeep, clearer payout ladders, and milestone callouts so builds pay off earlier.
 - Education and hustle systems link courses to gig bonuses with celebratory progress cues and smarter scheduling buffers.
