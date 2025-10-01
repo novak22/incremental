@@ -1,18 +1,10 @@
 import { renderCardCollections, updateAllCards } from './cards.js';
 import { getState } from '../core/state.js';
-import { configureRegistry } from '../core/state/registry.js';
-import { getRegistry } from '../game/registryService.js';
-import { loadDefaultRegistry } from '../game/registryLoader.js';
 import { computeDailySummary } from '../game/summary.js';
 import { renderDashboard } from './dashboard.js';
 import { refreshActionCatalogDebug } from './debugCatalog.js';
 import { getActiveView } from './viewManager.js';
-import {
-  buildAssetModels,
-  buildEducationModels,
-  buildHustleModels,
-  buildUpgradeModels
-} from './cards/model.js';
+import cardCollectionService from './cards/collectionService.js';
 import { buildPlayerPanelModel } from './player/model.js';
 import { buildSkillsWidgetModel } from './skillsWidget/model.js';
 import { buildHeaderActionModel } from './headerAction/model.js';
@@ -21,60 +13,20 @@ import { applyCardFilters } from './layout/index.js';
 import playerPresenterClassic from './views/classic/playerPresenter.js';
 import skillsWidgetPresenterClassic from './views/classic/skillsWidgetPresenter.js';
 
-function resolveRegistrySnapshot() {
-  try {
-    return getRegistry();
-  } catch (error) {
-    const message = typeof error?.message === 'string' ? error.message : '';
-    if (!message.includes('Registry definitions have not been loaded')) {
-      throw error;
-    }
-
-    loadDefaultRegistry();
-    configureRegistry();
-    return getRegistry();
-  }
-}
-
-function buildCollections() {
-  const registry = resolveRegistrySnapshot();
-  const hustles = registry.hustles.filter(hustle => hustle.tag?.type !== 'study');
-  const education = registry.hustles.filter(hustle => hustle.tag?.type === 'study');
-  const assets = registry.assets;
-  const upgrades = registry.upgrades;
-  return {
-    hustles,
-    education,
-    assets,
-    upgrades,
-    models: {
-      hustles: buildHustleModels(hustles),
-      education: buildEducationModels(education),
-      assets: buildAssetModels(assets),
-      upgrades: buildUpgradeModels(upgrades)
-    }
-  };
-}
-
 export function renderCards() {
-  const collections = buildCollections();
-  const { models = {}, ...registries } = collections;
+  cardCollectionService.refreshCollections();
+  const { registries, models } = cardCollectionService.getCollections();
   const presenter = getActiveView()?.presenters?.cards;
   const payload = { registries, models };
 
   if (typeof presenter?.renderAll === 'function') {
     presenter.renderAll(payload);
-    applyCardFilters(models);
-    return;
-  }
-
-  if (typeof presenter?.render === 'function') {
+  } else if (typeof presenter?.render === 'function') {
     presenter.render(payload);
-    applyCardFilters(models);
-    return;
+  } else {
+    renderCardCollections(registries, models);
   }
 
-  renderCardCollections(registries, models);
   applyCardFilters(models);
 }
 
@@ -101,8 +53,8 @@ export function updateUI() {
   const headerModel = buildHeaderActionModel(state);
   renderHeaderAction(headerModel);
 
-  const collections = buildCollections();
-  const { models = {}, ...registries } = collections;
+  cardCollectionService.refreshCollections();
+  const { registries, models } = cardCollectionService.getCollections();
   const presenter = activeView?.presenters?.cards;
   const payload = { registries, models };
 
