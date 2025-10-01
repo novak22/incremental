@@ -750,7 +750,9 @@ function buildQuickActionModel(state = {}) {
     payoutText: action.payoutText,
     durationHours: action.durationHours,
     durationText: action.durationText,
-    meta: action.meta
+    meta: action.meta,
+    repeatable: action.repeatable,
+    remainingRuns: action.remainingRuns
   }));
   const baseHours = clampNumber(state.baseTime) + clampNumber(state.bonusTime) + clampNumber(state.dailyBonusTime);
   const hoursAvailable = Math.max(0, clampNumber(state.timeLeft));
