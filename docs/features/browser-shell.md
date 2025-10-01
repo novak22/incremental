@@ -13,12 +13,14 @@
 - Hours available and hours spent stay visible so players can pace their day while they click through tasks.
 - Completed actions slide into a muted "Done" ledger with time-spent markers, celebrating momentum without crowding the list.
 - A dedicated End Day button sits under the checklist so players can wrap the day from the same surface they planned it on.
+- A compact bank snapshot mirrors the BankApp header so daily cashflow, net movement, and highlights are visible without opening a new tab.
+- The apps widget now reads like a login roster—each workspace is a single button with its description tucked into a tooltip for quick launches.
 
 ## Implementation Notes
-- `browser.html` still boots the shared game scripts, but the homepage markup now collapses to a single ToDo widget with a time summary and End Day control.
-- Dashboard presenters only initialize the todo widget; earnings and notification modules stay dormant until future iterations bring them back.
+- `browser.html` now lays out three uniform widgets (tasks, apps, bank) so the homepage reads as a single column of quick actions.
+- Dashboard presenters initialize todo, apps, and bank widgets—each module keeps state in sync with the shared registries while remaining lazy-loaded.
 - `todoWidget` now treats each hustle row as a full-width button that fires the action, logs completions with time data, and updates hours spent immediately.
-- `styles/browser.css` received a pared-down layout and new `.todo-widget` system so the launch screen reads like a standard productivity app in both light and dark themes.
+- `styles/browser.css` defines a reusable `.browser-widget` shell plus dedicated styling for the app roster and bank chips so every panel lines up cleanly.
 - Quick action view models provide payout, duration, and day metadata so the widget can track hours and reset completion history when a new day begins.
 
 ## Multi-Tab Workspace System

@@ -79,9 +79,9 @@
 
           <main class="browser-main" aria-live="polite">
             <section id="browser-home" class="browser-home" aria-labelledby="browser-widget-todo-heading">
-              <section class="browser-launch" aria-label="Today's focus">
-                <section class="todo-widget" data-widget="todo" aria-labelledby="browser-widget-todo-heading">
-                  <header class="todo-widget__header">
+              <div class="browser-home__widgets">
+                <section class="browser-widget todo-widget" data-widget="todo" aria-labelledby="browser-widget-todo-heading">
+                  <header class="browser-widget__header todo-widget__header">
                     <div class="todo-widget__intro">
                       <h2 id="browser-widget-todo-heading">Today's Tasks</h2>
                       <p id="browser-widget-todo-note">Pick the moves that make today sparkle.</p>
@@ -107,7 +107,37 @@
 
                   <button id="browser-widget-todo-end" class="todo-widget__end" type="button">End Day</button>
                 </section>
-              </section>
+
+                <section
+                  class="browser-widget apps-widget"
+                  data-widget="apps"
+                  aria-labelledby="browser-widget-apps-heading"
+                >
+                  <header class="browser-widget__header">
+                    <div>
+                      <h2 id="browser-widget-apps-heading">Apps</h2>
+                      <p id="browser-widget-apps-note">Launch into any workspace in a single click.</p>
+                    </div>
+                  </header>
+                  <ul id="browser-widget-apps-list" class="apps-widget__list" aria-live="polite"></ul>
+                </section>
+
+                <section
+                  class="browser-widget bank-widget"
+                  data-widget="bank"
+                  aria-labelledby="browser-widget-bank-heading"
+                >
+                  <header class="browser-widget__header">
+                    <div>
+                      <h2 id="browser-widget-bank-heading">Bank Snapshot</h2>
+                      <p id="browser-widget-bank-note">Fresh totals piped in from BankApp.</p>
+                    </div>
+                  </header>
+                  <ul id="browser-widget-bank-stats" class="bank-widget__stats" aria-live="polite"></ul>
+                  <p id="browser-widget-bank-footnote" class="bank-widget__footnote" hidden></p>
+                  <div id="browser-widget-bank-highlights" class="bank-widget__highlights" hidden></div>
+                </section>
+              </div>
             </section>
           </main>
         </div>

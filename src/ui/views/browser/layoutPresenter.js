@@ -466,6 +466,11 @@ function initNavigation() {
     siteList.addEventListener('click', handleSiteClick);
   }
 
+  const homepage = getElement('homepage')?.container;
+  if (homepage) {
+    homepage.addEventListener('click', handleSiteClick);
+  }
+
   setActivePage(currentPage, { recordHistory: false, ensureTab: false });
   updateNavigationButtons();
 }
