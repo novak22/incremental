@@ -4,6 +4,7 @@ import { SERVICE_PAGES } from './config.js';
 import { buildFinanceModel } from '../../cards/model/index.js';
 import { createStat, formatRoi } from './components/widgets.js';
 import blogpressApp from './components/blogpress.js';
+import learnlyApp from './components/learnly.js';
 
 let cachedRegistries = null;
 let cachedModels = null;
@@ -468,97 +469,27 @@ function renderUpgradesPage(definitions = [], models = {}) {
   };
 }
 
-function renderStudyCard(track) {
-  const card = document.createElement('article');
-  card.className = 'browser-card browser-card--study';
-  card.dataset.track = track.id;
-  card.dataset.completed = track.progress?.completed ? 'true' : 'false';
-
-  const header = document.createElement('header');
-  header.className = 'browser-card__header';
-  const title = document.createElement('h2');
-  title.className = 'browser-card__title';
-  title.textContent = track.name;
-  header.appendChild(title);
-  card.appendChild(header);
-
-  if (track.summary) {
-    const summary = document.createElement('p');
-    summary.className = 'browser-card__summary';
-    summary.textContent = track.summary;
-    card.appendChild(summary);
-  }
-
-  const stats = document.createElement('div');
-  stats.className = 'browser-card__stats';
-  const dailyHours = Number(track.hoursPerDay) || 0;
-  stats.append(
-    createStat('Daily time', formatHours(dailyHours)),
-    createStat('Duration', `${track.days || 0} day${track.days === 1 ? '' : 's'}`),
-    createStat('Progress', `${track.progress?.daysCompleted ?? 0}/${track.progress?.totalDays ?? track.days}`)
-  );
-  card.appendChild(stats);
-
-  if (track.description) {
-    const detail = document.createElement('p');
-    detail.className = 'browser-card__note';
-    detail.textContent = track.description;
-    card.appendChild(detail);
-  }
-
-  const actions = document.createElement('div');
-  actions.className = 'browser-card__actions';
-  if (track.action?.label) {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'browser-card__button browser-card__button--primary';
-    button.textContent = track.action.label;
-    button.disabled = Boolean(track.action.disabled);
-    button.addEventListener('click', () => {
-      if (button.disabled) return;
-      track.action?.onClick?.();
-    });
-    actions.appendChild(button);
-  }
-  card.appendChild(actions);
-
-  return card;
-}
-
-function renderEducationPage(definitions = [], models = {}) {
+function renderEducationPage(definitions = [], model = {}) {
   const page = SERVICE_PAGES.find(entry => entry.type === 'education');
   if (!page) return null;
 
   const refs = ensurePageContent(page, ({ body }) => {
-    body.innerHTML = '';
+    if (!body.querySelector('[data-role="learnly-root"]')) {
+      body.innerHTML = '';
+      const wrapper = document.createElement('div');
+      wrapper.className = 'learnly';
+      wrapper.dataset.role = 'learnly-root';
+      body.appendChild(wrapper);
+    }
   });
   if (!refs) return null;
 
-  const tracks = Array.isArray(models.tracks) ? models.tracks : [];
-  const grid = document.createElement('div');
-  grid.className = 'browser-card-grid';
-  let activeCount = 0;
+  const mount = refs.body.querySelector('[data-role="learnly-root"]');
+  if (!mount) return null;
 
-  tracks.forEach(track => {
-    if (track.progress?.enrolled && !track.progress?.completed) {
-      activeCount += 1;
-    }
-    grid.appendChild(renderStudyCard(track));
-  });
-
-  if (!tracks.length) {
-    const empty = document.createElement('p');
-    empty.className = 'browser-empty';
-    empty.textContent = 'Enroll in a course to light up this study hall.';
-    refs.body.appendChild(empty);
-  } else {
-    refs.body.appendChild(grid);
-  }
-
-  return {
-    id: page.id,
-    meta: activeCount > 0 ? `${activeCount} active track${activeCount === 1 ? '' : 's'}` : 'No tracks running yet'
-  };
+  const summary = learnlyApp.render(model, { mount, page, definitions });
+  const meta = summary?.meta || 'Browse the catalog';
+  return { id: page.id, meta };
 }
 
 function formatCurrency(amount) {
