@@ -3037,8 +3037,7 @@ body {
 }
 
 .slide-over,
-.event-log-panel,
-.command-palette {
+.event-log-panel {
   position: fixed;
   inset: 0;
   display: grid;
@@ -3048,14 +3047,12 @@ body {
 }
 
 .slide-over[hidden],
-.event-log-panel[hidden],
-.command-palette[hidden] {
+.event-log-panel[hidden] {
   display: none;
 }
 
 .slide-over__backdrop,
-.event-log-panel__backdrop,
-.command-palette__backdrop {
+.event-log-panel__backdrop {
   background: rgba(15, 23, 42, 0.75);
   backdrop-filter: blur(14px);
 }
@@ -3156,33 +3153,6 @@ body {
   color: var(--text-subtle);
   font-size: 14px;
   box-shadow: var(--shadow-sm);
-}
-
-.command-palette__panel {
-  margin: 96px auto 0;
-  width: min(600px, calc(100% - 48px));
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-lg);
-  display: grid;
-  grid-template-rows: auto 1fr;
-}
-
-.command-palette__panel header {
-  padding: 18px 20px;
-  border-bottom: 1px solid var(--border);
-  display: grid;
-  gap: 12px;
-}
-
-.command-palette__panel input {
-  padding: 12px 14px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border);
-  background: var(--surface-muted);
-  color: var(--text);
-  font-size: 15px;
 }
 
 .definition-list {

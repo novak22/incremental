@@ -2,7 +2,6 @@ import { renderCardCollections, updateAllCards } from './cards.js';
 import { getState } from '../core/state.js';
 import { computeDailySummary } from '../game/summary.js';
 import { renderDashboard } from './dashboard.js';
-import { refreshActionCatalogDebug } from './debugCatalog.js';
 import { getActiveView } from './viewManager.js';
 import cardCollectionService from './cards/collectionService.js';
 import { buildPlayerPanelModel } from './player/model.js';
@@ -80,5 +79,4 @@ export function updateUI() {
     updateAllCards(registries, models);
     applyCardFilters(models);
   }
-  refreshActionCatalogDebug();
 }

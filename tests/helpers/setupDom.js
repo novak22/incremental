@@ -42,7 +42,6 @@ export function ensureTestDom() {
             </div>
           </div>
           <div class="shell__controls">
-            <button id="command-palette-trigger"></button>
             <button id="end-day"></button>
           </div>
         </header>
@@ -133,9 +132,8 @@ export function ensureTestDom() {
       <div id="log-tip"></div>
       <div id="slide-over"><div class="slide-over__backdrop" data-close="slide-over"></div><div class="slide-over__panel"><header><p id="slide-over-eyebrow"></p><h2 id="slide-over-title"></h2><button id="slide-over-close" data-close="slide-over"></button></header><div id="slide-over-content"></div></div></div>
       <aside id="event-log-panel" hidden><button id="event-log-close" data-close="event-log"></button></aside>
-      <div id="log-feed"></div>
-      <div id="command-palette"><div class="command-palette__backdrop" data-close="command"></div><div class="command-palette__panel"><header><input id="command-palette-search" /></header></div></div>
-    </body></html>`,
+        <div id="log-feed"></div>
+      </body></html>`,
     { url: 'https://example.com' }
   );
 
