@@ -67,6 +67,7 @@ import {
   getAssetGroupId,
   getAssetGroupLabel,
   getAssetGroupNote,
+  getUpgradeSnapshot,
   resolveTrack
 } from '../../cards/model.js';
 
@@ -2809,7 +2810,8 @@ function updateUpgradeCard(definition, model) {
   if (!ui) return;
   const state = getState();
   const resolvedModel = model || findUpgradeModelById(key);
-  const snapshot = resolvedModel?.snapshot || (() => {
+  const previousSnapshot = resolvedModel?.snapshot ?? null;
+  const fallbackSnapshot = () => {
     const cost = Number(definition?.cost) || 0;
     const money = Number(state?.money) || 0;
     const affordable = cost <= 0 || money >= cost;
@@ -2827,7 +2829,26 @@ function updateUpgradeCard(definition, model) {
       purchased,
       ready
     };
-  })();
+  };
+
+  let snapshot = previousSnapshot;
+  if (definition) {
+    snapshot = getUpgradeSnapshot(definition, state);
+  }
+  if (!snapshot) {
+    snapshot = fallbackSnapshot();
+  }
+
+  if (resolvedModel) {
+    if (snapshot !== previousSnapshot) {
+      resolvedModel.snapshot = snapshot;
+      reconcileUpgradeOverviewStats(previousSnapshot, snapshot);
+    }
+    if (resolvedModel.filters) {
+      resolvedModel.filters.ready = snapshot.ready;
+      resolvedModel.filters.affordable = snapshot.affordable;
+    }
+  }
 
   ui.card.dataset.affordable = snapshot.affordable ? 'true' : 'false';
   ui.card.dataset.purchased = snapshot.purchased ? 'true' : 'false';
@@ -2868,6 +2889,24 @@ function updateUpgradeCard(definition, model) {
   }
 
   ui.updateDetails?.();
+}
+
+function reconcileUpgradeOverviewStats(previousSnapshot, nextSnapshot) {
+  if (!currentUpgradeModels?.overview) return;
+  const overview = currentUpgradeModels.overview;
+  const toNumber = value => (Number.isFinite(Number(value)) ? Number(value) : 0);
+  overview.total = toNumber(overview.total);
+
+  const purchasedDelta = (nextSnapshot?.purchased ? 1 : 0) - (previousSnapshot?.purchased ? 1 : 0);
+  const readyDelta = (nextSnapshot?.ready ? 1 : 0) - (previousSnapshot?.ready ? 1 : 0);
+
+  overview.purchased = Math.max(0, toNumber(overview.purchased) + purchasedDelta);
+  overview.ready = Math.max(0, toNumber(overview.ready) + readyDelta);
+  overview.note = describeOverviewNote({
+    total: overview.total,
+    purchased: overview.purchased,
+    ready: overview.ready
+  });
 }
 
 function renderUpgrades(definitions, upgradeModels) {
