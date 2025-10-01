@@ -6,7 +6,7 @@ export const SERVICE_PAGES = [
     slug: 'bank',
     label: 'BankApp',
     headline: 'BankApp Balance Center',
-    tagline: 'Track cashflow, obligations, and investments in one glance.',
+    tagline: 'Track cashflow, daily net, and ledger entries in one glance.',
     icon: '🏦',
     type: 'finance'
   },

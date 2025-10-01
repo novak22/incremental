@@ -1,6 +1,7 @@
 import { getElement } from '../../elements/registry.js';
 import { formatHours, formatMoney } from '../../../core/helpers.js';
 import { SERVICE_PAGES } from './config.js';
+import { buildFinanceModel } from '../../cards/model.js';
 import { createStat, formatRoi } from './components/widgets.js';
 
 let cachedRegistries = null;
@@ -560,11 +561,17 @@ function renderFinanceHeader(model = {}) {
   const summary = document.createElement('div');
   summary.className = 'bankapp-summary';
 
+  const balanceValue = Number((model.currentBalance ?? model.cashOnHand ?? 0));
+  const netValue = Number(model.netDaily || 0);
+  const dailyIncomeValue = Number(model.dailyIncome || 0);
+  const dailySpendValue = Number(model.dailySpend || 0);
+  const lifetimeEarnedValue = Number(model.lifetimeEarned || 0);
+  const lifetimeSpentValue = Number(model.lifetimeSpent || 0);
   const cards = [
-    { label: 'Cash on hand', value: formatCurrency(model.cashOnHand || 0) },
-    { label: 'Net today', value: formatSignedCurrency(model.netDaily || 0) },
-    { label: 'Lifetime earned', value: formatCurrency(model.lifetimeEarned || 0) },
-    { label: 'Lifetime spent', value: formatCurrency(model.lifetimeSpent || 0) }
+    { label: 'Current balance', value: formatCurrency(balanceValue), tone: 'neutral' },
+    { label: 'Net / Day', value: formatSignedCurrency(netValue), tone: netValue > 0 ? 'positive' : netValue < 0 ? 'negative' : 'neutral' },
+    { label: 'Daily +', value: formatCurrency(dailyIncomeValue), tone: dailyIncomeValue > 0 ? 'positive' : 'neutral' },
+    { label: 'Daily -', value: formatCurrency(dailySpendValue > 0 ? -dailySpendValue : 0), tone: dailySpendValue > 0 ? 'negative' : 'neutral' }
   ];
 
   cards.forEach(entry => {
@@ -576,11 +583,25 @@ function renderFinanceHeader(model = {}) {
     const value = document.createElement('span');
     value.className = 'bankapp-summary__value';
     value.textContent = entry.value;
+    if (entry.tone === 'positive') {
+      value.classList.add('is-positive');
+    } else if (entry.tone === 'negative') {
+      value.classList.add('is-negative');
+    }
     card.append(label, value);
     summary.appendChild(card);
   });
 
   container.appendChild(summary);
+
+  if (lifetimeEarnedValue > 0 || lifetimeSpentValue > 0) {
+    const footnote = document.createElement('p');
+    footnote.className = 'bankapp-summary__footnote';
+    const earnedText = formatCurrency(lifetimeEarnedValue);
+    const spentText = formatCurrency(lifetimeSpentValue > 0 ? -lifetimeSpentValue : 0);
+    footnote.textContent = `Lifetime earned ${earnedText} • Lifetime spent ${spentText}`;
+    container.appendChild(footnote);
+  }
 
   const pulseEntries = Array.isArray(model.pulse) ? model.pulse : [];
   if (pulseEntries.length) {
@@ -709,7 +730,10 @@ function createLedgerColumn(title, entries = [], direction = 'in') {
 }
 
 function renderFinanceLedger(model = {}) {
-  const { section, body } = createBankSection('Daily Cashflow (Ledger)', 'Today’s payouts and costs grouped by stream.');
+  const { section, body } = createBankSection(
+    'Daily Cashflow (Ledger)',
+    'Today’s earnings and spend straight from the classic dashboard breakdown.'
+  );
 
   const ledger = document.createElement('div');
   ledger.className = 'bankapp-ledger';
@@ -1052,11 +1076,6 @@ function renderFinancePage(model = {}) {
     container.appendChild(renderFinanceHeader(model.header));
   }
   container.appendChild(renderFinanceLedger(model.ledger || {}));
-  container.appendChild(renderFinanceObligations(model.obligations || {}));
-  container.appendChild(renderFinancePendingIncome(model.pendingIncome || []));
-  container.appendChild(renderFinancePerformance(model.assetPerformance || []));
-  container.appendChild(renderFinanceOpportunities(model.opportunities || {}));
-  container.appendChild(renderFinanceEducation(model.education || []));
 
   refs.body.appendChild(container);
 
@@ -1131,6 +1150,17 @@ function renderSiteList(summaries = []) {
   }
 }
 
+function ensureFinanceModel(registries = {}, models = {}) {
+  if (models && typeof models.finance === 'object' && models.finance !== null) {
+    return models.finance;
+  }
+  const financeModel = buildFinanceModel(registries);
+  if (models) {
+    models.finance = financeModel;
+  }
+  return financeModel;
+}
+
 function renderServices(registries = {}, models = {}) {
   cachedRegistries = registries;
   cachedModels = models;
@@ -1144,7 +1174,7 @@ function renderServices(registries = {}, models = {}) {
   if (upgradeSummary) summaries.push(upgradeSummary);
   const educationSummary = renderEducationPage(registries.education, models.education);
   if (educationSummary) summaries.push(educationSummary);
-  const financeSummary = renderFinancePage(models.finance);
+  const financeSummary = renderFinancePage(ensureFinanceModel(registries, models));
   if (financeSummary) summaries.push(financeSummary);
 
   renderSiteList(summaries);
