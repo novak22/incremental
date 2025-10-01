@@ -131,12 +131,27 @@ function getPageElement(pageId) {
 }
 
 function markActiveSite(pageId) {
+  const containers = [];
   const list = getElement('siteList');
-  if (!list) return;
-  list.querySelectorAll('button[data-site-target]').forEach(button => {
-    const isActive = button.dataset.siteTarget === pageId;
-    button.classList.toggle('is-active', isActive);
-    button.setAttribute('aria-pressed', String(isActive));
+  if (list) containers.push(list);
+
+  const homepage = getElement('homepage')?.container || null;
+  if (homepage) {
+    homepage.querySelectorAll('[data-role="browser-app-launcher"]').forEach(node => {
+      if (node instanceof HTMLElement) {
+        containers.push(node);
+      }
+    });
+  }
+
+  if (!containers.length) return;
+
+  containers.forEach(container => {
+    container.querySelectorAll('button[data-site-target]').forEach(button => {
+      const isActive = button.dataset.siteTarget === pageId;
+      button.classList.toggle('is-active', isActive);
+      button.setAttribute('aria-pressed', String(isActive));
+    });
   });
 }
 

@@ -73,20 +73,33 @@ function renderList() {
 
     const button = document.createElement('button');
     button.type = 'button';
-    button.className = 'apps-widget__link';
+    button.className = 'apps-widget__tile';
     button.dataset.siteTarget = page.id;
     button.title = describeTooltip(page, summary);
     button.setAttribute('aria-label', describeAriaLabel(page, summary));
+    button.setAttribute('aria-pressed', 'false');
 
     const icon = document.createElement('span');
     icon.className = 'apps-widget__icon';
     icon.textContent = page.icon || '✨';
 
+    const label = document.createElement('span');
+    label.className = 'apps-widget__label';
+
     const name = document.createElement('span');
     name.className = 'apps-widget__name';
     name.textContent = page.label;
 
-    button.append(icon, name);
+    label.appendChild(name);
+
+    if (summary.meta) {
+      const badge = document.createElement('span');
+      badge.className = 'apps-widget__badge';
+      badge.textContent = summary.meta;
+      label.appendChild(badge);
+    }
+
+    button.append(icon, label);
     item.appendChild(button);
     elements.list.appendChild(item);
   });
