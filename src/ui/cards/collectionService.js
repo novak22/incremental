@@ -8,15 +8,24 @@ import {
   buildUpgradeModels
 } from './model.js';
 
-let hasEnsuredRegistry = false;
 let cachedRegistries = null;
 let cachedModels = null;
+let lastRegistrySnapshot = null;
+
+function updateSnapshot(snapshot) {
+  if (snapshot !== lastRegistrySnapshot) {
+    lastRegistrySnapshot = snapshot;
+    cachedRegistries = null;
+    cachedModels = null;
+  }
+
+  return snapshot;
+}
 
 function ensureRegistrySnapshot() {
   try {
     const snapshot = getRegistry();
-    hasEnsuredRegistry = true;
-    return snapshot;
+    return updateSnapshot(snapshot);
   } catch (error) {
     const message = typeof error?.message === 'string' ? error.message : '';
     const registryMissing = message.includes('Registry definitions have not been loaded');
@@ -25,11 +34,10 @@ function ensureRegistrySnapshot() {
       throw error;
     }
 
-    hasEnsuredRegistry = false;
     loadDefaultRegistry();
     configureRegistry();
-    hasEnsuredRegistry = true;
-    return getRegistry();
+    const snapshot = getRegistry();
+    return updateSnapshot(snapshot);
   }
 }
 
