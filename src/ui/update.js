@@ -13,20 +13,42 @@ import { applyCardFilters } from './layout/index.js';
 import playerPresenterClassic from './views/classic/playerPresenter.js';
 import skillsWidgetPresenterClassic from './views/classic/skillsWidgetPresenter.js';
 
-export function renderCards() {
+function dispatchCardCollections(mode, activeView = getActiveView()) {
   cardCollectionService.refreshCollections();
   const { registries, models } = cardCollectionService.getCollections();
-  const presenter = getActiveView()?.presenters?.cards;
+  const presenter = activeView?.presenters?.cards;
   const payload = { registries, models };
 
-  if (typeof presenter?.renderAll === 'function') {
-    presenter.renderAll(payload);
-  } else if (typeof presenter?.render === 'function') {
-    presenter.render(payload);
-  } else {
-    renderCardCollections(registries, models);
+  let handled = false;
+
+  if (mode === 'renderAll') {
+    if (typeof presenter?.renderAll === 'function') {
+      presenter.renderAll(payload);
+      handled = true;
+    } else if (typeof presenter?.render === 'function') {
+      presenter.render(payload);
+      handled = true;
+    }
+  } else if (mode === 'render') {
+    if (typeof presenter?.render === 'function') {
+      presenter.render(payload);
+      handled = true;
+    }
+  } else if (mode === 'update') {
+    if (typeof presenter?.update === 'function') {
+      presenter.update(payload);
+      handled = true;
+    }
   }
 
+  return { registries, models, handled };
+}
+
+export function renderCards() {
+  const { registries, models, handled } = dispatchCardCollections('renderAll');
+  if (!handled) {
+    renderCardCollections(registries, models);
+  }
   applyCardFilters(models);
 }
 
@@ -53,14 +75,8 @@ export function updateUI() {
   const headerModel = buildHeaderActionModel(state);
   renderHeaderAction(headerModel);
 
-  cardCollectionService.refreshCollections();
-  const { registries, models } = cardCollectionService.getCollections();
-  const presenter = activeView?.presenters?.cards;
-  const payload = { registries, models };
-
-  if (typeof presenter?.update === 'function') {
-    presenter.update(payload);
-  } else {
+  const { registries, models, handled } = dispatchCardCollections('update', activeView);
+  if (!handled) {
     updateAllCards(registries, models);
     applyCardFilters(models);
   }
