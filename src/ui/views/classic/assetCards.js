@@ -424,23 +424,25 @@ function createInstanceNicheSelector(definition, instance) {
   const select = document.createElement('select');
   select.className = 'asset-detail__niche-dropdown';
   const info = getInstanceNicheInfo(instance);
-  const summary = getAssignableNicheSummaries(definition) || {};
-  const entries = Array.isArray(summary.entries) ? summary.entries : [];
+  const summariesSource = getAssignableNicheSummaries(definition);
+  const summaries = Array.isArray(summariesSource) ? summariesSource : [];
 
-  const options = entries.map(entry => ({
-    value: entry.id,
-    label: `${entry.label}${entry.modifier ? ` (${entry.modifier})` : ''}`
-  }));
-  if (!summary.hideUnassigned) {
-    options.unshift({ value: '', label: 'Unassigned' });
-  }
+  const options = summaries
+    .map(entry => ({
+      value: entry?.definition?.id || '',
+      label: entry?.definition?.name || entry?.definition?.id || '',
+      modifier: entry?.popularity?.label || ''
+    }))
+    .filter(option => option.value && option.label);
+
+  options.unshift({ value: '', label: 'Unassigned' });
   options.forEach(option => {
     const node = document.createElement('option');
     node.value = option.value;
-    node.textContent = option.label;
+    node.textContent = option.modifier ? `${option.label} (${option.modifier})` : option.label;
     select.appendChild(node);
   });
-  select.value = info?.id || '';
+  select.value = info?.definition?.id || '';
 
   select.addEventListener('change', () => {
     const assetId = definition?.id || instance?.definitionId;
@@ -449,9 +451,11 @@ function createInstanceNicheSelector(definition, instance) {
 
   const hint = document.createElement('p');
   hint.className = 'asset-detail__niche-note';
-  if (summary.note) {
-    hint.textContent = summary.note;
-  } else if (info?.id) {
+  if (info?.popularity?.summary) {
+    hint.textContent = info.popularity.summary;
+  } else if (summaries[0]?.popularity?.summary) {
+    hint.textContent = summaries[0].popularity.summary;
+  } else if (info?.definition?.id) {
     hint.textContent = 'Boosting demand with a specialty audience.';
   } else {
     hint.textContent = 'Pick a niche to sync with daily demand.';
