@@ -5,7 +5,6 @@ import classicLayoutPresenter from '../views/classic/layoutPresenter.js';
 import { setupTabs } from './features/tabs.js';
 import { setupEventLog } from './features/eventLog.js';
 import { setupSlideOver } from './features/slideOver.js';
-import { setupCommandPalette } from './features/commandPalette.js';
 import { setupKpiShortcuts } from './features/kpiShortcuts.js';
 
 export class LayoutController {
@@ -20,7 +19,6 @@ export class LayoutController {
       setupTabs: options.setupTabs || setupTabs,
       setupEventLog: options.setupEventLog || setupEventLog,
       setupSlideOver: options.setupSlideOver || setupSlideOver,
-      setupCommandPalette: options.setupCommandPalette || setupCommandPalette,
       setupKpiShortcuts: options.setupKpiShortcuts || setupKpiShortcuts
     };
 
@@ -43,7 +41,6 @@ export class LayoutController {
     });
     this.features.setupEventLog?.(baseContext);
     this.features.setupSlideOver?.(baseContext);
-    this.features.setupCommandPalette?.(baseContext);
     this.features.setupKpiShortcuts?.(baseContext);
 
     this.syncView();

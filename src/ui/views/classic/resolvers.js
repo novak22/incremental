@@ -151,13 +151,6 @@ const resolvers = {
     slideOverEyebrow: root.getElementById('slide-over-eyebrow'),
     slideOverContent: root.getElementById('slide-over-content')
   }),
-  commandPalette: root => ({
-    commandPalette: root.getElementById('command-palette'),
-    commandPaletteTrigger: root.getElementById('command-palette-trigger'),
-    commandPaletteBackdrop: root.querySelector('#command-palette .command-palette__backdrop'),
-    commandPaletteSearch: root.getElementById('command-palette-search'),
-    commandPaletteResults: root.getElementById('command-palette-results')
-  }),
   playerNodes: root => ({
     summary: {
       tier: root.getElementById('player-summary-tier'),
@@ -175,11 +168,6 @@ const resolvers = {
     educationList: root.getElementById('player-education-list'),
     equipmentList: root.getElementById('player-equipment-list'),
     statsList: root.getElementById('player-stats-list')
-  }),
-  debugCatalog: root => ({
-    debugActionCatalog: root.getElementById('debug-action-catalog'),
-    debugActionCatalogList: root.getElementById('debug-action-catalog-list'),
-    debugActionCatalogSummary: root.getElementById('debug-action-catalog-summary')
   })
 };
 

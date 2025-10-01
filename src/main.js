@@ -2,7 +2,6 @@ import { addLog, renderLog } from './core/log.js';
 import { loadState, saveState } from './core/storage.js';
 import { renderCards, updateUI } from './ui/update.js';
 import { initLayoutControls } from './ui/layout/index.js';
-import { initActionCatalogDebug } from './ui/debugCatalog.js';
 import { resetTick, startGameLoop } from './game/loop.js';
 import { handleOfflineProgress } from './game/offline.js';
 import { initHeaderActionControls } from './ui/headerAction/index.js';
@@ -27,7 +26,6 @@ renderCards();
 updateUI();
 initLayoutControls();
 initHeaderActionControls();
-initActionCatalogDebug();
 startGameLoop();
 
 document.addEventListener('visibilitychange', () => {
