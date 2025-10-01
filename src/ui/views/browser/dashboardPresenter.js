@@ -47,6 +47,12 @@ function composeTodoModel(quickActions = {}, assetActions = {}) {
     || assetActions?.emptyMessage
     || 'Queue a hustle or upgrade to add new tasks.';
 
+  if (quickActions?.scroller || assetActions?.scroller) {
+    model.scroller = quickActions?.scroller || assetActions?.scroller;
+  } else if (model.scroller) {
+    delete model.scroller;
+  }
+
   if (model.hoursAvailable == null && assetActions?.hoursAvailable != null) {
     model.hoursAvailable = assetActions.hoursAvailable;
   }

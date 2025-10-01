@@ -371,6 +371,7 @@ a {
   gap: 1.5rem;
   flex: 1 1 auto;
   min-height: 0;
+  --todo-widget-row-height: 4.5rem;
 }
 
 .todo-widget__header {
@@ -430,6 +431,7 @@ a {
   overflow-y: auto;
   padding-right: 0.25rem;
   scrollbar-gutter: stable;
+  max-height: var(--todo-widget-max-height, none);
 }
 
 .todo-widget__item {
