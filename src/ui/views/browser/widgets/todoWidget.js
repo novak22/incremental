@@ -20,7 +20,13 @@ function bindEndDay(button) {
 
 function init(widgetElements = {}) {
   if (initialized) return;
-  elements = widgetElements;
+  elements = { ...widgetElements };
+  if (!elements.listWrapper) {
+    const wrapper = elements.container?.querySelector?.('.todo-widget__list-wrapper');
+    if (wrapper) {
+      elements.listWrapper = wrapper;
+    }
+  }
   initialized = true;
   bindEndDay(elements?.endDayButton);
   if (elements?.doneHeading) {
@@ -62,6 +68,25 @@ function getAvailableHours(model = {}) {
     return Infinity;
   }
   return Math.max(0, available);
+}
+
+function applyScrollerLimit(model = {}) {
+  if (!elements?.listWrapper) return;
+  const limit = Number(model?.scroller?.limit);
+  if (!Number.isFinite(limit) || limit <= 0) {
+    elements.listWrapper.style.removeProperty('--todo-widget-max-height');
+    elements.listWrapper.style.removeProperty('--todo-widget-row-height');
+    return;
+  }
+  const rows = Math.max(1, Math.floor(limit));
+  const rowHeight = Number(model?.scroller?.rowHeight);
+  if (Number.isFinite(rowHeight) && rowHeight > 0) {
+    elements.listWrapper.style.setProperty('--todo-widget-row-height', `${rowHeight}rem`);
+  } else {
+    elements.listWrapper.style.removeProperty('--todo-widget-row-height');
+  }
+  const maxHeight = `calc(var(--todo-widget-row-height, 4.5rem) * ${rows})`;
+  elements.listWrapper.style.setProperty('--todo-widget-max-height', maxHeight);
 }
 
 function getEffectiveRemainingRuns(entry = {}, completion) {
@@ -280,6 +305,7 @@ export function render(model = {}) {
 
   lastModel = model || {};
   resetCompletedForDay(model.day);
+  applyScrollerLimit(model);
 
   const entries = normalizeEntries(model);
   const availableHours = getAvailableHours(model);

@@ -88,8 +88,8 @@
                 <section class="browser-widget todo-widget" data-widget="todo" aria-labelledby="browser-widget-todo-heading">
                   <header class="browser-widget__header todo-widget__header">
                     <div class="todo-widget__intro">
-                      <h2 id="browser-widget-todo-heading">Today's Tasks</h2>
-                      <p id="browser-widget-todo-note">Pick the moves that make today sparkle.</p>
+                      <h2 id="browser-widget-todo-heading">ToDo</h2>
+                      <p id="browser-widget-todo-note">Line up quick wins and smart upgrades to make today sparkle.</p>
                     </div>
                     <dl class="todo-widget__hours" aria-live="polite">
                       <div class="todo-widget__hours-row">
@@ -103,7 +103,9 @@
                     </dl>
                   </header>
 
-                  <ul id="browser-widget-todo-list" class="todo-widget__list" aria-live="polite"></ul>
+                  <div class="todo-widget__list-wrapper" role="presentation">
+                    <ul id="browser-widget-todo-list" class="todo-widget__list" aria-live="polite"></ul>
+                  </div>
 
                   <section class="todo-widget__done" aria-labelledby="browser-widget-todo-done-heading">
                     <h3 id="browser-widget-todo-done-heading">Done</h3>

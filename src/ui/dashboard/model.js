@@ -118,6 +118,63 @@ function buildSummaryPresentations(summary = {}) {
   };
 }
 
+function getQualitySnapshot(instance = {}) {
+  const level = Math.max(0, clampNumber(instance?.quality?.level));
+  const progress = instance?.quality?.progress && typeof instance.quality.progress === 'object'
+    ? { ...instance.quality.progress }
+    : {};
+  return {
+    level,
+    progress
+  };
+}
+
+function resolveProgressAmount(action, context) {
+  if (!action) return 0;
+  if (typeof action.progressAmount === 'function') {
+    try {
+      const amount = Number(action.progressAmount(context));
+      if (Number.isFinite(amount) && amount > 0) {
+        return amount;
+      }
+    } catch (error) {
+      return 0;
+    }
+  }
+  if (Number.isFinite(Number(action.progressAmount))) {
+    const numeric = Number(action.progressAmount);
+    return numeric > 0 ? numeric : 0;
+  }
+  if (action.progressKey) {
+    return 1;
+  }
+  return 0;
+}
+
+function getProgressPerRun(asset, instance, action, state) {
+  if (!asset || !instance || !action) return 0;
+  const quality = getQualitySnapshot(instance);
+  const context = {
+    state,
+    definition: asset,
+    instance,
+    quality,
+    upgrade: id => state?.upgrades?.[id]
+  };
+  return resolveProgressAmount(action, context);
+}
+
+function estimateRemainingRuns(asset, instance, action, remaining, state) {
+  if (!Number.isFinite(remaining) || remaining <= 0) {
+    return 0;
+  }
+  const progressPerRun = getProgressPerRun(asset, instance, action, state);
+  if (!Number.isFinite(progressPerRun) || progressPerRun <= 0) {
+    return null;
+  }
+  return Math.max(1, Math.ceil(remaining / progressPerRun));
+}
+
 function describeDelta(popularity = {}) {
   const raw = Number(popularity.delta);
   if (!Number.isFinite(raw)) return 'Fresh reading';
@@ -366,7 +423,7 @@ export function buildQuickActions(state) {
   }
 
   items.sort((a, b) => b.roi - a.roi);
-  return items.slice(0, 4);
+  return items;
 }
 
 export function buildAssetUpgradeRecommendations(state) {
@@ -431,6 +488,8 @@ export function buildAssetUpgradeRecommendations(state) {
           ? action.label({ definition: asset, instance, state })
           : action.label;
         const buttonLabel = actionLabel || 'Boost Quality';
+        const remainingRuns = estimateRemainingRuns(asset, instance, action, remaining, state);
+        const repeatable = remainingRuns == null ? true : remainingRuns > 1;
 
         suggestions.push({
           id: `asset-upgrade:${asset.id}:${instance.id}:${action.id}:${key}`,
@@ -443,7 +502,9 @@ export function buildAssetUpgradeRecommendations(state) {
           completion,
           remaining,
           level,
-          timeCost
+          timeCost,
+          remainingRuns,
+          repeatable
         });
       });
     });
@@ -772,20 +833,29 @@ function buildQuickActionModel(state = {}) {
 
 function buildAssetActionModel(state = {}) {
   const suggestions = buildAssetUpgradeRecommendations(state);
-  const entries = suggestions.map(action => ({
-    id: action.id,
-    title: action.title,
-    subtitle: action.subtitle,
-    meta: action.meta,
-    metaClass: 'upgrade-actions__meta',
-    buttonLabel: action.buttonLabel,
-    onClick: action.onClick
-  }));
+  const entries = suggestions.map(action => {
+    const timeCost = Math.max(0, clampNumber(action.timeCost));
+    return {
+      id: action.id,
+      title: action.title,
+      subtitle: action.subtitle,
+      meta: action.meta,
+      metaClass: 'upgrade-actions__meta',
+      buttonLabel: action.buttonLabel,
+      onClick: action.onClick,
+      timeCost,
+      durationHours: timeCost,
+      durationText: formatHours(timeCost),
+      repeatable: Boolean(action.repeatable),
+      remainingRuns: action.remainingRuns ?? null
+    };
+  });
   return {
     entries,
     emptyMessage: 'Every venture is humming along. Check back after today’s upkeep.',
     buttonClass: 'secondary',
-    defaultLabel: 'Boost'
+    defaultLabel: 'Boost',
+    scroller: { limit: 6 }
   };
 }
 

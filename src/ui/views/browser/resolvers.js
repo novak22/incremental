@@ -35,6 +35,7 @@ const resolvers = {
       container: root.querySelector('[data-widget="todo"]'),
       list: root.getElementById('browser-widget-todo-list'),
       done: root.getElementById('browser-widget-todo-done'),
+      listWrapper: root.querySelector('[data-widget="todo"] .todo-widget__list-wrapper'),
       note: root.getElementById('browser-widget-todo-note'),
       doneHeading: root.getElementById('browser-widget-todo-done-heading'),
       availableValue: root.getElementById('browser-widget-todo-available'),
