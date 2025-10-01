@@ -740,6 +740,28 @@ export function enrollInKnowledgeTrack(id) {
   return { success: true };
 }
 
+export function dropKnowledgeTrack(id) {
+  const state = getState();
+  const track = KNOWLEDGE_TRACKS[id];
+  if (!state || !track) {
+    return { success: false, reason: 'missing' };
+  }
+
+  const progress = getKnowledgeProgress(id, state);
+  if (!progress.enrolled || progress.completed) {
+    addLog(`You're not currently enrolled in ${track.name}.`, 'info');
+    return { success: false, reason: 'not_enrolled' };
+  }
+
+  progress.enrolled = false;
+  progress.studiedToday = false;
+  progress.enrolledOnDay = null;
+
+  addLog(`You dropped ${track.name}. Tuition stays paid, but your schedule opens back up.`, 'warning');
+
+  return { success: true };
+}
+
 export function allocateDailyStudy({ trackIds, triggeredByEnrollment = false } = {}) {
   const state = getState();
   if (!state) return;
