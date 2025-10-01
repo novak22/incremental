@@ -89,16 +89,27 @@ export function ensureTestDom() {
             <div id="hustle-list"></div>
           </section>
           <section id="panel-ventures" class="panel" hidden>
-            <input id="venture-active-toggle" type="checkbox" />
-            <input id="venture-maintenance-toggle" type="checkbox" />
-            <input id="venture-risk-toggle" type="checkbox" />
-            <table>
-              <tbody id="asset-table-body"></tbody>
-            </table>
-            <div id="asset-selection-note"></div>
-            <button id="asset-batch-maintain"></button>
-            <button id="asset-batch-pause"></button>
-            <button id="asset-batch-preset"></button>
+            <header class="panel__header venture-panel__header">
+              <div class="venture-panel__intro">
+                <h2>Ventures</h2>
+                <p>Test venture hub</p>
+              </div>
+              <div class="filter-bar venture-panel__filters" role="group" aria-label="Venture filters">
+                <label class="filter-toggle">
+                  <input id="venture-active-toggle" type="checkbox" />
+                  <span>Active only</span>
+                </label>
+                <label class="filter-toggle">
+                  <input id="venture-maintenance-toggle" type="checkbox" />
+                  <span>Needs upkeep</span>
+                </label>
+                <label class="filter-toggle">
+                  <input id="venture-risk-toggle" type="checkbox" />
+                  <span>Hide high risk</span>
+                </label>
+              </div>
+            </header>
+            <div class="asset-gallery venture-gallery" id="venture-gallery"></div>
           </section>
           <section id="panel-upgrades" class="panel" hidden>
             <input id="upgrade-unlocked-toggle" type="checkbox" checked />
