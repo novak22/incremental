@@ -13,6 +13,7 @@ import {
   getShellNavigation
 } from '../../elements/registry.js';
 import setText from '../../dom.js';
+import { renderNicheWidget } from './nichePresenter.js';
 
 function createDailyListItem(entry) {
   if (!entry) return null;
@@ -321,6 +322,9 @@ function renderDashboard(viewModel = {}) {
   renderNotificationsSection(viewModel.notifications);
   renderEventLogSection(viewModel.eventLog);
   renderDailyStatsSection(viewModel.dailyStats);
+  if (viewModel.niche) {
+    renderNicheWidget(viewModel.niche);
+  }
 }
 
 export default {
