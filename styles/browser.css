@@ -345,6 +345,7 @@ a {
   flex-direction: column;
   gap: 1.05rem;
   height: 100%;
+  min-height: 0;
 }
 
 .browser-widget__header {
@@ -368,6 +369,9 @@ a {
 
 .todo-widget {
   gap: 1.5rem;
+  flex: 1 1 auto;
+  min-height: 0;
+  --todo-widget-row-height: 4.5rem;
 }
 
 .todo-widget__header {
@@ -419,6 +423,15 @@ a {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+}
+
+.todo-widget__list-wrapper {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+  scrollbar-gutter: stable;
+  max-height: var(--todo-widget-max-height, none);
 }
 
 .todo-widget__item {

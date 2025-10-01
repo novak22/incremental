@@ -10,8 +10,10 @@
 - Widget cards reuse the existing presenter modules and simply stretch to fill each grid cell. Cards share a consistent padding, border radius, and drop shadow defined in `styles/browser.css` so they feel like a matched set.
 - The apps widget reuses the existing `appsWidget` module. It now renders each workspace as a tile button with an icon, label, and optional status badge derived from the service summary metadata.
 - Navigation highlighting looks for `[data-role="browser-app-launcher"]` containers in addition to the legacy sidebar list so active pages still pulse even without the sidebar.
+- The ToDo widget now merges quick actions and asset upgrade recommendations, keeping their time costs in sync with the action queue. The list sits inside a scrollable pane so every pending task stays accessible without stretching the rest of the grid.
 
 ## Player Impact
 - Players can scan the day's plan, finances, and workspace launchers at a glance without juggling two columns.
 - The tile launcher mirrors a mobile home screen, making it faster to spot ready actions or idle tabs from the status badges.
 - Responsive breakpoints ensure the layout remains legible on narrow QA windows while keeping the three-up structure on desktop.
+- Combining upgrades with quick actions in the ToDo queue helps players chain momentum moves back-to-back, and the scroll affordance means long task lists no longer crowd out neighboring widgets.

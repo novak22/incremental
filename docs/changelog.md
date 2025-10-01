@@ -2,6 +2,7 @@
 
 ## Unreleased
 - Retired the debug action catalog and command palette overlays to streamline the shell and remove unused maintenance paths.
+- Browser homepage ToDo widget merges quick actions and upgrade suggestions into a scrollable list so every pending move stays visible.
 - Learnly graduates into a dedicated browser app with a course catalog, detail pages, My Courses hub, and pricing FAQ while reusing the existing education systems.
 - BlogPress brings the Personal Blog management flow into the browser shell with a table overview, detail inspector, pricing page, and one-click quality actions while reusing the existing passive-income logic.
 - Browser homepage redesign removes the sidebar, aligns widgets into a responsive three-column grid, and promotes the app launcher into tile-based cards with live status badges.
