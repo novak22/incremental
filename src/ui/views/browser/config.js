@@ -29,6 +29,15 @@ export const SERVICE_PAGES = [
     type: 'assets'
   },
   {
+    id: 'blogpress',
+    slug: 'blogpress',
+    label: 'BlogPress',
+    headline: 'BlogPress Creator Console',
+    tagline: 'Spin up blogs, nurture niches, and celebrate payout streaks.',
+    icon: '📰',
+    type: 'blogpress'
+  },
+  {
     id: 'shopstack',
     slug: 'shopstack',
     label: 'ShopStack',

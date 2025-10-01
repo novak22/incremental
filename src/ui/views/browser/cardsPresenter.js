@@ -3,6 +3,7 @@ import { formatHours, formatMoney } from '../../../core/helpers.js';
 import { SERVICE_PAGES } from './config.js';
 import { buildFinanceModel } from '../../cards/model/index.js';
 import { createStat, formatRoi } from './components/widgets.js';
+import blogpressApp from './components/blogpress.js';
 
 let cachedRegistries = null;
 let cachedModels = null;
@@ -350,6 +351,28 @@ function renderAssetsPage(definitions = [], models = {}) {
     id: page.id,
     meta: activeCount > 0 ? `${activeCount} active venture${activeCount === 1 ? '' : 's'}` : 'No active ventures yet'
   };
+}
+
+function renderBlogpressPage(definitions = [], model = {}) {
+  const page = SERVICE_PAGES.find(entry => entry.type === 'blogpress');
+  if (!page) return null;
+
+  const refs = ensurePageContent(page, ({ body }) => {
+    if (!body.querySelector('[data-role="blogpress-root"]')) {
+      body.innerHTML = '';
+      const wrapper = document.createElement('div');
+      wrapper.dataset.role = 'blogpress-root';
+      body.appendChild(wrapper);
+    }
+  });
+  if (!refs) return null;
+
+  const mount = refs.body.querySelector('[data-role="blogpress-root"]');
+  if (!mount) return null;
+
+  const summary = blogpressApp.render(model, { mount, page });
+  const meta = summary?.meta || model?.summary?.meta || 'Launch your first blog';
+  return { id: page.id, meta };
 }
 
 function renderUpgradeCard(definition, model) {
@@ -1194,6 +1217,8 @@ function renderServices(registries = {}, models = {}) {
   if (hustleSummary) summaries.push(hustleSummary);
   const assetSummary = renderAssetsPage(registries.assets, models.assets);
   if (assetSummary) summaries.push(assetSummary);
+  const blogpressSummary = renderBlogpressPage(registries.assets, models.blogpress);
+  if (blogpressSummary) summaries.push(blogpressSummary);
   const upgradeSummary = renderUpgradesPage(registries.upgrades, models.upgrades);
   if (upgradeSummary) summaries.push(upgradeSummary);
   const educationSummary = renderEducationPage(registries.education, models.education);
