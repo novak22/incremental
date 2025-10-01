@@ -90,7 +90,8 @@ function renderHustleCard(definition, model, container) {
   header.appendChild(title);
   const badges = document.createElement('div');
   badges.className = 'badges';
-  model.badges.forEach(text => {
+  const badgeList = Array.isArray(model.badges) ? model.badges : [];
+  badgeList.forEach(text => {
     if (!text) return;
     badges.appendChild(createBadge(text));
   });
@@ -144,7 +145,13 @@ function renderHustleCard(definition, model, container) {
   card.appendChild(actions);
   container.appendChild(card);
 
-  hustleUi.set(definition.id, { card, queueButton, limitDetail });
+  hustleUi.set(definition.id, {
+    card,
+    queueButton,
+    limitDetail,
+    requirementsSummary: meta,
+    badges
+  });
 }
 
 export function cacheHustleModels(models = [], { skipCacheReset = false } = {}) {
@@ -200,6 +207,19 @@ export function updateHustleCard(definition, model, { emitEvent } = {}) {
     ui.queueButton.className = model.action.className || 'primary';
     ui.queueButton.disabled = model.action.disabled;
     ui.queueButton.textContent = model.action.label;
+  }
+
+  if (ui.badges) {
+    ui.badges.innerHTML = '';
+    const badgeList = Array.isArray(model.badges) ? model.badges : [];
+    badgeList.forEach(text => {
+      if (!text) return;
+      ui.badges.appendChild(createBadge(text));
+    });
+  }
+
+  if (ui.requirementsSummary) {
+    ui.requirementsSummary.textContent = model.requirements.summary;
   }
 
   if (ui.limitDetail) {
