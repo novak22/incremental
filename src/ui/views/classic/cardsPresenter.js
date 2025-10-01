@@ -58,7 +58,7 @@ import {
 import { applyCardFilters } from '../../layout.js';
 import { createAssetUpgradeShortcuts } from '../../assetUpgradeShortcuts.js';
 import {
-  buildAssetGroups,
+  buildAssetModels,
   buildUpgradeCategories,
   getUpgradeCategory,
   describeAssetCardSummary,
@@ -79,6 +79,13 @@ const upgradeSections = new Map();
 const upgradeLaneItems = new Map();
 const studyUi = new Map();
 let currentAssetDefinitions = [];
+let currentAssetModels = { groups: [], launchers: [] };
+const assetGroupUi = new Map();
+const assetModelGroupByDefinition = new Map();
+const assetDefinitionLookup = new Map();
+let assetPortfolioNode = null;
+let assetHubNode = null;
+let assetEmptyNotice = null;
 let currentUpgradeDefinitions = [];
 let assetLaunchPanelExpanded = false;
 
@@ -104,6 +111,32 @@ function indexModelsById(list = []) {
   return map;
 }
 
+function cacheAssetModels(models = {}) {
+  const groups = Array.isArray(models?.groups) ? models.groups : [];
+  const launchers = Array.isArray(models?.launchers) ? models.launchers : [];
+  currentAssetModels = { groups, launchers };
+  assetModelGroupByDefinition.clear();
+  groups.forEach(group => {
+    if (!group?.id) return;
+    const definitions = Array.isArray(group.definitions) ? group.definitions : [];
+    definitions.forEach(entry => {
+      const definitionId = entry?.id || entry?.definition?.id;
+      if (definitionId) {
+        assetModelGroupByDefinition.set(definitionId, group);
+      }
+    });
+  });
+}
+
+function cacheAssetDefinitions(definitions = []) {
+  assetDefinitionLookup.clear();
+  definitions.forEach(definition => {
+    if (definition?.id) {
+      assetDefinitionLookup.set(definition.id, definition);
+    }
+  });
+}
+
 function cacheCardModels(models = {}) {
   hustleModelCache.clear();
   (models?.hustles ?? []).forEach(model => {
@@ -112,6 +145,7 @@ function cacheCardModels(models = {}) {
     }
   });
   educationModelCache = models?.education ?? null;
+  cacheAssetModels(models?.assets);
 }
 
 
@@ -1308,165 +1342,6 @@ function buildLaunchFeedbackMessage(definition) {
   return `New ${singular.toLowerCase()} is being set up.`;
 }
 
-function buildAssetLaunchTile(definition, state = getState()) {
-  if (!definition?.action?.onClick) return null;
-
-  const tile = document.createElement('article');
-  tile.className = 'venture-launcher__tile';
-
-  const heading = document.createElement('div');
-  heading.className = 'venture-launcher__heading';
-  const title = document.createElement('h4');
-  title.className = 'venture-launcher__title';
-  title.textContent = definition.name || definition.id || 'Venture';
-  heading.appendChild(title);
-
-  const tag = document.createElement('span');
-  tag.className = 'venture-launcher__type';
-  tag.textContent = definition.singular || 'Passive venture';
-  heading.appendChild(tag);
-  tile.appendChild(heading);
-
-  const summaryCopy = describeAssetCardSummary(definition);
-  if (summaryCopy) {
-    const summary = document.createElement('p');
-    summary.className = 'venture-launcher__summary';
-    summary.textContent = summaryCopy;
-    tile.appendChild(summary);
-  }
-
-  const stats = document.createElement('p');
-  stats.className = 'venture-launcher__meta';
-  const parts = [];
-  const setupDays = Number(definition.setup?.days) || 0;
-  const setupHours = Number(definition.setup?.hoursPerDay) || 0;
-  if (setupDays > 0) {
-    parts.push(`${setupDays} day${setupDays === 1 ? '' : 's'} of prep`);
-  }
-  if (setupHours > 0) {
-    parts.push(`${formatHours(setupHours)}/day`);
-  }
-  const setupCost = Number(definition.setup?.cost) || 0;
-  if (setupCost > 0) {
-    parts.push(`$${formatMoney(setupCost)} upfront`);
-  }
-  const maintenanceText = formatInstanceUpkeep(definition);
-  if (maintenanceText) {
-    parts.push(`Upkeep ${maintenanceText}`);
-  }
-  stats.textContent = parts.join(' • ');
-  tile.appendChild(stats);
-
-  const availability = describeAssetLaunchAvailability(definition, state);
-
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.className = 'venture-launcher__button';
-  button.textContent = typeof definition.action.label === 'function'
-    ? definition.action.label(state)
-    : definition.action.label || `Launch ${definition.singular || definition.name || 'venture'}`;
-  button.disabled = availability.disabled;
-  if (availability.reasons.length) {
-    button.title = availability.reasons.join(' • ');
-  } else if (availability.hours > 0 || availability.cost > 0) {
-    const detailParts = [];
-    if (availability.hours > 0) detailParts.push(`Needs ${formatHours(availability.hours)} free today`);
-    if (availability.cost > 0) detailParts.push(`Costs $${formatMoney(availability.cost)}`);
-    button.title = detailParts.join(' • ');
-  }
-  if (button.disabled) {
-    tile.classList.add('is-disabled');
-  }
-
-  const feedback = document.createElement('p');
-  feedback.className = 'venture-launcher__feedback';
-  feedback.hidden = true;
-  tile.appendChild(feedback);
-
-  button.addEventListener('click', event => {
-    event.preventDefault();
-    if (button.disabled) return;
-    const beforeState = getAssetState(definition.id, getState());
-    const beforeCount = Array.isArray(beforeState?.instances) ? beforeState.instances.length : 0;
-    definition.action.onClick();
-    setTimeout(() => {
-      const afterState = getAssetState(definition.id, getState());
-      const afterCount = Array.isArray(afterState?.instances) ? afterState.instances.length : 0;
-      if (afterCount > beforeCount) {
-        feedback.textContent = buildLaunchFeedbackMessage(definition);
-        feedback.hidden = false;
-        tile.classList.add('venture-launcher__tile--success');
-        setTimeout(() => {
-          feedback.hidden = true;
-          tile.classList.remove('venture-launcher__tile--success');
-        }, 2400);
-        renderAssets(currentAssetDefinitions);
-        applyCardFilters();
-      }
-    }, 40);
-  });
-
-  tile.appendChild(button);
-  return tile;
-}
-
-function buildAssetLaunchPanel(definitions = [], state = getState()) {
-  const tiles = definitions
-    .map(definition => buildAssetLaunchTile(definition, state))
-    .filter(Boolean);
-  if (!tiles.length) {
-    assetLaunchPanelExpanded = false;
-    return null;
-  }
-
-  const container = document.createElement('section');
-  container.className = 'venture-launcher';
-
-  const trigger = document.createElement('button');
-  trigger.type = 'button';
-  trigger.className = 'venture-launcher__trigger primary';
-  trigger.textContent = assetLaunchPanelExpanded ? 'Hide launch options' : 'Launch a new venture';
-  trigger.setAttribute('aria-expanded', assetLaunchPanelExpanded ? 'true' : 'false');
-  const contentId = 'venture-launcher-options';
-  trigger.setAttribute('aria-controls', contentId);
-  if (assetLaunchPanelExpanded) {
-    trigger.classList.add('is-open');
-  }
-  container.appendChild(trigger);
-
-  const content = document.createElement('div');
-  content.className = 'venture-launcher__content';
-  content.id = contentId;
-  content.hidden = !assetLaunchPanelExpanded;
-
-  const header = document.createElement('div');
-  header.className = 'venture-launcher__header';
-  const title = document.createElement('h3');
-  title.className = 'venture-launcher__heading-title';
-  title.textContent = 'Launch a new venture';
-  header.appendChild(title);
-  const note = document.createElement('p');
-  note.className = 'venture-launcher__note';
-  note.textContent = 'Pick a build to celebrate a brand-new income stream.';
-  header.appendChild(note);
-  content.appendChild(header);
-
-  const grid = document.createElement('div');
-  grid.className = 'venture-launcher__grid';
-  tiles.forEach(tile => grid.appendChild(tile));
-  content.appendChild(grid);
-  container.appendChild(content);
-
-  trigger.addEventListener('click', event => {
-    event.preventDefault();
-    assetLaunchPanelExpanded = !assetLaunchPanelExpanded;
-    content.hidden = !assetLaunchPanelExpanded;
-    trigger.setAttribute('aria-expanded', assetLaunchPanelExpanded ? 'true' : 'false');
-    trigger.textContent = assetLaunchPanelExpanded ? 'Hide launch options' : 'Launch a new venture';
-    trigger.classList.toggle('is-open', assetLaunchPanelExpanded);
-  });
-  return container;
-}
 
 function formatUpkeepTotals(cost, hours) {
   const parts = [];
@@ -1482,9 +1357,9 @@ function formatUpkeepTotals(cost, hours) {
 function buildAssetSummary(groups = []) {
   const totals = groups.reduce(
     (acc, group) => {
-      group.instances.forEach(entry => {
+      (group.instances || []).forEach(entry => {
         if (!entry) return;
-        const { definition } = entry;
+        const definition = entry.definition || assetDefinitionLookup.get(entry.definitionId);
         const instance = entry.instance || null;
         const status = instance?.status || entry.status || 'setup';
 
@@ -1539,9 +1414,173 @@ function buildAssetSummary(groups = []) {
   return summary;
 }
 
-function buildAssetHub(definitions, groups, state) {
+function buildAssetLaunchTile(launcher, state = getState()) {
+  if (!launcher) return null;
+  const definition = launcher.definition;
+  const action = launcher.action;
+  if (!definition || !action || typeof action.onClick !== 'function') {
+    return null;
+  }
+
+  const tile = document.createElement('article');
+  tile.className = 'venture-launcher__tile';
+
+  const heading = document.createElement('header');
+  heading.className = 'venture-launcher__heading';
+  const title = document.createElement('h3');
+  title.className = 'venture-launcher__title';
+  title.textContent = launcher.name || definition.name || definition.id || 'Venture';
+  heading.appendChild(title);
+
+  const tag = document.createElement('span');
+  tag.className = 'venture-launcher__type';
+  tag.textContent = launcher.singular || definition.singular || 'Passive venture';
+  heading.appendChild(tag);
+  tile.appendChild(heading);
+
+  const summaryCopy = launcher.summary || describeAssetCardSummary(definition);
+  if (summaryCopy) {
+    const summary = document.createElement('p');
+    summary.className = 'venture-launcher__summary';
+    summary.textContent = summaryCopy;
+    tile.appendChild(summary);
+  }
+
+  const stats = document.createElement('p');
+  stats.className = 'venture-launcher__meta';
+  const parts = [];
+  const setupDays = Number(launcher.setup?.days ?? definition.setup?.days) || 0;
+  const setupHours = Number(launcher.setup?.hoursPerDay ?? definition.setup?.hoursPerDay) || 0;
+  if (setupDays > 0) {
+    parts.push(`${setupDays} day${setupDays === 1 ? '' : 's'} of prep`);
+  }
+  if (setupHours > 0) {
+    parts.push(`${formatHours(setupHours)}/day`);
+  }
+  const setupCost = Number(launcher.setup?.cost ?? definition.setup?.cost) || 0;
+  if (setupCost > 0) {
+    parts.push(`$${formatMoney(setupCost)} upfront`);
+  }
+  const maintenanceText = launcher.upkeep || formatInstanceUpkeep(definition);
+  if (maintenanceText) {
+    parts.push(`Upkeep ${maintenanceText}`);
+  }
+  stats.textContent = parts.join(' • ');
+  tile.appendChild(stats);
+
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'venture-launcher__button';
+  button.textContent = action.label
+    || `Launch ${launcher.singular || definition.singular || definition.name || 'venture'}`;
+  button.disabled = Boolean(action.disabled);
+  if (Array.isArray(action.reasons) && action.reasons.length) {
+    button.title = action.reasons.join(' • ');
+  } else if (Number(action.hours) > 0 || Number(action.cost) > 0) {
+    const detailParts = [];
+    if (Number(action.hours) > 0) detailParts.push(`Needs ${formatHours(action.hours)} free today`);
+    if (Number(action.cost) > 0) detailParts.push(`Costs $${formatMoney(action.cost)}`);
+    if (detailParts.length) {
+      button.title = detailParts.join(' • ');
+    }
+  }
+  if (button.disabled) {
+    tile.classList.add('is-disabled');
+  }
+
+  const feedback = document.createElement('p');
+  feedback.className = 'venture-launcher__feedback';
+  feedback.hidden = true;
+  tile.appendChild(feedback);
+
+  button.addEventListener('click', event => {
+    event.preventDefault();
+    if (button.disabled) return;
+
+    const beforeState = getAssetState(definition.id, getState());
+    const beforeCount = Array.isArray(beforeState?.instances) ? beforeState.instances.length : 0;
+    action.onClick();
+    setTimeout(() => {
+      const afterState = getAssetState(definition.id, getState());
+      const afterCount = Array.isArray(afterState?.instances) ? afterState.instances.length : 0;
+      if (afterCount > beforeCount) {
+        feedback.textContent = buildLaunchFeedbackMessage(definition);
+        feedback.hidden = false;
+        tile.classList.add('venture-launcher__tile--success');
+        setTimeout(() => {
+          feedback.hidden = true;
+          tile.classList.remove('venture-launcher__tile--success');
+        }, 2400);
+        const refreshedModels = buildAssetModels(currentAssetDefinitions);
+        updateAssets(currentAssetDefinitions, refreshedModels);
+        applyCardFilters();
+      }
+    }, 40);
+  });
+
+  tile.appendChild(button);
+  return tile;
+}
+function buildAssetLaunchPanel(launchers = [], state = getState()) {
+  const tiles = launchers
+    .map(launcher => buildAssetLaunchTile(launcher, state))
+    .filter(Boolean);
+  if (!tiles.length) {
+    assetLaunchPanelExpanded = false;
+    return null;
+  }
+
+  const container = document.createElement('section');
+  container.className = 'venture-launcher';
+
+  const trigger = document.createElement('button');
+  trigger.type = 'button';
+  trigger.className = 'venture-launcher__trigger primary';
+  trigger.textContent = assetLaunchPanelExpanded ? 'Hide launch options' : 'Launch a new venture';
+  trigger.setAttribute('aria-expanded', assetLaunchPanelExpanded ? 'true' : 'false');
+  const contentId = 'venture-launcher-options';
+  trigger.setAttribute('aria-controls', contentId);
+  if (assetLaunchPanelExpanded) {
+    trigger.classList.add('is-open');
+  }
+  container.appendChild(trigger);
+
+  const content = document.createElement('div');
+  content.className = 'venture-launcher__content';
+  content.id = contentId;
+  content.hidden = !assetLaunchPanelExpanded;
+
+  const header = document.createElement('div');
+  header.className = 'venture-launcher__header';
+  const title = document.createElement('h3');
+  title.className = 'venture-launcher__heading-title';
+  title.textContent = 'Launch a new venture';
+  header.appendChild(title);
+  const note = document.createElement('p');
+  note.className = 'venture-launcher__note';
+  note.textContent = 'Pick a build to celebrate a brand-new income stream.';
+  header.appendChild(note);
+  content.appendChild(header);
+
+  const grid = document.createElement('div');
+  grid.className = 'venture-launcher__grid';
+  tiles.forEach(tile => grid.appendChild(tile));
+  content.appendChild(grid);
+  container.appendChild(content);
+
+  trigger.addEventListener('click', event => {
+    event.preventDefault();
+    assetLaunchPanelExpanded = !assetLaunchPanelExpanded;
+    content.hidden = !assetLaunchPanelExpanded;
+    trigger.setAttribute('aria-expanded', assetLaunchPanelExpanded ? 'true' : 'false');
+    trigger.textContent = assetLaunchPanelExpanded ? 'Hide launch options' : 'Launch a new venture';
+    trigger.classList.toggle('is-open', assetLaunchPanelExpanded);
+  });
+  return container;
+}
+function buildAssetHub(groups, launchers, state = getState()) {
   const summary = buildAssetSummary(groups);
-  const launchPanel = buildAssetLaunchPanel(definitions, state);
+  const launchPanel = buildAssetLaunchPanel(launchers, state);
   if (!summary && !launchPanel) return null;
 
   const container = document.createElement('div');
@@ -1550,7 +1589,6 @@ function buildAssetHub(definitions, groups, state) {
   if (launchPanel) container.appendChild(launchPanel);
   return container;
 }
-
 function createMetric(label, value) {
   const metric = document.createElement('div');
   metric.className = 'asset-overview-card__metric';
@@ -1639,7 +1677,7 @@ function buildNicheField(definition, instance, state) {
     const assigned = assignInstanceToNiche(definition.id, instance.id, value);
     if (assigned) {
       select.disabled = true;
-      renderAssets(currentAssetDefinitions);
+      updateAssets(currentAssetDefinitions, currentAssetModels);
       applyCardFilters();
     }
   });
@@ -1904,17 +1942,132 @@ function createAssetInstanceCard(definition, instance, index, state = getState()
   return card;
 }
 
-function renderAssets(definitions = []) {
+function createAssetGroupSection(group, state = getState()) {
+  const section = document.createElement('section');
+  section.className = 'asset-portfolio__group';
+  section.dataset.group = group.id;
+
+  const header = document.createElement('header');
+  header.className = 'asset-portfolio__header';
+
+  const heading = document.createElement('div');
+  heading.className = 'asset-portfolio__heading';
+  if (group.icon) {
+    const emblem = document.createElement('span');
+    emblem.className = 'asset-portfolio__icon';
+    emblem.textContent = group.icon;
+    heading.appendChild(emblem);
+  }
+  const title = document.createElement('h3');
+  title.className = 'asset-portfolio__title';
+  title.textContent = `${group.label} ventures`;
+  heading.appendChild(title);
+  if (group.note) {
+    const note = document.createElement('p');
+    note.className = 'asset-portfolio__note';
+    note.textContent = group.note;
+    heading.appendChild(note);
+  }
+  header.appendChild(heading);
+
+  const toolbar = document.createElement('div');
+  toolbar.className = 'asset-portfolio__toolbar';
+  const detailButton = document.createElement('button');
+  detailButton.type = 'button';
+  detailButton.className = 'ghost asset-portfolio__detail-button';
+  detailButton.textContent = 'View category details';
+  detailButton.addEventListener('click', event => {
+    event.preventDefault();
+    openAssetGroupDetails(group);
+  });
+  toolbar.appendChild(detailButton);
+
+  const count = document.createElement('span');
+  count.className = 'asset-portfolio__count';
+  const ventureCount = Array.isArray(group.instances) ? group.instances.length : 0;
+  count.textContent = ventureCount
+    ? `${ventureCount} venture${ventureCount === 1 ? '' : 's'}`
+    : 'No ventures yet';
+  toolbar.appendChild(count);
+
+  header.appendChild(toolbar);
+  section.appendChild(header);
+
+  const grid = document.createElement('div');
+  grid.className = 'asset-portfolio__cards';
+  grid.setAttribute('role', 'list');
+
+  const instances = Array.isArray(group.instances) ? group.instances.slice() : [];
+  instances.sort((a, b) => {
+    const aInstance = a?.instance || null;
+    const bInstance = b?.instance || null;
+    const aStatus = aInstance?.status || a?.status || 'setup';
+    const bStatus = bInstance?.status || b?.status || 'setup';
+    const aActive = aStatus === 'active';
+    const bActive = bStatus === 'active';
+    if (aActive !== bActive) {
+      return aActive ? -1 : 1;
+    }
+    const aDay = Number(aInstance?.createdOnDay) || Number.MAX_SAFE_INTEGER;
+    const bDay = Number(bInstance?.createdOnDay) || Number.MAX_SAFE_INTEGER;
+    return aDay - bDay;
+  });
+
+  let renderedCount = 0;
+  instances.forEach(entry => {
+    if (!entry) return;
+    const definition = entry.definition || assetDefinitionLookup.get(entry.definitionId);
+    if (!definition) return;
+    const assetState = getAssetState(definition.id, state);
+    const stateInstances = Array.isArray(assetState?.instances) ? assetState.instances : [];
+    const instance = stateInstances[entry.index] || entry.instance;
+    if (!instance) return;
+    const card = createAssetInstanceCard(definition, instance, entry.index, state);
+    if (card) {
+      grid.appendChild(card);
+      renderedCount += 1;
+    }
+  });
+
+  if (!renderedCount) {
+    const emptyGroup = document.createElement('p');
+    emptyGroup.className = 'asset-portfolio__empty';
+    emptyGroup.textContent = 'No launched ventures in this category yet.';
+    grid.appendChild(emptyGroup);
+  }
+
+  section.appendChild(grid);
+  return section;
+}
+
+function renderAssets(definitions = [], assetModels = currentAssetModels) {
   const gallery = getAssetGallery();
   if (!gallery) return;
-  const state = getState();
-  currentAssetDefinitions = Array.isArray(definitions) ? definitions : [];
-  gallery.innerHTML = '';
 
-  const groups = buildAssetGroups(currentAssetDefinitions, state);
-  const hub = buildAssetHub(currentAssetDefinitions, groups, state);
+  if (assetModels && assetModels !== currentAssetModels) {
+    cacheAssetModels(assetModels);
+  }
+
+  currentAssetDefinitions = Array.isArray(definitions) ? definitions : [];
+  cacheAssetDefinitions(currentAssetDefinitions);
+
+  const state = getState();
+  gallery.innerHTML = '';
+  assetGroupUi.clear();
+  assetPortfolioNode = null;
+  assetHubNode = null;
+  if (assetEmptyNotice && gallery.contains(assetEmptyNotice)) {
+    assetEmptyNotice.remove();
+  }
+  assetEmptyNotice = null;
+
+  const groups = Array.isArray(currentAssetModels.groups) ? currentAssetModels.groups : [];
+  const launchers = Array.isArray(currentAssetModels.launchers) ? currentAssetModels.launchers : [];
+
+  const hub = buildAssetHub(groups, launchers, state);
   if (hub) {
     gallery.appendChild(hub);
+    assetHubNode = hub;
   }
 
   if (!groups.length) {
@@ -1922,97 +2075,21 @@ function renderAssets(definitions = []) {
     empty.className = 'asset-gallery__empty';
     empty.textContent = 'No passive ventures discovered yet. Story beats will unlock them soon.';
     gallery.appendChild(empty);
+    assetEmptyNotice = empty;
+    applyCardFilters();
     return;
   }
 
   const portfolio = document.createElement('div');
   portfolio.className = 'asset-portfolio';
+  assetPortfolioNode = portfolio;
+
   let totalInstances = 0;
-
   groups.forEach(group => {
-    const section = document.createElement('section');
-    section.className = 'asset-portfolio__group';
-    section.dataset.group = group.id;
-
-    const header = document.createElement('header');
-    header.className = 'asset-portfolio__header';
-
-    const heading = document.createElement('div');
-    heading.className = 'asset-portfolio__heading';
-    if (group.icon) {
-      const emblem = document.createElement('span');
-      emblem.className = 'asset-portfolio__icon';
-      emblem.textContent = group.icon;
-      heading.appendChild(emblem);
-    }
-    const title = document.createElement('h3');
-    title.className = 'asset-portfolio__title';
-    title.textContent = `${group.label} ventures`;
-    heading.appendChild(title);
-    if (group.note) {
-      const note = document.createElement('p');
-      note.className = 'asset-portfolio__note';
-      note.textContent = group.note;
-      heading.appendChild(note);
-    }
-    header.appendChild(heading);
-
-    const toolbar = document.createElement('div');
-    toolbar.className = 'asset-portfolio__toolbar';
-    const detailButton = document.createElement('button');
-    detailButton.type = 'button';
-    detailButton.className = 'ghost asset-portfolio__detail-button';
-    detailButton.textContent = 'View category details';
-    detailButton.addEventListener('click', event => {
-      event.preventDefault();
-      openAssetGroupDetails(group);
-    });
-    toolbar.appendChild(detailButton);
-
-    const count = document.createElement('span');
-    count.className = 'asset-portfolio__count';
-    count.textContent = group.instances.length
-      ? `${group.instances.length} venture${group.instances.length === 1 ? '' : 's'}`
-      : 'No ventures yet';
-    toolbar.appendChild(count);
-
-    header.appendChild(toolbar);
-    section.appendChild(header);
-
-    const grid = document.createElement('div');
-    grid.className = 'asset-portfolio__cards';
-    grid.setAttribute('role', 'list');
-
-    const sortedInstances = [...group.instances].sort((a, b) => {
-      const aStatus = a.instance?.status || a.status || 'setup';
-      const bStatus = b.instance?.status || b.status || 'setup';
-      const aActive = aStatus === 'active';
-      const bActive = bStatus === 'active';
-      if (aActive !== bActive) {
-        return aActive ? -1 : 1;
-      }
-      const aDay = Number(a.instance?.createdOnDay) || Number.MAX_SAFE_INTEGER;
-      const bDay = Number(b.instance?.createdOnDay) || Number.MAX_SAFE_INTEGER;
-      return aDay - bDay;
-    });
-
-    sortedInstances.forEach(entry => {
-      const card = createAssetInstanceCard(entry.definition, entry.instance, entry.index, state);
-      if (card) {
-        grid.appendChild(card);
-        totalInstances += 1;
-      }
-    });
-
-    if (!grid.childElementCount) {
-      const emptyGroup = document.createElement('p');
-      emptyGroup.className = 'asset-portfolio__empty';
-      emptyGroup.textContent = 'No launched ventures in this category yet.';
-      grid.appendChild(emptyGroup);
-    }
-
-    section.appendChild(grid);
+    const section = createAssetGroupSection(group, state);
     portfolio.appendChild(section);
+    assetGroupUi.set(group.id, section);
+    totalInstances += Array.isArray(group.instances) ? group.instances.length : 0;
   });
 
   gallery.appendChild(portfolio);
@@ -2022,8 +2099,155 @@ function renderAssets(definitions = []) {
     empty.className = 'asset-gallery__empty';
     empty.textContent = 'Launch a venture to see it here. Each build gets its own showcase card once active.';
     gallery.appendChild(empty);
+    assetEmptyNotice = empty;
   }
 
+  applyCardFilters();
+}
+
+function updateAssetHub() {
+  const gallery = getAssetGallery();
+  if (!gallery) return;
+
+  const groups = Array.isArray(currentAssetModels.groups) ? currentAssetModels.groups : [];
+  const launchers = Array.isArray(currentAssetModels.launchers) ? currentAssetModels.launchers : [];
+  const hub = buildAssetHub(groups, launchers, getState());
+
+  if (!hub) {
+    if (assetHubNode && gallery.contains(assetHubNode)) {
+      assetHubNode.remove();
+    }
+    assetHubNode = null;
+    return;
+  }
+
+  if (assetHubNode && gallery.contains(assetHubNode)) {
+    assetHubNode.replaceWith(hub);
+  } else {
+    gallery.prepend(hub);
+  }
+  assetHubNode = hub;
+}
+
+function updateAssetEmptyNotice(totalInstances) {
+  const gallery = getAssetGallery();
+  if (!gallery) return;
+
+  if (totalInstances === 0) {
+    const message = currentAssetModels.groups.length
+      ? 'Launch a venture to see it here. Each build gets its own showcase card once active.'
+      : 'No passive ventures discovered yet. Story beats will unlock them soon.';
+    if (assetEmptyNotice && gallery.contains(assetEmptyNotice)) {
+      assetEmptyNotice.textContent = message;
+    } else {
+      const empty = document.createElement('p');
+      empty.className = 'asset-gallery__empty';
+      empty.textContent = message;
+      gallery.appendChild(empty);
+      assetEmptyNotice = empty;
+    }
+    return;
+  }
+
+  if (assetEmptyNotice && gallery.contains(assetEmptyNotice)) {
+    assetEmptyNotice.remove();
+  }
+  assetEmptyNotice = null;
+}
+
+function updateAssets(definitions = [], assetModels = currentAssetModels) {
+  if (assetModels && assetModels !== currentAssetModels) {
+    cacheAssetModels(assetModels);
+  }
+
+  if (Array.isArray(definitions)) {
+    currentAssetDefinitions = definitions;
+  }
+  cacheAssetDefinitions(currentAssetDefinitions);
+
+  const gallery = getAssetGallery();
+  if (!gallery) return;
+
+  const groups = Array.isArray(currentAssetModels.groups) ? currentAssetModels.groups : [];
+  if (!groups.length) {
+    renderAssets(currentAssetDefinitions, currentAssetModels);
+    return;
+  }
+
+  if (!assetPortfolioNode || !gallery.contains(assetPortfolioNode)) {
+    renderAssets(currentAssetDefinitions, currentAssetModels);
+    return;
+  }
+
+  const state = getState();
+  const desiredOrder = new Map(groups.map((group, index) => [group.id, index]));
+
+  assetGroupUi.forEach((section, groupId) => {
+    if (!desiredOrder.has(groupId) && section?.parentNode) {
+      section.parentNode.removeChild(section);
+      assetGroupUi.delete(groupId);
+    }
+  });
+
+  groups.forEach((group, index) => {
+    const section = createAssetGroupSection(group, state);
+    const existing = assetGroupUi.get(group.id);
+    if (existing && existing.parentNode === assetPortfolioNode) {
+      existing.replaceWith(section);
+    } else if (index >= assetPortfolioNode.children.length) {
+      assetPortfolioNode.appendChild(section);
+    } else {
+      assetPortfolioNode.insertBefore(section, assetPortfolioNode.children[index]);
+    }
+    assetGroupUi.set(group.id, section);
+  });
+
+  updateAssetHub();
+  const totalInstances = groups.reduce(
+    (sum, group) => sum + (Array.isArray(group.instances) ? group.instances.length : 0),
+    0
+  );
+  updateAssetEmptyNotice(totalInstances);
+  applyCardFilters();
+}
+
+function updateAssetGroup(definitionId) {
+  if (!definitionId) return;
+  const group = assetModelGroupByDefinition.get(definitionId);
+  if (!group) {
+    updateAssets(currentAssetDefinitions, currentAssetModels);
+    return;
+  }
+
+  const gallery = getAssetGallery();
+  if (!gallery) return;
+  if (!assetPortfolioNode || !gallery.contains(assetPortfolioNode)) {
+    renderAssets(currentAssetDefinitions, currentAssetModels);
+    return;
+  }
+
+  const state = getState();
+  const section = createAssetGroupSection(group, state);
+  const existing = assetGroupUi.get(group.id);
+  const index = currentAssetModels.groups.findIndex(entry => entry.id === group.id);
+  if (existing && existing.parentNode === assetPortfolioNode) {
+    existing.replaceWith(section);
+  } else if (index >= 0) {
+    if (index >= assetPortfolioNode.children.length) {
+      assetPortfolioNode.appendChild(section);
+    } else {
+      assetPortfolioNode.insertBefore(section, assetPortfolioNode.children[index]);
+    }
+  } else {
+    assetPortfolioNode.appendChild(section);
+  }
+  assetGroupUi.set(group.id, section);
+  updateAssetHub();
+  const totalInstances = currentAssetModels.groups.reduce(
+    (sum, entry) => sum + (Array.isArray(entry.instances) ? entry.instances.length : 0),
+    0
+  );
+  updateAssetEmptyNotice(totalInstances);
   applyCardFilters();
 }
 
@@ -2062,7 +2286,8 @@ function openAssetGroupDetails(group) {
     container.appendChild(intro);
   }
 
-  group.definitions.forEach(definition => {
+  group.definitions.forEach(entry => {
+    const definition = entry?.definition || entry;
     if (!definition) return;
 
     const card = document.createElement('article');
@@ -2992,7 +3217,7 @@ function renderStudyQueue(educationModels) {
 function renderClassicCollections(registries, models) {
   const { hustles = [], education = [], assets = [], upgrades = [] } = registries;
   renderHustles(hustles, models?.hustles ?? []);
-  renderAssets(assets);
+  renderAssets(assets, models?.assets ?? currentAssetModels);
   renderUpgrades(upgrades);
   renderEducation(education, models?.education ?? educationModelCache);
 }
@@ -3010,7 +3235,7 @@ export function updateCard(definition) {
     return;
   }
   if (currentAssetDefinitions.some(def => def.id === definition.id)) {
-    renderAssets(currentAssetDefinitions);
+    updateAssetGroup(definition.id);
     return;
   }
   if (upgradeUi.has(definition.id)) {
@@ -3039,7 +3264,7 @@ function updateClassicCollections(registries, models) {
     const model = hustleModels.get(definition.id) || hustleModelCache.get(definition.id);
     updateHustleCard(definition, model);
   });
-  assets.forEach(def => updateCard(def));
+  updateAssets(assets, models?.assets ?? currentAssetModels);
   upgrades.forEach(updateUpgradeCard);
   education.forEach(def => {
     if (def.tag?.type === 'study' || KNOWLEDGE_TRACKS[def.id]) {
