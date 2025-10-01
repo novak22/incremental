@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Online Hustle Simulator — Browser Shell</title>
+  <link rel="stylesheet" href="styles/browser.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body data-ui-view="browser">
+  <div class="browser-shell" data-theme="night">
+    <header class="browser-chrome" aria-label="Browser chrome">
+      <div class="browser-chrome__cluster" aria-label="Navigation controls">
+        <button id="browser-nav-back" class="browser-button" type="button" title="Go back">⟵</button>
+        <button id="browser-nav-forward" class="browser-button" type="button" title="Go forward">⟶</button>
+        <button id="browser-nav-refresh" class="browser-button" type="button" title="Refresh page">⟳</button>
+      </div>
+      <form id="browser-address" class="browser-address" role="search">
+        <label for="browser-address-input" class="browser-address__label">Address</label>
+        <input
+          id="browser-address-input"
+          class="browser-address__input"
+          type="search"
+          name="address"
+          placeholder="Search hustles, niches, or paste a link"
+          autocomplete="off"
+        />
+      </form>
+      <div class="browser-chrome__cluster" aria-label="Session controls">
+        <button id="browser-home-button" class="browser-button" type="button">Home</button>
+        <button id="browser-command-button" class="browser-button" type="button">⌘K</button>
+        <button id="browser-session-button" class="browser-button browser-button--primary" type="button">End Day</button>
+      </div>
+    </header>
+
+    <div class="browser-layout">
+      <aside class="browser-sidebar" aria-labelledby="browser-sites-heading">
+        <header class="browser-sidebar__header">
+          <h2 id="browser-sites-heading">Favorite Stations</h2>
+          <p id="browser-sites-note">Pin your go-to dashboards for lightning hops.</p>
+        </header>
+        <ul id="browser-site-list" class="browser-site-list" aria-live="polite"></ul>
+        <button id="browser-add-site" class="browser-sidebar__action" type="button">Add site</button>
+      </aside>
+
+      <main class="browser-main" aria-live="polite">
+        <section id="browser-home" class="browser-home" aria-labelledby="browser-home-heading">
+          <header class="browser-home__header">
+            <h1 id="browser-home-heading">Browser Homepage</h1>
+            <p id="browser-home-tagline">Your empire’s launchpad with shortcuts, streaks, and story beats.</p>
+          </header>
+
+          <div class="browser-home__widgets">
+            <section class="browser-widget" aria-labelledby="browser-widget-focus-heading">
+              <header class="browser-widget__header">
+                <h2 id="browser-widget-focus-heading">Focus streak</h2>
+                <p id="browser-widget-focus-note">Keep the daily rhythm humming.</p>
+              </header>
+              <div id="browser-widget-focus" class="browser-widget__body"></div>
+            </section>
+
+            <section class="browser-widget" aria-labelledby="browser-widget-updates-heading">
+              <header class="browser-widget__header">
+                <h2 id="browser-widget-updates-heading">Latest updates</h2>
+                <p id="browser-widget-updates-note">Fresh highlights from your ventures.</p>
+              </header>
+              <ul id="browser-widget-updates" class="browser-widget__list"></ul>
+            </section>
+
+            <section class="browser-widget" aria-labelledby="browser-widget-shortcuts-heading">
+              <header class="browser-widget__header">
+                <h2 id="browser-widget-shortcuts-heading">Quick shortcuts</h2>
+                <p id="browser-widget-shortcuts-note">Jump straight into your next power move.</p>
+              </header>
+              <div id="browser-widget-shortcuts" class="browser-widget__body browser-widget__body--grid"></div>
+            </section>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
