@@ -98,66 +98,68 @@ export class StatePersistence {
     this.initializeState(defaultState);
 
     const lastSavedFallback = this.now();
-    let rawSnapshot = null;
-    try {
-      rawSnapshot = this.storage?.getItem(this.storageKey) ?? null;
-    } catch (err) {
-      this.logger?.error?.('Failed to read saved state', err);
-      if (typeof onError === 'function') {
-        onError(err);
+    const fallback = () => this.initializeDefaultState(onFirstLoad, lastSavedFallback);
+
+    const readSnapshotRaw = onErrorCallback => {
+      let rawSnapshot = null;
+      try {
+        rawSnapshot = this.storage?.getItem(this.storageKey) ?? null;
+      } catch (err) {
+        this.logger?.error?.('Failed to read saved state', err);
+        if (typeof onErrorCallback === 'function') {
+          onErrorCallback(err);
+        }
+        return { ok: false, result: fallback() };
       }
+
+      if (!rawSnapshot) {
+        return { ok: false, result: fallback() };
+      }
+
+      return { ok: true, value: rawSnapshot };
+    };
+
+    const parseSnapshot = (raw, onErrorCallback) => {
+      try {
+        return { ok: true, value: JSON.parse(raw) };
+      } catch (err) {
+        this.logger?.error?.('Failed to parse saved state', err);
+        if (typeof onErrorCallback === 'function') {
+          onErrorCallback(err);
+        }
+        return { ok: false, result: fallback() };
+      }
+    };
+
+    const migrateSnapshot = (parsed, context, onErrorCallback) => {
+      try {
+        return { ok: true, value: this.migrate(parsed, context) };
+      } catch (err) {
+        this.logger?.error?.('Failed to migrate saved state', err);
+        if (typeof onErrorCallback === 'function') {
+          onErrorCallback(err);
+        }
+        return { ok: false, result: fallback() };
+      }
+    };
+
+    const rawResult = readSnapshotRaw(onError);
+    if (!rawResult.ok) {
+      return rawResult.result;
     }
 
-    if (!rawSnapshot) {
-      const state = this.getState();
-      const initialVersion = Number.isInteger(state.version) ? state.version : 0;
-      state.version = Math.max(this.version, initialVersion);
-      state.lastSaved = lastSavedFallback;
-      this.ensureStateShape(state);
-      if (typeof onFirstLoad === 'function') {
-        onFirstLoad({ state, lastSaved: state.lastSaved });
-      }
-      return { state, returning: false, lastSaved: state.lastSaved };
-    }
-
-    let parsed;
-    try {
-      parsed = JSON.parse(rawSnapshot);
-    } catch (err) {
-      this.logger?.error?.('Failed to parse saved state', err);
-      if (typeof onError === 'function') {
-        onError(err);
-      }
-      const state = this.getState();
-      const initialVersion = Number.isInteger(state.version) ? state.version : 0;
-      state.version = Math.max(this.version, initialVersion);
-      state.lastSaved = lastSavedFallback;
-      this.ensureStateShape(state);
-      if (typeof onFirstLoad === 'function') {
-        onFirstLoad({ state, lastSaved: state.lastSaved });
-      }
-      return { state, returning: false, lastSaved: state.lastSaved };
+    const parsedResult = parseSnapshot(rawResult.value, onError);
+    if (!parsedResult.ok) {
+      return parsedResult.result;
     }
 
     const context = this.createMigrationContext(defaultState);
-    let migrated;
-    try {
-      migrated = this.migrate(parsed, context);
-    } catch (err) {
-      this.logger?.error?.('Failed to migrate saved state', err);
-      if (typeof onError === 'function') {
-        onError(err);
-      }
-      const state = this.getState();
-      const initialVersion = Number.isInteger(state.version) ? state.version : 0;
-      state.version = Math.max(this.version, initialVersion);
-      state.lastSaved = lastSavedFallback;
-      this.ensureStateShape(state);
-      if (typeof onFirstLoad === 'function') {
-        onFirstLoad({ state, lastSaved: state.lastSaved });
-      }
-      return { state, returning: false, lastSaved: state.lastSaved };
+    const migratedResult = migrateSnapshot(parsedResult.value, context, onError);
+    if (!migratedResult.ok) {
+      return migratedResult.result;
     }
+
+    const migrated = migratedResult.value;
 
     const merged = this.mergeWithDefault(defaultState, migrated);
     const lastSaved = Number.isFinite(merged.lastSaved) ? merged.lastSaved : this.now();
@@ -177,6 +179,20 @@ export class StatePersistence {
     }
 
     return { state, returning: true, lastSaved };
+  }
+
+  initializeDefaultState(onFirstLoad, lastSavedFallback) {
+    const state = this.getState();
+    const initialVersion = Number.isInteger(state.version) ? state.version : 0;
+    state.version = Math.max(this.version, initialVersion);
+    state.lastSaved = lastSavedFallback;
+    this.ensureStateShape(state);
+
+    if (typeof onFirstLoad === 'function') {
+      onFirstLoad({ state, lastSaved: state.lastSaved });
+    }
+
+    return { state, returning: false, lastSaved: state.lastSaved };
   }
 
   save() {
