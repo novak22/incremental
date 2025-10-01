@@ -2,6 +2,7 @@ import { getActiveView } from './viewManager.js';
 import {
   buildAssetModels,
   buildEducationModels,
+  buildFinanceModel,
   buildHustleModels,
   buildUpgradeModels
 } from './cards/model.js';
@@ -42,6 +43,10 @@ function synthesizeModels(baseModels = {}, registries = {}, force = false) {
   }
   if (force || typeof models.upgrades !== 'object' || models.upgrades === null) {
     models.upgrades = buildUpgradeModels(registries.upgrades);
+    generated = true;
+  }
+  if (force || typeof models.finance !== 'object' || models.finance === null) {
+    models.finance = buildFinanceModel(registries);
     generated = true;
   }
   return { models, generated };

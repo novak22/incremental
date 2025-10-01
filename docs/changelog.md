@@ -4,6 +4,7 @@
 - Browser launch view trims the hero headline, keeps repeatable quick tasks visible, and adds an inline End Day button when the action list is empty for faster wrap-ups.
 - Browser homepage now launches with a focused ToDo widget, time tracker, and End Day button while shortcut, earnings, and notification surfaces stay hidden for future drops.
 - Boot logic now respects an `?ui=` flag and the browser chrome includes a Classic Shell button so testers can bounce between shells while feature parity lands.
+- BankApp finance portal now lives in the browser shell with live cashflow summaries, obligations, pending payouts, and investment scouting cards.
 - Browser shell entry experiments ship a homepage chrome with pinned sites and dedicated widgets while sharing the core game lo
 op with the classic dashboard.
 - Browser chrome now renders dashboard KPIs, quick actions, notifications, and the BlogPress/VideoTube/ShopStack/Learnly surfaces through dedicated presenters that reuse the shared models.
