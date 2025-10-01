@@ -1,17 +1,4 @@
-import {
-  getAssetUpgradeActionsContainer,
-  getDailyStats,
-  getEventLogPreviewNode,
-  getHeaderStats,
-  getKpiNotes,
-  getKpiValues,
-  getMoneyNode,
-  getNotificationsContainer,
-  getQueueNodes,
-  getQuickActionsContainer,
-  getSessionStatusNode,
-  getShellNavigation
-} from '../../elements/registry.js';
+import { getElement } from '../../elements/registry.js';
 import setText from '../../dom.js';
 import { renderNicheWidget } from './nichePresenter.js';
 
@@ -126,7 +113,7 @@ function renderDailyList(container, entries, emptyMessage, limit = 3) {
 }
 
 function renderQueueSection(queue = {}) {
-  const container = getQueueNodes()?.actionQueue;
+  const container = getElement('queueNodes')?.actionQueue;
   if (!container) return;
   container.innerHTML = '';
   const items = Array.isArray(queue.items) ? queue.items : [];
@@ -156,7 +143,7 @@ function renderQueueSection(queue = {}) {
 }
 
 function renderQuickActionsSection(quickActions = {}) {
-  const container = getQuickActionsContainer();
+  const container = getElement('quickActions');
   const entries = Array.isArray(quickActions.entries) ? quickActions.entries : [];
   renderActionSection(container, entries, {
     emptyMessage: quickActions.emptyMessage,
@@ -166,7 +153,7 @@ function renderQuickActionsSection(quickActions = {}) {
 }
 
 function renderAssetActionsSection(assetActions = {}) {
-  const container = getAssetUpgradeActionsContainer();
+  const container = getElement('assetUpgradeActions');
   const entries = Array.isArray(assetActions.entries) ? assetActions.entries : [];
   renderActionSection(container, entries, {
     emptyMessage: assetActions.emptyMessage,
@@ -180,7 +167,7 @@ function resolveNotificationAction(entry) {
   if (entry.action.type === 'shell-tab') {
     const tabId = entry.action.tabId;
     return () => {
-      const { shellTabs = [] } = getShellNavigation() || {};
+      const { shellTabs = [] } = getElement('shellNavigation') || {};
       shellTabs.find(tab => tab.id === tabId)?.click();
     };
   }
@@ -191,7 +178,7 @@ function resolveNotificationAction(entry) {
 }
 
 function renderNotificationsSection(notifications = {}) {
-  const container = getNotificationsContainer();
+  const container = getElement('notifications');
   if (!container) return;
   container.innerHTML = '';
   const entries = Array.isArray(notifications.entries) ? notifications.entries : [];
@@ -230,7 +217,7 @@ function renderNotificationsSection(notifications = {}) {
 }
 
 function renderEventLogSection(eventLog = {}) {
-  const container = getEventLogPreviewNode();
+  const container = getElement('eventLogPreview');
   if (!container) return;
   container.innerHTML = '';
   const entries = Array.isArray(eventLog.entries) ? eventLog.entries : [];
@@ -258,7 +245,7 @@ function renderEventLogSection(eventLog = {}) {
 }
 
 function renderDailyStatsSection(dailyStats = {}) {
-  const refs = getDailyStats() || {};
+  const refs = getElement('dailyStats') || {};
   if (!refs) return;
 
   if (dailyStats.time) {
@@ -284,7 +271,7 @@ function renderDailyStatsSection(dailyStats = {}) {
 }
 
 function applyHeaderMetrics(headerMetrics = {}) {
-  const refs = getHeaderStats() || {};
+  const refs = getElement('headerStats') || {};
   const sections = ['dailyPlus', 'dailyMinus', 'timeAvailable', 'timeReserved'];
   sections.forEach(key => {
     const target = headerMetrics[key];
@@ -295,8 +282,8 @@ function applyHeaderMetrics(headerMetrics = {}) {
 }
 
 function applyKpiStats(kpis = {}) {
-  const values = getKpiValues() || {};
-  const notes = getKpiNotes() || {};
+  const values = getElement('kpiValues') || {};
+  const notes = getElement('kpiNotes') || {};
   const entries = ['net', 'hours', 'upkeep', 'ventures', 'study'];
   entries.forEach(key => {
     const target = kpis[key];
@@ -306,9 +293,9 @@ function applyKpiStats(kpis = {}) {
 }
 
 function renderSession(session = {}) {
-  const sessionStatus = getSessionStatusNode();
+  const sessionStatus = getElement('sessionStatus');
   setText(sessionStatus, session.statusText || '');
-  setText(getMoneyNode(), session.moneyText || '');
+  setText(getElement('money'), session.moneyText || '');
 }
 
 function renderDashboard(viewModel = {}) {

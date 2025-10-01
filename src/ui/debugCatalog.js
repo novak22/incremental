@@ -1,7 +1,7 @@
 import { formatHours, formatMoney } from '../core/helpers.js';
 import { getState } from '../core/state.js';
 import { listCatalog } from '../game/content/catalog.js';
-import { getDebugCatalogNodes } from './elements/registry.js';
+import { getElement } from './elements/registry.js';
 
 let debugEnabled = false;
 
@@ -109,7 +109,8 @@ function renderActionRows(table, entries) {
 }
 
 function renderDebugCatalog() {
-  const { debugActionCatalogList: table, debugActionCatalogSummary: summary } = getDebugCatalogNodes() || {};
+  const { debugActionCatalogList: table, debugActionCatalogSummary: summary } =
+    getElement('debugCatalog') || {};
   if (!table) return;
   table.textContent = '';
   const state = getState();
@@ -132,7 +133,7 @@ function renderDebugCatalog() {
 }
 
 function enableDebugPanel() {
-  const { debugActionCatalog: panel } = getDebugCatalogNodes() || {};
+  const { debugActionCatalog: panel } = getElement('debugCatalog') || {};
   if (!panel) return;
   debugEnabled = true;
   persistDebugFlag(true);
@@ -142,7 +143,11 @@ function enableDebugPanel() {
 }
 
 function disableDebugPanel() {
-  const { debugActionCatalog: panel, debugActionCatalogList: table, debugActionCatalogSummary: summary } = getDebugCatalogNodes() || {};
+  const {
+    debugActionCatalog: panel,
+    debugActionCatalogList: table,
+    debugActionCatalogSummary: summary
+  } = getElement('debugCatalog') || {};
   if (!panel) return;
   debugEnabled = false;
   persistDebugFlag(false);

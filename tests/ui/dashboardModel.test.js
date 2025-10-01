@@ -25,14 +25,41 @@ function createSummary(overrides = {}) {
     otherTimeHours: 3,
     totalTime: 6,
     timeBreakdown: [
-      { key: 'queue-1', label: 'Prototype sprint', value: '2h', hours: 2, category: 'active' }
+      { key: 'queue-1', label: 'Prototype sprint', hours: 2, category: 'active' }
     ],
     earningsBreakdown: [
-      { label: 'Freelance gig', value: '$180', definition: { id: 'earn-1', name: 'Freelance' } }
+      {
+        key: 'earn-1',
+        label: 'Freelance gig',
+        amount: 180,
+        category: 'active',
+        stream: 'active',
+        definition: { id: 'earn-1', name: 'Freelance' }
+      }
     ],
-    passiveBreakdown: [],
-    spendBreakdown: [],
-    studyBreakdown: [],
+    passiveBreakdown: [
+      {
+        key: 'asset:rig:payout',
+        label: '💰 Rig payout',
+        amount: 220,
+        category: 'passive',
+        stream: 'passive',
+        source: { type: 'asset', name: 'Analytics Rig', count: 2 }
+      }
+    ],
+    spendBreakdown: [
+      { key: 'spend-1', label: '🛠 Maintenance', amount: 60, category: 'maintenance' }
+    ],
+    studyBreakdown: [
+      {
+        trackId: 'outlineMastery',
+        name: 'Outline Mastery Workshop',
+        hoursPerDay: 2,
+        remainingDays: 3,
+        studiedToday: false,
+        status: 'waiting'
+      }
+    ],
     knowledgeInProgress: 1,
     knowledgePendingToday: 1
   };
@@ -89,6 +116,24 @@ test('buildDashboardViewModel produces derived dashboard sections', t => {
 
   assert.equal(viewModel.queue.items[0].label, 'Prototype sprint');
   assert.ok(viewModel.queue.items[0].hoursLabel.includes('h'));
+
+  const timeEntries = viewModel.dailyStats.time.entries;
+  assert.equal(timeEntries[0].value.includes('today'), true);
+
+  const activeEntry = viewModel.dailyStats.earnings.active.entries[0];
+  assert.equal(activeEntry.label, 'Freelance gig');
+  assert.ok(activeEntry.value.includes('$180'));
+
+  const passiveEntry = viewModel.dailyStats.earnings.passive.entries[0];
+  assert.ok(passiveEntry.label.includes('Analytics Rig'));
+  assert.ok(passiveEntry.label.includes('(2)'));
+
+  const spendEntry = viewModel.dailyStats.spend.entries[0];
+  assert.ok(spendEntry.value.includes('$60'));
+
+  const studyEntry = viewModel.dailyStats.study.entries[0];
+  assert.ok(studyEntry.label.startsWith('📘'));
+  assert.ok(studyEntry.value.includes('waiting'));
 
   assert.ok(Array.isArray(viewModel.quickActions.entries));
   assert.ok(Array.isArray(viewModel.assetActions.entries));

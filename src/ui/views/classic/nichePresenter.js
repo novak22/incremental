@@ -1,8 +1,4 @@
-import {
-  getAssetGallery,
-  getNicheTrends,
-  getSessionStatusNode
-} from '../../elements/registry.js';
+import { getElement } from '../../elements/registry.js';
 import { formatMoney } from '../../../core/helpers.js';
 import { activateShellPanel } from '../../layout.js';
 import { setNicheWatchlist } from '../../../game/assets/niches.js';
@@ -55,7 +51,7 @@ function requestRender() {
 }
 
 function updateControlStates({ watchlistCount = 0 } = {}) {
-  const refs = getNicheTrends() || {};
+  const refs = getElement('nicheTrends') || {};
   const buttons = Array.isArray(refs.sortButtons) ? refs.sortButtons : [];
   buttons.forEach(button => {
     const isActive = (button.dataset.nicheSort || 'impact') === nicheViewState.sort;
@@ -85,7 +81,7 @@ function updateControlStates({ watchlistCount = 0 } = {}) {
 
 function setupNicheControls() {
   if (nicheControlsBound) return;
-  const refs = getNicheTrends() || {};
+  const refs = getElement('nicheTrends') || {};
   const buttons = Array.isArray(refs.sortButtons) ? refs.sortButtons : [];
   buttons.forEach(button => {
     button.addEventListener('click', () => {
@@ -129,8 +125,8 @@ function describeTrendStatus(entry) {
 function focusAssetsForNiche(nicheId, { hasAssets = false, nicheName = '' } = {}) {
   if (!nicheId) return;
   activateShellPanel('panel-ventures');
-  const assetGallery = getAssetGallery();
-  const sessionStatus = getSessionStatusNode();
+  const assetGallery = getElement('assetGallery');
+  const sessionStatus = getElement('sessionStatus');
   if (!assetGallery) return;
   const raf = typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function'
     ? window.requestAnimationFrame
@@ -422,7 +418,7 @@ function renderBoard(boardNode, entries, emptyMessages = DEFAULT_EMPTY_MESSAGES)
 export function renderNicheWidget(viewModel) {
   currentViewModel = viewModel;
   setupNicheControls();
-  const refs = getNicheTrends() || {};
+  const refs = getElement('nicheTrends') || {};
   if (!refs) return;
 
   const highlights = viewModel?.highlights || DEFAULT_HIGHLIGHTS;

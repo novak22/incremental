@@ -15,6 +15,12 @@ const {
   resetDailyMetrics
 } = await import('../src/game/metrics.js');
 const { computeDailySummary } = await import('../src/game/summary.js');
+const {
+  selectDailyTimeEntries,
+  selectDailyPayoutEntries,
+  selectDailyCostEntries,
+  selectStudyProgressEntries
+} = await import('../src/game/summary/selectors.js');
 
 test('daily summary aggregates metrics into category totals', () => {
   registryService.resetRegistry();
@@ -74,6 +80,11 @@ test('daily summary aggregates metrics into category totals', () => {
   assert.equal(summary.passiveBreakdown.length, 1);
   assert.equal(summary.earningsBreakdown.length, 1);
   assert.equal(summary.spendBreakdown.length, 2);
+
+  assert.equal(summary.timeBreakdown[0].hours, 3);
+  assert.equal(summary.earningsBreakdown[0].amount, 24);
+  assert.equal(summary.passiveBreakdown[0].stream, 'passive');
+  assert.equal(summary.spendBreakdown[0].amount, 42);
 });
 
 test('daily summary attaches definition references for canonical metrics', () => {
@@ -118,6 +129,64 @@ test('daily summary attaches definition references for canonical metrics', () =>
   );
   assert.ok(maintenanceEntry?.definition, 'spend entry should include definition metadata');
   assert.equal(maintenanceEntry.definition.category, 'maintenance');
+});
+
+test('raw selectors return numeric breakdown entries', () => {
+  configureRegistry(registry);
+  const state = initializeState();
+  resetDailyMetrics(state);
+
+  recordTimeContribution({
+    key: 'selector:time',
+    label: '⌛ Selector Time',
+    hours: 4,
+    category: 'maintenance'
+  });
+
+  recordPayoutContribution({
+    key: 'selector:earnings',
+    label: '💼 Selector Earnings',
+    amount: 75,
+    category: 'passive'
+  });
+
+  recordCostContribution({
+    key: 'selector:cost',
+    label: '🔧 Selector Cost',
+    amount: 18,
+    category: 'maintenance'
+  });
+
+  state.progress = state.progress || {};
+  state.progress.knowledge = {
+    outlineMastery: {
+      enrolled: true,
+      completed: false,
+      daysCompleted: 1,
+      studiedToday: false
+    }
+  };
+
+  const timeEntries = selectDailyTimeEntries(state);
+  const payoutEntries = selectDailyPayoutEntries(state);
+  const costEntries = selectDailyCostEntries(state);
+  const studyEntries = selectStudyProgressEntries(state);
+
+  assert.equal(timeEntries.length, 1);
+  assert.equal(timeEntries[0].hours, 4);
+  assert.equal(timeEntries[0].category, 'maintenance');
+
+  assert.equal(payoutEntries.length, 1);
+  assert.equal(payoutEntries[0].amount, 75);
+  assert.equal(payoutEntries[0].stream, 'passive');
+
+  assert.equal(costEntries.length, 1);
+  assert.equal(costEntries[0].amount, 18);
+  assert.equal(costEntries[0].category, 'maintenance');
+
+  assert.equal(studyEntries.length, 1);
+  assert.equal(studyEntries[0].remainingDays, 4);
+  assert.equal(studyEntries[0].status, 'waiting');
 });
 
 test('lifetime totals accumulate alongside daily metrics', () => {

@@ -257,4 +257,3 @@ export class StatePersistence {
   }
 }
 
-export { DEFAULT_MIGRATIONS };

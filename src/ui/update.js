@@ -39,6 +39,19 @@ function buildCollections() {
 export function renderCards() {
   const collections = buildCollections();
   const { models = {}, ...registries } = collections;
+  const presenter = getActiveView()?.presenters?.cards;
+  const payload = { registries, models };
+
+  if (typeof presenter?.renderAll === 'function') {
+    presenter.renderAll(payload);
+    return;
+  }
+
+  if (typeof presenter?.render === 'function') {
+    presenter.render(payload);
+    return;
+  }
+
   renderCardCollections(registries, models);
   applyCardFilters();
 }
@@ -60,7 +73,14 @@ export function updateUI() {
 
   const collections = buildCollections();
   const { models = {}, ...registries } = collections;
-  updateAllCards(registries, models);
-  applyCardFilters();
+  const presenter = activeView?.presenters?.cards;
+  const payload = { registries, models };
+
+  if (typeof presenter?.update === 'function') {
+    presenter.update(payload);
+  } else {
+    updateAllCards(registries, models);
+    applyCardFilters();
+  }
   refreshActionCatalogDebug();
 }
