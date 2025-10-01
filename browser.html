@@ -67,6 +67,24 @@
           <main class="browser-main" aria-live="polite">
             <section id="browser-home" class="browser-home" aria-labelledby="browser-widget-todo-heading">
               <div class="browser-home__widgets">
+                <section
+                  class="browser-widget apps-widget"
+                  data-widget="apps"
+                  aria-labelledby="browser-widget-apps-heading"
+                >
+                  <header class="browser-widget__header">
+                    <div>
+                      <h2 id="browser-widget-apps-heading">Apps</h2>
+                      <p id="browser-widget-apps-note">Tap an icon to launch. Status badges light up when something's ready.</p>
+                    </div>
+                  </header>
+                  <ul
+                    id="browser-widget-apps-list"
+                    class="apps-widget__list"
+                    aria-live="polite"
+                    data-role="browser-app-launcher"
+                  ></ul>
+                </section>
                 <section class="browser-widget todo-widget" data-widget="todo" aria-labelledby="browser-widget-todo-heading">
                   <header class="browser-widget__header todo-widget__header">
                     <div class="todo-widget__intro">
@@ -109,24 +127,6 @@
                   <ul id="browser-widget-bank-stats" class="bank-widget__stats" aria-live="polite"></ul>
                   <p id="browser-widget-bank-footnote" class="bank-widget__footnote" hidden></p>
                   <div id="browser-widget-bank-highlights" class="bank-widget__highlights" hidden></div>
-                </section>
-                <section
-                  class="browser-widget apps-widget"
-                  data-widget="apps"
-                  aria-labelledby="browser-widget-apps-heading"
-                >
-                  <header class="browser-widget__header">
-                    <div>
-                      <h2 id="browser-widget-apps-heading">Apps</h2>
-                      <p id="browser-widget-apps-note">Tap an icon to launch. Status badges light up when something's ready.</p>
-                    </div>
-                  </header>
-                  <ul
-                    id="browser-widget-apps-list"
-                    class="apps-widget__list"
-                    aria-live="polite"
-                    data-role="browser-app-launcher"
-                  ></ul>
                 </section>
               </div>
             </section>
