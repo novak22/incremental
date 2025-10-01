@@ -337,6 +337,8 @@ export function buildQuickActions(state) {
     const payout = clampNumber(hustle.payout?.amount);
     const time = clampNumber(hustle.time || hustle.action?.timeCost) || 1;
     const roi = time > 0 ? payout / time : payout;
+    const payoutText = `$${formatMoney(payout)}`;
+    const timeText = formatHours(time);
     items.push({
       id: hustle.id,
       label: hustle.name,
@@ -346,7 +348,12 @@ export function buildQuickActions(state) {
       description: `${formatMoney(payout)} payout • ${formatHours(time)}`,
       onClick: hustle.action.onClick,
       roi,
-      timeCost: time
+      timeCost: time,
+      payout,
+      payoutText,
+      durationHours: time,
+      durationText: timeText,
+      meta: `${payoutText} • ${timeText}`
     });
   }
 
@@ -730,13 +737,26 @@ function buildQuickActionModel(state = {}) {
     title: action.label,
     subtitle: action.description,
     buttonLabel: action.primaryLabel,
-    onClick: action.onClick
+    onClick: action.onClick,
+    payout: action.payout,
+    payoutText: action.payoutText,
+    durationHours: action.durationHours,
+    durationText: action.durationText,
+    meta: action.meta
   }));
+  const baseHours = clampNumber(state.baseTime) + clampNumber(state.bonusTime) + clampNumber(state.dailyBonusTime);
+  const hoursAvailable = Math.max(0, clampNumber(state.timeLeft));
+  const hoursSpent = Math.max(0, baseHours - hoursAvailable);
   return {
     entries,
     emptyMessage: 'No ready actions. Check upgrades or ventures.',
     buttonClass: 'primary',
-    defaultLabel: 'Queue'
+    defaultLabel: 'Queue',
+    hoursAvailable,
+    hoursAvailableLabel: formatHours(hoursAvailable),
+    hoursSpent,
+    hoursSpentLabel: formatHours(hoursSpent),
+    day: clampNumber(state.day)
   };
 }
 

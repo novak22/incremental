@@ -32,17 +32,10 @@ const resolvers = {
       list: root.getElementById('browser-widget-todo-list'),
       done: root.getElementById('browser-widget-todo-done'),
       note: root.getElementById('browser-widget-todo-note'),
-      doneHeading: root.getElementById('browser-widget-todo-done-heading')
-    },
-    earnings: {
-      container: root.querySelector('[data-widget="earnings"]'),
-      list: root.getElementById('browser-widget-earnings'),
-      note: root.getElementById('browser-widget-earnings-note')
-    },
-    notifications: {
-      container: root.querySelector('[data-widget="notifications"]'),
-      list: root.getElementById('browser-widget-notifications'),
-      note: root.getElementById('browser-widget-notifications-note')
+      doneHeading: root.getElementById('browser-widget-todo-done-heading'),
+      availableValue: root.getElementById('browser-widget-todo-available'),
+      spentValue: root.getElementById('browser-widget-todo-spent'),
+      endDayButton: root.getElementById('browser-widget-todo-end')
     }
   })
 };

@@ -1,7 +1,7 @@
 # Changelog
 
 ## Unreleased
-- Browser homepage redesign introduces a widget-driven launchpad with app shortcut grid, actionable TODO checklist, finance pulse, notifications, and a persistent light/dark toggle.
+- Browser homepage now launches with a focused ToDo widget, time tracker, and End Day button while shortcut, earnings, and notification surfaces stay hidden for future drops.
 - Boot logic now respects an `?ui=` flag and the browser chrome includes a Classic Shell button so testers can bounce between shells while feature parity lands.
 - Browser shell entry experiments ship a homepage chrome with pinned sites and dedicated widgets while sharing the core game lo
 op with the classic dashboard.
