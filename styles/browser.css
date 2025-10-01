@@ -384,11 +384,43 @@ a {
 }
 
 .todo-widget__empty {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
   padding: 0.75rem 1rem;
   border-radius: 12px;
   background: rgba(148, 163, 184, 0.12);
   color: var(--browser-subtle);
   font-size: 0.95rem;
+}
+
+.todo-widget__empty-text {
+  flex: 1;
+}
+
+.todo-widget__empty-action {
+  font: inherit;
+  font-weight: 600;
+  color: #fff;
+  background: var(--browser-accent);
+  border: none;
+  border-radius: 10px;
+  padding: 0.5rem 0.9rem;
+  cursor: pointer;
+  transition: background 160ms ease, transform 160ms ease;
+}
+
+.todo-widget__empty-action:hover {
+  background: #1e4fd6;
+}
+
+.todo-widget__empty-action:active {
+  transform: translateY(1px);
+}
+
+.todo-widget__empty-action:focus-visible {
+  outline: 2px solid var(--browser-accent);
+  outline-offset: 3px;
 }
 
 .todo-widget__end {

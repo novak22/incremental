@@ -330,6 +330,12 @@ export function buildQuickActions(state) {
   for (const hustle of getHustles()) {
     if (hustle?.tag?.type === 'study') continue;
     if (!hustle?.action?.onClick) continue;
+    const usage = typeof hustle.getDailyUsage === 'function' ? hustle.getDailyUsage(state) : null;
+    const remainingRuns = Number.isFinite(usage?.remaining)
+      ? Math.max(0, usage.remaining)
+      : Infinity;
+    const usageLimit = usage?.limit;
+    const repeatable = remainingRuns > 0 && (!Number.isFinite(usageLimit) || usageLimit !== 1);
     const disabled = typeof hustle.action.disabled === 'function'
       ? hustle.action.disabled(state)
       : Boolean(hustle.action.disabled);
@@ -353,7 +359,9 @@ export function buildQuickActions(state) {
       payoutText,
       durationHours: time,
       durationText: timeText,
-      meta: `${payoutText} • ${timeText}`
+      meta: `${payoutText} • ${timeText}`,
+      repeatable,
+      remainingRuns
     });
   }
 

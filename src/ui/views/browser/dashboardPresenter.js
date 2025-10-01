@@ -1,5 +1,4 @@
 import { getElement } from '../../elements/registry.js';
-import setText from '../../dom.js';
 import todoWidget from './widgets/todoWidget.js';
 
 const widgetModules = {
@@ -22,16 +21,6 @@ function ensureWidget(key) {
   return module;
 }
 
-function renderHomepageShell(session = {}) {
-  const homepage = getElement('homepage') || {};
-  if (homepage.heading) {
-    setText(homepage.heading, 'Launch the day');
-  }
-  if (homepage.tagline) {
-    setText(homepage.tagline, session.statusText || 'Day 0 • 0h remaining');
-  }
-}
-
 function renderTodo(actions = {}) {
   const widget = ensureWidget('todo');
   widget?.render(actions);
@@ -39,7 +28,6 @@ function renderTodo(actions = {}) {
 
 function renderDashboard(viewModel = {}) {
   if (!viewModel) return;
-  renderHomepageShell(viewModel.session || {});
   renderTodo(viewModel.quickActions || {});
 }
 

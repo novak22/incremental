@@ -22,9 +22,7 @@ const resolvers = {
   siteListNote: root => root.getElementById('browser-sites-note'),
   addSiteButton: root => root.getElementById('browser-add-site'),
   homepage: root => ({
-    container: root.getElementById('browser-home'),
-    heading: root.getElementById('browser-home-heading'),
-    tagline: root.getElementById('browser-home-tagline')
+    container: root.getElementById('browser-home')
   }),
   homepageWidgets: root => ({
     todo: {
