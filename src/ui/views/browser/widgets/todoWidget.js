@@ -56,6 +56,27 @@ function formatDuration(hours) {
   return formatHours(Math.max(0, numeric));
 }
 
+function getAvailableHours(model = {}) {
+  const available = Number(model?.hoursAvailable);
+  if (!Number.isFinite(available)) {
+    return Infinity;
+  }
+  return Math.max(0, available);
+}
+
+function getEffectiveRemainingRuns(entry = {}, completion) {
+  if (entry?.remainingRuns == null) {
+    return null;
+  }
+  const total = Number(entry.remainingRuns);
+  if (!Number.isFinite(total)) {
+    return null;
+  }
+  const used = Number(completion?.count);
+  const consumed = Number.isFinite(used) ? Math.max(0, used) : 0;
+  return Math.max(0, total - consumed);
+}
+
 function normalizeEntries(model = {}) {
   const entries = Array.isArray(model.entries) ? model.entries : [];
   return entries
@@ -261,8 +282,18 @@ export function render(model = {}) {
   resetCompletedForDay(model.day);
 
   const entries = normalizeEntries(model);
+  const availableHours = getAvailableHours(model);
   const pending = entries.filter(entry => {
     const completion = completedItems.get(entry.id);
+    const remainingRuns = getEffectiveRemainingRuns(entry, completion);
+    const hasRunsLeft = remainingRuns === null || remainingRuns > 0;
+    if (!hasRunsLeft) return false;
+
+    const canAfford = Number.isFinite(availableHours)
+      ? entry.durationHours <= availableHours
+      : true;
+    if (!canAfford) return false;
+
     if (!completion) return true;
     return entry.repeatable;
   });
