@@ -1432,3 +1432,555 @@ a {
     text-align: center;
   }
 }
+
+.blogpress {
+  display: flex;
+  flex-direction: column;
+  gap: 1.8rem;
+}
+
+.blogpress__header {
+  display: grid;
+  gap: 1.2rem;
+  padding: 1.6rem;
+  border-radius: var(--browser-radius-lg);
+  background: var(--browser-panel);
+  border: 1px solid var(--browser-panel-border);
+  box-shadow: var(--browser-shadow-card);
+}
+
+.blogpress__title h1 {
+  margin: 0;
+  font-size: 1.6rem;
+}
+
+.blogpress__title p {
+  margin: 0.3rem 0 0;
+  color: var(--browser-muted);
+}
+
+.blogpress-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.blogpress-tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.95rem;
+  border-radius: var(--browser-radius-pill);
+  border: 1px solid var(--browser-panel-border);
+  background: var(--browser-panel-elevated);
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+}
+
+.blogpress-tab.is-active {
+  border-color: var(--browser-accent);
+  background: var(--browser-accent-soft);
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.18);
+}
+
+.blogpress-tab__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 999px;
+  background: var(--browser-accent);
+  color: #fff;
+  font-size: 0.75rem;
+  padding: 0 0.4rem;
+}
+
+.blogpress__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.blogpress-button {
+  font: inherit;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  padding: 0.55rem 1.05rem;
+  cursor: pointer;
+  transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
+}
+
+.blogpress-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.blogpress-button--primary {
+  background: var(--browser-accent);
+  color: #fff;
+  box-shadow: var(--browser-shadow-focus);
+}
+
+.blogpress-button--primary:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+.blogpress-button--ghost {
+  background: var(--browser-panel-elevated);
+  border-color: var(--browser-panel-border);
+  color: inherit;
+}
+
+.blogpress-button--ghost:not(:disabled):hover {
+  border-color: var(--browser-accent);
+}
+
+.blogpress-button--link {
+  border: none;
+  background: none;
+  color: var(--browser-accent);
+  padding: 0;
+}
+
+.blogpress__hint {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--browser-muted);
+}
+
+.blogpress-summary {
+  margin: 0 0 1.2rem;
+  padding: 0.65rem 0.9rem;
+  border-radius: 12px;
+  background: var(--browser-panel-elevated);
+  border: 1px solid var(--browser-panel-border);
+  color: var(--browser-muted);
+  font-size: 0.9rem;
+}
+
+.blogpress-view {
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+}
+
+.blogpress-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+  background: var(--browser-panel);
+  border: 1px solid var(--browser-panel-border);
+  border-radius: var(--browser-radius-lg);
+  overflow: hidden;
+}
+
+.blogpress-table th,
+.blogpress-table td {
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid var(--browser-panel-border);
+  text-align: left;
+}
+
+.blogpress-table th {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.78rem;
+  color: var(--browser-subtle);
+}
+
+.blogpress-table tr.is-selected {
+  background: var(--browser-accent-soft);
+}
+
+.blogpress-table__cell--label {
+  width: 18%;
+}
+
+.blogpress-table__cell--actions {
+  width: 18%;
+}
+
+.blogpress-table__link {
+  border: none;
+  background: none;
+  color: var(--browser-accent);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  padding: 0;
+}
+
+.blogpress-table__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.blogpress-table__meta {
+  font-size: 0.8rem;
+  color: var(--browser-muted);
+}
+
+.blogpress-payout {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.blogpress-payout strong {
+  font-size: 1rem;
+}
+
+.blogpress-payout span {
+  font-size: 0.85rem;
+  color: var(--browser-muted);
+}
+
+.blogpress-niche {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.blogpress-niche__name {
+  font-weight: 600;
+}
+
+.blogpress-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.blogpress-status--active {
+  background: rgba(5, 150, 105, 0.12);
+  color: #047857;
+}
+
+.blogpress-status--setup {
+  background: rgba(37, 99, 235, 0.12);
+  color: var(--browser-accent);
+}
+
+.blogpress-quality {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.blogpress-quality__level {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.8rem;
+  height: 1.8rem;
+  border-radius: 10px;
+  background: var(--browser-panel-elevated);
+  border: 1px solid var(--browser-panel-border);
+  font-weight: 700;
+}
+
+.blogpress-quality__label {
+  font-size: 0.9rem;
+  color: var(--browser-muted);
+}
+
+.blogpress-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: var(--browser-panel-elevated);
+  border: 1px solid var(--browser-panel-border);
+}
+
+.blogpress-badge--active {
+  background: rgba(5, 150, 105, 0.12);
+  border-color: rgba(5, 150, 105, 0.35);
+  color: #047857;
+}
+
+.blogpress-badge--setup {
+  background: var(--browser-accent-soft);
+  border-color: var(--browser-accent);
+  color: var(--browser-accent);
+}
+
+.blogpress-badge--tone-blazing {
+  background: rgba(249, 115, 22, 0.14);
+  border-color: rgba(249, 115, 22, 0.32);
+  color: #ea580c;
+}
+
+.blogpress-badge--tone-surging {
+  background: rgba(14, 165, 233, 0.14);
+  border-color: rgba(14, 165, 233, 0.3);
+  color: #0284c7;
+}
+
+.blogpress-badge--tone-trending,
+.blogpress-badge--tone-steady {
+  background: rgba(37, 99, 235, 0.12);
+  border-color: rgba(37, 99, 235, 0.28);
+  color: var(--browser-accent);
+}
+
+.blogpress-badge--tone-cooling,
+.blogpress-badge--tone-dormant {
+  background: rgba(148, 163, 184, 0.15);
+  border-color: rgba(148, 163, 184, 0.28);
+  color: var(--browser-muted);
+}
+
+.blogpress-empty,
+.blogpress-view--locked {
+  display: grid;
+  gap: 1rem;
+  justify-items: start;
+  padding: 2rem;
+  border-radius: var(--browser-radius-lg);
+  background: var(--browser-panel);
+  border: 1px solid var(--browser-panel-border);
+  box-shadow: var(--browser-shadow-card);
+}
+
+.blogpress-empty__message {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--browser-muted);
+}
+
+.blogpress-detail-grid {
+  display: grid;
+  gap: 1.2rem;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+.blogpress-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.2rem;
+  border-radius: 16px;
+  background: var(--browser-panel);
+  border: 1px solid var(--browser-panel-border);
+  box-shadow: var(--browser-shadow-soft);
+}
+
+.blogpress-panel h2,
+.blogpress-panel h3 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.blogpress-panel__lead {
+  margin: 0;
+  font-weight: 600;
+}
+
+.blogpress-panel__note,
+.blogpress-panel__hint,
+.blogpress-panel__warning,
+.blogpress-panel__range {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--browser-muted);
+}
+
+.blogpress-panel__warning {
+  color: var(--browser-danger);
+}
+
+.blogpress-progress {
+  width: 100%;
+  height: 0.6rem;
+  border-radius: 999px;
+  background: var(--browser-panel-elevated);
+  overflow: hidden;
+}
+
+.blogpress-progress__fill {
+  height: 100%;
+  background: var(--browser-accent);
+  transition: width 220ms ease;
+}
+
+.blogpress-stats {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  margin: 0;
+}
+
+.blogpress-stats dt {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--browser-subtle);
+}
+
+.blogpress-stats dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.blogpress-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.blogpress-list__item {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.9rem;
+}
+
+.blogpress-list__label {
+  font-weight: 600;
+}
+
+.blogpress-list__value {
+  color: var(--browser-muted);
+}
+
+.blogpress-action-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.blogpress-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  background: var(--browser-panel-elevated);
+  border: 1px solid var(--browser-panel-border);
+}
+
+.blogpress-action__label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.blogpress-action__meta {
+  color: var(--browser-muted);
+  font-size: 0.82rem;
+}
+
+.blogpress-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  font-weight: 600;
+}
+
+.blogpress-select {
+  font: inherit;
+  border-radius: 12px;
+  border: 1px solid var(--browser-panel-border);
+  padding: 0.6rem 0.75rem;
+  background: var(--browser-panel-elevated);
+}
+
+.blogpress-pricing__intro,
+.blogpress-pricing__section,
+.blogpress-blueprint {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1.4rem;
+  border-radius: var(--browser-radius-lg);
+  background: var(--browser-panel);
+  border: 1px solid var(--browser-panel-border);
+  box-shadow: var(--browser-shadow-soft);
+}
+
+.blogpress-pricing__intro h2 {
+  margin: 0;
+  font-size: 1.4rem;
+}
+
+.blogpress-pricing__grid {
+  display: grid;
+  gap: 1.1rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.blogpress-plan {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem 1.2rem;
+  border-radius: 14px;
+  background: var(--browser-panel-elevated);
+  border: 1px solid var(--browser-panel-border);
+}
+
+.blogpress-plan__range {
+  margin: 0;
+  color: var(--browser-muted);
+  font-size: 0.9rem;
+}
+
+.blogpress-requirements {
+  margin: 0;
+  padding-left: 1.2rem;
+  color: var(--browser-muted);
+  font-size: 0.9rem;
+}
+
+.blogpress-blueprint h2 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.blogpress-blueprint p {
+  margin: 0;
+  color: var(--browser-muted);
+}
+
+.blogpress-view--blueprint,
+.blogpress-view--pricing {
+  gap: 1.6rem;
+}
+
+.blogpress-view--detail {
+  gap: 1.6rem;
+}
+
+@media (max-width: 720px) {
+  .blogpress__header {
+    padding: 1.2rem;
+  }
+
+  .blogpress-table th,
+  .blogpress-table td {
+    padding: 0.6rem 0.7rem;
+  }
+
+  .blogpress-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
