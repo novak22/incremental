@@ -6,6 +6,7 @@ import playerPresenter from './playerPresenter.js';
 import skillsWidgetPresenter from './skillsWidgetPresenter.js';
 import headerActionPresenter from './headerActionPresenter.js';
 import layoutPresenter from './layoutPresenter.js';
+import debugCatalogPresenter from './debugCatalogPresenter.js';
 import logPresenter from './logPresenter.js';
 
 const classicView = {
@@ -19,6 +20,7 @@ const classicView = {
     skillsWidget: skillsWidgetPresenter,
     headerAction: headerActionPresenter,
     layout: layoutPresenter,
+    debugCatalog: debugCatalogPresenter,
     log: logPresenter
   },
   renderDashboard(state, summary) {
