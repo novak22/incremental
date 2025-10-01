@@ -10,8 +10,8 @@ const pageSections = new Map();
 
 function getMainContainer() {
   if (mainContainer) return mainContainer;
-  const homepage = getElement('homepage');
-  const container = homepage?.container?.parentElement || null;
+  const host = getElement('workspaceHost');
+  const container = host || document.getElementById('browser-workspaces');
   mainContainer = container;
   return mainContainer;
 }

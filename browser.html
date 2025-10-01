@@ -52,53 +52,68 @@
       </div>
     </header>
 
-    <div class="browser-layout">
-      <aside class="browser-sidebar" aria-label="Workspace launcher">
-        <section class="browser-sites">
-          <header class="browser-sites__header">
-            <h2 class="browser-sites__title">Apps</h2>
-            <p id="browser-sites-note" class="browser-sites__note">
-              Pick a workspace to launch. Status badges refresh in real time.
-            </p>
-          </header>
-          <ul id="browser-site-list" class="browser-app-list" aria-live="polite"></ul>
-          <button id="browser-add-site" class="browser-app-button" type="button">Discover more apps</button>
-        </section>
-      </aside>
+    <nav id="browser-tab-bar" class="browser-tabs" aria-label="Open workspaces">
+      <ul id="browser-tab-list" class="browser-tabs__list" role="tablist"></ul>
+    </nav>
 
-      <main class="browser-main" aria-live="polite">
-        <section id="browser-home" class="browser-home" aria-labelledby="browser-widget-todo-heading">
-          <section class="browser-launch" aria-label="Today's focus">
-            <section class="todo-widget" data-widget="todo" aria-labelledby="browser-widget-todo-heading">
-              <header class="todo-widget__header">
-                <div class="todo-widget__intro">
-                  <h2 id="browser-widget-todo-heading">Today's Tasks</h2>
-                  <p id="browser-widget-todo-note">Pick the moves that make today sparkle.</p>
-                </div>
-                <dl class="todo-widget__hours" aria-live="polite">
-                  <div class="todo-widget__hours-row">
-                    <dt>Hours available</dt>
-                    <dd id="browser-widget-todo-available">0h</dd>
-                  </div>
-                  <div class="todo-widget__hours-row">
-                    <dt>Hours spent</dt>
-                    <dd id="browser-widget-todo-spent">0h</dd>
-                  </div>
-                </dl>
+    <div class="browser-stage">
+      <section
+        id="browser-launch-stage"
+        class="browser-stage__pane browser-stage__pane--home is-active"
+        data-browser-page="home"
+        aria-labelledby="browser-sites-note"
+      >
+        <div class="browser-layout">
+          <aside class="browser-sidebar" aria-label="Workspace launcher">
+            <section class="browser-sites">
+              <header class="browser-sites__header">
+                <h2 class="browser-sites__title">Apps</h2>
+                <p id="browser-sites-note" class="browser-sites__note">
+                  Pick a workspace to launch. Status badges refresh in real time.
+                </p>
               </header>
-
-              <ul id="browser-widget-todo-list" class="todo-widget__list" aria-live="polite"></ul>
-
-              <section class="todo-widget__done" aria-labelledby="browser-widget-todo-done-heading">
-                <h3 id="browser-widget-todo-done-heading">Done</h3>
-                <ul id="browser-widget-todo-done" class="todo-widget__done-list"></ul>
-              </section>
-
-              <button id="browser-widget-todo-end" class="todo-widget__end" type="button">End Day</button>
+              <ul id="browser-site-list" class="browser-app-list" aria-live="polite"></ul>
+              <button id="browser-add-site" class="browser-app-button" type="button">Discover more apps</button>
             </section>
-          </section>
-        </section>
-      </main>
+          </aside>
+
+          <main class="browser-main" aria-live="polite">
+            <section id="browser-home" class="browser-home" aria-labelledby="browser-widget-todo-heading">
+              <section class="browser-launch" aria-label="Today's focus">
+                <section class="todo-widget" data-widget="todo" aria-labelledby="browser-widget-todo-heading">
+                  <header class="todo-widget__header">
+                    <div class="todo-widget__intro">
+                      <h2 id="browser-widget-todo-heading">Today's Tasks</h2>
+                      <p id="browser-widget-todo-note">Pick the moves that make today sparkle.</p>
+                    </div>
+                    <dl class="todo-widget__hours" aria-live="polite">
+                      <div class="todo-widget__hours-row">
+                        <dt>Hours available</dt>
+                        <dd id="browser-widget-todo-available">0h</dd>
+                      </div>
+                      <div class="todo-widget__hours-row">
+                        <dt>Hours spent</dt>
+                        <dd id="browser-widget-todo-spent">0h</dd>
+                      </div>
+                    </dl>
+                  </header>
+
+                  <ul id="browser-widget-todo-list" class="todo-widget__list" aria-live="polite"></ul>
+
+                  <section class="todo-widget__done" aria-labelledby="browser-widget-todo-done-heading">
+                    <h3 id="browser-widget-todo-done-heading">Done</h3>
+                    <ul id="browser-widget-todo-done" class="todo-widget__done-list"></ul>
+                  </section>
+
+                  <button id="browser-widget-todo-end" class="todo-widget__end" type="button">End Day</button>
+                </section>
+              </section>
+            </section>
+          </main>
+        </div>
+      </section>
+
+      <div id="browser-workspaces" class="browser-stage__pane browser-stage__pane--workspace" aria-live="polite"></div>
     </div>
   </div>
 
