@@ -40,6 +40,17 @@ const resolvers = {
       availableValue: root.getElementById('browser-widget-todo-available'),
       spentValue: root.getElementById('browser-widget-todo-spent'),
       endDayButton: root.getElementById('browser-widget-todo-end')
+    },
+    apps: {
+      container: root.querySelector('[data-widget="apps"]'),
+      list: root.getElementById('browser-widget-apps-list'),
+      note: root.getElementById('browser-widget-apps-note')
+    },
+    bank: {
+      container: root.querySelector('[data-widget="bank"]'),
+      stats: root.getElementById('browser-widget-bank-stats'),
+      footnote: root.getElementById('browser-widget-bank-footnote'),
+      highlights: root.getElementById('browser-widget-bank-highlights')
     }
   })
 };

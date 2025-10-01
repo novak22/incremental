@@ -6,6 +6,30 @@ import { createStat, formatRoi } from './components/widgets.js';
 
 let cachedRegistries = null;
 let cachedModels = null;
+let latestServiceSummaries = [];
+const serviceSummaryListeners = new Set();
+
+function getStableSummaries() {
+  return latestServiceSummaries.map(entry => ({ ...entry }));
+}
+
+function notifyServiceSummaryListeners() {
+  const snapshot = getStableSummaries();
+  serviceSummaryListeners.forEach(listener => {
+    try {
+      listener(snapshot);
+    } catch (error) {
+      // Swallow listener errors to avoid breaking rendering
+    }
+  });
+}
+
+function setServiceSummaries(summaries = []) {
+  latestServiceSummaries = Array.isArray(summaries)
+    ? summaries.filter(entry => entry && entry.id)
+    : [];
+  notifyServiceSummaryListeners();
+}
 let mainContainer = null;
 const pageSections = new Map();
 
@@ -1178,6 +1202,7 @@ function renderServices(registries = {}, models = {}) {
   if (financeSummary) summaries.push(financeSummary);
 
   renderSiteList(summaries);
+  setServiceSummaries(summaries);
 }
 
 function renderAll(payload = {}) {
@@ -1196,6 +1221,20 @@ function updateCard() {
 
 function refreshUpgradeSections() {
   updateCard();
+}
+
+export function getLatestServiceSummaries() {
+  return getStableSummaries();
+}
+
+export function subscribeToServiceSummaries(listener) {
+  if (typeof listener !== 'function') {
+    return () => {};
+  }
+  serviceSummaryListeners.add(listener);
+  return () => {
+    serviceSummaryListeners.delete(listener);
+  };
 }
 
 export default {

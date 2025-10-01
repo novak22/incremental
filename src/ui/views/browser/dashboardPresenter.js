@@ -1,8 +1,12 @@
 import { getElement } from '../../elements/registry.js';
 import todoWidget from './widgets/todoWidget.js';
+import appsWidget from './widgets/appsWidget.js';
+import bankWidget from './widgets/bankWidget.js';
 
 const widgetModules = {
-  todo: todoWidget
+  todo: todoWidget,
+  apps: appsWidget,
+  bank: bankWidget
 };
 
 function getWidgetMounts() {
@@ -26,9 +30,21 @@ function renderTodo(actions = {}) {
   widget?.render(actions);
 }
 
-function renderDashboard(viewModel = {}) {
+function renderApps(context = {}) {
+  const widget = ensureWidget('apps');
+  widget?.render(context);
+}
+
+function renderBank(context = {}) {
+  const widget = ensureWidget('bank');
+  widget?.render(context);
+}
+
+function renderDashboard(viewModel = {}, context = {}) {
   if (!viewModel) return;
   renderTodo(viewModel.quickActions || {});
+  renderApps(context);
+  renderBank(context);
 }
 
 export default {
