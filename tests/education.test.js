@@ -7,10 +7,10 @@ const { document } = dom.window;
 
 test('renderCardCollections synthesizes models when omitted', async () => {
   const hustleList = document.getElementById('hustle-list');
-  const assetTable = document.getElementById('asset-table-body');
+  const ventureGallery = document.getElementById('venture-gallery');
   hustleList.innerHTML = '';
-  if (assetTable) {
-    assetTable.innerHTML = '';
+  if (ventureGallery) {
+    ventureGallery.innerHTML = '';
   }
 
   const stateModule = await import('../src/core/state.js');
@@ -44,10 +44,10 @@ test('renderCardCollections synthesizes models when omitted', async () => {
     });
 
     const hustleCards = document.querySelectorAll('.hustle-card');
-    const assetRows = document.querySelectorAll('#asset-table-body tr');
+    const assetCards = document.querySelectorAll('#venture-gallery [data-asset]');
     assert.ok(
-      hustleCards.length > 0 || assetRows.length > 0,
-      'fallback render should show hustles or assets without provided models'
+      hustleCards.length > 0 || assetCards.length > 0,
+      'fallback render should show hustles or ventures without provided models'
     );
   } finally {
     viewManager.setActiveView(classicModule.default, document);
