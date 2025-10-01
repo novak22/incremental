@@ -1,50 +1,13 @@
 # Changelog
 
 ## Unreleased
-- UI architecture: player overview, skills widget, header actions, and layout filters now use shared view-model builders with presenters resolved per active view, paving the way for alternate browser shells.
-- Tech refactor: Hustle helpers, definitions, and knowledge flows now live in dedicated modules so new gigs slot in without tou
-  ching core loop logic.
-- Analytics makeover: Daily outlook hero highlights and a sortable niche card grid with watchlist filters surface earnings, asset exposure, and trend swings at a glance.
-- Education curriculum expansion: seven new study programs now award hustle multipliers, passive asset modifiers, and payout log callouts when their bonuses trigger.
-- Dashboard KPIs now jump to their detailed breakdowns, focusing the card, flashing a highlight, and updating the session status so the context change is announced.
-- Maintenance rebalance: daily upkeep hours for core passive assets now average just over five hours so a full portfolio still leaves meaningful manual time within the 14-hour day.
-- Study scheduler buffer: `allocateDailyStudy` now reserves time for upkeep and manual work, and the e-commerce plus automation courses eased their daily load.
-- Asset hub polish: launcher hides behind a dedicated button, asset cards always surface payout breakdowns, and upgrade buttons
-  clearly show when a boost is ready versus locked.
-- Dashboard quick actions and asset upgrade suggestions now use uniform action cards so critical buttons stay aligned and easy to scan.
-- Introduced an Analytics tab that houses the niche popularity pulse, keeping the dashboard focused on immediate actions.
-- Dashboard quick actions now focus on hustle-ready tasks instead of education enrollment, keeping the header recommendation in sync.
-- Niche realism: swapped in ten real-world audience niches so daily trend chasing mirrors recognizable markets.
-- Upgrade filters: the Upgrades panel now defaults to an "Unlocked now" view so only instant-install picks show until you opt to browse the full catalog.
-- Upgrade taxonomy: tech/house/infra tabs with family sub-sections and slot-aware tooltips make browsing gear lanes intuitive while the new effect engine drives unified payout, time, and quality multipliers.
-- Assistant payroll rebalance: virtual assistants now cover more upkeep hours at a lower $8/hr rate so their freed time beats baseline hustles on value.
-- Player screen: new overview tab spotlights character level, skills, education, gear, and hustle momentum in one place.
-- Asset liquidation rebalance: selling an instance now multiplies the 3× sale value by its quality tier for high-grade exits.
-- Passive economy rebalance: trimmed upkeep costs and boosted Quality 0 payouts for stock photos, dropshipping labs, and micro SaaS so each build breaks even before upgrades and reaches its first quality tier faster.
-- SaaS upkeep tuning: removed duplicate maintenance data and confirmed the micro SaaS upkeep target stays at 2.2h/day plus $24.
-- Progression refresh: character skills, study scheduling, and celebratory UI now guide players through course-driven bonuses and countdowns.
-- Flow helpers: the "Next" action, Daily Stats card, and header pulse now keep priorities, earnings, and schedules visible at a glance.
-- Auto forward loop: header toggle now cycles through paused, current pace (every two seconds), or a 2× sprint (every second) to keep momentum without constant clicks.
-- Asset stewardship: detail panels, sell controls, and recommendations highlight ROI, upkeep costs, and upgrade shortcuts for each build.
-- Asset category insights: every category header sports a Details slider that surfaces launch requirements, upkeep schedules, payout ranges, and quality ladders for its assets.
-- Active build cards surface quality tiers, remaining steps to the next milestone, and yesterday’s payout breakdown so upgrades feel tangible.
-- Automation & infrastructure: broader instant gigs, smarter assistant load balancing, and new studio/server tiers expand long-term play.
-- Commerce ladder: fulfillment automation, global supply mesh, and white-label alliances stack payouts for thriving dropshipping empires.
-- Education clarity: finished courses now show 100% progress and list the XP-rich skills they elevate.
-- Upgrade hub redesign: roadmap stats, lane map quick-read counts, and a "Ready to install" toggle make reinvestment planning faster and more celebratory.
-- Upgrade hub polish: lane map buttons now jump to their sections and the "Ready to install" filter hides anything you can’t buy yet.
-- Hustle pacing: retired the eBay flip queue and delayed payouts so every gig pays out the moment you wrap it.
-- Hustle caps: Audience Q&A now runs once per day and Micro Survey Dash allows four bursts, with UI cues showing remaining slots.
-- Creative upgrade ladder: editorial pipeline, syndication suite, and immersive story worlds stack payouts and progress boosts across blogs, e-books, and vlogs.
-- Quality system refresh: daily-use counters replace cooldown timers on passive actions, with UI, saves, and docs updated to celebrate remaining uses each day.
-- Niche market pulse: assign each passive asset to a daily-trending niche, gain payout multipliers from hot audiences, and track every niche’s popularity from the dashboard widget.
-- Asset command center: the assets page now opens with a launch hub and refreshed build cards that bundle niche assignment, payout breakdowns, quality progress, and quick category blueprints in one glance.
-- Venture hub celebration: the renamed Ventures tab sports a slim summary strip, gallery-style category sections, showcase venture cards with trend badges, and a festive launcher drawer for new builds.
+- Modular UI view-model builders keep player overview, skills, header actions, and layout filters aligned while making alternate shells easy to drop in.
+- Passive asset economy has lower upkeep, clearer payout ladders, and milestone callouts so builds pay off earlier.
+- Education and hustle systems link courses to gig bonuses with celebratory progress cues and smarter scheduling buffers.
+- Upgrade and venture hubs highlight ready actions, lane navigation, and payout breakdowns to streamline reinvestment.
+- Analytics surfaces—daily outlooks, niche multipliers, and sortable grids—now live in a dedicated tab while the dashboard stays action focused.
 
 ## Recent Highlights
 - Passive assets gained Quality 4–5 milestones with higher payouts and refreshed modifiers.
 - Education and hustle systems link courses to gig bonuses while workshops diversify study plans.
 - Dashboard upgrades centralize upgrade recommendations, daily stats, and schedule messaging.
-
-## Archive
-The full historical log lives in the [changelog archive](archive/changelog-archive.md).
