@@ -36,36 +36,36 @@ export async function getGameTestHarness() {
 
   const elements = {
     get money() {
-      return elementRegistryModule.getMoneyNode();
+      return elementRegistryModule.getElement('money');
     },
     get logFeed() {
-      return (elementRegistryModule.getLogNodes() || {}).logFeed;
+      return (elementRegistryModule.getElement('logNodes') || {}).logFeed;
     },
     get logTip() {
-      return (elementRegistryModule.getLogNodes() || {}).logTip;
+      return (elementRegistryModule.getElement('logNodes') || {}).logTip;
     },
     get day() {
-      return (elementRegistryModule.getPlayerNodes() || {}).summary?.day;
+      return (elementRegistryModule.getElement('playerNodes') || {}).summary?.day;
     },
     get time() {
-      return (elementRegistryModule.getPlayerNodes() || {}).summary?.time;
+      return (elementRegistryModule.getElement('playerNodes') || {}).summary?.time;
     }
   };
 
   const resetState = () => {
     const nextState = stateModule.initializeState(stateModule.buildDefaultState());
-    const logNodes = elementRegistryModule.getLogNodes() || {};
+    const logNodes = elementRegistryModule.getElement('logNodes') || {};
     if (logNodes.logFeed) {
       logNodes.logFeed.innerHTML = '';
     }
     if (logNodes.logTip) {
       logNodes.logTip.style.display = 'block';
     }
-    const moneyNode = elementRegistryModule.getMoneyNode();
+    const moneyNode = elementRegistryModule.getElement('money');
     if (moneyNode) {
       moneyNode.textContent = '';
     }
-    const playerSummary = elementRegistryModule.getPlayerNodes()?.summary || {};
+    const playerSummary = elementRegistryModule.getElement('playerNodes')?.summary || {};
     if (playerSummary.time) {
       playerSummary.time.textContent = '';
     }

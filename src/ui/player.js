@@ -1,4 +1,4 @@
-import { getPlayerNodes } from './elements/registry.js';
+import { getElement } from './elements/registry.js';
 import setText from './dom.js';
 import { formatHours, formatList, formatMoney } from '../core/helpers.js';
 import { registry } from '../game/registry.js';
@@ -12,7 +12,7 @@ import {
 } from './skills/helpers.js';
 
 function renderSummary(state, summary) {
-  const player = getPlayerNodes() || {};
+  const player = getElement('playerNodes') || {};
   const target = player.summary;
   if (!target) return;
   const info = describeCharacter(state?.character);
@@ -26,7 +26,7 @@ function renderSummary(state, summary) {
 }
 
 function renderSkillList(state) {
-  const player = getPlayerNodes() || {};
+  const player = getElement('playerNodes') || {};
   const target = player.skills;
   if (!target?.list) return;
 
@@ -107,7 +107,7 @@ function formatSkillFocus(skills) {
 }
 
 function renderEquipment(state) {
-  const player = getPlayerNodes() || {};
+  const player = getElement('playerNodes') || {};
   const list = player.equipmentList;
   if (!list) return;
   list.innerHTML = '';
@@ -157,7 +157,7 @@ function formatEducationStatus(progress) {
 }
 
 function renderEducation(state) {
-  const player = getPlayerNodes() || {};
+  const player = getElement('playerNodes') || {};
   const list = player.educationList;
   if (!list) return;
   list.innerHTML = '';
@@ -214,7 +214,7 @@ function countActiveAssets(state) {
 }
 
 function renderStats(state, summary) {
-  const player = getPlayerNodes() || {};
+  const player = getElement('playerNodes') || {};
   const list = player.statsList;
   if (!list) return;
   list.innerHTML = '';

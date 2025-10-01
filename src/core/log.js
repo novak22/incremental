@@ -1,7 +1,7 @@
 import { MAX_LOG_ENTRIES } from './constants.js';
 import { createId } from './helpers.js';
 import { getState } from './state.js';
-import { getLogNodes } from '../ui/elements/registry.js';
+import { getElement } from '../ui/elements/registry.js';
 
 export function addLog(message, type = 'info') {
   const state = getState();
@@ -22,7 +22,7 @@ export function addLog(message, type = 'info') {
 export function renderLog() {
   const state = getState();
   if (!state) return;
-  const { logFeed, logTemplate, logTip } = getLogNodes() || {};
+  const { logFeed, logTemplate, logTip } = getElement('logNodes') || {};
   if (!logFeed || !logTemplate || !logTip) return;
   if (!state.log.length) {
     logTip.style.display = 'block';

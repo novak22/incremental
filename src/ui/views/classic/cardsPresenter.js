@@ -1,12 +1,4 @@
-import {
-  getAssetGallery,
-  getHustleControls,
-  getUpgradeDockList,
-  getUpgradeEmptyNode,
-  getUpgradeLaneList,
-  getUpgradeList,
-  getUpgradeOverview
-} from '../../elements/registry.js';
+import { getElement } from '../../elements/registry.js';
 import { getAssetState, getState } from '../../../core/state.js';
 import { formatHours, formatMoney } from '../../../core/helpers.js';
 import { describeHustleRequirements, getHustleDailyUsage } from '../../../game/hustles/helpers.js';
@@ -1186,7 +1178,7 @@ function openHustleDetails(definition) {
 }
 
 function renderHustles(definitions, hustleModels = []) {
-  const { hustleList } = getHustleControls() || {};
+  const { hustleList } = getElement('hustleControls') || {};
   const container = hustleList;
   if (!container) return;
   container.innerHTML = '';
@@ -2023,7 +2015,7 @@ function createAssetGroupSection(group, state = getState()) {
 }
 
 function renderAssets(definitions = [], assetModels = currentAssetModels) {
-  const gallery = getAssetGallery();
+  const gallery = getElement('assetGallery');
   if (!gallery) return;
 
   if (assetModels && assetModels !== currentAssetModels) {
@@ -2088,7 +2080,7 @@ function renderAssets(definitions = [], assetModels = currentAssetModels) {
 }
 
 function updateAssetHub() {
-  const gallery = getAssetGallery();
+  const gallery = getElement('assetGallery');
   if (!gallery) return;
 
   const groups = Array.isArray(currentAssetModels.groups) ? currentAssetModels.groups : [];
@@ -2112,7 +2104,7 @@ function updateAssetHub() {
 }
 
 function updateAssetEmptyNotice(totalInstances) {
-  const gallery = getAssetGallery();
+  const gallery = getElement('assetGallery');
   if (!gallery) return;
 
   if (totalInstances === 0) {
@@ -2147,7 +2139,7 @@ function updateAssets(definitions = [], assetModels = currentAssetModels) {
   }
   cacheAssetDefinitions(currentAssetDefinitions);
 
-  const gallery = getAssetGallery();
+  const gallery = getElement('assetGallery');
   if (!gallery) return;
 
   const groups = Array.isArray(currentAssetModels.groups) ? currentAssetModels.groups : [];
@@ -2201,7 +2193,7 @@ function updateAssetGroup(definitionId) {
     return;
   }
 
-  const gallery = getAssetGallery();
+  const gallery = getElement('assetGallery');
   if (!gallery) return;
   if (!assetPortfolioNode || !gallery.contains(assetPortfolioNode)) {
     renderAssets(currentAssetDefinitions, currentAssetModels);
@@ -2390,7 +2382,7 @@ function scrollUpgradeLaneIntoView(categoryId) {
   if (!categoryId) return;
 
   if (categoryId === 'all') {
-    const container = getUpgradeList();
+    const container = getElement('upgradeList');
     if (container) {
       container.scrollIntoView({ behavior: 'smooth', block: 'start' });
       container.focus?.({ preventScroll: true });
@@ -2413,7 +2405,7 @@ function scrollUpgradeLaneIntoView(categoryId) {
 }
 
 function renderUpgradeLaneMap(categories, overview) {
-  const list = getUpgradeLaneList();
+  const list = getElement('upgradeLaneList');
   if (!list) return;
 
   list.innerHTML = '';
@@ -2563,7 +2555,7 @@ function describeOverviewNote({ total, purchased, ready }) {
 }
 
 function renderUpgradeOverview(upgradeModels) {
-  const overview = getUpgradeOverview();
+  const overview = getElement('upgradeOverview');
   if (!overview?.container) return;
   const statsSource = upgradeModels?.overview ?? null;
   const categories = upgradeModels?.categories ?? currentUpgradeModels.categories;
@@ -2607,7 +2599,7 @@ function renderUpgradeOverview(upgradeModels) {
 }
 
 export function refreshUpgradeSections() {
-  const emptyNote = getUpgradeEmptyNode();
+  const emptyNote = getElement('upgradeEmpty');
   let visibleTotal = 0;
 
   upgradeSections.forEach(({ section, list, count, emptyMessage }) => {
@@ -2845,7 +2837,7 @@ function reconcileUpgradeOverviewStats(previousSnapshot, nextSnapshot) {
 }
 
 function renderUpgrades(definitions, upgradeModels) {
-  const list = getUpgradeList();
+  const list = getElement('upgradeList');
   if (!list) return;
   list.tabIndex = -1;
 
@@ -3031,7 +3023,7 @@ function updateUpgrades(definitions, upgradeModels) {
 }
 
 function renderUpgradeDock() {
-  const dock = getUpgradeDockList();
+  const dock = getElement('upgradeDockList');
   if (!dock) return;
   dock.innerHTML = '';
 
