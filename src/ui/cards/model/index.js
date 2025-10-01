@@ -32,3 +32,5 @@ export {
   describeAssetCardSummary,
   formatInstanceUpkeep
 } from '../utils.js';
+
+export { default as buildBlogpressModel, selectNiche as selectBlogpressNiche } from './blogpress.js';

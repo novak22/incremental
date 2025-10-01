@@ -1,6 +1,7 @@
 import { ensureRegistryReady } from '../../game/registryBootstrap.js';
 import {
   buildAssetModels,
+  buildBlogpressModel,
   buildEducationModels,
   buildHustleModels,
   buildUpgradeModels
@@ -45,7 +46,8 @@ function buildModels(registries) {
     hustles: buildHustleModels(registries.hustles),
     education: buildEducationModels(registries.education),
     assets: buildAssetModels(registries.assets),
-    upgrades: buildUpgradeModels(registries.upgrades)
+    upgrades: buildUpgradeModels(registries.upgrades),
+    blogpress: buildBlogpressModel(registries.assets, registries.upgrades)
   };
 }
 
