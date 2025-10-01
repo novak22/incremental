@@ -155,16 +155,6 @@ export const getUpgradeState = (...args) => stateManager.getUpgradeState(...args
 export const countActiveAssetInstances = (...args) => stateManager.countActiveAssetInstances(...args);
 
 export {
-  ensureHustleSlice,
-  getHustleSliceState,
-  ensureAssetSlice,
-  getAssetSliceState,
-  ensureUpgradeSlice,
-  getUpgradeSliceState,
-  ensureProgressSlice
-};
-
-export {
   configureRegistry,
   getRegistrySnapshot,
   getHustleDefinition,

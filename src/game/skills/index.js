@@ -14,8 +14,6 @@ import {
   normalizeSkillState
 } from './data.js';
 
-export { SKILL_DEFINITIONS, SKILL_LEVELS, CHARACTER_LEVELS, getSkillDefinition, normalizeSkillList } from './data.js';
-
 const TIME_XP_RATE = 5;
 const MONEY_XP_INTERVAL = 25;
 

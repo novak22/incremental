@@ -2,8 +2,6 @@ import { getState } from '../core/state.js';
 import { buildDashboardViewModel } from './dashboard/model.js';
 import { getActiveView } from './viewManager.js';
 
-export { buildDashboardViewModel } from './dashboard/model.js';
-
 export function renderDashboard(state, summary, presenter) {
   const currentState = state ?? getState();
   if (!currentState) return;

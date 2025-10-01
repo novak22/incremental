@@ -66,4 +66,3 @@ export function refreshUpgradeSections() {
   classicRefreshUpgradeSections();
 }
 
-export { classicCardsPresenter };

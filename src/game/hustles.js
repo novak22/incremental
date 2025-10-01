@@ -7,6 +7,4 @@ const KNOWLEDGE_HUSTLES = createKnowledgeHustles();
 
 export const HUSTLES = [...INSTANT_HUSTLES, ...KNOWLEDGE_HUSTLES];
 
-export { createKnowledgeHustles };
-export { INSTANT_HUSTLES };
 export * from './hustles/helpers.js';
