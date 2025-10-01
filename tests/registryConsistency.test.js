@@ -20,7 +20,7 @@ import {
   buildHustleModels,
   buildAssetModels,
   buildUpgradeModels
-} from '../src/ui/cards/model.js';
+} from '../src/ui/cards/model/index.js';
 
 function createSampleDefinitions() {
   return {

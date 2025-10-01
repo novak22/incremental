@@ -4,7 +4,7 @@ import {
   buildHustleModels,
   buildUpgradeModels,
   buildEducationModels
-} from '../../src/ui/cards/model.js';
+} from '../../src/ui/cards/model/index.js';
 
 test('buildHustleModels mirrors availability filters', () => {
   const hustles = [

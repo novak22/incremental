@@ -45,7 +45,7 @@ import {
   formatInstanceUpkeep,
   getAssetGroupLabel,
   getAssetGroupNote
-} from '../../cards/model.js';
+} from '../../cards/model/index.js';
 import { showSlideOver } from './components/slideOver.js';
 
 const assetGroupUi = new Map();

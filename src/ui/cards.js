@@ -5,7 +5,7 @@ import {
   buildFinanceModel,
   buildHustleModels,
   buildUpgradeModels
-} from './cards/model.js';
+} from './cards/model/index.js';
 import classicCardsPresenter, {
   renderAll as renderClassicCards,
   update as updateClassicCards,

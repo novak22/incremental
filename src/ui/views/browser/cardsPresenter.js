@@ -1,7 +1,7 @@
 import { getElement } from '../../elements/registry.js';
 import { formatHours, formatMoney } from '../../../core/helpers.js';
 import { SERVICE_PAGES } from './config.js';
-import { buildFinanceModel } from '../../cards/model.js';
+import { buildFinanceModel } from '../../cards/model/index.js';
 import { createStat, formatRoi } from './components/widgets.js';
 
 let cachedRegistries = null;
