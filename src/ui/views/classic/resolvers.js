@@ -183,5 +183,4 @@ const resolvers = {
   })
 };
 
-export { resolvers as classicResolvers };
 export default resolvers;

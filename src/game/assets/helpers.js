@@ -43,7 +43,7 @@ function getEffectiveSetupHours(definition) {
   return base * (Number.isFinite(effect.multiplier) ? effect.multiplier : 1);
 }
 
-function getAssetMetricId(definition, scope, type) {
+export function getAssetMetricId(definition, scope, type) {
   if (!definition) return null;
   const metricIds = definition.metricIds || {};
   const scoped = metricIds[scope];
@@ -507,4 +507,3 @@ export function qualityProgressDetail(definition) {
   return `📈 Roadmap: ${lines}`;
 }
 
-export { assetActionLabel, isAssetPurchaseDisabled, startAsset, getAssetMetricId };
