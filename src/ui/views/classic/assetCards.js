@@ -464,36 +464,64 @@ function createInstanceNicheSelector(definition, instance) {
 
 function createInstanceCard(definition, instance, index, state, group) {
   const resolvedDefinition = resolveDefinitionReference(definition, instance, group);
+  const assetInstance = instance?.instance || instance;
+  if (!assetInstance) {
+    return null;
+  }
+  const filters = instance?.filters || {};
+  const status = filters.status || instance?.status || assetInstance?.status || 'setup';
+  const nicheId = filters.niche || instance?.nicheId || assetInstance?.nicheId;
+  const risk = filters.risk || instance?.risk || (resolvedDefinition?.tag?.type === 'advanced' ? 'high' : 'medium');
+  const needsMaintenance =
+    filters.needsMaintenance ?? instance?.needsMaintenance ?? (
+      assetInstance?.status === 'active' && assetInstance?.maintenanceFundedToday === false
+    );
+
   const item = document.createElement('li');
   item.className = 'asset-detail__instance';
-  item.dataset.instanceId = instance.id;
+  const instanceId = assetInstance.id || instance?.id || resolvedDefinition?.id || `unknown-${index}`;
+  item.dataset.instanceId = instanceId;
+  item.dataset.asset = instanceId;
+  item.dataset.state = status;
+  item.dataset.needsMaintenance = needsMaintenance ? 'true' : 'false';
+  item.dataset.risk = risk;
+  if (nicheId) {
+    item.dataset.niche = nicheId;
+  }
+  if (group?.id) {
+    item.dataset.group = group.id;
+  }
 
   const header = document.createElement('div');
   header.className = 'asset-detail__instance-header';
   const name = document.createElement('strong');
-  name.textContent = resolvedDefinition ? instanceLabel(resolvedDefinition, index) : instance.name || `Asset ${index}`;
+  name.textContent = resolvedDefinition
+    ? instanceLabel(resolvedDefinition, index)
+    : assetInstance?.name || `Asset ${index}`;
   header.appendChild(name);
 
-  const status = document.createElement('span');
-  status.className = 'asset-detail__instance-status';
-  const statusText = resolvedDefinition ? describeInstance(resolvedDefinition, instance) : instance.status || '';
-  if (instance.status === 'active' && resolvedDefinition) {
-    const level = Number(instance.quality?.level) || 0;
+  const statusNode = document.createElement('span');
+  statusNode.className = 'asset-detail__instance-status';
+  const statusText = resolvedDefinition
+    ? describeInstance(resolvedDefinition, assetInstance)
+    : assetInstance?.status || '';
+  if (assetInstance?.status === 'active' && resolvedDefinition) {
+    const level = Number(assetInstance.quality?.level) || 0;
     const levelInfo = getQualityLevel(resolvedDefinition, level);
     const label = levelInfo?.name ? ` • ${levelInfo.name}` : '';
-    status.textContent = `${statusText}${label}`;
+    statusNode.textContent = `${statusText}${label}`;
   } else {
-    status.textContent = statusText;
+    statusNode.textContent = statusText;
   }
-  header.appendChild(status);
+  header.appendChild(statusNode);
   item.appendChild(header);
 
-  const overview = resolvedDefinition ? buildInstanceOverview(resolvedDefinition, instance) : null;
+  const overview = resolvedDefinition ? buildInstanceOverview(resolvedDefinition, assetInstance) : null;
   if (overview) {
     item.appendChild(overview);
   }
 
-  const stats = resolvedDefinition ? buildInstanceStats(resolvedDefinition, instance) : null;
+  const stats = resolvedDefinition ? buildInstanceStats(resolvedDefinition, assetInstance) : null;
   if (stats) {
     item.appendChild(stats);
   }
@@ -503,15 +531,15 @@ function createInstanceCard(definition, instance, index, state, group) {
 
   const actionColumns = document.createElement('div');
   actionColumns.className = 'asset-detail__action-columns';
-  const quickActions = resolvedDefinition ? createInstanceQuickActions(resolvedDefinition, instance, state) : null;
+  const quickActions = resolvedDefinition ? createInstanceQuickActions(resolvedDefinition, assetInstance, state) : null;
   if (quickActions) {
     actionColumns.appendChild(quickActions);
   }
-  const nicheSelector = resolvedDefinition ? createInstanceNicheSelector(resolvedDefinition, instance) : null;
+  const nicheSelector = resolvedDefinition ? createInstanceNicheSelector(resolvedDefinition, assetInstance) : null;
   if (nicheSelector) {
     actionColumns.appendChild(nicheSelector);
   }
-  const equipmentShortcuts = instance.status === 'active' && resolvedDefinition
+  const equipmentShortcuts = assetInstance?.status === 'active' && resolvedDefinition
     ? createEquipmentShortcuts(resolvedDefinition, state)
     : null;
   if (equipmentShortcuts) {
@@ -522,13 +550,13 @@ function createInstanceCard(definition, instance, index, state, group) {
   const sellButton = document.createElement('button');
   sellButton.type = 'button';
   sellButton.className = 'asset-detail__sell secondary';
-  const price = calculateAssetSalePrice(instance);
+  const price = calculateAssetSalePrice(assetInstance);
   sellButton.textContent = price > 0 ? `Sell for $${formatMoney(price)}` : 'No buyer yet';
   sellButton.disabled = price <= 0;
   sellButton.addEventListener('click', event => {
     event.preventDefault();
     if (sellButton.disabled) return;
-    sellAssetInstance(resolvedDefinition || definition, instance.id);
+    sellAssetInstance(resolvedDefinition || definition, assetInstance?.id || instance?.id);
   });
   actions.appendChild(sellButton);
 
@@ -624,7 +652,7 @@ function buildQualityInsight(definition, instance) {
   }
   container.appendChild(summary);
 
-  const range = getInstanceQualityRange(definition);
+  const range = getInstanceQualityRange(definition, instance);
   const levelDetail = document.createElement('p');
   levelDetail.className = 'asset-detail__insight-note';
   const current = Number(instance.quality?.level) || 0;
@@ -1209,19 +1237,29 @@ function buildPayoutBlock(definition, instance) {
 
 function createAssetInstanceCard(definition, instance, index, state = getState()) {
   const resolvedDefinition = resolveDefinitionReference(definition, instance);
+  const assetInstance = instance?.instance || instance;
+  if (!assetInstance) {
+    return null;
+  }
+  const filters = instance?.filters || {};
+  const status = filters.status || instance?.status || assetInstance?.status || 'setup';
   const card = document.createElement('article');
   card.className = 'asset-detail';
-  card.dataset.instance = instance.id;
+  card.dataset.instance = assetInstance.id || instance?.id || '';
 
   const header = document.createElement('header');
   header.className = 'asset-detail__header';
   const title = document.createElement('h2');
-  title.textContent = resolvedDefinition ? instanceLabel(resolvedDefinition, index) : instance.name || `Asset ${index}`;
+  title.textContent = resolvedDefinition
+    ? instanceLabel(resolvedDefinition, index)
+    : assetInstance?.name || `Asset ${index}`;
   header.appendChild(title);
 
   const summary = document.createElement('p');
   summary.className = 'asset-detail__summary';
-  summary.textContent = resolvedDefinition ? describeInstance(resolvedDefinition, instance) : instance.status || '';
+  summary.textContent = resolvedDefinition
+    ? describeInstance(resolvedDefinition, assetInstance)
+    : status || '';
   header.appendChild(summary);
 
   const feedback = document.createElement('p');
@@ -1231,7 +1269,8 @@ function createAssetInstanceCard(definition, instance, index, state = getState()
 
   card.appendChild(header);
 
-  const metrics = resolvedDefinition ? buildMetricsRow(resolvedDefinition, instance, state, instance.risk?.label) : null;
+  const riskLabel = instance?.risk?.label || filters.risk;
+  const metrics = resolvedDefinition ? buildMetricsRow(resolvedDefinition, assetInstance, state, riskLabel) : null;
   if (metrics) {
     card.appendChild(metrics);
   }
@@ -1239,17 +1278,17 @@ function createAssetInstanceCard(definition, instance, index, state = getState()
   const body = document.createElement('div');
   body.className = 'asset-detail__body';
 
-  const overview = resolvedDefinition ? buildInstanceOverview(resolvedDefinition, instance) : null;
+  const overview = resolvedDefinition ? buildInstanceOverview(resolvedDefinition, assetInstance) : null;
   if (overview) {
     body.appendChild(overview);
   }
 
-  const stats = resolvedDefinition ? buildInstanceStats(resolvedDefinition, instance) : null;
+  const stats = resolvedDefinition ? buildInstanceStats(resolvedDefinition, assetInstance) : null;
   if (stats) {
     body.appendChild(stats);
   }
 
-  const quickActions = resolvedDefinition ? buildSpecialActionButtons(resolvedDefinition, instance, state) : [];
+  const quickActions = resolvedDefinition ? buildSpecialActionButtons(resolvedDefinition, assetInstance, state) : [];
   if (quickActions.length) {
     const actionRow = document.createElement('div');
     actionRow.className = 'asset-detail__action-row';
@@ -1258,8 +1297,8 @@ function createAssetInstanceCard(definition, instance, index, state = getState()
   }
 
   if (resolvedDefinition) {
-    body.appendChild(buildQualityBlock(resolvedDefinition, instance));
-    body.appendChild(buildPayoutBlock(resolvedDefinition, instance));
+    body.appendChild(buildQualityBlock(resolvedDefinition, assetInstance));
+    body.appendChild(buildPayoutBlock(resolvedDefinition, assetInstance));
   }
 
   card.appendChild(body);
@@ -1397,7 +1436,9 @@ function openInstanceDetails(definition, instance, index, state = getState()) {
   const body = document.createElement('div');
   body.className = 'asset-detail__drawer';
   const card = createAssetInstanceCard(definition, instance, index, state);
-  body.appendChild(card);
+  if (card) {
+    body.appendChild(card);
+  }
   showSlideOver({ eyebrow: 'Asset', title: definition.name, body });
 }
 
@@ -1417,7 +1458,9 @@ function openAssetGroupDetails(group) {
 
   group.instances?.forEach((instance, index) => {
     const card = createAssetInstanceCard(group.definition, instance, index + 1, state);
-    body.appendChild(card);
+    if (card) {
+      body.appendChild(card);
+    }
   });
 
   showSlideOver({ eyebrow: 'Asset group', title: group.definition.name, body });
