@@ -2,6 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { getGameTestHarness } from './helpers/gameTestHarness.js';
 
+const { buildTrackViewModel } = await import('../src/game/hustles/knowledgeHustles.js');
+const { formatMoney } = await import('../src/core/helpers.js');
+
 const harness = await getGameTestHarness();
 const {
   stateModule,
@@ -31,6 +34,54 @@ const resetState = () => harness.resetState();
 
 test.beforeEach(() => {
   resetState();
+});
+
+test('knowledge hustle view model summarizes study progress states', () => {
+  const track = KNOWLEDGE_TRACKS.outlineMastery;
+
+  const readyState = getState();
+  readyState.money = track.tuition;
+  const readyModel = buildTrackViewModel(track, readyState);
+  assert.equal(readyModel.statusLabel, '🚀 Status: <strong>Ready to enroll</strong>');
+  assert.equal(readyModel.ctaLabel, `Enroll for $${formatMoney(track.tuition)}`);
+  assert.equal(readyModel.canEnroll, true);
+  assert.deepEqual(readyModel.datasetFlags, {
+    inProgress: false,
+    studiedToday: false,
+    enrolled: false
+  });
+
+  resetState();
+  const enrolledState = getState();
+  enrolledState.money = 0;
+  const enrolledProgress = getKnowledgeProgress(track.id, enrolledState);
+  enrolledProgress.enrolled = true;
+  enrolledProgress.daysCompleted = 3;
+  enrolledProgress.studiedToday = true;
+  const enrolledModel = buildTrackViewModel(track, enrolledState);
+  assert.equal(enrolledModel.statusLabel, '📚 Status: <strong>2 days remaining</strong>');
+  assert.equal(enrolledModel.ctaLabel, '2 days remaining');
+  assert.equal(enrolledModel.canEnroll, false);
+  assert.deepEqual(enrolledModel.datasetFlags, {
+    inProgress: true,
+    studiedToday: true,
+    enrolled: true
+  });
+
+  resetState();
+  const completedState = getState();
+  const completedProgress = getKnowledgeProgress(track.id, completedState);
+  completedProgress.completed = true;
+  completedProgress.enrolled = false;
+  const completedModel = buildTrackViewModel(track, completedState);
+  assert.equal(completedModel.statusLabel, '✅ Status: <strong>Complete</strong>');
+  assert.equal(completedModel.ctaLabel, 'Course Complete');
+  assert.equal(completedModel.canEnroll, false);
+  assert.deepEqual(completedModel.datasetFlags, {
+    inProgress: false,
+    studiedToday: false,
+    enrolled: false
+  });
 });
 
 test('study hustles charge tuition and auto-schedule class time', () => {
