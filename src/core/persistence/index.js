@@ -1,6 +1,8 @@
 import { getAssetDefinition } from '../state/registry.js';
 import { createAssetInstance } from '../state/assets.js';
 import { getAssetState, getUpgradeState } from '../state.js';
+import { SnapshotRepository } from './snapshotRepository.js';
+import { StateMigrationRunner } from './stateMigrationRunner.js';
 
 function migrateLegacySnapshot(snapshot, context) {
   if (!snapshot || typeof snapshot !== 'object') {
@@ -65,6 +67,8 @@ function migrateLegacySnapshot(snapshot, context) {
 
 const DEFAULT_MIGRATIONS = [migrateLegacySnapshot];
 
+export { SnapshotRepository, StateMigrationRunner, DEFAULT_MIGRATIONS };
+
 export class StatePersistence {
   constructor({
     storageKey,
@@ -77,10 +81,11 @@ export class StatePersistence {
     ensureStateShape,
     getState,
     migrations = DEFAULT_MIGRATIONS,
-    logger = console
+    logger = console,
+    repository,
+    migrationRunner
   }) {
     this.storageKey = storageKey;
-    this.storage = storage;
     this.clone = clone;
     this.now = now;
     this.buildDefaultState = buildDefaultState;
@@ -88,9 +93,27 @@ export class StatePersistence {
     this.replaceState = replaceState;
     this.ensureStateShape = ensureStateShape;
     this.getState = getState;
-    this.migrations = migrations;
-    this.version = Array.isArray(migrations) ? migrations.length : 0;
     this.logger = logger;
+
+    this.repository =
+      repository ?? new SnapshotRepository({ storageKey, storage });
+    this.migrationRunner =
+      migrationRunner ?? new StateMigrationRunner({ migrations });
+
+    Object.defineProperty(this, 'storage', {
+      get: () => this.repository.storage,
+      set: value => {
+        this.repository.storage = value;
+      }
+    });
+
+    Object.defineProperty(this, 'migrations', {
+      get: () => this.migrationRunner.migrations
+    });
+
+    Object.defineProperty(this, 'version', {
+      get: () => this.migrationRunner.version
+    });
   }
 
   load({ onFirstLoad, onReturning, onError } = {}) {
@@ -139,16 +162,11 @@ export class StatePersistence {
   }
 
   readSnapshot(onError) {
-    try {
-      const rawSnapshot = this.storage?.getItem(this.storageKey) ?? null;
-      if (!rawSnapshot) {
-        return { type: 'empty' };
-      }
-      return { type: 'success', value: rawSnapshot };
-    } catch (err) {
-      this.handleLoadFailure('Failed to read saved state', err, onError);
-      return { type: 'error', error: err };
+    const result = this.repository.loadRaw();
+    if (result.type === 'error') {
+      this.handleLoadFailure('Failed to read saved state', result.error, onError);
     }
+    return result;
   }
 
   parseSnapshot(raw, onError) {
@@ -162,7 +180,7 @@ export class StatePersistence {
 
   migrateSnapshot(parsed, context, onError) {
     try {
-      return { type: 'success', value: this.migrate(parsed, context) };
+      return { type: 'success', value: this.migrationRunner.run(parsed, context) };
     } catch (err) {
       this.handleLoadFailure('Failed to migrate saved state', err, onError);
       return { type: 'error', error: err };
@@ -201,39 +219,12 @@ export class StatePersistence {
     snapshot.version = effectiveVersion;
     state.lastSaved = lastSaved;
     state.version = effectiveVersion;
-    try {
-      this.storage?.setItem(this.storageKey, JSON.stringify(snapshot));
-    } catch (err) {
-      this.logger?.error?.('Failed to save game', err);
+    const saveResult = this.repository.saveRaw(JSON.stringify(snapshot));
+    if (saveResult.type === 'error') {
+      this.logger?.error?.('Failed to save game', saveResult.error);
       return null;
     }
     return { lastSaved };
-  }
-
-  migrate(snapshot, context) {
-    if (!snapshot || typeof snapshot !== 'object') {
-      return context.clone(context.defaultState);
-    }
-
-    if (!Array.isArray(this.migrations) || !this.migrations.length) {
-      return { ...snapshot };
-    }
-
-    let current = { ...snapshot };
-    const startVersion = Number.isInteger(current.version) ? current.version : 0;
-    if (startVersion < this.version) {
-      for (let index = Math.max(0, startVersion); index < this.migrations.length; index += 1) {
-        const step = this.migrations[index];
-        if (typeof step !== 'function') continue;
-        current = step(current, context);
-        if (!current || typeof current !== 'object') {
-          throw new Error(`Migration at index ${index} did not return an object.`);
-        }
-      }
-    }
-
-    current.version = Math.max(this.version, startVersion);
-    return current;
   }
 
   mergeWithDefault(defaultState, snapshot) {

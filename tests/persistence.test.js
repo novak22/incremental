@@ -1,6 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { StatePersistence } from '../src/core/persistence/index.js';
+import {
+  SnapshotRepository,
+  StateMigrationRunner,
+  StatePersistence
+} from '../src/core/persistence/index.js';
 
 function createPersistence({ storage, migrations = [] } = {}) {
   let state;
@@ -16,9 +20,14 @@ function createPersistence({ storage, migrations = [] } = {}) {
     version: 0
   });
 
+  const repository = new SnapshotRepository({
+    storageKey: 'test-key',
+    storage
+  });
+  const migrationRunner = new StateMigrationRunner({ migrations });
+
   const persistence = new StatePersistence({
     storageKey: 'test-key',
-    storage,
     clone,
     now: () => nowValue,
     buildDefaultState: () => baseState(),
@@ -32,8 +41,9 @@ function createPersistence({ storage, migrations = [] } = {}) {
     },
     ensureStateShape: () => {},
     getState: () => state,
-    migrations,
-    logger: { error: () => {} }
+    logger: { error: () => {} },
+    repository,
+    migrationRunner
   });
 
   return { persistence, getState: () => state, nowValue };
