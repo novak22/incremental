@@ -132,7 +132,9 @@ test('daily summary attaches definition references for canonical metrics', () =>
 });
 
 test('raw selectors return numeric breakdown entries', () => {
-  configureRegistry(registry);
+  registryService.resetRegistry();
+  loadDefaultRegistry();
+  configureRegistry();
   const state = initializeState();
   resetDailyMetrics(state);
 
