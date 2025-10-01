@@ -366,7 +366,7 @@ export function buildQuickActions(state) {
   }
 
   items.sort((a, b) => b.roi - a.roi);
-  return items.slice(0, 4);
+  return items;
 }
 
 export function buildAssetUpgradeRecommendations(state) {
@@ -772,15 +772,23 @@ function buildQuickActionModel(state = {}) {
 
 function buildAssetActionModel(state = {}) {
   const suggestions = buildAssetUpgradeRecommendations(state);
-  const entries = suggestions.map(action => ({
-    id: action.id,
-    title: action.title,
-    subtitle: action.subtitle,
-    meta: action.meta,
-    metaClass: 'upgrade-actions__meta',
-    buttonLabel: action.buttonLabel,
-    onClick: action.onClick
-  }));
+  const entries = suggestions.map(action => {
+    const timeCost = Math.max(0, clampNumber(action.timeCost));
+    return {
+      id: action.id,
+      title: action.title,
+      subtitle: action.subtitle,
+      meta: action.meta,
+      metaClass: 'upgrade-actions__meta',
+      buttonLabel: action.buttonLabel,
+      onClick: action.onClick,
+      timeCost,
+      durationHours: timeCost,
+      durationText: formatHours(timeCost),
+      repeatable: false,
+      remainingRuns: null
+    };
+  });
   return {
     entries,
     emptyMessage: 'Every venture is humming along. Check back after today’s upkeep.',
