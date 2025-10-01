@@ -11,11 +11,11 @@ export const SERVICE_PAGES = [
     type: 'finance'
   },
   {
-    id: 'blogpress',
-    slug: 'blogpress',
-    label: 'BlogPress',
-    headline: 'BlogPress Creator Hub',
-    tagline: 'Publish posts, tweak monetization, and celebrate streaks.',
+    id: 'downwork',
+    slug: 'downwork',
+    label: 'DownWork',
+    headline: 'DownWork Hustle Exchange',
+    tagline: 'Match with online gigs, pitch your services, and celebrate new wins.',
     icon: '📝',
     type: 'hustles'
   },
