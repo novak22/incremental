@@ -14,6 +14,12 @@ const resolvers = {
     endDayButton: root.getElementById('browser-session-button')
   }),
   themeToggle: root => root.getElementById('browser-theme-toggle'),
+  browserTabs: root => ({
+    container: root.getElementById('browser-tab-bar'),
+    list: root.getElementById('browser-tab-list')
+  }),
+  launchStage: root => root.getElementById('browser-launch-stage'),
+  workspaceHost: root => root.getElementById('browser-workspaces'),
   headerActionButtons: root => ({
     endDayButton: root.getElementById('browser-session-button'),
     autoForwardButton: null

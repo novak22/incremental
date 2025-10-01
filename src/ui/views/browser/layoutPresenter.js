@@ -9,6 +9,14 @@ let sessionControls = null;
 let themeToggle = null;
 let currentTheme = 'day';
 
+const openTabs = new Set([HOMEPAGE_ID]);
+const tabOrder = [HOMEPAGE_ID];
+let activeTab = HOMEPAGE_ID;
+const activationHistory = [HOMEPAGE_ID];
+let tabRefs = null;
+let launchStageRef = null;
+let workspaceHostRef = null;
+
 const THEME_STORAGE_KEY = 'browser-theme';
 
 function getNavigationRefs() {
@@ -30,6 +38,27 @@ function getThemeToggle() {
     themeToggle = getElement('themeToggle');
   }
   return themeToggle;
+}
+
+function getTabRefs() {
+  if (!tabRefs) {
+    tabRefs = getElement('browserTabs') || {};
+  }
+  return tabRefs;
+}
+
+function getLaunchStage() {
+  if (!launchStageRef) {
+    launchStageRef = getElement('launchStage') || null;
+  }
+  return launchStageRef;
+}
+
+function getWorkspaceHost() {
+  if (!workspaceHostRef) {
+    workspaceHostRef = getElement('workspaceHost') || null;
+  }
+  return workspaceHostRef;
 }
 
 function getShellElement() {
@@ -89,18 +118,16 @@ function toggleTheme() {
 }
 
 function getHomepageElement() {
-  return getElement('homepage')?.container || null;
+  return getLaunchStage() || getElement('homepage')?.container || null;
 }
 
 function getPageElement(pageId) {
   if (pageId === HOMEPAGE_ID) {
     return getHomepageElement();
   }
-  return document.querySelector(`[data-browser-page="${pageId}"]`);
-}
-
-function listPageSections() {
-  return Array.from(document.querySelectorAll('[data-browser-page]'));
+  const host = getWorkspaceHost();
+  if (!host) return null;
+  return host.querySelector(`[data-browser-page="${pageId}"]`);
 }
 
 function markActiveSite(pageId) {
@@ -133,41 +160,229 @@ function updateNavigationButtons() {
 }
 
 function revealPage(pageId, { focus = false } = {}) {
-  const homepage = getHomepageElement();
-  if (homepage) {
-    const isHome = pageId === HOMEPAGE_ID;
-    homepage.hidden = !isHome;
-    homepage.classList.toggle('is-active', isHome);
+  const isHome = pageId === HOMEPAGE_ID;
+  const launchStage = getLaunchStage();
+  if (launchStage) {
+    launchStage.hidden = !isHome;
+    launchStage.classList.toggle('is-active', isHome);
   }
 
-  listPageSections().forEach(section => {
-    const isActive = section.dataset.browserPage === pageId;
-    section.hidden = !isActive;
-    section.classList.toggle('is-active', isActive);
-  });
+  const workspaceHost = getWorkspaceHost();
+  if (workspaceHost) {
+    workspaceHost.hidden = isHome;
+    workspaceHost.classList.toggle('is-active', !isHome);
+  }
 
-  const target = getPageElement(pageId);
-  if (target && focus) {
-    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const homepageContent = getElement('homepage')?.container || null;
+  if (homepageContent) {
+    homepageContent.hidden = !isHome;
+    homepageContent.classList.toggle('is-active', isHome);
+    if (isHome && focus) {
+      homepageContent.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  if (workspaceHost) {
+    workspaceHost.querySelectorAll('[data-browser-page]').forEach(section => {
+      const active = section.dataset.browserPage === pageId;
+      section.hidden = !active;
+      section.classList.toggle('is-active', active);
+      if (active && focus) {
+        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
   }
 }
 
-function setActivePage(targetId, { recordHistory = true, focus = false } = {}) {
+function removeFromArray(array, value) {
+  const index = array.indexOf(value);
+  if (index !== -1) {
+    array.splice(index, 1);
+  }
+}
+
+function purgeFromHistory(stack, pageId) {
+  for (let index = stack.length - 1; index >= 0; index -= 1) {
+    if (stack[index] === pageId) {
+      stack.splice(index, 1);
+    }
+  }
+}
+
+function recordTabActivation(pageId) {
+  removeFromArray(activationHistory, pageId);
+  activationHistory.push(pageId);
+}
+
+function ensureTab(pageId) {
+  if (!pageId || openTabs.has(pageId)) {
+    return false;
+  }
+  openTabs.add(pageId);
+  tabOrder.push(pageId);
+  return true;
+}
+
+function renderTabs() {
+  const { list } = getTabRefs();
+  if (!list) return;
+
+  list.innerHTML = '';
+
+  tabOrder.forEach(pageId => {
+    const page = findPageById(pageId);
+    if (!page) return;
+
+    const item = document.createElement('li');
+    item.className = 'browser-tab';
+    item.dataset.tab = pageId;
+    if (pageId === activeTab) {
+      item.classList.add('is-active');
+    }
+
+    const tabButton = document.createElement('button');
+    tabButton.type = 'button';
+    tabButton.className = 'browser-tab__button';
+    tabButton.dataset.tabTarget = pageId;
+    tabButton.setAttribute('role', 'tab');
+    tabButton.setAttribute('aria-selected', pageId === activeTab ? 'true' : 'false');
+    tabButton.setAttribute('aria-controls', pageId === HOMEPAGE_ID ? 'browser-launch-stage' : `browser-page-${page.slug || page.id}`);
+    tabButton.tabIndex = pageId === activeTab ? 0 : -1;
+
+    const icon = document.createElement('span');
+    icon.className = 'browser-tab__icon';
+    icon.textContent = page.icon || '✨';
+
+    const label = document.createElement('span');
+    label.className = 'browser-tab__label';
+    label.textContent = page.label || page.name || 'Workspace';
+
+    tabButton.append(icon, label);
+    item.appendChild(tabButton);
+
+    if (pageId !== HOMEPAGE_ID) {
+      const close = document.createElement('button');
+      close.type = 'button';
+      close.className = 'browser-tab__close';
+      close.dataset.tabClose = pageId;
+      close.setAttribute('aria-label', `Close ${page.label || page.name || 'workspace'} tab`);
+      close.textContent = '×';
+      item.appendChild(close);
+    }
+
+    list.appendChild(item);
+  });
+}
+
+function getFallbackTab(closedId) {
+  for (let index = activationHistory.length - 1; index >= 0; index -= 1) {
+    const candidate = activationHistory[index];
+    if (candidate && candidate !== closedId && openTabs.has(candidate)) {
+      return candidate;
+    }
+  }
+  return HOMEPAGE_ID;
+}
+
+function closeTab(pageId) {
+  if (pageId === HOMEPAGE_ID || !openTabs.has(pageId)) {
+    return;
+  }
+
+  openTabs.delete(pageId);
+  removeFromArray(tabOrder, pageId);
+  removeFromArray(activationHistory, pageId);
+  purgeFromHistory(historyStack, pageId);
+  purgeFromHistory(futureStack, pageId);
+
+  const host = getWorkspaceHost();
+  const section = host?.querySelector(`[data-browser-page="${pageId}"]`);
+  if (section) {
+    section.hidden = true;
+    section.classList.remove('is-active');
+  }
+
+  const wasActive = activeTab === pageId;
+  if (wasActive) {
+    const fallback = getFallbackTab(pageId);
+    renderTabs();
+    setActivePage(fallback, { recordHistory: false, focus: true, ensureTab: false });
+  } else {
+    renderTabs();
+  }
+}
+
+function handleTabBarClick(event) {
+  const closeTarget = event.target.closest('[data-tab-close]');
+  if (closeTarget) {
+    event.preventDefault();
+    closeTab(closeTarget.dataset.tabClose);
+    return;
+  }
+
+  const tabTarget = event.target.closest('[data-tab-target]');
+  if (tabTarget) {
+    event.preventDefault();
+    setActivePage(tabTarget.dataset.tabTarget, { recordHistory: false, focus: true });
+  }
+}
+
+function openWorkspace(pageId, { focus = true, recordHistory = true } = {}) {
+  if (!pageId) return;
+  const resolved = findPageById(pageId) || findPageBySlug(pageId);
+  if (!resolved) return;
+  setActivePage(resolved.id, { recordHistory, focus, ensureTab: true });
+}
+
+function initTabs() {
+  const { list } = getTabRefs();
+  if (list) {
+    list.addEventListener('click', handleTabBarClick);
+  }
+  renderTabs();
+}
+
+function setActivePage(targetId, { recordHistory = true, focus = false, ensureTab: shouldEnsureTab = true } = {}) {
   const resolved = findPageById(targetId) || findPageBySlug(targetId) || findPageById(HOMEPAGE_ID);
   const pageId = resolved?.id || HOMEPAGE_ID;
-  const element = getPageElement(pageId);
-  if (!element) return;
-
   if (recordHistory && currentPage !== pageId) {
     historyStack.push(currentPage);
     futureStack.length = 0;
   }
 
+  let addedTab = false;
+  if (shouldEnsureTab) {
+    addedTab = ensureTab(pageId);
+    if (addedTab) {
+      renderTabs();
+    }
+  }
+  if (!openTabs.has(pageId)) {
+    return;
+  }
+
+  const element = getPageElement(pageId);
+  if (!element) {
+    if (addedTab) {
+      openTabs.delete(pageId);
+      removeFromArray(tabOrder, pageId);
+      removeFromArray(activationHistory, pageId);
+      renderTabs();
+    }
+    if (pageId !== HOMEPAGE_ID) {
+      setActivePage(HOMEPAGE_ID, { recordHistory: false, focus: false, ensureTab: false });
+    }
+    return;
+  }
+
   currentPage = pageId;
+  activeTab = pageId;
+  recordTabActivation(pageId);
   revealPage(pageId, { focus });
   markActiveSite(pageId);
   updateAddressBar(resolved);
   updateNavigationButtons();
+  renderTabs();
 }
 
 function navigateBack() {
@@ -201,7 +416,12 @@ function handleSiteClick(event) {
   const button = event.target.closest('button[data-site-target]');
   if (!button) return;
   event.preventDefault();
-  setActivePage(button.dataset.siteTarget || HOMEPAGE_ID);
+  const target = button.dataset.siteTarget || HOMEPAGE_ID;
+  if (target === HOMEPAGE_ID) {
+    setActivePage(HOMEPAGE_ID, { focus: true, recordHistory: true });
+  } else {
+    openWorkspace(target, { focus: true, recordHistory: true });
+  }
 }
 
 function handleAddressSubmit(event) {
@@ -233,7 +453,7 @@ function initNavigation() {
 
   const controls = getSessionControls();
   if (controls?.homeButton) {
-    controls.homeButton.addEventListener('click', () => setActivePage(HOMEPAGE_ID));
+    controls.homeButton.addEventListener('click', () => setActivePage(HOMEPAGE_ID, { focus: true, ensureTab: false }));
   }
 
   const address = getElement('browserAddress') || {};
@@ -246,7 +466,7 @@ function initNavigation() {
     siteList.addEventListener('click', handleSiteClick);
   }
 
-  setActivePage(currentPage, { recordHistory: false });
+  setActivePage(currentPage, { recordHistory: false, ensureTab: false });
   updateNavigationButtons();
 }
 
@@ -342,6 +562,7 @@ function applyStudyFilters(model = {}) {
 }
 
 function initControls() {
+  initTabs();
   initNavigation();
   initThemeControls();
 }
