@@ -1,5 +1,4 @@
 import { addLog, renderLog } from './core/log.js';
-import { configureRegistry } from './core/state/registry.js';
 import { loadState, saveState } from './core/storage.js';
 import { renderCards, updateUI } from './ui/update.js';
 import { initLayoutControls } from './ui/layout/index.js';
@@ -10,7 +9,7 @@ import { initHeaderActionControls } from './ui/headerAction/index.js';
 import { setActiveView } from './ui/viewManager.js';
 import classicView from './ui/views/classic/index.js';
 import browserView from './ui/views/browser/index.js';
-import { loadDefaultRegistry } from './game/registryLoader.js';
+import { ensureRegistryReady } from './game/registryBootstrap.js';
 
 function resolveViewFromFlag(rootDocument) {
   if (typeof window === 'undefined' || typeof URLSearchParams !== 'function') {
@@ -53,8 +52,7 @@ function resolveInitialView(rootDocument = typeof document !== 'undefined' ? doc
   return classicView;
 }
 
-loadDefaultRegistry();
-configureRegistry();
+ensureRegistryReady();
 const initialView = resolveInitialView(document);
 setActiveView(initialView, document);
 const { returning, lastSaved } = loadState({

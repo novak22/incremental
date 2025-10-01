@@ -4,14 +4,13 @@ import { ensureTestDom } from './helpers/setupDom.js';
 
 ensureTestDom();
 
-const { configureRegistry, getAssetDefinition, getHustleDefinition } = await import('../src/core/state/registry.js');
+const { getAssetDefinition, getHustleDefinition } = await import('../src/core/state/registry.js');
 const registryService = await import('../src/game/registryService.js');
-const { loadDefaultRegistry } = await import('../src/game/registryLoader.js');
+const { ensureRegistryReady } = await import('../src/game/registryBootstrap.js');
 
 function ensureConfigured() {
   registryService.resetRegistry();
-  loadDefaultRegistry();
-  configureRegistry();
+  ensureRegistryReady();
 }
 
 test('hustle definitions expose canonical metric identifiers', () => {

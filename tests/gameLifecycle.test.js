@@ -13,7 +13,7 @@ const upgradesModule = await import('../src/game/upgrades.js');
 const requirementsModule = await import('../src/game/requirements.js');
 
 const { buildDefaultState, initializeState, getState, getAssetState, getUpgradeState } = stateModule;
-const { configureRegistry, getAssetDefinition } = registryModule;
+const { getAssetDefinition } = registryModule;
 const { createAssetInstance } = assetStateModule;
 const { allocateAssetMaintenance, closeOutDay, ASSETS, getIncomeRangeForDisplay } = assetsModule;
 const { HUSTLES } = hustlesModule;
@@ -26,10 +26,10 @@ const {
   getKnowledgeProgress
 } = requirementsModule;
 const registryService = await import('../src/game/registryService.js');
+const { ensureRegistryReady } = await import('../src/game/registryBootstrap.js');
 
 registryService.resetRegistry();
-registryService.loadRegistry({ assets: ASSETS, hustles: HUSTLES, upgrades: UPGRADES });
-configureRegistry();
+ensureRegistryReady();
 
 const resetState = () => initializeState(buildDefaultState());
 

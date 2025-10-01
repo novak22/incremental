@@ -15,6 +15,7 @@ import {
   getRegistry,
   getMetricDefinition
 } from '../src/game/registryService.js';
+import { ensureRegistryReady } from '../src/game/registryBootstrap.js';
 import {
   buildHustleModels,
   buildAssetModels,
@@ -57,6 +58,20 @@ function createSampleDefinitions() {
     ]
   };
 }
+
+test('ensureRegistryReady hydrates and caches the shared snapshot', t => {
+  resetRegistry();
+  t.after(() => {
+    resetRegistry();
+  });
+
+  const snapshot = ensureRegistryReady();
+  assert.equal(snapshot, getRegistry(), 'ensure helper should return registry service snapshot');
+  assert.equal(snapshot, getRegistrySnapshot(), 'state snapshot should match service snapshot');
+
+  const secondCall = ensureRegistryReady();
+  assert.equal(secondCall, snapshot, 'subsequent calls should reuse the cached snapshot');
+});
 
 test('registry service and state share canonical definitions', t => {
   resetRegistry();
