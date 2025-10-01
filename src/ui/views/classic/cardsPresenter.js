@@ -148,8 +148,11 @@ function cacheUpgradeDefinitions(definitions = []) {
   });
 }
 
-function cacheCardModels(models = {}) {
-  hustleModelCache.clear();
+function cacheCardModels(models = {}, options = {}) {
+  const { skipCacheReset = false } = options;
+  if (!skipCacheReset) {
+    hustleModelCache.clear();
+  }
   (models?.hustles ?? []).forEach(model => {
     if (model?.id) {
       hustleModelCache.set(model.id, model);
@@ -3089,9 +3092,9 @@ function renderClassicCollections(registries, models) {
   renderStudySection(education, models?.education);
 }
 
-export function renderAll({ registries = {}, models = {} } = {}) {
+export function renderAll({ registries = {}, models = {} } = {}, options = {}) {
   const normalized = normalizeRegistries(registries);
-  cacheCardModels(models);
+  cacheCardModels(models, options);
   renderClassicCollections(normalized, models);
 }
 
@@ -3134,9 +3137,9 @@ function updateClassicCollections(registries, models) {
   emitUIEvent('upgrades:state-updated');
 }
 
-export function update({ registries = {}, models = {} } = {}) {
+export function update({ registries = {}, models = {} } = {}, options = {}) {
   const normalized = normalizeRegistries(registries);
-  cacheCardModels(models);
+  cacheCardModels(models, options);
   updateClassicCollections(normalized, models);
 }
 
