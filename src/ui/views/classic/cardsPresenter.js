@@ -58,6 +58,7 @@ import {
 import { applyCardFilters } from '../../layout.js';
 import { createAssetUpgradeShortcuts } from '../../assetUpgradeShortcuts.js';
 import {
+  buildAssetModels,
   buildUpgradeCategories,
   getUpgradeCategory,
   describeAssetCardSummary,
@@ -1510,7 +1511,8 @@ function buildAssetLaunchTile(launcher, state = getState()) {
           feedback.hidden = true;
           tile.classList.remove('venture-launcher__tile--success');
         }, 2400);
-        updateAssets(currentAssetDefinitions, currentAssetModels);
+        const refreshedModels = buildAssetModels(currentAssetDefinitions);
+        updateAssets(currentAssetDefinitions, refreshedModels);
         applyCardFilters();
       }
     }, 40);
