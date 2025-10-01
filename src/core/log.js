@@ -1,7 +1,9 @@
 import { MAX_LOG_ENTRIES } from './constants.js';
 import { createId } from './helpers.js';
 import { getState } from './state.js';
-import { getElement } from '../ui/elements/registry.js';
+import { buildLogModel } from '../ui/log/model.js';
+import { getActiveView } from '../ui/viewManager.js';
+import classicLogPresenter from '../ui/views/classic/logPresenter.js';
 
 export function addLog(message, type = 'info') {
   const state = getState();
@@ -22,29 +24,10 @@ export function addLog(message, type = 'info') {
 export function renderLog() {
   const state = getState();
   if (!state) return;
-  const { logFeed, logTemplate, logTip } = getElement('logNodes') || {};
-  if (!logFeed || !logTemplate || !logTip) return;
-  if (!state.log.length) {
-    logTip.style.display = 'block';
-    logFeed.innerHTML = '';
-    return;
-  }
 
-  logTip.style.display = 'none';
-  logFeed.innerHTML = '';
-  const fragment = document.createDocumentFragment();
-  const entries = [...state.log].sort((a, b) => b.timestamp - a.timestamp);
-  for (const item of entries) {
-    const node = logTemplate.content.cloneNode(true);
-    const entryEl = node.querySelector('.log-entry');
-    entryEl.classList.add(`type-${item.type}`);
-    node.querySelector('.timestamp').textContent = new Date(item.timestamp).toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-    node.querySelector('.message').textContent = item.message;
-    fragment.appendChild(node);
+  const model = buildLogModel(state);
+  const presenter = getActiveView()?.presenters?.log ?? classicLogPresenter;
+  if (typeof presenter?.render === 'function') {
+    presenter.render(model);
   }
-  logFeed.appendChild(fragment);
-  logFeed.scrollTop = 0;
 }
