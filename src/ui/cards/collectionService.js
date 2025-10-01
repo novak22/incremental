@@ -19,10 +19,13 @@ function ensureRegistrySnapshot() {
     return snapshot;
   } catch (error) {
     const message = typeof error?.message === 'string' ? error.message : '';
-    if (hasEnsuredRegistry || !message.includes('Registry definitions have not been loaded')) {
+    const registryMissing = message.includes('Registry definitions have not been loaded');
+
+    if (!registryMissing) {
       throw error;
     }
 
+    hasEnsuredRegistry = false;
     loadDefaultRegistry();
     configureRegistry();
     hasEnsuredRegistry = true;
