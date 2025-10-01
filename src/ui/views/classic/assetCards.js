@@ -81,6 +81,14 @@ let assetHubNode = null;
 let assetEmptyNotice = null;
 let assetLaunchPanelExpanded = false;
 
+function resolveAssetGalleryContainer() {
+  return (
+    getElement('assetGallery')
+    || (typeof document !== 'undefined' ? document.getElementById('venture-gallery') : null)
+    || (typeof document !== 'undefined' ? document.getElementById('asset-gallery') : null)
+  );
+}
+
 function normalizeModelData(models = {}) {
   return {
     groups: Array.isArray(models?.groups) ? models.groups : [],
@@ -1300,11 +1308,11 @@ function createAssetGroupSection(group, state = getState()) {
 }
 
 function renderAssets(definitions = [], assetModels = currentAssetModels) {
-  const container = getElement('assetGallery');
-  if (!container) return;
-
   const normalizedModels = resolveAssetModels(definitions, assetModels);
   storeAssetCaches({ definitions, models: normalizedModels });
+
+  const container = resolveAssetGalleryContainer();
+  if (!container) return;
 
   const state = getState();
   const hub = buildAssetHub(normalizedModels.groups, normalizedModels.launchers, state);
@@ -1322,9 +1330,13 @@ function renderAssets(definitions = [], assetModels = currentAssetModels) {
 }
 
 function updateAssetHub() {
-  const container = getElement('assetGallery');
+  const container = resolveAssetGalleryContainer();
   if (!container || !assetHubNode) return;
-  container.replaceChild(assetHubNode, container.firstElementChild);
+  if (container.firstElementChild) {
+    container.replaceChild(assetHubNode, container.firstElementChild);
+  } else {
+    container.appendChild(assetHubNode);
+  }
 }
 
 function updateAssetEmptyNotice(totalInstances) {
@@ -1339,6 +1351,11 @@ function updateAssets(definitions = [], assetModels = currentAssetModels) {
   const state = getState();
   const hub = buildAssetHub(normalizedModels.groups, normalizedModels.launchers, state);
   assetHubNode = hub;
+
+  const container = resolveAssetGalleryContainer();
+  if (container) {
+    assetPortfolioNode = container;
+  }
 
   if (assetPortfolioNode) {
     assetPortfolioNode.innerHTML = '';
