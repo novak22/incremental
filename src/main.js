@@ -9,11 +9,21 @@ import { handleOfflineProgress } from './game/offline.js';
 import { initHeaderActionControls } from './ui/headerAction/index.js';
 import { setActiveView } from './ui/viewManager.js';
 import classicView from './ui/views/classic/index.js';
+import browserView from './ui/views/browser/index.js';
 import { loadDefaultRegistry } from './game/registryLoader.js';
+
+function resolveInitialView(rootDocument = typeof document !== 'undefined' ? document : null) {
+  const viewId = rootDocument?.body?.dataset?.uiView;
+  if (viewId === browserView.id) {
+    return browserView;
+  }
+  return classicView;
+}
 
 loadDefaultRegistry();
 configureRegistry();
-setActiveView(classicView, document);
+const initialView = resolveInitialView(document);
+setActiveView(initialView, document);
 const { returning, lastSaved } = loadState({
   onFirstLoad: () =>
     addLog('Welcome to Online Hustle Simulator! Time to make that side cash.', 'info'),

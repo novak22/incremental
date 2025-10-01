@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+- Browser shell entry experiments ship a homepage chrome with pinned sites and dedicated widgets while sharing the core game lo
+op with the classic dashboard.
 - Modular UI view-model builders keep player overview, skills, header actions, and layout filters aligned while making alternate shells easy to drop in.
 - Passive asset economy has lower upkeep, clearer payout ladders, and milestone callouts so builds pay off earlier.
 - Education and hustle systems link courses to gig bonuses with celebratory progress cues and smarter scheduling buffers.
