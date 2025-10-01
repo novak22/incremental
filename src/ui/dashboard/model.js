@@ -22,6 +22,102 @@ function clampScore(value) {
   return Math.max(0, Math.min(100, Math.round(value)));
 }
 
+function getMetricLabel(entry = {}) {
+  return entry.label
+    || entry?.definition?.label
+    || entry?.definition?.name
+    || entry.key
+    || 'Metric';
+}
+
+function extractIconPrefix(label) {
+  if (typeof label !== 'string') return '';
+  const match = label.match(/^([^\w]*)/u);
+  return match ? match[1].trim() : '';
+}
+
+function formatTimeEntries(summary = {}) {
+  const entries = Array.isArray(summary.timeBreakdown) ? summary.timeBreakdown : [];
+  return entries.map(entry => {
+    const hours = clampNumber(entry?.hours);
+    return {
+      key: entry?.key,
+      label: getMetricLabel(entry),
+      value: `${formatHours(hours)} today`,
+      hours,
+      category: entry?.category || entry?.definition?.category || 'general',
+      definition: entry?.definition
+    };
+  });
+}
+
+function formatPayoutEntries(entries = []) {
+  return entries.map(entry => {
+    const amount = clampNumber(entry?.amount);
+    const baseLabel = getMetricLabel(entry);
+    let label = baseLabel;
+
+    if (entry?.source?.type === 'asset') {
+      const prefix = extractIconPrefix(entry?.label);
+      const name = entry?.source?.name || baseLabel;
+      const decorated = entry?.source?.count > 1 ? `${name} (${entry.source.count})` : name;
+      label = prefix ? `${prefix} ${decorated}`.trim() : decorated;
+    }
+
+    return {
+      key: entry?.key,
+      label,
+      value: `$${formatMoney(amount)} today`,
+      amount,
+      category: entry?.category || entry?.definition?.category || 'general',
+      definition: entry?.definition,
+      stream: entry?.stream,
+      source: entry?.source
+    };
+  });
+}
+
+function formatSpendEntries(entries = []) {
+  return entries.map(entry => {
+    const amount = clampNumber(entry?.amount);
+    return {
+      key: entry?.key,
+      label: getMetricLabel(entry),
+      value: `$${formatMoney(amount)} today`,
+      amount,
+      category: entry?.category || entry?.definition?.category || 'general',
+      definition: entry?.definition
+    };
+  });
+}
+
+function formatStudyEntries(entries = []) {
+  return entries.map(entry => {
+    const hours = clampNumber(entry?.hoursPerDay);
+    const remaining = Math.max(0, clampNumber(entry?.remainingDays));
+    const status = entry?.status || (entry?.studiedToday ? 'scheduled' : 'waiting');
+    return {
+      trackId: entry?.trackId,
+      label: `📘 ${entry?.name}`,
+      value: `${formatHours(hours)} / day • ${remaining} day${remaining === 1 ? '' : 's'} left (${status})`,
+      hoursPerDay: hours,
+      remainingDays: remaining,
+      studiedToday: Boolean(entry?.studiedToday),
+      status
+    };
+  });
+}
+
+function buildSummaryPresentations(summary = {}) {
+  return {
+    timeEntries: formatTimeEntries(summary),
+    earningsEntries: formatPayoutEntries(Array.isArray(summary.earningsBreakdown) ? summary.earningsBreakdown : []),
+    passiveEntries: formatPayoutEntries(Array.isArray(summary.passiveBreakdown) ? summary.passiveBreakdown : []),
+    spendEntries: formatSpendEntries(Array.isArray(summary.spendBreakdown) ? summary.spendBreakdown : []),
+    studyEntries: formatStudyEntries(Array.isArray(summary.studyBreakdown) ? summary.studyBreakdown : [])
+  };
+}
+
 function describeDelta(popularity = {}) {
   const raw = Number(popularity.delta);
   if (!Number.isFinite(raw)) return 'Fresh reading';
@@ -206,7 +302,8 @@ function computeTimeCap(state = {}) {
 }
 
 function describeQueue(summary = {}) {
-  const entries = Array.isArray(summary.timeBreakdown) ? summary.timeBreakdown : [];
+  const { timeEntries } = buildSummaryPresentations(summary);
+  const entries = Array.isArray(timeEntries) ? timeEntries : [];
   if (!entries.length) {
     return [
       {
@@ -458,6 +555,7 @@ function buildEventLog(state = {}) {
 }
 
 function buildDailyStats(summary = {}) {
+  const presentations = buildSummaryPresentations(summary);
   const totalTime = Math.max(0, clampNumber(summary.totalTime));
   const setupHours = Math.max(0, clampNumber(summary.setupHours));
   const maintenanceHours = Math.max(0, clampNumber(summary.maintenanceHours));
@@ -489,32 +587,32 @@ function buildDailyStats(summary = {}) {
   return {
     time: {
       summary: timeSummaryText,
-      entries: Array.isArray(summary.timeBreakdown) ? summary.timeBreakdown : [],
+      entries: presentations.timeEntries,
       emptyMessage: 'Time tracking kicks off after your first action.',
       limit: 3
     },
     earnings: {
       summary: earningsSummaryText,
       active: {
-        entries: Array.isArray(summary.earningsBreakdown) ? summary.earningsBreakdown : [],
+        entries: presentations.earningsEntries,
         emptyMessage: 'Active gigs will report here.',
         limit: 3
       },
       passive: {
-        entries: Array.isArray(summary.passiveBreakdown) ? summary.passiveBreakdown : [],
+        entries: presentations.passiveEntries,
         emptyMessage: 'Passive and offline streams update after upkeep.',
         limit: 3
       }
     },
     spend: {
       summary: spendSummaryText,
-      entries: Array.isArray(summary.spendBreakdown) ? summary.spendBreakdown : [],
+      entries: presentations.spendEntries,
       emptyMessage: 'No cash out yet. Fund upkeep or buy an upgrade.',
       limit: 3
     },
     study: {
       summary: studySummaryText,
-      entries: Array.isArray(summary.studyBreakdown) ? summary.studyBreakdown : [],
+      entries: presentations.studyEntries,
       emptyMessage: 'Your courses will list here once enrolled.',
       limit: 3
     }
