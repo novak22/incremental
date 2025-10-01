@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-browser-theme="day">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body data-ui-view="browser">
-  <div class="browser-shell" data-theme="night">
+  <div class="browser-shell" data-theme="day">
     <header class="browser-chrome" aria-label="Browser chrome">
       <div class="browser-chrome__cluster" aria-label="Navigation controls">
         <button id="browser-nav-back" class="browser-button" type="button" title="Go back">⟵</button>
@@ -28,9 +28,19 @@
           autocomplete="off"
         />
       </form>
-      <div class="browser-chrome__cluster" aria-label="Session controls">
+      <div class="browser-chrome__cluster browser-chrome__cluster--session" aria-label="Session controls">
         <button id="browser-home-button" class="browser-button" type="button">Home</button>
         <button id="browser-command-button" class="browser-button" type="button">⌘K</button>
+        <button
+          id="browser-theme-toggle"
+          class="browser-button browser-button--icon"
+          type="button"
+          title="Toggle light or dark mode"
+          aria-pressed="false"
+        >
+          <span class="browser-theme-toggle__icon" aria-hidden="true">🌞</span>
+          <span class="browser-theme-toggle__label">Light</span>
+        </button>
         <a
           id="browser-classic-link"
           class="browser-button"
@@ -43,47 +53,67 @@
     </header>
 
     <div class="browser-layout">
-      <aside class="browser-sidebar" aria-labelledby="browser-sites-heading">
-        <header class="browser-sidebar__header">
-          <h2 id="browser-sites-heading">Favorite Stations</h2>
-          <p id="browser-sites-note">Pin your go-to dashboards for lightning hops.</p>
-        </header>
-        <ul id="browser-site-list" class="browser-site-list" aria-live="polite"></ul>
-        <button id="browser-add-site" class="browser-sidebar__action" type="button">Add site</button>
-      </aside>
-
       <main class="browser-main" aria-live="polite">
         <section id="browser-home" class="browser-home" aria-labelledby="browser-home-heading">
           <header class="browser-home__header">
-            <h1 id="browser-home-heading">Browser Homepage</h1>
-            <p id="browser-home-tagline">Your empire’s launchpad with shortcuts, streaks, and story beats.</p>
+            <div class="browser-home__headline">
+              <h1 id="browser-home-heading">Browser Homepage</h1>
+              <p id="browser-home-tagline">Your empire’s launchpad with shortcuts, streaks, and story beats.</p>
+            </div>
           </header>
 
-          <div class="browser-home__widgets">
-            <section class="browser-widget" aria-labelledby="browser-widget-focus-heading">
-              <header class="browser-widget__header">
-                <h2 id="browser-widget-focus-heading">Focus streak</h2>
-                <p id="browser-widget-focus-note">Keep the daily rhythm humming.</p>
-              </header>
-              <div id="browser-widget-focus" class="browser-widget__body"></div>
-            </section>
+          <section class="browser-home__section" aria-labelledby="browser-sites-heading">
+            <div class="browser-section-header">
+              <h2 id="browser-sites-heading">Workspace</h2>
+              <p id="browser-sites-note">Pin your go-to dashboards for lightning hops.</p>
+            </div>
+            <div class="browser-home__apps">
+              <ul id="browser-site-list" class="browser-app-grid" aria-live="polite"></ul>
+              <button id="browser-add-site" class="browser-app-button" type="button">Add site</button>
+            </div>
+          </section>
 
-            <section class="browser-widget" aria-labelledby="browser-widget-updates-heading">
-              <header class="browser-widget__header">
-                <h2 id="browser-widget-updates-heading">Latest updates</h2>
-                <p id="browser-widget-updates-note">Fresh highlights from your ventures.</p>
-              </header>
-              <ul id="browser-widget-updates" class="browser-widget__list"></ul>
-            </section>
+          <section class="browser-home__section" aria-labelledby="browser-widgets-heading">
+            <div class="browser-section-header">
+              <h2 id="browser-widgets-heading">Pinned widgets</h2>
+              <p>Keep fast stats and actions right where you need them.</p>
+            </div>
+            <div id="browser-widget-grid" class="browser-widget-grid">
+              <section class="browser-widget-card" data-widget="todo" aria-labelledby="browser-widget-todo-heading">
+                <header class="browser-widget-card__header">
+                  <h3 id="browser-widget-todo-heading">Today's tasks</h3>
+                  <p id="browser-widget-todo-note">Line up your next wins.</p>
+                </header>
+                <div class="browser-widget-card__body">
+                  <ul id="browser-widget-todo-list" class="browser-todo-list"></ul>
+                  <div class="browser-todo-log" aria-live="polite">
+                    <h4 id="browser-widget-todo-done-heading">Done</h4>
+                    <ul id="browser-widget-todo-done" class="browser-todo-done"></ul>
+                  </div>
+                </div>
+              </section>
 
-            <section class="browser-widget" aria-labelledby="browser-widget-shortcuts-heading">
-              <header class="browser-widget__header">
-                <h2 id="browser-widget-shortcuts-heading">Quick shortcuts</h2>
-                <p id="browser-widget-shortcuts-note">Jump straight into your next power move.</p>
-              </header>
-              <div id="browser-widget-shortcuts" class="browser-widget__body browser-widget__body--grid"></div>
-            </section>
-          </div>
+              <section class="browser-widget-card" data-widget="earnings" aria-labelledby="browser-widget-earnings-heading">
+                <header class="browser-widget-card__header">
+                  <h3 id="browser-widget-earnings-heading">Earnings pulse</h3>
+                  <p id="browser-widget-earnings-note">Track today’s flow at a glance.</p>
+                </header>
+                <div class="browser-widget-card__body">
+                  <div id="browser-widget-earnings" class="browser-earnings-stats"></div>
+                </div>
+              </section>
+
+              <section class="browser-widget-card" data-widget="notifications" aria-labelledby="browser-widget-notifications-heading">
+                <header class="browser-widget-card__header">
+                  <h3 id="browser-widget-notifications-heading">Notifications</h3>
+                  <p id="browser-widget-notifications-note">Alerts and upgrades ready to roll.</p>
+                </header>
+                <div class="browser-widget-card__body">
+                  <ul id="browser-widget-notifications" class="browser-notification-list"></ul>
+                </div>
+              </section>
+            </div>
+          </section>
         </section>
       </main>
     </div>

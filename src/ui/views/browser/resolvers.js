@@ -13,6 +13,7 @@ const resolvers = {
     commandButton: root.getElementById('browser-command-button'),
     endDayButton: root.getElementById('browser-session-button')
   }),
+  themeToggle: root => root.getElementById('browser-theme-toggle'),
   headerActionButtons: root => ({
     endDayButton: root.getElementById('browser-session-button'),
     autoForwardButton: null
@@ -26,17 +27,22 @@ const resolvers = {
     tagline: root.getElementById('browser-home-tagline')
   }),
   homepageWidgets: root => ({
-    focus: {
-      container: root.getElementById('browser-widget-focus'),
-      note: root.getElementById('browser-widget-focus-note')
+    todo: {
+      container: root.querySelector('[data-widget="todo"]'),
+      list: root.getElementById('browser-widget-todo-list'),
+      done: root.getElementById('browser-widget-todo-done'),
+      note: root.getElementById('browser-widget-todo-note'),
+      doneHeading: root.getElementById('browser-widget-todo-done-heading')
     },
-    updates: {
-      list: root.getElementById('browser-widget-updates'),
-      note: root.getElementById('browser-widget-updates-note')
+    earnings: {
+      container: root.querySelector('[data-widget="earnings"]'),
+      list: root.getElementById('browser-widget-earnings'),
+      note: root.getElementById('browser-widget-earnings-note')
     },
-    shortcuts: {
-      container: root.getElementById('browser-widget-shortcuts'),
-      note: root.getElementById('browser-widget-shortcuts-note')
+    notifications: {
+      container: root.querySelector('[data-widget="notifications"]'),
+      list: root.getElementById('browser-widget-notifications'),
+      note: root.getElementById('browser-widget-notifications-note')
     }
   })
 };

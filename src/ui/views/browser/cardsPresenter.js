@@ -518,31 +518,63 @@ function renderSiteList(summaries = []) {
   if (!list) return;
   list.innerHTML = '';
 
-  SERVICE_PAGES.forEach(page => {
-    const summary = summaries.find(entry => entry?.id === page.id) || {};
+  const summaryMap = new Map(summaries.map(entry => [entry?.id, entry]));
+  const visiblePages = SERVICE_PAGES.filter(page => {
+    const meta = summaryMap.get(page.id)?.meta || '';
+    return !/lock/i.test(meta);
+  });
+
+  visiblePages.forEach(page => {
+    const summary = summaryMap.get(page.id) || {};
     const li = document.createElement('li');
 
     const button = document.createElement('button');
     button.type = 'button';
-    button.className = 'browser-site-list__button';
+    button.className = 'browser-app-card';
     button.dataset.siteTarget = page.id;
+    button.setAttribute('aria-label', `${page.label} workspace`);
+
+    const icon = document.createElement('span');
+    icon.className = 'browser-app-card__icon';
+    icon.textContent = page.icon || '✨';
+
+    const header = document.createElement('div');
+    header.className = 'browser-app-card__header';
 
     const title = document.createElement('span');
-    title.className = 'browser-site-list__title';
+    title.className = 'browser-app-card__title';
     title.textContent = page.label;
+    header.appendChild(title);
 
-    const meta = document.createElement('span');
-    meta.className = 'browser-site-list__meta';
-    meta.textContent = summary.meta || page.tagline;
+    if (summary.meta) {
+      const badge = document.createElement('span');
+      badge.className = 'browser-app-card__badge';
+      badge.textContent = summary.meta;
+      header.appendChild(badge);
+    }
 
-    button.append(title, meta);
+    const meta = document.createElement('p');
+    meta.className = 'browser-app-card__meta';
+    meta.textContent = page.tagline;
+
+    button.append(icon, header, meta);
     li.appendChild(button);
     list.appendChild(li);
   });
 
+  const addButton = getElement('addSiteButton');
+  if (addButton) {
+    addButton.classList.add('browser-app-button');
+    const addWrapper = document.createElement('li');
+    addWrapper.appendChild(addButton);
+    list.appendChild(addWrapper);
+  }
+
   const note = getElement('siteListNote');
   if (note) {
-    note.textContent = 'Pinned surfaces show quick health for each corner of your empire.';
+    note.textContent = visiblePages.length
+      ? 'Launch into any app. Status badges refresh in real time.'
+      : 'Unlock more workspaces through upgrades and courses.';
   }
 }
 
