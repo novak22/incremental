@@ -24,7 +24,6 @@ import {
   getPendingEquipmentUpgrades,
   isUpgradeDisabled
 } from '../../assetUpgrades.js';
-import { getAssetEffectMultiplier } from '../../../game/upgrades/effects.js';
 import {
   canPerformQualityAction,
   getQualityActionAvailability,
@@ -415,42 +414,48 @@ function createInstanceQuickActions(definition, instance, state) {
 
 function createInstanceNicheSelector(definition, instance) {
   const container = document.createElement('div');
-  container.className = 'asset-detail__niche';
+  container.className = 'asset-detail__niche-selector';
 
-  const title = document.createElement('h4');
-  title.textContent = 'Audience sync';
-  container.appendChild(title);
+  const label = document.createElement('span');
+  label.className = 'asset-detail__niche-label';
+  label.textContent = 'Audience sync';
+  container.appendChild(label);
 
   const select = document.createElement('select');
-  select.className = 'asset-detail__niche-select';
+  select.className = 'asset-detail__niche-dropdown';
   const info = getInstanceNicheInfo(instance);
-  const summary = getAssignableNicheSummaries(definition, instance) || {};
-  const entries = Array.isArray(summary.entries) ? summary.entries : [];
+  const summariesSource = getAssignableNicheSummaries(definition);
+  const summaries = Array.isArray(summariesSource) ? summariesSource : [];
 
-  const options = entries.map(entry => ({
-    value: entry.id,
-    label: `${entry.label}${entry.modifier ? ` (${entry.modifier})` : ''}`
-  }));
-  if (!summary.hideUnassigned) {
-    options.unshift({ value: '', label: 'Unassigned' });
-  }
+  const options = summaries
+    .map(entry => ({
+      value: entry?.definition?.id || '',
+      label: entry?.definition?.name || entry?.definition?.id || '',
+      modifier: entry?.popularity?.label || ''
+    }))
+    .filter(option => option.value && option.label);
+
+  options.unshift({ value: '', label: 'Unassigned' });
   options.forEach(option => {
     const node = document.createElement('option');
     node.value = option.value;
-    node.textContent = option.label;
+    node.textContent = option.modifier ? `${option.label} (${option.modifier})` : option.label;
     select.appendChild(node);
   });
-  select.value = info?.id || '';
+  select.value = info?.definition?.id || '';
 
   select.addEventListener('change', () => {
-    assignInstanceToNiche(instance.id, select.value);
+    const assetId = definition?.id || instance?.definitionId;
+    assignInstanceToNiche(assetId, instance.id, select.value);
   });
 
   const hint = document.createElement('p');
-  hint.className = 'asset-detail__niche-hint';
-  if (summary.note) {
-    hint.textContent = summary.note;
-  } else if (info?.id) {
+  hint.className = 'asset-detail__niche-note';
+  if (info?.popularity?.summary) {
+    hint.textContent = info.popularity.summary;
+  } else if (summaries[0]?.popularity?.summary) {
+    hint.textContent = summaries[0].popularity.summary;
+  } else if (info?.definition?.id) {
     hint.textContent = 'Boosting demand with a specialty audience.';
   } else {
     hint.textContent = 'Pick a niche to sync with daily demand.';
@@ -952,65 +957,115 @@ function formatUpkeepTotals(cost, hours) {
 }
 
 function buildAssetSummary(groups = []) {
+  const summary = document.createElement('div');
   const totalInstances = groups.reduce((sum, group) => sum + (group.instances ?? []).length, 0);
-  const summary = getElement('assetSummary');
-  if (!summary) return totalInstances;
+  if (!totalInstances) {
+    summary.className = 'venture-summary venture-summary--empty';
+    const empty = document.createElement('p');
+    empty.className = 'venture-summary__empty';
+    empty.textContent = 'Launch a fresh venture to light up this showcase.';
+    summary.appendChild(empty);
+    return { summary, totalInstances, emptyNotice: empty };
+  }
+
+  summary.className = 'venture-summary';
 
   const activeInstances = groups.reduce(
     (sum, group) => sum + (group.instances ?? []).filter(instance => instance.status === 'active').length,
     0
   );
-
-  summary.total.textContent = String(totalInstances);
-  summary.active.textContent = `${activeInstances}/${totalInstances}`;
-
   const upkeepTotal = groups.reduce((sum, group) => {
     const upkeep = Number(group.metrics?.upkeep?.total) || 0;
     return sum + upkeep;
   }, 0);
 
-  summary.upkeep.textContent = `$${formatMoney(upkeepTotal)} / day`;
-  return totalInstances;
+  const stats = [
+    { label: 'Asset groups', value: String(groups.length) },
+    { label: 'Active ventures', value: `${activeInstances}/${totalInstances}` },
+    { label: 'Daily upkeep', value: `$${formatMoney(upkeepTotal)} / day` }
+  ];
+
+  stats.forEach(entry => {
+    const stat = document.createElement('div');
+    stat.className = 'venture-summary__stat';
+    const value = document.createElement('span');
+    value.className = 'venture-summary__value';
+    value.textContent = entry.value;
+    const label = document.createElement('span');
+    label.className = 'venture-summary__label';
+    label.textContent = entry.label;
+    stat.append(value, label);
+    summary.appendChild(stat);
+  });
+
+  return { summary, totalInstances, emptyNotice: null };
 }
 
 function buildAssetLaunchTile(launcher, state = getState()) {
-  const item = document.createElement('li');
-  item.className = 'launch-panel__item';
+  const tile = document.createElement('article');
+  tile.className = 'venture-launcher__tile';
+  const availability = describeAssetLaunchAvailability(launcher.definition, state);
+  const ready = availability ? availability.disabled === false : false;
+  if (ready) {
+    tile.classList.add('venture-launcher__tile--success');
+  }
+  if (launcher.action?.disabled) {
+    tile.classList.add('is-disabled');
+  }
 
   const header = document.createElement('div');
-  header.className = 'launch-panel__header';
+  header.className = 'venture-launcher__heading';
   const title = document.createElement('h3');
+  title.className = 'venture-launcher__title';
   title.textContent = launcher.name;
   header.appendChild(title);
-  const quality = document.createElement('span');
-  quality.className = 'launch-panel__quality';
-  const availability = describeAssetLaunchAvailability(launcher.definition, state);
-  quality.textContent = availability?.ready ? 'Ready to launch' : 'Requires prep';
-  header.appendChild(quality);
-  item.appendChild(header);
+  const type = document.createElement('span');
+  type.className = 'venture-launcher__type';
+  type.textContent = ready ? 'Ready to launch' : 'Requires prep';
+  header.appendChild(type);
+  tile.appendChild(header);
 
   const summary = document.createElement('p');
-  summary.className = 'launch-panel__summary';
+  summary.className = 'venture-launcher__summary';
   summary.textContent = launcher.summary;
-  item.appendChild(summary);
+  tile.appendChild(summary);
+
+  const meta = document.createElement('p');
+  meta.className = 'venture-launcher__meta';
+  const parts = [];
+  if (launcher.setup?.days) {
+    parts.push(`${launcher.setup.days} day setup`);
+  }
+  if (launcher.setup?.hoursPerDay) {
+    parts.push(`${formatHours(launcher.setup.hoursPerDay)} / day`);
+  }
+  if (launcher.setup?.cost) {
+    parts.push(`$${formatMoney(launcher.setup.cost)} upfront`);
+  }
+  if (launcher.upkeep) {
+    parts.push(`${launcher.upkeep} upkeep`);
+  }
+  meta.textContent = parts.join(' • ');
+  tile.appendChild(meta);
 
   const actions = document.createElement('div');
-  actions.className = 'launch-panel__actions';
+  actions.className = 'venture-launcher__actions';
 
   const launchButton = document.createElement('button');
   launchButton.type = 'button';
-  launchButton.className = 'primary';
+  launchButton.className = ['venture-launcher__button', launcher.action?.className || 'primary'].join(' ');
   launchButton.textContent = launcher.action?.label || 'Launch';
-  launchButton.disabled = !availability?.ready || launcher.action?.disabled;
+  launchButton.disabled = Boolean(availability?.disabled || launcher.action?.disabled);
   launchButton.addEventListener('click', event => {
     event.preventDefault();
+    if (launchButton.disabled) return;
     launcher.action?.onClick?.();
   });
   actions.appendChild(launchButton);
 
   const detailsButton = document.createElement('button');
   detailsButton.type = 'button';
-  detailsButton.className = 'ghost';
+  detailsButton.className = 'venture-launcher__button ghost';
   detailsButton.textContent = 'Details';
   detailsButton.addEventListener('click', () => {
     const body = document.createElement('div');
@@ -1019,100 +1074,114 @@ function buildAssetLaunchTile(launcher, state = getState()) {
   });
   actions.appendChild(detailsButton);
 
-  item.appendChild(actions);
-  return item;
+  tile.appendChild(actions);
+
+  const feedback = document.createElement('p');
+  feedback.className = 'venture-launcher__feedback';
+  if (availability?.disabled && availability?.reasons?.length) {
+    feedback.textContent = availability.reasons[0];
+  } else {
+    feedback.textContent = buildLaunchFeedbackMessage(launcher.definition);
+  }
+  tile.appendChild(feedback);
+
+  return tile;
 }
 
 function buildAssetLaunchPanel(launchers = [], state = getState()) {
   if (!launchers.length) return null;
 
-  const panel = document.createElement('section');
-  panel.className = 'launch-panel';
-  panel.dataset.expanded = assetLaunchPanelExpanded ? 'true' : 'false';
+  const wrapper = document.createElement('div');
+  wrapper.className = 'venture-launcher';
 
-  const header = document.createElement('header');
-  header.className = 'launch-panel__header';
-  const title = document.createElement('h2');
+  const content = document.createElement('div');
+  content.className = 'venture-launcher__content';
+
+  const header = document.createElement('div');
+  header.className = 'venture-launcher__header';
+  const title = document.createElement('h3');
+  title.className = 'venture-launcher__heading-title';
   title.textContent = 'Launch blueprint';
   header.appendChild(title);
+  const note = document.createElement('p');
+  note.className = 'venture-launcher__note';
+  note.textContent = 'Line up your next flagship build with ready-to-launch blueprints.';
+  header.appendChild(note);
+  content.appendChild(header);
 
-  const toggle = document.createElement('button');
-  toggle.type = 'button';
-  toggle.className = 'launch-panel__toggle';
-  toggle.textContent = assetLaunchPanelExpanded ? 'Hide launch options' : 'Show launch options';
-  toggle.addEventListener('click', () => {
-    assetLaunchPanelExpanded = !assetLaunchPanelExpanded;
-    panel.dataset.expanded = assetLaunchPanelExpanded ? 'true' : 'false';
-    toggle.textContent = assetLaunchPanelExpanded ? 'Hide launch options' : 'Show launch options';
-  });
-  header.appendChild(toggle);
-
-  panel.appendChild(header);
-
-  const list = document.createElement('ul');
-  list.className = 'launch-panel__list';
+  const grid = document.createElement('div');
+  grid.className = 'venture-launcher__grid';
   launchers.forEach(launcher => {
     const tile = buildAssetLaunchTile(launcher, state);
     if (tile) {
-      list.appendChild(tile);
+      grid.appendChild(tile);
     }
   });
-  panel.appendChild(list);
+  content.appendChild(grid);
 
-  return panel;
+  const toggle = document.createElement('button');
+  toggle.type = 'button';
+  toggle.className = 'venture-launcher__trigger ghost';
+  const applyToggleState = () => {
+    toggle.textContent = assetLaunchPanelExpanded ? 'Hide launch options' : 'Show launch options';
+    toggle.classList.toggle('is-open', assetLaunchPanelExpanded);
+    content.hidden = !assetLaunchPanelExpanded;
+  };
+  toggle.addEventListener('click', () => {
+    assetLaunchPanelExpanded = !assetLaunchPanelExpanded;
+    applyToggleState();
+  });
+
+  wrapper.appendChild(toggle);
+  wrapper.appendChild(content);
+  applyToggleState();
+
+  return wrapper;
 }
 
 function buildAssetHub(groups, launchers, state = getState()) {
   const container = document.createElement('section');
-  container.className = 'asset-hub';
+  container.className = 'venture-hub';
 
-  const header = document.createElement('header');
-  header.className = 'asset-hub__header';
-  const title = document.createElement('h2');
-  title.textContent = 'Asset hub';
-  header.appendChild(title);
-  container.appendChild(header);
-
-  const metricsRow = document.createElement('div');
-  metricsRow.className = 'asset-hub__metrics';
-  const groupsCount = groups.length;
-  metricsRow.appendChild(createMetric('Asset groups', String(groupsCount)));
-  metricsRow.appendChild(createMetric('Total assets', String(groups.reduce(
-    (sum, group) => sum + (group.instances ?? []).length,
-    0
-  ))));
-  const multiplier = getAssetEffectMultiplier(state);
-  metricsRow.appendChild(createMetric('Effect multiplier', `${formatPercent(multiplier)} boost`));
-  container.appendChild(metricsRow);
+  const { summary, totalInstances, emptyNotice } = buildAssetSummary(groups);
+  container.appendChild(summary);
 
   const launchPanel = buildAssetLaunchPanel(launchers, state);
   if (launchPanel) {
     container.appendChild(launchPanel);
   }
 
-  const groupsList = document.createElement('div');
-  groupsList.className = 'asset-hub__groups';
+  const portfolio = document.createElement('div');
+  portfolio.className = 'asset-portfolio';
   groups.forEach(group => {
     const section = createAssetGroupSection(group, state);
     if (section) {
-      groupsList.appendChild(section);
+      portfolio.appendChild(section);
     }
   });
-  container.appendChild(groupsList);
+  container.appendChild(portfolio);
 
-  return container;
+  return { container, totalInstances, emptyNotice };
 }
 
 function createMetric(label, value) {
   const metric = document.createElement('div');
-  metric.className = 'asset-hub__metric';
-  const heading = document.createElement('span');
-  heading.className = 'asset-hub__metric-label';
-  heading.textContent = label;
-  const detail = document.createElement('span');
-  detail.className = 'asset-hub__metric-value';
-  detail.textContent = value;
-  metric.append(heading, detail);
+  metric.className = 'asset-detail__metric';
+
+  const metricLabel = document.createElement('span');
+  metricLabel.className = 'asset-detail__metric-label';
+  metricLabel.textContent = label;
+  metric.appendChild(metricLabel);
+
+  const metricValue = document.createElement('span');
+  metricValue.className = 'asset-detail__metric-value';
+  if (value instanceof Node) {
+    metricValue.appendChild(value);
+  } else {
+    metricValue.textContent = value;
+  }
+  metric.appendChild(metricValue);
+
   return metric;
 }
 
@@ -1308,43 +1377,54 @@ function createAssetInstanceCard(definition, instance, index, state = getState()
 function createAssetGroupSection(group, state = getState()) {
   if (!group?.id) return null;
   const section = document.createElement('section');
-  section.className = 'asset-group';
+  section.className = 'asset-portfolio__group';
   section.dataset.group = group.id;
 
   const header = document.createElement('header');
-  header.className = 'asset-group__header';
-  const title = document.createElement('h3');
-  title.textContent = getAssetGroupLabel(group.id);
-  header.appendChild(title);
+  header.className = 'asset-portfolio__header';
 
-  const note = getAssetGroupNote(group.id);
+  const heading = document.createElement('div');
+  heading.className = 'asset-portfolio__heading';
+  const icon = document.createElement('span');
+  icon.className = 'asset-portfolio__icon';
+  icon.textContent = group.icon || '✨';
+  heading.appendChild(icon);
+
+  const title = document.createElement('h3');
+  title.className = 'asset-portfolio__title';
+  title.textContent = group.label || getAssetGroupLabel(group.id);
+  heading.appendChild(title);
+
+  const note = group.note || getAssetGroupNote(group.id);
   if (note) {
     const noteNode = document.createElement('p');
-    noteNode.className = 'asset-group__note';
+    noteNode.className = 'asset-portfolio__note';
     noteNode.textContent = note;
-    header.appendChild(noteNode);
+    heading.appendChild(noteNode);
   }
+  header.appendChild(heading);
 
-  const summary = document.createElement('p');
-  summary.className = 'asset-group__summary';
-  summary.textContent = describeAssetCardSummary(group);
-  header.appendChild(summary);
+  const toolbar = document.createElement('div');
+  toolbar.className = 'asset-portfolio__toolbar';
 
-  const actions = document.createElement('div');
-  actions.className = 'asset-group__actions';
+  const count = document.createElement('span');
+  count.className = 'asset-portfolio__count';
+  const totalInstances = (group.instances || []).length;
+  count.textContent = totalInstances === 1 ? '1 venture' : `${totalInstances} ventures`;
+  toolbar.appendChild(count);
 
   const detailsButton = document.createElement('button');
   detailsButton.type = 'button';
-  detailsButton.className = 'ghost';
+  detailsButton.className = 'asset-portfolio__detail-button ghost';
   detailsButton.textContent = 'Details';
   detailsButton.addEventListener('click', () => openAssetGroupDetails(group));
-  actions.appendChild(detailsButton);
+  toolbar.appendChild(detailsButton);
 
-  header.appendChild(actions);
+  header.appendChild(toolbar);
   section.appendChild(header);
 
   const list = document.createElement('ul');
-  list.className = 'asset-group__instances';
+  list.className = 'asset-portfolio__cards';
   (group.instances || []).forEach((instance, index) => {
     const definition = resolveDefinitionReference(group.definition, instance, group);
     const item = createInstanceCard(definition, instance, index + 1, state, group);
@@ -1366,16 +1446,19 @@ function renderAssets(definitions = [], assetModels = currentAssetModels) {
   if (!container) return;
 
   const state = getState();
-  const hub = buildAssetHub(normalizedModels.groups, normalizedModels.launchers, state);
+  const { container: hub, totalInstances, emptyNotice } = buildAssetHub(
+    normalizedModels.groups,
+    normalizedModels.launchers,
+    state
+  );
 
   container.innerHTML = '';
   container.appendChild(hub);
 
   assetHubNode = hub;
   assetPortfolioNode = container;
-  assetEmptyNotice = getElement('assetEmptyNotice');
+  assetEmptyNotice = emptyNotice || hub.querySelector('.venture-summary__empty') || null;
 
-  const totalInstances = buildAssetSummary(assetModels.groups);
   updateAssetEmptyNotice(totalInstances);
   applyCardFilters();
 }
@@ -1400,7 +1483,11 @@ function updateAssets(definitions = [], assetModels = currentAssetModels) {
   storeAssetCaches({ definitions, models: normalizedModels });
 
   const state = getState();
-  const hub = buildAssetHub(normalizedModels.groups, normalizedModels.launchers, state);
+  const { container: hub, totalInstances, emptyNotice } = buildAssetHub(
+    normalizedModels.groups,
+    normalizedModels.launchers,
+    state
+  );
   assetHubNode = hub;
 
   const container = resolveAssetGalleryContainer();
@@ -1413,7 +1500,7 @@ function updateAssets(definitions = [], assetModels = currentAssetModels) {
     assetPortfolioNode.appendChild(hub);
   }
 
-  const totalInstances = buildAssetSummary(normalizedModels.groups);
+  assetEmptyNotice = emptyNotice || hub.querySelector('.venture-summary__empty') || null;
   updateAssetEmptyNotice(totalInstances);
   applyCardFilters();
 }
@@ -1428,7 +1515,19 @@ function updateAssetGroup(definitionId) {
     ui.section.replaceWith(section);
     assetGroupUi.set(group.id, { ...ui, section });
   }
-  buildAssetSummary(currentAssetModels.groups);
+  const summaryData = buildAssetSummary(currentAssetModels.groups);
+  if (assetHubNode && summaryData?.summary) {
+    const existing = assetHubNode.querySelector('.venture-summary');
+    if (existing) {
+      existing.replaceWith(summaryData.summary);
+    } else {
+      assetHubNode.prepend(summaryData.summary);
+    }
+    assetEmptyNotice = summaryData.emptyNotice || summaryData.summary.querySelector('.venture-summary__empty') || null;
+    updateAssetEmptyNotice(summaryData.totalInstances);
+  } else {
+    updateAssetEmptyNotice(summaryData?.totalInstances ?? 0);
+  }
   applyCardFilters();
 }
 
