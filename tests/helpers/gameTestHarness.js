@@ -26,16 +26,12 @@ export async function getGameTestHarness() {
   const viewManagerModule = await import('../../src/ui/viewManager.js');
   const classicViewModule = await import('../../src/ui/views/classic/index.js');
   const registryService = await import('../../src/game/registryService.js');
+  const { ensureRegistryReady } = await import('../../src/game/registryBootstrap.js');
 
   viewManagerModule.setActiveView(classicViewModule.default, document);
 
   registryService.resetRegistry();
-  registryService.loadRegistry({
-    assets: assetsModule.ASSETS,
-    hustles: hustlesModule.HUSTLES,
-    upgrades: upgradesModule.UPGRADES
-  });
-  registryModule.configureRegistry();
+  ensureRegistryReady();
 
   const elements = {
     get money() {

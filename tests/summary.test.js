@@ -5,9 +5,8 @@ import { ensureTestDom } from './helpers/setupDom.js';
 ensureTestDom();
 
 const { initializeState } = await import('../src/core/state.js');
-const { configureRegistry } = await import('../src/core/state/registry.js');
 const registryService = await import('../src/game/registryService.js');
-const { loadDefaultRegistry } = await import('../src/game/registryLoader.js');
+const { ensureRegistryReady } = await import('../src/game/registryBootstrap.js');
 const {
   recordCostContribution,
   recordPayoutContribution,
@@ -24,8 +23,7 @@ const {
 
 test('daily summary aggregates metrics into category totals', () => {
   registryService.resetRegistry();
-  loadDefaultRegistry();
-  configureRegistry();
+  ensureRegistryReady();
   const state = initializeState();
   resetDailyMetrics(state);
 
@@ -89,8 +87,7 @@ test('daily summary aggregates metrics into category totals', () => {
 
 test('daily summary attaches definition references for canonical metrics', () => {
   registryService.resetRegistry();
-  loadDefaultRegistry();
-  configureRegistry();
+  ensureRegistryReady();
   const state = initializeState();
   resetDailyMetrics(state);
 
@@ -133,8 +130,7 @@ test('daily summary attaches definition references for canonical metrics', () =>
 
 test('raw selectors return numeric breakdown entries', () => {
   registryService.resetRegistry();
-  loadDefaultRegistry();
-  configureRegistry();
+  ensureRegistryReady();
   const state = initializeState();
   resetDailyMetrics(state);
 
@@ -193,8 +189,7 @@ test('raw selectors return numeric breakdown entries', () => {
 
 test('lifetime totals accumulate alongside daily metrics', () => {
   registryService.resetRegistry();
-  loadDefaultRegistry();
-  configureRegistry();
+  ensureRegistryReady();
   const state = initializeState();
   resetDailyMetrics(state);
 

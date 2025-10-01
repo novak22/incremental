@@ -3,13 +3,11 @@ import assert from 'node:assert/strict';
 import { buildDashboardViewModel } from '../../src/ui/dashboard/model.js';
 import { buildDefaultState } from '../../src/core/state.js';
 import { getAssets, resetRegistry } from '../../src/game/registryService.js';
-import { loadDefaultRegistry } from '../../src/game/registryLoader.js';
-import { configureRegistry } from '../../src/core/state/registry.js';
+import { ensureRegistryReady } from '../../src/game/registryBootstrap.js';
 
 test.before(() => {
   resetRegistry();
-  loadDefaultRegistry();
-  configureRegistry();
+  ensureRegistryReady();
 });
 
 function createSummary(overrides = {}) {

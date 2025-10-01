@@ -14,16 +14,12 @@ test('renderCardCollections synthesizes models when omitted', async () => {
   }
 
   const stateModule = await import('../src/core/state.js');
-  const registryModule = await import('../src/core/state/registry.js');
   const registryService = await import('../src/game/registryService.js');
-  const { loadDefaultRegistry } = await import('../src/game/registryLoader.js');
+  const { ensureRegistryReady } = await import('../src/game/registryBootstrap.js');
   const { initializeState } = stateModule;
-  const { configureRegistry } = registryModule;
 
   registryService.resetRegistry();
-  loadDefaultRegistry();
-  configureRegistry();
-  const registry = registryService.getRegistry();
+  const registry = ensureRegistryReady();
   initializeState();
 
   const viewManager = await import('../src/ui/viewManager.js');
@@ -69,16 +65,12 @@ test('education tracks reflect canonical study data', async () => {
   queueCap.textContent = '';
 
   const stateModule = await import('../src/core/state.js');
-  const registryModule = await import('../src/core/state/registry.js');
   const { initializeState, getState } = stateModule;
-  const { configureRegistry } = registryModule;
 
   const registryService = await import('../src/game/registryService.js');
-  const { loadDefaultRegistry } = await import('../src/game/registryLoader.js');
+  const { ensureRegistryReady } = await import('../src/game/registryBootstrap.js');
   registryService.resetRegistry();
-  loadDefaultRegistry();
-  configureRegistry();
-  const registry = registryService.getRegistry();
+  const registry = ensureRegistryReady();
   initializeState();
 
   const requirements = await import('../src/game/requirements.js');
@@ -135,16 +127,12 @@ test('completed study tracks celebrate progress and skills', async () => {
   queueCap.textContent = '';
 
   const stateModule = await import('../src/core/state.js');
-  const registryModule = await import('../src/core/state/registry.js');
   const { initializeState, getState } = stateModule;
-  const { configureRegistry } = registryModule;
 
   const registryService = await import('../src/game/registryService.js');
-  const { loadDefaultRegistry } = await import('../src/game/registryLoader.js');
+  const { ensureRegistryReady } = await import('../src/game/registryBootstrap.js');
   registryService.resetRegistry();
-  loadDefaultRegistry();
-  configureRegistry();
-  const registry = registryService.getRegistry();
+  const registry = ensureRegistryReady();
   initializeState();
 
   const requirements = await import('../src/game/requirements.js');

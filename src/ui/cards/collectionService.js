@@ -1,6 +1,4 @@
-import { configureRegistry } from '../../core/state/registry.js';
-import { getRegistry } from '../../game/registryService.js';
-import { loadDefaultRegistry } from '../../game/registryLoader.js';
+import { ensureRegistryReady } from '../../game/registryBootstrap.js';
 import {
   buildAssetModels,
   buildEducationModels,
@@ -23,22 +21,8 @@ function updateSnapshot(snapshot) {
 }
 
 function ensureRegistrySnapshot() {
-  try {
-    const snapshot = getRegistry();
-    return updateSnapshot(snapshot);
-  } catch (error) {
-    const message = typeof error?.message === 'string' ? error.message : '';
-    const registryMissing = message.includes('Registry definitions have not been loaded');
-
-    if (!registryMissing) {
-      throw error;
-    }
-
-    loadDefaultRegistry();
-    configureRegistry();
-    const snapshot = getRegistry();
-    return updateSnapshot(snapshot);
-  }
+  const snapshot = ensureRegistryReady();
+  return updateSnapshot(snapshot);
 }
 
 function buildRegistries() {
