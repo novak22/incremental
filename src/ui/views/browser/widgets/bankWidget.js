@@ -1,4 +1,4 @@
-import { buildFinanceModel } from '../../../cards/model.js';
+import { buildFinanceModel } from '../../../cards/model/index.js';
 import { formatMoney } from '../../../../core/helpers.js';
 
 let elements = null;
