@@ -12,7 +12,7 @@
 - Pending payouts, per-asset performance, and curated opportunity lists make it easier to decide whether to launch, upgrade, or study next.
 
 ## Implementation Notes
-- `buildFinanceModel` in `src/ui/cards/model.js` synthesizes cash summaries, ledger groups, obligations, pending income, asset ROI, and study data from the existing state selectors.
+- `buildFinanceModel` in `src/ui/cards/model/finance.js` synthesizes cash summaries, ledger groups, obligations, pending income, asset ROI, and study data from the existing state selectors.
 - `renderFinancePage` in `src/ui/views/browser/cardsPresenter.js` assembles the new banking layout with reusable helper sections and styles, feeding the site list meta string for the BankApp tile.
 - The header summary reuses the classic dashboard totals to show Current balance, Net / Day, Daily +, and Daily - so both shells stay in sync.
 - `styles/browser.css` gained a `bankapp` design system (header summary strip, ledger grid, obligation cards, tables) so future browser apps can share the visual language.

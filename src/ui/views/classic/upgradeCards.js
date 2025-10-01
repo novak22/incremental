@@ -2,7 +2,7 @@ import { getElement } from '../../elements/registry.js';
 import { getState } from '../../../core/state.js';
 import { formatMoney } from '../../../core/helpers.js';
 import { applyCardFilters } from '../../layout/index.js';
-import { describeUpgradeStatus, getUpgradeSnapshot } from '../../cards/model.js';
+import { describeUpgradeStatus, getUpgradeSnapshot } from '../../cards/model/index.js';
 
 const upgradeUi = new Map();
 const upgradeSections = new Map();

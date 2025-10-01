@@ -4,7 +4,7 @@ import {
   buildEducationModels,
   buildHustleModels,
   buildUpgradeModels
-} from './model.js';
+} from './model/index.js';
 
 let cachedRegistries = null;
 let cachedModels = null;

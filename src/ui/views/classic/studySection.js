@@ -2,7 +2,7 @@ import { getElement } from '../../elements/registry.js';
 import { getState } from '../../../core/state.js';
 import { formatDays, formatHours, formatMoney } from '../../../core/helpers.js';
 import { KNOWLEDGE_TRACKS, getKnowledgeProgress } from '../../../game/requirements.js';
-import { resolveTrack } from '../../cards/model.js';
+import { resolveTrack } from '../../cards/model/index.js';
 import { createBadge } from './components/badge.js';
 import { createDefinitionSummary } from './components/definitionSummary.js';
 import { showSlideOver } from './components/slideOver.js';
