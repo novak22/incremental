@@ -9,6 +9,60 @@ import {
 } from '../requirements.js';
 import { describeTrackEducationBonuses } from '../educationEffects.js';
 
+export function createKnowledgeTrackPresenter(track) {
+  let cachedSignature = null;
+  let cachedViewModel = null;
+
+  const compute = (state = getState()) => {
+    const progress = getKnowledgeProgress(track.id, state);
+    const availableMoney = Number(state?.money ?? 0);
+    const signature = [
+      Number(progress.daysCompleted) || 0,
+      progress.enrolled ? '1' : '0',
+      progress.completed ? '1' : '0',
+      progress.studiedToday ? '1' : '0',
+      Number.isFinite(availableMoney) ? availableMoney : 0
+    ].join('|');
+
+    if (cachedSignature !== signature) {
+      cachedViewModel = buildTrackViewModel(track, state);
+      cachedSignature = signature;
+    }
+
+    return cachedViewModel;
+  };
+
+  return {
+    refresh(state = getState()) {
+      cachedSignature = null;
+      return compute(state);
+    },
+    getStatusLabel(state = getState()) {
+      return compute(state)?.statusLabel;
+    },
+    getCtaLabel(state = getState()) {
+      return compute(state)?.ctaLabel;
+    },
+    isEnrollable(state = getState()) {
+      return Boolean(compute(state)?.canEnroll);
+    },
+    getViewModel(state = getState()) {
+      return compute(state);
+    },
+    applyCardState(card, state = getState()) {
+      if (!card) return;
+      const snapshot = compute(state);
+      if (!snapshot) return;
+
+      const { progress, datasetFlags } = snapshot;
+      card.classList.toggle('completed', Boolean(progress?.completed));
+      card.dataset.inProgress = datasetFlags.inProgress ? 'true' : 'false';
+      card.dataset.studiedToday = datasetFlags.studiedToday ? 'true' : 'false';
+      card.dataset.enrolled = datasetFlags.enrolled ? 'true' : 'false';
+    }
+  };
+}
+
 export function buildTrackViewModel(track, state = getState()) {
   const progress = getKnowledgeProgress(track.id, state);
   const tuition = Number(track.tuition) || 0;
@@ -51,41 +105,38 @@ export function buildTrackViewModel(track, state = getState()) {
 }
 
 export function createKnowledgeHustles() {
-  return Object.values(KNOWLEDGE_TRACKS).map(track => ({
-    id: `study-${track.id}`,
-    studyTrackId: track.id,
-    name: track.name,
-    tag: { label: 'Study', type: 'study' },
-    description: track.description,
-    details: [
-      () => `🎓 Tuition: <strong>$${formatMoney(track.tuition)}</strong>`,
-      () => `⏳ Study Load: <strong>${formatHours(track.hoursPerDay)} / day for ${formatDays(track.days)}</strong>`,
-      () => buildTrackViewModel(track).statusLabel,
-      ...describeTrackEducationBonuses(track.id)
-    ],
-    action: {
-      id: `enroll-${track.id}`,
-      timeCost: 0,
-      moneyCost: Number(track.tuition) || 0,
-      label: () => buildTrackViewModel(track).ctaLabel,
-      className: 'secondary',
-      disabled: () => !buildTrackViewModel(track).canEnroll,
-      onClick: () => {
-        executeAction(() => {
-          const { progress, canEnroll } = buildTrackViewModel(track);
-          if (!canEnroll) return;
-          enrollInKnowledgeTrack(track.id);
-        });
-        checkDayEnd();
-      }
-    },
-    cardState: (_state, card) => {
-      if (!card) return;
-      const { progress, datasetFlags } = buildTrackViewModel(track);
-      card.classList.toggle('completed', progress.completed);
-      card.dataset.inProgress = datasetFlags.inProgress ? 'true' : 'false';
-      card.dataset.studiedToday = datasetFlags.studiedToday ? 'true' : 'false';
-      card.dataset.enrolled = datasetFlags.enrolled ? 'true' : 'false';
-    }
-  }));
+  return Object.values(KNOWLEDGE_TRACKS).map(track => {
+    const presenter = createKnowledgeTrackPresenter(track);
+
+    return {
+      id: `study-${track.id}`,
+      studyTrackId: track.id,
+      name: track.name,
+      tag: { label: 'Study', type: 'study' },
+      description: track.description,
+      details: [
+        () => `🎓 Tuition: <strong>$${formatMoney(track.tuition)}</strong>`,
+        () => `⏳ Study Load: <strong>${formatHours(track.hoursPerDay)} / day for ${formatDays(track.days)}</strong>`,
+        () => presenter.getStatusLabel(),
+        ...describeTrackEducationBonuses(track.id)
+      ],
+      action: {
+        id: `enroll-${track.id}`,
+        timeCost: 0,
+        moneyCost: Number(track.tuition) || 0,
+        label: () => presenter.getCtaLabel(),
+        className: 'secondary',
+        disabled: () => !presenter.isEnrollable(),
+        onClick: () => {
+          executeAction(() => {
+            const { canEnroll } = presenter.refresh();
+            if (!canEnroll) return;
+            enrollInKnowledgeTrack(track.id);
+          });
+          checkDayEnd();
+        }
+      },
+      cardState: (state, card) => presenter.applyCardState(card, state)
+    };
+  });
 }
