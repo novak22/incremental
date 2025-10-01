@@ -1,6 +1,6 @@
 import { formatHours, formatMoney } from '../../core/helpers.js';
 import { getAssetState } from '../../core/state.js';
-import { registry } from '../../game/registry.js';
+import { getAssets, getHustles, getUpgrades } from '../../game/registryService.js';
 import { getNicheRoster, getNicheWatchlist } from '../../game/assets/niches.js';
 import {
   canPerformQualityAction,
@@ -74,7 +74,7 @@ function buildNicheAnalytics(state) {
     });
   });
 
-  registry.assets.forEach(asset => {
+  getAssets().forEach(asset => {
     const assetState = getAssetState(asset.id, state);
     const instances = Array.isArray(assetState?.instances) ? assetState.instances : [];
     instances.forEach(instance => {
@@ -230,7 +230,7 @@ function describeQueue(summary = {}) {
 
 export function buildQuickActions(state) {
   const items = [];
-  for (const hustle of registry.hustles) {
+  for (const hustle of getHustles()) {
     if (hustle?.tag?.type === 'study') continue;
     if (!hustle?.action?.onClick) continue;
     const disabled = typeof hustle.action.disabled === 'function'
@@ -262,7 +262,7 @@ export function buildAssetUpgradeRecommendations(state) {
 
   const suggestions = [];
 
-  for (const asset of registry.assets) {
+  for (const asset of getAssets()) {
     const qualityActions = getQualityActions(asset);
     if (!qualityActions.length) continue;
 
@@ -360,7 +360,7 @@ function computeAssetMetrics(state = {}) {
   let activeAssets = 0;
   let upkeepDue = 0;
 
-  for (const asset of registry.assets) {
+  for (const asset of getAssets()) {
     const assetState = getAssetState(asset.id, state);
     const instances = Array.isArray(assetState?.instances) ? assetState.instances : [];
     instances.forEach(instance => {
@@ -406,7 +406,7 @@ function computeStudyProgress(state = {}) {
 function buildNotifications(state = {}) {
   const notifications = [];
 
-  for (const asset of registry.assets) {
+  for (const asset of getAssets()) {
     const assetState = getAssetState(asset.id, state);
     const instances = Array.isArray(assetState?.instances) ? assetState.instances : [];
     const maintenanceDue = instances.filter(instance => instance?.status === 'active' && !instance.maintenanceFundedToday);
@@ -420,7 +420,7 @@ function buildNotifications(state = {}) {
     }
   }
 
-  const affordableUpgrades = registry.upgrades.filter(upgrade => {
+  const affordableUpgrades = getUpgrades().filter(upgrade => {
     const cost = clampNumber(upgrade.cost);
     if (cost <= 0) return false;
     const owned = state?.upgrades?.[upgrade.id]?.purchased;

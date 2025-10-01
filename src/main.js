@@ -4,14 +4,15 @@ import { loadState, saveState } from './core/storage.js';
 import { renderCards, updateUI } from './ui/update.js';
 import { initLayoutControls } from './ui/layout.js';
 import { initActionCatalogDebug } from './ui/debugCatalog.js';
-import { registry } from './game/registry.js';
 import { resetTick, startGameLoop } from './game/loop.js';
 import { handleOfflineProgress } from './game/offline.js';
 import { initHeaderActionControls } from './ui/headerAction.js';
 import { setActiveView } from './ui/viewManager.js';
 import classicView from './ui/views/classic/index.js';
+import { loadDefaultRegistry } from './game/registryLoader.js';
 
-configureRegistry(registry);
+loadDefaultRegistry();
+configureRegistry();
 setActiveView(classicView, document);
 const { returning, lastSaved } = loadState({
   onFirstLoad: () =>

@@ -1,7 +1,7 @@
 import { getPlayerNodes } from './elements/registry.js';
 import setText from './dom.js';
 import { formatHours, formatList, formatMoney } from '../core/helpers.js';
-import { registry } from '../game/registry.js';
+import { getUpgrades } from '../game/registryService.js';
 import { countActiveAssetInstances, getUpgradeState } from '../core/state.js';
 import { SKILL_DEFINITIONS } from '../game/skills/data.js';
 import { KNOWLEDGE_TRACKS, getKnowledgeProgress } from '../game/requirements.js';
@@ -112,7 +112,7 @@ function renderEquipment(state) {
   if (!list) return;
   list.innerHTML = '';
 
-  const owned = registry.upgrades
+  const owned = getUpgrades()
     .filter(upgrade => !upgrade.repeatable)
     .filter(upgrade => getUpgradeState(upgrade.id, state)?.purchased);
 
@@ -198,7 +198,7 @@ function renderEducation(state) {
         ? 'Today’s session booked and underway.'
         : 'Session still waiting for focus time today.';
     } else {
-      note.textContent = 'Enroll when you’re ready for a new boost.';
+      note.textContent = 'Enroll to unlock new perks and instant boosts.';
     }
 
     item.append(header, meta, note);
@@ -206,69 +206,11 @@ function renderEducation(state) {
   });
 }
 
-function countActiveAssets(state) {
-  return registry.assets.reduce(
-    (total, asset) => total + countActiveAssetInstances(asset.id, state),
-    0
-  );
-}
-
-function renderStats(state, summary) {
-  const player = getPlayerNodes() || {};
-  const list = player.statsList;
-  if (!list) return;
-  list.innerHTML = '';
-
-  const assistantState = getUpgradeState('assistant', state);
-  const stats = [
-    {
-      label: 'Active ventures',
-      value: String(countActiveAssets(state))
-    },
-    {
-      label: 'Assistants on payroll',
-      value: String(Math.max(0, Number(assistantState?.count) || 0))
-    },
-    {
-      label: 'Passive earnings today',
-      value: `$${formatMoney(summary?.passiveEarnings || 0)}`
-    },
-    {
-      label: 'Daily upkeep spend',
-      value: `$${formatMoney(summary?.upkeepSpend || 0)}`
-    },
-    {
-      label: 'Active study tracks',
-      value: summary?.knowledgeInProgress
-        ? `${summary.knowledgeInProgress} active (${summary.knowledgePendingToday} waiting today)`
-        : 'None scheduled'
-    },
-    {
-      label: 'Focus booked today',
-      value: formatHours(Math.max(0, Number(state?.baseTime || 0) + Number(state?.dailyBonusTime || 0) - Number(state?.timeLeft || 0)))
-    }
-  ];
-
-  stats.forEach(entry => {
-    const item = document.createElement('li');
-    item.className = 'player-stats__item';
-    const label = document.createElement('span');
-    label.className = 'player-stats__label';
-    label.textContent = entry.label;
-    const value = document.createElement('span');
-    value.className = 'player-stats__value';
-    value.textContent = entry.value;
-    item.append(label, value);
-    list.appendChild(item);
-  });
-}
-
 export function renderPlayerPanel(state, summary) {
-  if (!state) return;
   renderSummary(state, summary);
   renderSkillList(state);
-  renderEducation(state);
   renderEquipment(state);
-  renderStats(state, summary);
+  renderEducation(state);
 }
 
+export default renderPlayerPanel;

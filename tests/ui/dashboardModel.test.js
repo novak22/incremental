@@ -2,7 +2,15 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { buildDashboardViewModel } from '../../src/ui/dashboard/model.js';
 import { buildDefaultState } from '../../src/core/state.js';
-import { registry } from '../../src/game/registry.js';
+import { getAssets, resetRegistry } from '../../src/game/registryService.js';
+import { loadDefaultRegistry } from '../../src/game/registryLoader.js';
+import { configureRegistry } from '../../src/core/state/registry.js';
+
+test.before(() => {
+  resetRegistry();
+  loadDefaultRegistry();
+  configureRegistry();
+});
 
 function createSummary(overrides = {}) {
   const base = {
@@ -50,9 +58,10 @@ test('buildDashboardViewModel produces derived dashboard sections', t => {
     name: 'View Model Asset',
     maintenance: { cost: 75 }
   };
-  registry.assets.push(stubAsset);
+  const assets = getAssets();
+  assets.push(stubAsset);
   t.after(() => {
-    registry.assets.pop();
+    assets.pop();
   });
 
   state.assets[stubAsset.id] = {
@@ -125,9 +134,10 @@ test('buildDashboardViewModel includes niche analytics data', t => {
     maintenance: { cost: 10 }
   };
 
-  registry.assets.push(stubAsset);
+  const assets = getAssets();
+  assets.push(stubAsset);
   t.after(() => {
-    registry.assets.pop();
+    assets.pop();
   });
 
   state.assets[stubAsset.id] = {
@@ -140,7 +150,7 @@ test('buildDashboardViewModel includes niche analytics data', t => {
         lastIncomeBreakdown: {
           total: 150,
           entries: [
-            { type: 'niche', amount: 45 }
+            { type: 'niche', amount: 45, label: 'Trend bonus' }
           ]
         }
       }

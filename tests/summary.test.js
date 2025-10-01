@@ -6,7 +6,8 @@ ensureTestDom();
 
 const { initializeState } = await import('../src/core/state.js');
 const { configureRegistry } = await import('../src/core/state/registry.js');
-const { registry } = await import('../src/game/registry.js');
+const registryService = await import('../src/game/registryService.js');
+const { loadDefaultRegistry } = await import('../src/game/registryLoader.js');
 const {
   recordCostContribution,
   recordPayoutContribution,
@@ -16,7 +17,9 @@ const {
 const { computeDailySummary } = await import('../src/game/summary.js');
 
 test('daily summary aggregates metrics into category totals', () => {
-  configureRegistry(registry);
+  registryService.resetRegistry();
+  loadDefaultRegistry();
+  configureRegistry();
   const state = initializeState();
   resetDailyMetrics(state);
 
@@ -74,7 +77,9 @@ test('daily summary aggregates metrics into category totals', () => {
 });
 
 test('daily summary attaches definition references for canonical metrics', () => {
-  configureRegistry(registry);
+  registryService.resetRegistry();
+  loadDefaultRegistry();
+  configureRegistry();
   const state = initializeState();
   resetDailyMetrics(state);
 
@@ -116,7 +121,9 @@ test('daily summary attaches definition references for canonical metrics', () =>
 });
 
 test('lifetime totals accumulate alongside daily metrics', () => {
-  configureRegistry(registry);
+  registryService.resetRegistry();
+  loadDefaultRegistry();
+  configureRegistry();
   const state = initializeState();
   resetDailyMetrics(state);
 

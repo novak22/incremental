@@ -1,6 +1,6 @@
 import { renderCardCollections, updateAllCards } from './cards.js';
 import { getState } from '../core/state.js';
-import { registry } from '../game/registry.js';
+import { getRegistry } from '../game/registryService.js';
 import { computeDailySummary } from '../game/summary.js';
 import { renderDashboard } from './dashboard.js';
 import { renderSkillWidgets } from './skillsWidget.js';
@@ -17,6 +17,7 @@ import {
 } from './cards/model.js';
 
 function buildCollections() {
+  const registry = getRegistry();
   const hustles = registry.hustles.filter(hustle => hustle.tag?.type !== 'study');
   const education = registry.hustles.filter(hustle => hustle.tag?.type === 'study');
   const assets = registry.assets;
