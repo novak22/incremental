@@ -2,6 +2,10 @@ import resolvers from './resolvers.js';
 import { renderDashboard as baseRenderDashboard } from '../../dashboard.js';
 import dashboardPresenter from './dashboardPresenter.js';
 import cardsPresenter from './cardsPresenter.js';
+import playerPresenter from './playerPresenter.js';
+import skillsWidgetPresenter from './skillsWidgetPresenter.js';
+import headerActionPresenter from './headerActionPresenter.js';
+import layoutPresenter from './layoutPresenter.js';
 
 const classicView = {
   id: 'classic',
@@ -9,7 +13,11 @@ const classicView = {
   resolvers,
   presenters: {
     dashboard: dashboardPresenter,
-    cards: cardsPresenter
+    cards: cardsPresenter,
+    player: playerPresenter,
+    skillsWidget: skillsWidgetPresenter,
+    headerAction: headerActionPresenter,
+    layout: layoutPresenter
   },
   renderDashboard(state, summary) {
     baseRenderDashboard(state, summary, dashboardPresenter);

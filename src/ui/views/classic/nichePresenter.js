@@ -1,6 +1,6 @@
 import { getElement } from '../../elements/registry.js';
 import { formatMoney } from '../../../core/helpers.js';
-import { activateShellPanel } from '../../layout.js';
+import { activateShellPanel } from '../../layout/index.js';
 import { setNicheWatchlist } from '../../../game/assets/niches.js';
 
 const DEFAULT_EMPTY_MESSAGES = {

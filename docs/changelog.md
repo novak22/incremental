@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- UI architecture: player overview, skills widget, header actions, and layout filters now use shared view-model builders with presenters resolved per active view, paving the way for alternate browser shells.
 - Tech refactor: Hustle helpers, definitions, and knowledge flows now live in dedicated modules so new gigs slot in without tou
   ching core loop logic.
 - Analytics makeover: Daily outlook hero highlights and a sortable niche card grid with watchlist filters surface earnings, asset exposure, and trend swings at a glance.

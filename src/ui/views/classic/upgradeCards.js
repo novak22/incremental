@@ -1,7 +1,7 @@
 import { getElement } from '../../elements/registry.js';
 import { getState } from '../../../core/state.js';
 import { formatMoney } from '../../../core/helpers.js';
-import { applyCardFilters } from '../../layout.js';
+import { applyCardFilters } from '../../layout/index.js';
 import { describeUpgradeStatus, getUpgradeSnapshot } from '../../cards/model.js';
 
 const upgradeUi = new Map();
