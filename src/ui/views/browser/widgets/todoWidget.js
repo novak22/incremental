@@ -56,6 +56,27 @@ function formatDuration(hours) {
   return formatHours(Math.max(0, numeric));
 }
 
+function getAvailableHours(model = {}) {
+  const available = Number(model?.hoursAvailable);
+  if (!Number.isFinite(available)) {
+    return Infinity;
+  }
+  return Math.max(0, available);
+}
+
+function getEffectiveRemainingRuns(entry = {}, completion) {
+  if (entry?.remainingRuns == null) {
+    return null;
+  }
+  const total = Number(entry.remainingRuns);
+  if (!Number.isFinite(total)) {
+    return null;
+  }
+  const used = Number(completion?.count);
+  const consumed = Number.isFinite(used) ? Math.max(0, used) : 0;
+  return Math.max(0, total - consumed);
+}
+
 function normalizeEntries(model = {}) {
   const entries = Array.isArray(model.entries) ? model.entries : [];
   return entries
@@ -66,13 +87,19 @@ function normalizeEntries(model = {}) {
       const durationText = entry?.durationText || formatDuration(normalizedDuration);
       const payoutText = entry?.payoutText || entry?.payoutLabel || '';
       const meta = entry?.meta || [payoutText, durationText].filter(Boolean).join(' • ');
+      const rawRemaining = Number(entry?.remainingRuns);
+      const hasRemaining = Number.isFinite(rawRemaining);
+      const remainingRuns = hasRemaining ? Math.max(0, rawRemaining) : null;
+      const repeatable = Boolean(entry?.repeatable) || (hasRemaining && remainingRuns > 1);
       return {
         id,
         title: entry?.title || 'Action',
         meta,
         onClick: typeof entry?.onClick === 'function' ? entry.onClick : null,
         durationHours: normalizedDuration,
-        durationText
+        durationText,
+        repeatable,
+        remainingRuns
       };
     })
     .filter(entry => Boolean(entry?.id));
@@ -119,17 +146,38 @@ function renderEmptyState(message) {
   elements.list.innerHTML = '';
   const empty = document.createElement('li');
   empty.className = 'todo-widget__empty';
-  empty.textContent = message || 'No quick wins queued. Check upgrades or ventures.';
+  const text = document.createElement('span');
+  text.className = 'todo-widget__empty-text';
+  text.textContent = message || 'No quick wins queued. Check upgrades or ventures.';
+  empty.appendChild(text);
+
+  if (elements?.endDayButton) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'todo-widget__empty-action';
+    button.textContent = 'End Day';
+    bindEndDay(button);
+    empty.appendChild(button);
+  }
+
   elements.list.appendChild(empty);
 }
 
 function handleCompletion(entry, model) {
-  if (!entry || completedItems.has(entry.id)) return;
+  if (!entry) return;
+  const existing = completedItems.get(entry.id);
+  if (existing && !entry.repeatable) {
+    return;
+  }
+  const count = existing ? (existing.count || 1) + 1 : 1;
   completedItems.set(entry.id, {
     id: entry.id,
     title: entry.title,
     durationHours: entry.durationHours,
     durationText: entry.durationText,
+    repeatable: entry.repeatable,
+    remainingRuns: entry.remainingRuns,
+    count,
     completedAt: Date.now()
   });
   if (typeof entry.onClick === 'function') {
@@ -214,7 +262,8 @@ function renderCompleted() {
     const meta = document.createElement('span');
     meta.className = 'todo-widget__done-meta';
     const label = entry.durationText || formatDuration(entry.durationHours);
-    meta.textContent = `(${label})`;
+    const countLabel = entry.count && entry.count > 1 ? ` ×${entry.count}` : '';
+    meta.textContent = `(${label}${countLabel})`;
 
     item.append(title, meta);
     elements.done.appendChild(item);
@@ -233,7 +282,21 @@ export function render(model = {}) {
   resetCompletedForDay(model.day);
 
   const entries = normalizeEntries(model);
-  const pending = entries.filter(entry => !completedItems.has(entry.id));
+  const availableHours = getAvailableHours(model);
+  const pending = entries.filter(entry => {
+    const completion = completedItems.get(entry.id);
+    const remainingRuns = getEffectiveRemainingRuns(entry, completion);
+    const hasRunsLeft = remainingRuns === null || remainingRuns > 0;
+    if (!hasRunsLeft) return false;
+
+    const canAfford = Number.isFinite(availableHours)
+      ? entry.durationHours <= availableHours
+      : true;
+    if (!canAfford) return false;
+
+    if (!completion) return true;
+    return entry.repeatable;
+  });
 
   renderHours(model);
   updateNote(model, pending.length);
