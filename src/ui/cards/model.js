@@ -540,7 +540,8 @@ export function buildAssetModels(definitions = [], helpers = {}) {
     entry.definitions.push({
       id: definition.id,
       name: definition.name || definition.id,
-      summary: describeAssetCardSummary(definition)
+      summary: describeAssetCardSummary(definition),
+      definition
     });
 
     const assetState = getAssetStateFn(definition.id, state);
@@ -563,7 +564,9 @@ export function buildAssetModels(definitions = [], helpers = {}) {
           needsMaintenance,
           niche: nicheId,
           risk: definition.tag?.type === 'advanced' ? 'high' : 'medium'
-        }
+        },
+        definition,
+        instance: instance || null
       });
     });
 
@@ -588,12 +591,15 @@ export function buildAssetModels(definitions = [], helpers = {}) {
           reasons: availability.reasons,
           hours: availability.hours,
           cost: availability.cost,
-          className: definition.action.className || 'primary'
+          className: definition.action.className || 'primary',
+          onClick: typeof definition.action.onClick === 'function' ? definition.action.onClick : null
         },
         filters: {
           group: groupId,
           tag: definition.tag?.type || 'general'
-        }
+        },
+        singular: definition.singular || 'Passive venture',
+        definition
       });
     }
   });
