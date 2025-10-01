@@ -1066,7 +1066,7 @@ export function calculateInstanceProgress(definition, instance) {
   };
 }
 
-function formatInstanceDailyAverage(instance, state = getState()) {
+export function formatInstanceDailyAverage(instance, state = getState()) {
   if (!instance || instance.status !== 'active') {
     return 'Launch pending';
   }

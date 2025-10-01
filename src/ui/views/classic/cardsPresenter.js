@@ -68,7 +68,8 @@ import {
   createInstanceCard,
   formatPercent,
   calculateInstanceProgress,
-  buildSpecialActionButtons
+  buildSpecialActionButtons,
+  formatInstanceDailyAverage
 } from './assetDetails.js';
 import { showSlideOver } from './components/slideOver.js';
 import {
