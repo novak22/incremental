@@ -15,11 +15,15 @@ test('renderCardCollections synthesizes models when omitted', async () => {
 
   const stateModule = await import('../src/core/state.js');
   const registryModule = await import('../src/core/state/registry.js');
+  const registryService = await import('../src/game/registryService.js');
+  const { loadDefaultRegistry } = await import('../src/game/registryLoader.js');
   const { initializeState } = stateModule;
   const { configureRegistry } = registryModule;
 
-  const { registry } = await import('../src/game/registry.js');
-  configureRegistry(registry);
+  registryService.resetRegistry();
+  loadDefaultRegistry();
+  configureRegistry();
+  const registry = registryService.getRegistry();
   initializeState();
 
   const viewManager = await import('../src/ui/viewManager.js');
@@ -69,8 +73,12 @@ test('education tracks reflect canonical study data', async () => {
   const { initializeState, getState } = stateModule;
   const { configureRegistry } = registryModule;
 
-  const { registry } = await import('../src/game/registry.js');
-  configureRegistry(registry);
+  const registryService = await import('../src/game/registryService.js');
+  const { loadDefaultRegistry } = await import('../src/game/registryLoader.js');
+  registryService.resetRegistry();
+  loadDefaultRegistry();
+  configureRegistry();
+  const registry = registryService.getRegistry();
   initializeState();
 
   const requirements = await import('../src/game/requirements.js');
@@ -131,8 +139,12 @@ test('completed study tracks celebrate progress and skills', async () => {
   const { initializeState, getState } = stateModule;
   const { configureRegistry } = registryModule;
 
-  const { registry } = await import('../src/game/registry.js');
-  configureRegistry(registry);
+  const registryService = await import('../src/game/registryService.js');
+  const { loadDefaultRegistry } = await import('../src/game/registryLoader.js');
+  registryService.resetRegistry();
+  loadDefaultRegistry();
+  configureRegistry();
+  const registry = registryService.getRegistry();
   initializeState();
 
   const requirements = await import('../src/game/requirements.js');

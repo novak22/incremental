@@ -1,4 +1,4 @@
-import { registry } from '../registry.js';
+import { getAssets, getHustles, getUpgrades } from '../registryService.js';
 import { getState, getAssetState, getUpgradeState } from '../../core/state.js';
 import { getUpgradeDefinition, getAssetDefinition } from '../../core/state/registry.js';
 import { toNumber } from '../../core/helpers.js';
@@ -134,7 +134,7 @@ function describeUpgradeRequirements(definition, state) {
 }
 
 function buildAssetEntries() {
-  return registry.assets.map(definition => {
+  return getAssets().map(definition => {
     const action = definition.action || {};
     const actionId = action.id || 'launch';
     const timeCost = Math.max(0, toNumber(definition.setup?.hoursPerDay, 0));
@@ -167,7 +167,7 @@ function buildAssetEntries() {
 
 function buildQualityEntries() {
   const entries = [];
-  for (const definition of registry.assets) {
+  for (const definition of getAssets()) {
     const actions = getQualityActions(definition) || [];
     for (const action of actions) {
       const actionId = action.id || action.label;
@@ -203,7 +203,7 @@ function buildQualityEntries() {
 }
 
 function buildHustleEntries() {
-  return registry.hustles.map(definition => {
+  return getHustles().map(definition => {
     const action = definition.action || {};
     const actionId = action.id || 'action';
     const timeCost = Math.max(0, toNumber(action.timeCost, 0));
@@ -274,7 +274,7 @@ function describeAssistantRequirement(state) {
 }
 
 function buildUpgradeEntries() {
-  return registry.upgrades.map(definition => {
+  return getUpgrades().map(definition => {
     const action = definition.action || {};
     const actionId = action.id || 'activate';
     const timeCost = Math.max(0, toNumber(action.timeCost, 0));

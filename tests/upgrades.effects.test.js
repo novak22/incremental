@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import { initializeState } from '../src/core/state.js';
 import { configureRegistry, getUpgradeDefinition } from '../src/core/state/registry.js';
+import { loadRegistry, resetRegistry } from '../src/game/registryService.js';
 import {
   buildSlotLedger,
   describeSlotLedger,
@@ -25,8 +26,9 @@ function makeUpgrade(definition) {
   };
 }
 
-test('quality progress multipliers stack multiplicatively for matching assets', () => {
-  configureRegistry({
+test('quality progress multipliers stack multiplicatively for matching assets', t => {
+  resetRegistry();
+  loadRegistry({
     upgrades: [
       makeUpgrade({
         id: 'course',
@@ -41,6 +43,10 @@ test('quality progress multipliers stack multiplicatively for matching assets', 
     ],
     assets: [],
     hustles: []
+  });
+  configureRegistry();
+  t.after(() => {
+    resetRegistry();
   });
 
   const state = initializeState();
@@ -57,8 +63,9 @@ test('quality progress multipliers stack multiplicatively for matching assets', 
   assert.equal(effect.sources.length, 2);
 });
 
-test('exclusive conflicts ignore prerequisite upgrades but block peers', () => {
-  configureRegistry({
+test('exclusive conflicts ignore prerequisite upgrades but block peers', t => {
+  resetRegistry();
+  loadRegistry({
     upgrades: [
       makeUpgrade({
         id: 'basicRig',
@@ -77,6 +84,10 @@ test('exclusive conflicts ignore prerequisite upgrades but block peers', () => {
     assets: [],
     hustles: []
   });
+  configureRegistry();
+  t.after(() => {
+    resetRegistry();
+  });
 
   const state = initializeState();
   state.upgrades.basicRig = { purchased: true };
@@ -94,8 +105,9 @@ test('exclusive conflicts ignore prerequisite upgrades but block peers', () => {
   assert.equal(noConflict, null, 'prerequisite should not cause a conflict');
 });
 
-test('slot ledger tracks provided and consumed capacity for repeatables', () => {
-  configureRegistry({
+test('slot ledger tracks provided and consumed capacity for repeatables', t => {
+  resetRegistry();
+  loadRegistry({
     upgrades: [
       makeUpgrade({
         id: 'monitorHub',
@@ -109,6 +121,10 @@ test('slot ledger tracks provided and consumed capacity for repeatables', () => 
     ],
     assets: [],
     hustles: []
+  });
+  configureRegistry();
+  t.after(() => {
+    resetRegistry();
   });
 
   const state = initializeState();

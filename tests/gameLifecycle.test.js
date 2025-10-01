@@ -25,8 +25,11 @@ const {
   enrollInKnowledgeTrack,
   getKnowledgeProgress
 } = requirementsModule;
+const registryService = await import('../src/game/registryService.js');
 
-configureRegistry({ assets: ASSETS, hustles: HUSTLES, upgrades: UPGRADES });
+registryService.resetRegistry();
+registryService.loadRegistry({ assets: ASSETS, hustles: HUSTLES, upgrades: UPGRADES });
+configureRegistry();
 
 const resetState = () => initializeState(buildDefaultState());
 
