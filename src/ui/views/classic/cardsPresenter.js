@@ -59,8 +59,7 @@ import { applyCardFilters } from '../../layout.js';
 import { createAssetUpgradeShortcuts } from '../../assetUpgradeShortcuts.js';
 import {
   buildAssetModels,
-  buildUpgradeCategories,
-  getUpgradeCategory,
+  buildUpgradeModels,
   describeAssetCardSummary,
   describeAssetLaunchAvailability,
   describeUpgradeStatus,
@@ -68,8 +67,6 @@ import {
   getAssetGroupId,
   getAssetGroupLabel,
   getAssetGroupNote,
-  getFamilyCopy,
-  getUpgradeSnapshot,
   resolveTrack
 } from '../../cards/model.js';
 
@@ -87,6 +84,8 @@ let assetPortfolioNode = null;
 let assetHubNode = null;
 let assetEmptyNotice = null;
 let currentUpgradeDefinitions = [];
+let currentUpgradeModels = { categories: [], overview: { purchased: 0, ready: 0, total: 0, note: '' } };
+const upgradeDefinitionLookup = new Map();
 let assetLaunchPanelExpanded = false;
 
 const hustleModelCache = new Map();
@@ -137,6 +136,16 @@ function cacheAssetDefinitions(definitions = []) {
   });
 }
 
+function cacheUpgradeDefinitions(definitions = []) {
+  upgradeDefinitionLookup.clear();
+  currentUpgradeDefinitions = Array.isArray(definitions) ? [...definitions] : [];
+  currentUpgradeDefinitions.forEach(definition => {
+    if (definition?.id) {
+      upgradeDefinitionLookup.set(definition.id, definition);
+    }
+  });
+}
+
 function cacheCardModels(models = {}) {
   hustleModelCache.clear();
   (models?.hustles ?? []).forEach(model => {
@@ -146,6 +155,43 @@ function cacheCardModels(models = {}) {
   });
   educationModelCache = models?.education ?? null;
   cacheAssetModels(models?.assets);
+  cacheUpgradeModels(models?.upgrades);
+}
+
+function cacheUpgradeModels(models = {}) {
+  const categories = Array.isArray(models?.categories) ? models.categories : [];
+  const overview = models?.overview ?? {};
+  currentUpgradeModels = {
+    categories,
+    overview: {
+      purchased: Number.isFinite(Number(overview.purchased)) ? Number(overview.purchased) : 0,
+      ready: Number.isFinite(Number(overview.ready)) ? Number(overview.ready) : 0,
+      total: Number.isFinite(Number(overview.total)) ? Number(overview.total) : categories.reduce(
+        (sum, category) =>
+          sum + (category?.families ?? []).reduce(
+            (familySum, family) => familySum + (family?.definitions?.length ?? 0),
+            0
+          ),
+        0
+      ),
+      note: overview.note || null
+    }
+  };
+}
+
+function findUpgradeModelById(id) {
+  if (!id) return null;
+  for (const category of currentUpgradeModels?.categories ?? []) {
+    const families = category?.families ?? [];
+    for (const family of families) {
+      const definitions = family?.definitions ?? [];
+      const match = definitions.find(def => def?.id === id);
+      if (match) {
+        return match;
+      }
+    }
+  }
+  return null;
 }
 
 
@@ -2376,12 +2422,12 @@ function buildUpgradeDetails(definition) {
   return { list, update };
 }
 
-function sortUpgradesForCategory(definitions, state = getState()) {
-  return definitions
+function sortUpgradeModelsForFamily(definitions = []) {
+  return (definitions ?? [])
     .slice()
     .sort((a, b) => {
-      const aSnapshot = getUpgradeSnapshot(a, state);
-      const bSnapshot = getUpgradeSnapshot(b, state);
+      const aSnapshot = a?.snapshot ?? {};
+      const bSnapshot = b?.snapshot ?? {};
 
       const score = snapshot => {
         if (snapshot.ready) return 0;
@@ -2393,11 +2439,15 @@ function sortUpgradesForCategory(definitions, state = getState()) {
       const scoreDiff = score(aSnapshot) - score(bSnapshot);
       if (scoreDiff !== 0) return scoreDiff;
 
-      if (aSnapshot.cost !== bSnapshot.cost) {
-        return aSnapshot.cost - bSnapshot.cost;
+      const aCost = Number.isFinite(Number(aSnapshot.cost)) ? Number(aSnapshot.cost) : Number(a?.cost) || 0;
+      const bCost = Number.isFinite(Number(bSnapshot.cost)) ? Number(bSnapshot.cost) : Number(b?.cost) || 0;
+      if (aCost !== bCost) {
+        return aCost - bCost;
       }
 
-      return aSnapshot.name.localeCompare(bSnapshot.name);
+      const aName = a?.name || a?.id || '';
+      const bName = b?.name || b?.id || '';
+      return aName.localeCompare(bName);
     });
 }
 function scrollUpgradeLaneIntoView(categoryId) {
@@ -2426,7 +2476,7 @@ function scrollUpgradeLaneIntoView(categoryId) {
   }
 }
 
-function renderUpgradeLaneMap(categories) {
+function renderUpgradeLaneMap(categories, overview) {
   const list = getUpgradeLaneList();
   if (!list) return;
 
@@ -2439,7 +2489,8 @@ function renderUpgradeLaneMap(categories) {
       copy: {
         label: 'All lanes',
         note: 'Browse every upgrade in one sweep.'
-      }
+      },
+      overview: overview || currentUpgradeModels.overview
     },
     ...(Array.isArray(categories) ? categories : [])
   ];
@@ -2488,7 +2539,7 @@ function renderUpgradeLaneMap(categories) {
 
     item.appendChild(block);
     list.appendChild(item);
-    upgradeLaneItems.set(lane.id, { item, count, ready, owned });
+    upgradeLaneItems.set(lane.id, { item, count, ready, owned, model: lane });
   });
 
   if (!list.childElementCount) {
@@ -2499,29 +2550,34 @@ function renderUpgradeLaneMap(categories) {
     return;
   }
 
-  updateUpgradeLaneMap();
+  updateUpgradeLaneMap(categories, overview);
 }
 
-function updateUpgradeLaneMap() {
+function updateUpgradeLaneMap(categories = currentUpgradeModels.categories, overview = currentUpgradeModels.overview) {
   if (!upgradeLaneItems.size) return;
-  const state = getState();
-  if (!state) return;
 
   upgradeLaneItems.forEach((entry, categoryId) => {
     if (!entry) return;
-    const definitions = categoryId === 'all'
-      ? currentUpgradeDefinitions
-      : currentUpgradeDefinitions.filter(def => getUpgradeCategory(def) === categoryId);
 
-    const total = definitions.length;
+    let total = 0;
     let readyCount = 0;
     let ownedCount = 0;
 
-    definitions.forEach(definition => {
-      const snapshot = getUpgradeSnapshot(definition, state);
-      if (snapshot.ready) readyCount += 1;
-      if (snapshot.purchased) ownedCount += 1;
-    });
+    if (categoryId === 'all') {
+      total = Number.isFinite(Number(overview?.total)) ? Number(overview.total) : 0;
+      readyCount = Number.isFinite(Number(overview?.ready)) ? Number(overview.ready) : 0;
+      ownedCount = Number.isFinite(Number(overview?.purchased)) ? Number(overview.purchased) : 0;
+    } else {
+      const category = (categories ?? []).find(cat => cat?.id === categoryId);
+      const families = category?.families ?? [];
+      families.forEach(family => {
+        (family?.definitions ?? []).forEach(model => {
+          total += 1;
+          if (model?.snapshot?.ready) readyCount += 1;
+          if (model?.snapshot?.purchased) ownedCount += 1;
+        });
+      });
+    }
 
     if (entry.count) {
       entry.count.textContent = total ? `${total} upgrades` : 'No upgrades yet';
@@ -2570,27 +2626,47 @@ function describeOverviewNote({ total, purchased, ready }) {
   return 'Meet the prerequisites or save up to line up your next power spike.';
 }
 
-function renderUpgradeOverview(definitions) {
+function renderUpgradeOverview(upgradeModels) {
   const overview = getUpgradeOverview();
   if (!overview?.container) return;
-  const state = getState();
-  if (!state) return;
+  const statsSource = upgradeModels?.overview ?? null;
+  const categories = upgradeModels?.categories ?? currentUpgradeModels.categories;
 
-  const stats = definitions.reduce(
-    (acc, definition) => {
-      const snapshot = getUpgradeSnapshot(definition, state);
-      if (snapshot.purchased) acc.purchased += 1;
-      if (snapshot.ready) acc.ready += 1;
-      acc.total += 1;
-      return acc;
-    },
-    { purchased: 0, ready: 0, total: 0 }
-  );
+  const stats = {
+    total: Number.isFinite(Number(statsSource?.total))
+      ? Number(statsSource.total)
+      : categories.reduce(
+          (sum, category) =>
+            sum + (category?.families ?? []).reduce(
+              (familySum, family) => familySum + (family?.definitions?.length ?? 0),
+              0
+            ),
+          0
+        ),
+    purchased: Number.isFinite(Number(statsSource?.purchased)) ? Number(statsSource.purchased) : categories.reduce(
+      (sum, category) =>
+        sum + (category?.families ?? []).reduce(
+          (familySum, family) =>
+            familySum + (family?.definitions ?? []).filter(model => model?.snapshot?.purchased).length,
+          0
+        ),
+      0
+    ),
+    ready: Number.isFinite(Number(statsSource?.ready)) ? Number(statsSource.ready) : categories.reduce(
+      (sum, category) =>
+        sum + (category?.families ?? []).reduce(
+          (familySum, family) =>
+            familySum + (family?.definitions ?? []).filter(model => model?.snapshot?.ready).length,
+          0
+        ),
+      0
+    )
+  };
 
   overview.purchased.textContent = `${stats.purchased}/${stats.total}`;
   overview.ready.textContent = String(stats.ready);
   if (overview.note) {
-    overview.note.textContent = describeOverviewNote(stats);
+    overview.note.textContent = statsSource?.note || describeOverviewNote(stats);
   }
 }
 
@@ -2628,7 +2704,7 @@ export function refreshUpgradeSections() {
     emptyNote.hidden = visibleTotal > 0;
   }
 
-  updateUpgradeLaneMap();
+  updateUpgradeLaneMap(currentUpgradeModels.categories, currentUpgradeModels.overview);
 }
 
 if (typeof document !== 'undefined') {
@@ -2637,17 +2713,17 @@ if (typeof document !== 'undefined') {
   });
 }
 
-function renderUpgradeCard(definition, container, categoryId, familyId = 'general') {
+function renderUpgradeCard(definition, model, container) {
+  if (!definition || !model || !container) return;
   const state = getState();
   const card = document.createElement('article');
   card.className = 'upgrade-card';
   card.dataset.upgrade = definition.id;
-  card.dataset.category = categoryId;
-  card.dataset.family = familyId;
-  const searchPieces = [definition.name, definition.description, definition.tag?.label]
-    .filter(Boolean)
-    .join(' ');
-  card.dataset.search = searchPieces.toLowerCase();
+  card.dataset.category = model.filters?.category || definition.category || 'misc';
+  card.dataset.family = model.filters?.family || definition.family || 'general';
+  const searchValue = model.filters?.search
+    || [definition.name, definition.description, definition.tag?.label].filter(Boolean).join(' ');
+  card.dataset.search = searchValue.toLowerCase();
   card.tabIndex = -1;
 
   const eyebrow = document.createElement('div');
@@ -2714,26 +2790,53 @@ function renderUpgradeCard(definition, container, categoryId, familyId = 'genera
   }
 
   container.appendChild(card);
-  upgradeUi.set(definition.id, {
+  upgradeUi.set(model.id, {
     card,
     buyButton,
     status,
     price,
     updateDetails: details?.update,
-    extra
+    extra,
+    modelId: model.id
   });
-  updateUpgradeCard(definition);
+  updateUpgradeCard(definition, model);
 }
 
-function updateUpgradeCard(definition) {
-  const ui = upgradeUi.get(definition.id);
+function updateUpgradeCard(definition, model) {
+  const key = model?.id || definition?.id;
+  if (!key) return;
+  const ui = upgradeUi.get(key);
   if (!ui) return;
   const state = getState();
-  const snapshot = getUpgradeSnapshot(definition, state);
+  const resolvedModel = model || findUpgradeModelById(key);
+  const snapshot = resolvedModel?.snapshot || (() => {
+    const cost = Number(definition?.cost) || 0;
+    const money = Number(state?.money) || 0;
+    const affordable = cost <= 0 || money >= cost;
+    const disabled = typeof definition?.action?.disabled === 'function'
+      ? definition.action.disabled(state)
+      : Boolean(definition?.action?.disabled);
+    const upgradeState = state?.upgrades?.[key] || {};
+    const purchased = Boolean(upgradeState.purchased);
+    const ready = !purchased && affordable && !disabled;
+    return {
+      cost,
+      affordable,
+      disabled,
+      name: definition?.name || key,
+      purchased,
+      ready
+    };
+  })();
 
   ui.card.dataset.affordable = snapshot.affordable ? 'true' : 'false';
   ui.card.dataset.purchased = snapshot.purchased ? 'true' : 'false';
   ui.card.dataset.ready = snapshot.ready ? 'true' : 'false';
+  if (resolvedModel?.filters) {
+    ui.card.dataset.category = resolvedModel.filters.category || ui.card.dataset.category;
+    ui.card.dataset.family = resolvedModel.filters.family || ui.card.dataset.family;
+    ui.card.dataset.search = resolvedModel.filters.search || ui.card.dataset.search;
+  }
 
   if (ui.buyButton) {
     ui.buyButton.className = definition.action?.className || 'primary';
@@ -2767,17 +2870,26 @@ function updateUpgradeCard(definition) {
   ui.updateDetails?.();
 }
 
-function renderUpgrades(definitions) {
+function renderUpgrades(definitions, upgradeModels) {
   const list = getUpgradeList();
   if (!list) return;
   list.tabIndex = -1;
-  currentUpgradeDefinitions = Array.isArray(definitions) ? [...definitions] : [];
+
+  if (Array.isArray(definitions) && definitions.length) {
+    cacheUpgradeDefinitions(definitions);
+  }
+  cacheUpgradeModels(upgradeModels);
+  if ((!currentUpgradeModels.categories.length || !upgradeModels) && Array.isArray(definitions) && definitions.length) {
+    cacheUpgradeModels(buildUpgradeModels(definitions));
+  }
+
   list.innerHTML = '';
   upgradeUi.clear();
   upgradeSections.clear();
+  upgradeLaneItems.clear();
 
-  const categories = buildUpgradeCategories(definitions);
-  renderUpgradeLaneMap(categories);
+  const categories = currentUpgradeModels.categories;
+  renderUpgradeLaneMap(categories, currentUpgradeModels.overview);
 
   const fragment = document.createDocumentFragment();
   categories.forEach(category => {
@@ -2792,11 +2904,11 @@ function renderUpgrades(definitions) {
     headingGroup.className = 'upgrade-section__heading';
     const eyebrow = document.createElement('span');
     eyebrow.className = 'upgrade-section__eyebrow';
-    eyebrow.textContent = category.copy.label;
+    eyebrow.textContent = category.copy?.label || category.id;
     const title = document.createElement('h3');
-    title.textContent = category.copy.title;
+    title.textContent = category.copy?.title || `${category.id} upgrades`;
     const note = document.createElement('p');
-    note.textContent = category.copy.note;
+    note.textContent = category.copy?.note || 'Discover boosts in this lane to broaden your toolkit.';
     headingGroup.append(eyebrow, title, note);
 
     const count = document.createElement('span');
@@ -2806,7 +2918,18 @@ function renderUpgrades(definitions) {
 
     const familiesContainer = document.createElement('div');
     familiesContainer.className = 'upgrade-section__families';
-    const families = category.families.length ? category.families : [{ id: 'general', copy: getFamilyCopy('general'), definitions: [] }];
+    const families = (category.families ?? []).length
+      ? category.families
+      : [
+          {
+            id: 'general',
+            copy: {
+              label: 'General upgrades',
+              note: 'New discoveries will land here until a family appears.'
+            },
+            definitions: []
+          }
+        ];
     families.forEach(family => {
       const familyArticle = document.createElement('article');
       familyArticle.className = 'upgrade-family';
@@ -2816,13 +2939,13 @@ function renderUpgrades(definitions) {
       const familyHeader = document.createElement('header');
       familyHeader.className = 'upgrade-family__header';
       const familyTitle = document.createElement('h4');
-      familyTitle.textContent = family.copy.label;
+      familyTitle.textContent = family.copy?.label || family.id;
       const familyCount = document.createElement('span');
       familyCount.className = 'upgrade-family__count';
       familyHeader.append(familyTitle, familyCount);
       familyArticle.appendChild(familyHeader);
 
-      if (family.copy.note) {
+      if (family.copy?.note) {
         const familyNote = document.createElement('p');
         familyNote.className = 'upgrade-family__note';
         familyNote.textContent = family.copy.note;
@@ -2831,8 +2954,13 @@ function renderUpgrades(definitions) {
 
       const familyList = document.createElement('div');
       familyList.className = 'upgrade-family__list';
-      const sorted = sortUpgradesForCategory(family.definitions);
-      sorted.forEach(def => renderUpgradeCard(def, familyList, category.id, family.id));
+      const sorted = sortUpgradeModelsForFamily(family.definitions);
+      sorted.forEach(model => {
+        const definition = upgradeDefinitionLookup.get(model.id);
+        if (definition) {
+          renderUpgradeCard(definition, model, familyList);
+        }
+      });
       familyArticle.appendChild(familyList);
 
       const familyEmpty = document.createElement('p');
@@ -2842,11 +2970,13 @@ function renderUpgrades(definitions) {
       familyArticle.appendChild(familyEmpty);
 
       familiesContainer.appendChild(familyArticle);
-      upgradeSections.set(`${category.id}:${family.id}`, {
+      const familyKey = `${category.id}:${family.id}`;
+      upgradeSections.set(familyKey, {
         section: familyArticle,
         list: familyList,
         count: familyCount,
-        emptyMessage: familyEmpty
+        emptyMessage: familyEmpty,
+        model: family
       });
     });
     section.appendChild(familiesContainer);
@@ -2858,13 +2988,72 @@ function renderUpgrades(definitions) {
     section.appendChild(empty);
 
     fragment.appendChild(section);
-    upgradeSections.set(category.id, { section, list: familiesContainer, count, emptyMessage: empty });
+    upgradeSections.set(category.id, {
+      section,
+      list: familiesContainer,
+      count,
+      emptyMessage: empty,
+      model: category
+    });
   });
 
   list.appendChild(fragment);
-  renderUpgradeOverview(currentUpgradeDefinitions);
+  renderUpgradeOverview(currentUpgradeModels);
   renderUpgradeDock();
   refreshUpgradeSections();
+}
+
+function updateUpgrades(definitions, upgradeModels) {
+  if (Array.isArray(definitions) && definitions.length) {
+    cacheUpgradeDefinitions(definitions);
+  }
+  if (upgradeModels) {
+    cacheUpgradeModels(upgradeModels);
+  }
+  if ((!currentUpgradeModels.categories.length || !upgradeModels) && Array.isArray(definitions) && definitions.length) {
+    cacheUpgradeModels(buildUpgradeModels(definitions));
+  }
+
+  if (!upgradeUi.size) {
+    return;
+  }
+
+  const categories = currentUpgradeModels.categories;
+
+  categories.forEach(category => {
+    const categoryEntry = upgradeSections.get(category.id);
+    if (categoryEntry?.count) {
+      const total = (category.families ?? []).reduce(
+        (sum, family) => sum + (family?.definitions?.length ?? 0),
+        0
+      );
+      categoryEntry.count.textContent = total ? `${total} total` : 'No upgrades yet';
+    }
+  });
+
+  categories.forEach(category => {
+    const families = category.families ?? [];
+    families.forEach(family => {
+      const sorted = sortUpgradeModelsForFamily(family.definitions);
+      const familyKey = `${category.id}:${family.id}`;
+      const familyEntry = upgradeSections.get(familyKey);
+      if (familyEntry?.count) {
+        familyEntry.count.textContent = sorted.length ? `${sorted.length} total` : 'No upgrades yet';
+      }
+      if (familyEntry?.emptyMessage) {
+        familyEntry.emptyMessage.hidden = sorted.length > 0;
+      }
+      sorted.forEach(model => {
+        const definition = upgradeDefinitionLookup.get(model.id);
+        if (definition) {
+          updateUpgradeCard(definition, model);
+        }
+      });
+    });
+  });
+
+  renderUpgradeOverview(currentUpgradeModels);
+  updateUpgradeLaneMap(currentUpgradeModels.categories, currentUpgradeModels.overview);
 }
 
 function renderUpgradeDock() {
@@ -3218,7 +3407,7 @@ function renderClassicCollections(registries, models) {
   const { hustles = [], education = [], assets = [], upgrades = [] } = registries;
   renderHustles(hustles, models?.hustles ?? []);
   renderAssets(assets, models?.assets ?? currentAssetModels);
-  renderUpgrades(upgrades);
+  renderUpgrades(upgrades, models?.upgrades);
   renderEducation(education, models?.education ?? educationModelCache);
 }
 
@@ -3239,12 +3428,10 @@ export function updateCard(definition) {
     return;
   }
   if (upgradeUi.has(definition.id)) {
-    updateUpgradeCard(definition);
+    const model = findUpgradeModelById(definition.id);
+    updateUpgradeCard(definition, model);
     renderUpgradeDock();
-    if (!currentUpgradeDefinitions.length) {
-      currentUpgradeDefinitions = [definition];
-    }
-    renderUpgradeOverview(currentUpgradeDefinitions);
+    renderUpgradeOverview(currentUpgradeModels);
     refreshUpgradeSections();
     emitUIEvent('upgrades:state-updated');
     return;
@@ -3265,17 +3452,13 @@ function updateClassicCollections(registries, models) {
     updateHustleCard(definition, model);
   });
   updateAssets(assets, models?.assets ?? currentAssetModels);
-  upgrades.forEach(updateUpgradeCard);
+  updateUpgrades(upgrades, models?.upgrades);
   education.forEach(def => {
     if (def.tag?.type === 'study' || KNOWLEDGE_TRACKS[def.id]) {
       updateStudyTrack(def);
     }
   });
   renderStudyQueue(models?.education ?? educationModelCache);
-  if (!currentUpgradeDefinitions.length && Array.isArray(upgrades)) {
-    currentUpgradeDefinitions = [...upgrades];
-  }
-  renderUpgradeOverview(currentUpgradeDefinitions.length ? currentUpgradeDefinitions : upgrades);
   renderUpgradeDock();
   refreshUpgradeSections();
   emitUIEvent('upgrades:state-updated');
