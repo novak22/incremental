@@ -14,7 +14,9 @@
   --browser-positive: #059669;
   --browser-danger: #ef4444;
   --browser-radius: 16px;
+  --browser-radius-md: 14px;
   --browser-radius-lg: 20px;
+  --browser-radius-pill: 999px;
   --browser-shadow-card: 0 18px 38px rgba(15, 23, 42, 0.08);
   --browser-shadow-soft: 0 20px 44px rgba(15, 23, 42, 0.06);
 }
@@ -32,6 +34,8 @@
   --browser-accent-soft: rgba(139, 170, 255, 0.18);
   --browser-positive: #3dd68c;
   --browser-danger: #f87171;
+  --browser-radius-md: 14px;
+  --browser-radius-pill: 999px;
   --browser-shadow-card: 0 24px 48px rgba(2, 6, 23, 0.6);
   --browser-shadow-soft: 0 26px 52px rgba(2, 6, 23, 0.52);
 }
@@ -148,9 +152,136 @@ a {
 
 .browser-layout {
   flex: 1 1 auto;
-  display: flex;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  gap: 2.75rem;
   padding: 3rem 1.75rem 4rem;
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.browser-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  position: sticky;
+  top: 3rem;
+  align-self: flex-start;
+}
+
+.browser-sites {
+  background: var(--browser-panel);
+  border: 1px solid var(--browser-panel-border);
+  border-radius: var(--browser-radius-lg);
+  box-shadow: var(--browser-shadow-soft);
+  padding: 1.75rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.35rem;
+}
+
+.browser-sites__header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.browser-sites__title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.browser-sites__note {
+  margin: 0;
+  color: var(--browser-muted);
+  font-size: 0.95rem;
+}
+
+.browser-app-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.browser-app-card {
+  width: 100%;
+  border: 1px solid var(--browser-panel-border);
+  border-radius: var(--browser-radius-md);
+  background: #fff;
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  text-align: left;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.browser-app-card:hover,
+.browser-app-card:focus-visible {
+  border-color: var(--browser-accent);
+  box-shadow: 0 6px 18px rgba(30, 62, 123, 0.14);
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.browser-app-card.is-active {
+  border-color: var(--browser-accent);
+  box-shadow: 0 0 0 3px rgba(85, 122, 255, 0.15);
+}
+
+.browser-app-card__icon {
+  font-size: 1.5rem;
+}
+
+.browser-app-card__header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: space-between;
+}
+
+.browser-app-card__title {
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.browser-app-card__badge {
+  background: var(--browser-accent-soft);
+  color: var(--browser-accent);
+  border-radius: var(--browser-radius-pill);
+  padding: 0.15rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.browser-app-card__meta {
+  margin: 0;
+  color: var(--browser-muted);
+  font-size: 0.9rem;
+}
+
+.browser-app-button {
+  width: 100%;
+  border: 1px dashed var(--browser-panel-border);
+  border-radius: var(--browser-radius-md);
+  padding: 0.85rem 1.1rem;
+  background: transparent;
+  color: var(--browser-accent);
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
+}
+
+.browser-app-button:hover,
+.browser-app-button:focus-visible {
+  border-color: var(--browser-accent);
+  background: var(--browser-accent-soft);
+  outline: none;
 }
 
 .browser-main {
@@ -158,7 +289,9 @@ a {
   max-width: 900px;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
+  gap: 0;
+  margin: 0 auto;
 }
 
 .browser-home {
@@ -582,6 +715,372 @@ a {
   color: #fff;
 }
 
+.bankapp {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.bankapp__header {
+  display: grid;
+  gap: 1.5rem;
+  padding: 1.8rem;
+  border-radius: var(--browser-radius-lg);
+  background: var(--browser-panel);
+  border: 1px solid var(--browser-panel-border);
+  box-shadow: var(--browser-shadow-card);
+}
+
+.bankapp-summary {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.bankapp-summary__card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 1rem 1.2rem;
+  border-radius: 14px;
+  background: var(--browser-panel-elevated);
+  border: 1px solid var(--browser-panel-border);
+}
+
+.bankapp-summary__label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--browser-subtle);
+}
+
+.bankapp-summary__value {
+  font-size: 1.55rem;
+  font-weight: 700;
+}
+
+.bankapp-pulse {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.bankapp-pulse__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.9rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  border: 1px solid var(--browser-panel-border);
+  background: var(--browser-panel-elevated);
+}
+
+.bankapp-pulse__item--in {
+  border-color: rgba(5, 150, 105, 0.35);
+  background: rgba(5, 150, 105, 0.12);
+}
+
+.bankapp-pulse__item--out {
+  border-color: rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.12);
+}
+
+.bankapp-pulse__icon {
+  font-size: 1rem;
+}
+
+.bankapp-pill {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  background: var(--browser-panel-elevated);
+  border: 1px solid var(--browser-panel-border);
+}
+
+.bankapp-pill__label {
+  font-weight: 600;
+}
+
+.bankapp-pill__value {
+  font-weight: 700;
+  color: var(--browser-accent);
+}
+
+.bankapp-pill__note {
+  color: var(--browser-muted);
+}
+
+.bankapp-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.8rem 1.1rem;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.16), rgba(37, 99, 235, 0.04));
+  border: 1px solid rgba(37, 99, 235, 0.3);
+}
+
+.bankapp-badge__icon {
+  font-size: 1.4rem;
+}
+
+.bankapp-badge__title {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--browser-subtle);
+}
+
+.bankapp-badge__value {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.bankapp-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 1.6rem;
+  border-radius: var(--browser-radius-lg);
+  background: var(--browser-panel);
+  border: 1px solid var(--browser-panel-border);
+  box-shadow: var(--browser-shadow-soft);
+}
+
+.bankapp-section__header h2 {
+  margin: 0;
+  font-size: 1.4rem;
+}
+
+.bankapp-section__header p {
+  margin: 0.4rem 0 0;
+  color: var(--browser-muted);
+}
+
+.bankapp-section__body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.bankapp-ledger {
+  display: grid;
+  gap: 1.35rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.bankapp-ledger__column {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.bankapp-ledger__column h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.bankapp-ledger-group {
+  border: 1px solid var(--browser-panel-border);
+  border-radius: 14px;
+  padding: 1rem;
+  background: var(--browser-panel-elevated);
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.bankapp-ledger-group__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.bankapp-ledger-group__icon {
+  font-size: 1.4rem;
+}
+
+.bankapp-ledger-group__title {
+  flex: 1;
+  font-weight: 600;
+}
+
+.bankapp-ledger-group__total {
+  font-weight: 700;
+}
+
+.bankapp-ledger-group__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.bankapp-ledger-group__item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.5rem;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.bankapp-ledger-group__note {
+  grid-column: 1 / -1;
+  color: var(--browser-muted);
+  font-size: 0.8rem;
+}
+
+.bankapp-empty {
+  margin: 0;
+  font-style: italic;
+  color: var(--browser-subtle);
+}
+
+.bankapp-obligations,
+.bankapp-pending,
+.bankapp-education {
+  display: grid;
+  gap: 1.1rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.bankapp-card {
+  border: 1px solid var(--browser-panel-border);
+  border-radius: 16px;
+  padding: 1.15rem;
+  background: var(--browser-panel-elevated);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.bankapp-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.bankapp-card__header h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.bankapp-card__amount {
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--browser-accent);
+}
+
+.bankapp-card__note {
+  margin: 0;
+  color: var(--browser-muted);
+  line-height: 1.45;
+}
+
+.bankapp-card__note--muted {
+  color: var(--browser-subtle);
+}
+
+.bankapp-card__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.bankapp-card__list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.9rem;
+}
+
+.bankapp-card__status {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--browser-subtle);
+}
+
+.bankapp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.bankapp-table th,
+.bankapp-table td {
+  padding: 0.65rem 0.8rem;
+  border-bottom: 1px solid var(--browser-panel-border);
+  text-align: left;
+}
+
+.bankapp-table th {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--browser-subtle);
+}
+
+.bankapp-opportunities {
+  display: grid;
+  gap: 1.2rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.bankapp-opportunities__block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.bankapp-opportunities__block h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.bankapp-opportunities__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.bankapp-opportunities__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.8rem 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--browser-panel-border);
+  background: var(--browser-panel-elevated);
+}
+
+.bankapp-opportunities__name {
+  font-weight: 600;
+}
+
+.bankapp-opportunities__value {
+  font-weight: 600;
+  color: var(--browser-accent);
+}
+
+.bankapp-opportunities__note {
+  color: var(--browser-muted);
+  font-size: 0.85rem;
+}
+
 .browser-empty {
   margin: 0;
   padding: 1.2rem;
@@ -622,7 +1121,15 @@ a {
 
 @media (max-width: 960px) {
   .browser-layout {
-    padding: 1.8rem 1.4rem 2.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    padding: 2.2rem 1.4rem 2.5rem;
+  }
+
+  .browser-sidebar {
+    position: static;
+    width: 100%;
   }
 
   .browser-chrome {
@@ -636,7 +1143,8 @@ a {
   }
 
   .browser-main {
-    align-items: stretch;
+    max-width: 100%;
+    margin: 0;
   }
 
   .browser-home {

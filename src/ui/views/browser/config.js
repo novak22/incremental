@@ -2,6 +2,15 @@ export const HOMEPAGE_ID = 'home';
 
 export const SERVICE_PAGES = [
   {
+    id: 'bankapp',
+    slug: 'bank',
+    label: 'BankApp',
+    headline: 'BankApp Balance Center',
+    tagline: 'Track cashflow, obligations, and investments in one glance.',
+    icon: '🏦',
+    type: 'finance'
+  },
+  {
     id: 'blogpress',
     slug: 'blogpress',
     label: 'BlogPress',
