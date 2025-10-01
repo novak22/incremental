@@ -1,6 +1,8 @@
 import { renderCardCollections, updateAllCards } from './cards.js';
 import { getState } from '../core/state.js';
+import { configureRegistry } from '../core/state/registry.js';
 import { getRegistry } from '../game/registryService.js';
+import { loadDefaultRegistry } from '../game/registryLoader.js';
 import { computeDailySummary } from '../game/summary.js';
 import { renderDashboard } from './dashboard.js';
 import { renderSkillWidgets } from './skillsWidget.js';
@@ -16,8 +18,23 @@ import {
   buildUpgradeModels
 } from './cards/model.js';
 
+function resolveRegistrySnapshot() {
+  try {
+    return getRegistry();
+  } catch (error) {
+    const message = typeof error?.message === 'string' ? error.message : '';
+    if (!message.includes('Registry definitions have not been loaded')) {
+      throw error;
+    }
+
+    loadDefaultRegistry();
+    configureRegistry();
+    return getRegistry();
+  }
+}
+
 function buildCollections() {
-  const registry = getRegistry();
+  const registry = resolveRegistrySnapshot();
   const hustles = registry.hustles.filter(hustle => hustle.tag?.type !== 'study');
   const education = registry.hustles.filter(hustle => hustle.tag?.type === 'study');
   const assets = registry.assets;
