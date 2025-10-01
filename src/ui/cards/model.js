@@ -184,41 +184,6 @@ export function formatInstanceUpkeep(definition) {
   return parts.join(' • ');
 }
 
-export function buildAssetGroups(definitions = [], state = getState()) {
-  const groups = new Map();
-  definitions.forEach(definition => {
-    const groupId = getAssetGroupId(definition);
-    const label = getAssetGroupLabel(definition);
-    if (!groups.has(groupId)) {
-      groups.set(groupId, {
-        id: groupId,
-        label,
-        note: getAssetGroupNote(label),
-        icon: ASSET_GROUP_ICONS[label] || '✨',
-        definitions: [],
-        instances: []
-      });
-    }
-    const entry = groups.get(groupId);
-    entry.definitions.push(definition);
-    const assetState = getAssetState(definition.id, state);
-    const instances = Array.isArray(assetState?.instances) ? assetState.instances : [];
-    instances.forEach((instance, index) => {
-      const id = instance?.id ?? `${definition.id}-${index}`;
-      const status = instance?.status || 'setup';
-      entry.instances.push({
-        id,
-        index,
-        status,
-        definitionId: definition.id,
-        definition,
-        instance: instance || null
-      });
-    });
-  });
-  return Array.from(groups.values());
-}
-
 export function describeAssetLaunchAvailability(definition, state = getState()) {
   if (!definition) {
     return { disabled: true, reasons: ['Definition missing.'], hours: 0, cost: 0 };
@@ -738,10 +703,3 @@ export function buildEducationModels(definitions = [], helpers = {}) {
   };
 }
 
-export {
-  UPGRADE_CATEGORY_ORDER,
-  UPGRADE_CATEGORY_COPY,
-  UPGRADE_FAMILY_COPY,
-  ASSET_GROUP_NOTES,
-  ASSET_GROUP_ICONS
-};

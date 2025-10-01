@@ -20,10 +20,14 @@ function indexModelsById(list = []) {
   return map;
 }
 
-export function cacheHustleModels(models) {
-  if (!Array.isArray(models)) return;
-  hustleModelCache.clear();
-  models.forEach(model => {
+export function cacheHustleModels(models, options = {}) {
+  const { skipCacheReset = false } = options;
+  if (!skipCacheReset) {
+    hustleModelCache.clear();
+  }
+
+  const list = Array.isArray(models) ? models : [];
+  list.forEach(model => {
     if (model?.id) {
       hustleModelCache.set(model.id, model);
     }
@@ -204,7 +208,7 @@ export function renderHustles(definitions = [], hustleModels = []) {
 
   container.innerHTML = '';
   hustleUi.clear();
-  cacheHustleModels(hustleModels);
+  cacheHustleModels(hustleModels, { skipCacheReset: true });
 
   const modelMap = indexModelsById(hustleModels);
   definitions.forEach(definition => {

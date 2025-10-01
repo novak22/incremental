@@ -148,8 +148,8 @@ function cacheUpgradeDefinitions(definitions = []) {
   });
 }
 
-function cacheCardModels(models = {}) {
-  cacheHustleModels(models?.hustles);
+function cacheCardModels(models = {}, options = {}) {
+  cacheHustleModels(models?.hustles, options);
   cacheEducationModels(models?.education);
   cacheAssetModels(models?.assets);
   cacheUpgradeModels(models?.upgrades);
@@ -1953,9 +1953,9 @@ function renderClassicCollections(registries, models) {
   renderStudySection(education, models?.education);
 }
 
-export function renderAll({ registries = {}, models = {} } = {}) {
+export function renderAll({ registries = {}, models = {} } = {}, options = {}) {
   const normalized = normalizeRegistries(registries);
-  cacheCardModels(models);
+  cacheCardModels(models, options);
   renderClassicCollections(normalized, models);
 }
 
@@ -1992,9 +1992,9 @@ function updateClassicCollections(registries, models) {
   emitUIEvent('upgrades:state-updated');
 }
 
-export function update({ registries = {}, models = {} } = {}) {
+export function update({ registries = {}, models = {} } = {}, options = {}) {
   const normalized = normalizeRegistries(registries);
-  cacheCardModels(models);
+  cacheCardModels(models, options);
   updateClassicCollections(normalized, models);
 }
 

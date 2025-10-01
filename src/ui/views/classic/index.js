@@ -1,4 +1,4 @@
-import resolvers, { classicResolvers } from './resolvers.js';
+import resolvers from './resolvers.js';
 import { renderDashboard as baseRenderDashboard } from '../../dashboard.js';
 import dashboardPresenter from './dashboardPresenter.js';
 import cardsPresenter from './cardsPresenter.js';
@@ -16,5 +16,4 @@ const classicView = {
   }
 };
 
-export { classicResolvers };
 export default classicView;

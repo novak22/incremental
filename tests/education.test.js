@@ -5,6 +5,51 @@ import { ensureTestDom } from './helpers/setupDom.js';
 const dom = ensureTestDom();
 const { document } = dom.window;
 
+test('renderCardCollections synthesizes models when omitted', async () => {
+  const hustleList = document.getElementById('hustle-list');
+  const assetTable = document.getElementById('asset-table-body');
+  hustleList.innerHTML = '';
+  if (assetTable) {
+    assetTable.innerHTML = '';
+  }
+
+  const stateModule = await import('../src/core/state.js');
+  const registryModule = await import('../src/core/state/registry.js');
+  const { initializeState } = stateModule;
+  const { configureRegistry } = registryModule;
+
+  const { registry } = await import('../src/game/registry.js');
+  configureRegistry(registry);
+  initializeState();
+
+  const viewManager = await import('../src/ui/viewManager.js');
+  const classicModule = await import('../src/ui/views/classic/index.js');
+  const fallbackView = {
+    ...classicModule.default,
+    presenters: { ...classicModule.default.presenters, cards: null }
+  };
+  viewManager.setActiveView(fallbackView, document);
+
+  const { renderCardCollections } = await import('../src/ui/cards.js');
+  try {
+    renderCardCollections({
+      hustles: registry.hustles.filter(hustle => hustle.tag?.type !== 'study').slice(0, 3),
+      education: [],
+      assets: registry.assets.slice(0, 2),
+      upgrades: []
+    });
+
+    const hustleCards = document.querySelectorAll('.hustle-card');
+    const assetRows = document.querySelectorAll('#asset-table-body tr');
+    assert.ok(
+      hustleCards.length > 0 || assetRows.length > 0,
+      'fallback render should show hustles or assets without provided models'
+    );
+  } finally {
+    viewManager.setActiveView(classicModule.default, document);
+  }
+});
+
 test('education tracks reflect canonical study data', async () => {
   const trackList = document.getElementById('study-track-list');
   const queueList = document.getElementById('study-queue-list');
