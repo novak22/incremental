@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Boot logic now respects an `?ui=` flag and the browser chrome includes a Classic Shell button so testers can bounce between shells while feature parity lands.
 - Browser shell entry experiments ship a homepage chrome with pinned sites and dedicated widgets while sharing the core game lo
 op with the classic dashboard.
 - Browser chrome now renders dashboard KPIs, quick actions, notifications, and the BlogPress/VideoTube/ShopStack/Learnly surfaces through dedicated presenters that reuse the shared models.
