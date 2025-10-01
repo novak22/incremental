@@ -6,6 +6,7 @@
 - Education and hustle systems link courses to gig bonuses with celebratory progress cues and smarter scheduling buffers.
 - Upgrade and venture hubs highlight ready actions, lane navigation, and payout breakdowns to streamline reinvestment.
 - Analytics surfaces—daily outlooks, niche multipliers, and sortable grids—now live in a dedicated tab while the dashboard stays action focused.
+- Retired the upgrade shortcuts helper to simplify asset panes and rely on contextual card guidance.
 
 ## Recent Highlights
 - Passive assets gained Quality 4–5 milestones with higher payouts and refreshed modifiers.
