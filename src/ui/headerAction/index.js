@@ -31,10 +31,28 @@ const autoForwardState = {
 };
 
 let activeRecommendation = null;
+let presenterRef = null;
+let activeViewId = null;
+
+function refreshPresenterState() {
+  const view = getActiveView();
+  const nextViewId = view?.id || null;
+  if (nextViewId !== activeViewId) {
+    activeViewId = nextViewId;
+    presenterRef = null;
+  }
+}
 
 function getPresenter() {
-  const presenter = getActiveView()?.presenters?.headerAction;
-  return presenter || classicHeaderActionPresenter;
+  refreshPresenterState();
+  const view = getActiveView();
+  if (view?.presenters?.headerAction) {
+    return view.presenters.headerAction;
+  }
+  if (!view) {
+    return classicHeaderActionPresenter;
+  }
+  return null;
 }
 
 function getNextMode(current) {
@@ -91,11 +109,15 @@ function cycleAutoForward() {
 }
 
 export function initHeaderActionControls() {
+  refreshPresenterState();
   const presenter = getPresenter();
-  presenter?.init?.({
-    onPrimaryAction: handlePrimaryAction,
-    onAutoForwardToggle: cycleAutoForward
-  });
+  if (presenter && presenter !== presenterRef) {
+    presenter?.init?.({
+      onPrimaryAction: handlePrimaryAction,
+      onAutoForwardToggle: cycleAutoForward
+    });
+    presenterRef = presenter;
+  }
   applyAutoForwardState('paused');
 }
 

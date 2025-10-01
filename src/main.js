@@ -12,9 +12,42 @@ import classicView from './ui/views/classic/index.js';
 import browserView from './ui/views/browser/index.js';
 import { loadDefaultRegistry } from './game/registryLoader.js';
 
+function resolveViewFromFlag(rootDocument) {
+  if (typeof window === 'undefined' || typeof URLSearchParams !== 'function') {
+    return null;
+  }
+
+  let requestedId = null;
+  try {
+    const params = new URLSearchParams(window.location.search);
+    requestedId = params.get('ui') || params.get('view') || params.get('shell');
+  } catch (error) {
+    requestedId = null;
+  }
+
+  if (!requestedId) {
+    return null;
+  }
+
+  const normalizedId = requestedId.toLowerCase();
+  if (normalizedId === browserView.id && rootDocument?.getElementById('browser-home')) {
+    return browserView;
+  }
+  if (normalizedId === classicView.id && rootDocument?.getElementById('tab-dashboard')) {
+    return classicView;
+  }
+
+  return null;
+}
+
 function resolveInitialView(rootDocument = typeof document !== 'undefined' ? document : null) {
+  const flagView = resolveViewFromFlag(rootDocument);
+  if (flagView) {
+    return flagView;
+  }
+
   const viewId = rootDocument?.body?.dataset?.uiView;
-  if (viewId === browserView.id) {
+  if (viewId === browserView.id && rootDocument?.getElementById('browser-home')) {
     return browserView;
   }
   return classicView;

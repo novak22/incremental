@@ -7,6 +7,7 @@ let activePanelController = null;
 let currentCardModels = null;
 let layoutPresenterInitialized = false;
 let presenterRef = null;
+let activeViewId = null;
 
 function syncPreferencesFromDom() {
   const hustleControls = getElement('hustleControls') || {};
@@ -53,9 +54,25 @@ function emitLayoutEvent(name) {
   }
 }
 
+function refreshPresenterState() {
+  const view = getActiveView();
+  const nextViewId = view?.id || null;
+  if (nextViewId !== activeViewId) {
+    layoutPresenterInitialized = false;
+    presenterRef = null;
+    activeViewId = nextViewId;
+  }
+}
+
 function getPresenter() {
-  const presenter = getActiveView()?.presenters?.layout;
-  return presenter || classicLayoutPresenter;
+  const view = getActiveView();
+  if (view?.presenters?.layout) {
+    return view.presenters.layout;
+  }
+  if (!view) {
+    return classicLayoutPresenter;
+  }
+  return null;
 }
 
 function setupTabs() {
@@ -243,6 +260,7 @@ function setupKpiShortcuts() {
 }
 
 function initializeLayoutPresenter() {
+  refreshPresenterState();
   const presenter = getPresenter();
   if (!presenter?.initControls) {
     return;
