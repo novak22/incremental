@@ -1,4 +1,4 @@
-import { getElement } from '../../elements/registry.js';
+import registry, { getElement } from '../../elements/registry.js';
 import { getState } from '../../../core/state.js';
 import { formatHours, formatMoney } from '../../../core/helpers.js';
 import {
@@ -82,11 +82,23 @@ let assetEmptyNotice = null;
 let assetLaunchPanelExpanded = false;
 
 function resolveAssetGalleryContainer() {
-  return (
-    getElement('assetGallery')
-    || (typeof document !== 'undefined' ? document.getElementById('venture-gallery') : null)
-    || (typeof document !== 'undefined' ? document.getElementById('asset-gallery') : null)
-  );
+  const gallery = getElement('assetGallery');
+  if (gallery) {
+    return gallery;
+  }
+
+  if (typeof document === 'undefined') {
+    return null;
+  }
+
+  const fallback = document.getElementById('venture-gallery')
+    || document.getElementById('asset-gallery');
+
+  if (fallback && typeof registry?.cache?.set === 'function') {
+    registry.cache.set('assetGallery', fallback);
+  }
+
+  return fallback;
 }
 
 function normalizeModelData(models = {}) {
