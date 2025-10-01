@@ -1160,6 +1160,27 @@ function buildAssetHub(groups, launchers, state = getState()) {
   return { container, totalInstances, emptyNotice };
 }
 
+function createMetric(label, value) {
+  const metric = document.createElement('div');
+  metric.className = 'asset-detail__metric';
+
+  const metricLabel = document.createElement('span');
+  metricLabel.className = 'asset-detail__metric-label';
+  metricLabel.textContent = label;
+  metric.appendChild(metricLabel);
+
+  const metricValue = document.createElement('span');
+  metricValue.className = 'asset-detail__metric-value';
+  if (value instanceof Node) {
+    metricValue.appendChild(value);
+  } else {
+    metricValue.textContent = value;
+  }
+  metric.appendChild(metricValue);
+
+  return metric;
+}
+
 function buildMetricsRow(definition, instance, state, riskLabel) {
   const metrics = document.createElement('div');
   metrics.className = 'asset-detail__metrics';
