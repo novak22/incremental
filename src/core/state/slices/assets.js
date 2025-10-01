@@ -1,31 +1,26 @@
 import { normalizeAssetState } from '../assets.js';
-import { getRegistrySnapshot, getAssetDefinition } from '../registry.js';
+import { getAssetDefinition } from '../registry.js';
+import { createRegistrySliceManager } from './factory.js';
 
-export function ensureSlice(state) {
-  if (!state) return {};
-  state.assets = state.assets || {};
-  const registry = getRegistrySnapshot();
-  for (const definition of registry.assets) {
-    const existing = state.assets[definition.id] || {};
-    state.assets[definition.id] = normalizeAssetState(definition, existing, { state });
+const { ensureSlice, getSliceState } = createRegistrySliceManager({
+  sliceKey: 'assets',
+  registryKey: 'assets',
+  definitionLookup: getAssetDefinition,
+  defaultFactory: (definition, { state }) => {
+    if (!definition) {
+      return {};
+    }
+    return normalizeAssetState(definition, {}, { state });
+  },
+  normalizer: (definition, entry = {}, { state }) => {
+    if (!definition) {
+      return entry || {};
+    }
+    return normalizeAssetState(definition, entry || {}, { state });
   }
-  return state.assets;
-}
+});
 
-export function getSliceState(state, id) {
-  if (!state) return {};
-  const assets = ensureSlice(state);
-  if (!id) {
-    return assets;
-  }
-  const definition = getAssetDefinition(id);
-  if (!definition) {
-    assets[id] = assets[id] || {};
-    return assets[id];
-  }
-  assets[id] = normalizeAssetState(definition, assets[id] || {}, { state });
-  return assets[id];
-}
+export { ensureSlice, getSliceState };
 
 export default {
   ensureSlice,
