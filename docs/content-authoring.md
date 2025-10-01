@@ -1,18 +1,15 @@
 # Content Authoring Guide
 
-Designers can configure new hustles, assets, and upgrades without writing imperative logic by using the schema builders in `src/game/content/schema.js`. The builders normalize metadata, inject default UI details, and wire runtime hooks used by the lifecycle systems.
+Designers shape new hustles, assets, and upgrades through the schema builders in `src/game/content/schema.js`. The helpers inject default copy, metrics wiring, and UI hooks so data stays declarative while runtime systems stay consistent.
 
-## Available Builders
+## Core Builders
+- `createAssetDefinition(config)` — Defines a passive asset with setup, upkeep, quality, and payout summaries. Extend detail stacks with `detailKeys` or tweak call-to-action copy with `actionLabels`.
+- `createInstantHustle(config)` — Captures instant hustles with time, cost, payout, and optional requirements. Use `onExecute` / `onComplete` for bespoke logic without skipping standard formatting.
+- `createUpgrade(config)` — Produces purchase or repeatable upgrades, normalizing requirements, lock states, and telemetry labels. Customize button text with `labels` and hook effects with `onPurchase`.
 
-- `createAssetDefinition(config)` – Produces a full asset definition from declarative data. Standard details (owned count, setup, maintenance, quality, and yield summaries) are injected automatically. Provide `detailKeys` to reorder or extend the default stack and `actionLabels` to customize card CTA copy.
-- `createInstantHustle(config)` – Creates instant hustles. Supply `time`, `cost`, `payout`, and optional `requirements`. Metrics labels, payout copy, and requirement summaries are generated for you. Hook custom logic with `onExecute`/`onComplete` callbacks.
-- `createUpgrade(config)` – Generates purchase or repeatable upgrades. Costs, requirement details, and lock states are standardized. Use `labels` for dynamic button text, `metrics` for custom telemetry labels, and `onPurchase` to trigger special behavior.
+## Workflow
+1. Import the relevant builder in the destination module (assets, hustles, or upgrades).
+2. Pass only the unique tuning, flavor text, and optional hooks for the new content.
+3. Append the created definition to the exported collection so the loop picks it up.
 
-## Adding New Content
-
-1. Import the relevant builder inside the target module (e.g., `src/game/assets/definitions/` for assets or `src/game/upgrades.js` for upgrades).
-2. Pass a plain object describing the content. Only include unique flavor text, numerical tuning, and any bespoke hooks.
-3. Append the created definition to the exported array (`ASSETS`, `HUSTLES`, or `UPGRADES`).
-4. Optional: Provide supplemental detail functions or card state overrides when a design calls for bespoke messaging.
-
-The builders ensure consistent formatting, metrics tracking, and UI behavior so designers can focus on storytelling and balance.
+Keeping content declarative makes balancing, localization, and experimentation faster for the whole team.

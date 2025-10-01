@@ -1,19 +1,16 @@
 # Maintenance Brief
 
-For the full historical analysis and detailed recommendations, see the [Maintenance Review Archive](archive/maintenance-review.md).
-
 ## Loop Snapshot
-- Players start each day with fixed hours and cash, investing time in hustles, asset setup, upkeep, and study before ending the day.
-- Morning automation now reserves upkeep first and holds back a manual buffer so players can still run hands-on hustles.
-- Passive assets only pay out when their setup is complete and upkeep is funded, making maintenance choices central to income.
-- The schedule summary surfaces projected earnings, costs, and knowledge commitments so players can plan the next day at a glance.
+- Players juggle daily hours across hustles, upkeep, automation, and study; assets only pay when setup and upkeep are funded.
+- Morning automation reserves upkeep first and keeps a manual buffer so players retain agency each day.
+- The schedule summary projects earnings, costs, and knowledge commitments to plan the next day quickly.
 
 ## Top Maintenance Priorities
-- Stabilize tooling so a clean clone can run tests without manual fixes, including documenting installs and adding CI coverage.
-- Separate gameplay definitions from copy and ad-hoc state mutations to simplify tuning, localization, and debugging.
-- Add maintenance prioritization controls so player intent guides which assets receive scarce hours when schedules overrun.
+- Keep onboarding smooth by documenting install steps and adding CI coverage for `npm install && npm test`.
+- Separate gameplay definitions from copy and ad-hoc mutations so designers can rebalance without touching engine code.
+- Provide prioritization controls for directing upkeep when schedules overrun.
 
 ## Success Metrics
-- `npm install && npm test` succeeds on a clean environment and in continuous integration.
-- Designers adjust payouts, time costs, and narrative copy without editing core logic files.
-- Telemetry and feedback show players using more than one early hustle path and feeling in control of upkeep trade-offs.
+- Fresh environments pass `npm install && npm test` without manual fixes.
+- Designers tweak payouts, durations, and copy without editing core logic files.
+- Telemetry shows players exploring multiple early hustle paths while feeling in control of upkeep trade-offs.
