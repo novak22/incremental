@@ -3450,7 +3450,7 @@ function renderClassicCollections(registries, models) {
   renderEducation(education, models?.education ?? educationModelCache);
 }
 
-export function renderClassicCards({ registries = {}, models = {} } = {}) {
+export function renderAll({ registries = {}, models = {} } = {}) {
   const normalized = normalizeRegistries(registries);
   cacheCardModels(models);
   renderClassicCollections(normalized, models);
@@ -3503,7 +3503,7 @@ function updateClassicCollections(registries, models) {
   emitUIEvent('upgrades:state-updated');
 }
 
-export function updateClassicCards({ registries = {}, models = {} } = {}) {
+export function update({ registries = {}, models = {} } = {}) {
   const normalized = normalizeRegistries(registries);
   cacheCardModels(models);
   updateClassicCollections(normalized, models);
@@ -3519,8 +3519,8 @@ function updateStudyTrack(definition) {
 }
 
 const classicCardsPresenter = {
-  render: renderClassicCards,
-  update: updateClassicCards,
+  renderAll,
+  update,
   updateCard,
   refreshUpgradeSections
 };

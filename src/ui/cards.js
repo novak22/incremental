@@ -1,7 +1,7 @@
 import { getActiveView } from './viewManager.js';
 import classicCardsPresenter, {
-  renderClassicCards,
-  updateClassicCards,
+  renderAll as renderClassicCards,
+  update as updateClassicCards,
   updateCard as updateClassicCard,
   refreshUpgradeSections as classicRefreshUpgradeSections
 } from './views/classic/cardsPresenter.js';
@@ -22,6 +22,11 @@ function getActiveCardsPresenter() {
 export function renderCardCollections(registries = {}, models = {}) {
   const presenter = getActiveCardsPresenter();
   const payload = { registries: normalizeRegistries(registries), models };
+  if (typeof presenter?.renderAll === 'function') {
+    presenter.renderAll(payload);
+    return;
+  }
+
   if (presenter?.render) {
     presenter.render(payload);
     return;
@@ -33,7 +38,7 @@ export function renderCardCollections(registries = {}, models = {}) {
 export function updateAllCards(registries = {}, models = {}) {
   const presenter = getActiveCardsPresenter();
   const payload = { registries: normalizeRegistries(registries), models };
-  if (presenter?.update) {
+  if (typeof presenter?.update === 'function') {
     presenter.update(payload);
     return;
   }
