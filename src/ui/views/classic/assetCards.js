@@ -1300,7 +1300,7 @@ function createAssetGroupSection(group, state = getState()) {
 }
 
 function renderAssets(definitions = [], assetModels = currentAssetModels) {
-  const container = getElement('assetHub');
+  const container = getElement('assetGallery');
   if (!container) return;
 
   const normalizedModels = resolveAssetModels(definitions, assetModels);
@@ -1322,7 +1322,7 @@ function renderAssets(definitions = [], assetModels = currentAssetModels) {
 }
 
 function updateAssetHub() {
-  const container = getElement('assetHub');
+  const container = getElement('assetGallery');
   if (!container || !assetHubNode) return;
   container.replaceChild(assetHubNode, container.firstElementChild);
 }

@@ -72,7 +72,11 @@ function updateClassicCollections(registries, models) {
     const model = modelMap.get(definition.id) || getCachedHustleModel(definition.id);
     updateHustleCard(definition, model, { emitEvent: emitUIEvent });
   });
-  assetCards.updateAssets(assets, normalizeAssetModels(models?.assets));
+  if (typeof models?.assets === 'undefined') {
+    assetCards.updateAssets(assets);
+  } else {
+    assetCards.updateAssets(assets, normalizeAssetModels(models?.assets));
+  }
   updateUpgrades(upgrades, models?.upgrades);
   updateStudySection(education, models?.education);
   emitUIEvent('upgrades:state-updated');
