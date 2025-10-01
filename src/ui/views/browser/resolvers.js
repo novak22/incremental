@@ -13,6 +13,10 @@ const resolvers = {
     commandButton: root.getElementById('browser-command-button'),
     endDayButton: root.getElementById('browser-session-button')
   }),
+  headerActionButtons: root => ({
+    endDayButton: root.getElementById('browser-session-button'),
+    autoForwardButton: null
+  }),
   siteList: root => root.getElementById('browser-site-list'),
   siteListNote: root => root.getElementById('browser-sites-note'),
   addSiteButton: root => root.getElementById('browser-add-site'),
