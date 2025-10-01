@@ -100,63 +100,20 @@ export class StatePersistence {
     const lastSavedFallback = this.now();
     const fallback = () => this.initializeDefaultState(onFirstLoad, lastSavedFallback);
 
-    const readSnapshotRaw = onErrorCallback => {
-      let rawSnapshot = null;
-      try {
-        rawSnapshot = this.storage?.getItem(this.storageKey) ?? null;
-      } catch (err) {
-        this.logger?.error?.('Failed to read saved state', err);
-        if (typeof onErrorCallback === 'function') {
-          onErrorCallback(err);
-        }
-        return { ok: false, result: fallback() };
-      }
-
-      if (!rawSnapshot) {
-        return { ok: false, result: fallback() };
-      }
-
-      return { ok: true, value: rawSnapshot };
-    };
-
-    const parseSnapshot = (raw, onErrorCallback) => {
-      try {
-        return { ok: true, value: JSON.parse(raw) };
-      } catch (err) {
-        this.logger?.error?.('Failed to parse saved state', err);
-        if (typeof onErrorCallback === 'function') {
-          onErrorCallback(err);
-        }
-        return { ok: false, result: fallback() };
-      }
-    };
-
-    const migrateSnapshot = (parsed, context, onErrorCallback) => {
-      try {
-        return { ok: true, value: this.migrate(parsed, context) };
-      } catch (err) {
-        this.logger?.error?.('Failed to migrate saved state', err);
-        if (typeof onErrorCallback === 'function') {
-          onErrorCallback(err);
-        }
-        return { ok: false, result: fallback() };
-      }
-    };
-
-    const rawResult = readSnapshotRaw(onError);
-    if (!rawResult.ok) {
-      return rawResult.result;
+    const rawResult = this.readSnapshot(onError);
+    if (rawResult.type !== 'success') {
+      return fallback();
     }
 
-    const parsedResult = parseSnapshot(rawResult.value, onError);
-    if (!parsedResult.ok) {
-      return parsedResult.result;
+    const parsedResult = this.parseSnapshot(rawResult.value, onError);
+    if (parsedResult.type !== 'success') {
+      return fallback();
     }
 
     const context = this.createMigrationContext(defaultState);
-    const migratedResult = migrateSnapshot(parsedResult.value, context, onError);
-    if (!migratedResult.ok) {
-      return migratedResult.result;
+    const migratedResult = this.migrateSnapshot(parsedResult.value, context, onError);
+    if (migratedResult.type !== 'success') {
+      return fallback();
     }
 
     const migrated = migratedResult.value;
@@ -179,6 +136,44 @@ export class StatePersistence {
     }
 
     return { state, returning: true, lastSaved };
+  }
+
+  readSnapshot(onError) {
+    try {
+      const rawSnapshot = this.storage?.getItem(this.storageKey) ?? null;
+      if (!rawSnapshot) {
+        return { type: 'empty' };
+      }
+      return { type: 'success', value: rawSnapshot };
+    } catch (err) {
+      this.handleLoadFailure('Failed to read saved state', err, onError);
+      return { type: 'error', error: err };
+    }
+  }
+
+  parseSnapshot(raw, onError) {
+    try {
+      return { type: 'success', value: JSON.parse(raw) };
+    } catch (err) {
+      this.handleLoadFailure('Failed to parse saved state', err, onError);
+      return { type: 'error', error: err };
+    }
+  }
+
+  migrateSnapshot(parsed, context, onError) {
+    try {
+      return { type: 'success', value: this.migrate(parsed, context) };
+    } catch (err) {
+      this.handleLoadFailure('Failed to migrate saved state', err, onError);
+      return { type: 'error', error: err };
+    }
+  }
+
+  handleLoadFailure(message, error, onError) {
+    this.logger?.error?.(message, error);
+    if (typeof onError === 'function') {
+      onError(error);
+    }
   }
 
   initializeDefaultState(onFirstLoad, lastSavedFallback) {
