@@ -1,5 +1,6 @@
 import { getElement } from '../../elements/registry.js';
 import { formatHours, formatMoney } from '../../../core/helpers.js';
+import { getState } from '../../../core/state.js';
 import { SERVICE_PAGES } from './config.js';
 import { buildFinanceModel } from '../../cards/model/index.js';
 import { createStat, formatRoi } from './components/widgets.js';
@@ -9,6 +10,9 @@ import videotubeApp from './components/videotube.js';
 import learnlyApp from './components/learnly.js';
 import shopstackApp from './components/shopstack.js';
 import shopilyApp from './components/shopily.js';
+import yourNetworkApp from './components/yournetwork.js';
+import { buildPlayerPanelModel } from '../../player/model.js';
+import { computeDailySummary } from '../../../game/summary.js';
 import trendsApp from './components/trends.js';
 import serverhubApp from './components/serverhub.js';
 
@@ -86,6 +90,38 @@ function ensurePageContent(page, builder) {
     builder(refs);
   }
   return refs;
+}
+
+function renderYourNetworkPage(models = {}) {
+  const page = SERVICE_PAGES.find(entry => entry.type === 'profile');
+  if (!page) return null;
+
+  const refs = ensurePageContent(page, ({ body }) => {
+    if (!body.querySelector('[data-role="yournetwork-root"]')) {
+      body.innerHTML = '';
+      const wrapper = document.createElement('div');
+      wrapper.dataset.role = 'yournetwork-root';
+      body.appendChild(wrapper);
+    }
+  });
+  if (!refs) return null;
+
+  const mount = refs.body.querySelector('[data-role="yournetwork-root"]');
+  if (!mount) return null;
+
+  const state = getState();
+  const profile = buildPlayerPanelModel(state);
+  const dailySummary = computeDailySummary(state);
+  const summary = yourNetworkApp.render({
+    mount,
+    profile,
+    assetsModel: models.assets,
+    state,
+    dailySummary
+  });
+
+  const meta = summary?.meta || profile?.summary?.title || profile?.summary?.tier || 'Profile ready';
+  return { id: page.id, meta };
 }
 
 function renderHustlesPage(definitions = [], models = []) {
@@ -1321,6 +1357,8 @@ function renderServices(registries = {}, models = {}) {
   cachedModels = models;
 
   const summaries = [];
+  const profileSummary = renderYourNetworkPage(models);
+  if (profileSummary) summaries.push(profileSummary);
   const hustleSummary = renderHustlesPage(registries.hustles, models.hustles);
   if (hustleSummary) summaries.push(hustleSummary);
   const assetSummary = renderAssetsPage(registries.assets, models.assets);

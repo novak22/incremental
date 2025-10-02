@@ -1102,6 +1102,307 @@ a {
   background: rgba(239, 68, 68, 0.12);
 }
 
+.yournetwork {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.yournetwork-hero {
+  display: grid;
+  gap: 1.8rem;
+  padding: 2.2rem;
+  border-radius: var(--browser-radius-lg);
+  border: 1px solid var(--browser-panel-border);
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), transparent) var(--browser-panel-elevated);
+  box-shadow: var(--browser-shadow-soft);
+}
+
+.yournetwork-hero__identity {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.yournetwork-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 24px;
+  background: var(--browser-panel);
+  display: grid;
+  place-items: center;
+  font-size: 2rem;
+  box-shadow: var(--browser-shadow-card);
+}
+
+.yournetwork-hero__headline {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.yournetwork-hero__name {
+  margin: 0;
+  font-size: 1.6rem;
+}
+
+.yournetwork-hero__title {
+  margin: 0;
+  font-weight: 600;
+  color: var(--browser-accent);
+}
+
+.yournetwork-hero__tagline,
+.yournetwork-hero__meta {
+  margin: 0;
+  color: var(--browser-muted);
+  font-size: 0.95rem;
+}
+
+.yournetwork-hero__snapshot {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  margin: 0;
+}
+
+.yournetwork-hero__stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.yournetwork-hero__label {
+  margin: 0;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--browser-subtle);
+}
+
+.yournetwork-hero__value {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.yournetwork-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 1.8rem;
+  border-radius: var(--browser-radius-lg);
+  border: 1px solid var(--browser-panel-border);
+  background: var(--browser-panel);
+  box-shadow: var(--browser-shadow-card);
+}
+
+.yournetwork-section__header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.yournetwork-section__header h2 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.yournetwork-section__note {
+  margin: 0;
+  color: var(--browser-muted);
+  font-size: 0.95rem;
+}
+
+.yournetwork-section__body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.yournetwork-grid {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.yournetwork-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 1.3rem;
+  border-radius: var(--browser-radius-md);
+  border: 1px solid rgba(37, 99, 235, 0.08);
+  background: var(--browser-panel-elevated);
+  box-shadow: var(--browser-shadow-card);
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.yournetwork-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 38px rgba(15, 23, 42, 0.12);
+}
+
+.yournetwork-card.is-locked {
+  opacity: 0.6;
+  border-style: dashed;
+}
+
+.yournetwork-card.is-maxed {
+  border-color: rgba(5, 150, 105, 0.4);
+}
+
+.yournetwork-card--education[data-state='active'] {
+  border-color: rgba(37, 99, 235, 0.35);
+}
+
+.yournetwork-card--education[data-state='completed'] {
+  border-color: rgba(5, 150, 105, 0.4);
+}
+
+.yournetwork-card__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.yournetwork-card__title {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.yournetwork-card__badge {
+  padding: 0.15rem 0.55rem;
+  border-radius: var(--browser-radius-pill);
+  background: rgba(37, 99, 235, 0.12);
+  color: var(--browser-accent);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.yournetwork-card__subtitle {
+  margin: 0;
+  color: var(--browser-muted);
+  font-size: 0.95rem;
+}
+
+.yournetwork-card__meta {
+  margin: 0;
+  color: var(--browser-muted);
+  font-size: 0.9rem;
+}
+
+.yournetwork-card__note {
+  margin: 0;
+  color: var(--browser-subtle);
+  font-size: 0.85rem;
+}
+
+.yournetwork-card__note--cost {
+  font-weight: 600;
+}
+
+.yournetwork-progress {
+  position: relative;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.3);
+  overflow: hidden;
+}
+
+.yournetwork-progress__fill {
+  position: absolute;
+  inset: 0;
+  width: var(--progress, 0%);
+  background: linear-gradient(90deg, var(--browser-accent), rgba(37, 99, 235, 0.65));
+}
+
+.yournetwork-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--browser-radius-pill);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.yournetwork-badge--info {
+  background: rgba(37, 99, 235, 0.12);
+  color: var(--browser-accent);
+}
+
+.yournetwork-badge--success {
+  background: rgba(5, 150, 105, 0.14);
+  color: var(--browser-positive);
+}
+
+.yournetwork-badge--muted {
+  background: rgba(148, 163, 184, 0.18);
+  color: var(--browser-muted);
+}
+
+.yournetwork-empty {
+  margin: 0;
+  color: var(--browser-muted);
+  font-size: 0.95rem;
+}
+
+.yournetwork-asset__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.yournetwork-asset__stat {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.6rem;
+  border-radius: var(--browser-radius-pill);
+  background: rgba(37, 99, 235, 0.1);
+  font-size: 0.85rem;
+}
+
+.yournetwork-stats {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  margin: 0;
+}
+
+.yournetwork-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 1rem 1.2rem;
+  border-radius: 14px;
+  border: 1px solid rgba(37, 99, 235, 0.12);
+  background: var(--browser-panel-elevated);
+}
+
+.yournetwork-stat__label {
+  margin: 0;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--browser-subtle);
+}
+
+.yournetwork-stat__value {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.yournetwork-stat__meta {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.85rem;
+  color: var(--browser-muted);
+}
+
 .bankapp-pulse__icon {
   font-size: 1rem;
 }

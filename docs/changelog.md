@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- YourNetwork joins the browser apps lineup with a LinkedIn-inspired profile that showcases skills, study progress, equipment, portfolio highlights, and career metrics in one celebratory view.
 - Trends Intelligence Lab replaces the classic analytics tab with a standalone browser app featuring a daily outlook ticker, refreshed momentum cards, and a dedicated watchlist while reusing existing niche data.
 - ServerHub launches as a cloud-inspired control center for Micro SaaS ventures with KPI hero metrics, app table + detail sidebar, upgrade shelf, and pricing tiers built on the existing SaaS backend.
 - BankApp now archives the last seven day-end ledgers and mirrors the shared activity log so the browser shell surfaces cashflow streaks without leaving the app.
