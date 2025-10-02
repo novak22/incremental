@@ -16,6 +16,7 @@
 - Browser homepage ToDo widget now auto-lists any upkeep or study time already consumed at daybreak inside the Done column so players see their remaining capacity at a glance.
 - Browser chrome End Day button now launches the next queued ToDo task and only offers "Next Day" once the list is clear.
 - Learnly graduates into a dedicated browser app with a course catalog, detail pages, My Courses hub, and pricing FAQ while reusing the existing education systems.
+- Learnly catalog now hides completed courses, floats active enrollments to the top of My Courses, and mirrors tab switches in the workspace URL bar for clearer navigation.
 - BlogPress brings the Personal Blog management flow into the browser shell with a table overview, detail inspector, pricing page, and one-click quality actions while reusing the existing passive-income logic.
 - VideoTube graduates the vlog asset tools into a studio-style browser app with a channel dashboard, analytics view, niche selection, and launch workflow that reuse the existing vlog economy.
 - Shopily launches as the dropshipping control center with KPI hero, store table + sidebar, upgrade shelf, and pricing tier cards while reusing the established commerce backend.

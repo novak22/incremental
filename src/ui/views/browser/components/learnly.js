@@ -32,6 +32,9 @@ const CATEGORY_BY_SKILL = CATEGORY_DEFINITIONS.reduce((map, category) => {
 }, new Map());
 
 let currentMount = null;
+let routeListener = null;
+let currentRoutePath = '';
+
 let currentState = {
   view: VIEW_CATALOG,
   tab: VIEW_CATALOG,
@@ -41,6 +44,7 @@ let currentState = {
 
 let currentContext = {
   courses: [],
+  catalogCourses: [],
   courseMap: new Map(),
   categories: [],
   summary: {
@@ -143,11 +147,14 @@ function buildContext(model = {}, definitions = []) {
   const definitionMap = new Map((definitions || []).map(definition => [definition?.id, definition]).filter(Boolean));
   const tracks = Array.isArray(model?.tracks) ? model.tracks : [];
   const courses = tracks.map(track => buildCourse(track, definitionMap));
+  const catalogCourses = courses.filter(course => !course.progress.completed);
   const courseMap = new Map(courses.map(course => [course.id, course]));
 
   const summary = courses.reduce(
     (acc, course) => {
-      acc.total += 1;
+      if (!course.progress.completed) {
+        acc.total += 1;
+      }
       if (course.progress.enrolled && !course.progress.completed) {
         acc.active += 1;
         acc.dailyHours += course.hoursPerDay;
@@ -162,14 +169,14 @@ function buildContext(model = {}, definitions = []) {
   );
 
   const categoryCounts = new Map();
-  courses.forEach(course => {
+  catalogCourses.forEach(course => {
     course.categories.forEach(categoryId => {
       categoryCounts.set(categoryId, (categoryCounts.get(categoryId) || 0) + 1);
     });
   });
 
   const categories = [
-    { id: 'all', label: 'All Courses', count: courses.length }
+    { id: 'all', label: 'All Courses', count: catalogCourses.length }
   ];
 
   CATEGORY_DEFINITIONS.forEach(category => {
@@ -185,7 +192,7 @@ function buildContext(model = {}, definitions = []) {
     }
   });
 
-  return { courses, courseMap, categories, summary };
+  return { courses, catalogCourses, courseMap, categories, summary };
 }
 
 function ensureSelectedCourse() {
@@ -195,7 +202,7 @@ function ensureSelectedCourse() {
   }
   if (!currentState.selectedCourseId || !currentContext.courseMap.has(currentState.selectedCourseId)) {
     const activeCourse = currentContext.courses.find(course => course.progress.enrolled && !course.progress.completed);
-    const fallback = currentContext.courses[0];
+    const fallback = currentContext.catalogCourses[0] || currentContext.courses[0];
     currentState.selectedCourseId = (activeCourse || fallback)?.id || null;
   }
 }
@@ -206,6 +213,7 @@ function setState(partial) {
     ensureSelectedCourse();
   }
   draw();
+  updateRoute();
 }
 
 function handleSelectCategory(categoryId) {
@@ -246,6 +254,7 @@ function handleDrop(course) {
   if (result?.success) {
     course.progress.enrolled = false;
     draw();
+    updateRoute();
   }
 }
 
@@ -353,7 +362,7 @@ function renderCatalogView() {
   const catalog = document.createElement('div');
   catalog.className = 'learnly-grid';
 
-  const filteredCourses = currentContext.courses.filter(course => {
+  const filteredCourses = currentContext.catalogCourses.filter(course => {
     if (currentState.category === 'all') return true;
     return course.categories.includes(currentState.category);
   });
@@ -636,7 +645,18 @@ function renderMyCoursesView() {
   const list = document.createElement('div');
   list.className = 'learnly-enrollment-list';
 
-  const enrolledCourses = currentContext.courses.filter(course => course.progress.enrolled || course.progress.completed);
+  const enrolledCourses = currentContext.courses
+    .map((course, index) => ({ course, index }))
+    .filter(entry => entry.course.progress.enrolled || entry.course.progress.completed)
+    .sort((a, b) => {
+      const aActive = a.course.progress.enrolled && !a.course.progress.completed;
+      const bActive = b.course.progress.enrolled && !b.course.progress.completed;
+      if (aActive === bActive) {
+        return a.index - b.index;
+      }
+      return aActive ? -1 : 1;
+    })
+    .map(entry => entry.course);
   if (!enrolledCourses.length) {
     const empty = document.createElement('div');
     empty.className = 'learnly-empty';
@@ -778,17 +798,46 @@ function draw() {
   currentMount.appendChild(fragment);
 }
 
-function render(model, { mount, definitions = [] } = {}) {
+function getRoutePath() {
+  if (currentState.view === VIEW_PRICING) {
+    return 'pricing';
+  }
+  if (currentState.view === VIEW_MY_COURSES) {
+    return 'my-courses';
+  }
+  if (currentState.view === VIEW_DETAIL) {
+    const courseId = currentState.selectedCourseId;
+    return courseId ? `catalog/${courseId}` : 'catalog';
+  }
+  return 'catalog';
+}
+
+function updateRoute(options = {}) {
+  const { force = false } = options;
+  const nextPath = getRoutePath();
+  const changed = nextPath !== currentRoutePath;
+  currentRoutePath = nextPath;
+  if ((force || changed) && typeof routeListener === 'function') {
+    routeListener(nextPath);
+  }
+  return nextPath;
+}
+
+function render(model, { mount, definitions = [], onRouteChange } = {}) {
   currentMount = mount || currentMount;
+  if (typeof onRouteChange === 'function') {
+    routeListener = onRouteChange;
+  }
   currentContext = buildContext(model, definitions);
   if (currentState.view === VIEW_DETAIL) {
     ensureSelectedCourse();
   }
   draw();
+  const urlPath = updateRoute({ force: true });
 
   const active = currentContext.summary.active;
   const meta = active > 0 ? `${active} active course${active === 1 ? '' : 's'}` : 'Browse the catalog';
-  return { meta };
+  return { meta, urlPath };
 }
 
 export default { render };
