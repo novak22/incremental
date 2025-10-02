@@ -22,6 +22,8 @@ function createUpgradeTodoEntries(entries = []) {
     const durationText = entry?.durationText || formatHours(hours);
     const moneyCost = Math.max(0, toNumber(entry?.moneyCost));
     const metaParts = [entry?.subtitle, entry?.meta].filter(Boolean);
+    const rawRemaining = Number(entry?.remaining);
+    const upgradeRemaining = Number.isFinite(rawRemaining) ? Math.max(0, rawRemaining) : null;
     return {
       id: entry?.id || `upgrade-${index}`,
       title: entry?.title || 'Upgrade',
@@ -31,7 +33,10 @@ function createUpgradeTodoEntries(entries = []) {
       durationText,
       moneyCost,
       repeatable: Boolean(entry?.repeatable),
-      remainingRuns: entry?.remainingRuns ?? null
+      remainingRuns: entry?.remainingRuns ?? null,
+      focusCategory: 'upgrade',
+      upgradeRemaining,
+      orderIndex: index
     };
   });
 }
@@ -52,14 +57,20 @@ function createEnrollmentTodoEntries(entries = []) {
       durationText,
       moneyCost,
       repeatable: Boolean(entry?.repeatable),
-      remainingRuns: entry?.remainingRuns ?? null
+      remainingRuns: entry?.remainingRuns ?? null,
+      focusCategory: 'study',
+      orderIndex: index
     };
   });
 }
 
 function composeTodoModel(quickActions = {}, assetActions = {}, enrollmentActions = {}) {
   const quickEntries = Array.isArray(quickActions?.entries)
-    ? quickActions.entries.filter(Boolean)
+    ? quickActions.entries.filter(Boolean).map((entry, index) => ({
+      ...entry,
+      focusCategory: entry?.focusCategory || 'hustle',
+      orderIndex: Number.isFinite(entry?.orderIndex) ? entry.orderIndex : index
+    }))
     : [];
   const upgradeEntries = createUpgradeTodoEntries(assetActions?.entries);
   const enrollmentEntries = createEnrollmentTodoEntries(enrollmentActions?.entries);

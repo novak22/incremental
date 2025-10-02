@@ -6,6 +6,7 @@
 - ShopStack storefront replaces the legacy upgrades tab with a full browser app featuring category filters, product detail pages, and a My Purchases hub while reusing the original upgrade logic.
 - Retired the debug action catalog and command palette overlays to streamline the shell and remove unused maintenance paths.
 - Browser homepage ToDo widget now unifies quick actions, upgrade prompts, and enrollable study tracks in a single filtered checklist so only affordable moves surface.
+- Browser homepage ToDo widget adds a "Focus on" toggle so players can sort for top-paying hustles, fastest upgrades, or an alternating blend of both.
 - Learnly graduates into a dedicated browser app with a course catalog, detail pages, My Courses hub, and pricing FAQ while reusing the existing education systems.
 - BlogPress brings the Personal Blog management flow into the browser shell with a table overview, detail inspector, pricing page, and one-click quality actions while reusing the existing passive-income logic.
 - VideoTube graduates the vlog asset tools into a studio-style browser app with a channel dashboard, analytics view, niche selection, and launch workflow that reuse the existing vlog economy.

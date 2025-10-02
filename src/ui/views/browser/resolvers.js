@@ -40,7 +40,9 @@ const resolvers = {
       doneHeading: root.getElementById('browser-widget-todo-done-heading'),
       availableValue: root.getElementById('browser-widget-todo-available'),
       spentValue: root.getElementById('browser-widget-todo-spent'),
-      endDayButton: root.getElementById('browser-widget-todo-end')
+      endDayButton: root.getElementById('browser-widget-todo-end'),
+      focusGroup: root.querySelector('[data-widget="todo"] [data-focus-group]'),
+      focusButtons: root.querySelectorAll('[data-widget="todo"] [data-focus]')
     },
     apps: {
       container: root.querySelector('[data-widget="apps"]'),
