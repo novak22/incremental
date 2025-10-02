@@ -1,3 +1,4 @@
+import { renderCollections, updateCollections } from '../../cards/presenters/shared.js';
 import { getElement } from '../../elements/registry.js';
 import { SERVICE_PAGES } from './config.js';
 import renderYourNetwork from './apps/yourNetwork.js';
@@ -168,9 +169,11 @@ function collectSummaries(context, registries = {}, models = {}) {
   return summaries;
 }
 
-function renderServices(registries = {}, models = {}) {
+function cacheBrowserPayload(registries = {}, models = {}) {
   cachePayload(registries, models);
+}
 
+function renderBrowserCollections(registries = {}, models = {}) {
   const context = { ensurePageContent };
   const summaries = collectSummaries(context, registries, models);
 
@@ -178,22 +181,30 @@ function renderServices(registries = {}, models = {}) {
   setServiceSummaries(summaries);
 }
 
-function renderAll(payload = {}) {
-  const { registries = {}, models = {} } = payload;
-  renderServices(registries, models);
+export function renderAll(payload = {}) {
+  renderCollections(payload, {
+    cache: cacheBrowserPayload,
+    render: renderBrowserCollections
+  });
 }
 
-function update(payload = {}) {
-  renderAll(payload);
+export function update(payload = {}) {
+  updateCollections(payload, {
+    cache: cacheBrowserPayload,
+    update: renderBrowserCollections
+  });
 }
 
-function updateCard() {
+export function updateCard() {
   const cached = getCachedPayload();
   if (!cached) return;
-  renderServices(cached.registries, cached.models);
+  renderCollections(cached, {
+    cache: cacheBrowserPayload,
+    render: renderBrowserCollections
+  });
 }
 
-function refreshUpgradeSections() {
+export function refreshUpgradeSections() {
   updateCard();
 }
 

@@ -79,6 +79,19 @@ test('cardsPresenter dispatches to app modules and publishes summaries', async t
     assert.equal(count, 1, `expected renderer ${stubConfigs[index].id} to be invoked once`);
   });
 
+  const renderNotificationCount = notifications.length;
+
+  cardsPresenter.update(registrySummary);
+
+  callCounts.forEach((count, index) => {
+    assert.equal(count, 2, `expected renderer ${stubConfigs[index].id} to run during update`);
+  });
+
+  assert.ok(
+    notifications.length > renderNotificationCount,
+    'expected update to publish new service summaries'
+  );
+
   const siteList = dom.window.document.getElementById('browser-site-list');
   const items = [...siteList.querySelectorAll('li')];
   assert.equal(
@@ -94,12 +107,18 @@ test('cardsPresenter dispatches to app modules and publishes summaries', async t
     assert.equal(metaById.get(id), meta, `expected summary meta for ${id}`);
   });
 
+  const updateNotificationCount = notifications.length;
+
   cardsPresenter.updateCard();
   callCounts.forEach((count, index) => {
-    assert.equal(count, 2, `expected renderer ${stubConfigs[index].id} to re-run during updateCard`);
+    assert.equal(count, 3, `expected renderer ${stubConfigs[index].id} to re-run during updateCard`);
   });
 
   assert.ok(notifications.length > 0, 'expected service summary notifications');
   const lastNotification = notifications.at(-1);
   assert.equal(lastNotification.length, stubConfigs.length, 'notification includes all summaries');
+  assert.ok(
+    notifications.length > updateNotificationCount,
+    'expected updateCard to publish refreshed service summaries'
+  );
 });
