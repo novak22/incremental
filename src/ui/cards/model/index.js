@@ -41,3 +41,7 @@ export {
   getQuickActionIds as getDigishelfQuickActionIds
 } from './digishelf.js';
 export { default as buildShopilyModel, selectNiche as selectShopilyNiche } from './shopily.js';
+export {
+  default as buildServerHubModel,
+  selectServerHubNiche
+} from './serverhub.js';
