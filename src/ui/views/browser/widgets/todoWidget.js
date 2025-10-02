@@ -189,11 +189,52 @@ function renderEmptyState(message) {
 }
 
 function handleCompletion(entry, model) {
-  if (!entry) return;
+  if (!entry) return false;
+
   const existing = completedItems.get(entry.id);
   if (existing && !entry.repeatable) {
-    return;
+    return false;
   }
+
+  const previousModel = lastModel || model || {};
+  const previousHoursAvailable = Number(previousModel?.hoursAvailable);
+  const previousHoursSpent = Number(previousModel?.hoursSpent);
+
+  const previousModelRef = lastModel;
+  let triggeredUpdate = false;
+  if (typeof entry.onClick === 'function') {
+    entry.onClick();
+    triggeredUpdate = lastModel !== previousModelRef;
+  }
+
+  const refreshedModel = triggeredUpdate ? (lastModel || {}) : (model || previousModel || {});
+  const duration = Number(entry.durationHours);
+  const trackTime = Number.isFinite(duration) && duration > 0;
+
+  let actionRan = true;
+  if (trackTime) {
+    const refreshedHoursAvailable = Number(refreshedModel?.hoursAvailable);
+    const refreshedHoursSpent = Number(refreshedModel?.hoursSpent);
+    const tolerance = 1e-6;
+    const spentDelta = Number.isFinite(previousHoursSpent) && Number.isFinite(refreshedHoursSpent)
+      ? refreshedHoursSpent - previousHoursSpent
+      : null;
+    const availableDelta = Number.isFinite(previousHoursAvailable) && Number.isFinite(refreshedHoursAvailable)
+      ? previousHoursAvailable - refreshedHoursAvailable
+      : null;
+    const hasSpentDelta = spentDelta !== null;
+    const hasAvailableDelta = availableDelta !== null;
+    const matchesSpent = hasSpentDelta && spentDelta >= duration - tolerance;
+    const matchesAvailable = hasAvailableDelta && availableDelta >= duration - tolerance;
+    actionRan = (hasSpentDelta || hasAvailableDelta)
+      ? (matchesSpent || matchesAvailable)
+      : true;
+  }
+
+  if (!actionRan) {
+    return false;
+  }
+
   const count = existing ? (existing.count || 1) + 1 : 1;
   completedItems.set(entry.id, {
     id: entry.id,
@@ -205,11 +246,13 @@ function handleCompletion(entry, model) {
     count,
     completedAt: Date.now()
   });
-  if (typeof entry.onClick === 'function') {
-    entry.onClick();
+
+  if (!triggeredUpdate && trackTime) {
+    applyImmediateTimeDelta(refreshedModel, duration);
   }
-  applyImmediateTimeDelta(model, entry.durationHours);
-  render(model);
+
+  render(refreshedModel);
+  return true;
 }
 
 function createTask(entry, model) {
@@ -244,7 +287,11 @@ function createTask(entry, model) {
     if (button.getAttribute('aria-disabled') === 'true') return;
     button.setAttribute('aria-disabled', 'true');
     button.classList.add('is-complete');
-    handleCompletion(entry, model);
+    const completed = handleCompletion(entry, model);
+    if (!completed) {
+      button.removeAttribute('aria-disabled');
+      button.classList.remove('is-complete');
+    }
   });
 
   button.append(checkbox, content);
