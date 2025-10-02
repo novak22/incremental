@@ -9,6 +9,7 @@ import videotubeApp from './components/videotube.js';
 import learnlyApp from './components/learnly.js';
 import shopstackApp from './components/shopstack.js';
 import shopilyApp from './components/shopily.js';
+import trendsApp from './components/trends.js';
 import serverhubApp from './components/serverhub.js';
 
 let cachedRegistries = null;
@@ -347,6 +348,28 @@ function renderAssetsPage(definitions = [], models = {}) {
     id: page.id,
     meta: activeCount > 0 ? `${activeCount} active venture${activeCount === 1 ? '' : 's'}` : 'No active ventures yet'
   };
+}
+
+function renderTrendsPage(model = {}) {
+  const page = SERVICE_PAGES.find(entry => entry.type === 'trends');
+  if (!page) return null;
+
+  const refs = ensurePageContent(page, ({ body }) => {
+    if (!body.querySelector('[data-role="trends-root"]')) {
+      body.innerHTML = '';
+      const wrapper = document.createElement('div');
+      wrapper.dataset.role = 'trends-root';
+      body.appendChild(wrapper);
+    }
+  });
+  if (!refs) return null;
+
+  const mount = refs.body.querySelector('[data-role="trends-root"]');
+  if (!mount) return null;
+
+  const summary = trendsApp.render(model, { mount, page });
+  const meta = summary?.meta || model?.highlights?.hot?.title || 'Trend insights ready';
+  return { id: page.id, meta };
 }
 
 function renderDigishelfPage(definitions = [], model = {}) {
@@ -1310,6 +1333,8 @@ function renderServices(registries = {}, models = {}) {
   if (videotubeSummary) summaries.push(videotubeSummary);
   const shopilySummary = renderShopilyPage(registries.assets, models.shopily);
   if (shopilySummary) summaries.push(shopilySummary);
+  const trendsSummary = renderTrendsPage(models.trends);
+  if (trendsSummary) summaries.push(trendsSummary);
   const blogpressSummary = renderBlogpressPage(registries.assets, models.blogpress);
   if (blogpressSummary) summaries.push(blogpressSummary);
   const upgradeSummary = renderUpgradesPage(registries.upgrades, models.upgrades);

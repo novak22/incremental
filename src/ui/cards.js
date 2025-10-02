@@ -4,6 +4,7 @@ import {
   buildEducationModels,
   buildFinanceModel,
   buildHustleModels,
+  buildTrendsModel,
   buildUpgradeModels
 } from './cards/model/index.js';
 import classicCardsPresenter, {
@@ -47,6 +48,10 @@ function synthesizeModels(baseModels = {}, registries = {}, force = false) {
   }
   if (force || typeof models.finance !== 'object' || models.finance === null) {
     models.finance = buildFinanceModel(registries);
+    generated = true;
+  }
+  if (force || typeof models.trends !== 'object' || models.trends === null) {
+    models.trends = buildTrendsModel();
     generated = true;
   }
   return { models, generated };
