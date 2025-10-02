@@ -64,7 +64,12 @@ function createEnrollmentTodoEntries(entries = []) {
   });
 }
 
-function composeTodoModel(quickActions = {}, assetActions = {}, enrollmentActions = {}) {
+function composeTodoModel(
+  quickActions = {},
+  assetActions = {},
+  enrollmentActions = {},
+  autoCompletedEntries = []
+) {
   const quickEntries = Array.isArray(quickActions?.entries)
     ? quickActions.entries.filter(Boolean).map((entry, index) => ({
       ...entry,
@@ -82,6 +87,12 @@ function composeTodoModel(quickActions = {}, assetActions = {}, enrollmentAction
     || assetActions?.emptyMessage
     || enrollmentActions?.emptyMessage
     || 'Queue a hustle or upgrade to add new tasks.';
+
+  if (Array.isArray(autoCompletedEntries) && autoCompletedEntries.length) {
+    model.autoCompletedEntries = autoCompletedEntries.filter(Boolean);
+  } else if (model.autoCompletedEntries) {
+    delete model.autoCompletedEntries;
+  }
 
   if (quickActions?.scroller || assetActions?.scroller || enrollmentActions?.scroller) {
     model.scroller = quickActions?.scroller || assetActions?.scroller || enrollmentActions?.scroller;
@@ -125,6 +136,35 @@ function composeTodoModel(quickActions = {}, assetActions = {}, enrollmentAction
   return model;
 }
 
+function createAutoCompletedEntries(summary = {}) {
+  const entries = Array.isArray(summary?.timeBreakdown) ? summary.timeBreakdown : [];
+  return entries
+    .map((entry, index) => {
+      const hours = Math.max(0, toNumber(entry?.hours));
+      if (hours <= 0) return null;
+      const category = typeof entry?.category === 'string' ? entry.category.toLowerCase() : '';
+      const tracksMaintenance = category.startsWith('maintenance');
+      const tracksStudy = category.startsWith('study') || category.startsWith('education');
+      if (!tracksMaintenance && !tracksStudy) {
+        return null;
+      }
+
+      const title = entry?.label
+        || entry?.definition?.label
+        || entry?.definition?.name
+        || 'Scheduled work';
+      const key = entry?.key || `${category || 'auto'}-${index}`;
+      return {
+        id: `auto:${key}`,
+        title,
+        durationHours: hours,
+        durationText: formatHours(hours),
+        category
+      };
+    })
+    .filter(Boolean);
+}
+
 function getWidgetMounts() {
   return getElement('homepageWidgets') || {};
 }
@@ -141,10 +181,16 @@ function ensureWidget(key) {
   return module;
 }
 
-function renderTodo(quickActions = {}, assetActions = {}, enrollmentActions = {}) {
+function renderTodo(quickActions = {}, assetActions = {}, enrollmentActions = {}, summary = {}) {
   const widget = ensureWidget('todo');
   if (!widget) return;
-  const model = composeTodoModel(quickActions, assetActions, enrollmentActions);
+  const autoCompletedEntries = createAutoCompletedEntries(summary);
+  const model = composeTodoModel(
+    quickActions,
+    assetActions,
+    enrollmentActions,
+    autoCompletedEntries
+  );
   widget.render(model);
 }
 
@@ -160,7 +206,12 @@ function renderBank(context = {}) {
 
 function renderDashboard(viewModel = {}, context = {}) {
   if (!viewModel) return;
-  renderTodo(viewModel.quickActions || {}, viewModel.assetActions || {}, viewModel.studyActions || {});
+  renderTodo(
+    viewModel.quickActions || {},
+    viewModel.assetActions || {},
+    viewModel.studyActions || {},
+    context?.summary || {}
+  );
   renderApps(context);
   renderBank(context);
 }
