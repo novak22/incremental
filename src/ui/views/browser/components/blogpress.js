@@ -1,6 +1,7 @@
 import { formatHours, formatMoney } from '../../../../core/helpers.js';
 import { selectBlogpressNiche } from '../../../cards/model/index.js';
 import { performQualityAction } from '../../../../game/assets/index.js';
+import { formatCurrency as baseFormatCurrency } from '../utils/formatting.js';
 
 const VIEW_HOME = 'home';
 const VIEW_DETAIL = 'detail';
@@ -20,9 +21,8 @@ let currentMount = null;
 let currentPageMeta = null;
 let routeListener = null;
 
-function formatCurrency(amount) {
-  return `$${formatMoney(Math.max(0, Math.round(Number(amount) || 0)))}`;
-}
+const formatCurrency = amount =>
+  baseFormatCurrency(amount, { precision: 'integer', clampZero: true });
 
 function formatRange(range = {}) {
   const min = Number(range.min) || 0;

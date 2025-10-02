@@ -4,6 +4,7 @@ import {
   selectDigishelfNiche
 } from '../../../cards/model/digishelf.js';
 import { performQualityAction } from '../../../../game/assets/index.js';
+import { formatCurrency as baseFormatCurrency } from '../utils/formatting.js';
 
 const VIEW_EBOOKS = 'ebooks';
 const VIEW_STOCK = 'stock';
@@ -42,10 +43,8 @@ function clampNumber(value) {
   return Number.isFinite(number) ? number : 0;
 }
 
-function formatCurrency(amount) {
-  const numeric = Math.max(0, Math.round(clampNumber(amount)));
-  return `$${formatMoney(numeric)}`;
-}
+const formatCurrency = amount =>
+  baseFormatCurrency(amount, { precision: 'integer', clampZero: true });
 
 function ensureState(model) {
   const ebookInstances = Array.isArray(model.ebook?.instances) ? model.ebook.instances : [];

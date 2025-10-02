@@ -1,6 +1,10 @@
-import { formatMoney } from '../../../../core/helpers.js';
 import { setNicheWatchlist } from '../../../../game/assets/niches.js';
 import { navigateToWorkspace } from '../layoutPresenter.js';
+import {
+  formatCurrency as baseFormatCurrency,
+  formatPercent as baseFormatPercent,
+  formatSignedCurrency as baseFormatSignedCurrency
+} from '../utils/formatting.js';
 
 const SORT_OPTIONS = [
   { key: 'impact', label: 'Highest payout impact' },
@@ -35,27 +39,14 @@ function clampScore(value) {
   return Math.max(0, Math.min(100, Math.round(value)));
 }
 
-function formatPercent(value) {
-  if (value === null || value === undefined) return '0%';
-  const numeric = Number(value);
-  if (!Number.isFinite(numeric)) return '0%';
-  const percent = Math.round(numeric * 100);
-  const sign = percent > 0 ? '+' : percent < 0 ? '-' : '';
-  return `${sign}${Math.abs(percent)}%`;
-}
+const formatPercent = value =>
+  baseFormatPercent(value, { nullFallback: '0%', signDisplay: 'always' });
 
-function formatCurrency(amount) {
-  const numeric = Number(amount) || 0;
-  const absolute = Math.abs(Math.round(numeric * 100) / 100);
-  return `$${formatMoney(absolute)}`;
-}
+const formatCurrency = amount =>
+  baseFormatCurrency(amount, { absolute: true, precision: 'cent', signDisplay: 'never' });
 
-function formatSignedCurrency(amount) {
-  const numeric = Number(amount) || 0;
-  const absolute = Math.abs(Math.round(numeric * 100) / 100);
-  const sign = numeric > 0 ? '+' : numeric < 0 ? '-' : '';
-  return `${sign}$${formatMoney(absolute)}`;
-}
+const formatSignedCurrency = amount =>
+  baseFormatSignedCurrency(amount, { precision: 'cent' });
 
 function describeDelta(popularity = {}) {
   const raw = Number(popularity.delta);

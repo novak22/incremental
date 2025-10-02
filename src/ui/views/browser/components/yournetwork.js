@@ -1,4 +1,8 @@
-import { formatHours, formatMoney } from '../../../../core/helpers.js';
+import { formatHours } from '../../../../core/helpers.js';
+import {
+  formatCurrency as baseFormatCurrency,
+  formatSignedCurrency as baseFormatSignedCurrency
+} from '../utils/formatting.js';
 
 const AVATAR_GLYPHS = ['🌱', '🚀', '🌟', '🏆', '🪐', '💫'];
 
@@ -8,23 +12,9 @@ function clampPercent(value) {
   return Math.min(100, Math.max(0, Math.round(numeric)));
 }
 
-function formatCurrency(amount) {
-  const numeric = Number(amount) || 0;
-  const absolute = Math.abs(Math.round(numeric * 100) / 100);
-  const formatted = formatMoney(absolute);
-  const prefix = numeric < 0 ? '-$' : '$';
-  return `${prefix}${formatted}`;
-}
-
-function formatSignedCurrency(amount) {
-  const numeric = Number(amount) || 0;
-  if (numeric === 0) {
-    return '$0';
-  }
-  const absolute = Math.abs(Math.round(numeric * 100) / 100);
-  const formatted = `$${formatMoney(absolute)}`;
-  return numeric > 0 ? `+${formatted}` : `-${formatted}`;
-}
+const formatCurrency = amount => baseFormatCurrency(amount, { precision: 'cent' });
+const formatSignedCurrency = amount =>
+  baseFormatSignedCurrency(amount, { precision: 'cent' });
 
 function toTitleCase(value) {
   if (!value) return '';
