@@ -110,10 +110,24 @@
                   data-widget="apps"
                   aria-labelledby="browser-widget-apps-heading"
                 >
-                  <header class="browser-widget__header">
-                    <div>
+                  <header class="browser-widget__header apps-widget__header">
+                    <div class="apps-widget__intro">
                       <h2 id="browser-widget-apps-heading">Apps</h2>
                       <p id="browser-widget-apps-note">Launch a workspace in a tap — hover to preview where it leads.</p>
+                    </div>
+                    <div class="apps-widget__controls">
+                      <span
+                        id="browser-widget-apps-sort-indicator"
+                        class="apps-widget__sort-indicator"
+                        hidden
+                      >Sorting mode on — drag tiles to swap!</span>
+                      <button
+                        id="browser-widget-apps-sort-toggle"
+                        class="apps-widget__sort-toggle"
+                        type="button"
+                        aria-pressed="false"
+                        title="Arrange the apps"
+                      >Arrange</button>
                     </div>
                   </header>
                   <ul
