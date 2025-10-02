@@ -23,21 +23,6 @@ export function getPendingEquipmentUpgrades(definition, state = getState()) {
   return pending;
 }
 
-export function getUpgradeButtonLabel(upgrade) {
-  if (!upgrade) return 'Upgrade';
-  const action = upgrade.action;
-  if (!action) {
-    return upgrade.name || 'Upgrade';
-  }
-  if (typeof action.label === 'function') {
-    const label = action.label();
-    if (label) return label;
-  } else if (action.label) {
-    return action.label;
-  }
-  return upgrade.name ? `Purchase ${upgrade.name}` : 'Purchase Upgrade';
-}
-
 export function isUpgradeDisabled(upgrade) {
   if (!upgrade?.action) return true;
   if (typeof upgrade.action.disabled === 'function') {
