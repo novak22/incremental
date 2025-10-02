@@ -341,7 +341,7 @@ function buildNicheBoardModel(analytics = []) {
   };
 }
 
-function buildNicheViewModel(state) {
+export function buildNicheViewModel(state) {
   const analytics = buildNicheAnalytics(state);
   const watchlistCount = analytics.filter(entry => entry.watchlisted).length;
   return {

@@ -20,6 +20,15 @@ export const SERVICE_PAGES = [
     type: 'profile'
   },
   {
+    id: 'trends',
+    slug: 'trends',
+    label: 'Trends',
+    headline: 'Trends Intelligence Lab',
+    tagline: 'Monitor niche momentum, payouts, and watchlist signals in one hub.',
+    icon: '📈',
+    type: 'trends'
+  },
+  {
     id: 'downwork',
     slug: 'downwork',
     label: 'DownWork',
@@ -36,6 +45,15 @@ export const SERVICE_PAGES = [
     tagline: 'Tend ebooks, SaaS, and evergreen earners in one upbeat hub.',
     icon: '💼',
     type: 'assets'
+  },
+  {
+    id: 'serverhub',
+    slug: 'serverhub',
+    label: 'ServerHub',
+    headline: 'ServerHub Cloud Control',
+    tagline: 'Launch SaaS apps, monitor uptime, and tune ROI in one console.',
+    icon: '☁️',
+    type: 'serverhub'
   },
   {
     id: 'digishelf',

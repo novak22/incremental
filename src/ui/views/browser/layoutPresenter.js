@@ -601,3 +601,7 @@ const layoutPresenter = {
 };
 
 export default layoutPresenter;
+
+export function navigateToWorkspace(pageId, options) {
+  openWorkspace(pageId, options);
+}
