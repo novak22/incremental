@@ -2,6 +2,7 @@ import { formatHours, formatMoney } from '../../../../core/helpers.js';
 import { selectBlogpressNiche } from '../../../cards/model/index.js';
 import { performQualityAction } from '../../../../game/assets/index.js';
 import { formatCurrency as baseFormatCurrency } from '../utils/formatting.js';
+import { createWorkspacePathController } from '../utils/workspacePaths.js';
 
 const VIEW_HOME = 'home';
 const VIEW_DETAIL = 'detail';
@@ -19,7 +20,22 @@ let currentModel = {
 };
 let currentMount = null;
 let currentPageMeta = null;
-let routeListener = null;
+
+const workspacePathController = createWorkspacePathController({
+  derivePath: () => {
+    switch (currentState.view) {
+      case VIEW_PRICING:
+        return 'pricing';
+      case VIEW_BLUEPRINTS:
+        return 'blueprints';
+      case VIEW_DETAIL:
+        return currentState.selectedBlogId ? `blog/${currentState.selectedBlogId}` : '';
+      case VIEW_HOME:
+      default:
+        return '';
+    }
+  }
+});
 
 const formatCurrency = amount =>
   baseFormatCurrency(amount, { precision: 'integer', clampZero: true });
@@ -49,26 +65,6 @@ function ensureSelectedBlog() {
   const fallback = instances[0];
   const target = instances.find(entry => entry.id === currentState.selectedBlogId);
   currentState.selectedBlogId = (target || active || fallback)?.id || fallback.id;
-}
-
-function getCurrentRoute() {
-  switch (currentState.view) {
-    case VIEW_PRICING:
-      return 'pricing';
-    case VIEW_BLUEPRINTS:
-      return 'blueprints';
-    case VIEW_DETAIL:
-      return currentState.selectedBlogId ? `blog/${currentState.selectedBlogId}` : '';
-    case VIEW_HOME:
-    default:
-      return '';
-  }
-}
-
-function notifyRouteChange() {
-  if (typeof routeListener === 'function') {
-    routeListener(getCurrentRoute());
-  }
 }
 
 function setView(view, options = {}) {
@@ -820,14 +816,13 @@ export function render(model = {}, context = {}) {
   if (context.page) {
     currentPageMeta = context.page;
   }
-  if (typeof context.onRouteChange === 'function') {
-    routeListener = context.onRouteChange;
-  }
+  workspacePathController.setListener(context.onRouteChange);
   ensureSelectedBlog();
+  workspacePathController.sync();
+
   if (!currentMount) {
     const summary = currentModel.summary || {};
-    const urlPath = getCurrentRoute();
-    notifyRouteChange();
+    const urlPath = workspacePathController.getPath();
     return { ...summary, urlPath };
   }
 
@@ -835,8 +830,7 @@ export function render(model = {}, context = {}) {
     currentMount.innerHTML = '';
     currentMount.appendChild(renderLockedState());
     const summary = currentModel.summary || {};
-    const urlPath = getCurrentRoute();
-    notifyRouteChange();
+    const urlPath = workspacePathController.getPath();
     return { ...summary, urlPath };
   }
 
@@ -857,8 +851,7 @@ export function render(model = {}, context = {}) {
   });
 
   const summary = currentModel.summary || {};
-  const urlPath = getCurrentRoute();
-  notifyRouteChange();
+  const urlPath = workspacePathController.getPath();
   return { ...summary, urlPath };
 }
 

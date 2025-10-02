@@ -2,6 +2,7 @@ import { formatDays, formatHours } from '../../../../core/helpers.js';
 import { describeTrackEducationBonuses } from '../../../../game/educationEffects.js';
 import { dropKnowledgeTrack } from '../../../../game/requirements.js';
 import { formatCurrency as baseFormatCurrency } from '../utils/formatting.js';
+import { createWorkspacePathController } from '../utils/workspacePaths.js';
 
 const VIEW_CATALOG = 'catalog';
 const VIEW_DETAIL = 'detail';
@@ -32,8 +33,6 @@ const CATEGORY_BY_SKILL = CATEGORY_DEFINITIONS.reduce((map, category) => {
 }, new Map());
 
 let currentMount = null;
-let routeListener = null;
-let currentRoutePath = '';
 
 let currentState = {
   view: VIEW_CATALOG,
@@ -55,6 +54,10 @@ let currentContext = {
     tuitionInvested: 0
   }
 };
+
+const workspacePathController = createWorkspacePathController({
+  derivePath: deriveWorkspacePath
+});
 
 const formatCurrency = amount =>
   baseFormatCurrency(amount, { clampZero: true });
@@ -213,7 +216,7 @@ function setState(partial) {
     ensureSelectedCourse();
   }
   draw();
-  updateRoute();
+  workspacePathController.sync();
 }
 
 function handleSelectCategory(categoryId) {
@@ -254,7 +257,7 @@ function handleDrop(course) {
   if (result?.success) {
     course.progress.enrolled = false;
     draw();
-    updateRoute();
+    workspacePathController.sync();
   }
 }
 
@@ -798,7 +801,7 @@ function draw() {
   currentMount.appendChild(fragment);
 }
 
-function getRoutePath() {
+function deriveWorkspacePath() {
   if (currentState.view === VIEW_PRICING) {
     return 'pricing';
   }
@@ -812,28 +815,16 @@ function getRoutePath() {
   return 'catalog';
 }
 
-function updateRoute(options = {}) {
-  const { force = false } = options;
-  const nextPath = getRoutePath();
-  const changed = nextPath !== currentRoutePath;
-  currentRoutePath = nextPath;
-  if ((force || changed) && typeof routeListener === 'function') {
-    routeListener(nextPath);
-  }
-  return nextPath;
-}
-
 function render(model, { mount, definitions = [], onRouteChange } = {}) {
   currentMount = mount || currentMount;
-  if (typeof onRouteChange === 'function') {
-    routeListener = onRouteChange;
-  }
+  workspacePathController.setListener(onRouteChange);
   currentContext = buildContext(model, definitions);
   if (currentState.view === VIEW_DETAIL) {
     ensureSelectedCourse();
   }
   draw();
-  const urlPath = updateRoute({ force: true });
+  workspacePathController.sync();
+  const urlPath = workspacePathController.getPath();
 
   const active = currentContext.summary.active;
   const meta = active > 0 ? `${active} active course${active === 1 ? '' : 's'}` : 'Browse the catalog';

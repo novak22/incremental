@@ -4,6 +4,7 @@ import {
   formatPercent as baseFormatPercent,
   formatSignedCurrency as baseFormatSignedCurrency
 } from '../utils/formatting.js';
+import { createWorkspacePathController } from '../utils/workspacePaths.js';
 import { selectShopilyNiche } from '../../../cards/model/index.js';
 import { performQualityAction } from '../../../../game/assets/index.js';
 
@@ -26,7 +27,22 @@ let currentModel = {
 };
 let currentMount = null;
 let currentPageMeta = null;
-let routeListener = null;
+
+const workspacePathController = createWorkspacePathController({
+  derivePath: () => {
+    switch (currentState.view) {
+      case VIEW_PRICING:
+        return 'pricing';
+      case VIEW_UPGRADES:
+        return 'upgrades';
+      case VIEW_DASHBOARD:
+      default: {
+        const storeId = currentState.selectedStoreId;
+        return storeId ? `store/${storeId}` : '';
+      }
+    }
+  }
+});
 
 const formatCurrency = amount =>
   baseFormatCurrency(amount, { precision: 'integer', clampZero: true });
@@ -45,26 +61,6 @@ function ensureSelectedStore() {
   const fallback = instances[0];
   const target = instances.find(entry => entry.id === currentState.selectedStoreId);
   currentState.selectedStoreId = (target || active || fallback)?.id || instances[0].id;
-}
-
-function getCurrentRoute() {
-  switch (currentState.view) {
-    case VIEW_PRICING:
-      return 'pricing';
-    case VIEW_UPGRADES:
-      return 'upgrades';
-    case VIEW_DASHBOARD:
-    default: {
-      const storeId = currentState.selectedStoreId;
-      return storeId ? `store/${storeId}` : '';
-    }
-  }
-}
-
-function notifyRouteChange() {
-  if (typeof routeListener === 'function') {
-    routeListener(getCurrentRoute());
-  }
 }
 
 function setView(view, options = {}) {
@@ -846,7 +842,7 @@ function renderPricingView(model) {
 
 function renderApp() {
   if (!currentMount) {
-    notifyRouteChange();
+    workspacePathController.sync();
     return;
   }
   currentMount.innerHTML = '';
@@ -869,19 +865,17 @@ function renderApp() {
   }
 
   currentMount.appendChild(root);
-  notifyRouteChange();
+  workspacePathController.sync();
 }
 
 function render(model, { mount, page, onRouteChange } = {}) {
   currentModel = model || currentModel;
   currentMount = mount || currentMount;
   currentPageMeta = page || currentPageMeta;
-  if (typeof onRouteChange === 'function') {
-    routeListener = onRouteChange;
-  }
+  workspacePathController.setListener(onRouteChange);
   ensureSelectedStore();
   renderApp();
-  const urlPath = getCurrentRoute();
+  const urlPath = workspacePathController.getPath();
   return { meta: model?.summary?.meta || 'Launch your first store', urlPath };
 }
 
