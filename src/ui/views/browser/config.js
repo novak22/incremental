@@ -20,13 +20,22 @@ export const SERVICE_PAGES = [
     type: 'hustles'
   },
   {
+    id: 'assets',
+    slug: 'assets',
+    label: 'Asset Arcade',
+    headline: 'Asset Arcade Command Deck',
+    tagline: 'Tend ebooks, SaaS, and evergreen earners in one upbeat hub.',
+    icon: '💼',
+    type: 'assets'
+  },
+  {
     id: 'videotube',
     slug: 'videotube',
     label: 'VideoTube',
     headline: 'VideoTube Venture Studio',
     tagline: 'Schedule drops, review analytics, and amplify fans.',
     icon: '📺',
-    type: 'assets'
+    type: 'videotube'
   },
   {
     id: 'blogpress',

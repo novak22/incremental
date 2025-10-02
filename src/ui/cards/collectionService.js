@@ -4,7 +4,8 @@ import {
   buildBlogpressModel,
   buildEducationModels,
   buildHustleModels,
-  buildUpgradeModels
+  buildUpgradeModels,
+  buildVideoTubeModel
 } from './model/index.js';
 
 let cachedRegistries = null;
@@ -47,7 +48,8 @@ function buildModels(registries) {
     education: buildEducationModels(registries.education),
     assets: buildAssetModels(registries.assets),
     upgrades: buildUpgradeModels(registries.upgrades),
-    blogpress: buildBlogpressModel(registries.assets, registries.upgrades)
+    blogpress: buildBlogpressModel(registries.assets, registries.upgrades),
+    videotube: buildVideoTubeModel(registries.assets)
   };
 }
 
