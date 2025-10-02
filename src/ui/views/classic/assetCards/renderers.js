@@ -8,12 +8,9 @@ import {
   describeInstance,
   describeInstanceNetHourly
 } from '../../../assetInstances.js';
-import {
-  calculateAssetSalePrice,
-  instanceLabel,
-  sellAssetInstance,
-  formatMaintenanceSummary
-} from '../../../../game/assets/helpers.js';
+import { calculateAssetSalePrice, sellAssetInstance } from '../../../../game/assets/actions.js';
+import { instanceLabel } from '../../../../game/assets/details.js';
+import { formatMaintenanceSummary } from '../../../../game/assets/maintenance.js';
 import { getPendingEquipmentUpgrades, isUpgradeDisabled } from '../../../assetUpgrades.js';
 import {
   describeAssetCardSummary,

@@ -19,17 +19,17 @@ import {
 } from '../requirements.js';
 import { spendTime } from '../time.js';
 import { awardSkillProgress } from '../skills/index.js';
+import { buildAssetAction } from '../assets/actions.js';
+import { maintenanceDetail } from '../assets/maintenance.js';
 import {
-  buildAssetAction,
   incomeDetail,
   latestYieldDetail,
-  maintenanceDetail,
   ownedDetail,
   qualityProgressDetail,
   qualitySummaryDetail,
   setupCostDetail,
   setupDetail
-} from '../assets/helpers.js';
+} from '../assets/details.js';
 import {
   applyInstantHustleEducationBonus,
   describeInstantHustleEducationBonuses,
