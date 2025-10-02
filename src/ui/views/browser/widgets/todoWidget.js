@@ -211,6 +211,7 @@ function handleCompletion(entry, model) {
   const duration = Number(entry.durationHours);
   const trackTime = Number.isFinite(duration) && duration > 0;
 
+  let effectiveDuration = null;
   let actionRan = true;
   if (trackTime) {
     const refreshedHoursAvailable = Number(refreshedModel?.hoursAvailable);
@@ -222,24 +223,32 @@ function handleCompletion(entry, model) {
     const availableDelta = Number.isFinite(previousHoursAvailable) && Number.isFinite(refreshedHoursAvailable)
       ? previousHoursAvailable - refreshedHoursAvailable
       : null;
-    const hasSpentDelta = spentDelta !== null;
-    const hasAvailableDelta = availableDelta !== null;
-    const matchesSpent = hasSpentDelta && spentDelta >= duration - tolerance;
-    const matchesAvailable = hasAvailableDelta && availableDelta >= duration - tolerance;
-    actionRan = (hasSpentDelta || hasAvailableDelta)
-      ? (matchesSpent || matchesAvailable)
-      : true;
+    const consumedCandidates = [];
+    if (spentDelta !== null && spentDelta > tolerance) {
+      consumedCandidates.push(spentDelta);
+    }
+    if (availableDelta !== null && availableDelta > tolerance) {
+      consumedCandidates.push(availableDelta);
+    }
+
+    if (consumedCandidates.length) {
+      effectiveDuration = Math.max(...consumedCandidates);
+      actionRan = true;
+    } else if (spentDelta !== null || availableDelta !== null) {
+      actionRan = false;
+    }
   }
 
   if (!actionRan) {
     return false;
   }
 
+  const recordedDuration = Number.isFinite(effectiveDuration) ? effectiveDuration : duration;
   const count = existing ? (existing.count || 1) + 1 : 1;
   completedItems.set(entry.id, {
     id: entry.id,
     title: entry.title,
-    durationHours: entry.durationHours,
+    durationHours: recordedDuration,
     durationText: entry.durationText,
     repeatable: entry.repeatable,
     remainingRuns: entry.remainingRuns,
@@ -248,7 +257,7 @@ function handleCompletion(entry, model) {
   });
 
   if (!triggeredUpdate && trackTime) {
-    applyImmediateTimeDelta(refreshedModel, duration);
+    applyImmediateTimeDelta(refreshedModel, recordedDuration);
   }
 
   render(refreshedModel);
