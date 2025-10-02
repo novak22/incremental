@@ -21,23 +21,24 @@ function isPageLocked(meta = '') {
   return /lock/i.test(meta || '');
 }
 
-function describeTooltip(page, summary = {}) {
+function describeTooltip(page, summary) {
   const parts = [];
   if (page?.tagline) {
     parts.push(page.tagline);
   }
   if (summary?.meta) {
-    parts.push(`Status: ${summary.meta}`);
+    parts.push(summary.meta);
   }
-  return parts.join(' • ');
+  return parts.join(' — ');
 }
 
-function describeAriaLabel(page, summary = {}) {
+function describeAriaLabel(page, summary) {
   const parts = [page?.label || 'Workspace'];
+  if (page?.tagline) {
+    parts.push(page.tagline);
+  }
   if (summary?.meta) {
     parts.push(summary.meta);
-  } else if (page?.tagline) {
-    parts.push(page.tagline);
   }
   return parts.join('. ');
 }
@@ -67,7 +68,7 @@ function renderList() {
   }
 
   pages.forEach(page => {
-    const summary = summaryMap.get(page.id) || {};
+    const summary = summaryMap.get(page.id);
     const item = document.createElement('li');
     item.className = 'apps-widget__item';
 
@@ -75,7 +76,10 @@ function renderList() {
     button.type = 'button';
     button.className = 'apps-widget__tile';
     button.dataset.siteTarget = page.id;
-    button.title = describeTooltip(page, summary);
+    const tooltip = describeTooltip(page, summary);
+    if (tooltip) {
+      button.title = tooltip;
+    }
     button.setAttribute('aria-label', describeAriaLabel(page, summary));
     button.setAttribute('aria-pressed', 'false');
 
@@ -92,20 +96,13 @@ function renderList() {
 
     label.appendChild(name);
 
-    if (summary.meta) {
-      const badge = document.createElement('span');
-      badge.className = 'apps-widget__badge';
-      badge.textContent = summary.meta;
-      label.appendChild(badge);
-    }
-
     button.append(icon, label);
     item.appendChild(button);
     elements.list.appendChild(item);
   });
 
   if (elements?.note) {
-    elements.note.textContent = 'Hover to peek the description, click to launch instantly.';
+    elements.note.textContent = 'Hover to preview each workspace, click to launch instantly.';
   }
 }
 
