@@ -1,5 +1,4 @@
 import { setNicheWatchlist } from '../../../../game/assets/niches.js';
-import { navigateToWorkspace } from '../layoutPresenter.js';
 import {
   formatCurrency as baseFormatCurrency,
   formatPercent as baseFormatPercent,
@@ -462,14 +461,6 @@ function createTrendCard(entry) {
   const actions = document.createElement('div');
   actions.className = 'trends-card__actions';
 
-  const venturesButton = document.createElement('button');
-  venturesButton.type = 'button';
-  venturesButton.className = 'trends-card__action trends-card__action--primary';
-  venturesButton.textContent = assetCount > 0 ? 'View ventures in this niche' : 'Find ventures for this niche';
-  venturesButton.dataset.trendsAction = 'ventures';
-  venturesButton.dataset.niche = entry.id;
-  venturesButton.dataset.nicheName = entry.definition?.name || '';
-
   const watchlistButton = document.createElement('button');
   watchlistButton.type = 'button';
   watchlistButton.className = 'trends-card__action';
@@ -487,7 +478,7 @@ function createTrendCard(entry) {
   queueButton.disabled = true;
   queueButton.title = 'Coming soon: auto-queue the best hustle for this niche.';
 
-  actions.append(venturesButton, watchlistButton, queueButton);
+  actions.append(watchlistButton, queueButton);
   card.appendChild(actions);
 
   return card;
@@ -561,13 +552,6 @@ function renderWatchlist(entries = []) {
 
     const actions = document.createElement('div');
     actions.className = 'trends-watchlist__actions';
-    const openButton = document.createElement('button');
-    openButton.type = 'button';
-    openButton.className = 'trends-pill';
-    openButton.dataset.trendsAction = 'ventures';
-    openButton.dataset.niche = entry.id;
-    openButton.textContent = 'View ventures';
-
     const removeButton = document.createElement('button');
     removeButton.type = 'button';
     removeButton.className = 'trends-pill';
@@ -575,7 +559,7 @@ function renderWatchlist(entries = []) {
     removeButton.dataset.niche = entry.id;
     removeButton.textContent = 'Remove';
 
-    actions.append(openButton, removeButton);
+    actions.append(removeButton);
     item.append(body, actions);
     refs.watchlistList.appendChild(item);
   });
@@ -651,9 +635,7 @@ function handleRootClick(event) {
     return;
   }
   event.preventDefault();
-  if (action === 'ventures') {
-    navigateToWorkspace('assets', { focus: true, recordHistory: true });
-  } else if (action === 'watchlist') {
+  if (action === 'watchlist') {
     const shouldWatch = button.getAttribute('aria-pressed') !== 'true';
     setNicheWatchlist(nicheId, shouldWatch);
     updateEntryWatchlist(nicheId, shouldWatch);

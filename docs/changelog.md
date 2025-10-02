@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Asset Arcade workspace retired from the browser prototype and hidden from the homepage launcher while we explore refreshed asset flows.
 - Browser chrome now features a notification bell that mirrors the event log with unread badges, read tracking, and a mark-all control.
 - YourNetwork joins the browser apps lineup with a LinkedIn-inspired profile that showcases skills, study progress, equipment, portfolio highlights, and career metrics in one celebratory view.
 - Trends Intelligence Lab replaces the classic analytics tab with a standalone browser app featuring a daily outlook ticker, refreshed momentum cards, and a dedicated watchlist while reusing existing niche data.

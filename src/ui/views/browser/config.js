@@ -38,15 +38,6 @@ export const SERVICE_PAGES = [
     type: 'hustles'
   },
   {
-    id: 'assets',
-    slug: 'assets',
-    label: 'Asset Arcade',
-    headline: 'Asset Arcade Command Deck',
-    tagline: 'Tend ebooks, SaaS, and evergreen earners in one upbeat hub.',
-    icon: '💼',
-    type: 'assets'
-  },
-  {
     id: 'serverhub',
     slug: 'serverhub',
     label: 'ServerHub',
