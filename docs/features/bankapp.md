@@ -10,13 +10,15 @@
 - The daily ledger groups inflows and outflows by stream, highlighting which hustles or passive assets delivered the biggest returns.
 - Obligations cards call out unfunded upkeep, assistant payroll, and active tuition so players can prioritize funding before ending the day.
 - Pending payouts, per-asset performance, and curated opportunity lists make it easier to decide whether to launch, upgrade, or study next.
+- A seven-day cashflow timeline and the shared activity log now surface historical context so players can spot streaks and relive clutch moments without leaving the app.
 
 ## Implementation Notes
-- `buildFinanceModel` in `src/ui/cards/model/finance.js` synthesizes cash summaries, ledger groups, obligations, pending income, asset ROI, and study data from the existing state selectors.
+- `buildFinanceModel` in `src/ui/cards/model/finance.js` synthesizes cash summaries, ledger groups, obligations, pending income, asset ROI, study data, the rolling history archive, and recent log entries from the existing state selectors.
 - `renderFinancePage` in `src/ui/views/browser/cardsPresenter.js` assembles the new banking layout with reusable helper sections and styles, feeding the site list meta string for the BankApp tile.
 - The header summary reuses the classic dashboard totals to show Current balance, Net / Day, Daily +, and Daily - so both shells stay in sync.
 - `styles/browser.css` gained a `bankapp` design system (header summary strip, ledger grid, obligation cards, tables) so future browser apps can share the visual language.
 - BankApp registers as a new service page in `src/ui/views/browser/config.js`, allowing the browser shell navigation and history stacks to treat it like any other site.
+- Daily metrics now archive the last seven wrap-ups in state so the browser widget and BankApp page can render rolling trends without extra backend calls.
 
 ## Future Work
-- Income/spend metrics only cover the current in-game day—there’s no historical ledger stored in state or surfaced by selectors yet. Once we add an archive, BankApp can grow a timeline module without changing today’s contracts.
+- Consider extending the seven-day archive once storage budgets allow, and explore inline breakdowns for deeper per-day drilldowns without overwhelming the timeline.

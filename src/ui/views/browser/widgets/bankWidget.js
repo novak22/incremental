@@ -159,6 +159,93 @@ function renderHighlights(header = {}) {
   elements.highlights.hidden = false;
 }
 
+function renderHistory(history = []) {
+  if (!elements?.historySection || !elements?.historyList) return;
+  const entries = Array.isArray(history) ? history.slice(0, 7) : [];
+  elements.historyList.innerHTML = '';
+  if (!entries.length) {
+    elements.historySection.hidden = true;
+    return;
+  }
+
+  entries.forEach(entry => {
+    const item = document.createElement('li');
+    item.className = 'bank-widget__history-item';
+    if (entry?.tone) {
+      item.dataset.tone = entry.tone;
+    }
+
+    const label = document.createElement('span');
+    label.className = 'bank-widget__history-label';
+    label.textContent = entry?.label || 'Day';
+
+    const net = document.createElement('span');
+    net.className = 'bank-widget__history-net';
+    net.textContent = formatSignedCurrency(entry?.totals?.net || 0);
+
+    const breakdown = document.createElement('span');
+    breakdown.className = 'bank-widget__history-breakdown';
+    const totals = entry?.totals || {};
+    breakdown.textContent = `${formatCurrency(totals.income || 0)} / ${formatCurrency(
+      totals.spend ? -totals.spend : 0
+    )}`;
+
+    item.append(label, net, breakdown);
+    elements.historyList.appendChild(item);
+  });
+
+  elements.historySection.hidden = false;
+}
+
+function formatActivityTime(timestamp) {
+  if (!Number.isFinite(timestamp)) return '';
+  try {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  } catch (err) {
+    return '';
+  }
+}
+
+function renderActivity(activity = []) {
+  if (!elements?.activitySection || !elements?.activityList) return;
+  const entries = Array.isArray(activity) ? activity.slice(0, 6) : [];
+  elements.activityList.innerHTML = '';
+  if (!entries.length) {
+    elements.activitySection.hidden = true;
+    return;
+  }
+
+  entries.forEach(entry => {
+    const item = document.createElement('li');
+    item.className = 'bank-widget__activity-item';
+    if (entry?.tone) {
+      item.dataset.tone = entry.tone;
+    }
+
+    const message = document.createElement('span');
+    message.className = 'bank-widget__activity-message';
+    message.textContent = entry?.message || '';
+
+    const time = document.createElement('time');
+    time.className = 'bank-widget__activity-time';
+    const timestampValue = Number(entry?.timestamp);
+    const formatted = formatActivityTime(timestampValue);
+    if (formatted) {
+      time.dateTime = new Date(timestampValue).toISOString();
+      time.textContent = formatted;
+    }
+
+    item.append(message);
+    if (formatted) {
+      item.appendChild(time);
+    }
+    elements.activityList.appendChild(item);
+  });
+
+  elements.activitySection.hidden = false;
+}
+
 function render(context = {}) {
   if (!initialized) return;
   if (!context?.state) {
@@ -173,6 +260,18 @@ function render(context = {}) {
       elements.highlights.hidden = true;
       elements.highlights.innerHTML = '';
     }
+    if (elements?.historySection) {
+      elements.historySection.hidden = true;
+      if (elements.historyList) {
+        elements.historyList.innerHTML = '';
+      }
+    }
+    if (elements?.activitySection) {
+      elements.activitySection.hidden = true;
+      if (elements.activityList) {
+        elements.activityList.innerHTML = '';
+      }
+    }
     return;
   }
 
@@ -182,6 +281,8 @@ function render(context = {}) {
   renderStats(model?.header || {});
   renderFootnote(model?.header || {});
   renderHighlights(model?.header || {});
+  renderHistory(model?.history || []);
+  renderActivity(model?.activity || []);
 }
 
 function init(widgetElements = {}) {

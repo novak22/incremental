@@ -1,4 +1,12 @@
-import { createEmptyDailyMetrics, ensureDailyMetrics, getState } from '../core/state.js';
+import {
+  createEmptyDailyMetrics,
+  ensureDailyMetrics,
+  ensureMetricsHistory,
+  getState
+} from '../core/state.js';
+import { structuredClone } from '../core/helpers.js';
+
+const MAX_METRIC_HISTORY = 7;
 
 function normalizeNumber(value, defaultValue = 0) {
   const number = Number(value);
@@ -88,4 +96,51 @@ export function resetDailyMetrics(target = getState()) {
   if (!target) return;
   target.metrics = target.metrics || {};
   target.metrics.daily = createEmptyDailyMetrics();
+}
+
+function normalizeHistoryBucket(bucket = {}, valueKey) {
+  return Object.values(bucket)
+    .map(entry => {
+      const value = Number(entry?.[valueKey]);
+      return {
+        key: entry?.key,
+        label: entry?.label,
+        category: entry?.category || 'general',
+        [valueKey]: Number.isFinite(value) ? value : 0
+      };
+    })
+    .filter(entry => entry?.[valueKey] > 0)
+    .sort((a, b) => b[valueKey] - a[valueKey]);
+}
+
+export function archiveDailyMetrics({ state = getState(), summary, day, timestamp } = {}) {
+  const target = state || getState();
+  if (!target) return;
+
+  const metrics = ensureDailyMetrics(target);
+  const history = ensureMetricsHistory(target);
+  if (!metrics || !history) return;
+
+  const totals = {
+    income: normalizeNumber(summary?.totalEarnings, 0),
+    spend: normalizeNumber(summary?.totalSpend, 0)
+  };
+  totals.net = totals.income - totals.spend;
+
+  const entry = {
+    day: Number.isFinite(day) ? day : Number(target.day) || 1,
+    recordedAt: Number.isFinite(timestamp) ? timestamp : Date.now(),
+    totals,
+    summary: summary ? structuredClone(summary) : null,
+    ledger: {
+      payouts: normalizeHistoryBucket(metrics.payouts, 'amount'),
+      costs: normalizeHistoryBucket(metrics.costs, 'amount'),
+      time: normalizeHistoryBucket(metrics.time, 'hours')
+    }
+  };
+
+  history.push(entry);
+  while (history.length > MAX_METRIC_HISTORY) {
+    history.shift();
+  }
 }
