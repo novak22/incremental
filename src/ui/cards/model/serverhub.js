@@ -1,6 +1,7 @@
 import { ensureArray, formatHours, formatMoney } from '../../../core/helpers.js';
 import { getAssetState, getState } from '../../../core/state.js';
-import { instanceLabel, formatMaintenanceSummary } from '../../../game/assets/helpers.js';
+import { instanceLabel } from '../../../game/assets/details.js';
+import { formatMaintenanceSummary } from '../../../game/assets/maintenance.js';
 import {
   assignInstanceToNiche,
   getAssignableNicheSummaries,

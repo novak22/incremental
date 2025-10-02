@@ -1,5 +1,6 @@
 import { formatMoney } from '../core/helpers.js';
-import { calculateAssetSalePrice, instanceLabel, sellAssetInstance } from '../game/assets/helpers.js';
+import { calculateAssetSalePrice, sellAssetInstance } from '../game/assets/actions.js';
+import { instanceLabel } from '../game/assets/details.js';
 
 export function describeInstance(definition, instance) {
   if (instance.status === 'setup') {

@@ -1,6 +1,6 @@
 import { getAssetState } from '../../../../core/state.js';
 import { getAssistantCount, getAssistantDailyCost } from '../../../../game/assistant.js';
-import { instanceLabel } from '../../../../game/assets/helpers.js';
+import { instanceLabel } from '../../../../game/assets/details.js';
 import { getKnowledgeProgress } from '../../../../game/requirements.js';
 import { buildSkillRewards, resolveTrack } from '../education.js';
 import { ensureArray, toCurrency } from './utils.js';

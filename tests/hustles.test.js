@@ -25,7 +25,7 @@ const {
 } = hustlesModule;
 
 const { ASSETS, allocateAssetMaintenance } = assetsModule;
-const { rollDailyIncome } = await import('../src/game/assets/helpers.js');
+const { rollDailyIncome } = await import('../src/game/assets/payout.js');
 
 const { handleOfflineProgress } = offlineModule;
 const { endDay } = lifecycleModule;

@@ -1,6 +1,6 @@
 import { formatHours, formatMoney } from '../../../../core/helpers.js';
 import { performQualityAction } from '../../../../game/assets/index.js';
-import { setAssetInstanceName } from '../../../../game/assets/helpers.js';
+import { setAssetInstanceName } from '../../../../game/assets/actions.js';
 import { selectVideoTubeNiche } from '../../../cards/model/index.js';
 
 const VIEW_DASHBOARD = 'dashboard';

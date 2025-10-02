@@ -1,5 +1,5 @@
 import { describeAssetLaunchAvailability } from '../assets.js';
-import { getDailyIncomeRange } from '../../../../game/assets/helpers.js';
+import { getDailyIncomeRange } from '../../../../game/assets/payout.js';
 import { getUpgradeSnapshot } from '../upgrades.js';
 import { describeHustleRequirements } from '../../../../game/hustles/helpers.js';
 import { ensureArray, toCurrency } from './utils.js';

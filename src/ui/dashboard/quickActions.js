@@ -9,7 +9,7 @@ import {
   getQualityTracks,
   performQualityAction
 } from '../../game/assets/quality.js';
-import { instanceLabel } from '../../game/assets/helpers.js';
+import { instanceLabel } from '../../game/assets/details.js';
 
 function getQualitySnapshot(instance = {}) {
   const level = Math.max(0, clampNumber(instance?.quality?.level));

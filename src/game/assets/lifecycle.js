@@ -4,7 +4,9 @@ import { getAssetState, getState } from '../../core/state.js';
 import { addMoney, spendMoney } from '../currency.js';
 import { spendTime } from '../time.js';
 import { ASSETS } from './registry.js';
-import { getAssetMetricId, instanceLabel, rollDailyIncome } from './helpers.js';
+import { getAssetMetricId } from './helpers.js';
+import { instanceLabel } from './details.js';
+import { rollDailyIncome } from './payout.js';
 import { ASSISTANT_CONFIG, getAssistantCount } from '../assistant.js';
 import {
   recordCostContribution,

@@ -1,11 +1,7 @@
 import { ASSETS } from './registry.js';
 import { allocateAssetMaintenance, closeOutDay } from './lifecycle.js';
-import {
-  getIncomeRangeForDisplay,
-  calculateAssetSalePrice,
-  sellAssetInstance,
-  setAssetInstanceName
-} from './helpers.js';
+import { getIncomeRangeForDisplay } from './payout.js';
+import { calculateAssetSalePrice, sellAssetInstance, setAssetInstanceName } from './actions.js';
 import {
   performQualityAction,
   getQualityLevel,
