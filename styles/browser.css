@@ -466,6 +466,8 @@ a {
 
 .browser-stage__pane--home .browser-layout {
   --browser-home-spacing: clamp(0.75rem, 1vw + 0.4rem, 1.25rem);
+  --browser-home-widget-gap: clamp(0.9rem, 1vw + 0.55rem, 1.4rem);
+  --browser-home-widget-spacer: clamp(0.4rem, 0.6vw, 0.55rem);
   max-width: none;
   margin: 0;
   padding: var(--browser-home-spacing);
@@ -487,23 +489,26 @@ a {
 
 .browser-home__widgets {
   width: 100%;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: var(--browser-home-spacing, 1.5rem);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--browser-home-widget-gap, var(--browser-home-spacing, 1.5rem));
   align-items: stretch;
-  justify-items: stretch;
+  justify-content: space-between;
   margin: 0;
 }
 
-@media (max-width: 1200px) {
-  .browser-home__widgets {
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  }
+.browser-home__widgets > .browser-widget {
+  flex: 1 1 0;
+  min-width: 280px;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .browser-home__widgets {
-    grid-template-columns: minmax(0, 1fr);
+    flex-direction: column;
+  }
+
+  .browser-home__widgets > .browser-widget {
+    min-width: 0;
   }
 }
 
