@@ -21,14 +21,24 @@ function isPageLocked(meta = '') {
   return /lock/i.test(meta || '');
 }
 
-function describeTooltip(page) {
-  return page?.tagline ? page.tagline : '';
+function describeTooltip(page, summary) {
+  const parts = [];
+  if (page?.tagline) {
+    parts.push(page.tagline);
+  }
+  if (summary?.meta) {
+    parts.push(summary.meta);
+  }
+  return parts.join(' — ');
 }
 
-function describeAriaLabel(page) {
+function describeAriaLabel(page, summary) {
   const parts = [page?.label || 'Workspace'];
   if (page?.tagline) {
     parts.push(page.tagline);
+  }
+  if (summary?.meta) {
+    parts.push(summary.meta);
   }
   return parts.join('. ');
 }
@@ -58,6 +68,7 @@ function renderList() {
   }
 
   pages.forEach(page => {
+    const summary = summaryMap.get(page.id);
     const item = document.createElement('li');
     item.className = 'apps-widget__item';
 
@@ -65,11 +76,11 @@ function renderList() {
     button.type = 'button';
     button.className = 'apps-widget__tile';
     button.dataset.siteTarget = page.id;
-    const tooltip = describeTooltip(page);
+    const tooltip = describeTooltip(page, summary);
     if (tooltip) {
       button.title = tooltip;
     }
-    button.setAttribute('aria-label', describeAriaLabel(page));
+    button.setAttribute('aria-label', describeAriaLabel(page, summary));
     button.setAttribute('aria-pressed', 'false');
 
     const icon = document.createElement('span');
