@@ -128,14 +128,6 @@ function renderTopBar(model) {
   const bar = document.createElement('header');
   bar.className = 'shopily-topbar';
 
-  const title = document.createElement('div');
-  title.className = 'shopily-topbar__title';
-  const heading = document.createElement('h1');
-  heading.textContent = currentPageMeta?.headline || 'Shopily Commerce Deck';
-  const note = document.createElement('p');
-  note.textContent = currentPageMeta?.tagline || 'Launch, nurture, and upgrade every store from one clean dashboard.';
-  title.append(heading, note);
-
   const nav = document.createElement('nav');
   nav.className = 'shopily-nav';
   const activeCount = model.summary?.active || 0;
@@ -146,13 +138,27 @@ function renderTopBar(model) {
     createNavButton('Shopily Pricing', VIEW_PRICING)
   );
 
+  const topRow = document.createElement('div');
+  topRow.className = 'shopily-topbar__row';
+
+  const shouldShowPageTitle =
+    currentPageMeta?.type !== 'shopily' && currentPageMeta?.id !== 'shopily';
+  if (shouldShowPageTitle) {
+    const title = document.createElement('div');
+    title.className = 'shopily-topbar__title';
+    const heading = document.createElement('h1');
+    heading.textContent = currentPageMeta?.headline || 'Shopily Commerce Deck';
+    const note = document.createElement('p');
+    note.textContent = currentPageMeta?.tagline ||
+      'Launch, nurture, and upgrade every store from one clean dashboard.';
+    title.append(heading, note);
+    topRow.appendChild(title);
+  }
+
   const actions = document.createElement('div');
   actions.className = 'shopily-topbar__actions';
   actions.appendChild(createLaunchButton(model.launch));
-
-  const topRow = document.createElement('div');
-  topRow.className = 'shopily-topbar__row';
-  topRow.append(title, actions);
+  topRow.appendChild(actions);
 
   bar.append(topRow, nav);
   return bar;
