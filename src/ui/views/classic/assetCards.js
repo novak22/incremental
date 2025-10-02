@@ -948,14 +948,6 @@ function buildLaunchFeedbackMessage(definition) {
   return requirements.reasons?.[0]?.detail || 'Meet the blueprint requirements to launch this asset.';
 }
 
-function formatUpkeepTotals(cost, hours) {
-  const total = cost * hours;
-  if (!total) {
-    return 'No upkeep';
-  }
-  return `$${formatMoney(total)} / day`;
-}
-
 function buildAssetSummary(groups = []) {
   const summary = document.createElement('div');
   const totalInstances = groups.reduce((sum, group) => sum + (group.instances ?? []).length, 0);
@@ -1200,27 +1192,6 @@ function buildMetricsRow(definition, instance, state, riskLabel) {
   }
 
   return metrics;
-}
-
-function buildNicheField(definition, instance, state) {
-  const field = document.createElement('div');
-  field.className = 'asset-detail__field';
-
-  const label = document.createElement('span');
-  label.className = 'asset-detail__field-label';
-  label.textContent = 'Audience niche';
-  const value = document.createElement('span');
-  value.className = 'asset-detail__field-value';
-  const info = getInstanceNicheInfo(instance);
-  value.textContent = info?.summary || 'Unassigned';
-  field.append(label, value);
-
-  const select = createInstanceNicheSelector(definition, instance, state);
-  if (select) {
-    field.appendChild(select);
-  }
-
-  return field;
 }
 
 function buildQualityBlock(definition, instance) {

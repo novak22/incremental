@@ -221,14 +221,6 @@ export function getLayoutPreferences() {
   return clone(preferences);
 }
 
-export function resetLayoutPreferences() {
-  preferences.hustles = { ...defaultPreferences.hustles };
-  preferences.assets = { ...defaultPreferences.assets };
-  preferences.upgrades = { ...defaultPreferences.upgrades };
-  preferences.study = { ...defaultPreferences.study };
-  return getLayoutPreferences();
-}
-
 export function updateLayoutPreferences(section, patch = {}) {
   if (!preferences[section]) {
     return getLayoutPreferences();

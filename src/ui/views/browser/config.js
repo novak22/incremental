@@ -135,6 +135,3 @@ export function findPageBySlug(slug) {
   return SERVICE_PAGES.find(page => page.slug === normalized || page.label.toLowerCase() === normalized) || null;
 }
 
-export function listAllPages() {
-  return [findPageById(HOMEPAGE_ID), ...SERVICE_PAGES];
-}

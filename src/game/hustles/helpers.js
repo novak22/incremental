@@ -1,8 +1,5 @@
 import { countActiveAssetInstances, getState } from '../../core/state.js';
-import {
-  summarizeAssetRequirements,
-  buildAssetRequirementDescriptor
-} from '../requirements.js';
+import { buildAssetRequirementDescriptor } from '../requirements.js';
 
 export const AUDIENCE_CALL_REQUIREMENTS = [{ assetId: 'blog', count: 1 }];
 export const BUNDLE_PUSH_REQUIREMENTS = [
@@ -94,8 +91,4 @@ export function getHustleDailyUsage(definition, state = getState()) {
   }
   const { limit, used, remaining, day } = usage;
   return { limit, used, remaining, day };
-}
-
-export function renderRequirementSummary(requirements = [], state = getState()) {
-  return summarizeAssetRequirements(requirements, state);
 }
