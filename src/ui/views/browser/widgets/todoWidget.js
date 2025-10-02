@@ -116,6 +116,7 @@ function normalizeEntries(model = {}) {
       const hasRemaining = Number.isFinite(rawRemaining);
       const remainingRuns = hasRemaining ? Math.max(0, rawRemaining) : null;
       const repeatable = Boolean(entry?.repeatable) || (hasRemaining && remainingRuns > 1);
+      const ignoreAvailableHours = entry?.ignoreAvailableHours === true;
       return {
         id,
         title: entry?.title || 'Action',
@@ -124,7 +125,8 @@ function normalizeEntries(model = {}) {
         durationHours: normalizedDuration,
         durationText,
         repeatable,
-        remainingRuns
+        remainingRuns,
+        ignoreAvailableHours
       };
     })
     .filter(entry => Boolean(entry?.id));
@@ -371,9 +373,11 @@ export function render(model = {}) {
     const hasRunsLeft = remainingRuns === null || remainingRuns > 0;
     if (!hasRunsLeft) return false;
 
-    const canAfford = Number.isFinite(availableHours)
-      ? entry.durationHours <= availableHours
-      : true;
+    const enforceHours = entry.ignoreAvailableHours !== true;
+    let canAfford = true;
+    if (enforceHours && Number.isFinite(availableHours)) {
+      canAfford = entry.durationHours <= availableHours;
+    }
     if (!canAfford) return false;
 
     if (!completion) return true;

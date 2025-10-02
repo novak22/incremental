@@ -29,7 +29,8 @@ function createUpgradeTodoEntries(entries = []) {
       durationHours: hours,
       durationText,
       repeatable: Boolean(entry?.repeatable),
-      remainingRuns: entry?.remainingRuns ?? null
+      remainingRuns: entry?.remainingRuns ?? null,
+      ignoreAvailableHours: true
     };
   });
 }
