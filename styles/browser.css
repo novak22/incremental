@@ -465,8 +465,10 @@ a {
 }
 
 .browser-stage__pane--home .browser-layout {
+  --browser-home-spacing: clamp(0.75rem, 1vw + 0.4rem, 1.25rem);
   max-width: none;
-  padding: 3rem 1.5rem 3.4rem;
+  margin: 0;
+  padding: var(--browser-home-spacing);
 }
 
 .browser-main {
@@ -480,14 +482,14 @@ a {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 1.8rem;
+  gap: var(--browser-home-spacing, 1.5rem);
 }
 
 .browser-home__widgets {
   width: 100%;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 1.5rem;
+  gap: var(--browser-home-spacing, 1.5rem);
   align-items: stretch;
   justify-items: stretch;
   margin: 0;
