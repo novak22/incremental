@@ -278,7 +278,7 @@ a {
 
 .browser-stage__pane--home .browser-layout {
   max-width: 1400px;
-  padding: 2.5rem clamp(0.75rem, 3vw, 1.5rem) 3.25rem;
+  padding: 2.5rem clamp(0.5rem, 2.4vw, 1.35rem) 3.25rem;
 }
 
 .browser-main {
@@ -299,7 +299,7 @@ a {
   width: 100%;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1.25rem;
+  gap: 1.6rem;
   align-items: stretch;
 }
 
@@ -340,10 +340,10 @@ a {
   border: 1px solid var(--browser-panel-border);
   border-radius: var(--browser-radius-lg);
   box-shadow: var(--browser-shadow-soft);
-  padding: 1.2rem;
+  padding: 1.35rem;
   display: flex;
   flex-direction: column;
-  gap: 1.05rem;
+  gap: 1.1rem;
   height: 100%;
   min-height: 0;
 }
