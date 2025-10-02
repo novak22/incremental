@@ -24,6 +24,29 @@ let sessionControls = null;
 
 const navigationController = createNavigationController({ homepageId: HOMEPAGE_ID });
 
+function scrollViewportToTop({ smooth = false } = {}) {
+  if (typeof window === 'undefined') return;
+  const behavior = smooth ? 'smooth' : 'auto';
+  if (typeof window.scrollTo === 'function') {
+    try {
+      window.scrollTo({ top: 0, behavior });
+      return;
+    } catch (error) {
+      window.scrollTo(0, 0);
+      return;
+    }
+  }
+
+  if (typeof document !== 'undefined') {
+    if (document.documentElement) {
+      document.documentElement.scrollTop = 0;
+    }
+    if (document.body) {
+      document.body.scrollTop = 0;
+    }
+  }
+}
+
 function getNavigationRefs() {
   if (!navigationRefs) {
     navigationRefs = getElement('browserNavigation') || {};
@@ -64,9 +87,6 @@ function revealPage(pageId, { focus = false } = {}) {
   if (homepageContent) {
     homepageContent.hidden = !isHome;
     homepageContent.classList.toggle('is-active', isHome);
-    if (isHome && focus) {
-      homepageContent.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
   }
 
   if (workspaceHost) {
@@ -74,10 +94,11 @@ function revealPage(pageId, { focus = false } = {}) {
       const active = section.dataset.browserPage === pageId;
       section.hidden = !active;
       section.classList.toggle('is-active', active);
-      if (active && focus) {
-        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
     });
+  }
+
+  if (focus) {
+    scrollViewportToTop({ smooth: true });
   }
 }
 
