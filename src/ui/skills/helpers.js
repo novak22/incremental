@@ -56,6 +56,11 @@ export function describeCharacter(character = {}) {
     : `${formatXp(xp)} XP logged • Top tier achieved—legendary!`;
   return {
     label: `${tier.title} · Level ${level}`,
+    title: tier.title,
+    level,
+    xp,
+    nextTier,
+    nextTierTitle: nextTier?.title || null,
     note
   };
 }

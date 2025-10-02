@@ -17,6 +17,9 @@ function buildSummary(state = {}) {
   const activeAssets = countActiveAssetInstances(state);
 
   return {
+    title: character.title || character.label,
+    level: character.level || 1,
+    xp: character.xp || 0,
     tier: character.label,
     note: character.note,
     money: {
@@ -77,17 +80,7 @@ function buildSkillList(state = {}) {
 }
 
 function buildEquipmentList(state = {}) {
-  const owned = getUpgrades()
-    .filter(upgrade => !upgrade.repeatable)
-    .filter(upgrade => getUpgradeState(upgrade.id, state)?.purchased);
-
-  if (!owned.length) {
-    return {
-      items: [],
-      empty: 'No gear purchased yet. Explore Upgrades to expand your toolkit.'
-    };
-  }
-
+  const allUpgrades = getUpgrades().filter(upgrade => !upgrade.repeatable);
   const skillNameMap = new Map(SKILL_DEFINITIONS.map(def => [def.id, def.name]));
   const formatSkillFocus = skills => {
     if (!Array.isArray(skills) || !skills.length) return null;
@@ -99,6 +92,7 @@ function buildEquipmentList(state = {}) {
     return formatList(names);
   };
 
+  const owned = allUpgrades.filter(upgrade => getUpgradeState(upgrade.id, state)?.purchased);
   const items = owned.map(upgrade => {
     const summaryParts = [];
     if (upgrade.unlocks) summaryParts.push(`Unlocks ${upgrade.unlocks}`);
@@ -109,11 +103,36 @@ function buildEquipmentList(state = {}) {
       id: upgrade.id,
       name: upgrade.name,
       summary,
-      focus: focus ? `Skill focus: ${focus}` : 'Skill focus: Generalist boost'
+      focus: focus ? `Skill focus: ${focus}` : 'Skill focus: Generalist boost',
+      status: 'owned',
+      cost: Number(upgrade.cost) || 0
     };
   });
 
-  return { items };
+  const ownedIds = new Set(items.map(item => item.id));
+  const locked = allUpgrades
+    .filter(upgrade => !ownedIds.has(upgrade.id))
+    .map(upgrade => {
+      const focus = formatSkillFocus(upgrade.skills);
+      return {
+        id: upgrade.id,
+        name: upgrade.name,
+        summary: upgrade.description || upgrade.boosts || '',
+        focus: focus ? `Skill focus: ${focus}` : 'Skill focus: Generalist boost',
+        status: 'locked',
+        cost: Number(upgrade.cost) || 0
+      };
+    });
+
+  if (!items.length) {
+    return {
+      items: [],
+      locked,
+      empty: 'No gear purchased yet. Explore Upgrades to expand your toolkit.'
+    };
+  }
+
+  return { items, locked };
 }
 
 function describeEducationStatus(progress = {}) {
@@ -129,6 +148,7 @@ function buildEducationList(state = {}) {
     const status = describeEducationStatus(progress);
     const daysCompleted = Math.max(0, Number(progress.daysCompleted) || 0);
     const totalDays = Math.max(0, Number(progress.totalDays ?? track.days) || track.days || 0);
+    const percent = totalDays > 0 ? Math.min(1, daysCompleted / totalDays) : progress.completed ? 1 : 0;
     return {
       id: track.id,
       name: track.name,
@@ -136,7 +156,7 @@ function buildEducationList(state = {}) {
       summary: `${daysCompleted}/${totalDays} days • ${formatHours(track.hoursPerDay)} per day • Tuition ${
         Number(track.tuition) > 0 ? `$${formatMoney(track.tuition)}` : 'Free'
       }`,
-    note: progress.completed
+      note: progress.completed
         ? 'Course complete—permanent bonuses unlocked!'
         : progress.enrolled
           ? progress.studiedToday
@@ -147,7 +167,14 @@ function buildEducationList(state = {}) {
         ? 'completed'
         : progress.enrolled
           ? 'active'
-          : 'available'
+          : 'available',
+      daysCompleted,
+      totalDays,
+      percent,
+      tuition: Number(track.tuition) || 0,
+      hoursPerDay: Number(track.hoursPerDay) || 0,
+      enrolled: Boolean(progress.enrolled),
+      completed: Boolean(progress.completed)
     };
   });
 

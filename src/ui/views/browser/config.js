@@ -11,6 +11,15 @@ export const SERVICE_PAGES = [
     type: 'finance'
   },
   {
+    id: 'yournetwork',
+    slug: 'your-network',
+    label: 'YourNetwork',
+    headline: 'YourNetwork Professional Profile',
+    tagline: 'Showcase your creator CV, highlight skills, and celebrate portfolio wins.',
+    icon: '🧑‍🚀',
+    type: 'profile'
+  },
+  {
     id: 'downwork',
     slug: 'downwork',
     label: 'DownWork',
