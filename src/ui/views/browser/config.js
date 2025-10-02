@@ -29,6 +29,15 @@ export const SERVICE_PAGES = [
     type: 'assets'
   },
   {
+    id: 'digishelf',
+    slug: 'digishelf',
+    label: 'DigiShelf',
+    headline: 'DigiShelf Digital Library',
+    tagline: 'Curate e-books and stock galleries in one polished workspace.',
+    icon: '📚',
+    type: 'digishelf'
+  },
+  {
     id: 'videotube',
     slug: 'videotube',
     label: 'VideoTube',

@@ -35,3 +35,8 @@ export {
 
 export { default as buildBlogpressModel, selectNiche as selectBlogpressNiche } from './blogpress.js';
 export { default as buildVideoTubeModel, selectNiche as selectVideoTubeNiche } from './videotube.js';
+export {
+  default as buildDigishelfModel,
+  selectDigishelfNiche,
+  getQuickActionIds as getDigishelfQuickActionIds
+} from './digishelf.js';
