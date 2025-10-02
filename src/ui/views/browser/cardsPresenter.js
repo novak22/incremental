@@ -9,6 +9,7 @@ import videotubeApp from './components/videotube.js';
 import learnlyApp from './components/learnly.js';
 import shopstackApp from './components/shopstack.js';
 import shopilyApp from './components/shopily.js';
+import serverhubApp from './components/serverhub.js';
 
 let cachedRegistries = null;
 let cachedModels = null;
@@ -433,6 +434,28 @@ function renderShopilyPage(definitions = [], model = {}) {
 
   const summary = shopilyApp.render(model, { mount, page });
   const meta = summary?.meta || model?.summary?.meta || 'Launch your first store';
+  return { id: page.id, meta };
+}
+
+function renderServerHubPage(definitions = [], model = {}) {
+  const page = SERVICE_PAGES.find(entry => entry.type === 'serverhub');
+  if (!page) return null;
+
+  const refs = ensurePageContent(page, ({ body }) => {
+    if (!body.querySelector('[data-role="serverhub-root"]')) {
+      body.innerHTML = '';
+      const wrapper = document.createElement('div');
+      wrapper.dataset.role = 'serverhub-root';
+      body.appendChild(wrapper);
+    }
+  });
+  if (!refs) return null;
+
+  const mount = refs.body.querySelector('[data-role="serverhub-root"]');
+  if (!mount) return null;
+
+  const summary = serverhubApp.render(model, { mount, page, definitions });
+  const meta = summary?.meta || model?.summary?.meta || 'Launch your first micro SaaS';
   return { id: page.id, meta };
 }
 
@@ -1281,6 +1304,8 @@ function renderServices(registries = {}, models = {}) {
   if (assetSummary) summaries.push(assetSummary);
   const digishelfSummary = renderDigishelfPage(registries.assets, models.digishelf);
   if (digishelfSummary) summaries.push(digishelfSummary);
+  const serverHubSummary = renderServerHubPage(registries.assets, models.serverhub);
+  if (serverHubSummary) summaries.push(serverHubSummary);
   const videotubeSummary = renderVideoTubePage(registries.assets, models.videotube);
   if (videotubeSummary) summaries.push(videotubeSummary);
   const shopilySummary = renderShopilyPage(registries.assets, models.shopily);

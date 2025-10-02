@@ -4,6 +4,7 @@ import {
   buildDigishelfModel,
   buildBlogpressModel,
   buildShopilyModel,
+  buildServerHubModel,
   buildEducationModels,
   buildHustleModels,
   buildUpgradeModels,
@@ -51,6 +52,7 @@ function buildModels(registries) {
     assets: buildAssetModels(registries.assets),
     digishelf: buildDigishelfModel(registries.assets),
     shopily: buildShopilyModel(registries.assets, registries.upgrades),
+    serverhub: buildServerHubModel(registries.assets, registries.upgrades),
     upgrades: buildUpgradeModels(registries.upgrades),
     blogpress: buildBlogpressModel(registries.assets, registries.upgrades),
     videotube: buildVideoTubeModel(registries.assets)
