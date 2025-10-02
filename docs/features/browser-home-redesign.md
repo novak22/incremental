@@ -11,9 +11,11 @@
 - The apps widget reuses the existing `appsWidget` module. It now renders each workspace as a tile button with an icon, label, and optional status badge derived from the service summary metadata.
 - Navigation highlighting looks for `[data-role="browser-app-launcher"]` containers in addition to the legacy sidebar list so active pages still pulse even without the sidebar.
 - The ToDo widget now aggregates quick actions, asset upgrade recommendations, and enrollable study tracks into a single scrollable list. Tasks validate hour and cash requirements before rendering so the queue always reflects moves you can take right now.
+- A "Focus on" toggle lets players sort the ToDo queue for Money-first hustles, upgrade milestones, or an alternating blend of both by interleaving the two lists.
 
 ## Player Impact
 - Players can scan the day's plan, finances, and workspace launchers at a glance without juggling two columns.
 - The tile launcher mirrors a mobile home screen, making it faster to spot ready actions or idle tabs from the status badges.
 - Responsive breakpoints ensure the layout remains legible on narrow QA windows while keeping the three-up structure on desktop.
 - Combining upgrades, hustles, and study enrollments in the ToDo queue helps players chain momentum moves back-to-back. Affordability checks keep impossible options hidden while the scroll affordance means long task lists no longer crowd out neighboring widgets.
+- Focus controls surface the next best hustle, the nearest upgrade, or an alternating rhythm so players can align the day’s plan with their current goals.

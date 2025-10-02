@@ -378,6 +378,55 @@ a {
   width: 100%;
 }
 
+.todo-widget__focus {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  color: var(--browser-muted);
+}
+
+.todo-widget__focus-label {
+  font-weight: 600;
+  color: var(--browser-subtle);
+  margin-right: 0.25rem;
+}
+
+.todo-widget__focus-button {
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--browser-radius-pill);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 140ms ease, background-color 140ms ease;
+}
+
+.todo-widget__focus-button:hover,
+.todo-widget__focus-button:focus-visible {
+  color: var(--browser-accent);
+  background-color: var(--browser-accent-soft);
+  outline: none;
+}
+
+.todo-widget__focus-button.is-active {
+  color: var(--browser-accent);
+  background-color: var(--browser-accent-soft);
+  font-weight: 600;
+}
+
+.todo-widget__focus-separator {
+  color: var(--browser-subtle);
+  font-weight: 600;
+  margin: 0 0.1rem;
+  user-select: none;
+}
+
 .todo-widget__intro h2 {
   margin: 0;
   font-size: 1.5rem;

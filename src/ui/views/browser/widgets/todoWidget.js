@@ -6,6 +6,8 @@ let elements = null;
 let initialized = false;
 let currentDay = null;
 let lastModel = null;
+const focusModes = ['money', 'upgrades', 'balanced'];
+let focusMode = 'balanced';
 
 function bindEndDay(button) {
   if (!button || button.dataset.bound === 'true') return;
@@ -18,6 +20,47 @@ function bindEndDay(button) {
   button.dataset.bound = 'true';
 }
 
+function isValidFocusMode(mode) {
+  return focusModes.includes(mode);
+}
+
+function syncFocusButtons() {
+  if (!elements?.focusButtons) return;
+  elements.focusButtons.forEach(button => {
+    if (!button?.dataset) return;
+    const mode = button.dataset.focus;
+    const isActive = mode === focusMode;
+    button.classList.toggle('is-active', isActive);
+    button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+  });
+}
+
+function setFocusMode(mode) {
+  const normalized = typeof mode === 'string' ? mode.toLowerCase() : '';
+  if (!isValidFocusMode(normalized) || normalized === focusMode) {
+    syncFocusButtons();
+    return;
+  }
+  focusMode = normalized;
+  syncFocusButtons();
+  if (lastModel) {
+    render(lastModel);
+  }
+}
+
+function bindFocusControls(buttons) {
+  if (!Array.isArray(buttons) || !buttons.length) return;
+  buttons.forEach(button => {
+    if (!button || button.dataset.focusBound === 'true') return;
+    button.addEventListener('click', () => {
+      const mode = button.dataset.focus;
+      setFocusMode(mode);
+    });
+    button.dataset.focusBound = 'true';
+  });
+  syncFocusButtons();
+}
+
 function init(widgetElements = {}) {
   if (initialized) return;
   elements = { ...widgetElements };
@@ -27,8 +70,17 @@ function init(widgetElements = {}) {
       elements.listWrapper = wrapper;
     }
   }
+  if (elements?.focusButtons) {
+    elements.focusButtons = Array.from(elements.focusButtons);
+  } else if (elements?.focusGroup) {
+    const buttons = elements.focusGroup.querySelectorAll?.('[data-focus]');
+    if (buttons?.length) {
+      elements.focusButtons = Array.from(buttons);
+    }
+  }
   initialized = true;
   bindEndDay(elements?.endDayButton);
+  bindFocusControls(elements?.focusButtons);
   if (elements?.doneHeading) {
     elements.doneHeading.hidden = true;
   }
@@ -126,6 +178,15 @@ function normalizeEntries(model = {}) {
       const repeatable = Boolean(entry?.repeatable) || (hasRemaining && remainingRuns > 1);
       const moneyCost = Number(entry?.moneyCost);
       const normalizedMoney = Number.isFinite(moneyCost) ? Math.max(0, moneyCost) : 0;
+      const rawPayout = Number(entry?.payout);
+      const normalizedPayout = Number.isFinite(rawPayout) ? Math.max(0, rawPayout) : 0;
+      const moneyPerHour = normalizedDuration > 0
+        ? normalizedPayout / normalizedDuration
+        : normalizedPayout;
+      const focusCategory = entry?.focusCategory || entry?.category || entry?.type || null;
+      const rawUpgradeRemaining = Number(entry?.upgradeRemaining ?? entry?.remaining ?? entry?.requirementsRemaining);
+      const upgradeRemaining = Number.isFinite(rawUpgradeRemaining) ? Math.max(0, rawUpgradeRemaining) : null;
+      const orderIndex = Number.isFinite(entry?.orderIndex) ? entry.orderIndex : index;
       return {
         id,
         title: entry?.title || 'Action',
@@ -135,10 +196,99 @@ function normalizeEntries(model = {}) {
         durationText,
         moneyCost: normalizedMoney,
         repeatable,
-        remainingRuns
+        remainingRuns,
+        payout: normalizedPayout,
+        moneyPerHour: Number.isFinite(moneyPerHour) ? moneyPerHour : 0,
+        focusCategory,
+        upgradeRemaining,
+        orderIndex
       };
     })
     .filter(entry => Boolean(entry?.id));
+}
+
+function sortHustleEntries(entries = []) {
+  return [...entries].sort((a, b) => {
+    const roiA = Number.isFinite(a?.moneyPerHour) ? a.moneyPerHour : -Infinity;
+    const roiB = Number.isFinite(b?.moneyPerHour) ? b.moneyPerHour : -Infinity;
+    if (roiA !== roiB) {
+      return roiB - roiA;
+    }
+    const payoutA = Number.isFinite(a?.payout) ? a.payout : 0;
+    const payoutB = Number.isFinite(b?.payout) ? b.payout : 0;
+    if (payoutA !== payoutB) {
+      return payoutB - payoutA;
+    }
+    const durationA = Number.isFinite(a?.durationHours) ? a.durationHours : Infinity;
+    const durationB = Number.isFinite(b?.durationHours) ? b.durationHours : Infinity;
+    if (durationA !== durationB) {
+      return durationA - durationB;
+    }
+    const orderA = Number.isFinite(a?.orderIndex) ? a.orderIndex : 0;
+    const orderB = Number.isFinite(b?.orderIndex) ? b.orderIndex : 0;
+    return orderA - orderB;
+  });
+}
+
+function sortUpgradeEntries(entries = []) {
+  return [...entries].sort((a, b) => {
+    const remainingA = Number.isFinite(a?.upgradeRemaining) ? a.upgradeRemaining : Infinity;
+    const remainingB = Number.isFinite(b?.upgradeRemaining) ? b.upgradeRemaining : Infinity;
+    if (remainingA !== remainingB) {
+      return remainingA - remainingB;
+    }
+    const durationA = Number.isFinite(a?.durationHours) ? a.durationHours : Infinity;
+    const durationB = Number.isFinite(b?.durationHours) ? b.durationHours : Infinity;
+    if (durationA !== durationB) {
+      return durationA - durationB;
+    }
+    const orderA = Number.isFinite(a?.orderIndex) ? a.orderIndex : 0;
+    const orderB = Number.isFinite(b?.orderIndex) ? b.orderIndex : 0;
+    return orderA - orderB;
+  });
+}
+
+function interleaveEntries(first = [], second = []) {
+  const results = [];
+  const max = Math.max(first.length, second.length);
+  for (let index = 0; index < max; index += 1) {
+    if (first[index]) {
+      results.push(first[index]);
+    }
+    if (second[index]) {
+      results.push(second[index]);
+    }
+  }
+  return results;
+}
+
+function applyFocusOrdering(entries = [], mode = 'balanced') {
+  if (!Array.isArray(entries) || entries.length === 0) {
+    return entries;
+  }
+
+  const hustles = entries.filter(entry => entry?.focusCategory === 'hustle');
+  const upgrades = entries.filter(entry => entry?.focusCategory === 'upgrade');
+  const others = entries.filter(entry => entry?.focusCategory !== 'hustle' && entry?.focusCategory !== 'upgrade');
+  const sortedHustles = sortHustleEntries(hustles);
+  const sortedUpgrades = sortUpgradeEntries(upgrades);
+
+  switch (mode) {
+    case 'money': {
+      return [...sortedHustles, ...sortedUpgrades, ...others.filter(Boolean)];
+    }
+    case 'upgrades': {
+      return [...sortedUpgrades, ...sortedHustles, ...others.filter(Boolean)];
+    }
+    case 'balanced':
+    default: {
+      const interleaved = interleaveEntries(sortedUpgrades, sortedHustles);
+      const usedIds = new Set(interleaved.map(entry => entry.id));
+      const leftovers = [...sortedUpgrades, ...sortedHustles, ...others.filter(Boolean)]
+        .filter(entry => !usedIds.has(entry.id));
+      return [...interleaved, ...leftovers];
+    }
+  }
 }
 
 function applyImmediateTimeDelta(model, hours) {
@@ -371,6 +521,7 @@ export function render(model = {}) {
   }
 
   lastModel = model || {};
+  syncFocusButtons();
   resetCompletedForDay(model.day);
   applyScrollerLimit(model);
 
@@ -397,13 +548,15 @@ export function render(model = {}) {
     return entry.repeatable;
   });
 
-  renderHours(model);
-  updateNote(model, pending.length);
+  const orderedPending = applyFocusOrdering(pending, focusMode);
 
-  if (!pending.length) {
+  renderHours(model);
+  updateNote(model, orderedPending.length);
+
+  if (!orderedPending.length) {
     renderEmptyState(model.emptyMessage);
   } else {
-    renderPending(pending, model);
+    renderPending(orderedPending, model);
   }
 
   renderCompleted();
