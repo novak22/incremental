@@ -11,6 +11,16 @@ const VIEW_DASHBOARD = 'dashboard';
 const VIEW_DETAIL = 'detail';
 const VIEW_CREATE = 'create';
 const VIEW_ANALYTICS = 'analytics';
+const VIEW_ORDER = [VIEW_DASHBOARD, VIEW_DETAIL, VIEW_ANALYTICS, VIEW_CREATE];
+
+const VIEW_ROUTES = {
+  [VIEW_DASHBOARD]: { label: 'Dashboard', path: '/' },
+  [VIEW_DETAIL]: { label: 'Video Details', path: '/details' },
+  [VIEW_ANALYTICS]: { label: 'Channel Analytics', path: '/analytics' },
+  [VIEW_CREATE]: { label: 'Create New Video', path: '/create' }
+};
+
+const BASE_URL = 'https://videotube.hub';
 
 let currentState = {
   view: VIEW_DASHBOARD,
@@ -26,6 +36,8 @@ let currentModel = {
 };
 let currentMount = null;
 let currentPageMeta = null;
+let isLocationInitialized = false;
+let hasBoundHistory = false;
 
 const formatCurrency = amount =>
   baseFormatCurrency(amount, { precision: 'integer', clampZero: true });
@@ -35,6 +47,99 @@ const formatPercent = value =>
     clampMax: 1,
     signDisplay: 'never'
   });
+
+function normalizeVideoId(value) {
+  if (value === null || value === undefined) return null;
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string' && /^\d+$/.test(value)) {
+    return Number(value);
+  }
+  return value;
+}
+
+function getViewPath(view, options = {}) {
+  if (options.locationPath) {
+    return options.locationPath;
+  }
+  if (view === VIEW_DETAIL) {
+    const videoId = options.videoId;
+    if (videoId !== null && videoId !== undefined) {
+      return `/video/${videoId}`;
+    }
+  }
+  return VIEW_ROUTES[view]?.path || '/';
+}
+
+function buildViewUrl(view, options = {}) {
+  const path = getViewPath(view, options);
+  return `${BASE_URL}${path}`;
+}
+
+function updateHistory(view, options = {}) {
+  if (typeof window === 'undefined' || !window.history) return;
+  const path = getViewPath(view, options);
+  const state = {
+    view,
+    videoId:
+      options.locationPath && !options.videoId && options.videoId !== 0
+        ? null
+        : options.videoId,
+    locationPath: options.locationPath || null
+  };
+  if (window.location.pathname === path) {
+    window.history.replaceState(state, '', path);
+  } else {
+    window.history.pushState(state, '', path);
+  }
+}
+
+function parseLocation(location = {}) {
+  const path = location.pathname || '/';
+  if (path.startsWith('/analytics')) {
+    return { view: VIEW_ANALYTICS };
+  }
+  if (path.startsWith('/create')) {
+    return { view: VIEW_CREATE };
+  }
+  if (path.startsWith('/details')) {
+    return { view: VIEW_DETAIL };
+  }
+  const detailMatch = path.match(/^\/video\/(.+)$/i);
+  if (detailMatch) {
+    return { view: VIEW_DETAIL, videoId: normalizeVideoId(detailMatch[1]) };
+  }
+  return { view: VIEW_DASHBOARD };
+}
+
+function primeStateFromLocation() {
+  if (isLocationInitialized || typeof window === 'undefined') {
+    return;
+  }
+  const next = parseLocation(window.location || {});
+  currentState.view = next.view || VIEW_DASHBOARD;
+  if (next.videoId !== undefined) {
+    currentState.selectedVideoId = normalizeVideoId(next.videoId);
+  }
+  isLocationInitialized = true;
+}
+
+function bindHistoryEvents() {
+  if (hasBoundHistory || typeof window === 'undefined') {
+    return;
+  }
+  window.addEventListener('popstate', event => {
+    const state = event.state || parseLocation(window.location || {});
+    setView(state.view || VIEW_DASHBOARD, {
+      videoId:
+        state.videoId !== undefined
+          ? normalizeVideoId(state.videoId)
+          : currentState.selectedVideoId,
+      locationPath: state.locationPath || null,
+      silent: true
+    });
+  });
+  hasBoundHistory = true;
+}
 
 function ensureSelectedVideo() {
   const instances = Array.isArray(currentModel.instances) ? currentModel.instances : [];
@@ -53,11 +158,19 @@ function ensureSelectedVideo() {
 
 function setView(view, options = {}) {
   const nextView = view || VIEW_DASHBOARD;
-  if (nextView === VIEW_DETAIL && options.videoId) {
-    currentState.selectedVideoId = options.videoId;
+  const videoId = normalizeVideoId(options.videoId);
+  if (nextView === VIEW_DETAIL && (videoId || videoId === 0)) {
+    currentState.selectedVideoId = videoId;
   }
   currentState.view = nextView;
   ensureSelectedVideo();
+  if (!options.silent) {
+    const historyVideoId = options.locationPath ? null : currentState.selectedVideoId;
+    updateHistory(currentState.view, {
+      videoId: historyVideoId,
+      locationPath: options.locationPath || null
+    });
+  }
   render(currentModel, { mount: currentMount, page: currentPageMeta });
 }
 
@@ -76,48 +189,32 @@ function handleRename(instanceId, value) {
   setAssetInstanceName('vlog', instanceId, value || '');
 }
 
-function createNavButton(label, view) {
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.className = 'videotube-tab';
-  button.dataset.view = view;
-  button.textContent = label;
-  button.addEventListener('click', () => {
-    setView(view);
+function createNavLink(view) {
+  const config = VIEW_ROUTES[view];
+  const link = document.createElement('a');
+  link.className = 'videotube-tab';
+  link.dataset.view = view;
+  link.href = buildViewUrl(view);
+  link.textContent = config?.label || view;
+  link.addEventListener('click', event => {
+    event.preventDefault();
+    setView(view, { locationPath: config?.path || '/' });
   });
-  return button;
+  return link;
 }
 
-function renderHeader(model) {
+function renderHeader() {
   const header = document.createElement('header');
   header.className = 'videotube__header';
 
-  const title = document.createElement('div');
-  title.className = 'videotube__title';
-  const heading = document.createElement('h1');
-  heading.textContent = 'VideoTube Studio';
-  const note = document.createElement('p');
-  note.textContent = 'Manage uploads, hype premieres, and celebrate every payout.';
-  title.append(heading, note);
-
   const nav = document.createElement('nav');
   nav.className = 'videotube-tabs';
-  nav.append(
-    createNavButton('Dashboard', VIEW_DASHBOARD),
-    createNavButton('Video Details', VIEW_DETAIL),
-    createNavButton('Channel Analytics', VIEW_ANALYTICS)
-  );
+  nav.setAttribute('aria-label', 'VideoTube navigation');
+  VIEW_ORDER.forEach(view => {
+    nav.appendChild(createNavLink(view));
+  });
 
-  const actions = document.createElement('div');
-  actions.className = 'videotube__actions';
-  const launchButton = document.createElement('button');
-  launchButton.type = 'button';
-  launchButton.className = 'videotube-button videotube-button--primary';
-  launchButton.textContent = 'Create New Video';
-  launchButton.addEventListener('click', () => setView(VIEW_CREATE));
-  actions.appendChild(launchButton);
-
-  header.append(title, nav, actions);
+  header.appendChild(nav);
   return header;
 }
 
@@ -735,10 +832,12 @@ function renderCurrentView(model) {
 function updateActiveTab(root) {
   const tabs = root.querySelectorAll('.videotube-tab');
   tabs.forEach(tab => {
-    if (tab.dataset.view === currentState.view) {
-      tab.classList.add('is-active');
+    const isActive = tab.dataset.view === currentState.view;
+    tab.classList.toggle('is-active', isActive);
+    if (isActive) {
+      tab.setAttribute('aria-current', 'page');
     } else {
-      tab.classList.remove('is-active');
+      tab.removeAttribute('aria-current');
     }
   });
 }
@@ -761,12 +860,14 @@ export function render(model = {}, context = {}) {
     return currentModel.summary || {};
   }
 
+  primeStateFromLocation();
+  bindHistoryEvents();
   ensureSelectedVideo();
 
   currentMount.innerHTML = '';
   const root = document.createElement('div');
   root.className = 'videotube';
-  root.appendChild(renderHeader(currentModel));
+  root.appendChild(renderHeader());
   const view = renderCurrentView(currentModel);
   root.appendChild(view);
   currentMount.appendChild(root);

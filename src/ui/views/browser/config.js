@@ -59,8 +59,8 @@ export const SERVICE_PAGES = [
     id: 'videotube',
     slug: 'videotube',
     label: 'VideoTube',
-    headline: 'VideoTube Venture Studio',
-    tagline: 'Schedule drops, review analytics, and amplify fans.',
+    headline: 'VideoTube Studio',
+    tagline: 'Manage uploads, hype premieres, and celebrate every payout.',
     icon: '📺',
     type: 'videotube'
   },
