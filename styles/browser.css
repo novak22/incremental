@@ -465,8 +465,8 @@ a {
 }
 
 .browser-stage__pane--home .browser-layout {
-  max-width: 1400px;
-  padding: 3rem clamp(0.85rem, 2.1vw, 1.6rem) 3.4rem;
+  max-width: none;
+  padding: 3rem 1.5rem 3.4rem;
 }
 
 .browser-main {
@@ -486,17 +486,16 @@ a {
 .browser-home__widgets {
   width: 100%;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
   align-items: stretch;
-  justify-content: center;
-  margin: 0 auto;
-  max-width: min(100%, 1180px);
+  justify-items: stretch;
+  margin: 0;
 }
 
 @media (max-width: 1200px) {
   .browser-home__widgets {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   }
 }
 
