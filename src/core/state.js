@@ -178,8 +178,6 @@ class StateManager {
 
 const stateManager = new StateManager();
 
-export default stateManager;
-
 export const createEmptyDailyMetrics = (...args) => stateManager.createEmptyDailyMetrics(...args);
 export const ensureDailyMetrics = (...args) => stateManager.ensureDailyMetrics(...args);
 export const ensureMetricsHistory = (...args) => stateManager.ensureMetricsHistory(...args);

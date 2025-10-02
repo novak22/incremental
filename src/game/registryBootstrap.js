@@ -34,6 +34,3 @@ export function ensureRegistryReady() {
   return readySnapshot;
 }
 
-export default {
-  ensureRegistryReady
-};

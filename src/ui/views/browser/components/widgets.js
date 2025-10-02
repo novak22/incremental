@@ -21,7 +21,3 @@ export function createStat(label, value) {
   return stat;
 }
 
-export default {
-  createStat,
-  formatRoi
-};
