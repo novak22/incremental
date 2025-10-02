@@ -1,36 +1,37 @@
 # Trends Intelligence Lab
 
 ## Overview
-The Trends app graduates the classic analytics tab into a standalone browser workspace. It frames niche insights like a SaaS research dashboard: daily highlights sit in a ticker, filters surface the right niches, and each card shows global momentum, payout impact, and what the player has invested. Watchlisted niches receive their own panel and a stubbed trend history panel teases upcoming charts. All data still flows from the original analytics builders so saves and backend systems stay untouched.
+The Trends app now frames niche analytics like a professional SaaS dashboard. A focused header introduces search, sorting, and an All vs. Watchlist toggle; a market overview strip surfaces the strongest swings and payouts; and a clean card grid highlights per-niche momentum with sparklines, deltas, and payout multipliers. Watchlisted niches receive a richer panel with payout context while empire totals stay as muted footnotes. All data continues to flow from the shared analytics builders so saves and backend systems remain untouched.
 
 ## Goals
-- Present the daily outlook (Top Boost, Big Swing, Cooling Risk) in a scannable header ticker.
-- Offer filter buttons for payout impact, assets invested, and trend movement plus toggles for invested-only and watchlist niches.
-- Recast each niche as a rich card with status badge, momentum meter, payout impact, empire stats, and quick actions.
-- Maintain a dedicated watchlist surface for pinned niches with quick navigation actions.
-- Keep room for future trend history charts while stubbing the panel today.
+- Provide a compact header with "Trends Analytics" branding, tagline, search, sort dropdown, and All/Watchlist toggle.
+- Summarise the day with overview cards for Top Boost, Biggest Drop, Best Payout Multiplier, and Active Niches Count.
+- Render a responsive three-column trend grid with sparklines, momentum delta, payout multipliers, and a watchlist star per card.
+- Keep empire context light via a muted footer that rolls up ventures and earnings for the current selection.
+- Give pinned niches a dedicated watchlist panel with average payout and momentum trend callouts for fast scanning.
 
 ## Mapping from Classic Shell
-- **Highlights** reuse the `buildNicheHighlights` output and are reformatted into ticker cards.
-- **Momentum board** pulls the same entries from `buildNicheViewModel`, now rendered as grid cards with SaaS styling.
-- **Filters** mirror the existing sort/checkbox logic, updating the same analytics entries on the fly.
-- **Watchlist actions** still call `setNicheWatchlist`, and the venture CTA is paused until a new destination ships.
-- **Future history** panel keeps the original analytics data warm while signalling upcoming visualizations.
+- **Overview metrics** draw from `buildNicheHighlights` and the board entries to surface top boosts, drops, and multiplier leaders.
+- **Trend grid** still reads entries from `buildNicheViewModel`, applying new search, sort, and view filters on the client.
+- **Watchlist controls** continue to call `setNicheWatchlist`, updating the cached entries so the UI stays responsive between state ticks.
+- **Empire summary** reuses existing earnings and asset counts, now rolled into the grid footer instead of heavy per-card sections.
+- Navigation URLs remain unchanged, keeping `/`, `/watchlist`, and `/niche/{slug}` ready for future expansion.
 
 ## Data & Logic
-- Trends relies on `buildNicheViewModel` so analytics, payouts, and watchlist counts stay synchronized with the classic shell.
-- Sorting and filtering logic matches the previous implementation, prioritising trend impact, asset counts, and delta magnitude.
-- Watchlist toggles immediately call `setNicheWatchlist` and locally update the cached model for responsive UI feedback until the next render tick.
-- CTA buttons continue to delegate to existing actions—the disabled recommended hustle stub remains in place for future automation.
+- Sorting options map to highest momentum score, highest payout impact, or fastest cooling delta using the existing board metrics.
+- Search operates on niche names only, ensuring no new backend lookups are required.
+- Sparkline trendlines interpolate between the stored previous and current scores when deeper history is unavailable, keeping fidelity with current data.
+- Watchlist meta counts recalculate locally so filters disable gracefully when nothing is starred.
 
 ## UI Notes
-- Cards use bar meters, stat pills, and CTA pill buttons to mimic modern trends dashboards.
-- Tone-aware metric chips colour positive/negative trend impact for instant scanning.
-- Watchlist items appear in a lightweight aside with pill buttons for quick removal.
-- The history panel ships with an upbeat “coming soon” message so the layout already reserves space for line charts.
+- Cards lean on whitespace, small caps labels, and subtle shadows to mimic modern analytics SaaS styling.
+- Watchlist stars use a single tap target in the card header and echo the state in both grid and watchlist panels.
+- Overview cards adopt emoji icons for quick scanning while maintaining a compact vertical rhythm.
+- Footer messaging keeps the "updated daily" reminder subtle so future history modules can slot underneath.
 
 ## Manual Test Checklist
-- Launch the browser shell, open Trends from the Apps grid, and confirm the ticker lists Top Boost, Big Swing, and Cooling Risk based on current data.
-- Toggle between sort filters and checkbox filters; ensure the board updates and empty states read correctly.
-- Add and remove niches from the watchlist via board cards and confirm the aside updates instantly.
-- Visit the watchlist panel buttons to remove a niche and confirm the board re-renders with updated counts.
+- Launch the browser shell, open Trends from the Apps grid, and confirm the header shows search, sort, and All/Watchlist toggle controls.
+- Verify the overview strip lists Top Boost, Biggest Drop, Best Payout Multiplier, and Active Niches Count populated from current data.
+- Toggle between sort options and enter a search term; the grid should update in-place and refresh the "Your empire" footer summary.
+- Star and unstar a niche from the grid; confirm both the grid badge and the watchlist panel update immediately.
+- Switch to the Watchlist view toggle and ensure only starred niches appear in the main grid with empty states when appropriate.

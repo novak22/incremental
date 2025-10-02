@@ -6,27 +6,25 @@ import {
 } from '../utils/formatting.js';
 
 const SORT_OPTIONS = [
-  { key: 'impact', label: 'Highest payout impact' },
-  { key: 'assets', label: 'Most assets invested' },
-  { key: 'movement', label: 'Fastest trend movement' }
+  { key: 'momentum', label: 'Highest Momentum' },
+  { key: 'payout', label: 'Payout Impact' },
+  { key: 'cooling', label: 'Cooling Off' }
 ];
 
-const DEFAULT_HIGHLIGHTS = {
-  hot: { title: 'No readings yet', note: 'Assign a niche to start tracking buzz.' },
-  swing: { title: 'Awaiting data', note: 'Fresh deltas will appear after the first reroll.' },
-  risk: { title: 'All calm', note: 'We’ll flag niches that are cooling off fast.' }
+const DEFAULT_OVERVIEW = {
+  topBoost: { title: 'No boosts yet', note: 'Run hustles to reveal positive swings.' },
+  biggestDrop: { title: 'Stable so far', note: 'Downtrends will appear here.' },
+  bestPayout: { title: 'No payout spikes yet', note: 'Assign ventures to chase multipliers.' },
+  activeCount: { value: 0, note: 'Activate a venture to start the count.' }
 };
 
-const DEFAULT_EMPTY_MESSAGES = {
-  default: 'Assign a niche to a venture to start tracking demand swings.',
-  investedOnly: 'You haven’t assigned any assets that fit this filter yet.',
-  watchlistOnly: 'No watchlisted niches match the current filters.'
-};
+const DEFAULT_EMPTY_MESSAGE = 'No niches match your filters yet.';
 
 const filterState = {
-  sort: 'impact',
-  investedOnly: false,
-  watchlistOnly: false
+  sort: 'momentum',
+  view: 'all',
+  search: '',
+  rawSearch: ''
 };
 
 let rootNode = null;
@@ -52,220 +50,268 @@ function describeDelta(popularity = {}) {
   if (!Number.isFinite(raw)) return 'Fresh reading';
   if (raw === 0) return 'Holding steady';
   const sign = raw > 0 ? '+' : '';
-  return `${sign}${raw} vs yesterday`;
+  return `${sign}${raw} pts vs yesterday`;
 }
 
-function describeStatus(entry = {}) {
-  const { popularity = {}, assetCount, watchlisted } = entry;
-  if (watchlisted && assetCount === 0) return 'Watchlist';
-  const delta = Number(popularity.delta);
-  if (Number.isFinite(delta)) {
-    if (delta >= 6) return 'Heating Up';
-    if (delta <= -6) return 'Cooling Off';
+function describeTrend(popularity = {}) {
+  if (typeof popularity.summary === 'string' && popularity.summary) {
+    return popularity.summary;
   }
-  const score = Number(popularity.score);
-  if (Number.isFinite(score)) {
-    if (score >= 70) return 'Trending';
-    if (score <= 40) return 'Cooling Off';
+  if (typeof popularity.label === 'string' && popularity.label) {
+    return popularity.label;
   }
-  return popularity.label || 'Steady';
+  return 'Trend pending';
 }
 
-function normalizeHighlights(source = {}) {
-  return {
-    hot: { ...DEFAULT_HIGHLIGHTS.hot, ...(source.hot || {}) },
-    swing: { ...DEFAULT_HIGHLIGHTS.swing, ...(source.swing || {}) },
-    risk: { ...DEFAULT_HIGHLIGHTS.risk, ...(source.risk || {}) }
-  };
+function createSparklineSeries(popularity = {}) {
+  const score = clampScore(popularity.score);
+  const previous = clampScore(popularity.previousScore);
+  const length = 7;
+  if (score === null && previous === null) {
+    return Array.from({ length }, () => 0);
+  }
+  const start = previous !== null ? previous : score ?? 0;
+  const end = score !== null ? score : start;
+  return Array.from({ length }, (_, index) => {
+    const t = length === 1 ? 1 : index / (length - 1);
+    return start + (end - start) * t;
+  });
 }
 
-function normalizeModel(model = {}) {
-  const highlights = normalizeHighlights(model.highlights);
-  const entries = Array.isArray(model?.board?.entries)
-    ? model.board.entries.map(entry => ({
-        ...entry,
-        assetBreakdown: Array.isArray(entry?.assetBreakdown)
-          ? entry.assetBreakdown.map(item => ({ ...item }))
-          : []
-      }))
-    : [];
-  const emptyMessages = {
-    default: model?.board?.emptyMessages?.default || DEFAULT_EMPTY_MESSAGES.default,
-    investedOnly: model?.board?.emptyMessages?.investedOnly || DEFAULT_EMPTY_MESSAGES.investedOnly,
-    watchlistOnly: model?.board?.emptyMessages?.watchlistOnly || DEFAULT_EMPTY_MESSAGES.watchlistOnly
-  };
-  const watchlistCount = Number.isFinite(model.watchlistCount)
-    ? model.watchlistCount
-    : entries.filter(entry => entry.watchlisted).length;
-  return {
-    highlights,
-    board: { entries, emptyMessages },
-    watchlistCount
-  };
+function buildSparkline(popularity = {}) {
+  const values = createSparklineSeries(popularity);
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const height = 42;
+  const width = 160;
+  const range = Math.max(1, max - min);
+  const hasSlope = values.some(value => value !== values[0]);
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+  svg.setAttribute('preserveAspectRatio', 'none');
+  svg.classList.add('trends-card__sparkline');
+
+  if (!hasSlope) {
+    const line = document.createElementNS(NS, 'path');
+    const y = height / 2;
+    line.setAttribute('d', `M0 ${y} L${width} ${y}`);
+    line.setAttribute('vector-effect', 'non-scaling-stroke');
+    svg.appendChild(line);
+    return svg;
+  }
+
+  const points = values.map((value, index) => {
+    const x = (index / (values.length - 1)) * width;
+    const y = height - ((value - min) / range) * height;
+    return { x, y };
+  });
+
+  const path = document.createElementNS(NS, 'path');
+  const pathData = points
+    .map(({ x, y }, index) => `${index === 0 ? 'M' : 'L'}${x} ${y}`)
+    .join(' ');
+  path.setAttribute('d', pathData);
+  path.setAttribute('vector-effect', 'non-scaling-stroke');
+
+  const area = document.createElementNS(NS, 'path');
+  const areaData = `M0 ${height} ${pathData} L${width} ${height} Z`;
+  area.setAttribute('d', areaData);
+
+  svg.append(area, path);
+  return svg;
 }
 
 function ensureRefs() {
   if (refs) return;
   refs = {
-    ticker: {
-      hot: {},
-      swing: {},
-      risk: {}
+    header: {
+      searchInput: null,
+      sortSelect: null,
+      viewButtons: {}
     },
-    sortButtons: [],
-    investedToggle: null,
-    watchlistToggle: null,
-    boardMeta: null,
-    boardGrid: null,
-    watchlistTitle: null,
-    watchlistMeta: null,
-    watchlistList: null,
-    historyNote: null
+    overview: {
+      topBoost: {},
+      biggestDrop: {},
+      bestPayout: {},
+      activeCount: {}
+    },
+    grid: {
+      container: null,
+      empty: null,
+      footer: null,
+      meta: null
+    },
+    watchlist: {
+      container: null,
+      section: null,
+      empty: null,
+      meta: null
+    },
+    footerNote: null
   };
 }
 
-function splitHighlight(title = '') {
-  const parts = String(title || '').split('•');
-  const primary = parts.shift()?.trim() || 'No data yet';
-  const secondary = parts.join('•').trim();
-  return { primary, secondary };
-}
-
-function createTickerCard(label, key) {
+function createOverviewCard(icon, label, key) {
   const card = document.createElement('article');
-  card.className = 'trends-ticker__card';
-  card.dataset.ticker = key;
+  card.className = 'trends-overview__card';
+
+  const iconEl = document.createElement('span');
+  iconEl.className = 'trends-overview__icon';
+  iconEl.textContent = icon;
 
   const labelEl = document.createElement('span');
-  labelEl.className = 'trends-ticker__label';
+  labelEl.className = 'trends-overview__label';
   labelEl.textContent = label;
 
-  const value = document.createElement('strong');
-  value.className = 'trends-ticker__value';
+  const valueEl = document.createElement('strong');
+  valueEl.className = 'trends-overview__value';
+  valueEl.textContent = '—';
 
-  const detail = document.createElement('span');
-  detail.className = 'trends-ticker__detail';
+  const noteEl = document.createElement('span');
+  noteEl.className = 'trends-overview__note';
+  noteEl.textContent = '';
 
-  const note = document.createElement('p');
-  note.className = 'trends-ticker__note';
-
-  card.append(labelEl, value, detail, note);
-  refs.ticker[key] = { card, value, detail, note };
+  card.append(iconEl, labelEl, valueEl, noteEl);
+  refs.overview[key] = { value: valueEl, note: noteEl, card };
   return card;
 }
 
-function createSortButton(option) {
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.className = 'trends-sort';
-  button.dataset.sortKey = option.key;
-  button.textContent = option.label;
-  button.addEventListener('click', () => {
-    if (filterState.sort === option.key) return;
-    filterState.sort = option.key;
+function createToolbar() {
+  const toolbar = document.createElement('div');
+  toolbar.className = 'trends-toolbar';
+
+  const searchLabel = document.createElement('label');
+  searchLabel.className = 'trends-search';
+  const searchText = document.createElement('span');
+  searchText.textContent = 'Search';
+  const searchInput = document.createElement('input');
+  searchInput.type = 'search';
+  searchInput.placeholder = 'Search niche…';
+  searchInput.addEventListener('input', event => {
+    filterState.rawSearch = event.target.value;
+    filterState.search = event.target.value.trim().toLowerCase();
     renderContent();
   });
-  refs.sortButtons.push(button);
-  return button;
-}
+  searchLabel.append(searchText, searchInput);
+  refs.header.searchInput = searchInput;
 
-function createToggle(label, id, onChange) {
-  const wrapper = document.createElement('label');
-  wrapper.className = 'trends-toggle';
-  wrapper.htmlFor = id;
-  const input = document.createElement('input');
-  input.type = 'checkbox';
-  input.id = id;
-  input.addEventListener('change', event => onChange(Boolean(event.target.checked)));
-  const span = document.createElement('span');
-  span.textContent = label;
-  wrapper.append(input, span);
-  return { wrapper, input };
+  const sortLabel = document.createElement('label');
+  sortLabel.className = 'trends-select';
+  const sortText = document.createElement('span');
+  sortText.textContent = 'Sort';
+  const sortSelect = document.createElement('select');
+  SORT_OPTIONS.forEach(option => {
+    const opt = document.createElement('option');
+    opt.value = option.key;
+    opt.textContent = option.label;
+    sortSelect.appendChild(opt);
+  });
+  sortSelect.value = filterState.sort;
+  sortSelect.addEventListener('change', event => {
+    filterState.sort = event.target.value;
+    renderContent();
+  });
+  sortLabel.append(sortText, sortSelect);
+  refs.header.sortSelect = sortSelect;
+
+  const toggleGroup = document.createElement('div');
+  toggleGroup.className = 'trends-toggle-group';
+  ['all', 'watchlist'].forEach(view => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.dataset.viewMode = view;
+    button.textContent = view === 'all' ? 'All Niches' : 'Watchlist';
+    button.addEventListener('click', () => {
+      if (filterState.view === view || button.disabled) return;
+      filterState.view = view;
+      renderContent();
+    });
+    refs.header.viewButtons[view] = button;
+    toggleGroup.appendChild(button);
+  });
+
+  toolbar.append(searchLabel, sortLabel, toggleGroup);
+  return toolbar;
 }
 
 function buildLayout(container) {
   ensureRefs();
   container.innerHTML = '';
 
-  const ticker = document.createElement('section');
-  ticker.className = 'trends-ticker';
-  ticker.append(
-    createTickerCard('Top Boost', 'hot'),
-    createTickerCard('Big Swing', 'swing'),
-    createTickerCard('Cooling Risk', 'risk')
+  const header = document.createElement('header');
+  header.className = 'trends-app__header';
+
+  const heading = document.createElement('div');
+  heading.className = 'trends-app__heading';
+  const title = document.createElement('h1');
+  title.className = 'trends-app__title';
+  title.textContent = 'Trends Analytics';
+  const tagline = document.createElement('p');
+  tagline.className = 'trends-app__tagline';
+  tagline.textContent = 'Momentum, payouts, and signals across all niches.';
+  heading.append(title, tagline);
+
+  header.append(heading, createToolbar());
+
+  const overview = document.createElement('section');
+  overview.className = 'trends-overview';
+  overview.append(
+    createOverviewCard('🔥', 'Top Boost Today', 'topBoost'),
+    createOverviewCard('📉', 'Biggest Drop Today', 'biggestDrop'),
+    createOverviewCard('💰', 'Best Payout Multiplier', 'bestPayout'),
+    createOverviewCard('🕒', 'Active Niches Count', 'activeCount')
   );
 
-  const controls = document.createElement('section');
-  controls.className = 'trends-controls';
-  const buttonRow = document.createElement('div');
-  buttonRow.className = 'trends-controls__buttons';
-  SORT_OPTIONS.forEach(option => buttonRow.appendChild(createSortButton(option)));
+  const gridSection = document.createElement('section');
+  gridSection.className = 'trends-grid-section';
+  const gridHeader = document.createElement('header');
+  gridHeader.className = 'trends-grid-section__header';
+  const gridTitle = document.createElement('h2');
+  gridTitle.textContent = 'Trend Grid';
+  const gridMeta = document.createElement('p');
+  gridMeta.className = 'trends-grid-section__meta';
+  gridMeta.textContent = 'Scanning niches for daily movement.';
+  refs.grid.meta = gridMeta;
+  gridHeader.append(gridTitle, gridMeta);
+  const grid = document.createElement('div');
+  grid.className = 'trends-grid';
+  refs.grid.container = grid;
+  const empty = document.createElement('p');
+  empty.className = 'trends-grid__empty';
+  refs.grid.empty = empty;
+  const footer = document.createElement('p');
+  footer.className = 'trends-grid__footer';
+  refs.grid.footer = footer;
+  gridSection.append(gridHeader, grid, footer);
 
-  const toggleRow = document.createElement('div');
-  toggleRow.className = 'trends-controls__toggles';
-
-  const investedToggle = createToggle('Invested niches only', 'trends-filter-invested', checked => {
-    filterState.investedOnly = checked;
-    renderContent();
-  });
-  refs.investedToggle = investedToggle.input;
-
-  const watchlistToggle = createToggle('Watchlist only', 'trends-filter-watchlist', checked => {
-    filterState.watchlistOnly = checked;
-    renderContent();
-  });
-  refs.watchlistToggle = watchlistToggle.input;
-
-  toggleRow.append(investedToggle.wrapper, watchlistToggle.wrapper);
-  controls.append(buttonRow, toggleRow);
-
-  const main = document.createElement('div');
-  main.className = 'trends-main';
-
-  const boardSection = document.createElement('section');
-  boardSection.className = 'trends-board';
-  const boardHeader = document.createElement('header');
-  boardHeader.className = 'trends-section__header';
-  const boardTitle = document.createElement('h2');
-  boardTitle.textContent = 'Momentum board';
-  const boardMeta = document.createElement('p');
-  boardMeta.className = 'trends-section__meta';
-  boardHeader.append(boardTitle, boardMeta);
-  refs.boardMeta = boardMeta;
-  const boardGrid = document.createElement('div');
-  boardGrid.className = 'trends-board__grid';
-  refs.boardGrid = boardGrid;
-  boardSection.append(boardHeader, boardGrid);
-
-  const watchlistSection = document.createElement('aside');
+  const watchlistSection = document.createElement('section');
   watchlistSection.className = 'trends-watchlist';
+  refs.watchlist.section = watchlistSection;
   const watchlistHeader = document.createElement('header');
-  watchlistHeader.className = 'trends-section__header';
+  watchlistHeader.className = 'trends-watchlist__header';
   const watchlistTitle = document.createElement('h2');
   watchlistTitle.textContent = 'Watchlist';
-  refs.watchlistTitle = watchlistTitle;
   const watchlistMeta = document.createElement('p');
-  watchlistMeta.className = 'trends-section__meta';
-  refs.watchlistMeta = watchlistMeta;
+  watchlistMeta.className = 'trends-watchlist__meta';
+  watchlistMeta.textContent = 'Pinned niches surface extra payout details.';
+  refs.watchlist.meta = watchlistMeta;
   watchlistHeader.append(watchlistTitle, watchlistMeta);
-  const watchlistList = document.createElement('ul');
-  watchlistList.className = 'trends-watchlist__list';
-  refs.watchlistList = watchlistList;
-  watchlistSection.append(watchlistHeader, watchlistList);
+  const watchlistGrid = document.createElement('div');
+  watchlistGrid.className = 'trends-watchlist__grid';
+  refs.watchlist.container = watchlistGrid;
+  const watchlistEmpty = document.createElement('p');
+  watchlistEmpty.className = 'trends-watchlist__empty';
+  watchlistEmpty.textContent = 'Star niches to pin them here.';
+  refs.watchlist.empty = watchlistEmpty;
+  watchlistSection.append(watchlistHeader, watchlistGrid);
 
-  const historySection = document.createElement('section');
-  historySection.className = 'trends-history';
-  const historyTitle = document.createElement('h2');
-  historyTitle.textContent = 'Trend history';
-  const historyNote = document.createElement('p');
-  historyNote.className = 'trends-history__note';
-  historyNote.textContent = 'Signals graph coming soon — daily momentum changes are already tracked under the hood.';
-  refs.historyNote = historyNote;
-  historySection.append(historyTitle, historyNote);
+  const footerNote = document.createElement('footer');
+  footerNote.className = 'trends-app__footer';
+  footerNote.textContent = 'Trend signals are updated daily based on game economy.';
+  refs.footerNote = footerNote;
 
-  main.append(boardSection, watchlistSection);
-  container.append(ticker, controls, main, historySection);
-
+  container.append(header, overview, gridSection, watchlistSection, footerNote);
   container.addEventListener('click', handleRootClick);
 }
 
@@ -281,297 +327,193 @@ function ensureRoot(mount) {
   }
 }
 
-function updateControls(watchlistCount) {
-  const buttons = Array.isArray(refs.sortButtons) ? refs.sortButtons : [];
-  buttons.forEach(button => {
-    const isActive = button.dataset.sortKey === filterState.sort;
-    button.classList.toggle('is-active', isActive);
-    button.setAttribute('aria-pressed', String(isActive));
-  });
+function normalizeModel(model = {}) {
+  const highlights = model.highlights || {};
+  const entries = Array.isArray(model?.board?.entries)
+    ? model.board.entries.map(entry => ({
+        ...entry,
+        popularity: { ...(entry.popularity || {}) },
+        definition: { ...(entry.definition || {}) },
+        assetBreakdown: Array.isArray(entry?.assetBreakdown)
+          ? entry.assetBreakdown.map(item => ({ ...item }))
+          : []
+      }))
+    : [];
+  const watchlistCount = Number.isFinite(model.watchlistCount)
+    ? model.watchlistCount
+    : entries.filter(entry => entry.watchlisted).length;
+  const emptyMessages = model?.board?.emptyMessages || {};
+  return { highlights, entries, watchlistCount, emptyMessages };
+}
 
-  if (refs.investedToggle) {
-    refs.investedToggle.checked = filterState.investedOnly;
-  }
+function computeOverview(entries = []) {
+  if (!entries.length) return DEFAULT_OVERVIEW;
 
-  if (refs.watchlistToggle) {
-    const disabled = watchlistCount === 0;
-    refs.watchlistToggle.disabled = disabled;
-    if (disabled) {
-      refs.watchlistToggle.checked = false;
-      refs.watchlistToggle.parentElement?.classList.add('is-disabled');
-      refs.watchlistToggle.title = 'Add niches to your watchlist to enable this filter.';
-      if (filterState.watchlistOnly) {
-        filterState.watchlistOnly = false;
-      }
-    } else {
-      refs.watchlistToggle.parentElement?.classList.remove('is-disabled');
-      refs.watchlistToggle.checked = filterState.watchlistOnly;
-      refs.watchlistToggle.title = '';
+  const byImpactDesc = entries
+    .filter(entry => Number.isFinite(Number(entry.trendImpact)))
+    .slice()
+    .sort((a, b) => Number(b.trendImpact) - Number(a.trendImpact));
+  const positive = byImpactDesc.filter(entry => Number(entry.trendImpact) > 0);
+  const negative = entries
+    .filter(entry => Number(entry.trendImpact) < 0)
+    .slice()
+    .sort((a, b) => Number(a.trendImpact) - Number(b.trendImpact));
+  const bestPayout = entries
+    .slice()
+    .sort((a, b) => (Number(b.popularity?.multiplier) || 1) - (Number(a.popularity?.multiplier) || 1))[0];
+  const activeCount = entries.filter(entry => entry.assetCount > 0).length;
+
+  return {
+    topBoost: positive[0] || null,
+    biggestDrop: negative[0] || null,
+    bestPayout: bestPayout || null,
+    activeCount: { value: activeCount }
+  };
+}
+
+function updateOverview(entries = []) {
+  const overview = computeOverview(entries);
+
+  const renderEntry = (target, entry, fallback) => {
+    if (!target) return;
+    if (!entry) {
+      target.value.textContent = fallback?.title || '—';
+      target.note.textContent = fallback?.note || '';
+      return;
     }
+    const name = entry.definition?.name || 'Untitled niche';
+    if (typeof entry === 'object' && 'value' in entry && !entry.definition) {
+      const countValue = Number(entry.value) || 0;
+      target.value.textContent = String(countValue);
+      target.note.textContent = countValue > 0
+        ? entry.note || (countValue === 1 ? 'Active niche today.' : 'Active niches today.')
+        : DEFAULT_OVERVIEW.activeCount.note;
+      return;
+    }
+    const impact = Number(entry.trendImpact) || 0;
+    const delta = Number(entry.popularity?.delta);
+    const multiplier = Number(entry.popularity?.multiplier) || 1;
+    const payoutText = formatPercent(multiplier - 1);
+    target.value.textContent = name;
+    if (impact > 0) {
+      target.note.textContent = `${formatSignedCurrency(impact)} impact • ${payoutText} payouts`;
+    } else if (impact < 0) {
+      target.note.textContent = `${formatSignedCurrency(impact)} impact`;
+    } else if (Number.isFinite(delta)) {
+      target.note.textContent = `${delta > 0 ? '+' : ''}${delta} pts momentum`;
+    } else {
+      target.note.textContent = payoutText;
+    }
+  };
+
+  renderEntry(refs.overview.topBoost, overview.topBoost, DEFAULT_OVERVIEW.topBoost);
+  renderEntry(refs.overview.biggestDrop, overview.biggestDrop, DEFAULT_OVERVIEW.biggestDrop);
+  renderEntry(refs.overview.bestPayout, overview.bestPayout, DEFAULT_OVERVIEW.bestPayout);
+
+  if (refs.overview.activeCount) {
+    const value = Number(overview.activeCount?.value) || 0;
+    refs.overview.activeCount.value.textContent = String(value);
+    const label = value === 1 ? 'Active niche today.' : 'Active niches today.';
+    refs.overview.activeCount.note.textContent = value ? label : DEFAULT_OVERVIEW.activeCount.note;
   }
 }
 
-function renderHighlights(highlights = {}) {
-  const normalized = normalizeHighlights(highlights);
-  ['hot', 'swing', 'risk'].forEach(key => {
-    const ref = refs.ticker[key];
-    if (!ref) return;
-    const entry = normalized[key];
-    const { primary, secondary } = splitHighlight(entry?.title);
-    ref.value.textContent = primary;
-    ref.detail.textContent = secondary || '';
-    ref.detail.hidden = !secondary;
-    ref.note.textContent = entry?.note || '';
-  });
-}
-
-function getEmptyMessage(emptyMessages = {}) {
-  if (filterState.watchlistOnly) {
-    return emptyMessages.watchlistOnly || DEFAULT_EMPTY_MESSAGES.watchlistOnly;
-  }
-  if (filterState.investedOnly) {
-    return emptyMessages.investedOnly || DEFAULT_EMPTY_MESSAGES.investedOnly;
-  }
-  return emptyMessages.default || DEFAULT_EMPTY_MESSAGES.default;
-}
-
-function createMetric({ label, value, note, tone }) {
-  const metric = document.createElement('div');
-  metric.className = 'trends-card__metric';
-  if (tone) {
-    metric.dataset.tone = tone;
-  }
+function createStat(label, value) {
+  const stat = document.createElement('div');
+  stat.className = 'trends-card__stat';
   const labelEl = document.createElement('span');
-  labelEl.className = 'trends-card__metric-label';
+  labelEl.className = 'trends-card__stat-label';
   labelEl.textContent = label;
   const valueEl = document.createElement('span');
-  valueEl.className = 'trends-card__metric-value';
+  valueEl.className = 'trends-card__stat-value';
   valueEl.textContent = value;
-  metric.append(labelEl, valueEl);
-  if (note) {
-    const noteEl = document.createElement('span');
-    noteEl.className = 'trends-card__metric-note';
-    noteEl.textContent = note;
-    metric.appendChild(noteEl);
-  }
-  return metric;
+  stat.append(labelEl, valueEl);
+  return stat;
 }
 
-function createTrendCard(entry) {
+function createWatchlistButton(entry) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'trends-card__watch';
+  button.dataset.trendsAction = 'watchlist';
+  button.dataset.niche = entry.id;
+  const watched = entry.watchlisted === true;
+  button.setAttribute('aria-pressed', String(watched));
+  button.title = watched ? 'Remove from watchlist' : 'Add to watchlist';
+  button.textContent = watched ? '★' : '☆';
+  return button;
+}
+
+function createTrendCard(entry, { variant = 'grid' } = {}) {
   const card = document.createElement('article');
   card.className = 'trends-card';
   card.dataset.niche = entry.id;
-  if (entry.popularity?.tone) {
-    card.dataset.tone = entry.popularity.tone;
-  }
   card.dataset.watchlisted = entry.watchlisted ? 'true' : 'false';
 
   const header = document.createElement('header');
   header.className = 'trends-card__header';
-  const title = document.createElement('div');
-  title.className = 'trends-card__title';
+
+  const titleWrap = document.createElement('div');
+  titleWrap.className = 'trends-card__title';
   const name = document.createElement('h3');
   name.className = 'trends-card__name';
   name.textContent = entry.definition?.name || 'Untitled niche';
-  const status = document.createElement('span');
-  status.className = 'trends-card__badge';
-  status.textContent = describeStatus(entry);
-  title.append(name, status);
+  const score = document.createElement('span');
+  score.className = 'trends-card__score';
+  const scoreValue = clampScore(entry.popularity?.score);
+  score.textContent = scoreValue !== null ? `${scoreValue}` : '–';
+  titleWrap.append(name, score);
 
-  const scoreWrap = document.createElement('div');
-  scoreWrap.className = 'trends-card__score';
-  const scoreValue = document.createElement('span');
-  scoreValue.className = 'trends-card__score-value';
-  const normalizedScore = clampScore(entry.popularity?.score);
-  scoreValue.textContent = normalizedScore !== null ? normalizedScore : '–';
-  const scoreLabel = document.createElement('span');
-  scoreLabel.className = 'trends-card__score-label';
-  scoreLabel.textContent = 'Momentum';
-  scoreWrap.append(scoreValue, scoreLabel);
-
-  header.append(title, scoreWrap);
+  header.append(titleWrap, createWatchlistButton(entry));
   card.appendChild(header);
 
-  const meter = document.createElement('div');
-  meter.className = 'trends-card__meter';
-  meter.setAttribute('role', 'progressbar');
-  meter.setAttribute('aria-valuemin', '0');
-  meter.setAttribute('aria-valuemax', '100');
-  meter.setAttribute('aria-valuenow', normalizedScore !== null ? String(normalizedScore) : '0');
-  const fill = document.createElement('div');
-  fill.className = 'trends-card__meter-fill';
-  fill.style.setProperty('--fill', normalizedScore !== null ? `${normalizedScore}%` : '0%');
-  meter.appendChild(fill);
-  card.appendChild(meter);
+  card.appendChild(buildSparkline(entry.popularity));
 
+  const stats = document.createElement('div');
+  stats.className = 'trends-card__stats';
   const deltaText = describeDelta(entry.popularity);
   const multiplier = Number(entry.popularity?.multiplier) || 1;
   const payoutPercent = formatPercent(multiplier - 1);
-  const trendImpact = Number(entry.trendImpact) || 0;
-
-  const metrics = document.createElement('div');
-  metrics.className = 'trends-card__metrics';
-  metrics.append(
-    createMetric({
-      label: 'Global momentum',
-      value: deltaText,
-      note: entry.popularity?.label || `Score ${normalizedScore !== null ? normalizedScore : 'pending'}`
-    }),
-    createMetric({
-      label: '% payout impact',
-      value: payoutPercent,
-      note: trendImpact !== 0 ? `${formatSignedCurrency(trendImpact)} vs baseline` : 'Trend impact neutral today.',
-      tone: trendImpact > 0 ? 'positive' : trendImpact < 0 ? 'negative' : 'neutral'
-    })
+  stats.append(
+    createStat('Momentum delta', deltaText),
+    createStat('Payout multiplier', payoutPercent)
   );
-  card.appendChild(metrics);
+  card.appendChild(stats);
 
-  const empire = document.createElement('section');
+  if (variant === 'watchlist') {
+    const extra = document.createElement('div');
+    extra.className = 'trends-card__extra';
+    const avg = createStat('Last 7d average payout', formatCurrency(entry.baselineEarnings || 0));
+    const trend = createStat('Current momentum trend', describeTrend(entry.popularity));
+    extra.append(avg, trend);
+    card.appendChild(extra);
+  }
+
+  const ventures = Number(entry.assetCount) || 0;
+  const earnings = Number(entry.netEarnings) || 0;
+  const empire = document.createElement('p');
   empire.className = 'trends-card__empire';
-  const empireTitle = document.createElement('h4');
-  empireTitle.textContent = 'Your empire';
-  empire.appendChild(empireTitle);
-
-  const empireMetrics = document.createElement('div');
-  empireMetrics.className = 'trends-card__metrics trends-card__metrics--compact';
-  const assetCount = Number(entry.assetCount) || 0;
-  const assetNote = assetCount > 0
-    ? (entry.assetBreakdown || []).map(({ name: assetName, count }) =>
-        count > 1 ? `${assetName} (${count})` : assetName
-      ).join(', ')
-    : entry.watchlisted ? 'Pinned for quick pivots.' : 'No ventures assigned yet.';
-  empireMetrics.append(
-    createMetric({
-      label: 'Ventures active',
-      value: assetCount > 0 ? String(assetCount) : '0',
-      note: assetNote || 'No ventures assigned yet.'
-    }),
-    createMetric({
-      label: 'Payouts today',
-      value: assetCount > 0 ? formatCurrency(entry.netEarnings) : '$0',
-      note: assetCount > 0
-        ? trendImpact !== 0
-          ? `${formatCurrency(entry.baselineEarnings)} baseline` : 'Baseline equals current payouts.'
-        : 'Queue a venture to capture the buzz.'
-    })
-  );
-  empire.appendChild(empireMetrics);
+  empire.textContent = ventures
+    ? `${ventures} active venture${ventures === 1 ? '' : 's'} • ${formatCurrency(earnings)} earned today`
+    : entry.watchlisted
+    ? 'Pinned for quick pivots.'
+    : 'No ventures assigned yet.';
   card.appendChild(empire);
-
-  const actions = document.createElement('div');
-  actions.className = 'trends-card__actions';
-
-  const watchlistButton = document.createElement('button');
-  watchlistButton.type = 'button';
-  watchlistButton.className = 'trends-card__action';
-  watchlistButton.dataset.trendsAction = 'watchlist';
-  watchlistButton.dataset.niche = entry.id;
-  watchlistButton.setAttribute('aria-pressed', String(entry.watchlisted));
-  watchlistButton.textContent = entry.watchlisted ? 'Remove from watchlist' : 'Add to watchlist';
-
-  const queueButton = document.createElement('button');
-  queueButton.type = 'button';
-  queueButton.className = 'trends-card__action';
-  queueButton.dataset.trendsAction = 'queue';
-  queueButton.dataset.niche = entry.id;
-  queueButton.textContent = 'Queue recommended hustle';
-  queueButton.disabled = true;
-  queueButton.title = 'Coming soon: auto-queue the best hustle for this niche.';
-
-  actions.append(watchlistButton, queueButton);
-  card.appendChild(actions);
 
   return card;
 }
 
-function renderBoard(entries = [], emptyMessages = {}) {
-  if (!refs.boardGrid) return;
-  refs.boardGrid.innerHTML = '';
-
-  const count = entries.length;
-  if (refs.boardMeta) {
-    refs.boardMeta.textContent = count
-      ? `${count} niche${count === 1 ? '' : 's'} match the current filters.`
-      : 'No niches match these filters yet.';
-  }
-
-  if (!count) {
-    const empty = document.createElement('p');
-    empty.className = 'trends-board__empty';
-    empty.textContent = getEmptyMessage(emptyMessages);
-    refs.boardGrid.appendChild(empty);
-    return;
-  }
-
-  const fragment = document.createDocumentFragment();
-  entries.forEach(entry => {
-    const card = createTrendCard(entry);
-    fragment.appendChild(card);
-  });
-  refs.boardGrid.appendChild(fragment);
-}
-
-function renderWatchlist(entries = []) {
-  if (!refs.watchlistList) return;
-  refs.watchlistList.innerHTML = '';
-  const watchlisted = entries.filter(entry => entry.watchlisted);
-  const count = watchlisted.length;
-
-  if (refs.watchlistTitle) {
-    refs.watchlistTitle.textContent = count ? `Watchlist (${count})` : 'Watchlist';
-  }
-  if (refs.watchlistMeta) {
-    refs.watchlistMeta.textContent = count
-      ? 'Quick actions for your pinned niches.'
-      : 'Use the board to add niches you want to monitor.';
-  }
-
-  if (!watchlisted.length) {
-    const empty = document.createElement('p');
-    empty.className = 'trends-watchlist__empty';
-    empty.textContent = 'No niches saved yet. Pin a niche to keep it close.';
-    refs.watchlistList.appendChild(empty);
-    return;
-  }
-
-  watchlisted.forEach(entry => {
-    const item = document.createElement('li');
-    item.className = 'trends-watchlist__item';
-
-    const body = document.createElement('div');
-    body.className = 'trends-watchlist__body';
-    const name = document.createElement('strong');
-    name.className = 'trends-watchlist__name';
-    name.textContent = entry.definition?.name || 'Untitled niche';
-    const stats = document.createElement('span');
-    stats.className = 'trends-watchlist__stat';
-    const score = clampScore(entry.popularity?.score);
-    const multiplier = Number(entry.popularity?.multiplier) || 1;
-    stats.textContent = `${score !== null ? `Score ${score}` : 'Score pending'} • ${formatPercent(multiplier - 1)} payouts`;
-    body.append(name, stats);
-
-    const actions = document.createElement('div');
-    actions.className = 'trends-watchlist__actions';
-    const removeButton = document.createElement('button');
-    removeButton.type = 'button';
-    removeButton.className = 'trends-pill';
-    removeButton.dataset.trendsAction = 'remove';
-    removeButton.dataset.niche = entry.id;
-    removeButton.textContent = 'Remove';
-
-    actions.append(removeButton);
-    item.append(body, actions);
-    refs.watchlistList.appendChild(item);
-  });
-}
-
-function filterEntries(entries = []) {
+function applyFilters(entries = []) {
+  const search = filterState.search;
   return entries.filter(entry => {
-    if (filterState.watchlistOnly && !entry.watchlisted) {
+    if (filterState.view === 'watchlist' && !entry.watchlisted) {
       return false;
     }
-    if (filterState.investedOnly && !(entry.assetCount > 0)) {
-      return false;
+    if (search) {
+      const name = String(entry.definition?.name || '').toLowerCase();
+      if (!name.includes(search)) {
+        return false;
+      }
     }
     return true;
   });
@@ -579,48 +521,140 @@ function filterEntries(entries = []) {
 
 function sortEntries(entries = []) {
   const sorters = {
-    impact: (a, b) => {
-      const impactDiff = Math.abs(b.trendImpact) - Math.abs(a.trendImpact);
-      if (impactDiff !== 0) return impactDiff;
-      const assetDiff = b.assetCount - a.assetCount;
-      if (assetDiff !== 0) return assetDiff;
-      return (clampScore(b.popularity?.score) || 0) - (clampScore(a.popularity?.score) || 0);
+    momentum: (a, b) => {
+      const scoreA = clampScore(a.popularity?.score) || 0;
+      const scoreB = clampScore(b.popularity?.score) || 0;
+      if (scoreB !== scoreA) return scoreB - scoreA;
+      const deltaA = Number(a.popularity?.delta) || 0;
+      const deltaB = Number(b.popularity?.delta) || 0;
+      return deltaB - deltaA;
     },
-    assets: (a, b) => {
-      const assetDiff = b.assetCount - a.assetCount;
-      if (assetDiff !== 0) return assetDiff;
-      const impactDiff = Math.abs(b.trendImpact) - Math.abs(a.trendImpact);
-      if (impactDiff !== 0) return impactDiff;
-      return (clampScore(b.popularity?.score) || 0) - (clampScore(a.popularity?.score) || 0);
+    payout: (a, b) => {
+      const impactA = Number(a.trendImpact) || 0;
+      const impactB = Number(b.trendImpact) || 0;
+      if (impactB !== impactA) return impactB - impactA;
+      const multiplierA = Number(a.popularity?.multiplier) || 1;
+      const multiplierB = Number(b.popularity?.multiplier) || 1;
+      return multiplierB - multiplierA;
     },
-    movement: (a, b) => {
-      const deltaA = Math.abs(Number(a.popularity?.delta) || 0);
-      const deltaB = Math.abs(Number(b.popularity?.delta) || 0);
-      if (deltaB !== deltaA) return deltaB - deltaA;
-      return Math.abs(b.trendImpact) - Math.abs(a.trendImpact);
+    cooling: (a, b) => {
+      const deltaA = Number(a.popularity?.delta) || 0;
+      const deltaB = Number(b.popularity?.delta) || 0;
+      if (deltaA !== deltaB) return deltaA - deltaB;
+      const impactA = Number(a.trendImpact) || 0;
+      const impactB = Number(b.trendImpact) || 0;
+      return impactA - impactB;
     }
   };
 
-  const sorter = sorters[filterState.sort] || sorters.impact;
+  const sorter = sorters[filterState.sort] || sorters.momentum;
   return entries.slice().sort(sorter);
 }
 
-function updateEntryWatchlist(nicheId, watchlisted) {
-  if (!nicheId || !currentModel?.board?.entries) return;
-  let found = false;
-  currentModel.board.entries.forEach(entry => {
-    if (entry?.id === nicheId) {
-      entry.watchlisted = watchlisted;
-      found = true;
+function renderGrid(entries = []) {
+  if (!refs.grid.container) return;
+  refs.grid.container.innerHTML = '';
+
+  if (!entries.length) {
+    refs.grid.empty.textContent = DEFAULT_EMPTY_MESSAGE;
+    refs.grid.container.appendChild(refs.grid.empty);
+    if (refs.grid.footer) {
+      refs.grid.footer.textContent = '';
+    }
+    if (refs.grid.meta) {
+      const viewLabel = filterState.view === 'watchlist'
+        ? 'Watchlist view. Add stars to populate this grid.'
+        : 'Adjust search or sorting to explore more niches.';
+      refs.grid.meta.textContent = viewLabel;
+    }
+    return;
+  }
+
+  const fragment = document.createDocumentFragment();
+  entries.forEach(entry => {
+    fragment.appendChild(createTrendCard(entry));
+  });
+  refs.grid.container.appendChild(fragment);
+
+  if (refs.grid.meta) {
+    const count = entries.length;
+    const sortLabel = SORT_OPTIONS.find(option => option.key === filterState.sort)?.label || 'Highest Momentum';
+    const viewLabel = filterState.view === 'watchlist' ? 'Watchlist view' : 'All niches';
+    const rawSearch = filterState.rawSearch.trim();
+    const searchNote = rawSearch ? ` • “${rawSearch}”` : '';
+    refs.grid.meta.textContent = `${count} niche${count === 1 ? '' : 's'} • ${sortLabel} • ${viewLabel}${searchNote}`;
+  }
+
+  if (refs.grid.footer) {
+    const totalVentures = entries.reduce((sum, entry) => sum + (Number(entry.assetCount) || 0), 0);
+    const totalEarnings = entries.reduce((sum, entry) => sum + (Number(entry.netEarnings) || 0), 0);
+    const ventureLabel = totalVentures === 1 ? 'venture' : 'ventures';
+    refs.grid.footer.textContent = `Your empire: ${totalVentures} active ${ventureLabel}, ${formatCurrency(totalEarnings)} earned today.`;
+  }
+}
+
+function renderWatchlist(entries = []) {
+  if (!refs.watchlist.container) return;
+  const watchlisted = entries.filter(entry => entry.watchlisted);
+  refs.watchlist.container.innerHTML = '';
+
+  if (refs.watchlist.meta) {
+    const count = watchlisted.length;
+    refs.watchlist.meta.textContent = count
+      ? `${count} niche${count === 1 ? '' : 's'} pinned.`
+      : 'Pinned niches surface extra payout details.';
+  }
+
+  if (!watchlisted.length) {
+    refs.watchlist.container.appendChild(refs.watchlist.empty);
+    return;
+  }
+
+  const fragment = document.createDocumentFragment();
+  watchlisted.forEach(entry => {
+    fragment.appendChild(createTrendCard(entry, { variant: 'watchlist' }));
+  });
+  refs.watchlist.container.appendChild(fragment);
+}
+
+function updateToolbarState() {
+  if (!refs.header) return;
+
+  if (refs.header.sortSelect) {
+    refs.header.sortSelect.value = filterState.sort;
+  }
+
+  if (refs.header.searchInput) {
+    refs.header.searchInput.value = filterState.rawSearch;
+  }
+
+  const watchlistCount = currentModel?.watchlistCount || 0;
+  const buttons = refs.header.viewButtons || {};
+  Object.keys(buttons).forEach(view => {
+    const button = buttons[view];
+    if (!button) return;
+    const isActive = filterState.view === view;
+    button.classList.toggle('is-active', isActive);
+    button.setAttribute('aria-pressed', String(isActive));
+    if (view === 'watchlist') {
+      const disabled = watchlistCount === 0;
+      button.disabled = disabled;
+      button.title = disabled ? 'Add niches to your watchlist to enable this view.' : '';
+      if (disabled && filterState.view === 'watchlist') {
+        filterState.view = 'all';
+      }
     }
   });
-  if (found) {
-    const count = currentModel.board.entries.filter(entry => entry.watchlisted).length;
-    currentModel.watchlistCount = count;
-    if (count === 0 && filterState.watchlistOnly) {
-      filterState.watchlistOnly = false;
+}
+
+function updateEntryWatchlist(nicheId, watchlisted) {
+  if (!nicheId || !currentModel?.entries) return;
+  currentModel.entries.forEach(entry => {
+    if (entry?.id === nicheId) {
+      entry.watchlisted = watchlisted;
     }
-  }
+  });
+  currentModel.watchlistCount = currentModel.entries.filter(entry => entry.watchlisted).length;
 }
 
 function handleRootClick(event) {
@@ -628,53 +662,41 @@ function handleRootClick(event) {
   if (!button) return;
   const action = button.dataset.trendsAction;
   const nicheId = button.dataset.niche;
-  if (!action || !nicheId) {
-    if (action === 'queue') {
-      event.preventDefault();
-    }
-    return;
-  }
+  if (action !== 'watchlist' || !nicheId) return;
   event.preventDefault();
-  if (action === 'watchlist') {
-    const shouldWatch = button.getAttribute('aria-pressed') !== 'true';
-    setNicheWatchlist(nicheId, shouldWatch);
-    updateEntryWatchlist(nicheId, shouldWatch);
-  } else if (action === 'remove') {
-    setNicheWatchlist(nicheId, false);
-    updateEntryWatchlist(nicheId, false);
-  }
+  const shouldWatch = button.getAttribute('aria-pressed') !== 'true';
+  setNicheWatchlist(nicheId, shouldWatch);
+  updateEntryWatchlist(nicheId, shouldWatch);
   renderContent();
 }
 
 function renderContent() {
   if (!currentModel) return;
-  if (currentModel.watchlistCount === 0 && filterState.watchlistOnly) {
-    filterState.watchlistOnly = false;
+  if (currentModel.watchlistCount === 0 && filterState.view === 'watchlist') {
+    filterState.view = 'all';
   }
-  updateControls(currentModel.watchlistCount);
-  renderHighlights(currentModel.highlights);
-  const filtered = filterEntries(currentModel.board.entries);
+  updateToolbarState();
+  updateOverview(currentModel.entries);
+  const filtered = applyFilters(currentModel.entries);
   const sorted = sortEntries(filtered);
-  renderBoard(sorted, currentModel.board.emptyMessages);
-  renderWatchlist(currentModel.board.entries);
+  renderGrid(sorted);
+  renderWatchlist(currentModel.entries);
 }
 
 function createMeta(model = {}) {
-  const highlightTitle = model?.highlights?.hot?.title;
-  if (highlightTitle) {
-    const { primary, secondary } = splitHighlight(highlightTitle);
-    if (secondary) return `${primary} • ${secondary}`;
-    return primary;
+  const entries = Array.isArray(model.entries) ? model.entries : [];
+  if (!entries.length) {
+    return 'Trend scan ready';
   }
-  const count = Array.isArray(model?.board?.entries) ? model.board.entries.length : 0;
-  if (count) {
-    return `${count} niches tracked`;
+  const watched = entries.filter(entry => entry.watchlisted).length;
+  if (watched) {
+    return `${entries.length} niches • ${watched} starred`;
   }
-  return 'Trend scan ready';
+  return `${entries.length} niches tracked`;
 }
 
 function render(model = {}, context = {}) {
-  const { mount, page } = context;
+  const { mount } = context;
   if (!mount) {
     return { meta: 'Trend scan ready' };
   }
