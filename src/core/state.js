@@ -43,6 +43,15 @@ class StateManager {
     return target.metrics.daily;
   }
 
+  ensureMetricsHistory(target = this.state) {
+    if (!target) return null;
+    target.metrics = target.metrics || {};
+    if (!Array.isArray(target.metrics.history)) {
+      target.metrics.history = [];
+    }
+    return target.metrics.history;
+  }
+
   ensureStateShape(target = this.state) {
     if (!target) return;
 
@@ -61,6 +70,7 @@ class StateManager {
     target.character = normalizeCharacterState(target.character);
 
     this.ensureDailyMetrics(target);
+    this.ensureMetricsHistory(target);
     ensureNicheStateShape(target, { fallbackDay: target.day || 1 });
   }
 
@@ -89,7 +99,8 @@ class StateManager {
         lastRollDay: 0
       },
       metrics: {
-        daily: this.createEmptyDailyMetrics()
+        daily: this.createEmptyDailyMetrics(),
+        history: []
       },
       log: [],
       lastSaved: Date.now()
@@ -144,6 +155,7 @@ export default stateManager;
 
 export const createEmptyDailyMetrics = (...args) => stateManager.createEmptyDailyMetrics(...args);
 export const ensureDailyMetrics = (...args) => stateManager.ensureDailyMetrics(...args);
+export const ensureMetricsHistory = (...args) => stateManager.ensureMetricsHistory(...args);
 export const ensureStateShape = (...args) => stateManager.ensureStateShape(...args);
 export const buildDefaultState = (...args) => stateManager.buildDefaultState(...args);
 export const initializeState = (...args) => stateManager.initializeState(...args);

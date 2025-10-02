@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- BankApp now archives the last seven day-end ledgers and mirrors the shared activity log so the browser shell surfaces cashflow streaks without leaving the app.
 - ShopStack storefront replaces the legacy upgrades tab with a full browser app featuring category filters, product detail pages, and a My Purchases hub while reusing the original upgrade logic.
 - Retired the debug action catalog and command palette overlays to streamline the shell and remove unused maintenance paths.
 - Browser homepage ToDo widget merges quick actions and upgrade suggestions into a scrollable list so every pending move stays visible.

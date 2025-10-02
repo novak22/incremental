@@ -438,6 +438,90 @@ function buildEducationInvestmentsForBank(educationDefinitions = [], state) {
   return entries.sort((a, b) => a.remainingDays - b.remainingDays);
 }
 
+function sanitizeHistoryLedger(entries = [], valueKey = 'amount') {
+  if (!Array.isArray(entries)) return [];
+  return entries
+    .map(entry => {
+      const raw = Number(entry?.[valueKey]);
+      const numeric = Number.isFinite(raw)
+        ? valueKey === 'hours'
+          ? Math.round(raw * 100) / 100
+          : toCurrency(raw)
+        : 0;
+      return {
+        key: entry?.key,
+        label: entry?.label,
+        category: entry?.category || 'general',
+        [valueKey]: numeric
+      };
+    })
+    .filter(entry => entry?.[valueKey] > 0)
+    .sort((a, b) => b[valueKey] - a[valueKey]);
+}
+
+function buildCashHistory(state) {
+  if (!state || !Array.isArray(state.metrics?.history)) return [];
+  const recent = state.metrics.history.slice(-7);
+  return recent
+    .map((entry, index) => {
+      const income = toCurrency(entry?.totals?.income);
+      const spend = toCurrency(entry?.totals?.spend);
+      const net = toCurrency(entry?.totals?.net ?? income - spend);
+      const tone = net > 0 ? 'positive' : net < 0 ? 'negative' : 'neutral';
+      const recordedAt = Number(entry?.recordedAt);
+      const dayNumber = Number(entry?.day);
+      return {
+        id: `history-${dayNumber || index}-${recordedAt || index}`,
+        day: Number.isFinite(dayNumber) ? dayNumber : null,
+        label: Number.isFinite(dayNumber) ? `Day ${dayNumber}` : 'Earlier',
+        recordedAt: Number.isFinite(recordedAt) ? recordedAt : null,
+        totals: {
+          income,
+          spend,
+          net
+        },
+        tone,
+        summary: entry?.summary || null,
+        ledger: {
+          payouts: sanitizeHistoryLedger(entry?.ledger?.payouts, 'amount'),
+          costs: sanitizeHistoryLedger(entry?.ledger?.costs, 'amount'),
+          time: sanitizeHistoryLedger(entry?.ledger?.time, 'hours')
+        }
+      };
+    })
+    .reverse();
+}
+
+const LOG_TONE = {
+  success: 'positive',
+  progress: 'positive',
+  passive: 'positive',
+  warning: 'negative',
+  danger: 'negative',
+  error: 'negative'
+};
+
+function resolveActivityTone(type) {
+  return LOG_TONE[type] || 'neutral';
+}
+
+function buildActivityFeed(state) {
+  if (!state || !Array.isArray(state.log)) return [];
+  return state.log
+    .slice(-10)
+    .map((entry, index) => {
+      const timestamp = Number(entry?.timestamp);
+      return {
+        id: entry?.id || `activity-${index}`,
+        message: entry?.message || '',
+        type: entry?.type || 'info',
+        tone: resolveActivityTone(entry?.type),
+        timestamp: Number.isFinite(timestamp) ? timestamp : null
+      };
+    })
+    .reverse();
+}
+
 export function buildFinanceModel(registries = {}, helpers = {}) {
   const { getState: getStateFn = getState } = helpers;
   const state = getStateFn();
@@ -450,7 +534,9 @@ export function buildFinanceModel(registries = {}, helpers = {}) {
       assetPerformance: [],
       opportunities: buildOpportunitySummary([], [], []),
       education: [],
-      summary: null
+      summary: null,
+      history: [],
+      activity: []
     };
   }
 
@@ -503,7 +589,9 @@ export function buildFinanceModel(registries = {}, helpers = {}) {
     assetPerformance,
     opportunities,
     education: educationInvestments,
-    summary: { meta }
+    summary: { meta },
+    history: buildCashHistory(state),
+    activity: buildActivityFeed(state)
   };
 }
 
