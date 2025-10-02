@@ -51,11 +51,7 @@ const resolvers = {
       container: root.querySelector('[data-widget="bank"]'),
       stats: root.getElementById('browser-widget-bank-stats'),
       footnote: root.getElementById('browser-widget-bank-footnote'),
-      highlights: root.getElementById('browser-widget-bank-highlights'),
-      historySection: root.getElementById('browser-widget-bank-history'),
-      historyList: root.getElementById('browser-widget-bank-history-list'),
-      activitySection: root.getElementById('browser-widget-bank-activity'),
-      activityList: root.getElementById('browser-widget-bank-activity-list')
+      highlights: root.getElementById('browser-widget-bank-highlights')
     }
   })
 };
