@@ -116,7 +116,10 @@ const creatorPhonePro = createUpgrade({
   },
   onPurchase: () => {
     const previous = getUpgradeState('creatorPhone');
-    if (previous) previous.purchased = false;
+    if (previous) {
+      previous.purchased = false;
+      previous.purchasedDay = null;
+    }
   },
   logMessage: 'Cinematic mobile shots now flow straight from pocket to platform.',
   logType: 'upgrade'
@@ -143,7 +146,10 @@ const creatorPhoneUltra = createUpgrade({
   },
   onPurchase: () => {
     const previous = getUpgradeState('creatorPhonePro');
-    if (previous) previous.purchased = false;
+    if (previous) {
+      previous.purchased = false;
+      previous.purchasedDay = null;
+    }
   },
   logMessage: 'Your mobile studio now beams polished stories from anywhere in seconds.',
   logType: 'upgrade'
@@ -191,7 +197,10 @@ const editingWorkstation = createUpgrade({
   },
   onPurchase: () => {
     const previous = getUpgradeState('studioLaptop');
-    if (previous) previous.purchased = false;
+    if (previous) {
+      previous.purchased = false;
+      previous.purchasedDay = null;
+    }
   },
   logMessage: 'Your workstation devours timelines and exports while you plan the next drop.',
   logType: 'upgrade'
@@ -217,7 +226,10 @@ const quantumRig = createUpgrade({
   },
   onPurchase: () => {
     const previous = getUpgradeState('editingWorkstation');
-    if (previous) previous.purchased = false;
+    if (previous) {
+      previous.purchased = false;
+      previous.purchasedDay = null;
+    }
   },
   logMessage: 'Rendering, compiling, and editing now feel instant—your rig hums with headroom.',
   logType: 'upgrade'
