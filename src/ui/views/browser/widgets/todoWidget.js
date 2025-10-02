@@ -189,27 +189,79 @@ function renderEmptyState(message) {
 }
 
 function handleCompletion(entry, model) {
-  if (!entry) return;
+  if (!entry) return false;
+
   const existing = completedItems.get(entry.id);
   if (existing && !entry.repeatable) {
-    return;
+    return false;
   }
+
+  const previousModel = lastModel || model || {};
+  const previousHoursAvailable = Number(previousModel?.hoursAvailable);
+  const previousHoursSpent = Number(previousModel?.hoursSpent);
+
+  const previousModelRef = lastModel;
+  let triggeredUpdate = false;
+  if (typeof entry.onClick === 'function') {
+    entry.onClick();
+    triggeredUpdate = lastModel !== previousModelRef;
+  }
+
+  const refreshedModel = triggeredUpdate ? (lastModel || {}) : (model || previousModel || {});
+  const duration = Number(entry.durationHours);
+  const trackTime = Number.isFinite(duration) && duration > 0;
+
+  let effectiveDuration = null;
+  let actionRan = true;
+  if (trackTime) {
+    const refreshedHoursAvailable = Number(refreshedModel?.hoursAvailable);
+    const refreshedHoursSpent = Number(refreshedModel?.hoursSpent);
+    const tolerance = 1e-6;
+    const spentDelta = Number.isFinite(previousHoursSpent) && Number.isFinite(refreshedHoursSpent)
+      ? refreshedHoursSpent - previousHoursSpent
+      : null;
+    const availableDelta = Number.isFinite(previousHoursAvailable) && Number.isFinite(refreshedHoursAvailable)
+      ? previousHoursAvailable - refreshedHoursAvailable
+      : null;
+    const consumedCandidates = [];
+    if (spentDelta !== null && spentDelta > tolerance) {
+      consumedCandidates.push(spentDelta);
+    }
+    if (availableDelta !== null && availableDelta > tolerance) {
+      consumedCandidates.push(availableDelta);
+    }
+
+    if (consumedCandidates.length) {
+      effectiveDuration = Math.max(...consumedCandidates);
+      actionRan = true;
+    } else if (spentDelta !== null || availableDelta !== null) {
+      actionRan = false;
+    }
+  }
+
+  if (!actionRan) {
+    return false;
+  }
+
+  const recordedDuration = Number.isFinite(effectiveDuration) ? effectiveDuration : duration;
   const count = existing ? (existing.count || 1) + 1 : 1;
   completedItems.set(entry.id, {
     id: entry.id,
     title: entry.title,
-    durationHours: entry.durationHours,
+    durationHours: recordedDuration,
     durationText: entry.durationText,
     repeatable: entry.repeatable,
     remainingRuns: entry.remainingRuns,
     count,
     completedAt: Date.now()
   });
-  if (typeof entry.onClick === 'function') {
-    entry.onClick();
+
+  if (!triggeredUpdate && trackTime) {
+    applyImmediateTimeDelta(refreshedModel, recordedDuration);
   }
-  applyImmediateTimeDelta(model, entry.durationHours);
-  render(model);
+
+  render(refreshedModel);
+  return true;
 }
 
 function createTask(entry, model) {
@@ -244,7 +296,11 @@ function createTask(entry, model) {
     if (button.getAttribute('aria-disabled') === 'true') return;
     button.setAttribute('aria-disabled', 'true');
     button.classList.add('is-complete');
-    handleCompletion(entry, model);
+    const completed = handleCompletion(entry, model);
+    if (!completed) {
+      button.removeAttribute('aria-disabled');
+      button.classList.remove('is-complete');
+    }
   });
 
   button.append(checkbox, content);
