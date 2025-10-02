@@ -42,10 +42,10 @@ body {
 .shell {
   display: grid;
   grid-template-rows: auto auto 1fr;
-  max-width: 1400px;
+  width: 100%;
   margin: 0 auto;
   min-height: 100vh;
-  padding: 32px 40px 48px;
+  padding: 24px;
   gap: 24px;
 }
 
@@ -827,7 +827,7 @@ body {
 .dashboard__kpis {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 16px;
+  gap: 24px;
 }
 
 .kpi {
@@ -881,7 +881,7 @@ body {
 .dashboard__grid {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  gap: 18px;
+  gap: 24px;
   min-height: 0;
 }
 
@@ -889,7 +889,7 @@ body {
 .dashboard__scroll {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 18px;
+  gap: 24px;
 }
 
 .dashboard__top-row {
