@@ -4,6 +4,7 @@ import { SERVICE_PAGES } from './config.js';
 import { buildFinanceModel } from '../../cards/model/index.js';
 import { createStat, formatRoi } from './components/widgets.js';
 import blogpressApp from './components/blogpress.js';
+import videotubeApp from './components/videotube.js';
 import learnlyApp from './components/learnly.js';
 import shopstackApp from './components/shopstack.js';
 
@@ -343,6 +344,28 @@ function renderAssetsPage(definitions = [], models = {}) {
     id: page.id,
     meta: activeCount > 0 ? `${activeCount} active venture${activeCount === 1 ? '' : 's'}` : 'No active ventures yet'
   };
+}
+
+function renderVideoTubePage(definitions = [], model = {}) {
+  const page = SERVICE_PAGES.find(entry => entry.type === 'videotube');
+  if (!page) return null;
+
+  const refs = ensurePageContent(page, ({ body }) => {
+    if (!body.querySelector('[data-role="videotube-root"]')) {
+      body.innerHTML = '';
+      const wrapper = document.createElement('div');
+      wrapper.dataset.role = 'videotube-root';
+      body.appendChild(wrapper);
+    }
+  });
+  if (!refs) return null;
+
+  const mount = refs.body.querySelector('[data-role="videotube-root"]');
+  if (!mount) return null;
+
+  const summary = videotubeApp.render(model, { mount, page, definitions });
+  const meta = summary?.meta || model?.summary?.meta || 'Launch your first video';
+  return { id: page.id, meta };
 }
 
 function renderBlogpressPage(definitions = [], model = {}) {
@@ -1068,6 +1091,8 @@ function renderServices(registries = {}, models = {}) {
   if (hustleSummary) summaries.push(hustleSummary);
   const assetSummary = renderAssetsPage(registries.assets, models.assets);
   if (assetSummary) summaries.push(assetSummary);
+  const videotubeSummary = renderVideoTubePage(registries.assets, models.videotube);
+  if (videotubeSummary) summaries.push(videotubeSummary);
   const blogpressSummary = renderBlogpressPage(registries.assets, models.blogpress);
   if (blogpressSummary) summaries.push(blogpressSummary);
   const upgradeSummary = renderUpgradesPage(registries.upgrades, models.upgrades);

@@ -26,7 +26,7 @@ export const SERVICE_PAGES = [
     headline: 'VideoTube Venture Studio',
     tagline: 'Schedule drops, review analytics, and amplify fans.',
     icon: '📺',
-    type: 'assets'
+    type: 'videotube'
   },
   {
     id: 'blogpress',

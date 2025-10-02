@@ -221,6 +221,45 @@ export function instanceLabel(definition, index) {
   return `${base} #${index + 1}`;
 }
 
+export function setAssetInstanceName(assetId, instanceId, name) {
+  if (!assetId || !instanceId) return false;
+  const definition = getAssetDefinition(assetId);
+  if (!definition) return false;
+
+  const trimmed = typeof name === 'string' ? name.trim() : '';
+  const safe = trimmed ? trimmed.slice(0, 60) : '';
+  let changed = false;
+
+  executeAction(() => {
+    const state = getState();
+    const assetState = getAssetState(assetId, state);
+    const instances = Array.isArray(assetState?.instances) ? assetState.instances : [];
+    const index = instances.findIndex(entry => entry?.id === instanceId);
+    if (index === -1) return;
+
+    const instance = instances[index];
+    const previous = typeof instance.customName === 'string' ? instance.customName : '';
+    if (!safe && !previous) return;
+    if (safe === previous) return;
+
+    if (safe) {
+      instance.customName = safe;
+    } else {
+      delete instance.customName;
+    }
+    changed = true;
+
+    const labelBase = definition.singular || definition.name || 'Asset';
+    const fallbackLabel = `${labelBase} #${index + 1}`;
+    const message = safe
+      ? `${fallbackLabel} is now titled “${safe}.” Subscribers love the fresh branding.`
+      : `${fallbackLabel} reset to its default title.`;
+    addLog(message, 'info');
+  });
+
+  return changed;
+}
+
 export function calculateAssetSalePrice(instance) {
   const lastIncome = Math.max(0, Number(instance?.lastIncome) || 0);
   const basePrice = Math.max(0, Math.round(lastIncome) * 3);

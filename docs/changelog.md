@@ -6,6 +6,7 @@
 - Browser homepage ToDo widget merges quick actions and upgrade suggestions into a scrollable list so every pending move stays visible.
 - Learnly graduates into a dedicated browser app with a course catalog, detail pages, My Courses hub, and pricing FAQ while reusing the existing education systems.
 - BlogPress brings the Personal Blog management flow into the browser shell with a table overview, detail inspector, pricing page, and one-click quality actions while reusing the existing passive-income logic.
+- VideoTube graduates the vlog asset tools into a studio-style browser app with a channel dashboard, analytics view, niche selection, and launch workflow that reuse the existing vlog economy.
 - Browser homepage redesign removes the sidebar, aligns widgets into a responsive three-column grid, and promotes the app launcher into tile-based cards with live status badges.
 - Browser shell graduates to a multi-tab workspace: the launch page stays pinned as the first tab while apps like BankApp open in their own closable tabs and keep their state when you swap views.
 - Browser launch view trims the hero headline, keeps repeatable quick tasks visible, and adds an inline End Day button when the action list is empty for faster wrap-ups.

@@ -34,3 +34,4 @@ export {
 } from '../utils.js';
 
 export { default as buildBlogpressModel, selectNiche as selectBlogpressNiche } from './blogpress.js';
+export { default as buildVideoTubeModel, selectNiche as selectVideoTubeNiche } from './videotube.js';

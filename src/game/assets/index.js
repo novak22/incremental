@@ -3,7 +3,8 @@ import { allocateAssetMaintenance, closeOutDay } from './lifecycle.js';
 import {
   getIncomeRangeForDisplay,
   calculateAssetSalePrice,
-  sellAssetInstance
+  sellAssetInstance,
+  setAssetInstanceName
 } from './helpers.js';
 import {
   performQualityAction,
@@ -33,6 +34,7 @@ export {
   getQualityTracks,
   sellAssetInstance,
   calculateAssetSalePrice,
+  setAssetInstanceName,
   assignInstanceToNiche,
   getAssignableNicheSummaries,
   getInstanceNicheEffect,
