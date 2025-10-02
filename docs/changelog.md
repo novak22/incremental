@@ -2,6 +2,7 @@
 
 ## Unreleased
 - Trends Intelligence Lab replaces the classic analytics tab with a standalone browser app featuring a daily outlook ticker, refreshed momentum cards, and a dedicated watchlist while reusing existing niche data.
+- ServerHub launches as a cloud-inspired control center for Micro SaaS ventures with KPI hero metrics, app table + detail sidebar, upgrade shelf, and pricing tiers built on the existing SaaS backend.
 - BankApp now archives the last seven day-end ledgers and mirrors the shared activity log so the browser shell surfaces cashflow streaks without leaving the app.
 - BankApp’s finance dashboard now pipes every tracked dataset—obligations, pending payouts, asset ROI tables, opportunity queues, and education commitments—into the in-app layout so the browser view matches the classic shell’s depth.
 - ShopStack storefront replaces the legacy upgrades tab with a full browser app featuring category filters, product detail pages, and a My Purchases hub while reusing the original upgrade logic.

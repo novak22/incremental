@@ -38,6 +38,15 @@ export const SERVICE_PAGES = [
     type: 'assets'
   },
   {
+    id: 'serverhub',
+    slug: 'serverhub',
+    label: 'ServerHub',
+    headline: 'ServerHub Cloud Control',
+    tagline: 'Launch SaaS apps, monitor uptime, and tune ROI in one console.',
+    icon: '☁️',
+    type: 'serverhub'
+  },
+  {
     id: 'digishelf',
     slug: 'digishelf',
     label: 'DigiShelf',
