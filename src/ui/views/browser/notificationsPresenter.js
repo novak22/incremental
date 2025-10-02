@@ -15,7 +15,8 @@ const presenterState = {
   entries: [],
   emptyMessage: '',
   outsideHandler: null,
-  keydownHandler: null
+  keydownHandler: null,
+  initialized: false
 };
 
 function getRefs() {
@@ -27,7 +28,8 @@ function attachDocumentListeners() {
     presenterState.outsideHandler = event => {
       if (!presenterState.isOpen) return;
       const { container } = getRefs();
-      if (!container || container.contains(event.target)) {
+      const target = event.target;
+      if (!container || (target instanceof Node && container.contains(target))) {
         return;
       }
       togglePanel(false);
@@ -43,13 +45,13 @@ function attachDocumentListeners() {
     };
   }
 
-  document.addEventListener('pointerdown', presenterState.outsideHandler);
+  document.addEventListener('click', presenterState.outsideHandler, true);
   document.addEventListener('keydown', presenterState.keydownHandler);
 }
 
 function detachDocumentListeners() {
   if (presenterState.outsideHandler) {
-    document.removeEventListener('pointerdown', presenterState.outsideHandler);
+    document.removeEventListener('click', presenterState.outsideHandler, true);
   }
   if (presenterState.keydownHandler) {
     document.removeEventListener('keydown', presenterState.keydownHandler);
@@ -87,6 +89,18 @@ function closePanel() {
   }
   presenterState.isOpen = false;
   detachDocumentListeners();
+}
+
+function ensurePanelHiddenByDefault() {
+  if (presenterState.initialized) return;
+  const { panel, button } = getRefs();
+  if (panel) {
+    panel.hidden = true;
+  }
+  if (button) {
+    button.setAttribute('aria-expanded', 'false');
+  }
+  presenterState.initialized = true;
 }
 
 function togglePanel(force) {
@@ -248,6 +262,8 @@ function render(model = {}) {
     closePanel();
     return;
   }
+
+  ensurePanelHiddenByDefault();
 
   bindControls();
 
