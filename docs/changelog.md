@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- ShopStack storefront replaces the legacy upgrades tab with a full browser app featuring category filters, product detail pages, and a My Purchases hub while reusing the original upgrade logic.
 - Retired the debug action catalog and command palette overlays to streamline the shell and remove unused maintenance paths.
 - Browser homepage ToDo widget merges quick actions and upgrade suggestions into a scrollable list so every pending move stays visible.
 - Learnly graduates into a dedicated browser app with a course catalog, detail pages, My Courses hub, and pricing FAQ while reusing the existing education systems.
