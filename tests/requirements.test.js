@@ -2,10 +2,21 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { getGameTestHarness } from './helpers/gameTestHarness.js';
 
+const knowledgeTracksModule = await import('../src/game/requirements/knowledgeTracks.js');
+const maintenanceModule = await import('../src/game/requirements/maintenanceReserve.js');
+const descriptorsModule = await import('../src/game/requirements/descriptors.js');
+const orchestratorModule = await import('../src/game/requirements/orchestrator.js');
+
+const { default: tracksDefaultExport, KNOWLEDGE_TRACKS: tracksCatalog, KNOWLEDGE_REWARDS: rewardCatalog } = knowledgeTracksModule;
+const { estimateManualMaintenanceReserve } = maintenanceModule;
+const { buildAssetRequirementDescriptor } = descriptorsModule;
+const { createRequirementsOrchestrator, MIN_MANUAL_BUFFER_HOURS } = orchestratorModule;
+
 const harness = await getGameTestHarness();
 const {
   stateModule,
-  requirementsModule
+  requirementsModule,
+  registryModule
 } = harness;
 
 const {
@@ -29,6 +40,49 @@ const resetState = () => harness.resetState();
 
 test.beforeEach(() => {
   resetState();
+});
+
+test('knowledge track catalog exports remain consistent', () => {
+  assert.equal(tracksDefaultExport, tracksCatalog);
+  assert.ok(tracksCatalog.outlineMastery);
+  assert.equal(rewardCatalog.outlineMastery.baseXp, 120);
+});
+
+test('descriptor builder reports current asset progress', () => {
+  const state = getState();
+  const blogState = getAssetState('blog');
+  blogState.instances = [{ status: 'active' }];
+
+  const descriptor = buildAssetRequirementDescriptor(
+    { type: 'experience', assetId: 'blog', count: 2 },
+    state
+  );
+
+  assert.equal(descriptor.progress.have, 1);
+  assert.equal(descriptor.progress.need, 2);
+  assert.equal(descriptor.met, false);
+});
+
+test('manual maintenance reserve respects assistant support', () => {
+  const state = getState();
+  Object.values(state.assets || {}).forEach(assetState => {
+    assetState.instances = [];
+  });
+  const assistantUpgrade = state.upgrades.assistant;
+  assistantUpgrade.count = 0;
+  state.assets.blog.instances = [{ status: 'active' }];
+  state.assets.vlog.instances = [{ status: 'active' }];
+
+  const baseline = estimateManualMaintenanceReserve(state);
+  const expected =
+    Number(registryModule.getAssetDefinition('blog').maintenance?.hours || 0) +
+    Number(registryModule.getAssetDefinition('vlog').maintenance?.hours || 0);
+  assert.equal(baseline.toFixed(2), expected.toFixed(2));
+
+  assistantUpgrade.count = 1;
+
+  const assisted = estimateManualMaintenanceReserve(state);
+  assert.equal(assisted, 0);
 });
 
 test('requirement label reflects missing equipment and updates after unlock', () => {
@@ -122,4 +176,73 @@ test('advancing knowledge logs completions and clears daily flags', () => {
 
   assert.ok(progress.completed);
   assert.match(state.log.at(-1).message, /Finished .*Photo Catalog Curation/i);
+});
+
+test('requirements orchestrator honors reserves and rewards completions', () => {
+  const track = tracksCatalog.outlineMastery;
+  const logs = [];
+  const contributions = [];
+  let awardPayload = null;
+
+  const state = {
+    day: 1,
+    money: 1000,
+    timeLeft: 0,
+    progress: { knowledge: {} },
+    log: []
+  };
+
+  const ensureProgress = id => {
+    if (!state.progress.knowledge[id]) {
+      state.progress.knowledge[id] = {
+        daysCompleted: 0,
+        studiedToday: false,
+        completed: false,
+        enrolled: true,
+        totalDays: track.days,
+        hoursPerDay: track.hoursPerDay,
+        tuitionCost: track.tuition,
+        enrolledOnDay: state.day,
+        skillRewarded: false
+      };
+    }
+    return state.progress.knowledge[id];
+  };
+
+  const reserveHours = 3;
+  const orchestrator = createRequirementsOrchestrator({
+    getState: () => state,
+    getKnowledgeProgress: ensureProgress,
+    knowledgeTracks: { [track.id]: track },
+    knowledgeRewards: { [track.id]: rewardCatalog[track.id] },
+    estimateMaintenanceReserve: () => reserveHours,
+    spendMoney: () => {},
+    spendTime: hours => { state.timeLeft -= hours; },
+    recordCostContribution: () => {},
+    recordTimeContribution: entry => contributions.push(entry),
+    awardSkillProgress: payload => { awardPayload = payload; },
+    addLog: (message, level) => logs.push({ message, level })
+  });
+
+  const progress = ensureProgress(track.id);
+  progress.daysCompleted = track.days - 1;
+
+  state.timeLeft = reserveHours + MIN_MANUAL_BUFFER_HOURS + track.hoursPerDay - 0.1;
+  orchestrator.allocateDailyStudy();
+  assert.equal(contributions.length, 0);
+  assert.ok(logs.some(log => log.level === 'warning' && log.message.includes('deferred')));
+  assert.equal(progress.studiedToday, false);
+  logs.length = 0;
+
+  state.timeLeft = reserveHours + MIN_MANUAL_BUFFER_HOURS + track.hoursPerDay + 1;
+  orchestrator.allocateDailyStudy();
+  assert.equal(contributions.length, 1);
+  assert.ok(progress.studiedToday);
+
+  orchestrator.advanceKnowledgeTracks();
+  assert.ok(progress.completed);
+  assert.equal(progress.studiedToday, false);
+  assert.ok(awardPayload);
+  assert.equal(awardPayload.label, track.name);
+  assert.ok(logs.some(log => log.message.includes('Finished')));
 });
