@@ -1,7 +1,11 @@
-import { formatHours, formatMoney } from '../../../../core/helpers.js';
+import { formatHours } from '../../../../core/helpers.js';
 import { performQualityAction } from '../../../../game/assets/index.js';
 import { setAssetInstanceName } from '../../../../game/assets/helpers.js';
 import { selectVideoTubeNiche } from '../../../cards/model/index.js';
+import {
+  formatCurrency as baseFormatCurrency,
+  formatPercent as baseFormatPercent
+} from '../utils/formatting.js';
 
 const VIEW_DASHBOARD = 'dashboard';
 const VIEW_DETAIL = 'detail';
@@ -23,14 +27,14 @@ let currentModel = {
 let currentMount = null;
 let currentPageMeta = null;
 
-function formatCurrency(amount) {
-  return `$${formatMoney(Math.max(0, Math.round(Number(amount) || 0)))}`;
-}
-
-function formatPercent(value) {
-  const numeric = Math.max(0, Math.min(1, Number(value) || 0));
-  return `${Math.round(numeric * 100)}%`;
-}
+const formatCurrency = amount =>
+  baseFormatCurrency(amount, { precision: 'integer', clampZero: true });
+const formatPercent = value =>
+  baseFormatPercent(value, {
+    clampMin: 0,
+    clampMax: 1,
+    signDisplay: 'never'
+  });
 
 function ensureSelectedVideo() {
   const instances = Array.isArray(currentModel.instances) ? currentModel.instances : [];

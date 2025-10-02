@@ -1,6 +1,7 @@
-import { formatDays, formatHours, formatMoney } from '../../../../core/helpers.js';
+import { formatDays, formatHours } from '../../../../core/helpers.js';
 import { describeTrackEducationBonuses } from '../../../../game/educationEffects.js';
 import { dropKnowledgeTrack } from '../../../../game/requirements.js';
+import { formatCurrency as baseFormatCurrency } from '../utils/formatting.js';
 
 const VIEW_CATALOG = 'catalog';
 const VIEW_DETAIL = 'detail';
@@ -51,10 +52,8 @@ let currentContext = {
   }
 };
 
-function formatCurrency(amount) {
-  const numeric = Math.max(0, Number(amount) || 0);
-  return `$${formatMoney(numeric)}`;
-}
+const formatCurrency = amount =>
+  baseFormatCurrency(amount, { clampZero: true });
 
 function deriveCategories(skills = []) {
   const categoryIds = new Set();

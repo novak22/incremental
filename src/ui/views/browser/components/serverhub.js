@@ -1,6 +1,11 @@
-import { ensureArray, formatHours, formatMoney } from '../../../../core/helpers.js';
+import { ensureArray, formatHours } from '../../../../core/helpers.js';
 import { performQualityAction } from '../../../../game/assets/index.js';
 import { selectServerHubNiche } from '../../../cards/model/index.js';
+import {
+  formatCurrency as baseFormatCurrency,
+  formatNetCurrency as baseFormatNetCurrency,
+  formatPercent as baseFormatPercent
+} from '../utils/formatting.js';
 
 const VIEW_APPS = 'apps';
 const VIEW_UPGRADES = 'upgrades';
@@ -19,28 +24,12 @@ let currentModel = {
 let currentMount = null;
 let currentPageMeta = null;
 
-function formatCurrency(amount) {
-  const numeric = Math.max(0, Math.round(Number(amount) || 0));
-  return `$${formatMoney(numeric)}`;
-}
-
-function formatNetCurrency(amount) {
-  const numeric = Number(amount) || 0;
-  const absolute = Math.abs(numeric);
-  const formatted = `$${formatMoney(Math.round(absolute))}`;
-  return numeric >= 0 ? formatted : `-${formatted}`;
-}
-
-function formatPercent(value) {
-  if (value === null || value === undefined) {
-    return '—';
-  }
-  const numeric = Number(value);
-  if (!Number.isFinite(numeric)) return '—';
-  const percent = Math.round(numeric * 100);
-  const sign = percent > 0 ? '+' : percent < 0 ? '-' : '';
-  return `${sign}${Math.abs(percent)}%`;
-}
+const formatCurrency = amount =>
+  baseFormatCurrency(amount, { precision: 'integer', clampZero: true });
+const formatNetCurrency = amount =>
+  baseFormatNetCurrency(amount, { precision: 'integer' });
+const formatPercent = value =>
+  baseFormatPercent(value, { nullFallback: '—', signDisplay: 'always' });
 
 function ensureSelectedApp() {
   const instances = ensureArray(currentModel.instances);

@@ -1,4 +1,9 @@
-import { ensureArray, formatHours, formatMoney } from '../../../../core/helpers.js';
+import { ensureArray, formatHours } from '../../../../core/helpers.js';
+import {
+  formatCurrency as baseFormatCurrency,
+  formatPercent as baseFormatPercent,
+  formatSignedCurrency as baseFormatSignedCurrency
+} from '../utils/formatting.js';
 import { selectShopilyNiche } from '../../../cards/model/index.js';
 import { performQualityAction } from '../../../../game/assets/index.js';
 
@@ -23,29 +28,12 @@ let currentMount = null;
 let currentPageMeta = null;
 let routeListener = null;
 
-function formatCurrency(amount) {
-  const numeric = Number(amount) || 0;
-  return `$${formatMoney(Math.max(0, Math.round(numeric)))}`;
-}
-
-function formatSignedCurrency(amount) {
-  const numeric = Number(amount) || 0;
-  const absolute = Math.abs(numeric);
-  const formatted = formatMoney(Math.round(absolute * 100) / 100);
-  const sign = numeric > 0 ? '+' : numeric < 0 ? '-' : '';
-  return `${sign}$${formatted}`;
-}
-
-function formatPercent(value) {
-  if (value === null || value === undefined) {
-    return '—';
-  }
-  const numeric = Number(value);
-  if (!Number.isFinite(numeric)) return '—';
-  const percent = Math.round(numeric * 100);
-  const sign = percent > 0 ? '+' : percent < 0 ? '-' : '';
-  return `${sign}${Math.abs(percent)}%`;
-}
+const formatCurrency = amount =>
+  baseFormatCurrency(amount, { precision: 'integer', clampZero: true });
+const formatSignedCurrency = amount =>
+  baseFormatSignedCurrency(amount, { precision: 'cent' });
+const formatPercent = value =>
+  baseFormatPercent(value, { nullFallback: '—', signDisplay: 'always' });
 
 function ensureSelectedStore() {
   const instances = Array.isArray(currentModel.instances) ? currentModel.instances : [];
