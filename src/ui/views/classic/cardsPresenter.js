@@ -12,7 +12,7 @@ import {
   renderHustles,
   updateHustleCard
 } from './hustleCards.js';
-import assetCards from './assetCards.js';
+import assetCardsController, { isAssetDefinition, updateAssetGroup } from './assetCards/index.js';
 import {
   cacheUpgradeModels,
   findUpgradeModelById,
@@ -54,7 +54,7 @@ function normalizeAssetModels(models) {
 function renderClassicCollections(registries, models) {
   const { hustles = [], education = [], assets = [], upgrades = [] } = registries;
   renderHustles(hustles, models?.hustles ?? []);
-  assetCards.renderAssets(assets, normalizeAssetModels(models?.assets));
+  assetCardsController.renderAssets(assets, normalizeAssetModels(models?.assets));
   renderUpgrades(upgrades, models?.upgrades);
   renderStudySection(education, models?.education);
 }
@@ -73,9 +73,9 @@ function updateClassicCollections(registries, models) {
     updateHustleCard(definition, model, { emitEvent: emitUIEvent });
   });
   if (typeof models?.assets === 'undefined') {
-    assetCards.updateAssets(assets);
+    assetCardsController.updateAssets(assets);
   } else {
-    assetCards.updateAssets(assets, normalizeAssetModels(models?.assets));
+    assetCardsController.updateAssets(assets, normalizeAssetModels(models?.assets));
   }
   updateUpgrades(upgrades, models?.upgrades);
   updateStudySection(education, models?.education);
@@ -99,8 +99,8 @@ export function updateCard(definition) {
     return;
   }
 
-  if (assetCards.isAssetDefinition(definition.id)) {
-    assetCards.updateAssetGroup(definition.id);
+  if (isAssetDefinition(definition.id)) {
+    updateAssetGroup(definition.id);
     return;
   }
 
