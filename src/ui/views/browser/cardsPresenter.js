@@ -3,7 +3,6 @@ import { getElement } from '../../elements/registry.js';
 import { SERVICE_PAGES } from './config.js';
 import renderYourNetwork from './apps/yourNetwork.js';
 import renderHustles from './apps/hustles.js';
-import renderAssets from './apps/assets.js';
 import renderTrends from './apps/trends.js';
 import renderDigishelf from './apps/digishelf.js';
 import renderVideoTube from './apps/videotube.js';
@@ -140,8 +139,6 @@ export const APP_RENDERERS = [
   (context, registries = {}, models = {}) => renderYourNetwork(context, models),
   (context, registries = {}, models = {}) =>
     renderHustles(context, registries.hustles || [], models.hustles || []),
-  (context, registries = {}, models = {}) =>
-    renderAssets(context, registries.assets || [], models.assets || {}),
   (context, registries = {}, models = {}) =>
     renderDigishelf(context, registries.assets || [], models.digishelf || {}),
   (context, registries = {}, models = {}) =>

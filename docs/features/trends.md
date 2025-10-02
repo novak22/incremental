@@ -14,24 +14,23 @@ The Trends app graduates the classic analytics tab into a standalone browser wor
 - **Highlights** reuse the `buildNicheHighlights` output and are reformatted into ticker cards.
 - **Momentum board** pulls the same entries from `buildNicheViewModel`, now rendered as grid cards with SaaS styling.
 - **Filters** mirror the existing sort/checkbox logic, updating the same analytics entries on the fly.
-- **Watchlist actions** still call `setNicheWatchlist`, and the “Find ventures” CTA jumps to the assets workspace via the browser layout presenter.
+- **Watchlist actions** still call `setNicheWatchlist`, and the venture CTA is paused until a new destination ships.
 - **Future history** panel keeps the original analytics data warm while signalling upcoming visualizations.
 
 ## Data & Logic
 - Trends relies on `buildNicheViewModel` so analytics, payouts, and watchlist counts stay synchronized with the classic shell.
 - Sorting and filtering logic matches the previous implementation, prioritising trend impact, asset counts, and delta magnitude.
 - Watchlist toggles immediately call `setNicheWatchlist` and locally update the cached model for responsive UI feedback until the next render tick.
-- CTA buttons delegate to existing actions—`navigateToWorkspace('assets')` for venture exploration and the disabled recommended hustle stub for future automation.
+- CTA buttons continue to delegate to existing actions—the disabled recommended hustle stub remains in place for future automation.
 
 ## UI Notes
 - Cards use bar meters, stat pills, and CTA pill buttons to mimic modern trends dashboards.
 - Tone-aware metric chips colour positive/negative trend impact for instant scanning.
-- Watchlist items appear in a lightweight aside with pill buttons for jump/remove actions.
+- Watchlist items appear in a lightweight aside with pill buttons for quick removal.
 - The history panel ships with an upbeat “coming soon” message so the layout already reserves space for line charts.
 
 ## Manual Test Checklist
 - Launch the browser shell, open Trends from the Apps grid, and confirm the ticker lists Top Boost, Big Swing, and Cooling Risk based on current data.
 - Toggle between sort filters and checkbox filters; ensure the board updates and empty states read correctly.
 - Add and remove niches from the watchlist via board cards and confirm the aside updates instantly.
-- Click “Find ventures for this niche” on a card and verify the browser navigates to the Assets workspace.
-- Visit the watchlist panel buttons to remove a niche and to jump to ventures; both should work and re-render the board.
+- Visit the watchlist panel buttons to remove a niche and confirm the board re-renders with updated counts.

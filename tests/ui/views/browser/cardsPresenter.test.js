@@ -47,7 +47,6 @@ test('cardsPresenter dispatches to app modules and publishes summaries', async t
   const stubConfigs = [
     { id: 'yournetwork', meta: 'Profile ready' },
     { id: 'downwork', meta: 'Hustle ready' },
-    { id: 'assets', meta: 'Assets ready' },
     { id: 'digishelf', meta: 'Shelf ready' },
     { id: 'serverhub', meta: 'Server ready' },
     { id: 'videotube', meta: 'Videos ready' },

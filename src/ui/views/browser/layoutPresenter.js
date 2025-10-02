@@ -307,27 +307,6 @@ function applyHustleFilters(model = {}) {
   list.appendChild(fragment);
 }
 
-function applyAssetFilters(model = {}) {
-  const hiddenSet = new Set(Array.isArray(model.hiddenIds) ? model.hiddenIds : []);
-  const visibleSet = new Set(Array.isArray(model.visibleIds) ? model.visibleIds : []);
-  const instances = document.querySelectorAll(
-    '[data-role="browser-asset-list"] [data-asset], .browser-asset-list [data-asset]'
-  );
-  instances.forEach(node => {
-    const id = node.dataset.asset;
-    if (!id) return;
-    if (hiddenSet.has(id)) {
-      node.hidden = true;
-      return;
-    }
-    if (visibleSet.size && !visibleSet.has(id)) {
-      node.hidden = true;
-      return;
-    }
-    node.hidden = false;
-  });
-}
-
 function applyUpgradeFilters(model = {}) {
   const hiddenSet = new Set(Array.isArray(model.hiddenIds) ? model.hiddenIds : []);
   const visibleSet = new Set(Array.isArray(model.visibleIds) ? model.visibleIds : []);
@@ -367,7 +346,6 @@ function applyStudyFilters(model = {}) {
 function applyFilters(model = {}) {
   if (!model) return;
   applyHustleFilters(model.hustles);
-  applyAssetFilters(model.assets);
   applyUpgradeFilters(model.upgrades);
   applyStudyFilters(model.study);
 }
