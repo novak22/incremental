@@ -24,17 +24,9 @@ import {
   updateUpgradeCard,
   updateUpgrades
 } from './upgradeCards.js';
+import { renderCollections, updateCollections } from '../../cards/presenters/shared.js';
 
-function normalizeRegistries(registries = {}) {
-  return {
-    hustles: Array.isArray(registries?.hustles) ? registries.hustles : [],
-    education: Array.isArray(registries?.education) ? registries.education : [],
-    assets: Array.isArray(registries?.assets) ? registries.assets : [],
-    upgrades: Array.isArray(registries?.upgrades) ? registries.upgrades : []
-  };
-}
-
-function cacheCardModels(models = {}, options = {}) {
+function cacheCardModels(_registries, models = {}, options = {}) {
   const { skipCacheReset = false } = options;
   cacheHustleModels(models?.hustles ?? [], { skipCacheReset });
   cacheEducationModels(models?.education);
@@ -59,10 +51,11 @@ function renderClassicCollections(registries, models) {
   renderStudySection(education, models?.education);
 }
 
-export function renderAll({ registries = {}, models = {} } = {}, options = {}) {
-  const normalized = normalizeRegistries(registries);
-  cacheCardModels(models, options);
-  renderClassicCollections(normalized, models);
+export function renderAll(payload = {}, options = {}) {
+  renderCollections(payload, {
+    cache: cacheCardModels,
+    render: renderClassicCollections
+  }, options);
 }
 
 function updateClassicCollections(registries, models) {
@@ -82,10 +75,11 @@ function updateClassicCollections(registries, models) {
   emitUIEvent('upgrades:state-updated');
 }
 
-export function update({ registries = {}, models = {} } = {}, options = {}) {
-  const normalized = normalizeRegistries(registries);
-  cacheCardModels(models, options);
-  updateClassicCollections(normalized, models);
+export function update(payload = {}, options = {}) {
+  updateCollections(payload, {
+    cache: cacheCardModels,
+    update: updateClassicCollections
+  }, options);
 }
 
 export function updateCard(definition) {

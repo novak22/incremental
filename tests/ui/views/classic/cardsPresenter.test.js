@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { JSDOM } from 'jsdom';
 
 import { initElementRegistry } from '../../../../src/ui/elements/registry.js';
-import { renderAll, update } from '../../../../src/ui/views/classic/cardsPresenter.js';
+import { renderAll, update, updateCard } from '../../../../src/ui/views/classic/cardsPresenter.js';
 import { initializeState } from '../../../../src/core/state.js';
 import { formatHours } from '../../../../src/core/helpers.js';
 import { KNOWLEDGE_TRACKS } from '../../../../src/game/requirements.js';
@@ -149,7 +149,7 @@ test('renderAll builds hustle card markup from models', () => {
   assert.equal(limitCopy.textContent, '3/3 runs left today');
 });
 
-test('update refreshes hustle card datasets', () => {
+test('update refreshes hustle card datasets and emits events', () => {
   const { document } = createTestDom();
   const state = initializeState();
   state.money = 500;
@@ -196,13 +196,27 @@ test('update refreshes hustle card datasets', () => {
       roi: 40
     },
     limit: { summary: '1/3 runs left today' },
-    filters: { ...initialModel.filters, payout: 120, roi: 40, limitRemaining: 1 }
+    filters: {
+      ...initialModel.filters,
+      payout: 120,
+      roi: 40,
+      limitRemaining: 1,
+      available: false
+    },
+    available: false
   };
 
   payload.registries.hustles = [hustleDefinition];
   payload.models.hustles = [initialModel];
 
   renderAll(payload);
+
+  const hustleEvents = [];
+  const upgradesEvents = [];
+  const hustleListener = () => hustleEvents.push('hustle');
+  const upgradesListener = () => upgradesEvents.push('upgrades');
+  document.addEventListener('hustles:availability-updated', hustleListener);
+  document.addEventListener('upgrades:state-updated', upgradesListener);
 
   const card = document.querySelector('[data-hustle="product-shoot"]');
   assert.ok(card, 'expected hustle card before update');
@@ -215,10 +229,95 @@ test('update refreshes hustle card datasets', () => {
     models: { ...payload.models, hustles: [updatedModel] }
   });
 
+  document.removeEventListener('hustles:availability-updated', hustleListener);
+  document.removeEventListener('upgrades:state-updated', upgradesListener);
+
   assert.equal(card.dataset.payout, '120');
   assert.equal(card.dataset.roi, '40');
+  assert.equal(card.dataset.available, 'false');
   assert.equal(card.dataset.limitRemaining, '1');
   assert.equal(card.querySelector('.hustle-card__limit').textContent, '1/3 runs left today');
+
+  assert.equal(hustleEvents.length, 1, 'expected hustle availability event to fire once');
+  assert.equal(upgradesEvents.length, 1, 'expected upgrade state event to fire once during update');
+});
+
+test('updateCard refreshes upgrade UI and dispatches events', () => {
+  const { document } = createTestDom();
+  const state = initializeState();
+  state.money = 1000;
+
+  const payload = buildBasePayload();
+
+  const upgradeDefinition = {
+    id: 'studio-lighting',
+    name: 'Studio Lighting',
+    description: 'Brighten your shoot space.',
+    cost: 250,
+    category: 'studio',
+    family: 'lighting',
+    tag: { label: 'Upgrade' },
+    action: { label: 'Buy', className: 'primary', onClick: () => {} }
+  };
+
+  const upgradeModel = {
+    id: 'studio-lighting',
+    name: 'Studio Lighting',
+    cost: 250,
+    filters: {
+      category: 'studio',
+      family: 'lighting',
+      search: 'studio lighting',
+      ready: true,
+      affordable: true
+    },
+    snapshot: {
+      cost: 250,
+      affordable: true,
+      disabled: false,
+      purchased: false,
+      ready: true
+    },
+    definition: upgradeDefinition
+  };
+
+  payload.registries.upgrades = [upgradeDefinition];
+  payload.models.upgrades = {
+    categories: [
+      {
+        id: 'studio',
+        name: 'Studio Gear',
+        families: [
+          {
+            id: 'lighting',
+            name: 'Lighting',
+            description: 'Keep the set glowing.',
+            definitions: [upgradeModel]
+          }
+        ]
+      }
+    ],
+    overview: {
+      purchased: 0,
+      ready: 1,
+      total: 1,
+      note: 'Ready to deploy'
+    }
+  };
+
+  renderAll(payload);
+
+  const events = [];
+  const listener = () => events.push('upgrades');
+  document.addEventListener('upgrades:state-updated', listener);
+
+  updateCard(upgradeDefinition);
+
+  document.removeEventListener('upgrades:state-updated', listener);
+
+  assert.equal(events.length, 1, 'expected upgrade event to emit during targeted update');
+  const dockItems = document.querySelectorAll('#upgrade-dock li');
+  assert.ok(dockItems.length > 0, 'expected upgrade dock to render content');
 });
 
 test('renderAll populates study tracks and queue details', () => {
