@@ -573,10 +573,6 @@ export function definitionRequirementsMet(definition, state = getState()) {
   return requirements.every(req => isRequirementMet(req, state));
 }
 
-export function assetRequirementsMet(definition, state = getState()) {
-  return definitionRequirementsMet(definition, state);
-}
-
 export function assetRequirementsMetById(id, state = getState()) {
   const definition = getAssetDefinition(id);
   if (!definition) return true;

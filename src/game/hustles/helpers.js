@@ -1,4 +1,4 @@
-import { countActiveAssetInstances, getState } from '../../core/state.js';
+import { getState } from '../../core/state.js';
 import { buildAssetRequirementDescriptor } from '../requirements.js';
 
 export const AUDIENCE_CALL_REQUIREMENTS = [{ assetId: 'blog', count: 1 }];
@@ -71,17 +71,6 @@ export function describeHustleRequirements(definition, state = getState()) {
   const requirements = getHustleRequirements(definition);
   const descriptors = requirements.map(req => buildAssetRequirementDescriptor(req, state, 'asset'));
   return [...descriptors, ...describeDailyLimit(definition, state)];
-}
-
-export function areHustleRequirementsMet(definition, state = getState()) {
-  const requirements = getHustleRequirements(definition);
-  const assetsMet = requirements.every(req => countActiveAssetInstances(req.assetId, state) >= (Number(req.count) || 1));
-  if (!assetsMet) return false;
-  const usage = normalizeHustleDailyUsage(definition, state);
-  if (usage && Number.isFinite(usage.limit) && usage.limit > 0 && Math.max(0, Number(usage.remaining)) <= 0) {
-    return false;
-  }
-  return true;
 }
 
 export function getHustleDailyUsage(definition, state = getState()) {

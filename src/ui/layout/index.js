@@ -14,13 +14,8 @@ export function activateShellPanel(panelId) {
   layoutController.activateShellPanel(panelId);
 }
 
-export function syncLayoutView() {
-  layoutController.syncView();
-}
-
 export default {
   initLayoutControls,
   activateShellPanel,
-  applyCardFilters,
-  syncLayoutView
+  applyCardFilters
 };
