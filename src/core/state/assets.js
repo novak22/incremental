@@ -161,8 +161,3 @@ export function normalizeAssetState(definition, assetState = {}, context = {}) {
   return merged;
 }
 
-export default {
-  createAssetInstance,
-  normalizeAssetInstance,
-  normalizeAssetState
-};

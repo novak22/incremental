@@ -13,7 +13,3 @@ const { ensureSlice, getSliceState } = createRegistrySliceManager({
 
 export { ensureSlice, getSliceState };
 
-export default {
-  ensureSlice,
-  getSliceState
-};

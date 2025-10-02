@@ -51,7 +51,7 @@ test('classic view update flow routes through cards presenter with dashboard and
   assetState.instances = [activeInstance, setupInstance];
 
   const updateModule = await import('../../src/ui/update.js');
-  const layoutModule = await import('../../src/ui/layout.js');
+  const layoutModule = await import('../../src/ui/layout/index.js');
   const classicModule = await import('../../src/ui/views/classic/index.js');
 
   layoutModule.initLayoutControls();

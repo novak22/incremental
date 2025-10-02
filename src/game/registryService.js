@@ -76,15 +76,3 @@ export function getMetricDefinition(metricId) {
   return metricIndex.get(metricId) || null;
 }
 
-export default {
-  loadRegistry,
-  resetRegistry,
-  getRegistry,
-  getHustles,
-  getAssets,
-  getUpgrades,
-  getHustleDefinition,
-  getAssetDefinition,
-  getUpgradeDefinition,
-  getMetricDefinition
-};

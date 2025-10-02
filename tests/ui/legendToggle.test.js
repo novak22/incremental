@@ -5,7 +5,7 @@ import { ensureTestDom } from '../helpers/setupDom.js';
 test('event log panel toggles visibility from dashboard shortcut', async () => {
   ensureTestDom();
 
-  const { initLayoutControls } = await import('../../src/ui/layout.js');
+  const { initLayoutControls } = await import('../../src/ui/layout/index.js');
   initLayoutControls();
 
   const trigger = document.getElementById('open-event-log');

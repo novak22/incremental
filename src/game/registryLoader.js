@@ -7,4 +7,3 @@ export function loadDefaultRegistry() {
   return loadRegistry({ assets: ASSETS, hustles: HUSTLES, upgrades: UPGRADES });
 }
 
-export default { loadDefaultRegistry };

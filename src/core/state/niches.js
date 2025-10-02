@@ -53,8 +53,3 @@ export function ensureNicheStateShape(target, { fallbackDay = 1 } = {}) {
   nicheState.lastRollDay = Number.isFinite(storedDay) ? storedDay : fallbackDay;
 }
 
-export default {
-  ensureNicheStateShape,
-  isValidNicheId,
-  rollInitialNicheScore
-};

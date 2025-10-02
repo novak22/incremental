@@ -32,11 +32,3 @@ export function getMetricDefinition(metricId) {
   return getMetricDefinitionFromService(metricId);
 }
 
-export default {
-  configureRegistry,
-  getRegistrySnapshot,
-  getHustleDefinition,
-  getAssetDefinition,
-  getUpgradeDefinition,
-  getMetricDefinition
-};

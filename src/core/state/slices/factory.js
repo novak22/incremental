@@ -127,6 +127,3 @@ export function createRegistrySliceManager({
   };
 }
 
-export default {
-  createRegistrySliceManager
-};
