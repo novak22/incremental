@@ -42,6 +42,18 @@
   --browser-shadow-focus: 0 16px 38px rgba(139, 170, 255, 0.28);
 }
 
+.browser-visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
@@ -198,6 +210,158 @@ a {
   gap: 0.5rem;
 }
 
+.browser-notifications {
+  position: relative;
+  display: flex;
+}
+
+.browser-notifications__trigger {
+  position: relative;
+}
+
+.browser-notifications__icon {
+  font-size: 1.1rem;
+}
+
+.browser-notifications__badge {
+  position: absolute;
+  top: 0.15rem;
+  right: 0.15rem;
+  min-width: 1.15rem;
+  height: 1.15rem;
+  padding: 0 0.35rem;
+  border-radius: var(--browser-radius-pill);
+  background: var(--browser-danger);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 2px var(--browser-panel);
+}
+
+.browser-notifications__panel {
+  position: absolute;
+  top: calc(100% + 0.75rem);
+  right: 0;
+  width: min(380px, 90vw);
+  background: var(--browser-panel);
+  border: 1px solid var(--browser-panel-border);
+  border-radius: var(--browser-radius-md);
+  box-shadow: var(--browser-shadow-soft);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  z-index: 40;
+}
+
+.browser-notifications__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.browser-notifications__title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.browser-notifications__empty {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--browser-muted);
+}
+
+.browser-notifications__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  max-height: calc(18rem * 1.3);
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.browser-notifications__item {
+  width: 100%;
+  border: 1px solid transparent;
+  background: transparent;
+  color: inherit;
+  padding: 0.7rem 0.85rem;
+  border-radius: var(--browser-radius-md);
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 0.6rem;
+  row-gap: 0.35rem;
+  align-items: start;
+  text-align: left;
+  cursor: pointer;
+  transition: background 150ms ease, border-color 150ms ease, transform 150ms ease;
+}
+
+.browser-notifications__item:hover,
+.browser-notifications__item:focus-visible {
+  background: var(--browser-accent-soft);
+  border-color: var(--browser-accent);
+  outline: none;
+}
+
+.browser-notifications__item:active {
+  transform: translateY(1px);
+}
+
+.browser-notifications__item.is-unread {
+  border-color: var(--browser-accent);
+  background: rgba(37, 99, 235, 0.12);
+}
+
+:root[data-browser-theme="night"] .browser-notifications__item.is-unread {
+  background: rgba(139, 170, 255, 0.18);
+}
+
+.browser-notifications__message {
+  grid-column: 2;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.browser-notifications__meta {
+  grid-column: 2;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--browser-muted);
+}
+
+.browser-notifications__indicator {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: var(--browser-accent);
+  align-self: start;
+  margin-top: 0.2rem;
+  transition: transform 150ms ease, opacity 150ms ease;
+}
+
+.browser-notifications__indicator.is-hidden {
+  opacity: 0;
+  transform: scale(0);
+}
+
+.browser-notifications__meta-label {
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  font-size: 0.7rem;
+}
+
 .browser-address {
   display: grid;
   grid-template-columns: min-content 1fr;
@@ -260,6 +424,26 @@ a {
 
 .browser-button--icon {
   padding: 0.45rem 0.65rem;
+}
+
+.browser-button--text {
+  padding: 0.2rem 0.4rem;
+  background: transparent;
+  border: none;
+  color: var(--browser-accent);
+  font-weight: 600;
+}
+
+.browser-button--text:hover,
+.browser-button--text:focus-visible {
+  background: var(--browser-accent-soft);
+  border: none;
+  outline: none;
+  color: var(--browser-accent);
+}
+
+.browser-button--text:active {
+  transform: none;
 }
 
 .browser-theme-toggle__label {

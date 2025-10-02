@@ -16,7 +16,8 @@ function formatLogEntry(entry) {
     type: entry.type || 'info',
     message: String(entry.message ?? ''),
     timestamp: timestamp,
-    timeLabel: date ? date.toLocaleTimeString([], TIME_FORMAT_OPTIONS) : ''
+    timeLabel: date ? date.toLocaleTimeString([], TIME_FORMAT_OPTIONS) : '',
+    read: entry.read === true
   };
 }
 

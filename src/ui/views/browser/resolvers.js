@@ -12,6 +12,19 @@ const resolvers = {
     homeButton: root.getElementById('browser-home-button'),
     endDayButton: root.getElementById('browser-session-button')
   }),
+  browserNotifications: root => {
+    const container = root.querySelector('[data-role="browser-notifications"]');
+    if (!container) return null;
+    return {
+      container,
+      button: container.querySelector('#browser-notifications-button'),
+      panel: container.querySelector('#browser-notifications-panel'),
+      list: container.querySelector('#browser-notifications-list'),
+      empty: container.querySelector('#browser-notifications-empty'),
+      badge: container.querySelector('#browser-notifications-badge'),
+      markAll: container.querySelector('#browser-notifications-mark-all')
+    };
+  },
   themeToggle: root => root.getElementById('browser-theme-toggle'),
   browserTabs: root => ({
     container: root.getElementById('browser-tab-bar'),

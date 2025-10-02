@@ -613,6 +613,26 @@ function buildNotifications(state = {}) {
   return notifications;
 }
 
+function formatEventLogEntry(entry) {
+  if (!entry || typeof entry !== 'object') {
+    return null;
+  }
+
+  const timestamp = Number(entry.timestamp);
+  const date = Number.isFinite(timestamp) ? new Date(timestamp) : null;
+
+  return {
+    id: entry.id || (Number.isFinite(timestamp) ? `log:${timestamp}` : `log:${Date.now()}`),
+    timestamp: Number.isFinite(timestamp) ? timestamp : Date.now(),
+    message: String(entry.message ?? ''),
+    type: typeof entry.type === 'string' && entry.type ? entry.type : 'info',
+    read: entry.read === true,
+    timeLabel: date
+      ? date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      : ''
+  };
+}
+
 function buildEventLog(state = {}) {
   const log = Array.isArray(state.log) ? [...state.log] : [];
   if (!log.length) {
@@ -620,14 +640,14 @@ function buildEventLog(state = {}) {
   }
 
   return log
-    .sort((a, b) => b.timestamp - a.timestamp)
-    .slice(0, 4)
-    .map(entry => ({
-      id: entry.id || `log:${entry.timestamp}`,
-      timestamp: entry.timestamp,
-      message: entry.message,
-      timeLabel: new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    }));
+    .slice()
+    .sort((a, b) => {
+      const aTime = Number(a?.timestamp) || 0;
+      const bTime = Number(b?.timestamp) || 0;
+      return bTime - aTime;
+    })
+    .map(formatEventLogEntry)
+    .filter(Boolean);
 }
 
 function buildDailyStats(summary = {}) {
@@ -962,9 +982,10 @@ function buildNotificationModel(state = {}) {
 }
 
 function buildEventLogModel(state = {}) {
-  const entries = buildEventLog(state);
+  const allEntries = buildEventLog(state);
   return {
-    entries,
+    entries: allEntries.slice(0, 4),
+    allEntries,
     emptyMessage: 'Log is quiet. Run a hustle or buy an upgrade.'
   };
 }
@@ -992,6 +1013,8 @@ export function buildDashboardViewModel(state, summary = {}) {
     niche: buildNicheViewModel(state)
   };
 }
+
+export { buildEventLogModel };
 
 export default {
   buildDashboardViewModel,

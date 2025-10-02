@@ -40,13 +40,52 @@
           <span class="browser-theme-toggle__icon" aria-hidden="true">🌞</span>
           <span class="browser-theme-toggle__label">Light</span>
         </button>
-        <a
-          id="browser-classic-link"
-          class="browser-button"
-          href="index.html"
-          role="button"
-          title="Pop back to the classic dashboard shell"
-        >Classic Shell</a>
+        <div class="browser-notifications" data-role="browser-notifications">
+          <button
+            id="browser-notifications-button"
+            class="browser-button browser-button--icon browser-notifications__trigger"
+            type="button"
+            aria-haspopup="true"
+            aria-expanded="false"
+            title="View notifications"
+          >
+            <span class="browser-notifications__icon" aria-hidden="true">🔔</span>
+            <span class="browser-visually-hidden">Notifications</span>
+            <span
+              id="browser-notifications-badge"
+              class="browser-notifications__badge"
+              aria-hidden="true"
+              hidden
+            >0</span>
+          </button>
+          <div
+            id="browser-notifications-panel"
+            class="browser-notifications__panel"
+            role="region"
+            aria-label="Notifications"
+            hidden
+          >
+            <div class="browser-notifications__header">
+              <p class="browser-notifications__title">Notifications</p>
+              <button
+                id="browser-notifications-mark-all"
+                class="browser-button browser-button--text"
+                type="button"
+              >
+                Mark all as read
+              </button>
+            </div>
+            <p
+              id="browser-notifications-empty"
+              class="browser-notifications__empty"
+              hidden
+            ></p>
+            <ul
+              id="browser-notifications-list"
+              class="browser-notifications__list"
+            ></ul>
+          </div>
+        </div>
         <button id="browser-session-button" class="browser-button browser-button--primary" type="button">End Day</button>
       </div>
     </header>
