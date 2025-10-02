@@ -466,6 +466,7 @@ a {
 
 .browser-stage__pane--home .browser-layout {
   --browser-home-spacing: clamp(0.75rem, 1vw + 0.4rem, 1.25rem);
+  --browser-home-widget-gap: clamp(1rem, 1vw + 0.75rem, 1.6rem);
   max-width: none;
   margin: 0;
   padding: var(--browser-home-spacing);
@@ -489,7 +490,7 @@ a {
   width: 100%;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: var(--browser-home-spacing, 1.5rem);
+  gap: var(--browser-home-widget-gap, var(--browser-home-spacing, 1.5rem));
   align-items: stretch;
   justify-items: stretch;
   margin: 0;
