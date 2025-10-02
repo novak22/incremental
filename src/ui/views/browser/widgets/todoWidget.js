@@ -8,6 +8,7 @@ let currentDay = null;
 let lastModel = null;
 const focusModes = ['money', 'upgrades', 'balanced'];
 let focusMode = 'balanced';
+let pendingEntries = [];
 
 function bindEndDay(button) {
   if (!button || button.dataset.bound === 'true') return;
@@ -575,6 +576,7 @@ export function render(model = {}) {
   });
 
   const orderedPending = applyFocusOrdering(pending, focusMode);
+  pendingEntries = orderedPending;
 
   renderHours(model);
   updateNote(model, orderedPending.length);
@@ -588,7 +590,26 @@ export function render(model = {}) {
   renderCompleted();
 }
 
+export function hasPendingTasks() {
+  return pendingEntries.length > 0;
+}
+
+export function peekNextTask() {
+  return pendingEntries.length ? pendingEntries[0] : null;
+}
+
+export function runNextTask() {
+  const next = peekNextTask();
+  if (!next) {
+    return false;
+  }
+  return handleCompletion(next, lastModel);
+}
+
 export default {
   init,
-  render
+  render,
+  hasPendingTasks,
+  peekNextTask,
+  runNextTask
 };

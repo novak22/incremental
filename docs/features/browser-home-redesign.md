@@ -13,6 +13,7 @@
 - The ToDo widget now aggregates quick actions, asset upgrade recommendations, and enrollable study tracks into a single scrollable list. Tasks validate hour and cash requirements before rendering so the queue always reflects moves you can take right now.
 - A "Focus on" toggle lets players sort the ToDo queue for Money-first hustles, upgrade milestones, or an alternating blend of both by interleaving the two lists.
 - The ToDo widget seeds its Done column with any maintenance or study time already reserved for the current day so the schedule immediately reflects auto-funded commitments.
+- The browser chrome's End Day control now mirrors the ToDo widget: it fires the next queued task when work remains and flips to "Next Day" only after the list is clear.
 
 ## Player Impact
 - Players can scan the day's plan, finances, and workspace launchers at a glance without juggling two columns.
