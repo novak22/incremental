@@ -70,6 +70,14 @@ function getAvailableHours(model = {}) {
   return Math.max(0, available);
 }
 
+function getAvailableMoney(model = {}) {
+  const available = Number(model?.moneyAvailable);
+  if (!Number.isFinite(available)) {
+    return Infinity;
+  }
+  return Math.max(0, available);
+}
+
 function applyScrollerLimit(model = {}) {
   if (!elements?.listWrapper) return;
   const limit = Number(model?.scroller?.limit);
@@ -116,6 +124,8 @@ function normalizeEntries(model = {}) {
       const hasRemaining = Number.isFinite(rawRemaining);
       const remainingRuns = hasRemaining ? Math.max(0, rawRemaining) : null;
       const repeatable = Boolean(entry?.repeatable) || (hasRemaining && remainingRuns > 1);
+      const moneyCost = Number(entry?.moneyCost);
+      const normalizedMoney = Number.isFinite(moneyCost) ? Math.max(0, moneyCost) : 0;
       return {
         id,
         title: entry?.title || 'Action',
@@ -123,6 +133,7 @@ function normalizeEntries(model = {}) {
         onClick: typeof entry?.onClick === 'function' ? entry.onClick : null,
         durationHours: normalizedDuration,
         durationText,
+        moneyCost: normalizedMoney,
         repeatable,
         remainingRuns
       };
@@ -365,6 +376,7 @@ export function render(model = {}) {
 
   const entries = normalizeEntries(model);
   const availableHours = getAvailableHours(model);
+  const availableMoney = getAvailableMoney(model);
   const pending = entries.filter(entry => {
     const completion = completedItems.get(entry.id);
     const remainingRuns = getEffectiveRemainingRuns(entry, completion);
@@ -375,6 +387,11 @@ export function render(model = {}) {
       ? entry.durationHours <= availableHours
       : true;
     if (!canAfford) return false;
+
+    const moneyAffordable = Number.isFinite(availableMoney)
+      ? entry.moneyCost <= availableMoney
+      : true;
+    if (!moneyAffordable) return false;
 
     if (!completion) return true;
     return entry.repeatable;
