@@ -3,6 +3,7 @@ import { renderDashboard as baseRenderDashboard } from '../../dashboard.js';
 import dashboardPresenter from './dashboardPresenter.js';
 import cardsPresenter from './cardsPresenter.js';
 import layoutPresenter from './layoutPresenter.js';
+import headerActionPresenter from './headerActionPresenter.js';
 
 const browserView = {
   id: 'browser',
@@ -11,7 +12,8 @@ const browserView = {
   presenters: {
     dashboard: dashboardPresenter,
     cards: cardsPresenter,
-    layout: layoutPresenter
+    layout: layoutPresenter,
+    headerAction: headerActionPresenter
   },
   renderDashboard(state, summary) {
     baseRenderDashboard(state, summary, dashboardPresenter);
