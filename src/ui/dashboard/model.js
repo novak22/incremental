@@ -827,7 +827,8 @@ function buildQuickActionModel(state = {}) {
     hoursAvailableLabel: formatHours(hoursAvailable),
     hoursSpent,
     hoursSpentLabel: formatHours(hoursSpent),
-    day: clampNumber(state.day)
+    day: clampNumber(state.day),
+    moneyAvailable: clampNumber(state.money)
   };
 }
 
@@ -846,6 +847,7 @@ function buildAssetActionModel(state = {}) {
       timeCost,
       durationHours: timeCost,
       durationText: formatHours(timeCost),
+      moneyCost: Math.max(0, clampNumber(action.cost)),
       repeatable: Boolean(action.repeatable),
       remainingRuns: action.remainingRuns ?? null
     };
@@ -855,7 +857,99 @@ function buildAssetActionModel(state = {}) {
     emptyMessage: 'Every venture is humming along. Check back after today’s upkeep.',
     buttonClass: 'secondary',
     defaultLabel: 'Boost',
-    scroller: { limit: 6 }
+    scroller: { limit: 6 },
+    moneyAvailable: clampNumber(state.money)
+  };
+}
+
+function buildStudyEnrollmentSuggestions(state = {}) {
+  const suggestions = [];
+
+  if (!state || typeof state !== 'object') {
+    return suggestions;
+  }
+
+  for (const hustle of getHustles()) {
+    if (hustle?.tag?.type !== 'study') continue;
+    const action = hustle?.action;
+    if (!action?.onClick) continue;
+
+    let disabled = false;
+    if (typeof action.disabled === 'function') {
+      try {
+        disabled = action.disabled(state);
+      } catch (error) {
+        disabled = true;
+      }
+    } else {
+      disabled = Boolean(action.disabled);
+    }
+    if (disabled) continue;
+
+    const timeCost = Math.max(0, clampNumber(action.timeCost ?? hustle.time));
+    const tuition = Math.max(0, clampNumber(action.moneyCost));
+    const metaParts = [];
+    if (tuition > 0) {
+      metaParts.push(`$${formatMoney(tuition)} tuition`);
+    }
+    if (timeCost > 0) {
+      metaParts.push(`${formatHours(timeCost)} focus`);
+    }
+
+    const buttonLabel = typeof action.label === 'function'
+      ? action.label(state)
+      : action.label || 'Enroll';
+
+    suggestions.push({
+      id: hustle.id,
+      title: hustle.name,
+      subtitle: hustle.description,
+      meta: metaParts.join(' • '),
+      buttonLabel,
+      onClick: action.onClick,
+      timeCost,
+      durationHours: timeCost,
+      durationText: formatHours(timeCost),
+      moneyCost: tuition,
+      repeatable: false,
+      remainingRuns: null
+    });
+  }
+
+  suggestions.sort((a, b) => a.moneyCost - b.moneyCost);
+  return suggestions;
+}
+
+function buildStudyEnrollmentActionModel(state = {}) {
+  const safeState = state || {};
+  const suggestions = buildStudyEnrollmentSuggestions(safeState);
+  const entries = suggestions.map((action, index) => ({
+    id: action.id || `study-${index}`,
+    title: action.title,
+    subtitle: action.subtitle,
+    meta: action.meta,
+    buttonLabel: action.buttonLabel,
+    onClick: action.onClick,
+    timeCost: action.timeCost,
+    durationHours: action.durationHours,
+    durationText: action.durationText,
+    moneyCost: action.moneyCost,
+    repeatable: action.repeatable,
+    remainingRuns: action.remainingRuns
+  }));
+
+  const baseHours = clampNumber(safeState.baseTime) + clampNumber(safeState.bonusTime) + clampNumber(safeState.dailyBonusTime);
+  const hoursAvailable = Math.max(0, clampNumber(safeState.timeLeft));
+  const hoursSpent = Math.max(0, baseHours - hoursAvailable);
+
+  return {
+    entries,
+    emptyMessage: 'No study tracks are ready to enroll right now.',
+    moneyAvailable: clampNumber(safeState.money),
+    hoursAvailable,
+    hoursAvailableLabel: formatHours(hoursAvailable),
+    hoursSpent,
+    hoursSpentLabel: formatHours(hoursSpent)
   };
 }
 
@@ -891,6 +985,7 @@ export function buildDashboardViewModel(state, summary = {}) {
     queue: buildQueueModel(summary),
     quickActions: buildQuickActionModel(state),
     assetActions: buildAssetActionModel(state),
+    studyActions: buildStudyEnrollmentActionModel(state),
     notifications: buildNotificationModel(state),
     eventLog: buildEventLogModel(state),
     dailyStats: buildDailyStats(summary),
@@ -901,5 +996,6 @@ export function buildDashboardViewModel(state, summary = {}) {
 export default {
   buildDashboardViewModel,
   buildQuickActions,
-  buildAssetUpgradeRecommendations
+  buildAssetUpgradeRecommendations,
+  buildStudyEnrollmentActionModel
 };
