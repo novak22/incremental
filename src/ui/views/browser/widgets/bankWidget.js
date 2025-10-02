@@ -176,7 +176,7 @@ function render(context = {}) {
     return;
   }
 
-  const model = buildFinanceModel(undefined, {
+  const model = buildFinanceModel(undefined, undefined, {
     getState: () => context.state
   });
   renderStats(model?.header || {});
