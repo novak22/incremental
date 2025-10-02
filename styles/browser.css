@@ -257,6 +257,10 @@ a {
   z-index: 40;
 }
 
+.browser-notifications__panel[hidden] {
+  display: none !important;
+}
+
 .browser-notifications__header {
   display: flex;
   align-items: center;
