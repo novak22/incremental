@@ -607,6 +607,13 @@ export function createUpgrade(config) {
     actions: config.affects?.actions ? { ...config.affects.actions } : {}
   };
   const synergies = Array.isArray(config.synergies) ? config.synergies.slice() : [];
+  const baseState = {
+    ...(config.defaultState ? { ...config.defaultState } : { purchased: false })
+  };
+  if (!Object.prototype.hasOwnProperty.call(baseState, 'purchasedDay')) {
+    baseState.purchasedDay = null;
+  }
+
   const definition = {
     ...config,
     type: 'upgrade',
@@ -618,7 +625,7 @@ export function createUpgrade(config) {
     effects,
     affects,
     synergies,
-    defaultState: config.defaultState || { purchased: false }
+    defaultState: baseState
   };
   definition.requirements = requirements;
 
@@ -776,6 +783,7 @@ export function createUpgrade(config) {
         if (!config.repeatable) {
           context.upgradeState.purchased = true;
         }
+        context.upgradeState.purchasedDay = context.state?.day ?? null;
         const skillLabel = typeof definition.name === 'string' ? definition.name : config.id;
         const skillXp = awardSkillProgress({
           skills: config.skills,

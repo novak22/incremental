@@ -5,6 +5,7 @@ import { buildFinanceModel } from '../../cards/model/index.js';
 import { createStat, formatRoi } from './components/widgets.js';
 import blogpressApp from './components/blogpress.js';
 import learnlyApp from './components/learnly.js';
+import shopstackApp from './components/shopstack.js';
 
 let cachedRegistries = null;
 let cachedModels = null;
@@ -80,16 +81,6 @@ function ensurePageContent(page, builder) {
     builder(refs);
   }
   return refs;
-}
-
-function buildDefinitionMap(definitions = []) {
-  const map = new Map();
-  definitions.forEach(definition => {
-    if (definition?.id) {
-      map.set(definition.id, definition);
-    }
-  });
-  return map;
 }
 
 function renderHustlesPage(definitions = [], models = []) {
@@ -376,97 +367,26 @@ function renderBlogpressPage(definitions = [], model = {}) {
   return { id: page.id, meta };
 }
 
-function renderUpgradeCard(definition, model) {
-  const card = document.createElement('article');
-  card.className = 'browser-card browser-card--upgrade';
-  card.dataset.upgrade = model.id;
-  card.dataset.ready = model.snapshot?.ready ? 'true' : 'false';
-  card.dataset.purchased = model.snapshot?.purchased ? 'true' : 'false';
-
-  const header = document.createElement('header');
-  header.className = 'browser-card__header';
-  const title = document.createElement('h2');
-  title.className = 'browser-card__title';
-  title.textContent = model.name;
-  header.appendChild(title);
-  card.appendChild(header);
-
-  if (model.description) {
-    const description = document.createElement('p');
-    description.className = 'browser-card__summary';
-    description.textContent = model.description;
-    card.appendChild(description);
-  }
-
-  const stats = document.createElement('div');
-  stats.className = 'browser-card__stats';
-  stats.append(
-    createStat('Cost', `$${formatMoney(model.cost || 0)}`),
-    createStat('Status', model.snapshot?.ready ? 'Ready to launch' : model.snapshot?.purchased ? 'Owned' : 'Locked')
-  );
-  card.appendChild(stats);
-
-  const actions = document.createElement('div');
-  actions.className = 'browser-card__actions';
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.className = 'browser-card__button browser-card__button--primary';
-  button.textContent = definition?.action?.label || 'Install';
-  const disabled = model.snapshot?.purchased || model.snapshot?.disabled;
-  button.disabled = Boolean(disabled) || !definition?.action;
-  button.addEventListener('click', () => {
-    if (button.disabled) return;
-    definition.action?.onClick?.();
-  });
-  actions.appendChild(button);
-  card.appendChild(actions);
-
-  return card;
-}
-
 function renderUpgradesPage(definitions = [], models = {}) {
   const page = SERVICE_PAGES.find(entry => entry.type === 'upgrades');
   if (!page) return null;
 
   const refs = ensurePageContent(page, ({ body }) => {
-    body.innerHTML = '';
+    if (!body.querySelector('[data-role="shopstack-root"]')) {
+      body.innerHTML = '';
+      const wrapper = document.createElement('div');
+      wrapper.dataset.role = 'shopstack-root';
+      body.appendChild(wrapper);
+    }
   });
   if (!refs) return null;
 
-  const definitionMap = buildDefinitionMap(definitions);
-  const categories = Array.isArray(models.categories) ? models.categories : [];
-  let readyCount = 0;
+  const mount = refs.body.querySelector('[data-role="shopstack-root"]');
+  if (!mount) return null;
 
-  const grid = document.createElement('div');
-  grid.className = 'browser-card-grid';
-
-  categories.forEach(category => {
-    (category?.families || []).forEach(family => {
-      (family?.definitions || []).forEach(model => {
-        const definition = model.definition || definitionMap.get(model.id);
-        if (!definition) return;
-        if (model.snapshot?.ready) {
-          readyCount += 1;
-        }
-        const card = renderUpgradeCard(definition, model);
-        grid.appendChild(card);
-      });
-    });
-  });
-
-  if (!grid.children.length) {
-    const empty = document.createElement('p');
-    empty.className = 'browser-empty';
-    empty.textContent = 'No upgrades visible yet. Meet a prerequisite or stack more cash to unlock new toys.';
-    refs.body.appendChild(empty);
-  } else {
-    refs.body.appendChild(grid);
-  }
-
-  return {
-    id: page.id,
-    meta: readyCount > 0 ? `${readyCount} upgrade${readyCount === 1 ? '' : 's'} ready` : 'Browse upgrades for upcoming boosts'
-  };
+  const summary = shopstackApp.render(models, { mount, page, definitions });
+  const meta = summary?.meta || models?.overview?.note || 'Browse upgrades for upcoming boosts';
+  return { id: page.id, meta };
 }
 
 function renderEducationPage(definitions = [], model = {}) {
