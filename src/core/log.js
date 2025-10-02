@@ -3,6 +3,7 @@ import { createId } from './helpers.js';
 import { getState } from './state.js';
 import { buildLogModel } from '../ui/log/model.js';
 import { getActiveView } from '../ui/viewManager.js';
+import { saveState } from './storage.js';
 import classicLogPresenter from '../ui/views/classic/logPresenter.js';
 
 export function addLog(message, type = 'info') {
@@ -31,6 +32,7 @@ export function markLogEntryRead(entryId) {
     return false;
   }
   entry.read = true;
+  saveState();
   renderLog();
   return true;
 }
@@ -46,6 +48,7 @@ export function markAllLogEntriesRead() {
     }
   });
   if (updated > 0) {
+    saveState();
     renderLog();
   }
   return updated;

@@ -104,6 +104,10 @@ function formatTypeLabel(type) {
   return TYPE_LABELS[normalized] || normalized.replace(/\b\w/g, char => char.toUpperCase());
 }
 
+function getUnreadEntries(entries = []) {
+  return entries.filter(entry => entry && entry.read !== true);
+}
+
 function renderBadge(entries = []) {
   const { badge, button } = getRefs();
   if (!badge || !button) return;
@@ -124,7 +128,8 @@ function renderBadge(entries = []) {
 function renderEmptyState(entries = [], emptyMessage = '') {
   const { empty } = getRefs();
   if (!empty) return;
-  if (!entries.length) {
+  const unread = getUnreadEntries(entries);
+  if (!unread.length) {
     empty.hidden = false;
     empty.textContent = emptyMessage || 'You are all caught up.';
   } else {
@@ -193,15 +198,16 @@ function createEntryButton(entry) {
 function renderList(entries = []) {
   const { list } = getRefs();
   if (!list) return;
+  const unreadEntries = getUnreadEntries(entries);
   list.innerHTML = '';
-  entries.forEach(entry => {
+  unreadEntries.forEach(entry => {
     if (!entry) return;
     const item = document.createElement('li');
     const button = createEntryButton(entry);
     item.appendChild(button);
     list.appendChild(item);
   });
-  list.hidden = entries.length === 0;
+  list.hidden = unreadEntries.length === 0;
 }
 
 function refreshFromState() {
