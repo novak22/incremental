@@ -466,7 +466,8 @@ a {
 
 .browser-stage__pane--home .browser-layout {
   --browser-home-spacing: clamp(0.75rem, 1vw + 0.4rem, 1.25rem);
-  --browser-home-widget-gap: clamp(1rem, 1vw + 0.75rem, 1.6rem);
+  --browser-home-widget-gap: clamp(0.9rem, 1vw + 0.55rem, 1.4rem);
+  --browser-home-widget-spacer: clamp(0.4rem, 0.6vw, 0.55rem);
   max-width: none;
   margin: 0;
   padding: var(--browser-home-spacing);
@@ -532,7 +533,9 @@ a {
   background: var(--browser-panel);
   border: 1px solid var(--browser-panel-border);
   border-radius: var(--browser-radius-lg);
-  box-shadow: var(--browser-shadow-soft);
+  box-shadow:
+    0 0 0 var(--browser-home-widget-spacer, 0.5rem) var(--browser-surface),
+    var(--browser-shadow-soft);
   padding: 1.1rem 1.2rem;
   display: flex;
   flex-direction: column;
