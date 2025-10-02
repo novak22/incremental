@@ -47,6 +47,15 @@ export const SERVICE_PAGES = [
     type: 'videotube'
   },
   {
+    id: 'shopily',
+    slug: 'shopily',
+    label: 'Shopily',
+    headline: 'Shopily Storefront Studio',
+    tagline: 'Launch dropshipping brands, monitor ROI, and trigger upgrades.',
+    icon: '🛒',
+    type: 'shopily'
+  },
+  {
     id: 'blogpress',
     slug: 'blogpress',
     label: 'BlogPress',

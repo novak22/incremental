@@ -8,6 +8,7 @@ import digishelfApp from './components/digishelf.js';
 import videotubeApp from './components/videotube.js';
 import learnlyApp from './components/learnly.js';
 import shopstackApp from './components/shopstack.js';
+import shopilyApp from './components/shopily.js';
 
 let cachedRegistries = null;
 let cachedModels = null;
@@ -410,6 +411,28 @@ function renderBlogpressPage(definitions = [], model = {}) {
 
   const summary = blogpressApp.render(model, { mount, page });
   const meta = summary?.meta || model?.summary?.meta || 'Launch your first blog';
+  return { id: page.id, meta };
+}
+
+function renderShopilyPage(definitions = [], model = {}) {
+  const page = SERVICE_PAGES.find(entry => entry.type === 'shopily');
+  if (!page) return null;
+
+  const refs = ensurePageContent(page, ({ body }) => {
+    if (!body.querySelector('[data-role="shopily-root"]')) {
+      body.innerHTML = '';
+      const wrapper = document.createElement('div');
+      wrapper.dataset.role = 'shopily-root';
+      body.appendChild(wrapper);
+    }
+  });
+  if (!refs) return null;
+
+  const mount = refs.body.querySelector('[data-role="shopily-root"]');
+  if (!mount) return null;
+
+  const summary = shopilyApp.render(model, { mount, page });
+  const meta = summary?.meta || model?.summary?.meta || 'Launch your first store';
   return { id: page.id, meta };
 }
 
@@ -1260,6 +1283,8 @@ function renderServices(registries = {}, models = {}) {
   if (digishelfSummary) summaries.push(digishelfSummary);
   const videotubeSummary = renderVideoTubePage(registries.assets, models.videotube);
   if (videotubeSummary) summaries.push(videotubeSummary);
+  const shopilySummary = renderShopilyPage(registries.assets, models.shopily);
+  if (shopilySummary) summaries.push(shopilySummary);
   const blogpressSummary = renderBlogpressPage(registries.assets, models.blogpress);
   if (blogpressSummary) summaries.push(blogpressSummary);
   const upgradeSummary = renderUpgradesPage(registries.upgrades, models.upgrades);
