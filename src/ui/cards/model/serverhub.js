@@ -17,6 +17,7 @@ import {
   getQualityTracks
 } from '../../../game/assets/quality.js';
 import { describeAssetLaunchAvailability } from './assets.js';
+import { registerModelBuilder } from '../modelBuilderRegistry.js';
 import { getUpgradeSnapshot, describeUpgradeStatus } from './upgrades.js';
 
 function clampNumber(value) {
@@ -445,3 +446,9 @@ export default function buildServerHubModel(assetDefinitions = [], upgradeDefini
 export function selectServerHubNiche(assetId, instanceId, nicheId) {
   return assignInstanceToNiche(assetId, instanceId, nicheId);
 }
+
+registerModelBuilder(
+  'serverhub',
+  (registries = {}, context = {}) =>
+    buildServerHubModel(registries.assets ?? [], registries.upgrades ?? [], context.state)
+);

@@ -17,6 +17,7 @@ import {
   getQualityTracks
 } from '../../../game/assets/quality.js';
 import { describeAssetLaunchAvailability } from './assets.js';
+import { registerModelBuilder } from '../modelBuilderRegistry.js';
 
 function clampNumber(value) {
   const number = Number(value);
@@ -350,3 +351,9 @@ export default function buildBlogpressModel(assetDefinitions = [], upgradeDefini
 export function selectNiche(assetId, instanceId, nicheId) {
   return assignInstanceToNiche(assetId, instanceId, nicheId);
 }
+
+registerModelBuilder(
+  'blogpress',
+  (registries = {}, context = {}) =>
+    buildBlogpressModel(registries.assets ?? [], registries.upgrades ?? [], context.state)
+);

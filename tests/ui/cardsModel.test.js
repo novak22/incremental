@@ -5,6 +5,8 @@ import {
   buildUpgradeModels,
   buildEducationModels
 } from '../../src/ui/cards/model/index.js';
+import { buildModelMap, registerModelBuilder } from '../../src/ui/cards/modelBuilderRegistry.js';
+import { ensureRegistryReady } from '../../src/game/registryBootstrap.js';
 
 test('buildHustleModels mirrors availability filters', () => {
   const hustles = [
@@ -158,4 +160,27 @@ test('buildEducationModels summarises study queue totals', () => {
   assert.equal(models.queue.totalHours, 2);
   assert.equal(models.queue.totalLabel.includes('Total ETA'), true);
   assert.equal(models.queue.capLabel, 'Daily cap: 8h');
+});
+
+test('model builder registry composes registered card models', () => {
+  const registries = {
+    hustles: [],
+    education: [],
+    assets: [],
+    upgrades: []
+  };
+
+  const dispose = registerModelBuilder('customCard', () => ({ id: 'customCard', label: 'Custom' }));
+
+  try {
+    ensureRegistryReady();
+    const models = buildModelMap(registries);
+    assert.ok(models.hustles, 'expected default hustle models to be present');
+    assert.ok(models.education, 'expected default education models to be present');
+    assert.ok(models.assets, 'expected default asset models to be present');
+    assert.ok(models.upgrades, 'expected default upgrade models to be present');
+    assert.deepEqual(models.customCard, { id: 'customCard', label: 'Custom' });
+  } finally {
+    dispose();
+  }
 });

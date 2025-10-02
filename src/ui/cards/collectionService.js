@@ -1,16 +1,6 @@
 import { ensureRegistryReady } from '../../game/registryBootstrap.js';
-import {
-  buildAssetModels,
-  buildDigishelfModel,
-  buildBlogpressModel,
-  buildShopilyModel,
-  buildServerHubModel,
-  buildEducationModels,
-  buildHustleModels,
-  buildUpgradeModels,
-  buildVideoTubeModel,
-  buildTrendsModel
-} from './model/index.js';
+import './model/index.js';
+import { buildModelMap } from './modelBuilderRegistry.js';
 
 let cachedRegistries = null;
 let cachedModels = null;
@@ -47,18 +37,7 @@ function buildRegistries() {
 }
 
 function buildModels(registries) {
-  return {
-    hustles: buildHustleModels(registries.hustles),
-    education: buildEducationModels(registries.education),
-    assets: buildAssetModels(registries.assets),
-    digishelf: buildDigishelfModel(registries.assets),
-    shopily: buildShopilyModel(registries.assets, registries.upgrades),
-    serverhub: buildServerHubModel(registries.assets, registries.upgrades),
-    upgrades: buildUpgradeModels(registries.upgrades),
-    blogpress: buildBlogpressModel(registries.assets, registries.upgrades),
-    videotube: buildVideoTubeModel(registries.assets),
-    trends: buildTrendsModel()
-  };
+  return buildModelMap(registries);
 }
 
 function getCollections() {

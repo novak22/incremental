@@ -22,6 +22,7 @@ import {
 } from '../../../game/assets/quality.js';
 import { getUpgradeSnapshot, describeUpgradeStatus } from './upgrades.js';
 import { describeAssetLaunchAvailability } from './assets.js';
+import { registerModelBuilder } from '../modelBuilderRegistry.js';
 
 function clampNumber(value) {
   const number = Number(value);
@@ -424,3 +425,9 @@ export default function buildShopilyModel(assetDefinitions = [], upgradeDefiniti
 export function selectNiche(assetId, instanceId, nicheId) {
   return assignInstanceToNiche(assetId, instanceId, nicheId);
 }
+
+registerModelBuilder(
+  'shopily',
+  (registries = {}, context = {}) =>
+    buildShopilyModel(registries.assets ?? [], registries.upgrades ?? [], context.state)
+);
