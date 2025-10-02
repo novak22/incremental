@@ -20,10 +20,6 @@ function registerModelBuilder(key, builder, { isDefault = false } = {}) {
   return () => builders.delete(normalizedKey);
 }
 
-function unregisterModelBuilder(key) {
-  builders.delete(key);
-}
-
 function getModelBuilderEntries() {
   return Array.from(builders.entries());
 }
@@ -34,11 +30,6 @@ function buildModelMap(registries, context = {}) {
     models[key] = builder(registries, context);
   });
   return models;
-}
-
-function resetModelBuilders() {
-  builders.clear();
-  defaultsRegistered = false;
 }
 
 function hasRegisteredBuilders() {
@@ -57,10 +48,8 @@ function ensureDefaultBuilders(registerDefaults) {
 
 export {
   registerModelBuilder,
-  unregisterModelBuilder,
   getModelBuilderEntries,
   buildModelMap,
-  resetModelBuilders,
   hasRegisteredBuilders,
   ensureDefaultBuilders
 };
