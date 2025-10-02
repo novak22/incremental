@@ -817,7 +817,9 @@ function deriveWorkspacePath() {
 
 function render(model, { mount, definitions = [], onRouteChange } = {}) {
   currentMount = mount || currentMount;
-  workspacePathController.setListener(onRouteChange);
+  if (typeof onRouteChange === 'function') {
+    workspacePathController.setListener(onRouteChange);
+  }
   currentContext = buildContext(model, definitions);
   if (currentState.view === VIEW_DETAIL) {
     ensureSelectedCourse();

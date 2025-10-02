@@ -872,7 +872,9 @@ function render(model, { mount, page, onRouteChange } = {}) {
   currentModel = model || currentModel;
   currentMount = mount || currentMount;
   currentPageMeta = page || currentPageMeta;
-  workspacePathController.setListener(onRouteChange);
+  if (typeof onRouteChange === 'function') {
+    workspacePathController.setListener(onRouteChange);
+  }
   ensureSelectedStore();
   renderApp();
   const urlPath = workspacePathController.getPath();

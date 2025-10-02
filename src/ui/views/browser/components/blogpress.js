@@ -816,7 +816,9 @@ export function render(model = {}, context = {}) {
   if (context.page) {
     currentPageMeta = context.page;
   }
-  workspacePathController.setListener(context.onRouteChange);
+  if (typeof context.onRouteChange === 'function') {
+    workspacePathController.setListener(context.onRouteChange);
+  }
   ensureSelectedBlog();
   workspacePathController.sync();
 
