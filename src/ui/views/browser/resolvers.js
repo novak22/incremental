@@ -10,7 +10,6 @@ const resolvers = {
   }),
   browserSessionControls: root => ({
     homeButton: root.getElementById('browser-home-button'),
-    commandButton: root.getElementById('browser-command-button'),
     endDayButton: root.getElementById('browser-session-button')
   }),
   themeToggle: root => root.getElementById('browser-theme-toggle'),
