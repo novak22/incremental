@@ -177,10 +177,6 @@ function updateSortModeUI() {
       : 'Arrange the apps';
   }
 
-  if (elements?.sortIndicator) {
-    elements.sortIndicator.hidden = !(sortMode && allowSort);
-  }
-
   if (elements?.container) {
     elements.container.classList.toggle('is-sorting', sortMode && allowSort);
   }
