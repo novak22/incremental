@@ -581,6 +581,93 @@ a {
   gap: 0.65rem;
 }
 
+.apps-widget__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.apps-widget__intro {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.apps-widget__controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.apps-widget__sort-toggle {
+  border: 1px solid var(--browser-panel-border);
+  background: var(--browser-panel-elevated);
+  color: var(--browser-subtle);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.28rem 0.65rem;
+  border-radius: var(--browser-radius-pill);
+  cursor: pointer;
+  transition: color 140ms ease, background-color 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.apps-widget__sort-toggle:hover,
+.apps-widget__sort-toggle:focus-visible {
+  color: var(--browser-accent);
+  border-color: var(--browser-accent);
+  background: var(--browser-accent-soft);
+  outline: none;
+}
+
+.apps-widget__sort-toggle[aria-pressed="true"] {
+  color: var(--browser-accent);
+  border-color: var(--browser-accent);
+  background: rgba(37, 99, 235, 0.12);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.18);
+}
+
+.apps-widget__sort-toggle:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.apps-widget__sort-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--browser-radius-pill);
+  background: var(--browser-accent-soft);
+  color: var(--browser-accent);
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.apps-widget.is-sorting .apps-widget__tile {
+  cursor: grab;
+  user-select: none;
+}
+
+.apps-widget.is-sorting .apps-widget__tile:active {
+  cursor: grabbing;
+}
+
+.apps-widget__tile.is-dragging {
+  opacity: 0.85;
+  box-shadow: 0 12px 34px rgba(37, 99, 235, 0.28);
+}
+
+.apps-widget__tile.is-drop-target {
+  border-color: var(--browser-accent);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.22);
+}
+
 .todo-widget {
   gap: 1.3rem;
   flex: 1 1 auto;
