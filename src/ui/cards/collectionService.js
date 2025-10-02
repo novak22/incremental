@@ -7,7 +7,8 @@ import {
   buildEducationModels,
   buildHustleModels,
   buildUpgradeModels,
-  buildVideoTubeModel
+  buildVideoTubeModel,
+  buildTrendsModel
 } from './model/index.js';
 
 let cachedRegistries = null;
@@ -53,7 +54,8 @@ function buildModels(registries) {
     shopily: buildShopilyModel(registries.assets, registries.upgrades),
     upgrades: buildUpgradeModels(registries.upgrades),
     blogpress: buildBlogpressModel(registries.assets, registries.upgrades),
-    videotube: buildVideoTubeModel(registries.assets)
+    videotube: buildVideoTubeModel(registries.assets),
+    trends: buildTrendsModel()
   };
 }
 

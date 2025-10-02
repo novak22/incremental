@@ -11,6 +11,15 @@ export const SERVICE_PAGES = [
     type: 'finance'
   },
   {
+    id: 'trends',
+    slug: 'trends',
+    label: 'Trends',
+    headline: 'Trends Intelligence Lab',
+    tagline: 'Monitor niche momentum, payouts, and watchlist signals in one hub.',
+    icon: '📈',
+    type: 'trends'
+  },
+  {
     id: 'downwork',
     slug: 'downwork',
     label: 'DownWork',
