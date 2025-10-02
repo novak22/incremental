@@ -20,7 +20,7 @@ const VIEW_ROUTES = {
   [VIEW_CREATE]: { label: 'Create New Video', path: '/create' }
 };
 
-const BASE_URL = 'https://videotube.hub';
+const ROUTE_PREFIX = '#/videotube';
 
 let currentState = {
   view: VIEW_DASHBOARD,
@@ -70,14 +70,27 @@ function getViewPath(view, options = {}) {
   return VIEW_ROUTES[view]?.path || '/';
 }
 
-function buildViewUrl(view, options = {}) {
+function buildBrowserFragment(view, options = {}) {
   const path = getViewPath(view, options);
-  return `${BASE_URL}${path}`;
+  if (path === '/' || path === '' || path === null || path === undefined) {
+    return ROUTE_PREFIX;
+  }
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  return `${ROUTE_PREFIX}${normalizedPath}`;
+}
+
+function buildBrowserUrl(view, options = {}) {
+  const fragment = buildBrowserFragment(view, options);
+  if (typeof window !== 'undefined' && window.location) {
+    const basePath = window.location.pathname || '';
+    return `${basePath}${fragment}`;
+  }
+  return `browser.html${fragment}`;
 }
 
 function updateHistory(view, options = {}) {
   if (typeof window === 'undefined' || !window.history) return;
-  const path = getViewPath(view, options);
+  const fragment = buildBrowserFragment(view, options);
   const state = {
     view,
     videoId:
@@ -86,15 +99,23 @@ function updateHistory(view, options = {}) {
         : options.videoId,
     locationPath: options.locationPath || null
   };
-  if (window.location.pathname === path) {
-    window.history.replaceState(state, '', path);
+  if ((window.location.hash || '') === fragment) {
+    window.history.replaceState(state, '', fragment);
   } else {
-    window.history.pushState(state, '', path);
+    window.history.pushState(state, '', fragment);
   }
 }
 
 function parseLocation(location = {}) {
-  const path = location.pathname || '/';
+  const hash = location.hash || '';
+  const normalized = hash.startsWith('#') ? hash.slice(1) : hash;
+  if (!normalized) {
+    return { view: VIEW_DASHBOARD };
+  }
+  if (!normalized.startsWith('/videotube')) {
+    return { view: VIEW_DASHBOARD };
+  }
+  const path = normalized.slice('/videotube'.length) || '/';
   if (path.startsWith('/analytics')) {
     return { view: VIEW_ANALYTICS };
   }
@@ -194,7 +215,7 @@ function createNavLink(view) {
   const link = document.createElement('a');
   link.className = 'videotube-tab';
   link.dataset.view = view;
-  link.href = buildViewUrl(view);
+  link.href = buildBrowserUrl(view);
   link.textContent = config?.label || view;
   link.addEventListener('click', event => {
     event.preventDefault();
