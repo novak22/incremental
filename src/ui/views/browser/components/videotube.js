@@ -117,7 +117,11 @@ function renderHeader(model) {
   launchButton.addEventListener('click', () => setView(VIEW_CREATE));
   actions.appendChild(launchButton);
 
-  header.append(title, nav, actions);
+  const masthead = document.createElement('div');
+  masthead.className = 'videotube__masthead';
+  masthead.append(title, actions);
+
+  header.append(masthead, nav);
   return header;
 }
 

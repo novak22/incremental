@@ -150,7 +150,11 @@ function renderTopBar(model) {
   actions.className = 'shopily-topbar__actions';
   actions.appendChild(createLaunchButton(model.launch));
 
-  bar.append(title, nav, actions);
+  const topRow = document.createElement('div');
+  topRow.className = 'shopily-topbar__row';
+  topRow.append(title, actions);
+
+  bar.append(topRow, nav);
   return bar;
 }
 
