@@ -106,6 +106,31 @@ function resetCompletedForDay(day) {
   }
 }
 
+function seedAutoCompletedEntries(entries = []) {
+  if (!Array.isArray(entries) || !entries.length) return;
+  entries.forEach((entry, index) => {
+    const id = entry?.id || `auto-${index}`;
+    if (!id) return;
+    const existing = completedItems.get(id);
+    const hours = Number(entry?.durationHours);
+    const durationHours = Number.isFinite(hours) && hours > 0 ? hours : 0;
+    const durationText = entry?.durationText || formatDuration(durationHours);
+    const count = Number.isFinite(entry?.count) && entry.count > 0 ? entry.count : 1;
+    const completedAt = existing?.completedAt ?? Date.now();
+
+    completedItems.set(id, {
+      id,
+      title: entry?.title || 'Scheduled work',
+      durationHours,
+      durationText,
+      repeatable: false,
+      remainingRuns: null,
+      count,
+      completedAt
+    });
+  });
+}
+
 function formatDuration(hours) {
   const numeric = Number(hours);
   if (!Number.isFinite(numeric) || numeric <= 0) {
@@ -523,6 +548,7 @@ export function render(model = {}) {
   lastModel = model || {};
   syncFocusButtons();
   resetCompletedForDay(model.day);
+  seedAutoCompletedEntries(model.autoCompletedEntries);
   applyScrollerLimit(model);
 
   const entries = normalizeEntries(model);
