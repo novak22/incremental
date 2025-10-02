@@ -43,6 +43,8 @@ import {
   getHustleEffectMultiplier,
   wouldExceedSlotCapacity
 } from '../upgrades/effects.js';
+import { resolveDetailEntry } from '../upgrades/detailResolvers.js';
+import { resolveRequirement as resolveUpgradeRequirement } from '../upgrades/requirementResolvers.js';
 
 function formatHourDetail(hours, effective) {
   if (!hours) return '⏳ Time: <strong>Instant</strong>';
@@ -595,9 +597,15 @@ function renderUpgradeRequirement(requirement) {
   }
 }
 
-export function createUpgrade(config) {
+export function createUpgrade(config, hooks = {}) {
   const rawRequirements = [...ensureArray(config.requires), ...ensureArray(config.prerequisites)];
-  const requirements = normalizeUpgradeRequirements(rawRequirements);
+  const requirements = normalizeUpgradeRequirements(rawRequirements).map(requirement => {
+    const resolved = resolveUpgradeRequirement(requirement);
+    if (typeof hooks.transformRequirement === 'function') {
+      return hooks.transformRequirement(resolved, config) || resolved;
+    }
+    return resolved;
+  });
   const provides = normalizeSlotMap(config.provides);
   const consumes = normalizeSlotMap(config.consumes);
   const effects = { ...(config.effects || {}) };
@@ -663,7 +671,13 @@ export function createUpgrade(config) {
   if (definition.exclusivityGroup) {
     details.push(() => `🔒 Exclusive lane: <strong>${formatKeyLabel(definition.exclusivityGroup)}</strong>`);
   }
-  definition.details = [...details, ...(config.details || [])];
+  const configDetails = ensureArray(config.details)
+    .map(entry => resolveDetailEntry(entry))
+    .filter(Boolean);
+  const hookDetails = ensureArray(hooks.details)
+    .map(entry => resolveDetailEntry(entry))
+    .filter(Boolean);
+  definition.details = [...details, ...configDetails, ...hookDetails];
 
   const costMetric = buildMetricConfig(config.id, 'upgrade', config.metrics?.cost, {
     key: `upgrade:${config.id}`,
@@ -690,9 +704,9 @@ export function createUpgrade(config) {
   };
 
   const actionConfig = {
-    className: config.actionClassName || 'secondary',
-    label: config.actionLabel,
-    labels: config.labels || {}
+    className: hooks.actionClassName || config.actionClassName || 'secondary',
+    label: hooks.actionLabel || config.actionLabel,
+    labels: { ...(config.labels || {}), ...(hooks.labels || {}) }
   };
 
   function computeLabel(context) {
@@ -744,6 +758,7 @@ export function createUpgrade(config) {
     if (!context.upgradeState?.purchased && context.conflict) return true;
     if (context.slotConflict) return true;
     if (config.cost && context.state.money < config.cost) return true;
+    if (typeof hooks.disabled === 'function' && hooks.disabled(context)) return true;
     if (typeof config.disabled === 'function' && config.disabled(context)) return true;
     return false;
   }
@@ -792,6 +807,7 @@ export function createUpgrade(config) {
           state: context.state
         });
         context.skillXpAwarded = skillXp;
+        hooks.onPurchase?.(context);
         config.onPurchase?.(context);
         if (config.logMessage) {
           addLog(
@@ -804,10 +820,11 @@ export function createUpgrade(config) {
     }
   };
 
-  if (config.cardState || config.lockCard !== false) {
+  const cardStateFn = typeof hooks.cardState === 'function' ? hooks.cardState : config.cardState;
+  if (cardStateFn || config.lockCard !== false) {
     definition.cardState = (state, card) => {
-      if (typeof config.cardState === 'function') {
-        config.cardState(state, card, {
+      if (typeof cardStateFn === 'function') {
+        cardStateFn(state, card, {
           requirements,
           definition
         });
@@ -820,11 +837,13 @@ export function createUpgrade(config) {
     };
   }
 
-  if (config.extraContent) {
-    definition.extraContent = config.extraContent;
+  const extraContentFn = typeof hooks.extraContent === 'function' ? hooks.extraContent : config.extraContent;
+  if (typeof extraContentFn === 'function') {
+    definition.extraContent = (card, ...args) => extraContentFn(card, ...args);
   }
-  if (config.update) {
-    definition.update = config.update;
+  const updateFn = typeof hooks.update === 'function' ? hooks.update : config.update;
+  if (typeof updateFn === 'function') {
+    definition.update = updateFn;
   }
   if (config.process) {
     definition.process = config.process;
