@@ -466,9 +466,10 @@ a {
 
 .browser-stage__pane--home .browser-layout {
   --browser-home-spacing: clamp(0.75rem, 1vw + 0.4rem, 1.25rem);
+  --browser-home-gutter: clamp(0.75rem, 0.9vw + 0.35rem, 1.05rem);
   max-width: none;
   margin: 0;
-  padding: var(--browser-home-spacing);
+  padding: var(--browser-home-gutter);
 }
 
 .browser-main {
@@ -488,8 +489,8 @@ a {
 .browser-home__widgets {
   width: 100%;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: var(--browser-home-spacing, 1.5rem);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--browser-home-gutter, var(--browser-home-spacing, 1.5rem));
   align-items: stretch;
   justify-items: stretch;
   margin: 0;
@@ -497,7 +498,7 @@ a {
 
 @media (max-width: 1200px) {
   .browser-home__widgets {
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
