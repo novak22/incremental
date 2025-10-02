@@ -142,8 +142,7 @@ const resolvers = {
       container: root.querySelector('[data-widget="apps"]'),
       list: root.getElementById('browser-widget-apps-list'),
       note: root.getElementById('browser-widget-apps-note'),
-      sortToggle: root.getElementById('browser-widget-apps-sort-toggle'),
-      sortIndicator: root.getElementById('browser-widget-apps-sort-indicator')
+      sortToggle: root.getElementById('browser-widget-apps-sort-toggle')
     },
     bank: {
       container: root.querySelector('[data-widget="bank"]'),

@@ -579,14 +579,13 @@ a {
 .apps-widget {
   padding: 0.85rem 0.95rem 1rem;
   gap: 0.65rem;
+  position: relative;
 }
 
 .apps-widget__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem;
-  flex-wrap: wrap;
+  position: relative;
+  display: block;
+  padding-inline-end: 6rem;
 }
 
 .apps-widget__intro {
@@ -596,11 +595,9 @@ a {
 }
 
 .apps-widget__controls {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+  position: absolute;
+  top: 0;
+  right: 0;
 }
 
 .apps-widget__sort-toggle {
@@ -634,19 +631,6 @@ a {
 .apps-widget__sort-toggle:disabled {
   opacity: 0.4;
   cursor: not-allowed;
-}
-
-.apps-widget__sort-indicator {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.25rem 0.6rem;
-  border-radius: var(--browser-radius-pill);
-  background: var(--browser-accent-soft);
-  color: var(--browser-accent);
-  font-size: 0.75rem;
-  font-weight: 700;
-  white-space: nowrap;
 }
 
 .apps-widget.is-sorting .apps-widget__tile {
