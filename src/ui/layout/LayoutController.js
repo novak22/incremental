@@ -6,6 +6,10 @@ import { setupTabs } from './features/tabs.js';
 import { setupEventLog } from './features/eventLog.js';
 import { setupSlideOver } from './features/slideOver.js';
 import { setupKpiShortcuts } from './features/kpiShortcuts.js';
+import {
+  ensureDefaultPreferenceAdapters,
+  getPreferenceAdapters
+} from './preferenceAdapters.js';
 
 export class LayoutController {
   constructor(options = {}) {
@@ -14,7 +18,11 @@ export class LayoutController {
     this.getPreferences = options.getLayoutPreferences || getLayoutPreferences;
     this.updatePreferences = options.updateLayoutPreferences || updateLayoutPreferences;
     this.getActiveView = options.getActiveView || getActiveView;
+    this.preferenceAdapterSource =
+      options.preferenceAdapters ?? options.preferenceAdapterSource ?? null;
+    this.preferenceAdapterResolver = options.getPreferenceAdapters || getPreferenceAdapters;
     this.defaultPresenter = options.defaultPresenter || classicLayoutPresenter;
+    this.logger = options.logger || console;
     this.features = {
       setupTabs: options.setupTabs || setupTabs,
       setupEventLog: options.setupEventLog || setupEventLog,
@@ -32,6 +40,7 @@ export class LayoutController {
   }
 
   init() {
+    ensureDefaultPreferenceAdapters();
     const baseContext = { getElement: this.getElement };
     this.features.setupTabs?.({
       ...baseContext,
@@ -82,36 +91,18 @@ export class LayoutController {
   }
 
   syncPreferencesFromDom() {
-    const hustleControls = this.getElement('hustleControls') || {};
-    if (hustleControls.hustleAvailableToggle || hustleControls.hustleSort || hustleControls.hustleSearch) {
-      this.updatePreferences('hustles', {
-        availableOnly: Boolean(hustleControls.hustleAvailableToggle?.checked),
-        sort: hustleControls.hustleSort?.value,
-        query: hustleControls.hustleSearch?.value ?? ''
-      });
-    }
-
-    const assetFilters = this.getElement('assetFilters') || {};
-    if (assetFilters.activeOnly || assetFilters.maintenance || assetFilters.lowRisk) {
-      this.updatePreferences('assets', {
-        activeOnly: Boolean(assetFilters.activeOnly?.checked),
-        maintenanceOnly: Boolean(assetFilters.maintenance?.checked),
-        hideHighRisk: Boolean(assetFilters.lowRisk?.checked)
-      });
-    }
-
-    const upgradeFilters = this.getElement('upgradeFilters') || {};
-    if (upgradeFilters.unlocked) {
-      this.updatePreferences('upgrades', { readyOnly: upgradeFilters.unlocked.checked !== false });
-    }
-
-    const studyFilters = this.getElement('studyFilters') || {};
-    if (studyFilters.activeOnly || studyFilters.hideComplete) {
-      this.updatePreferences('study', {
-        activeOnly: Boolean(studyFilters.activeOnly?.checked),
-        hideComplete: Boolean(studyFilters.hideComplete?.checked)
-      });
-    }
+    const adapters = this.resolvePreferenceAdapters();
+    adapters.forEach(adapter => {
+      try {
+        const elementLookup = this.getElement(adapter.elementKey) || {};
+        const patch = adapter.read(elementLookup, { getElement: this.getElement });
+        if (patch && typeof patch === 'object') {
+          this.updatePreferences(adapter.section, patch);
+        }
+      } catch (error) {
+        this.logger?.error?.('Failed to sync layout preferences', error);
+      }
+    });
   }
 
   refreshPresenterState() {
@@ -155,6 +146,24 @@ export class LayoutController {
   handlePreferenceChange(section, patch) {
     this.updatePreferences(section, patch);
     this.applyFilters();
+  }
+
+  resolvePreferenceAdapters() {
+    const source =
+      this.preferenceAdapterSource ??
+      this.preferenceAdapterResolver ??
+      getPreferenceAdapters;
+
+    if (Array.isArray(source)) {
+      return source;
+    }
+
+    if (typeof source === 'function') {
+      const resolved = source();
+      return Array.isArray(resolved) ? resolved : [];
+    }
+
+    return [];
   }
 }
 

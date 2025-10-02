@@ -1,5 +1,6 @@
 import { getState } from '../../../core/state.js';
 import { buildNicheViewModel } from '../../dashboard/model.js';
+import { registerModelBuilder } from '../modelBuilderRegistry.js';
 
 const DEFAULT_MODEL = {
   highlights: {
@@ -26,3 +27,5 @@ export default function buildTrendsModel(state = getState()) {
   }
   return DEFAULT_MODEL;
 }
+
+registerModelBuilder('trends', (registries = {}, context = {}) => buildTrendsModel(context.state));

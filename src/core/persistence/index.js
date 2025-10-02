@@ -3,6 +3,7 @@ import { createAssetInstance } from '../state/assets.js';
 import { getAssetState, getUpgradeState } from '../state.js';
 import { SnapshotRepository } from './snapshotRepository.js';
 import { StateMigrationRunner } from './stateMigrationRunner.js';
+import { success, error, empty, tryCatch } from './result.js';
 
 function migrateLegacySnapshot(snapshot, context) {
   if (!snapshot || typeof snapshot !== 'object') {
@@ -123,23 +124,16 @@ export class StatePersistence {
     const lastSavedFallback = this.now();
     const fallback = () => this.initializeDefaultState(onFirstLoad, lastSavedFallback);
 
-    const rawResult = this.readSnapshot(onError);
-    if (rawResult.type !== 'success') {
-      return fallback();
-    }
-
-    const parsedResult = this.parseSnapshot(rawResult.value, onError);
-    if (parsedResult.type !== 'success') {
-      return fallback();
-    }
-
     const context = this.createMigrationContext(defaultState);
-    const migratedResult = this.migrateSnapshot(parsedResult.value, context, onError);
-    if (migratedResult.type !== 'success') {
+    const pipeline = this.readSnapshot(onError)
+      .chain(raw => this.parseSnapshot(raw, onError))
+      .chain(parsed => this.migrateSnapshot(parsed, context, onError));
+
+    if (!pipeline.isSuccess) {
       return fallback();
     }
 
-    const migrated = migratedResult.value;
+    const migrated = pipeline.value;
 
     const merged = this.mergeWithDefault(defaultState, migrated);
     const lastSaved = Number.isFinite(merged.lastSaved) ? merged.lastSaved : this.now();
@@ -163,28 +157,28 @@ export class StatePersistence {
 
   readSnapshot(onError) {
     const result = this.repository.loadRaw();
-    if (result.type === 'error') {
-      this.handleLoadFailure('Failed to read saved state', result.error, onError);
+    if (result.type === 'success') {
+      return success(result.value);
     }
-    return result;
+    if (result.type === 'empty') {
+      return empty();
+    }
+    this.handleLoadFailure('Failed to read saved state', result.error, onError);
+    return error(result.error);
   }
 
   parseSnapshot(raw, onError) {
-    try {
-      return { type: 'success', value: JSON.parse(raw) };
-    } catch (err) {
+    return tryCatch(() => JSON.parse(raw)).mapError(err => {
       this.handleLoadFailure('Failed to parse saved state', err, onError);
-      return { type: 'error', error: err };
-    }
+      return err;
+    });
   }
 
   migrateSnapshot(parsed, context, onError) {
-    try {
-      return { type: 'success', value: this.migrationRunner.run(parsed, context) };
-    } catch (err) {
+    return tryCatch(() => this.migrationRunner.run(parsed, context)).mapError(err => {
       this.handleLoadFailure('Failed to migrate saved state', err, onError);
-      return { type: 'error', error: err };
-    }
+      return err;
+    });
   }
 
   handleLoadFailure(message, error, onError) {

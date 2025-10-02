@@ -18,6 +18,7 @@ import {
 } from '../../../game/assets/quality.js';
 import { setAssetInstanceName } from '../../../game/assets/helpers.js';
 import { describeAssetLaunchAvailability } from './assets.js';
+import { registerModelBuilder } from '../modelBuilderRegistry.js';
 
 function clampNumber(value) {
   const number = Number(value);
@@ -434,3 +435,9 @@ export default function buildVideoTubeModel(assetDefinitions = [], state = getSt
 export function selectNiche(assetId, instanceId, nicheId) {
   return assignInstanceToNiche(assetId, instanceId, nicheId);
 }
+
+registerModelBuilder(
+  'videotube',
+  (registries = {}, context = {}) =>
+    buildVideoTubeModel(registries.assets ?? [], context.state)
+);

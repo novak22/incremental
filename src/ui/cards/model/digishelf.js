@@ -17,6 +17,7 @@ import {
   getQualityTracks
 } from '../../../game/assets/quality.js';
 import { describeAssetLaunchAvailability } from './assets.js';
+import { registerModelBuilder } from '../modelBuilderRegistry.js';
 
 const QUICK_ACTION_MAP = {
   ebook: ['writeChapter'],
@@ -420,4 +421,8 @@ export function getQuickActionIds(assetId) {
 export function selectDigishelfNiche(assetId, instanceId, nicheId) {
   return assignInstanceToNiche(assetId, instanceId, nicheId);
 }
+
+registerModelBuilder('digishelf', (registries = {}, context = {}) =>
+  buildDigishelfModel(registries.assets ?? [], context.state)
+);
 
