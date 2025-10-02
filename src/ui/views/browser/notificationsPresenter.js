@@ -1,0 +1,272 @@
+import { getElement } from '../../elements/registry.js';
+import { getState } from '../../../core/state.js';
+import { markAllLogEntriesRead, markLogEntryRead } from '../../../core/log.js';
+import { buildEventLogModel } from '../../dashboard/model.js';
+
+const TYPE_LABELS = {
+  success: 'Success',
+  warning: 'Alert',
+  danger: 'Alert',
+  info: 'Update'
+};
+
+const presenterState = {
+  isOpen: false,
+  entries: [],
+  emptyMessage: '',
+  outsideHandler: null,
+  keydownHandler: null
+};
+
+function getRefs() {
+  return getElement('browserNotifications') || {};
+}
+
+function attachDocumentListeners() {
+  if (!presenterState.outsideHandler) {
+    presenterState.outsideHandler = event => {
+      if (!presenterState.isOpen) return;
+      const { container } = getRefs();
+      if (!container || container.contains(event.target)) {
+        return;
+      }
+      togglePanel(false);
+    };
+  }
+
+  if (!presenterState.keydownHandler) {
+    presenterState.keydownHandler = event => {
+      if (!presenterState.isOpen) return;
+      if (event.key === 'Escape') {
+        togglePanel(false);
+      }
+    };
+  }
+
+  document.addEventListener('pointerdown', presenterState.outsideHandler);
+  document.addEventListener('keydown', presenterState.keydownHandler);
+}
+
+function detachDocumentListeners() {
+  if (presenterState.outsideHandler) {
+    document.removeEventListener('pointerdown', presenterState.outsideHandler);
+  }
+  if (presenterState.keydownHandler) {
+    document.removeEventListener('keydown', presenterState.keydownHandler);
+  }
+}
+
+function focusFirstEntry() {
+  const { list } = getRefs();
+  if (!list) return;
+  const firstButton = list.querySelector('.browser-notifications__item');
+  firstButton?.focus({ preventScroll: true });
+}
+
+function openPanel() {
+  const { panel, button } = getRefs();
+  if (!panel || !button) return;
+  panel.hidden = false;
+  button.setAttribute('aria-expanded', 'true');
+  presenterState.isOpen = true;
+  attachDocumentListeners();
+  if (typeof requestAnimationFrame === 'function') {
+    requestAnimationFrame(() => focusFirstEntry());
+  } else {
+    focusFirstEntry();
+  }
+}
+
+function closePanel() {
+  const { panel, button } = getRefs();
+  if (panel) {
+    panel.hidden = true;
+  }
+  if (button) {
+    button.setAttribute('aria-expanded', 'false');
+  }
+  presenterState.isOpen = false;
+  detachDocumentListeners();
+}
+
+function togglePanel(force) {
+  const next = typeof force === 'boolean' ? force : !presenterState.isOpen;
+  if (next) {
+    openPanel();
+  } else {
+    closePanel();
+  }
+}
+
+function formatTypeLabel(type) {
+  if (!type) return '';
+  const normalized = String(type).toLowerCase();
+  return TYPE_LABELS[normalized] || normalized.replace(/\b\w/g, char => char.toUpperCase());
+}
+
+function renderBadge(entries = []) {
+  const { badge, button } = getRefs();
+  if (!badge || !button) return;
+  const unread = entries.filter(entry => entry && entry.read !== true).length;
+  if (unread > 0) {
+    badge.hidden = false;
+    badge.textContent = unread > 99 ? '99+' : String(unread);
+  } else {
+    badge.hidden = true;
+    badge.textContent = '0';
+  }
+  const labelBase = 'View notifications';
+  const label = unread > 0 ? `${labelBase} (${unread} unread)` : labelBase;
+  button.setAttribute('aria-label', label);
+  button.title = label;
+}
+
+function renderEmptyState(entries = [], emptyMessage = '') {
+  const { empty } = getRefs();
+  if (!empty) return;
+  if (!entries.length) {
+    empty.hidden = false;
+    empty.textContent = emptyMessage || 'You are all caught up.';
+  } else {
+    empty.hidden = true;
+    empty.textContent = '';
+  }
+}
+
+function createEntryButton(entry) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'browser-notifications__item';
+  button.dataset.entryId = entry.id;
+
+  if (entry.read !== true) {
+    button.classList.add('is-unread');
+  }
+
+  const indicator = document.createElement('span');
+  indicator.className = 'browser-notifications__indicator';
+  indicator.setAttribute('aria-hidden', 'true');
+  if (entry.read === true) {
+    indicator.classList.add('is-hidden');
+  }
+  button.appendChild(indicator);
+
+  const message = document.createElement('span');
+  message.className = 'browser-notifications__message';
+  message.textContent = entry.message || '';
+  button.appendChild(message);
+
+  const meta = document.createElement('span');
+  meta.className = 'browser-notifications__meta';
+
+  const typeLabel = formatTypeLabel(entry.type);
+  if (typeLabel) {
+    const typeBadge = document.createElement('span');
+    typeBadge.className = 'browser-notifications__meta-label';
+    typeBadge.textContent = typeLabel;
+    meta.appendChild(typeBadge);
+  }
+
+  if (entry.timeLabel) {
+    const time = document.createElement('span');
+    time.textContent = entry.timeLabel;
+    meta.appendChild(time);
+  }
+
+  if (meta.childNodes.length) {
+    button.appendChild(meta);
+  }
+
+  button.addEventListener('click', () => {
+    if (entry.read === true) {
+      return;
+    }
+    const changed = markLogEntryRead(entry.id);
+    if (changed) {
+      refreshFromState();
+    }
+  });
+
+  return button;
+}
+
+function renderList(entries = []) {
+  const { list } = getRefs();
+  if (!list) return;
+  list.innerHTML = '';
+  entries.forEach(entry => {
+    if (!entry) return;
+    const item = document.createElement('li');
+    const button = createEntryButton(entry);
+    item.appendChild(button);
+    list.appendChild(item);
+  });
+  list.hidden = entries.length === 0;
+}
+
+function refreshFromState() {
+  const state = getState();
+  if (!state) return;
+  const model = buildEventLogModel(state);
+  render(model);
+}
+
+function handleTriggerClick(event) {
+  event.preventDefault();
+  togglePanel();
+}
+
+function handleMarkAllClick(event) {
+  event.preventDefault();
+  const updated = markAllLogEntriesRead();
+  if (updated > 0) {
+    refreshFromState();
+  }
+}
+
+function bindControls() {
+  const { button, markAll } = getRefs();
+  if (button && button.dataset.notificationsBound !== 'true') {
+    button.addEventListener('click', handleTriggerClick);
+    button.dataset.notificationsBound = 'true';
+  }
+  if (markAll && markAll.dataset.notificationsBound !== 'true') {
+    markAll.addEventListener('click', handleMarkAllClick);
+    markAll.dataset.notificationsBound = 'true';
+  }
+}
+
+function render(model = {}) {
+  const refs = getRefs();
+  if (!refs?.button) {
+    closePanel();
+    return;
+  }
+
+  bindControls();
+
+  presenterState.entries = Array.isArray(model?.allEntries) ? model.allEntries : [];
+  presenterState.emptyMessage = model?.emptyMessage || 'You are all caught up.';
+
+  renderBadge(presenterState.entries);
+  renderList(presenterState.entries);
+  renderEmptyState(presenterState.entries, presenterState.emptyMessage);
+
+  const { markAll } = getRefs();
+  if (markAll) {
+    const hasUnread = presenterState.entries.some(entry => entry && entry.read !== true);
+    markAll.disabled = !hasUnread;
+    markAll.setAttribute('aria-disabled', String(!hasUnread));
+  }
+
+  if (presenterState.isOpen) {
+    openPanel();
+  } else {
+    closePanel();
+  }
+}
+
+export default {
+  render,
+  refresh: refreshFromState
+};

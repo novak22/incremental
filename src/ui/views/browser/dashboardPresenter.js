@@ -3,6 +3,7 @@ import { formatHours } from '../../../core/helpers.js';
 import todoWidget from './widgets/todoWidget.js';
 import appsWidget from './widgets/appsWidget.js';
 import bankWidget from './widgets/bankWidget.js';
+import notificationsPresenter from './notificationsPresenter.js';
 
 const widgetModules = {
   todo: todoWidget,
@@ -206,6 +207,7 @@ function renderBank(context = {}) {
 
 function renderDashboard(viewModel = {}, context = {}) {
   if (!viewModel) return;
+  notificationsPresenter.render(viewModel.eventLog || {});
   renderTodo(
     viewModel.quickActions || {},
     viewModel.assetActions || {},

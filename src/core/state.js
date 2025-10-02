@@ -1,5 +1,5 @@
 import { DEFAULT_DAY_HOURS } from './constants.js';
-import { structuredClone } from './helpers.js';
+import { structuredClone, createId } from './helpers.js';
 import {
   createEmptyCharacterState,
   createEmptySkillState,
@@ -20,6 +20,27 @@ import {
   getSliceState as getUpgradeSliceState
 } from './state/slices/upgrades.js';
 import { ensureSlice as ensureProgressSlice } from './state/slices/progress.js';
+
+function normalizeLogEntry(entry) {
+  if (!entry || typeof entry !== 'object') {
+    return {
+      id: createId(),
+      timestamp: Date.now(),
+      message: '',
+      type: 'info',
+      read: true
+    };
+  }
+
+  const normalized = { ...entry };
+  const timestamp = Number(entry.timestamp);
+  normalized.timestamp = Number.isFinite(timestamp) ? timestamp : Date.now();
+  normalized.id = typeof entry.id === 'string' && entry.id ? entry.id : createId();
+  normalized.message = entry.message != null ? String(entry.message) : '';
+  normalized.type = typeof entry.type === 'string' && entry.type ? entry.type : 'info';
+  normalized.read = entry.read === true;
+  return normalized;
+}
 
 class StateManager {
   constructor() {
@@ -72,6 +93,12 @@ class StateManager {
     this.ensureDailyMetrics(target);
     this.ensureMetricsHistory(target);
     ensureNicheStateShape(target, { fallbackDay: target.day || 1 });
+
+    if (!Array.isArray(target.log)) {
+      target.log = [];
+    } else {
+      target.log = target.log.map(entry => normalizeLogEntry(entry));
+    }
   }
 
   buildBaseState() {

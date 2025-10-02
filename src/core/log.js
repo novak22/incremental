@@ -12,13 +12,43 @@ export function addLog(message, type = 'info') {
     id: createId(),
     timestamp: Date.now(),
     message,
-    type
+    type,
+    read: false
   };
   state.log.push(entry);
   if (state.log.length > MAX_LOG_ENTRIES) {
     state.log.splice(0, state.log.length - MAX_LOG_ENTRIES);
   }
   renderLog();
+}
+
+export function markLogEntryRead(entryId) {
+  if (!entryId) return false;
+  const state = getState();
+  if (!state || !Array.isArray(state.log)) return false;
+  const entry = state.log.find(item => item?.id === entryId);
+  if (!entry || entry.read === true) {
+    return false;
+  }
+  entry.read = true;
+  renderLog();
+  return true;
+}
+
+export function markAllLogEntriesRead() {
+  const state = getState();
+  if (!state || !Array.isArray(state.log)) return 0;
+  let updated = 0;
+  state.log.forEach(entry => {
+    if (entry && entry.read !== true) {
+      entry.read = true;
+      updated += 1;
+    }
+  });
+  if (updated > 0) {
+    renderLog();
+  }
+  return updated;
 }
 
 export function renderLog() {
