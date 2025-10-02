@@ -94,12 +94,9 @@ function closePanel() {
 function ensurePanelHiddenByDefault() {
   if (presenterState.initialized) return;
   const { panel, button } = getRefs();
-  if (panel) {
-    panel.hidden = true;
-  }
-  if (button) {
-    button.setAttribute('aria-expanded', 'false');
-  }
+  if (!panel || !button) return;
+  panel.hidden = true;
+  button.setAttribute('aria-expanded', 'false');
   presenterState.initialized = true;
 }
 
