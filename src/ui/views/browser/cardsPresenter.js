@@ -1132,6 +1132,11 @@ function renderFinancePage(model = {}) {
     container.appendChild(renderFinanceHeader(model.header));
   }
   container.appendChild(renderFinanceLedger(model.ledger || {}));
+  container.appendChild(renderFinanceObligations(model.obligations || {}));
+  container.appendChild(renderFinancePendingIncome(model.pendingIncome || []));
+  container.appendChild(renderFinancePerformance(model.assetPerformance || []));
+  container.appendChild(renderFinanceOpportunities(model.opportunities || {}));
+  container.appendChild(renderFinanceEducation(model.education || []));
   container.appendChild(renderFinanceHistory(model.history || []));
   container.appendChild(renderFinanceActivity(model.activity || []));
 
