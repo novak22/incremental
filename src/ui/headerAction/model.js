@@ -1,4 +1,4 @@
-import { buildAssetUpgradeRecommendations, buildQuickActions } from '../dashboard/model.js';
+import { buildAssetUpgradeRecommendations, buildQuickActions } from '../dashboard/quickActions.js';
 import { formatHours } from '../../core/helpers.js';
 
 function formatActionLabel(base, timeCost) {
