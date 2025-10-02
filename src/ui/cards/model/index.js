@@ -15,7 +15,7 @@ import buildUpgradeModels, {
   describeUpgradeStatus
 } from './upgrades.js';
 import buildEducationModels, { buildSkillRewards, resolveTrack } from './education.js';
-import buildFinanceModel from './finance.js';
+import buildFinanceModel from './finance/index.js';
 import {
   formatLabelFromKey,
   describeAssetCardSummary,
