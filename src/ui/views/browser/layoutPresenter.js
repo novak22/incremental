@@ -155,12 +155,96 @@ function markActiveSite(pageId) {
   });
 }
 
+function normalizeWorkspacePath(path = '') {
+  const trimmed = String(path || '')
+    .trim()
+    .split(/[?#]/, 1)[0]
+    .replace(/^\/+|\/+$/g, '');
+  return trimmed;
+}
+
+function getWorkspaceElement(pageId) {
+  const element = getPageElement(pageId);
+  if (!element) return null;
+  return element;
+}
+
+function getWorkspacePath(pageId) {
+  const element = getWorkspaceElement(pageId);
+  if (!element) return '';
+  return normalizeWorkspacePath(element.dataset.browserPath || '');
+}
+
+function setWorkspacePath(pageId, path) {
+  const element = getWorkspaceElement(pageId);
+  if (!element) return;
+  const normalized = normalizeWorkspacePath(path);
+  if (normalized) {
+    element.dataset.browserPath = normalized;
+  } else {
+    delete element.dataset.browserPath;
+  }
+  if (currentPage === pageId) {
+    updateAddressBar(findPageById(pageId));
+  }
+}
+
+function getWorkspaceDomain(page) {
+  if (!page) return 'workspace';
+  const source = page.domain || page.id || page.slug || page.label || 'workspace';
+  const cleaned = String(source)
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, '');
+  return cleaned || 'workspace';
+}
+
+function buildWorkspaceUrl(page) {
+  if (!page || page.id === HOMEPAGE_ID) {
+    return 'https://hustle.city/';
+  }
+  const domain = `${getWorkspaceDomain(page)}.hub`;
+  const path = getWorkspacePath(page.id);
+  const suffix = path ? `/${path}` : '/';
+  return `https://${domain}${suffix}`;
+}
+
+function parseAddressValue(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return null;
+
+  const pattern = /^(?:https?:\/\/)?([^/]+)(?:\/(.*))?$/i;
+  const match = pattern.exec(raw);
+  if (!match) return null;
+
+  const host = match[1].toLowerCase();
+  const remainder = normalizeWorkspacePath(match[2] || '');
+
+  if (host === 'hustle.city') {
+    if (!remainder) {
+      return { pageId: HOMEPAGE_ID };
+    }
+    const [slug] = remainder.split('/');
+    return { slug };
+  }
+
+  if (host.endsWith('.hub')) {
+    const workspace = host.slice(0, -4);
+    return { slug: workspace, path: remainder };
+  }
+
+  if (!host.includes('.')) {
+    return { slug: host };
+  }
+
+  return null;
+}
+
 function updateAddressBar(page) {
   const address = getElement('browserAddress') || {};
   const input = address.input;
   if (!input) return;
-  const slug = page?.slug || 'home';
-  const url = `https://hustle.city/${slug === 'home' ? '' : slug}`;
+  const url = buildWorkspaceUrl(page);
   input.value = url;
 }
 
@@ -445,13 +529,24 @@ function handleAddressSubmit(event) {
   const input = address.input;
   if (!input) return;
   const value = String(input.value || '').trim();
-  const path = value.replace(/^https?:\/\/[^/]+\//iu, '').replace(/\s+/g, '').replace(/\/+$/, '');
-  const destination = findPageBySlug(path);
+  const target = parseAddressValue(value);
+  if (!target) {
+    updateAddressBar(findPageById(currentPage));
+    return;
+  }
+
+  if (target.pageId) {
+    setActivePage(target.pageId);
+    return;
+  }
+
+  const destination = target.slug ? findPageBySlug(target.slug) : null;
   if (destination) {
     setActivePage(destination.id);
-  } else {
-    updateAddressBar(findPageById(currentPage));
+    return;
   }
+
+  updateAddressBar(findPageById(currentPage));
 }
 
 function initNavigation() {
@@ -605,3 +700,5 @@ export default layoutPresenter;
 export function navigateToWorkspace(pageId, options) {
   openWorkspace(pageId, options);
 }
+
+export { setWorkspacePath };

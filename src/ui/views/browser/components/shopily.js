@@ -21,6 +21,7 @@ let currentModel = {
 };
 let currentMount = null;
 let currentPageMeta = null;
+let routeListener = null;
 
 function formatCurrency(amount) {
   const numeric = Number(amount) || 0;
@@ -56,6 +57,26 @@ function ensureSelectedStore() {
   const fallback = instances[0];
   const target = instances.find(entry => entry.id === currentState.selectedStoreId);
   currentState.selectedStoreId = (target || active || fallback)?.id || instances[0].id;
+}
+
+function getCurrentRoute() {
+  switch (currentState.view) {
+    case VIEW_PRICING:
+      return 'pricing';
+    case VIEW_UPGRADES:
+      return 'upgrades';
+    case VIEW_DASHBOARD:
+    default: {
+      const storeId = currentState.selectedStoreId;
+      return storeId ? `store/${storeId}` : '';
+    }
+  }
+}
+
+function notifyRouteChange() {
+  if (typeof routeListener === 'function') {
+    routeListener(getCurrentRoute());
+  }
 }
 
 function setView(view, options = {}) {
@@ -836,7 +857,10 @@ function renderPricingView(model) {
 }
 
 function renderApp() {
-  if (!currentMount) return;
+  if (!currentMount) {
+    notifyRouteChange();
+    return;
+  }
   currentMount.innerHTML = '';
 
   const root = document.createElement('div');
@@ -857,15 +881,20 @@ function renderApp() {
   }
 
   currentMount.appendChild(root);
+  notifyRouteChange();
 }
 
-function render(model, { mount, page } = {}) {
+function render(model, { mount, page, onRouteChange } = {}) {
   currentModel = model || currentModel;
   currentMount = mount || currentMount;
   currentPageMeta = page || currentPageMeta;
+  if (typeof onRouteChange === 'function') {
+    routeListener = onRouteChange;
+  }
   ensureSelectedStore();
   renderApp();
-  return { meta: model?.summary?.meta || 'Launch your first store' };
+  const urlPath = getCurrentRoute();
+  return { meta: model?.summary?.meta || 'Launch your first store', urlPath };
 }
 
 export default {

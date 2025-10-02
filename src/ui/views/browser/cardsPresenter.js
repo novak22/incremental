@@ -15,6 +15,7 @@ import { buildPlayerPanelModel } from '../../player/model.js';
 import { computeDailySummary } from '../../../game/summary.js';
 import trendsApp from './components/trends.js';
 import serverhubApp from './components/serverhub.js';
+import { setWorkspacePath } from './layoutPresenter.js';
 
 let cachedRegistries = null;
 let cachedModels = null;
@@ -469,9 +470,14 @@ function renderBlogpressPage(definitions = [], model = {}) {
   const mount = refs.body.querySelector('[data-role="blogpress-root"]');
   if (!mount) return null;
 
-  const summary = blogpressApp.render(model, { mount, page });
+  const handleRouteChange = path => {
+    setWorkspacePath(page.id, path);
+  };
+  const summary = blogpressApp.render(model, { mount, page, onRouteChange: handleRouteChange });
+  const path = summary?.urlPath || '';
+  setWorkspacePath(page.id, path);
   const meta = summary?.meta || model?.summary?.meta || 'Launch your first blog';
-  return { id: page.id, meta };
+  return { id: page.id, meta, urlPath: path };
 }
 
 function renderShopilyPage(definitions = [], model = {}) {
@@ -491,9 +497,14 @@ function renderShopilyPage(definitions = [], model = {}) {
   const mount = refs.body.querySelector('[data-role="shopily-root"]');
   if (!mount) return null;
 
-  const summary = shopilyApp.render(model, { mount, page });
+  const handleRouteChange = path => {
+    setWorkspacePath(page.id, path);
+  };
+  const summary = shopilyApp.render(model, { mount, page, onRouteChange: handleRouteChange });
+  const path = summary?.urlPath || '';
+  setWorkspacePath(page.id, path);
   const meta = summary?.meta || model?.summary?.meta || 'Launch your first store';
-  return { id: page.id, meta };
+  return { id: page.id, meta, urlPath: path };
 }
 
 function renderServerHubPage(definitions = [], model = {}) {
