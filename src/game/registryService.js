@@ -71,11 +71,6 @@ export function getUpgradeDefinition(id) {
   return upgradeMap.get(id) || null;
 }
 
-export function getMetricIndex() {
-  ensureLoaded();
-  return metricIndex;
-}
-
 export function getMetricDefinition(metricId) {
   ensureLoaded();
   return metricIndex.get(metricId) || null;
@@ -91,6 +86,5 @@ export default {
   getHustleDefinition,
   getAssetDefinition,
   getUpgradeDefinition,
-  getMetricIndex,
   getMetricDefinition
 };

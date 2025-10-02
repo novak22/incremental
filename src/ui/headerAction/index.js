@@ -127,13 +127,7 @@ export function renderHeaderAction(model) {
   presenter?.renderAction?.(model);
 }
 
-export function updateHeaderAction(state) {
-  const model = buildHeaderActionModel(state);
-  renderHeaderAction(model);
-}
-
 export default {
   initHeaderActionControls,
-  updateHeaderAction,
   renderHeaderAction
 };

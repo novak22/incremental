@@ -348,17 +348,12 @@ export function updateStudySection(definitions, educationModels) {
   renderStudyQueue();
 }
 
-export function getCachedEducationModels() {
-  return educationModelCache;
-}
-
 const studySection = {
   cacheEducationModels,
   renderStudySection,
   updateStudySection,
   updateStudyTrack,
-  isStudyDefinition,
-  getCachedEducationModels
+  isStudyDefinition
 };
 
 export default studySection;

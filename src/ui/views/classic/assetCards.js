@@ -137,12 +137,6 @@ export function isAssetDefinition(id) {
   return assetDefinitionLookup.has(id);
 }
 
-export function getCachedAssetModel(id) {
-  const group = assetModelGroupByDefinition.get(id);
-  if (!group) return null;
-  return group.definitions?.find(entry => entry?.id === id || entry?.definition?.id === id) || null;
-}
-
 function resolveAssetModels(definitions = [], models = {}) {
   const normalized = normalizeModelData(models);
   if ((normalized.groups?.length ?? 0) > 0 || (normalized.launchers?.length ?? 0) > 0) {
@@ -1545,8 +1539,7 @@ export const assetCards = {
   updateAssetEmptyNotice,
   openInstanceDetails,
   openAssetGroupDetails,
-  isAssetDefinition,
-  getCachedAssetModel
+  isAssetDefinition
 };
 
 export default assetCards;
