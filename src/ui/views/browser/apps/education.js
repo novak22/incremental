@@ -1,4 +1,5 @@
 import learnlyApp from '../components/learnly.js';
+import { setWorkspacePath } from '../layoutPresenter.js';
 import { getPageByType } from './pageLookup.js';
 
 export default function renderEducation(context = {}, definitions = [], model = {}) {
@@ -19,7 +20,13 @@ export default function renderEducation(context = {}, definitions = [], model = 
   const mount = refs.body.querySelector('[data-role="learnly-root"]');
   if (!mount) return null;
 
-  const summary = learnlyApp.render(model, { mount, page, definitions });
+  const handleRouteChange = path => {
+    setWorkspacePath(page.id, path);
+  };
+
+  const summary = learnlyApp.render(model, { mount, page, definitions, onRouteChange: handleRouteChange });
+  const path = summary?.urlPath || '';
+  setWorkspacePath(page.id, path);
   const meta = summary?.meta || 'Browse the catalog';
-  return { id: page.id, meta };
+  return { id: page.id, meta, urlPath: path };
 }
