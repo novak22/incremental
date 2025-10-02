@@ -18,6 +18,7 @@ let currentModel = {
 };
 let currentMount = null;
 let currentPageMeta = null;
+let routeListener = null;
 
 function formatCurrency(amount) {
   return `$${formatMoney(Math.max(0, Math.round(Number(amount) || 0)))}`;
@@ -48,6 +49,26 @@ function ensureSelectedBlog() {
   const fallback = instances[0];
   const target = instances.find(entry => entry.id === currentState.selectedBlogId);
   currentState.selectedBlogId = (target || active || fallback)?.id || fallback.id;
+}
+
+function getCurrentRoute() {
+  switch (currentState.view) {
+    case VIEW_PRICING:
+      return 'pricing';
+    case VIEW_BLUEPRINTS:
+      return 'blueprints';
+    case VIEW_DETAIL:
+      return currentState.selectedBlogId ? `blog/${currentState.selectedBlogId}` : '';
+    case VIEW_HOME:
+    default:
+      return '';
+  }
+}
+
+function notifyRouteChange() {
+  if (typeof routeListener === 'function') {
+    routeListener(getCurrentRoute());
+  }
 }
 
 function setView(view, options = {}) {
@@ -799,17 +820,25 @@ export function render(model = {}, context = {}) {
   if (context.page) {
     currentPageMeta = context.page;
   }
+  if (typeof context.onRouteChange === 'function') {
+    routeListener = context.onRouteChange;
+  }
+  ensureSelectedBlog();
   if (!currentMount) {
-    return currentModel.summary || {};
+    const summary = currentModel.summary || {};
+    const urlPath = getCurrentRoute();
+    notifyRouteChange();
+    return { ...summary, urlPath };
   }
 
   if (!currentModel.definition) {
     currentMount.innerHTML = '';
     currentMount.appendChild(renderLockedState());
-    return currentModel.summary || {};
+    const summary = currentModel.summary || {};
+    const urlPath = getCurrentRoute();
+    notifyRouteChange();
+    return { ...summary, urlPath };
   }
-
-  ensureSelectedBlog();
 
   currentMount.innerHTML = '';
   const root = document.createElement('div');
@@ -827,7 +856,10 @@ export function render(model = {}, context = {}) {
     button.setAttribute('aria-pressed', String(isActive));
   });
 
-  return currentModel.summary || {};
+  const summary = currentModel.summary || {};
+  const urlPath = getCurrentRoute();
+  notifyRouteChange();
+  return { ...summary, urlPath };
 }
 
 export default { render };
