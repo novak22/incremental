@@ -31,6 +31,13 @@ const formatNetCurrency = amount =>
 const formatPercent = value =>
   baseFormatPercent(value, { nullFallback: '—', signDisplay: 'always' });
 
+const ACTION_CONSOLE_ORDER = [
+  { id: 'shipFeature', label: 'Ship Feature' },
+  { id: 'improveStability', label: 'Improve Stability' },
+  { id: 'launchCampaign', label: 'Launch Campaign' },
+  { id: 'deployEdgeNodes', label: 'Deploy Edge Nodes' }
+];
+
 function ensureSelectedApp() {
   const instances = ensureArray(currentModel.instances);
   if (!instances.length) {
@@ -96,69 +103,103 @@ function createNavButton(label, view, { badge = null } = {}) {
   return button;
 }
 
-function renderHero(model) {
+function renderHeader(model) {
   const header = document.createElement('header');
   header.className = 'serverhub-header';
 
-  const hero = document.createElement('div');
-  hero.className = 'serverhub-hero';
+  const intro = document.createElement('div');
+  intro.className = 'serverhub-header__intro';
   const title = document.createElement('h1');
-  title.textContent = 'Scale your micro SaaS ideas with ServerHub.';
-  const note = document.createElement('p');
-  note.textContent = currentPageMeta?.tagline
-    || 'Deploy, monitor, and optimise every micro app from one professional console.';
-  hero.append(title, note);
+  title.className = 'serverhub-header__title';
+  title.textContent = 'ServerHub Cloud Console';
+  const subtitle = document.createElement('p');
+  subtitle.className = 'serverhub-header__subtitle';
+  subtitle.textContent = 'Deploy SaaS apps, monitor uptime, and optimize ROI.';
+  intro.append(title, subtitle);
 
   const actions = document.createElement('div');
-  actions.className = 'serverhub-hero__actions';
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.className = 'serverhub-button serverhub-button--primary';
-  button.textContent = 'Deploy New App';
+  actions.className = 'serverhub-header__actions';
+
+  const launchButton = document.createElement('button');
+  launchButton.type = 'button';
+  launchButton.className = 'serverhub-button serverhub-button--primary';
+  launchButton.textContent = '+ Deploy New App';
   if (model.launch?.disabled) {
-    button.disabled = true;
+    launchButton.disabled = true;
   }
   const reasons = ensureArray(model.launch?.availability?.reasons).filter(Boolean);
   if (reasons.length) {
-    button.title = reasons.join('\n');
+    launchButton.title = reasons.join('\n');
   }
-  button.addEventListener('click', () => {
-    if (button.disabled) return;
+  launchButton.addEventListener('click', () => {
+    if (launchButton.disabled) return;
     handleLaunch();
   });
-  actions.appendChild(button);
+
+  const upgradesButton = document.createElement('button');
+  upgradesButton.type = 'button';
+  upgradesButton.className = 'serverhub-button serverhub-button--quiet';
+  upgradesButton.textContent = 'Upgrades';
+  upgradesButton.ariaPressed = currentState.view === VIEW_UPGRADES ? 'true' : 'false';
+  if (currentState.view === VIEW_UPGRADES) {
+    upgradesButton.classList.add('is-active');
+  }
+  upgradesButton.addEventListener('click', () => setView(VIEW_UPGRADES));
+
+  const pricingButton = document.createElement('button');
+  pricingButton.type = 'button';
+  pricingButton.className = 'serverhub-button serverhub-button--quiet';
+  pricingButton.textContent = 'Pricing';
+  pricingButton.ariaPressed = currentState.view === VIEW_PRICING ? 'true' : 'false';
+  if (currentState.view === VIEW_PRICING) {
+    pricingButton.classList.add('is-active');
+  }
+  pricingButton.addEventListener('click', () => setView(VIEW_PRICING));
+
+  actions.append(launchButton, pricingButton, upgradesButton);
 
   if (model.summary?.setup > 0) {
     const setupInfo = document.createElement('p');
-    setupInfo.className = 'serverhub-hero__note';
+    setupInfo.className = 'serverhub-header__meta';
     setupInfo.textContent = `${model.summary.setup} app${model.summary.setup === 1 ? '' : 's'} finishing launch prep.`;
     actions.appendChild(setupInfo);
   }
 
-  header.append(hero, actions);
+  header.append(intro, actions);
   return header;
 }
 
 function renderMetrics(model) {
-  const metrics = document.createElement('div');
-  metrics.className = 'serverhub-metrics';
-  ensureArray(model.summary?.hero).forEach(metric => {
+  const metrics = document.createElement('section');
+  metrics.className = 'serverhub-kpis';
+  const heroMetrics = ensureArray(model.summary?.hero);
+  heroMetrics.forEach(metric => {
     const card = document.createElement('article');
-    card.className = 'serverhub-metric';
-    const label = document.createElement('h2');
-    label.className = 'serverhub-metric__label';
+    card.className = 'serverhub-kpi';
+
+    const label = document.createElement('span');
+    label.className = 'serverhub-kpi__label';
     label.textContent = metric.label;
+
     const value = document.createElement('p');
-    value.className = 'serverhub-metric__value';
+    value.className = 'serverhub-kpi__value';
     if (metric.id === 'active') {
-      value.textContent = String(metric.value || 0);
-    } else {
+      value.textContent = `${metric.value || 0} deployed`;
+    } else if (metric.id === 'net') {
       value.textContent = formatNetCurrency(metric.value || 0);
+    } else {
+      value.textContent = formatCurrency(metric.value || 0);
     }
+
+    const noteText = metric.note || '';
     const note = document.createElement('span');
-    note.className = 'serverhub-metric__note';
-    note.textContent = metric.note || '';
-    card.append(label, value, note);
+    note.className = 'serverhub-kpi__note';
+    note.textContent = noteText;
+
+    card.append(label, value);
+    if (noteText) {
+      card.appendChild(note);
+    }
     metrics.appendChild(card);
   });
   return metrics;
@@ -183,7 +224,7 @@ function renderQuickAction(instance, actionId, label) {
   const action = instance?.actionsById?.[actionId];
   const button = document.createElement('button');
   button.type = 'button';
-  button.className = 'serverhub-quick-action';
+  button.className = 'serverhub-button serverhub-button--quiet serverhub-button--compact';
   button.textContent = label;
   if (!action || !action.available) {
     button.disabled = true;
@@ -213,8 +254,18 @@ function renderAppsTable(instances) {
   table.className = 'serverhub-table';
   const thead = document.createElement('thead');
   const headRow = document.createElement('tr');
-  ['App Name', 'Niche', 'Daily Earnings', 'Daily Upkeep', 'ROI', 'Actions'].forEach(label => {
+  [
+    { label: 'App Name', className: 'serverhub-table__heading--name' },
+    { label: 'Status', className: 'serverhub-table__heading--status' },
+    { label: 'Niche', className: 'serverhub-table__heading--niche' },
+    { label: 'Daily Earnings', className: 'serverhub-table__heading--payout' },
+    { label: 'Daily Upkeep', className: 'serverhub-table__heading--upkeep' },
+    { label: 'ROI %', className: 'serverhub-table__heading--roi' },
+    { label: 'Actions', className: 'serverhub-table__heading--actions' }
+  ].forEach(({ label, className }) => {
     const th = document.createElement('th');
+    th.className = `serverhub-table__heading ${className || ''}`.trim();
+    th.scope = 'col';
     th.textContent = label;
     headRow.appendChild(th);
   });
@@ -225,46 +276,84 @@ function renderAppsTable(instances) {
   instances.forEach(instance => {
     const row = document.createElement('tr');
     row.dataset.appId = instance.id;
+    row.className = 'serverhub-table__row';
     if (instance.id === currentState.selectedAppId) {
       row.classList.add('is-selected');
     }
 
     const nameCell = document.createElement('td');
-    nameCell.className = 'serverhub-table__cell--name';
-    const name = document.createElement('span');
-    name.className = 'serverhub-table__name';
-    name.textContent = instance.label;
+    nameCell.className = 'serverhub-table__cell serverhub-table__cell--name';
+    const nameButton = document.createElement('button');
+    nameButton.type = 'button';
+    nameButton.className = 'serverhub-table__link';
+    nameButton.textContent = instance.label;
+    nameButton.addEventListener('click', event => {
+      event.stopPropagation();
+      selectApp(instance.id);
+    });
+    nameCell.appendChild(nameButton);
+
+    const statusCell = document.createElement('td');
+    statusCell.className = 'serverhub-table__cell serverhub-table__cell--status';
     const status = document.createElement('span');
     status.className = 'serverhub-status';
     status.dataset.state = instance.status?.id || 'setup';
     status.textContent = instance.status?.label || 'Setup';
-    nameCell.append(name, status);
+    statusCell.appendChild(status);
 
     const nicheCell = document.createElement('td');
-    nicheCell.className = 'serverhub-table__cell--niche';
+    nicheCell.className = 'serverhub-table__cell serverhub-table__cell--niche';
     if (instance.niche) {
       const nicheName = document.createElement('strong');
+      nicheName.className = 'serverhub-niche__name';
       nicheName.textContent = instance.niche.name;
       const nicheNote = document.createElement('span');
-      nicheNote.className = 'serverhub-niche-note';
+      nicheNote.className = 'serverhub-niche__note';
       const trend = instance.niche.label ? `${instance.niche.label}` : 'Trend data pending';
       nicheNote.textContent = trend;
       nicheCell.append(nicheName, nicheNote);
+    } else if (instance.nicheLocked) {
+      const locked = document.createElement('span');
+      locked.className = 'serverhub-niche__locked';
+      locked.textContent = 'Locked';
+      nicheCell.appendChild(locked);
     } else {
-      nicheCell.textContent = 'Unassigned';
+      const select = document.createElement('select');
+      select.className = 'serverhub-select serverhub-select--inline';
+      select.ariaLabel = `Assign niche to ${instance.label}`;
+      const placeholder = document.createElement('option');
+      placeholder.value = '';
+      placeholder.textContent = 'Assign niche';
+      select.appendChild(placeholder);
+      ensureArray(instance.nicheOptions).forEach(option => {
+        const opt = document.createElement('option');
+        opt.value = option.id;
+        opt.textContent = `${option.name} (${option.label || 'Popularity pending'})`;
+        select.appendChild(opt);
+      });
+      select.addEventListener('click', event => event.stopPropagation());
+      select.addEventListener('change', event => {
+        const value = event.target.value;
+        if (!value) return;
+        handleNicheSelect(instance.id, value);
+      });
+      nicheCell.appendChild(select);
     }
 
     const payoutCell = document.createElement('td');
+    payoutCell.className = 'serverhub-table__cell serverhub-table__cell--payout';
     payoutCell.textContent = formatCurrency(instance.latestPayout);
 
     const upkeepCell = document.createElement('td');
+    upkeepCell.className = 'serverhub-table__cell serverhub-table__cell--upkeep';
     upkeepCell.textContent = formatCurrency(instance.upkeepCost);
 
     const roiCell = document.createElement('td');
+    roiCell.className = 'serverhub-table__cell serverhub-table__cell--roi';
     roiCell.textContent = formatPercent(instance.roi);
 
     const actionsCell = document.createElement('td');
-    actionsCell.className = 'serverhub-table__cell--actions';
+    actionsCell.className = 'serverhub-table__cell serverhub-table__cell--actions';
     const actionGroup = document.createElement('div');
     actionGroup.className = 'serverhub-action-group';
     actionGroup.append(
@@ -273,7 +362,7 @@ function renderAppsTable(instances) {
     );
     const detailsButton = document.createElement('button');
     detailsButton.type = 'button';
-    detailsButton.className = 'serverhub-quick-action serverhub-quick-action--ghost';
+    detailsButton.className = 'serverhub-button serverhub-button--ghost serverhub-button--compact';
     detailsButton.textContent = 'View Details';
     detailsButton.addEventListener('click', event => {
       event.stopPropagation();
@@ -282,7 +371,15 @@ function renderAppsTable(instances) {
     actionGroup.appendChild(detailsButton);
     actionsCell.appendChild(actionGroup);
 
-    row.append(nameCell, nicheCell, payoutCell, upkeepCell, roiCell, actionsCell);
+    row.append(
+      nameCell,
+      statusCell,
+      nicheCell,
+      payoutCell,
+      upkeepCell,
+      roiCell,
+      actionsCell
+    );
     row.addEventListener('click', () => selectApp(instance.id));
     tbody.appendChild(row);
   });
@@ -311,38 +408,60 @@ function createStat(label, value, note = '') {
   return item;
 }
 
-function renderActionsList(instance) {
+function renderActionConsole(instance) {
+  const section = document.createElement('section');
+  section.className = 'serverhub-panel serverhub-panel--actions';
+  const heading = document.createElement('h3');
+  heading.textContent = 'Action console';
+  section.appendChild(heading);
+
   const list = document.createElement('div');
-  list.className = 'serverhub-action-list';
-  ensureArray(instance.actions).forEach(action => {
-    const card = document.createElement('article');
-    card.className = 'serverhub-action-card';
-    const title = document.createElement('h3');
-    title.textContent = action.label;
-    const meta = document.createElement('p');
-    meta.className = 'serverhub-action-card__meta';
-    const parts = [];
-    if (action.time > 0) parts.push(`${formatHours(action.time)} time`);
-    if (action.cost > 0) parts.push(`${formatCurrency(action.cost)} budget`);
-    meta.textContent = parts.length ? parts.join(' • ') : 'No cost';
+  list.className = 'serverhub-action-console';
+
+  const actions = ensureArray(instance.actions);
+  let rendered = 0;
+
+  ACTION_CONSOLE_ORDER.forEach(({ id, label }) => {
+    const action = instance.actionsById?.[id]
+      || actions.find(entry => entry.id === id);
+    if (!action) return;
     const button = document.createElement('button');
     button.type = 'button';
-    button.className = 'serverhub-button serverhub-button--secondary';
-    button.textContent = action.available ? 'Run action' : 'Locked';
+    button.className = 'serverhub-action-console__button';
+    const actionLabel = document.createElement('span');
+    actionLabel.className = 'serverhub-action-console__label';
+    actionLabel.textContent = action.label || label;
+    const meta = document.createElement('span');
+    meta.className = 'serverhub-action-console__meta';
+    const timeLabel = Number(action.time) > 0 ? formatHours(action.time) : 'Instant';
+    const costLabel = formatCurrency(action.cost || 0);
+    meta.textContent = `${timeLabel} • ${costLabel}`;
     if (!action.available) {
       button.disabled = true;
       if (action.disabledReason) {
         button.title = action.disabledReason;
       }
     }
-    button.addEventListener('click', () => {
+    button.append(actionLabel, meta);
+    button.addEventListener('click', event => {
+      event.stopPropagation();
       if (button.disabled) return;
       handleQuickAction(instance.id, action.id);
     });
-    card.append(title, meta, button);
-    list.appendChild(card);
+    list.appendChild(button);
+    rendered += 1;
   });
-  return list;
+
+  if (!rendered) {
+    const empty = document.createElement('p');
+    empty.className = 'serverhub-panel__hint';
+    empty.textContent = 'Quality actions unlock as your SaaS portfolio grows.';
+    section.appendChild(empty);
+  } else {
+    section.appendChild(list);
+  }
+
+  return section;
 }
 
 function renderNicheSection(instance) {
@@ -436,8 +555,14 @@ function renderPayoutBreakdown(instance) {
 function renderQualitySection(instance) {
   const section = document.createElement('section');
   section.className = 'serverhub-panel';
-  const heading = document.createElement('h3');
-  heading.textContent = `Quality milestone — Tier ${instance.milestone.level}`;
+  const heading = document.createElement('div');
+  heading.className = 'serverhub-panel__header';
+  const title = document.createElement('h3');
+  title.textContent = 'Quality tier';
+  const badge = document.createElement('span');
+  badge.className = 'serverhub-panel__badge';
+  badge.textContent = `Tier ${instance.milestone.level}`;
+  heading.append(title, badge);
   section.appendChild(heading);
 
   const progress = document.createElement('div');
@@ -477,6 +602,15 @@ function renderDetailPanel(model) {
   status.textContent = instance.status?.label || 'Active';
   header.append(title, status);
 
+  const tabs = document.createElement('div');
+  tabs.className = 'serverhub-detail__tabs';
+  const overviewTab = document.createElement('button');
+  overviewTab.type = 'button';
+  overviewTab.className = 'serverhub-detail__tab is-active';
+  overviewTab.textContent = 'Overview';
+  overviewTab.disabled = true;
+  tabs.appendChild(overviewTab);
+
   const stats = document.createElement('div');
   stats.className = 'serverhub-detail__stats';
   stats.append(
@@ -491,18 +625,14 @@ function renderDetailPanel(model) {
   );
 
   const panels = document.createElement('div');
-  panels.className = 'serverhub-detail__panels';
+  panels.className = 'serverhub-detail__grid';
   panels.append(
     renderQualitySection(instance),
-    renderPayoutBreakdown(instance),
-    renderNicheSection(instance)
+    renderNicheSection(instance),
+    renderPayoutBreakdown(instance)
   );
 
-  const actionsHeading = document.createElement('h3');
-  actionsHeading.className = 'serverhub-detail__actions-heading';
-  actionsHeading.textContent = 'Action console';
-
-  aside.append(header, stats, panels, actionsHeading, renderActionsList(instance));
+  aside.append(header, tabs, stats, panels, renderActionConsole(instance));
   return aside;
 }
 
@@ -512,8 +642,8 @@ function renderAppsView(model) {
   const layout = document.createElement('div');
   layout.className = 'serverhub-layout';
 
-  const activeInstances = ensureArray(model.instances).filter(instance => instance.status?.id === 'active');
-  layout.append(renderAppsTable(activeInstances), renderDetailPanel(model));
+  const allInstances = ensureArray(model.instances);
+  layout.append(renderAppsTable(allInstances), renderDetailPanel(model));
 
   container.appendChild(layout);
   return container;
@@ -717,7 +847,7 @@ function renderApp() {
   const root = document.createElement('div');
   root.className = 'serverhub';
   root.append(
-    renderHero(currentModel),
+    renderHeader(currentModel),
     renderMetrics(currentModel),
     renderNav(currentModel),
     renderBody(currentModel)
