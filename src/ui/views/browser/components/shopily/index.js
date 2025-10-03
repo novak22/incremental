@@ -4,6 +4,7 @@ import {
   formatPercent as baseFormatPercent,
   formatSignedCurrency as baseFormatSignedCurrency
 } from '../../utils/formatting.js';
+import { createCurrencyLifecycleSummary } from '../../utils/lifecycleSummaries.js';
 import { createTabbedWorkspacePresenter } from '../../utils/createTabbedWorkspacePresenter.js';
 import { selectShopilyNiche } from '../../../../cards/model/index.js';
 import { performQualityAction } from '../../../../../game/assets/index.js';
@@ -39,6 +40,18 @@ const formatSignedCurrency = amount =>
   baseFormatSignedCurrency(amount, { precision: 'cent' });
 const formatPercent = value =>
   baseFormatPercent(value, { nullFallback: '—', signDisplay: 'always' });
+
+const {
+  describeSetupSummary: describePlanSetupSummary,
+  describeUpkeepSummary: describePlanUpkeepSummary
+} = createCurrencyLifecycleSummary({
+  formatCurrency,
+  formatDailyHours: hours => `${formatHours(hours)} per day`,
+  copy: {
+    setupFallback: 'Instant setup',
+    upkeepFallback: 'No upkeep'
+  }
+});
 
 function handleQuickAction(instanceId, actionId) {
   if (!instanceId || !actionId) return;
@@ -1071,30 +1084,6 @@ function renderUpgradesView(model, state = initialState) {
   return container;
 }
 
-function describeSetup(plan) {
-  if (!plan) return 'Setup timeline varies';
-  const parts = [];
-  if (plan.setupDays > 0) {
-    parts.push(`${plan.setupDays} day${plan.setupDays === 1 ? '' : 's'}`);
-  }
-  if (plan.setupHours > 0) {
-    parts.push(`${formatHours(plan.setupHours)} / day`);
-  }
-  return parts.length ? parts.join(' • ') : 'Instant';
-}
-
-function describeUpkeep(plan) {
-  if (!plan) return 'No upkeep';
-  const parts = [];
-  if (plan.upkeepHours > 0) {
-    parts.push(`${formatHours(plan.upkeepHours)}/day`);
-  }
-  if (plan.upkeepCost > 0) {
-    parts.push(formatCurrency(plan.upkeepCost));
-  }
-  return parts.length ? parts.join(' • ') : 'No upkeep';
-}
-
 function renderPlanCard(plan) {
   const card = document.createElement('article');
   card.className = 'shopily-plan';
@@ -1113,8 +1102,20 @@ function renderPlanCard(plan) {
   list.className = 'shopily-plan__list';
   const items = [
     { label: 'Setup cost', value: formatCurrency(plan.setupCost || 0) },
-    { label: 'Setup timeline', value: describeSetup(plan) },
-    { label: 'Daily upkeep', value: describeUpkeep(plan) },
+    {
+      label: 'Setup timeline',
+      value: describePlanSetupSummary({
+        days: plan.setupDays,
+        hoursPerDay: plan.setupHours
+      })
+    },
+    {
+      label: 'Daily upkeep',
+      value: describePlanUpkeepSummary({
+        hours: plan.upkeepHours,
+        cost: plan.upkeepCost
+      })
+    },
     { label: 'Expected sales', value: plan.expectedSales || '$0/day' }
   ];
 

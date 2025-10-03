@@ -5,7 +5,7 @@ import {
 } from '../../../../cards/model/digishelf.js';
 import { performQualityAction } from '../../../../../game/assets/index.js';
 import { formatCurrency as baseFormatCurrency } from '../../utils/formatting.js';
-import { createLifecycleSummary } from '../../utils/lifecycleSummaries.js';
+import { createCurrencyLifecycleSummary } from '../../utils/lifecycleSummaries.js';
 import { showLaunchConfirmation } from '../../utils/launchDialog.js';
 import { createTabbedWorkspacePresenter } from '../../utils/createTabbedWorkspacePresenter.js';
 import {
@@ -41,14 +41,10 @@ const formatCurrency = amount =>
   baseFormatCurrency(amount, { precision: 'integer', clampZero: true });
 
 const { describeSetupSummary: describeLaunchSetup, describeUpkeepSummary: describeLaunchUpkeep } =
-  createLifecycleSummary({
+  createCurrencyLifecycleSummary({
     parseValue: clampNumber,
-    formatSetupHours: hours => `${formatHours(hours)} per day`,
-    formatUpkeepHours: hours => `${formatHours(hours)} per day`,
-    formatSetupCost: cost => `$${formatMoney(cost)} upfront`,
-    formatUpkeepCost: cost => `$${formatMoney(cost)} per day`,
-    setupFallback: 'Instant launch',
-    upkeepFallback: 'No upkeep required'
+    formatCurrency: value => `$${formatMoney(value)}`,
+    formatDailyHours: hours => `${formatHours(hours)} per day`
   });
 
 function confirmResourceLaunch(definition = {}) {

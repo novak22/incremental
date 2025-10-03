@@ -2,7 +2,7 @@ import { formatHours, formatMoney } from '../../../../core/helpers.js';
 import { selectBlogpressNiche } from '../../../cards/model/index.js';
 import { performQualityAction } from '../../../../game/assets/index.js';
 import { formatCurrency as baseFormatCurrency, formatNetCurrency } from '../utils/formatting.js';
-import { createLifecycleSummary } from '../utils/lifecycleSummaries.js';
+import { createCurrencyLifecycleSummary } from '../utils/lifecycleSummaries.js';
 import { showLaunchConfirmation } from '../utils/launchDialog.js';
 import { createTabbedWorkspacePresenter } from '../utils/createTabbedWorkspacePresenter.js';
 
@@ -19,17 +19,9 @@ const INITIAL_STATE = {
 const formatCurrency = amount =>
   baseFormatCurrency(amount, { precision: 'integer', clampZero: true });
 
-const { describeSetupSummary, describeUpkeepSummary } = createLifecycleSummary({
-  parseValue: value => {
-    const numeric = Number(value);
-    return Number.isFinite(numeric) ? numeric : 0;
-  },
-  formatSetupHours: hours => `${formatHours(hours)} per day`,
-  formatUpkeepHours: hours => `${formatHours(hours)} per day`,
-  formatSetupCost: cost => `$${formatMoney(cost)} upfront`,
-  formatUpkeepCost: cost => `$${formatMoney(cost)} per day`,
-  setupFallback: 'Instant launch',
-  upkeepFallback: 'No upkeep required'
+const { describeSetupSummary, describeUpkeepSummary } = createCurrencyLifecycleSummary({
+  formatCurrency: value => `$${formatMoney(value)}`,
+  formatDailyHours: hours => `${formatHours(hours)} per day`
 });
 
 function confirmBlogLaunch(definition = {}) {
