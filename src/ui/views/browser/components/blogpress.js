@@ -5,6 +5,8 @@ import { formatCurrency as baseFormatCurrency, formatNetCurrency } from '../util
 import { createCurrencyLifecycleSummary } from '../utils/lifecycleSummaries.js';
 import { showLaunchConfirmation } from '../utils/launchDialog.js';
 import { createTabbedWorkspacePresenter } from '../utils/createTabbedWorkspacePresenter.js';
+import { createNavTabs } from './common/navBuilders.js';
+import { renderWorkspaceLock } from './common/renderWorkspaceLock.js';
 
 const VIEW_HOME = 'home';
 const VIEW_DETAIL = 'detail';
@@ -94,25 +96,7 @@ function handleNicheSelect(instanceId, value) {
   selectBlogpressNiche('blog', instanceId, value);
 }
 
-function createNavButton(label, view, { count = null } = {}) {
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.className = 'blogpress-tab';
-  button.dataset.view = view;
-  button.textContent = label;
-  if (count !== null) {
-    const badge = document.createElement('span');
-    badge.className = 'blogpress-tab__badge';
-    badge.textContent = count;
-    button.appendChild(badge);
-  }
-  button.addEventListener('click', () => {
-    setView(view);
-  });
-  return button;
-}
-
-function renderHeader(model, _state = INITIAL_STATE) {
+function renderHeader(model, state = INITIAL_STATE) {
   const header = document.createElement('header');
   header.className = 'blogpress__header';
 
@@ -124,15 +108,35 @@ function renderHeader(model, _state = INITIAL_STATE) {
   note.textContent = 'Your faux CMS for cozy blog empires.';
   title.append(heading, note);
 
-  const nav = document.createElement('nav');
-  nav.className = 'blogpress-tabs';
   const activeCount = model.summary?.active || 0;
   const setupCount = model.summary?.setup || 0;
-  nav.append(
-    createNavButton('My Blogs', VIEW_HOME, { count: activeCount || null }),
-    createNavButton('Pricing', VIEW_PRICING),
-    createNavButton('Blueprints', VIEW_BLUEPRINTS, { count: setupCount || null })
-  );
+  const nav = createNavTabs({
+    navClassName: 'blogpress-tabs',
+    buttonClassName: 'blogpress-tab',
+    badgeClassName: 'blogpress-tab__badge',
+    datasetKey: 'view',
+    withAriaPressed: true,
+    onSelect: setView,
+    buttons: [
+      {
+        label: 'My Blogs',
+        view: VIEW_HOME,
+        badge: activeCount || null,
+        isActive: state.view === VIEW_HOME
+      },
+      {
+        label: 'Pricing',
+        view: VIEW_PRICING,
+        isActive: state.view === VIEW_PRICING
+      },
+      {
+        label: 'Blueprints',
+        view: VIEW_BLUEPRINTS,
+        badge: setupCount || null,
+        isActive: state.view === VIEW_BLUEPRINTS
+      }
+    ]
+  });
 
   const actions = document.createElement('div');
   actions.className = 'blogpress__actions';
@@ -874,21 +878,6 @@ function renderBlueprintView(model) {
   return container;
 }
 
-function renderLockedState(lock) {
-  const container = document.createElement('section');
-  container.className = 'blogpress-view blogpress-view--locked';
-  const message = document.createElement('p');
-  message.className = 'blogpress-empty__message';
-  if (lock?.type === 'skill') {
-    const courseNote = lock.courseName ? ` Complete ${lock.courseName} in Learnly to level up instantly.` : '';
-    message.textContent = `${lock.workspaceLabel || 'This workspace'} unlocks at ${lock.skillName} Lv ${lock.requiredLevel}.${courseNote}`;
-  } else {
-    message.textContent = 'BlogPress unlocks once the Personal Blog blueprint is discovered.';
-  }
-  container.appendChild(message);
-  return container;
-}
-
 function renderCurrentView(model, state = INITIAL_STATE) {
   switch (state.view) {
     case VIEW_PRICING:
@@ -906,7 +895,18 @@ function renderCurrentView(model, state = INITIAL_STATE) {
 function renderLockedWorkspace(model = {}, mount) {
   if (!mount) return;
   mount.innerHTML = '';
-  mount.appendChild(renderLockedState(model.lock));
+  mount.appendChild(
+    renderWorkspaceLock({
+      theme: {
+        container: 'blogpress-view',
+        locked: 'blogpress-view--locked',
+        message: 'blogpress-empty__message',
+        label: 'This workspace'
+      },
+      lock: model.lock,
+      fallbackMessage: 'BlogPress unlocks once the Personal Blog blueprint is discovered.'
+    })
+  );
 }
 
 function deriveWorkspaceSummary(model = {}) {
