@@ -488,27 +488,15 @@ a {
 
 .browser-home__widgets {
   width: 100%;
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
   gap: var(--browser-home-widget-gap, var(--browser-home-spacing, 1.5rem));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
   align-items: stretch;
-  justify-content: space-between;
   margin: 0;
 }
 
 .browser-home__widgets > .browser-widget {
-  flex: 1 1 0;
-  min-width: 280px;
-}
-
-@media (max-width: 900px) {
-  .browser-home__widgets {
-    flex-direction: column;
-  }
-
-  .browser-home__widgets > .browser-widget {
-    min-width: 0;
-  }
+  min-width: 0;
 }
 
 .browser-home__header {
