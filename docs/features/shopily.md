@@ -16,6 +16,9 @@ Shopily transforms the classic dropshipping venture interface into a modern SaaS
 - Niche selection uses `assignInstanceToNiche` under the hood and locks once set.
 - Upgrade cards call the underlying upgrade action `onClick` handlers; status badges rely on `getUpgradeSnapshot`.
 - Pricing cards read setup/maintenance values from the dropshipping asset definition so future tuning automatically updates the UI.
+- The upgrades tab now mirrors a mobile top-up catalog: cards show highlights, cost, readiness tone, and a "View product" action that opens a detail panel with full ShopStack-style specs, requirements, and buy button.
+- High-tier commerce upgrades formerly sold through ShopStack (Fulfillment Automation Suite, Global Supply Mesh, White-Label Alliance) render exclusively here so players manage all storefront boosters in one place.
+- Workspace URLs expose `upgrades/<id>` segments so selecting a product updates the browser shell path and keeps deep links in sync.
 
 ## Future Enhancements
 - Add analytics view (daily revenue chart, top modifiers) once the finance history service exposes commerce-specific slices.
