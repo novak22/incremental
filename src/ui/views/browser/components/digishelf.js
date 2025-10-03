@@ -5,6 +5,8 @@ import {
 } from '../../../cards/model/digishelf.js';
 import { performQualityAction } from '../../../../game/assets/index.js';
 import { formatCurrency as baseFormatCurrency } from '../utils/formatting.js';
+import { createLifecycleSummary } from '../utils/lifecycleSummaries.js';
+import { showLaunchConfirmation } from '../utils/launchDialog.js';
 
 const VIEW_EBOOKS = 'ebooks';
 const VIEW_STOCK = 'stock';
@@ -46,50 +48,32 @@ function clampNumber(value) {
 const formatCurrency = amount =>
   baseFormatCurrency(amount, { precision: 'integer', clampZero: true });
 
-function describeLaunchSetup(setup = {}) {
-  const days = clampNumber(setup.days);
-  const hoursPerDay = clampNumber(setup.hoursPerDay);
-  const cost = clampNumber(setup.cost);
-  const parts = [];
-  if (days > 0) {
-    parts.push(`${days} day${days === 1 ? '' : 's'}`);
-  }
-  if (hoursPerDay > 0) {
-    parts.push(`${formatHours(hoursPerDay)} per day`);
-  }
-  if (cost > 0) {
-    parts.push(`$${formatMoney(cost)} upfront`);
-  }
-  return parts.length ? parts.join(' • ') : 'Instant launch';
-}
-
-function describeLaunchUpkeep(upkeep = {}) {
-  const hours = clampNumber(upkeep.hours);
-  const cost = clampNumber(upkeep.cost);
-  const parts = [];
-  if (hours > 0) {
-    parts.push(`${formatHours(hours)} per day`);
-  }
-  if (cost > 0) {
-    parts.push(`$${formatMoney(cost)} per day`);
-  }
-  return parts.length ? parts.join(' • ') : 'No upkeep required';
-}
+const { describeSetupSummary: describeLaunchSetup, describeUpkeepSummary: describeLaunchUpkeep } =
+  createLifecycleSummary({
+    parseValue: clampNumber,
+    formatSetupHours: hours => `${formatHours(hours)} per day`,
+    formatUpkeepHours: hours => `${formatHours(hours)} per day`,
+    formatSetupCost: cost => `$${formatMoney(cost)} upfront`,
+    formatUpkeepCost: cost => `$${formatMoney(cost)} per day`,
+    setupFallback: 'Instant launch',
+    upkeepFallback: 'No upkeep required'
+  });
 
 function confirmResourceLaunch(definition = {}) {
-  if (typeof window === 'undefined' || typeof window.confirm !== 'function') {
-    return true;
-  }
-  const resourceName = definition.singular || definition.name || 'resource';
+  const resourceName = definition.singular || definition.name || 'collection';
   const setupSummary = describeLaunchSetup(definition.setup);
   const upkeepSummary = describeLaunchUpkeep(definition.maintenance);
-  const message = [
-    `Ready to publish the ${resourceName}?`,
-    `Setup commitment: ${setupSummary}.`,
-    `Daily upkeep: ${upkeepSummary}.`,
-    'Launch now?'
-  ].join('\n');
-  return window.confirm(message);
+  return showLaunchConfirmation({
+    theme: 'digishelf',
+    icon: '📚',
+    title: 'Publish this lineup?',
+    resourceName,
+    tagline: 'Preview the commitment, then dazzle the marketplace.',
+    setupSummary,
+    upkeepSummary,
+    confirmLabel: 'Ship it',
+    cancelLabel: 'Maybe later'
+  });
 }
 
 function ensureState(model) {
@@ -226,9 +210,10 @@ function renderLaunchCard(assetId, model) {
   button.className = 'digishelf-button digishelf-button--primary';
   button.textContent = model.launch.label || 'Launch';
   button.disabled = Boolean(model.launch.disabled || model.launch.availability?.disabled);
-  button.addEventListener('click', () => {
+  button.addEventListener('click', async () => {
     if (button.disabled) return;
-    if (!confirmResourceLaunch(model.definition)) {
+    const confirmed = await confirmResourceLaunch(model.definition);
+    if (!confirmed) {
       return;
     }
     model.launch.onClick?.();

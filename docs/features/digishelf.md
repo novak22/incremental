@@ -39,6 +39,7 @@ behave exactly as before.
   pill buttons.
 - Detail panels reuse the browser palette, offer progress bars for milestones, and surface modifiers in a tidy list.
 - Pricing cards emphasise opportunity framing—setup, upkeep, average payout, and required prep steps.
+- Publish CTA now opens a DigiShelf-themed confirmation modal summarising setup commitments and upkeep before the catalog goes live.
 
 ## Manual Test Checklist
 - Launch a new e-book or gallery through the Publish panel; confirm setup costs/hours deduct and the row appears in the proper tab.

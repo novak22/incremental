@@ -6,6 +6,8 @@ import {
   formatNetCurrency as baseFormatNetCurrency,
   formatPercent as baseFormatPercent
 } from '../utils/formatting.js';
+import { createLifecycleSummary } from '../utils/lifecycleSummaries.js';
+import { showLaunchConfirmation } from '../utils/launchDialog.js';
 
 const VIEW_APPS = 'apps';
 const VIEW_UPGRADES = 'upgrades';
@@ -38,50 +40,35 @@ const ACTION_CONSOLE_ORDER = [
   { id: 'deployEdgeNodes', label: 'Deploy Edge Nodes' }
 ];
 
-function formatSetupSummary(setup = {}) {
-  const days = Number(setup.days) || 0;
-  const hoursPerDay = Number(setup.hoursPerDay) || 0;
-  const cost = Number(setup.cost) || 0;
-  const parts = [];
-  if (days > 0) {
-    parts.push(`${days} day${days === 1 ? '' : 's'}`);
-  }
-  if (hoursPerDay > 0) {
-    parts.push(`${formatHours(hoursPerDay)} per day`);
-  }
-  if (cost > 0) {
-    parts.push(`${formatCurrency(cost)} upfront`);
-  }
-  return parts.length ? parts.join(' • ') : 'Instant setup';
-}
-
-function formatUpkeepSummary(upkeep = {}) {
-  const hours = Number(upkeep.hours) || 0;
-  const cost = Number(upkeep.cost) || 0;
-  const parts = [];
-  if (hours > 0) {
-    parts.push(`${formatHours(hours)} per day`);
-  }
-  if (cost > 0) {
-    parts.push(`${formatCurrency(cost)} per day`);
-  }
-  return parts.length ? parts.join(' • ') : 'No upkeep required';
-}
+const { describeSetupSummary: formatSetupSummary, describeUpkeepSummary: formatUpkeepSummary } =
+  createLifecycleSummary({
+    parseValue: value => {
+      const numeric = Number(value);
+      return Number.isFinite(numeric) ? numeric : 0;
+    },
+    formatSetupHours: hours => `${formatHours(hours)} per day`,
+    formatUpkeepHours: hours => `${formatHours(hours)} per day`,
+    formatSetupCost: cost => `${formatCurrency(cost)} upfront`,
+    formatUpkeepCost: cost => `${formatCurrency(cost)} per day`,
+    setupFallback: 'Instant setup',
+    upkeepFallback: 'No upkeep required'
+  });
 
 function confirmLaunchWithDetails(definition = {}) {
-  if (typeof window === 'undefined' || typeof window.confirm !== 'function') {
-    return true;
-  }
   const resourceName = definition.singular || definition.name || 'app';
   const setupSummary = formatSetupSummary(definition.setup);
   const upkeepSummary = formatUpkeepSummary(definition.maintenance);
-  const message = [
-    `Ready to deploy the ${resourceName}?`,
-    `Setup commitment: ${setupSummary}.`,
-    `Daily upkeep: ${upkeepSummary}.`,
-    'Launch now?'
-  ].join('\n');
-  return window.confirm(message);
+  return showLaunchConfirmation({
+    theme: 'serverhub',
+    icon: '🛰️',
+    title: 'Deploy this app?',
+    resourceName,
+    tagline: 'Give your SaaS a smooth liftoff with a quick double-check.',
+    setupSummary,
+    upkeepSummary,
+    confirmLabel: 'Deploy app',
+    cancelLabel: 'Hold launch'
+  });
 }
 
 function ensureSelectedApp() {
@@ -113,12 +100,13 @@ function getSelectedApp() {
   return instances.find(entry => entry.id === currentState.selectedAppId) || null;
 }
 
-function handleLaunch() {
+async function handleLaunch() {
   const launch = currentModel.launch;
   if (!launch || launch.disabled) {
     return;
   }
-  if (!confirmLaunchWithDetails(currentModel.definition)) {
+  const confirmed = await confirmLaunchWithDetails(currentModel.definition);
+  if (!confirmed) {
     return;
   }
   launch.onClick?.();
@@ -180,9 +168,9 @@ function renderHeader(model) {
   if (reasons.length) {
     launchButton.title = reasons.join('\n');
   }
-  launchButton.addEventListener('click', () => {
+  launchButton.addEventListener('click', async () => {
     if (launchButton.disabled) return;
-    handleLaunch();
+    await handleLaunch();
   });
 
   const upgradesButton = document.createElement('button');
@@ -264,7 +252,9 @@ function renderEmptyTable() {
   cta.type = 'button';
   cta.className = 'serverhub-button serverhub-button--primary';
   cta.textContent = 'Deploy New App';
-  cta.addEventListener('click', handleLaunch);
+  cta.addEventListener('click', async () => {
+    await handleLaunch();
+  });
   empty.appendChild(cta);
   return empty;
 }

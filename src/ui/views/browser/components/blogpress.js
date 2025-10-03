@@ -2,6 +2,8 @@ import { formatHours, formatMoney } from '../../../../core/helpers.js';
 import { selectBlogpressNiche } from '../../../cards/model/index.js';
 import { performQualityAction } from '../../../../game/assets/index.js';
 import { formatCurrency as baseFormatCurrency, formatNetCurrency } from '../utils/formatting.js';
+import { createLifecycleSummary } from '../utils/lifecycleSummaries.js';
+import { showLaunchConfirmation } from '../utils/launchDialog.js';
 import { createWorkspacePathController } from '../utils/workspacePaths.js';
 
 const VIEW_HOME = 'home';
@@ -40,50 +42,34 @@ const workspacePathController = createWorkspacePathController({
 const formatCurrency = amount =>
   baseFormatCurrency(amount, { precision: 'integer', clampZero: true });
 
-function describeSetupSummary(setup = {}) {
-  const days = Number(setup.days) || 0;
-  const hoursPerDay = Number(setup.hoursPerDay) || 0;
-  const cost = Number(setup.cost) || 0;
-  const parts = [];
-  if (days > 0) {
-    parts.push(`${days} day${days === 1 ? '' : 's'}`);
-  }
-  if (hoursPerDay > 0) {
-    parts.push(`${formatHours(hoursPerDay)} per day`);
-  }
-  if (cost > 0) {
-    parts.push(`$${formatMoney(cost)} upfront`);
-  }
-  return parts.length ? parts.join(' • ') : 'Instant launch';
-}
-
-function describeUpkeepSummary(upkeep = {}) {
-  const hours = Number(upkeep.hours) || 0;
-  const cost = Number(upkeep.cost) || 0;
-  const parts = [];
-  if (hours > 0) {
-    parts.push(`${formatHours(hours)} per day`);
-  }
-  if (cost > 0) {
-    parts.push(`$${formatMoney(cost)} per day`);
-  }
-  return parts.length ? parts.join(' • ') : 'No upkeep required';
-}
+const { describeSetupSummary, describeUpkeepSummary } = createLifecycleSummary({
+  parseValue: value => {
+    const numeric = Number(value);
+    return Number.isFinite(numeric) ? numeric : 0;
+  },
+  formatSetupHours: hours => `${formatHours(hours)} per day`,
+  formatUpkeepHours: hours => `${formatHours(hours)} per day`,
+  formatSetupCost: cost => `$${formatMoney(cost)} upfront`,
+  formatUpkeepCost: cost => `$${formatMoney(cost)} per day`,
+  setupFallback: 'Instant launch',
+  upkeepFallback: 'No upkeep required'
+});
 
 function confirmBlogLaunch(definition = {}) {
-  if (typeof window === 'undefined' || typeof window.confirm !== 'function') {
-    return true;
-  }
   const resourceName = definition.singular || definition.name || 'blog';
   const setupSummary = describeSetupSummary(definition.setup);
   const upkeepSummary = describeUpkeepSummary(definition.maintenance);
-  const message = [
-    `Ready to launch the ${resourceName}?`,
-    `Setup commitment: ${setupSummary}.`,
-    `Daily upkeep: ${upkeepSummary}.`,
-    'Launch now?'
-  ].join('\n');
-  return window.confirm(message);
+  return showLaunchConfirmation({
+    theme: 'blogpress',
+    icon: '📰',
+    title: 'Launch this blog?',
+    resourceName,
+    tagline: 'Blogs flourish when you honour the plan — ready to go live?',
+    setupSummary,
+    upkeepSummary,
+    confirmLabel: 'Launch blog',
+    cancelLabel: 'Keep planning'
+  });
 }
 
 function formatRange(range = {}) {
@@ -893,9 +879,10 @@ function renderBlueprintView(model) {
   button.className = 'blogpress-button blogpress-button--primary';
   button.textContent = launch.label || 'Launch blog';
   button.disabled = launch.disabled || launch.availability?.disabled;
-  button.addEventListener('click', () => {
+  button.addEventListener('click', async () => {
     if (button.disabled) return;
-    if (!confirmBlogLaunch(model.definition)) {
+    const confirmed = await confirmBlogLaunch(model.definition);
+    if (!confirmed) {
       return;
     }
     launch.onClick?.();

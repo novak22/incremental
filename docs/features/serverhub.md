@@ -9,6 +9,7 @@ ServerHub graduates the Micro SaaS venture flow from the legacy dashboard into a
 - **Detailed Operations Console** – The My Apps table lists every active instance with niche, payout, upkeep, and ROI data. Selecting an app opens a sidebar with payout breakdowns, quality progress, uptime context, and one-click quality actions that mirror the classic controls.
 - **Upgrade Alignment** – The Upgrades view highlights the existing infrastructure ladder (Server Rack → Cloud Cluster → Edge Delivery Network) with purchase states pulled from the shared upgrade system. Triggering a button fires the same upgrade logic and ToDo tasks as the original UI.
 - **Pricing Guidance** – The Pricing view converts the SaaS quality tiers into tiered plans so players can compare setup cost, upkeep, and projected payout ranges before investing.
+- **Launch Confidence** – Deploy actions now open a ServerHub-styled confirmation modal that reiterates setup time, upkeep, and flavour text before committing.
 
 ## Implementation Notes
 - Pulls live data from `buildServerHubModel`, which wraps the existing `saas` asset definition and upgrade catalogue.
