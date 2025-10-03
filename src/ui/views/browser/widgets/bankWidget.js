@@ -91,10 +91,13 @@ function renderFootnote(header = {}) {
   elements.footnote.textContent = `Lifetime earned ${earnedText} • Lifetime spent ${spentText}`;
 }
 
-function createChip({ label, value, tone = 'neutral', note }) {
+function createChip({ label, value, tone = 'neutral', note, position }) {
   const chip = document.createElement('span');
   chip.className = 'bank-widget__chip';
   chip.dataset.tone = tone;
+  if (position) {
+    chip.dataset.position = position;
+  }
 
   const chipLabel = document.createElement('span');
   chipLabel.className = 'bank-widget__chip-label';
@@ -111,50 +114,86 @@ function createChip({ label, value, tone = 'neutral', note }) {
   return chip;
 }
 
+function extractPulseEntry(pulseEntries = [], preferredIds = []) {
+  if (!pulseEntries.length) return null;
+  if (preferredIds.length) {
+    const matchIndex = pulseEntries.findIndex(entry => preferredIds.includes(entry?.id));
+    if (matchIndex >= 0) {
+      return pulseEntries.splice(matchIndex, 1)[0];
+    }
+  }
+  return pulseEntries.shift() || null;
+}
+
+function resolvePulseChipConfig(entry, { fallbackLabel, fallbackDirection = 'in' }) {
+  const amount = Number(entry?.amount ?? 0);
+  const direction = entry?.direction || fallbackDirection;
+  const tone = amount > 0 ? (direction === 'out' ? 'out' : 'in') : 'neutral';
+  const signedAmount = direction === 'out' ? -Math.abs(amount) : Math.abs(amount);
+  return {
+    label: entry?.label || fallbackLabel,
+    value: formatSignedCurrency(signedAmount),
+    tone,
+    note: entry?.note || 'Live cash pulse'
+  };
+}
+
 function renderHighlights(header = {}) {
   if (!elements?.highlights) return;
+
   const chips = [];
+  const quick = header?.quickObligation || null;
+  const quickAmount = Math.max(0, Number(quick?.amount ?? 0));
+  chips.push(
+    createChip({
+      label: quick?.label || 'Next due',
+      value: formatCurrency(quickAmount),
+      tone: quickAmount > 0 ? 'out' : 'neutral',
+      note: quick?.note || '',
+      position: 'left'
+    })
+  );
 
-  if (header?.quickObligation) {
-    chips.push(
-      createChip({
-        label: header.quickObligation.label || 'Next due',
-        value: formatCurrency(header.quickObligation.amount || 0),
-        tone: 'out',
-        note: header.quickObligation.note || ''
-      })
-    );
-  }
+  const top = header?.topEarner || null;
+  const topAmount = Math.max(0, Number(top?.amount ?? 0));
+  const topLabel = top?.label || '—';
+  chips.push(
+    createChip({
+      label: 'Top earner',
+      value: `${topLabel} • ${formatCurrency(topAmount)}`,
+      tone: topAmount > 0 ? 'in' : 'neutral',
+      note: topAmount > 0 ? 'Highest payout logged today' : '',
+      position: 'right'
+    })
+  );
 
-  if (header?.topEarner) {
-    chips.push(
-      createChip({
-        label: 'Top earner',
-        value: `${header.topEarner.label} • ${formatCurrency(header.topEarner.amount || 0)}`,
-        tone: 'in',
-        note: 'Highest payout logged today'
-      })
-    );
-  }
+  const pulseEntries = Array.isArray(header?.pulse) ? header.pulse.slice() : [];
+  const primaryPulse = extractPulseEntry(pulseEntries, ['active', 'passive', 'offline']);
+  const secondaryPulse = extractPulseEntry(pulseEntries, ['passive', 'offline', 'upkeep', 'tuition', 'investments']);
 
-  const pulse = Array.isArray(header?.pulse) ? header.pulse.slice(0, 2) : [];
-  pulse.forEach(entry => {
-    chips.push(
-      createChip({
-        label: entry.label || 'Pulse',
-        value: formatSignedCurrency(entry.direction === 'out' ? -entry.amount : entry.amount),
-        tone: entry.direction === 'out' ? 'out' : 'in',
-        note: 'Live cash pulse'
-      })
-    );
+  const primaryConfig = resolvePulseChipConfig(primaryPulse, {
+    fallbackLabel: 'Active',
+    fallbackDirection: 'in'
   });
+  chips.push(
+    createChip({
+      ...primaryConfig,
+      position: 'left'
+    })
+  );
+
+  const secondaryConfig = resolvePulseChipConfig(secondaryPulse, {
+    fallbackLabel: 'Passive',
+    fallbackDirection: 'in'
+  });
+  chips.push(
+    createChip({
+      ...secondaryConfig,
+      position: 'right'
+    })
+  );
 
   elements.highlights.innerHTML = '';
-  if (!chips.length) {
-    elements.highlights.hidden = true;
-    return;
-  }
-
   chips.forEach(chip => elements.highlights.appendChild(chip));
   elements.highlights.hidden = false;
 }

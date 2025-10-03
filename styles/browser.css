@@ -1139,8 +1139,8 @@ a {
 }
 
 .bank-widget__highlights {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.65rem;
 }
 
@@ -1154,6 +1154,14 @@ a {
   border: 1px solid var(--browser-panel-border);
   font-size: 0.84rem;
   line-height: 1;
+}
+
+.bank-widget__chip[data-position='left'] {
+  justify-self: start;
+}
+
+.bank-widget__chip[data-position='right'] {
+  justify-self: end;
 }
 
 .bank-widget__chip-label {
