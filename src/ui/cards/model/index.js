@@ -53,6 +53,11 @@ function registerDefaultCardBuilders() {
     registries => buildUpgradeModels(registries.upgrades),
     { isDefault: true }
   );
+  registerModelBuilder(
+    'finance',
+    registries => buildFinanceModel(registries),
+    { isDefault: true }
+  );
 }
 
 ensureDefaultBuilders(registerDefaultCardBuilders);
