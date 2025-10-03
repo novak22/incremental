@@ -8,8 +8,7 @@ import {
   buildAssetUpgradeRecommendations
 } from './quickActions.js';
 import { buildStudyEnrollmentActionModel } from './knowledge.js';
-import { getAssetState } from '../../core/state.js';
-import { getAssets, getUpgrades } from '../../game/registryService.js';
+import notificationsService from '../notifications/service.js';
 import { collectNicheAnalytics, summarizeNicheHighlights } from '../../game/analytics/niches.js';
 
 function createHighlightDefaults() {
@@ -165,43 +164,6 @@ export function buildNicheViewModel(state) {
   };
 }
 
-function buildNotifications(state = {}) {
-  const notifications = [];
-
-  for (const asset of getAssets()) {
-    const assetState = getAssetState(asset.id, state);
-    const instances = Array.isArray(assetState?.instances) ? assetState.instances : [];
-    const maintenanceDue = instances.filter(instance => instance?.status === 'active' && !instance.maintenanceFundedToday);
-    if (maintenanceDue.length) {
-      notifications.push({
-        id: `${asset.id}:maintenance`,
-        label: `${asset.name} needs upkeep`,
-        message: `${maintenanceDue.length} build${maintenanceDue.length === 1 ? '' : 's'} waiting for maintenance`,
-        action: { type: 'shell-tab', tabId: 'tab-ventures' }
-      });
-    }
-  }
-
-  const affordableUpgrades = getUpgrades().filter(upgrade => {
-    const cost = clampNumber(upgrade.cost);
-    if (cost <= 0) return false;
-    const owned = state?.upgrades?.[upgrade.id]?.purchased;
-    if (owned && !upgrade.repeatable) return false;
-    return clampNumber(state?.money) >= cost;
-  });
-
-  affordableUpgrades.slice(0, 3).forEach(upgrade => {
-    notifications.push({
-      id: `${upgrade.id}:upgrade`,
-      label: `${upgrade.name} is affordable`,
-      message: `$${formatMoney(upgrade.cost)} ready to invest`,
-      action: { type: 'shell-tab', tabId: 'tab-upgrades' }
-    });
-  });
-
-  return notifications;
-}
-
 function formatEventLogEntry(entry) {
   if (!entry || typeof entry !== 'object') {
     return null;
@@ -240,7 +202,7 @@ function buildEventLog(state = {}) {
 }
 
 function buildNotificationModel(state = {}) {
-  const entries = buildNotifications(state);
+  const entries = notificationsService.getSnapshot();
   return {
     entries,
     emptyMessage: 'All clear. Nothing urgent on deck.'

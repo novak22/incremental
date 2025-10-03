@@ -15,6 +15,7 @@ import {
 } from '../metrics.js';
 import { getAssetEffectMultiplier } from '../upgrades/effects.js';
 import { formatEducationBonusSummary } from '../educationEffects.js';
+import notificationsService from '../../ui/notifications/service.js';
 
 export function allocateAssetMaintenance() {
   const state = getState();
@@ -45,6 +46,10 @@ export function allocateAssetMaintenance() {
     });
     const maintenanceHours = baseMaintenanceHours * (Number.isFinite(maintenanceEffect.multiplier) ? maintenanceEffect.multiplier : 1);
     const maintenanceCost = Number(definition.maintenance?.cost) || 0;
+
+    let assetSkippedCount = 0;
+    let assetSkippedTimeCount = 0;
+    let assetSkippedFundsCount = 0;
 
     assetState.instances.forEach((instance, index) => {
       if (instance.status === 'setup') {
@@ -80,8 +85,15 @@ export function allocateAssetMaintenance() {
         const lacksMoney = maintenanceCost > 0 && availableMoney < maintenanceCost;
 
         if (lacksTime || lacksMoney) {
-          if (lacksTime) maintenanceSkippedTime.push(label);
-          if (lacksMoney) maintenanceSkippedFunds.push(label);
+          if (lacksTime) {
+            maintenanceSkippedTime.push(label);
+            assetSkippedTimeCount += 1;
+          }
+          if (lacksMoney) {
+            maintenanceSkippedFunds.push(label);
+            assetSkippedFundsCount += 1;
+          }
+          assetSkippedCount += 1;
           return;
         }
 
@@ -142,6 +154,28 @@ export function allocateAssetMaintenance() {
         maintenanceFunded.push(label);
       }
     });
+
+    const notificationId = `asset:${definition.id}:maintenance`;
+    if (assetSkippedCount > 0) {
+      const reasons = [];
+      if (assetSkippedTimeCount > 0) {
+        reasons.push('hours');
+      }
+      if (assetSkippedFundsCount > 0) {
+        reasons.push('cash');
+      }
+      const reasonText = reasons.length
+        ? `waiting on ${reasons.join(' and ')}`
+        : 'waiting for upkeep';
+      notificationsService.publish({
+        id: notificationId,
+        label: `${definition.name} needs upkeep`,
+        message: `${assetSkippedCount} build${assetSkippedCount === 1 ? '' : 's'} ${reasonText}.`,
+        action: { type: 'shell-tab', tabId: 'tab-ventures' }
+      });
+    } else {
+      notificationsService.dismiss(notificationId);
+    }
   }
 
   if (setupFunded.length) {

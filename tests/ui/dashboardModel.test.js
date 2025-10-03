@@ -4,6 +4,7 @@ import { buildDashboardViewModel } from '../../src/ui/dashboard/model.js';
 import { buildDefaultState } from '../../src/core/state.js';
 import { getAssets, resetRegistry } from '../../src/game/registryService.js';
 import { ensureRegistryReady } from '../../src/game/registryBootstrap.js';
+import notificationsService from '../../src/ui/notifications/service.js';
 
 test.before(() => {
   resetRegistry();
@@ -100,6 +101,18 @@ test('buildDashboardViewModel produces derived dashboard sections', t => {
   };
 
   const summary = createSummary();
+  const notificationEntries = [
+    {
+      id: 'vm-test-asset:maintenance',
+      label: 'View Model Asset needs upkeep',
+      message: '1 build waiting on hours.',
+      action: { type: 'shell-tab', tabId: 'tab-ventures' }
+    }
+  ];
+  const snapshotMock = t.mock.method(notificationsService, 'getSnapshot', () => notificationEntries);
+  t.after(() => {
+    snapshotMock.mock.restore();
+  });
   const viewModel = buildDashboardViewModel(state, summary);
 
   assert.ok(viewModel, 'view model should exist');
@@ -137,7 +150,8 @@ test('buildDashboardViewModel produces derived dashboard sections', t => {
   assert.ok(Array.isArray(viewModel.assetActions.entries));
 
   const notifications = viewModel.notifications.entries;
-  assert.ok(notifications.length > 0, 'expected at least one notification');
+  assert.equal(notifications.length, 1, 'expected a single notification from the service snapshot');
+  assert.equal(notifications[0].id, 'vm-test-asset:maintenance');
   assert.equal(notifications[0].action.type, 'shell-tab');
 
   const eventEntries = viewModel.eventLog.entries;

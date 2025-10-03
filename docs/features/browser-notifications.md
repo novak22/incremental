@@ -10,6 +10,7 @@
 - Clicking the bell opens a dropdown listing the full event log with timestamps and type labels; unread items are highlighted.
 - Players can mark individual entries read by tapping them or clear the entire list with "Mark all as read".
 - Read state persists with the save data so the badge only reflects new events that appeared since the last check.
+- Dashboard upkeep alerts now stream from the shared notifications service, so maintenance warnings land immediately while shop prompts no longer crowd the tray.
 
 ## Implementation Notes
 - Each log entry in `state.log` now includes a `read` flag; legacy saves are normalized on load.
@@ -17,3 +18,4 @@
 - `markLogEntryRead` and `markAllLogEntriesRead` helpers live in `src/core/log.js` and trigger UI refreshes when state changes.
 - Styling lives in `styles/browser.css` alongside other browser chrome rules, using the accent palette for unread indicators.
 - Logs generated for passive income ticks and completed upgrades are auto-marked as read so routine upkeep doesn't inflate the unread count.
+- The push-based `src/ui/notifications/service.js` module broadcasts gameplay alerts to all presenters; dashboard panels subscribe for live updates instead of rebuilding from state snapshots.

@@ -1,6 +1,13 @@
 import { getElement } from '../../elements/registry.js';
 import setText from '../../dom.js';
 import { renderNicheWidget } from './nichePresenter.js';
+import notificationsService from '../../notifications/service.js';
+
+const presenterState = {
+  notificationsUnsubscribe: null,
+  notificationsEmptyMessage: 'All clear. Nothing urgent on deck.',
+  notificationEntries: []
+};
 
 function createDailyListItem(entry) {
   if (!entry) return null;
@@ -183,9 +190,10 @@ function renderNotificationsSection(notifications = {}) {
   container.innerHTML = '';
   const entries = Array.isArray(notifications.entries) ? notifications.entries : [];
   if (!entries.length) {
-    if (!notifications.emptyMessage) return;
+    const emptyMessage = notifications.emptyMessage || presenterState.notificationsEmptyMessage;
+    if (!emptyMessage) return;
     const empty = document.createElement('li');
-    empty.textContent = notifications.emptyMessage;
+    empty.textContent = emptyMessage;
     container.appendChild(empty);
     return;
   }
@@ -214,6 +222,21 @@ function renderNotificationsSection(notifications = {}) {
     item.append(info, button);
     container.appendChild(item);
   });
+}
+
+function handleNotificationSnapshot(entries = []) {
+  presenterState.notificationEntries = Array.isArray(entries) ? entries : [];
+  renderNotificationsSection({
+    entries: presenterState.notificationEntries,
+    emptyMessage: presenterState.notificationsEmptyMessage
+  });
+}
+
+function ensureNotificationSubscription() {
+  if (presenterState.notificationsUnsubscribe) {
+    return;
+  }
+  presenterState.notificationsUnsubscribe = notificationsService.subscribe(handleNotificationSnapshot);
 }
 
 function renderEventLogSection(eventLog = {}) {
@@ -306,7 +329,13 @@ function renderDashboard(viewModel = {}) {
   renderQueueSection(viewModel.queue);
   renderQuickActionsSection(viewModel.quickActions);
   renderAssetActionsSection(viewModel.assetActions);
-  renderNotificationsSection(viewModel.notifications);
+  presenterState.notificationsEmptyMessage = viewModel.notifications?.emptyMessage
+    || 'All clear. Nothing urgent on deck.';
+  const initialEntries = Array.isArray(viewModel.notifications?.entries)
+    ? viewModel.notifications.entries
+    : notificationsService.getSnapshot();
+  handleNotificationSnapshot(initialEntries);
+  ensureNotificationSubscription();
   renderEventLogSection(viewModel.eventLog);
   renderDailyStatsSection(viewModel.dailyStats);
   if (viewModel.niche) {
