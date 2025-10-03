@@ -7,7 +7,7 @@ import {
   initElementRegistry
 } from '../../../src/ui/elements/registry.js';
 import { setActiveView } from '../../../src/ui/viewManager.js';
-import classicView from '../../../src/ui/views/classic/index.js';
+import browserView from '../../../src/ui/views/browser/index.js';
 
 test('uses injected resolvers to look up DOM nodes', t => {
   const calls = [];
@@ -30,7 +30,7 @@ test('uses injected resolvers to look up DOM nodes', t => {
 
   t.after(() => {
     const root = typeof document !== 'undefined' ? document : null;
-    setActiveView(classicView, root);
+    setActiveView(browserView, root);
   });
 
   assert.equal(getElement('money'), 'money-node');
@@ -56,7 +56,7 @@ test('returns null when no resolver is provided', t => {
 
   t.after(() => {
     const root = typeof document !== 'undefined' ? document : null;
-    setActiveView(classicView, root);
+    setActiveView(browserView, root);
   });
 
   assert.equal(getElement('money'), null);

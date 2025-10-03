@@ -1,4 +1,3 @@
-import classicView from './classic/index.js';
 import browserView from './browser/index.js';
 
 const registeredViews = [];
@@ -119,10 +118,6 @@ export function resolveInitialView(
 
   return registeredViews[0]?.view ?? null;
 }
-
-registerView(classicView, {
-  guard: root => Boolean(root?.getElementById('tab-dashboard'))
-});
 
 registerView(browserView, {
   guard: root => Boolean(root?.getElementById('browser-home'))

@@ -4,7 +4,6 @@ import { getState } from './state.js';
 import { buildLogModel } from '../ui/log/model.js';
 import { getActiveView } from '../ui/viewManager.js';
 import { saveState } from './storage.js';
-import classicLogPresenter from '../ui/views/classic/logPresenter.js';
 
 const AUTO_READ_TYPES = new Set(['passive', 'upgrade']);
 
@@ -66,7 +65,7 @@ export function renderLog() {
   if (!state) return;
 
   const model = buildLogModel(state);
-  const presenter = getActiveView()?.presenters?.log ?? classicLogPresenter;
+  const presenter = getActiveView()?.presenters?.log;
   if (typeof presenter?.render === 'function') {
     presenter.render(model);
   }
