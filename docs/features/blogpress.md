@@ -31,6 +31,7 @@ BlogPress relocates the classic Personal Blog management experience into the bro
 - Table rows highlight the currently selected blog; empty states encourage spinning up the first blueprint.
 - Detail panels use the existing colour palette and card shadows, plus warm hints to keep the copy upbeat.
 - Pricing view borrows SaaS patterns with plan cards, niche heat callouts, and upgrade lists to teach progression at a glance.
+- Blueprint launch buttons open a themed confirmation modal that reiterates setup time, daily upkeep, and the action’s flavour before the blueprint fires.
 
 ## Manual Test Checklist
 - Launch a new blog from the blueprint view; confirm the setup cost/time is deducted and the row appears in the table.
