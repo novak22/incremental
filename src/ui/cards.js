@@ -7,12 +7,10 @@ import {
   buildTrendsModel,
   buildUpgradeModels
 } from './cards/model/index.js';
-import classicCardsPresenter, {
-  renderAll as renderClassicCards,
-  update as updateClassicCards,
-  updateCard as updateClassicCard,
-  refreshUpgradeSections as classicRefreshUpgradeSections
-} from './views/classic/cardsPresenter.js';
+import {
+  renderCollections as renderSharedCollections,
+  updateCollections as updateSharedCollections
+} from './cards/presenters/shared.js';
 
 function normalizeRegistries(registries = {}) {
   return {
@@ -78,7 +76,7 @@ export function renderCardCollections(registries = {}, models) {
     return;
   }
 
-  renderClassicCards(payload, presenterOptions);
+  renderSharedCollections(payload, {}, presenterOptions);
 }
 
 export function updateAllCards(registries = {}, models) {
@@ -97,7 +95,7 @@ export function updateAllCards(registries = {}, models) {
     return;
   }
 
-  updateClassicCards(payload, presenterOptions);
+  updateSharedCollections(payload, {}, presenterOptions);
 }
 
 export function updateCard(definition) {
@@ -107,7 +105,7 @@ export function updateCard(definition) {
     return;
   }
 
-  updateClassicCard(definition);
+  renderSharedCollections();
 }
 
 export function refreshUpgradeSections() {
@@ -117,6 +115,6 @@ export function refreshUpgradeSections() {
     return;
   }
 
-  classicRefreshUpgradeSections();
+  renderSharedCollections();
 }
 

@@ -1,7 +1,6 @@
 import { getElement } from '../elements/registry.js';
 import { buildLayoutModel, getLayoutPreferences, updateLayoutPreferences } from './model.js';
 import { getActiveView } from '../viewManager.js';
-import classicLayoutPresenter from '../views/classic/layoutPresenter.js';
 import { setupTabs } from './features/tabs.js';
 import { setupEventLog } from './features/eventLog.js';
 import { setupSlideOver } from './features/slideOver.js';
@@ -21,7 +20,7 @@ export class LayoutController {
     this.preferenceAdapterSource =
       options.preferenceAdapters ?? options.preferenceAdapterSource ?? null;
     this.preferenceAdapterResolver = options.getPreferenceAdapters || getPreferenceAdapters;
-    this.defaultPresenter = options.defaultPresenter || classicLayoutPresenter;
+    this.defaultPresenter = options.defaultPresenter ?? null;
     this.logger = options.logger || console;
     this.features = {
       setupTabs: options.setupTabs || setupTabs,
@@ -120,10 +119,7 @@ export class LayoutController {
     if (view?.presenters?.layout) {
       return view.presenters.layout;
     }
-    if (!view) {
-      return this.defaultPresenter;
-    }
-    return null;
+    return this.defaultPresenter;
   }
 
   initializeLayoutPresenter() {

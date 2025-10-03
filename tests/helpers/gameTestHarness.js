@@ -1,4 +1,4 @@
-  import { ensureTestDom } from './setupDom.js';
+import { ensureTestDom } from './setupDom.js';
 
 let harness;
 
@@ -23,53 +23,17 @@ export async function getGameTestHarness() {
   const storageModule = await import('../../src/core/storage.js');
   const offlineModule = await import('../../src/game/offline.js');
   const elementRegistryModule = await import('../../src/ui/elements/registry.js');
-  const viewManagerModule = await import('../../src/ui/viewManager.js');
-  const classicViewModule = await import('../../src/ui/views/classic/index.js');
   const registryService = await import('../../src/game/registryService.js');
   const { ensureRegistryReady } = await import('../../src/game/registryBootstrap.js');
-
-  viewManagerModule.setActiveView(classicViewModule.default, document);
 
   registryService.resetRegistry();
   ensureRegistryReady();
 
-  const elements = {
-    get money() {
-      return elementRegistryModule.getElement('money');
-    },
-    get logFeed() {
-      return (elementRegistryModule.getElement('logNodes') || {}).logFeed;
-    },
-    get logTip() {
-      return (elementRegistryModule.getElement('logNodes') || {}).logTip;
-    },
-    get day() {
-      return (elementRegistryModule.getElement('playerNodes') || {}).summary?.day;
-    },
-    get time() {
-      return (elementRegistryModule.getElement('playerNodes') || {}).summary?.time;
-    }
-  };
-
   const resetState = () => {
     const nextState = stateModule.initializeState(stateModule.buildDefaultState());
-    const logNodes = elementRegistryModule.getElement('logNodes') || {};
-    if (logNodes.logFeed) {
-      logNodes.logFeed.innerHTML = '';
-    }
-    if (logNodes.logTip) {
-      logNodes.logTip.style.display = 'block';
-    }
-    const moneyNode = elementRegistryModule.getElement('money');
-    if (moneyNode) {
-      moneyNode.textContent = '';
-    }
-    const playerSummary = elementRegistryModule.getElement('playerNodes')?.summary || {};
-    if (playerSummary.time) {
-      playerSummary.time.textContent = '';
-    }
-    if (playerSummary.day) {
-      playerSummary.day.textContent = '';
+    const logNodes = elementRegistryModule.getElement('browserNotifications');
+    if (logNodes?.badge) {
+      logNodes.badge.textContent = '';
     }
     return nextState;
   };
@@ -90,7 +54,6 @@ export async function getGameTestHarness() {
     logModule,
     storageModule,
     offlineModule,
-    elements,
     resetState
   };
 

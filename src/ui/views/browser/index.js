@@ -4,6 +4,7 @@ import dashboardPresenter from './dashboardPresenter.js';
 import cardsPresenter from './cardsPresenter.js';
 import layoutPresenter from './layoutPresenter.js';
 import headerActionPresenter from './headerActionPresenter.js';
+import logPresenter from './logPresenter.js';
 
 const browserView = {
   id: 'browser',
@@ -13,7 +14,8 @@ const browserView = {
     dashboard: dashboardPresenter,
     cards: cardsPresenter,
     layout: layoutPresenter,
-    headerAction: headerActionPresenter
+    headerAction: headerActionPresenter,
+    log: logPresenter
   },
   renderDashboard(state, summary) {
     baseRenderDashboard(state, summary, dashboardPresenter);

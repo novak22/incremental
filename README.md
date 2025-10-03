@@ -95,7 +95,7 @@ Each asset supports multiple instances, tracks setup progress, and rolls a daily
 
 ## Running the Project Locally
 1. Clone the repository or download the source.
-2. Open `index.html` in any modern browser. The project is a static ES-module bundle; no build tools required.
+2. Open `browser.html` in any modern browser. The project is a static ES-module bundle; no build tools required.
 3. Optional: serve with a simple HTTP server (e.g., `npx serve .`) to avoid `localStorage` restrictions during local testing.
 
 ## Testing
