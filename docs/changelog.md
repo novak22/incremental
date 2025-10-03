@@ -6,6 +6,7 @@
 - Browser chrome now features a notification bell that mirrors the event log with unread badges, read tracking, and a mark-all control.
 - AboutYou rebrands the browser profile hub with upbeat copy, refreshed styling, and tighter lists that only surface owned education tracks and equipped gear.
 - Trends Intelligence Lab refreshes the browser app with analytics-style header controls, overview metrics, sparkline cards, and an expanded watchlist panel while reusing existing niche data.
+- Trends analytics now archive a rolling seven-day highlight recap in local storage and surface it in the dashboard for fast comparisons across days.
 - ServerHub launches as a cloud-inspired control center for Micro SaaS ventures with KPI hero metrics, app table + detail sidebar, upgrade shelf, and pricing tiers built on the existing SaaS backend.
 - BankApp now archives the last seven day-end ledgers and mirrors the shared activity log so the browser shell surfaces cashflow streaks without leaving the app.
 - BankApp’s finance dashboard now pipes every tracked dataset—obligations, pending payouts, asset ROI tables, opportunity queues, and education commitments—into the in-app layout so the browser view matches the classic shell’s depth.

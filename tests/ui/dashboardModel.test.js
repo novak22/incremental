@@ -218,4 +218,76 @@ test('buildDashboardViewModel includes niche analytics data', t => {
 
   const highlightTitle = nicheModel.highlights.hot.title;
   assert.ok(highlightTitle.includes('Tech Innovators'));
+  assert.ok(Array.isArray(nicheModel.history.entries));
+  assert.equal(nicheModel.history.entries.length, 0);
+});
+
+test('buildNicheViewModel formats stored history snapshots', t => {
+  const state = buildDefaultState();
+  state.niches.analyticsHistory = [
+    {
+      id: 'history-1',
+      day: 4,
+      recordedAt: Date.UTC(2024, 0, 5, 15, 30),
+      analytics: [
+        {
+          id: 'techInnovators',
+          definition: { id: 'techInnovators', name: 'Tech Innovators' },
+          watchlisted: true,
+          assetCount: 2,
+          netEarnings: 210,
+          trendImpact: 60,
+          baselineEarnings: 150,
+          popularity: { score: 82, previousScore: 70, delta: 8, multiplier: 1.25 },
+          assetBreakdown: [{ name: 'Analytics Rig', count: 2 }],
+          status: 'Heating Up'
+        }
+      ],
+      highlights: {
+        hot: {
+          id: 'techInnovators',
+          name: 'Tech Innovators',
+          assetCount: 2,
+          netEarnings: 210,
+          trendImpact: 60,
+          multiplier: 1.25,
+          delta: 8,
+          score: 82
+        },
+        swing: {
+          id: 'travelAdventures',
+          name: 'Travel & Adventure',
+          assetCount: 1,
+          netEarnings: 95,
+          trendImpact: 18,
+          multiplier: 1.15,
+          delta: 6,
+          score: 74
+        },
+        risk: {
+          id: 'homeDIY',
+          name: 'Home & DIY',
+          assetCount: 0,
+          netEarnings: 0,
+          trendImpact: -24,
+          multiplier: 0.9,
+          delta: -5,
+          score: 42
+        }
+      }
+    }
+  ];
+
+  const summary = createSummary();
+  const viewModel = buildDashboardViewModel(state, summary);
+  const history = viewModel.niche.history;
+
+  assert.ok(Array.isArray(history.entries), 'expected history entries array');
+  assert.equal(history.entries.length, 1, 'expected a single history entry');
+  const entry = history.entries[0];
+  assert.equal(entry.dayLabel, 'Day 4');
+  assert.ok(entry.recordedAtLabel.includes('Jan'), 'expected formatted timestamp');
+  assert.ok(entry.highlights.hot.title.includes('Tech Innovators'));
+  assert.ok(entry.highlights.swing.note.includes('payouts'));
+  assert.ok(entry.highlights.risk.note && entry.highlights.risk.note.length > 0);
 });

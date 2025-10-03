@@ -9,6 +9,7 @@ import { advanceKnowledgeTracks, allocateDailyStudy } from './requirements.js';
 import { archiveDailyMetrics, resetDailyMetrics } from './metrics.js';
 import { rerollNichePopularity } from './assets/niches.js';
 import { computeDailySummary } from './summary.js';
+import { archiveNicheAnalytics } from './analytics/niches.js';
 
 export function endDay(auto = false) {
   const state = getState();
@@ -19,6 +20,7 @@ export function endDay(auto = false) {
   updateUI();
   const summary = computeDailySummary(state);
   archiveDailyMetrics({ state, summary, day: state.day });
+  archiveNicheAnalytics({ state, summary, day: state.day, timestamp: Date.now() });
   const message = auto
     ? 'You ran out of time. The grind resets tomorrow.'
     : 'You called it a day. Fresh hustle awaits tomorrow.';

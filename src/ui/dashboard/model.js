@@ -1,5 +1,5 @@
 import { formatHours, formatMoney } from '../../core/helpers.js';
-import { clampNumber, clampScore, formatPercent, describeDelta } from './formatters.js';
+import { clampNumber, formatPercent, describeDelta } from './formatters.js';
 import { buildDailySummaries } from './passiveIncome.js';
 import {
   buildQuickActionModel,
@@ -10,144 +10,79 @@ import {
 import { buildStudyEnrollmentActionModel } from './knowledge.js';
 import { getAssetState } from '../../core/state.js';
 import { getAssets, getUpgrades } from '../../game/registryService.js';
-import { getNicheRoster, getNicheWatchlist } from '../../game/assets/niches.js';
+import { collectNicheAnalytics, summarizeNicheHighlights } from '../../game/analytics/niches.js';
 
-function describeTrendStatus(entry) {
-  if (!entry) return 'Steady';
-  const { popularity = {}, assetCount, watchlisted } = entry;
-  if (watchlisted && assetCount === 0) return 'Watchlist';
-  const delta = Number(popularity.delta);
-  if (Number.isFinite(delta)) {
-    if (delta >= 6) return 'Heating Up';
-    if (delta <= -6) return 'Cooling Off';
-  }
-  const score = Number(popularity.score);
-  if (Number.isFinite(score)) {
-    if (score >= 70) return 'Trending';
-    if (score <= 40) return 'Cooling Off';
-  }
-  return 'Steady';
-}
-
-function buildNicheAnalytics(state) {
-  const roster = getNicheRoster(state) || [];
-  const watchlist = getNicheWatchlist(state);
-  const stats = new Map();
-  roster.forEach(entry => {
-    const id = entry?.definition?.id;
-    if (!id) return;
-    stats.set(id, {
-      id,
-      definition: entry.definition,
-      popularity: entry.popularity || {},
-      watchlisted: watchlist.has(id),
-      assetCount: 0,
-      netEarnings: 0,
-      trendImpact: 0,
-      baselineEarnings: 0,
-      assetBreakdown: new Map()
-    });
-  });
-
-  getAssets().forEach(asset => {
-    const assetState = getAssetState(asset.id, state);
-    const instances = Array.isArray(assetState?.instances) ? assetState.instances : [];
-    instances.forEach(instance => {
-      if (!instance) return;
-      const nicheId = typeof instance.nicheId === 'string' ? instance.nicheId : null;
-      if (!nicheId) return;
-      const target = stats.get(nicheId);
-      if (!target) return;
-      target.assetCount += 1;
-      const label = asset.singular || asset.name || 'Asset';
-      target.assetBreakdown.set(label, (target.assetBreakdown.get(label) || 0) + 1);
-
-      const breakdownData = instance.lastIncomeBreakdown;
-      const total = Number(breakdownData?.total);
-      const payout = Number.isFinite(total) ? total : Number(instance.lastIncome);
-      const actual = Math.max(0, Number.isFinite(payout) ? payout : 0);
-      const entries = Array.isArray(breakdownData?.entries) ? breakdownData.entries : [];
-      const trendDelta = entries.reduce((sum, item) => {
-        if (!item || item.type !== 'niche') return sum;
-        const amount = Number(item.amount);
-        return sum + (Number.isFinite(amount) ? amount : 0);
-      }, 0);
-      const baseline = actual - trendDelta;
-      target.netEarnings += actual;
-      target.trendImpact += trendDelta;
-      target.baselineEarnings += Math.max(0, baseline);
-    });
-  });
-
-  return Array.from(stats.values()).map(entry => {
-    const assetBreakdown = Array.from(entry.assetBreakdown.entries()).map(([name, count]) => ({ name, count }));
-    return {
-      ...entry,
-      assetBreakdown,
-      netEarnings: Math.round(entry.netEarnings * 100) / 100,
-      trendImpact: Math.round(entry.trendImpact * 100) / 100,
-      baselineEarnings: Math.round(entry.baselineEarnings * 100) / 100,
-      status: describeTrendStatus(entry)
-    };
-  });
-}
-
-function buildNicheHighlights(analytics = []) {
-  const defaults = {
+function createHighlightDefaults() {
+  return {
     hot: { title: 'No readings yet', note: 'Assign a niche to start tracking buzz.' },
     swing: { title: 'Awaiting data', note: 'Fresh deltas will appear after the first reroll.' },
     risk: { title: 'All calm', note: 'We’ll flag niches that are cooling off fast.' }
   };
+}
 
-  if (!Array.isArray(analytics) || analytics.length === 0) {
-    return defaults;
-  }
+function composeHighlightMessages(summary = {}) {
+  const defaults = createHighlightDefaults();
+  const highlights = {
+    hot: { ...defaults.hot },
+    swing: { ...defaults.swing },
+    risk: { ...defaults.risk }
+  };
 
-  const invested = analytics.filter(entry => entry.assetCount > 0);
-  const relevant = invested.length ? invested : analytics;
-  const topImpact = relevant.slice().sort((a, b) => Math.abs(b.trendImpact) - Math.abs(a.trendImpact))[0];
-  const fastestMove = analytics.slice().sort((a, b) => Math.abs(Number(b.popularity?.delta) || 0) - Math.abs(Number(a.popularity?.delta) || 0))[0];
-  const negativePool = (invested.length ? invested : analytics).filter(entry => entry.trendImpact < 0);
-  const biggestLoss = negativePool.sort((a, b) => a.trendImpact - b.trendImpact)[0];
+  const { hot, swing, risk } = summary || {};
 
-  const highlights = { ...defaults };
-
-  if (topImpact) {
-    const impactValue = Math.abs(topImpact.trendImpact);
-    const isPositive = topImpact.trendImpact >= 0;
+  if (hot && hot.name) {
+    const impactValue = Math.abs(Number(hot.trendImpact) || 0);
+    const isPositive = Number(hot.trendImpact) >= 0;
+    const multiplier = Number(hot.multiplier) || 1;
     const impactLabel = impactValue >= 0.5
       ? `${isPositive ? '+' : '-'}$${formatMoney(impactValue)} trend ${isPositive ? 'boost' : 'drag'}`
-      : `${formatPercent((Number(topImpact.popularity?.multiplier) || 1) - 1)} payouts`;
+      : `${formatPercent(multiplier - 1)} payouts`;
+    const ventureCount = Number(hot.assetCount) || 0;
+    const earningsValue = Math.max(0, Number(hot.netEarnings) || 0);
     highlights.hot = {
-      title: `${topImpact.definition?.name || 'Untitled niche'} • ${impactLabel}`,
-      note: topImpact.assetCount > 0
-        ? `Your ${topImpact.assetCount} venture${topImpact.assetCount === 1 ? '' : 's'} made $${formatMoney(Math.max(0, topImpact.netEarnings))} today with ${formatPercent((Number(topImpact.popularity?.multiplier) || 1) - 1)} payouts.`
-        : `Queue a venture to capture ${formatPercent((Number(topImpact.popularity?.multiplier) || 1) - 1)} payouts from this niche.`
+      title: `${hot.name} • ${impactLabel}`,
+      note: ventureCount > 0
+        ? `Your ${ventureCount} venture${ventureCount === 1 ? '' : 's'} made $${formatMoney(earningsValue)} today with ${formatPercent(multiplier - 1)} payouts.`
+        : `Queue a venture to capture ${formatPercent(multiplier - 1)} payouts from this niche.`
     };
   }
 
-  if (fastestMove && Number.isFinite(Number(fastestMove.popularity?.delta))) {
-    const deltaText = describeDelta(fastestMove.popularity);
-    const score = clampScore(fastestMove.popularity?.score);
-    const payoutText = formatPercent((Number(fastestMove.popularity?.multiplier) || 1) - 1);
+  if (swing && swing.name) {
+    const delta = Number.isFinite(Number(swing.delta)) ? Number(swing.delta) : null;
+    const deltaText = delta !== null ? describeDelta({ delta }) : 'Fresh reading';
+    const multiplier = Number(swing.multiplier) || 1;
+    const payoutText = formatPercent(multiplier - 1);
+    const score = Number.isFinite(Number(swing.score)) ? Math.round(Number(swing.score)) : null;
     const scoreText = score !== null ? `score ${score}` : 'score pending';
     highlights.swing = {
-      title: `${fastestMove.definition?.name || 'Untitled niche'} • ${deltaText}`,
+      title: `${swing.name} • ${deltaText}`,
       note: `${payoutText} payouts • ${scoreText}.`
     };
   }
 
-  if (biggestLoss) {
-    const lossValue = Math.abs(biggestLoss.trendImpact);
+  if (risk && risk.name) {
+    const lossValue = Math.abs(Number(risk.trendImpact) || 0);
+    const ventureCount = Number(risk.assetCount) || 0;
+    const multiplier = Number(risk.multiplier) || 1;
+    const payoutText = formatPercent(multiplier - 1);
     highlights.risk = {
-      title: `${biggestLoss.definition?.name || 'Untitled niche'} • -$${formatMoney(lossValue)} trend drag`,
-      note: biggestLoss.assetCount > 0
-        ? `${biggestLoss.assetCount} venture${biggestLoss.assetCount === 1 ? '' : 's'} lost ${formatPercent((Number(biggestLoss.popularity?.multiplier) || 1) - 1)} vs baseline today.`
+      title: `${risk.name} • -$${formatMoney(lossValue)} trend drag`,
+      note: ventureCount > 0
+        ? `${ventureCount} venture${ventureCount === 1 ? '' : 's'} lost ${payoutText} vs baseline today.`
         : 'No ventures invested yet, so you are safe from this downswing.'
     };
   }
 
   return highlights;
+}
+
+function buildNicheHighlights(analytics = []) {
+  if (!Array.isArray(analytics) || analytics.length === 0) {
+    return createHighlightDefaults();
+  }
+
+  const summary = summarizeNicheHighlights(analytics);
+  return composeHighlightMessages(summary);
 }
 
 function buildNicheBoardModel(analytics = []) {
@@ -163,12 +98,69 @@ function buildNicheBoardModel(analytics = []) {
   };
 }
 
+function formatHistoryTimestamp(timestamp) {
+  const value = Number(timestamp);
+  if (!Number.isFinite(value)) {
+    return { label: '', iso: '' };
+  }
+  const date = new Date(value);
+  return {
+    label: date.toLocaleString([], {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }),
+    iso: date.toISOString()
+  };
+}
+
+function buildNicheHistoryModel(state = {}) {
+  const history = Array.isArray(state?.niches?.analyticsHistory)
+    ? state.niches.analyticsHistory
+    : [];
+
+  if (!history.length) {
+    return {
+      entries: [],
+      emptyMessage: 'Complete a day with niches assigned to start logging history.'
+    };
+  }
+
+  const entries = history
+    .slice()
+    .reverse()
+    .map((entry, index) => {
+      const analytics = Array.isArray(entry?.analytics) ? entry.analytics : [];
+      const snapshot = entry?.highlights &&
+        (entry.highlights.hot || entry.highlights.swing || entry.highlights.risk)
+        ? entry.highlights
+        : summarizeNicheHighlights(analytics);
+      const highlights = composeHighlightMessages(snapshot);
+      const { label, iso } = formatHistoryTimestamp(entry?.recordedAt);
+      const dayNumber = Number(entry?.day);
+      return {
+        id: entry?.id || `niche-history:${index}`,
+        dayLabel: Number.isFinite(dayNumber) ? `Day ${dayNumber}` : 'Day –',
+        recordedAtLabel: label,
+        recordedAtISO: iso,
+        highlights
+      };
+    });
+
+  return {
+    entries,
+    emptyMessage: 'Complete a day with niches assigned to start logging history.'
+  };
+}
+
 export function buildNicheViewModel(state) {
-  const analytics = buildNicheAnalytics(state);
+  const analytics = collectNicheAnalytics(state);
   const watchlistCount = analytics.filter(entry => entry.watchlisted).length;
   return {
     highlights: buildNicheHighlights(analytics),
     board: buildNicheBoardModel(analytics),
+    history: buildNicheHistoryModel(state),
     watchlistCount
   };
 }

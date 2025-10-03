@@ -9,6 +9,7 @@ The Trends app now frames niche analytics like a professional SaaS dashboard. A 
 - Render a responsive three-column trend grid with sparklines, momentum delta, payout multipliers, and a watchlist star per card.
 - Keep empire context light via a muted footer that rolls up ventures and earnings for the current selection.
 - Give pinned niches a dedicated watchlist panel with average payout and momentum trend callouts for fast scanning.
+- Persist a rolling seven-day recap of niche highlights and surface it beside the daily analytics for quick comparisons.
 
 ## Mapping from Classic Shell
 - **Overview metrics** draw from `buildNicheHighlights` and the board entries to surface top boosts, drops, and multiplier leaders.
@@ -22,12 +23,14 @@ The Trends app now frames niche analytics like a professional SaaS dashboard. A 
 - Search operates on niche names only, ensuring no new backend lookups are required.
 - Sparkline trendlines interpolate between the stored previous and current scores when deeper history is unavailable, keeping fidelity with current data.
 - Watchlist meta counts recalculate locally so filters disable gracefully when nothing is starred.
+- Each day’s highlights and per-niche analytics snapshot are archived client-side via `archiveNicheAnalytics`, trimming the history array to the newest seven entries.
 
 ## UI Notes
 - Cards lean on whitespace, small caps labels, and subtle shadows to mimic modern analytics SaaS styling.
 - Watchlist stars use a single tap target in the card header and echo the state in both grid and watchlist panels.
 - Overview cards adopt emoji icons for quick scanning while maintaining a compact vertical rhythm.
 - Footer messaging keeps the "updated daily" reminder subtle so future history modules can slot underneath.
+- The 7-day recap card lists each day’s Top boost, Big swing, and Cooling risk summaries with timestamps so players can spot streaks at a glance.
 
 ## Manual Test Checklist
 - Launch the browser shell, open Trends from the Apps grid, and confirm the header shows search, sort, and All/Watchlist toggle controls.
@@ -35,3 +38,4 @@ The Trends app now frames niche analytics like a professional SaaS dashboard. A 
 - Toggle between sort options and enter a search term; the grid should update in-place and refresh the "Your empire" footer summary.
 - Star and unstar a niche from the grid; confirm both the grid badge and the watchlist panel update immediately.
 - Switch to the Watchlist view toggle and ensure only starred niches appear in the main grid with empty states when appropriate.
+- End a few days in succession and confirm the 7-day recap card logs the newest highlight summaries while trimming older ones beyond the seven-day window.

@@ -69,6 +69,7 @@ const resolvers = {
     highlightRisk: root.getElementById('analytics-highlight-risk'),
     highlightRiskNote: root.getElementById('analytics-highlight-risk-note'),
     board: root.getElementById('niche-board'),
+    historyList: root.getElementById('niche-history'),
     sortButtons: Array.from(root.querySelectorAll('[data-niche-sort]')),
     filterInvested: root.getElementById('niche-filter-invested'),
     filterWatchlist: root.getElementById('niche-filter-watchlist')
