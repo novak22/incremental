@@ -119,10 +119,19 @@ function markActiveSite(pageId) {
   if (!containers.length) return;
 
   containers.forEach(container => {
-    container.querySelectorAll('button[data-site-target]').forEach(button => {
-      const isActive = button.dataset.siteTarget === pageId;
-      button.classList.toggle('is-active', isActive);
-      button.setAttribute('aria-pressed', String(isActive));
+    container.querySelectorAll('[data-site-target]').forEach(control => {
+      if (!(control instanceof HTMLElement)) {
+        return;
+      }
+      const isActive = control.dataset.siteTarget === pageId;
+      control.classList.toggle('is-active', isActive);
+      if (control instanceof HTMLButtonElement) {
+        control.setAttribute('aria-pressed', String(isActive));
+      } else if (isActive) {
+        control.setAttribute('aria-current', 'page');
+      } else {
+        control.removeAttribute('aria-current');
+      }
     });
   });
 }
@@ -142,10 +151,12 @@ function refreshActivePage() {
 }
 
 function handleSiteClick(event) {
-  const button = event.target.closest('button[data-site-target]');
-  if (!button) return;
+  const control = event.target.closest('[data-site-target]');
+  if (!control || !(control instanceof HTMLElement)) {
+    return;
+  }
   event.preventDefault();
-  const target = button.dataset.siteTarget || HOMEPAGE_ID;
+  const target = control.dataset.siteTarget || HOMEPAGE_ID;
   if (target === HOMEPAGE_ID) {
     setActivePage(HOMEPAGE_ID, { focus: true, recordHistory: true, ensureTab: false });
   } else {
