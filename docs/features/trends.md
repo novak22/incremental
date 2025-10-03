@@ -18,7 +18,7 @@ The Trends app now frames niche analytics like a professional SaaS dashboard. A 
 - Navigation URLs remain unchanged, keeping `/`, `/watchlist`, and `/niche/{slug}` ready for future expansion.
 
 ## Data & Logic
-- Sorting options map to highest momentum score, highest payout impact, or fastest cooling delta using the existing board metrics.
+- Sorting options map to highest momentum score, alphabetical niche names, highest payout impact, or fastest cooling delta using the existing board metrics.
 - Search operates on niche names only, ensuring no new backend lookups are required.
 - Sparkline trendlines interpolate between the stored previous and current scores when deeper history is unavailable, keeping fidelity with current data.
 - Watchlist meta counts recalculate locally so filters disable gracefully when nothing is starred.

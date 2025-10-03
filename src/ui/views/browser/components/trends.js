@@ -7,6 +7,7 @@ import {
 
 const SORT_OPTIONS = [
   { key: 'momentum', label: 'Highest Momentum' },
+  { key: 'name', label: 'Name (A–Z)' },
   { key: 'payout', label: 'Payout Impact' },
   { key: 'cooling', label: 'Cooling Off' }
 ];
@@ -528,6 +529,14 @@ function sortEntries(entries = []) {
       const deltaA = Number(a.popularity?.delta) || 0;
       const deltaB = Number(b.popularity?.delta) || 0;
       return deltaB - deltaA;
+    },
+    name: (a, b) => {
+      const nameA = String(a.definition?.name || '').toLowerCase();
+      const nameB = String(b.definition?.name || '').toLowerCase();
+      if (nameA !== nameB) return nameA.localeCompare(nameB);
+      const scoreA = clampScore(a.popularity?.score) || 0;
+      const scoreB = clampScore(b.popularity?.score) || 0;
+      return scoreB - scoreA;
     },
     payout: (a, b) => {
       const impactA = Number(a.trendImpact) || 0;
