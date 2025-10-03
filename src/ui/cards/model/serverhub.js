@@ -20,6 +20,7 @@ import {
 import { describeAssetLaunchAvailability } from './assets.js';
 import { registerModelBuilder } from '../modelBuilderRegistry.js';
 import { getUpgradeSnapshot, describeUpgradeStatus } from './upgrades.js';
+import { buildSkillLock } from './skillLocks.js';
 
 function clampNumber(value) {
   const number = Number(value);
@@ -425,6 +426,19 @@ export default function buildServerHubModel(assetDefinitions = [], upgradeDefini
       launch: null,
       upgrades: [],
       pricing: []
+    };
+  }
+
+  const lock = buildSkillLock(state, 'serverhub');
+  if (lock) {
+    return {
+      definition: null,
+      instances: [],
+      summary: { meta: lock.meta },
+      launch: null,
+      upgrades: [],
+      pricing: [],
+      lock
     };
   }
 

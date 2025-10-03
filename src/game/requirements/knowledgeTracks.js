@@ -1,4 +1,90 @@
 export const KNOWLEDGE_TRACKS = {
+  storycraftJumpstart: {
+    id: 'storycraftJumpstart',
+    name: 'Storycraft Jumpstart',
+    description: 'Outline pillar posts for 3 days (1h/day) and polish headlines without paying tuition.',
+    hoursPerDay: 1,
+    days: 3,
+    tuition: 0,
+    instantBoosts: [
+      {
+        assetId: 'blog',
+        assetName: 'Personal Blog Network',
+        type: 'multiplier',
+        amount: 0.05
+      }
+    ]
+  },
+  vlogStudioJumpstart: {
+    id: 'vlogStudioJumpstart',
+    name: 'Creator Studio Jumpstart',
+    description: 'Shadow a creator coach for 3 days (1h/day) to frame shots, light sets, and warm up edits. Tuition free.',
+    hoursPerDay: 1,
+    days: 3,
+    tuition: 0,
+    instantBoosts: [
+      {
+        assetId: 'vlog',
+        assetName: 'Weekly Vlog Channel',
+        type: 'multiplier',
+        amount: 0.05
+      }
+    ]
+  },
+  digitalShelfPrimer: {
+    id: 'digitalShelfPrimer',
+    name: 'Digital Shelf Primer',
+    description: 'Curate e-books and galleries for 3 days (1h/day) to master metadata, covers, and storefront polish — no tuition required.',
+    hoursPerDay: 1,
+    days: 3,
+    tuition: 0,
+    instantBoosts: [
+      {
+        assetId: 'ebook',
+        assetName: 'Digital E-Book Series',
+        type: 'multiplier',
+        amount: 0.05
+      },
+      {
+        assetId: 'stockPhotos',
+        assetName: 'Stock Photo Gallery',
+        type: 'multiplier',
+        amount: 0.05
+      }
+    ]
+  },
+  commerceLaunchPrimer: {
+    id: 'commerceLaunchPrimer',
+    name: 'Commerce Launch Primer',
+    description: 'Shadow a fulfillment lead for 3 days (1h/day) to set up shipping flows and customer support scripts for free.',
+    hoursPerDay: 1,
+    days: 3,
+    tuition: 0,
+    instantBoosts: [
+      {
+        assetId: 'dropshipping',
+        assetName: 'Dropshipping Product Lab',
+        type: 'multiplier',
+        amount: 0.05
+      }
+    ]
+  },
+  microSaasJumpstart: {
+    id: 'microSaasJumpstart',
+    name: 'Micro SaaS Jumpstart',
+    description: 'Pair with senior engineers for 3 days (1h/day) to ship deploy scripts and uptime monitors with zero tuition.',
+    hoursPerDay: 1,
+    days: 3,
+    tuition: 0,
+    instantBoosts: [
+      {
+        assetId: 'saas',
+        assetName: 'SaaS Micro-App',
+        type: 'multiplier',
+        amount: 0.05
+      }
+    ]
+  },
   outlineMastery: {
     id: 'outlineMastery',
     name: 'Outline Mastery Workshop',
@@ -276,6 +362,11 @@ export const KNOWLEDGE_TRACKS = {
 };
 
 export const KNOWLEDGE_REWARDS = {
+  storycraftJumpstart: { baseXp: 120, skills: ['writing'] },
+  vlogStudioJumpstart: { baseXp: 120, skills: ['visual'] },
+  digitalShelfPrimer: { baseXp: 120, skills: ['editing'] },
+  commerceLaunchPrimer: { baseXp: 120, skills: ['commerce'] },
+  microSaasJumpstart: { baseXp: 120, skills: ['software'] },
   outlineMastery: { baseXp: 120, skills: ['writing'] },
   photoLibrary: {
     baseXp: 120,

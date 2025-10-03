@@ -105,7 +105,19 @@ export function buildTrackViewModel(track, state = getState()) {
 }
 
 export function createKnowledgeHustles() {
-  return Object.values(KNOWLEDGE_TRACKS).map(track => {
+  const orderedTracks = Object.values(KNOWLEDGE_TRACKS)
+    .map((track, index) => ({ track, index }))
+    .sort((a, b) => {
+      const aFree = (Number(a.track.tuition) || 0) <= 0;
+      const bFree = (Number(b.track.tuition) || 0) <= 0;
+      if (aFree === bFree) {
+        return a.index - b.index;
+      }
+      return aFree ? 1 : -1;
+    })
+    .map(entry => entry.track);
+
+  return orderedTracks.map(track => {
     const presenter = createKnowledgeTrackPresenter(track);
 
     return {

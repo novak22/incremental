@@ -11,7 +11,7 @@ Online Hustle Simulator is a browser-based incremental game about orchestrating 
 - **Audience Niches & Trends** – Each passive asset can target a whimsical niche that re-rolls in popularity every day. Assign builds to hot audiences for up to +30% payouts (or unassign to ride out a slump), monitor the daily popularity board, and review a seven-day highlight recap right from the dashboard.
 - **Dynamic Random Events** – Assets and niches can now spark multi-day streaks. Viral tailwinds start strong and taper each sunrise, while setbacks recover step-by-step until they expire, giving payouts a little extra drama beyond daily niche rolls.
 - **Skills & Experience** – Hustles, asset launches, quality pushes, upgrades, and study milestones award skill XP across ten creative disciplines. Skill tiers (Novice → Master) grant celebratory log entries, while total skill XP feeds an overall creator level that tracks your long-term momentum.
-- **Knowledge Tracks** – Paying tuition enrolls you in longer-form courses that auto-schedule their daily study load until graduation. Completed courses unlock advanced assets, inject gig-specific payout boosts, and now apply passive-income modifiers to matching assets; if the scheduler runs out of hours, you’ll receive gentle warnings and the course simply waits for tomorrow.
+- **Knowledge Tracks** – Paying tuition enrolls you in longer-form courses that auto-schedule their daily study load until graduation. Completed courses unlock advanced assets, inject gig-specific payout boosts, and now apply passive-income modifiers to matching assets; if the scheduler runs out of hours, you’ll receive gentle warnings and the course simply waits for tomorrow. A new Free Courses tab spotlights jumpstart programs that award enough XP to hit level 1 in their focus skill so BlogPress, VideoTube, DigiShelf, Shopily, and ServerHub unlock the moment you graduate.
 - **Daily Recap Log** – Every launch, maintenance result, payout, and study milestone is written to the log so you can reconstruct exactly what happened during busy streaks.
 
 ### Interface Overview
@@ -31,6 +31,11 @@ Online Hustle Simulator is a browser-based incremental game about orchestrating 
 - **Audience Q&A Blast** – Spend 1h with at least one active blog to earn $12 from checklist upsells (+$4 after Brand Voice Lab). Limited to one spotlight stream per day, so pick your prime time.
 - **Bundle Promo Push** – Spend 2.5h once you have two active blogs plus an e-book to pocket $48 immediately (+$6 after E-Commerce Playbook).
 - **Micro Survey Dash** – Fire off 15-minute surveys for $1 a pop (up to four per day; Guerrilla Buzz Workshop adds +$1.50 each) to keep pockets of time profitable.
+- **Storycraft Jumpstart** – Free; 1h/day for 3 days lets you outline pillar posts, grants +120 Writing XP (level 1), and unlocks BlogPress without spending tuition.
+- **Creator Studio Jumpstart** – Free; 1h/day for 3 days pairs you with a coach, awards +120 Visual Production XP (level 1), and unlocks VideoTube.
+- **Digital Shelf Primer** – Free; 1h/day for 3 days polishes metadata basics, grants +120 Editing XP (level 1), and unlocks DigiShelf alongside gallery boosts.
+- **Commerce Launch Primer** – Free; 1h/day for 3 days shadows fulfillment leads, awards +120 Commerce Operations XP (level 1), and unlocks Shopily.
+- **Micro SaaS Jumpstart** – Free; 1h/day for 3 days mentors you through deploy scripts, grants +120 Software Development XP (level 1), and unlocks ServerHub.
 - **Outline Mastery Workshop** – Pay $140 upfront; 2h/day for 5 days auto-reserve to unlock e-book production chops and boost writing/narration gigs.
 - **Photo Catalog Curation** – Pay $95 upfront; 1.5h/day for 4 days auto-reserve to polish your stock gallery workflow and increase Event Photo Gig payouts by 20%.
 - **E-Commerce Playbook** – Pay $260 upfront; 2h/day for 7 days auto-reserve to prep dropshipping ventures (+$6 Bundle Promo Push, +20% Dropship Pack Party).

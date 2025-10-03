@@ -889,8 +889,29 @@ function renderBody(model) {
   }
 }
 
+function renderLockedState(lock) {
+  const wrapper = document.createElement('section');
+  wrapper.className = 'serverhub serverhub--locked';
+  const message = document.createElement('p');
+  message.className = 'serverhub-empty';
+  if (lock?.type === 'skill') {
+    const courseNote = lock.courseName ? ` Complete ${lock.courseName} in Learnly to level up instantly.` : '';
+    message.textContent = `${lock.workspaceLabel || 'This console'} unlocks at ${lock.skillName} Lv ${lock.requiredLevel}.${courseNote}`;
+  } else {
+    message.textContent = 'ServerHub unlocks once the SaaS Micro-App blueprint is discovered.';
+  }
+  wrapper.appendChild(message);
+  return wrapper;
+}
+
 function renderApp() {
   if (!currentMount) return;
+  if (!currentModel.definition) {
+    currentMount.innerHTML = '';
+    currentMount.appendChild(renderLockedState(currentModel.lock));
+    return;
+  }
+
   ensureSelectedApp();
   currentMount.innerHTML = '';
   const root = document.createElement('div');

@@ -712,12 +712,17 @@ function renderAnalyticsView(model) {
   return container;
 }
 
-function renderLockedState() {
+function renderLockedState(lock) {
   const container = document.createElement('section');
   container.className = 'videotube-view videotube-view--locked';
   const message = document.createElement('p');
   message.className = 'videotube-empty';
-  message.textContent = 'VideoTube unlocks once the Vlog blueprint is discovered.';
+  if (lock?.type === 'skill') {
+    const courseNote = lock.courseName ? ` Complete ${lock.courseName} in Learnly to level up instantly.` : '';
+    message.textContent = `${lock.workspaceLabel || 'This workspace'} unlocks at ${lock.skillName} Lv ${lock.requiredLevel}.${courseNote}`;
+  } else {
+    message.textContent = 'VideoTube unlocks once the Vlog blueprint is discovered.';
+  }
   container.appendChild(message);
   return container;
 }
@@ -761,7 +766,7 @@ export function render(model = {}, context = {}) {
 
   if (!currentModel.definition) {
     currentMount.innerHTML = '';
-    currentMount.appendChild(renderLockedState());
+    currentMount.appendChild(renderLockedState(currentModel.lock));
     return currentModel.summary || {};
   }
 
