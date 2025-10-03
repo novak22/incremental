@@ -40,8 +40,7 @@ test('registry exposes built-in views with guards and presenters', () => {
   const entries = getRegisteredViews();
   const ids = entries.map(entry => entry.id);
 
-  assert.ok(ids.includes('classic'));
-  assert.ok(ids.includes('browser'));
+  assert.deepEqual(ids, ['browser']);
 
   for (const entry of entries) {
     assert.equal(typeof entry.guard, 'function');
