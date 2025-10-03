@@ -86,29 +86,45 @@ function ensureElements(body) {
     const summaryColumn = document.createElement('div');
     summaryColumn.className = 'timodoro__column timodoro__column--summary';
 
-    const taskCard = createCard('Task Log', 'See what’s finished and what’s waiting.');
-
-    const pendingSection = document.createElement('section');
-    pendingSection.className = 'timodoro-section';
-    const pendingHeading = document.createElement('h3');
-    pendingHeading.className = 'timodoro-section__title';
-    pendingHeading.textContent = 'Pending tasks';
-    const pendingList = document.createElement('ul');
-    pendingList.className = 'timodoro-list timodoro-list--tasks';
-    pendingList.dataset.role = 'timodoro-pending';
-    pendingSection.append(pendingHeading, pendingList);
+    const taskCard = createCard('Task Log', 'Celebrate today’s finished focus blocks.');
 
     const completedSection = document.createElement('section');
     completedSection.className = 'timodoro-section';
     const completedHeading = document.createElement('h3');
     completedHeading.className = 'timodoro-section__title';
     completedHeading.textContent = 'Completed today';
-    const completedList = document.createElement('ul');
-    completedList.className = 'timodoro-list timodoro-list--tasks';
-    completedList.dataset.role = 'timodoro-completed';
-    completedSection.append(completedHeading, completedList);
+    const completedGroups = document.createElement('div');
+    completedGroups.className = 'timodoro-section__groups';
 
-    taskCard.append(pendingSection, completedSection);
+    const groupDefinitions = [
+      { key: 'hustles', label: 'Hustles' },
+      { key: 'education', label: 'Education' },
+      { key: 'upkeep', label: 'Upkeep' },
+      { key: 'upgrades', label: 'Upgrades' }
+    ];
+
+    const completedLists = {};
+
+    groupDefinitions.forEach(({ key, label }) => {
+      const group = document.createElement('section');
+      group.className = 'timodoro-subsection';
+
+      const heading = document.createElement('h4');
+      heading.className = 'timodoro-subsection__title';
+      heading.textContent = label;
+
+      const list = document.createElement('ul');
+      list.className = 'timodoro-list timodoro-list--tasks';
+      list.dataset.role = `timodoro-completed-${key}`;
+
+      group.append(heading, list);
+      completedGroups.appendChild(group);
+      completedLists[key] = list;
+    });
+
+    completedSection.append(completedHeading, completedGroups);
+
+    taskCard.append(completedSection);
 
     const recurringCard = createCard('Recurring / Assistant Work', 'Upkeep, maintenance, and study sessions auto-logged for you.');
     const recurringList = document.createElement('ul');
@@ -153,8 +169,7 @@ function ensureElements(body) {
 
     elements = {
       root,
-      pendingList,
-      completedList,
+      completedLists,
       recurringList,
       breakdownList,
       summaryList,
@@ -166,8 +181,12 @@ function ensureElements(body) {
 
   elements = {
     root,
-    pendingList: root.querySelector('[data-role="timodoro-pending"]'),
-    completedList: root.querySelector('[data-role="timodoro-completed"]'),
+    completedLists: {
+      hustles: root.querySelector('[data-role="timodoro-completed-hustles"]'),
+      education: root.querySelector('[data-role="timodoro-completed-education"]'),
+      upkeep: root.querySelector('[data-role="timodoro-completed-upkeep"]'),
+      upgrades: root.querySelector('[data-role="timodoro-completed-upgrades"]')
+    },
     recurringList: root.querySelector('[data-role="timodoro-recurring"]'),
     breakdownList: root.querySelector('[data-role="timodoro-breakdown"]'),
     summaryList: root.querySelector('[data-role="timodoro-stats"]'),
@@ -202,6 +221,21 @@ function renderList(list, entries, emptyText) {
 
     item.append(name, meta);
     list.appendChild(item);
+  });
+}
+
+function renderCompletedGroups(lists = {}, groupedEntries = {}) {
+  const groups = [
+    { key: 'hustles', empty: 'No hustles wrapped yet.' },
+    { key: 'education', empty: 'No study blocks logged yet.' },
+    { key: 'upkeep', empty: 'No upkeep tackled yet.' },
+    { key: 'upgrades', empty: 'No upgrade pushes finished yet.' }
+  ];
+
+  groups.forEach(({ key, empty }) => {
+    const list = lists?.[key];
+    const entries = Array.isArray(groupedEntries?.[key]) ? groupedEntries[key] : [];
+    renderList(list, entries, empty);
   });
 }
 
@@ -261,63 +295,43 @@ function renderSummaryStats(list, entries) {
   });
 }
 
-function buildPendingEntries(model = {}) {
-  const entries = Array.isArray(model.entries) ? model.entries : [];
-  const availableHours = Number.isFinite(model.hoursAvailable)
-    ? Math.max(0, model.hoursAvailable)
-    : Infinity;
-  const availableMoney = Number.isFinite(model.moneyAvailable)
-    ? Math.max(0, model.moneyAvailable)
-    : Infinity;
-
-  return entries
-    .filter(entry => {
-      const duration = Number(entry?.durationHours);
-      const moneyCost = Number(entry?.moneyCost);
-      const remainingRuns = entry?.remainingRuns;
-      const hasRuns = remainingRuns == null || remainingRuns > 0;
-      if (!hasRuns) return false;
-      const fitsTime = !Number.isFinite(availableHours) || !Number.isFinite(duration)
-        ? true
-        : duration <= availableHours;
-      if (!fitsTime) return false;
-      const cost = Number.isFinite(moneyCost) ? moneyCost : 0;
-      const fitsMoney = !Number.isFinite(availableMoney) || cost <= availableMoney;
-      return fitsMoney;
-    })
-    .map(entry => {
-      const durationText = entry?.durationText || formatHours(Number(entry?.durationHours) || 0);
-      const payout = Number(entry?.payout);
-      const payoutLabel = Number.isFinite(payout) && payout > 0
-        ? `${formatCurrency(payout)}`
-        : (entry?.payoutText || entry?.meta || '—');
-      const detailParts = [durationText];
-      if (payoutLabel) {
-        detailParts.push(payoutLabel);
-      }
-      return {
-        name: entry?.title || 'Task',
-        detail: detailParts.join(' • ')
-      };
-    });
+function normalizeCompletedCategory(category) {
+  const label = typeof category === 'string' ? category.toLowerCase() : '';
+  if (['study', 'education', 'learning', 'knowledge', 'class'].includes(label)) {
+    return 'education';
+  }
+  if (['maintenance', 'upkeep', 'care', 'support'].includes(label)) {
+    return 'upkeep';
+  }
+  if (['setup', 'upgrade', 'investment', 'build', 'construction', 'improvement'].includes(label)) {
+    return 'upgrades';
+  }
+  return 'hustles';
 }
 
-function buildCompletedEntries(summary = {}) {
+function buildCompletedGroups(summary = {}) {
   const presentations = buildSummaryPresentations(summary);
   const timeEntries = Array.isArray(presentations.timeEntries) ? presentations.timeEntries : [];
-  const earningsEntries = Array.isArray(presentations.earningsEntries) ? presentations.earningsEntries : [];
-  const payoutMap = new Map(earningsEntries.map(entry => [entry?.key, entry?.amount]));
+  const groups = {
+    hustles: [],
+    education: [],
+    upkeep: [],
+    upgrades: []
+  };
 
-  return timeEntries
-    .filter(entry => entry && entry.category !== 'maintenance' && entry.category !== 'study')
-    .map(entry => {
-      const payout = payoutMap.get(entry.key) || 0;
-      const payoutLabel = payout > 0 ? formatCurrency(payout) : '$0';
-      return {
-        name: entry.label,
-        detail: `${formatHours(entry.hours)} • ${payoutLabel}`
-      };
+  timeEntries.forEach(entry => {
+    if (!entry) return;
+    const bucket = normalizeCompletedCategory(entry.category);
+    const hours = Math.max(0, Number(entry.hours) || 0);
+    if (hours <= 0) return;
+    const detail = `${formatHours(hours)} logged`;
+    groups[bucket].push({
+      name: entry.label,
+      detail
     });
+  });
+
+  return groups;
 }
 
 function buildRecurringEntries(summary = {}) {
@@ -390,10 +404,13 @@ function buildBreakdown(summary = {}, todoModel = {}, state = {}) {
   ];
 }
 
-function buildMeta(summary = {}, completed = []) {
+function buildMeta(summary = {}, completedGroups = {}) {
   const totalHours = Math.max(0, Number(summary?.totalTime) || 0);
   const totalEarnings = Math.max(0, Number(summary?.totalEarnings) || 0);
-  const taskCount = completed.length;
+  const taskCount = Object.values(completedGroups || {}).reduce((total, group) => {
+    if (!Array.isArray(group)) return total;
+    return total + group.length;
+  }, 0);
   const parts = [];
   if (taskCount > 0) {
     parts.push(`${taskCount} task${taskCount === 1 ? '' : 's'} logged`);
@@ -428,8 +445,7 @@ export default function renderTimodoro(context = {}) {
   const autoEntries = createAutoCompletedEntries(summary);
   const todoModel = composeTodoModel(quickActions, assetActions, studyActions, autoEntries);
 
-  const pendingEntries = buildPendingEntries(todoModel);
-  const completedEntries = buildCompletedEntries(summary);
+  const completedGroups = buildCompletedGroups(summary);
   const recurringEntries = buildRecurringEntries(summary);
   const summaryEntries = buildSummaryEntries(summary, todoModel, state);
   const breakdownEntries = buildBreakdown(summary, todoModel, state);
@@ -447,11 +463,10 @@ export default function renderTimodoro(context = {}) {
   }
 
   renderBreakdown(dom.breakdownList, breakdownEntries);
-  renderList(dom.pendingList, pendingEntries, 'Queue a hustle or upgrade to add new tasks.');
-  renderList(dom.completedList, completedEntries, 'Nothing checked off yet.');
+  renderCompletedGroups(dom.completedLists, completedGroups);
   renderList(dom.recurringList, recurringEntries, 'No upkeep logged yet. Assistants will report here.');
   renderSummaryStats(dom.summaryList, summaryEntries);
 
-  const meta = buildMeta(summary, completedEntries);
+  const meta = buildMeta(summary, completedGroups);
   return { id: page.id, meta };
 }
