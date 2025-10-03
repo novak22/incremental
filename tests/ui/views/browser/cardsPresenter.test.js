@@ -55,7 +55,8 @@ test('cardsPresenter dispatches to app modules and publishes summaries', async t
     { id: 'blogpress', meta: 'Blog ready' },
     { id: 'shopstack', meta: 'Upgrades ready' },
     { id: 'learnly', meta: 'Education ready' },
-    { id: 'bankapp', meta: 'Bank ready' }
+    { id: 'bankapp', meta: 'Bank ready' },
+    { id: 'timodoro', meta: 'Productivity ready' }
   ];
 
   const callCounts = new Array(APP_RENDERERS.length).fill(0);
