@@ -11,6 +11,15 @@ export const SERVICE_PAGES = [
     type: 'finance'
   },
   {
+    id: 'timodoro',
+    slug: 'timodoro',
+    label: 'TimoDoro',
+    headline: 'TimoDoro Productivity Hub',
+    tagline: 'Track your hustle hours and assistant work.',
+    icon: '⏱️',
+    type: 'timodoro'
+  },
+  {
     id: 'aboutyou',
     slug: 'about-you',
     label: 'AboutYou',

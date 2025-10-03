@@ -12,6 +12,7 @@ import renderServerHub from './apps/serverhub.js';
 import renderUpgrades from './apps/upgrades.js';
 import renderEducation from './apps/education.js';
 import renderFinance from './apps/finance.js';
+import renderTimodoro from './apps/timodoro.js';
 import {
   cachePayload,
   getCachedPayload,
@@ -146,7 +147,8 @@ export const APP_RENDERERS = [
     renderUpgrades(context, registries.upgrades || [], models.upgrades || {}),
   (context, registries = {}, models = {}) =>
     renderEducation(context, registries.education || [], models.education || {}),
-  (context, registries = {}, models = {}) => renderFinance(context, registries, models)
+  (context, registries = {}, models = {}) => renderFinance(context, registries, models),
+  (context, registries = {}, models = {}) => renderTimodoro(context, registries, models)
 ];
 
 function collectSummaries(context, registries = {}, models = {}) {

@@ -65,7 +65,7 @@ function createEnrollmentTodoEntries(entries = []) {
   });
 }
 
-function composeTodoModel(
+export function composeTodoModel(
   quickActions = {},
   assetActions = {},
   enrollmentActions = {},
@@ -137,7 +137,7 @@ function composeTodoModel(
   return model;
 }
 
-function createAutoCompletedEntries(summary = {}) {
+export function createAutoCompletedEntries(summary = {}) {
   const entries = Array.isArray(summary?.timeBreakdown) ? summary.timeBreakdown : [];
   return entries
     .map((entry, index) => {

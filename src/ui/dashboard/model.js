@@ -282,6 +282,8 @@ export function buildDashboardViewModel(state, summary = {}) {
   };
 }
 
+export { buildQuickActionModel, buildAssetActionModel, buildStudyEnrollmentActionModel };
+
 export default {
   buildDashboardViewModel,
   buildDailySummaries,
