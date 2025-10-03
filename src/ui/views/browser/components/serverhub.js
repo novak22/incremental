@@ -6,7 +6,7 @@ import {
   formatNetCurrency as baseFormatNetCurrency,
   formatPercent as baseFormatPercent
 } from '../utils/formatting.js';
-import { createLifecycleSummary } from '../utils/lifecycleSummaries.js';
+import { createCurrencyLifecycleSummary } from '../utils/lifecycleSummaries.js';
 import { showLaunchConfirmation } from '../utils/launchDialog.js';
 import { createWorkspacePresenter } from '../utils/workspacePresenter.js';
 
@@ -41,17 +41,12 @@ const presenter = createWorkspacePresenter({
 });
 
 const { describeSetupSummary: formatSetupSummary, describeUpkeepSummary: formatUpkeepSummary } =
-  createLifecycleSummary({
-    parseValue: value => {
-      const numeric = Number(value);
-      return Number.isFinite(numeric) ? numeric : 0;
-    },
-    formatSetupHours: hours => `${formatHours(hours)} per day`,
-    formatUpkeepHours: hours => `${formatHours(hours)} per day`,
-    formatSetupCost: cost => `${formatCurrency(cost)} upfront`,
-    formatUpkeepCost: cost => `${formatCurrency(cost)} per day`,
-    setupFallback: 'Instant setup',
-    upkeepFallback: 'No upkeep required'
+  createCurrencyLifecycleSummary({
+    formatCurrency,
+    formatDailyHours: hours => `${formatHours(hours)} per day`,
+    copy: {
+      setupFallback: 'Instant setup'
+    }
   });
 
 function confirmLaunchWithDetails(definition = {}) {

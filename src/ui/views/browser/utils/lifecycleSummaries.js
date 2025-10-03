@@ -1,3 +1,5 @@
+import { formatHours as baseFormatHours, formatMoney } from '../../../../core/helpers.js';
+
 const defaultParseValue = value => {
   const numeric = Number(value);
   return Number.isFinite(numeric) ? numeric : 0;
@@ -11,6 +13,22 @@ const defaultFormatSetupCost = cost => `$${cost} upfront`;
 
 const defaultFormatUpkeepCost = cost => `$${cost} per day`;
 
+const defaultCopy = {
+  setupFallback: 'Instant',
+  upkeepFallback: 'No upkeep required'
+};
+
+function normalizeCopy(config = {}) {
+  const overrides = { ...config.copy };
+  if (Object.prototype.hasOwnProperty.call(config, 'setupFallback')) {
+    overrides.setupFallback = config.setupFallback;
+  }
+  if (Object.prototype.hasOwnProperty.call(config, 'upkeepFallback')) {
+    overrides.upkeepFallback = config.upkeepFallback;
+  }
+  return { ...defaultCopy, ...overrides };
+}
+
 /**
  * Builds setup/upkeep describers with shared numeric parsing but themed labels.
  */
@@ -22,10 +40,10 @@ export function createLifecycleSummary(config = {}) {
     formatSetupHours = formatDailyHours,
     formatSetupCost = defaultFormatSetupCost,
     formatUpkeepHours = formatDailyHours,
-    formatUpkeepCost = defaultFormatUpkeepCost,
-    setupFallback = 'Instant',
-    upkeepFallback = 'No upkeep required'
+    formatUpkeepCost = defaultFormatUpkeepCost
   } = config;
+
+  const copy = normalizeCopy(config);
 
   const parse = value => {
     const parsed = parseValue(value);
@@ -50,7 +68,7 @@ export function createLifecycleSummary(config = {}) {
       parts.push(formatSetupCost(cost));
     }
 
-    return parts.length ? parts.join(' • ') : setupFallback;
+    return parts.length ? parts.join(' • ') : copy.setupFallback;
   }
 
   function describeUpkeepSummary(upkeep = {}) {
@@ -66,15 +84,54 @@ export function createLifecycleSummary(config = {}) {
       parts.push(formatUpkeepCost(cost));
     }
 
-    return parts.length ? parts.join(' • ') : upkeepFallback;
+    return parts.length ? parts.join(' • ') : copy.upkeepFallback;
   }
 
   return {
     describeSetupSummary,
-    describeUpkeepSummary
+    describeUpkeepSummary,
+    copy
   };
 }
 
+const defaultCurrencyCopy = {
+  setupFallback: 'Instant launch',
+  upkeepFallback: 'No upkeep required'
+};
+
+const defaultCurrencyFormatHours = hours => `${baseFormatHours(hours)} per day`;
+
+const defaultCurrencyFormatMoney = value => `$${formatMoney(value)}`;
+
+export function createCurrencyLifecycleSummary(options = {}) {
+  const {
+    formatCurrency = defaultCurrencyFormatMoney,
+    formatDailyHours = defaultCurrencyFormatHours,
+    formatSetupDays,
+    formatSetupHours,
+    formatUpkeepHours,
+    formatSetupCost,
+    formatUpkeepCost,
+    copy,
+    ...rest
+  } = options;
+
+  const resolvedCopy = { ...defaultCurrencyCopy, ...(copy || {}) };
+
+  const describe = createLifecycleSummary({
+    ...rest,
+    formatSetupDays,
+    formatSetupHours: formatSetupHours || (hours => formatDailyHours(hours)),
+    formatUpkeepHours: formatUpkeepHours || (hours => formatDailyHours(hours)),
+    formatSetupCost: formatSetupCost || (cost => `${formatCurrency(cost)} upfront`),
+    formatUpkeepCost: formatUpkeepCost || (cost => `${formatCurrency(cost)} per day`),
+    copy: resolvedCopy
+  });
+
+  return describe;
+}
+
 export default {
-  createLifecycleSummary
+  createLifecycleSummary,
+  createCurrencyLifecycleSummary
 };
