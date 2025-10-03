@@ -3,6 +3,7 @@ import { addLog } from '../../core/log.js';
 import { getAssetState, getState } from '../../core/state.js';
 import { getAssetDefinition } from '../../core/state/registry.js';
 import { getNicheDefinition, getNicheDefinitions } from './nicheData.js';
+import { NICHE_ANALYTICS_HISTORY_LIMIT } from '../../core/state/niches.js';
 
 const POPULARITY_MIN = 25;
 const POPULARITY_MAX = 95;
@@ -28,7 +29,7 @@ function rollPopularityScore() {
   return clampScore(POPULARITY_MIN + roll * spread);
 }
 
-function ensureNicheState(target = getState()) {
+export function ensureNicheState(target = getState()) {
   if (!target) return null;
   if (!target.niches || typeof target.niches !== 'object') {
     target.niches = {};
@@ -37,6 +38,11 @@ function ensureNicheState(target = getState()) {
   data.popularity = data.popularity || {};
   if (!Array.isArray(data.watchlist)) {
     data.watchlist = [];
+  }
+  if (!Array.isArray(data.analyticsHistory)) {
+    data.analyticsHistory = [];
+  } else if (data.analyticsHistory.length > NICHE_ANALYTICS_HISTORY_LIMIT) {
+    data.analyticsHistory = data.analyticsHistory.slice(-NICHE_ANALYTICS_HISTORY_LIMIT);
   }
 
   const definitions = getNicheDefinitions();

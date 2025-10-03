@@ -12,6 +12,7 @@ const {
 const { getState, getAssetState, getUpgradeState } = stateModule;
 const { loadState, saveState, getStatePersistence } = storageModule;
 const { addLog } = logModule;
+const { archiveNicheAnalytics } = await import('../src/game/analytics/niches.js');
 
 const STORAGE_KEY = 'online-hustle-sim-v2';
 
@@ -80,4 +81,23 @@ test('legacy saves migrate to new asset structure', () => {
   assert.equal(getUpgradeState('coffee').usedToday, 2);
   assert.ok(state.log.some(entry => entry.message === 'Legacy entry'));
   assert.equal(state.version, getStatePersistence().version);
+});
+
+test('saveState persists a trimmed niche analytics history snapshot', () => {
+  const state = getState();
+  state.niches.analyticsHistory = [];
+
+  for (let day = 1; day <= 9; day += 1) {
+    state.day = day;
+    archiveNicheAnalytics({ state, day, timestamp: day * 1000 });
+  }
+
+  saveState();
+  const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+  const history = saved?.niches?.analyticsHistory;
+
+  assert.ok(Array.isArray(history), 'expected analytics history array in snapshot');
+  assert.equal(history.length, 7, 'keeps only the newest seven entries');
+  assert.equal(history[0].day, 3);
+  assert.equal(history.at(-1).day, 9);
 });
