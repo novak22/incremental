@@ -663,19 +663,16 @@ function renderActionPanel(instance) {
     const label = document.createElement('div');
     label.className = 'blogpress-action__label';
     label.textContent = action.label;
-    const meta = document.createElement('span');
-    meta.className = 'blogpress-action__meta';
-    const parts = [];
-    if (action.time > 0) parts.push(formatHours(action.time));
-    if (action.cost > 0) parts.push(formatCurrency(action.cost));
-    meta.textContent = parts.length ? parts.join(' • ') : 'Instant';
-    label.appendChild(meta);
     item.appendChild(label);
 
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'blogpress-button blogpress-button--primary';
-    button.textContent = action.available ? 'Run' : 'Locked';
+    const requirementParts = [];
+    if (action.time > 0) requirementParts.push(formatHours(action.time));
+    if (action.cost > 0) requirementParts.push(formatCurrency(action.cost));
+    const requirementLabel = requirementParts.length ? requirementParts.join('/') : 'Instant';
+    button.textContent = action.available ? `Run • ${requirementLabel}` : requirementLabel;
     button.disabled = !action.available;
     if (action.disabledReason) {
       button.title = action.disabledReason;

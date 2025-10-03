@@ -3305,11 +3305,6 @@ a {
   gap: 0.35rem;
 }
 
-.blogpress-action__meta {
-  color: var(--browser-muted);
-  font-size: 0.82rem;
-}
-
 .blogpress-field {
   display: flex;
   flex-direction: column;
