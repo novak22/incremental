@@ -425,6 +425,11 @@ a {
   font-weight: 600;
 }
 
+#browser-session-button {
+  justify-content: center;
+  min-width: var(--browser-session-button-width, auto);
+}
+
 .browser-button--icon {
   padding: 0.45rem 0.65rem;
 }
