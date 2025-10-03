@@ -318,7 +318,8 @@ function renderHomeView(model) {
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'blogpress-button blogpress-button--ghost';
-      button.textContent = quick.label;
+      const timeLabel = quick.time > 0 ? ` (${formatHours(quick.time)})` : '';
+      button.textContent = `${quick.label}${timeLabel}`;
       button.disabled = !quick.available;
       if (quick.disabledReason) {
         button.title = quick.disabledReason;
@@ -330,10 +331,15 @@ function renderHomeView(model) {
       });
       const effort = document.createElement('span');
       effort.className = 'blogpress-table__meta';
-      const partsMeta = [];
-      if (quick.time > 0) partsMeta.push(formatHours(quick.time));
-      if (quick.cost > 0) partsMeta.push(formatCurrency(quick.cost));
-      effort.textContent = partsMeta.length ? partsMeta.join(' • ') : 'Instant';
+      const costParts = [];
+      if (quick.cost > 0) costParts.push(formatCurrency(quick.cost));
+      if (costParts.length) {
+        effort.textContent = costParts.join(' • ');
+      } else if (quick.time > 0) {
+        effort.textContent = 'No cash needed';
+      } else {
+        effort.textContent = 'Instant';
+      }
       actionCell.append(button, effort);
     } else {
       const none = document.createElement('span');
