@@ -2,8 +2,8 @@ export const KNOWLEDGE_TRACKS = {
   storycraftJumpstart: {
     id: 'storycraftJumpstart',
     name: 'Storycraft Jumpstart',
-    description: 'Outline pillar posts for 3 days (1h/day) and polish headlines without paying tuition.',
-    hoursPerDay: 1,
+    description: 'Outline pillar posts for 3 days (4h/day) and polish headlines without paying tuition.',
+    hoursPerDay: 4,
     days: 3,
     tuition: 0,
     instantBoosts: [
@@ -18,8 +18,8 @@ export const KNOWLEDGE_TRACKS = {
   vlogStudioJumpstart: {
     id: 'vlogStudioJumpstart',
     name: 'Creator Studio Jumpstart',
-    description: 'Shadow a creator coach for 3 days (1h/day) to frame shots, light sets, and warm up edits. Tuition free.',
-    hoursPerDay: 1,
+    description: 'Shadow a creator coach for 3 days (4h/day) to frame shots, light sets, and warm up edits. Tuition free.',
+    hoursPerDay: 4,
     days: 3,
     tuition: 0,
     instantBoosts: [
@@ -34,8 +34,8 @@ export const KNOWLEDGE_TRACKS = {
   digitalShelfPrimer: {
     id: 'digitalShelfPrimer',
     name: 'Digital Shelf Primer',
-    description: 'Curate e-books and galleries for 3 days (1h/day) to master metadata, covers, and storefront polish — no tuition required.',
-    hoursPerDay: 1,
+    description: 'Curate e-books and galleries for 3 days (4h/day) to master metadata, covers, and storefront polish — no tuition required.',
+    hoursPerDay: 4,
     days: 3,
     tuition: 0,
     instantBoosts: [
@@ -56,8 +56,8 @@ export const KNOWLEDGE_TRACKS = {
   commerceLaunchPrimer: {
     id: 'commerceLaunchPrimer',
     name: 'Commerce Launch Primer',
-    description: 'Shadow a fulfillment lead for 3 days (1h/day) to set up shipping flows and customer support scripts for free.',
-    hoursPerDay: 1,
+    description: 'Shadow a fulfillment lead for 3 days (4h/day) to set up shipping flows and customer support scripts for free.',
+    hoursPerDay: 4,
     days: 3,
     tuition: 0,
     instantBoosts: [
@@ -72,8 +72,8 @@ export const KNOWLEDGE_TRACKS = {
   microSaasJumpstart: {
     id: 'microSaasJumpstart',
     name: 'Micro SaaS Jumpstart',
-    description: 'Pair with senior engineers for 3 days (1h/day) to ship deploy scripts and uptime monitors with zero tuition.',
-    hoursPerDay: 1,
+    description: 'Pair with senior engineers for 3 days (4h/day) to ship deploy scripts and uptime monitors with zero tuition.',
+    hoursPerDay: 4,
     days: 3,
     tuition: 0,
     instantBoosts: [
@@ -126,38 +126,44 @@ export const KNOWLEDGE_TRACKS = {
   ecomPlaybook: {
     id: 'ecomPlaybook',
     name: 'E-Commerce Playbook',
-    description: 'Shadow a pro operator for 7 days (2h/day) to master funnels and fulfillment math.',
-    hoursPerDay: 2,
-    days: 7,
-    tuition: 260,
+    description: 'Bundle Promo Push yields +5; dropshipping profits +15%.',
+    hoursPerDay: 3,
+    days: 9,
+    tuition: 900,
     instantBoosts: [
       {
         hustleId: 'bundlePush',
         hustleName: 'Bundle Promo Push',
         type: 'flat',
-        amount: 6
+        amount: 5
       },
       {
-        hustleId: 'dropshipPackParty',
-        hustleName: 'Dropship Pack Party',
+        assetId: 'dropshipping',
+        assetName: 'Dropshipping Product Lab',
         type: 'multiplier',
-        amount: 0.2
+        amount: 0.15
       }
     ]
   },
   automationCourse: {
     id: 'automationCourse',
     name: 'Automation Architecture Course',
-    description: 'Pair-program with mentors for 10 days (~2¼h/day) to architect a reliable micro-app.',
-    hoursPerDay: 2.25,
-    days: 10,
-    tuition: 540,
+    description: 'SaaS Bug Squash retainers +6; SaaS Micro-App subscriptions +15%.',
+    hoursPerDay: 6,
+    days: 15,
+    tuition: 3000,
     instantBoosts: [
       {
         hustleId: 'saasBugSquash',
         hustleName: 'SaaS Bug Squash',
         type: 'flat',
-        amount: 12
+        amount: 6
+      },
+      {
+        assetId: 'saas',
+        assetName: 'SaaS Micro-App',
+        type: 'multiplier',
+        amount: 0.15
       }
     ]
   },
@@ -224,126 +230,126 @@ export const KNOWLEDGE_TRACKS = {
   postProductionPipelineLab: {
     id: 'postProductionPipelineLab',
     name: 'Post-Production Pipeline Lab',
-    description: 'Run edit bays for 8 days (3h/day) to master color, captions, and delivery workflows.',
-    hoursPerDay: 3,
-    days: 8,
-    tuition: 360,
+    description: 'Vlog Edit Rush payouts +25%; Weekly Vlog Channel income +15%.',
+    hoursPerDay: 4,
+    days: 10,
+    tuition: 900,
     instantBoosts: [
       {
         hustleId: 'vlogEditRush',
         hustleName: 'Vlog Edit Rush',
         type: 'multiplier',
-        amount: 0.35
+        amount: 0.25
       },
       {
         assetId: 'vlog',
         assetName: 'Weekly Vlog Channel',
         type: 'multiplier',
-        amount: 0.18
+        amount: 0.15
       }
     ]
   },
   fulfillmentOpsMasterclass: {
     id: 'fulfillmentOpsMasterclass',
     name: 'Fulfillment Ops Masterclass',
-    description: 'Shadow a 7-day (2h/day) logistics crew to automate pick, pack, and ship perfection.',
-    hoursPerDay: 2,
-    days: 7,
-    tuition: 320,
+    description: 'Dropship Pack Party earnings +20%; dropshipping revenue +25%.',
+    hoursPerDay: 4,
+    days: 10,
+    tuition: 1200,
     instantBoosts: [
       {
         hustleId: 'dropshipPackParty',
         hustleName: 'Dropship Pack Party',
         type: 'multiplier',
-        amount: 0.25
+        amount: 0.2
       },
       {
         assetId: 'dropshipping',
         assetName: 'Dropshipping Product Lab',
         type: 'multiplier',
-        amount: 0.35
+        amount: 0.25
       }
     ]
   },
   customerRetentionClinic: {
     id: 'customerRetentionClinic',
     name: 'Customer Retention Clinic',
-    description: 'Coach subscription success teams for 5 days (2h/day) to keep churn near zero.',
-    hoursPerDay: 2,
-    days: 5,
-    tuition: 210,
+    description: 'SaaS Bug Squash retainers +$5; SaaS Micro-App subscriptions +20%.',
+    hoursPerDay: 3,
+    days: 7,
+    tuition: 1000,
     instantBoosts: [
       {
         hustleId: 'saasBugSquash',
         hustleName: 'SaaS Bug Squash',
         type: 'flat',
-        amount: 8
+        amount: 5
       },
       {
         assetId: 'saas',
         assetName: 'SaaS Micro-App',
         type: 'multiplier',
-        amount: 0.25
+        amount: 0.2
       }
     ]
   },
   narrationPerformanceWorkshop: {
     id: 'narrationPerformanceWorkshop',
     name: 'Narration Performance Workshop',
-    description: 'Spend 4 days (1.75h/day) with vocal coaches to perfect audiobook cadence.',
-    hoursPerDay: 1.75,
-    days: 4,
-    tuition: 190,
+    description: 'Audiobook Narration payouts +25%; e-book royalties +10%.',
+    hoursPerDay: 3,
+    days: 7,
+    tuition: 900,
     instantBoosts: [
       {
         hustleId: 'audiobookNarration',
         hustleName: 'Audiobook Narration',
         type: 'multiplier',
-        amount: 0.3
+        amount: 0.25
       },
       {
         assetId: 'ebook',
         assetName: 'Digital E-Book Series',
         type: 'multiplier',
-        amount: 0.15
+        amount: 0.1
       }
     ]
   },
   galleryLicensingSummit: {
     id: 'galleryLicensingSummit',
     name: 'Gallery Licensing Summit',
-    description: 'Pitch curators for 5 days (2.25h/day) to secure premium gallery licensing deals.',
-    hoursPerDay: 2.25,
-    days: 5,
-    tuition: 240,
+    description: 'Event Photo Gig bookings +20%; Stock Photo Gallery income +15%.',
+    hoursPerDay: 4,
+    days: 8,
+    tuition: 1100,
     instantBoosts: [
       {
         hustleId: 'eventPhotoGig',
         hustleName: 'Event Photo Gig',
         type: 'multiplier',
-        amount: 0.3
+        amount: 0.2
       },
       {
         assetId: 'stockPhotos',
         assetName: 'Stock Photo Gallery',
         type: 'multiplier',
-        amount: 0.22
+        amount: 0.15
       }
     ]
   },
   syndicationResidency: {
     id: 'syndicationResidency',
     name: 'Syndication Residency',
-    description: 'Curate partnerships for 6 days (2h/day) to syndicate your flagship content network.',
-    hoursPerDay: 2,
-    days: 6,
-    tuition: 300,
+    description: 'Freelance Writing payouts +15%; Street Promo Sprint tips +$2; Blog Network income +12%.',
+    hoursPerDay: 4,
+    days: 9,
+    tuition: 1000,
     instantBoosts: [
       {
         hustleId: 'freelance',
         hustleName: 'Freelance Writing',
         type: 'multiplier',
-        amount: 0.2
+        amount: 0.15
       },
       {
         hustleId: 'streetPromoSprint',
@@ -355,7 +361,7 @@ export const KNOWLEDGE_TRACKS = {
         assetId: 'blog',
         assetName: 'Personal Blog Network',
         type: 'multiplier',
-        amount: 0.18
+        amount: 0.12
       }
     ]
   }
