@@ -1,10 +1,17 @@
-export function createWorkspacePathController({ derivePath }) {
+/**
+ * Builds a lightweight controller that tracks the current workspace path.
+ *
+ * @param {Object} options
+ * @param {() => string} options.derivePath - Computes the latest path.
+ * @param {(path: string) => void} [options.listener] - Optional initial listener.
+ */
+export function createWorkspacePathController({ derivePath, listener: initialListener } = {}) {
   if (typeof derivePath !== 'function') {
     throw new TypeError('derivePath must be a function');
   }
 
   let lastPath = undefined;
-  let listener = null;
+  let listener = typeof initialListener === 'function' ? initialListener : null;
 
   function setListener(fn) {
     listener = typeof fn === 'function' ? fn : null;
