@@ -1195,23 +1195,6 @@ a {
   animation: browser-page-refresh 320ms ease;
 }
 
-.browser-page__header {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.browser-page__header h1 {
-  margin: 0;
-  font-size: 1.45rem;
-}
-
-.browser-page__header p {
-  margin: 0;
-  color: var(--browser-muted);
-  font-size: 0.95rem;
-}
-
 .browser-card-grid {
   display: grid;
   gap: 1.35rem;
