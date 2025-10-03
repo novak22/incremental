@@ -1351,6 +1351,26 @@ a {
   font-size: 1.05rem;
 }
 
+.timodoro-section__groups {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.timodoro-subsection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.timodoro-subsection__title {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--browser-muted-strong, var(--browser-muted));
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
 .timodoro-list {
   list-style: none;
   margin: 0;
