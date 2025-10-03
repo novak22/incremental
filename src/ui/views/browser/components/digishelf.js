@@ -5,7 +5,7 @@ import {
 } from '../../../cards/model/digishelf.js';
 import { performQualityAction } from '../../../../game/assets/index.js';
 import { formatCurrency as baseFormatCurrency } from '../utils/formatting.js';
-import { createLifecycleSummary } from '../utils/lifecycleSummaries.js';
+import { createDailyLifecycleSummary } from '../utils/lifecycleSummaries.js';
 import { showLaunchConfirmation } from '../utils/launchDialog.js';
 
 const VIEW_EBOOKS = 'ebooks';
@@ -48,16 +48,17 @@ function clampNumber(value) {
 const formatCurrency = amount =>
   baseFormatCurrency(amount, { precision: 'integer', clampZero: true });
 
-const { describeSetupSummary: describeLaunchSetup, describeUpkeepSummary: describeLaunchUpkeep } =
-  createLifecycleSummary({
-    parseValue: clampNumber,
-    formatSetupHours: hours => `${formatHours(hours)} per day`,
-    formatUpkeepHours: hours => `${formatHours(hours)} per day`,
-    formatSetupCost: cost => `$${formatMoney(cost)} upfront`,
-    formatUpkeepCost: cost => `$${formatMoney(cost)} per day`,
-    setupFallback: 'Instant launch',
-    upkeepFallback: 'No upkeep required'
-  });
+const {
+  describeSetupSummary: describeLaunchSetup,
+  describeUpkeepSummary: describeLaunchUpkeep
+} = createDailyLifecycleSummary({
+  parseValue: clampNumber,
+  formatHoursValue: formatHours,
+  formatSetupCost: cost => `$${formatMoney(cost)} upfront`,
+  formatUpkeepCost: cost => `$${formatMoney(cost)} per day`,
+  setupFallback: 'Instant launch',
+  upkeepFallback: 'No upkeep required'
+});
 
 function confirmResourceLaunch(definition = {}) {
   const resourceName = definition.singular || definition.name || 'collection';
@@ -183,24 +184,9 @@ function renderLaunchCard(assetId, model) {
   meta.className = 'digishelf-launch__meta';
   const setup = model.definition.setup || {};
   const upkeep = model.definition.maintenance || {};
-  const setupParts = [];
-  if (setup.days > 0) {
-    setupParts.push(`${setup.days} day${setup.days === 1 ? '' : 's'}`);
-  }
-  if (setup.hoursPerDay > 0) {
-    setupParts.push(`${formatHours(setup.hoursPerDay)}/day`);
-  }
-  if (setup.cost > 0) {
-    setupParts.push(`$${formatMoney(setup.cost)} upfront`);
-  }
-  const upkeepParts = [];
-  if (upkeep.hours > 0) {
-    upkeepParts.push(`${formatHours(upkeep.hours)}/day`);
-  }
-  if (upkeep.cost > 0) {
-    upkeepParts.push(`$${formatMoney(upkeep.cost)}/day`);
-  }
-  meta.textContent = `${setupParts.join(' • ') || 'Instant launch'} • ${upkeepParts.join(' + ') || 'No upkeep'}`;
+  const setupSummary = describeLaunchSetup(setup);
+  const upkeepSummary = describeLaunchUpkeep(upkeep);
+  meta.textContent = `${setupSummary} • ${upkeepSummary}`;
 
   const actions = document.createElement('div');
   actions.className = 'digishelf-launch__actions';

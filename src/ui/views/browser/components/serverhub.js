@@ -6,7 +6,7 @@ import {
   formatNetCurrency as baseFormatNetCurrency,
   formatPercent as baseFormatPercent
 } from '../utils/formatting.js';
-import { createLifecycleSummary } from '../utils/lifecycleSummaries.js';
+import { createDailyLifecycleSummary } from '../utils/lifecycleSummaries.js';
 import { showLaunchConfirmation } from '../utils/launchDialog.js';
 
 const VIEW_APPS = 'apps';
@@ -40,19 +40,16 @@ const ACTION_CONSOLE_ORDER = [
   { id: 'deployEdgeNodes', label: 'Deploy Edge Nodes' }
 ];
 
-const { describeSetupSummary: formatSetupSummary, describeUpkeepSummary: formatUpkeepSummary } =
-  createLifecycleSummary({
-    parseValue: value => {
-      const numeric = Number(value);
-      return Number.isFinite(numeric) ? numeric : 0;
-    },
-    formatSetupHours: hours => `${formatHours(hours)} per day`,
-    formatUpkeepHours: hours => `${formatHours(hours)} per day`,
-    formatSetupCost: cost => `${formatCurrency(cost)} upfront`,
-    formatUpkeepCost: cost => `${formatCurrency(cost)} per day`,
-    setupFallback: 'Instant setup',
-    upkeepFallback: 'No upkeep required'
-  });
+const {
+  describeSetupSummary: formatSetupSummary,
+  describeUpkeepSummary: formatUpkeepSummary
+} = createDailyLifecycleSummary({
+  formatHoursValue: formatHours,
+  formatSetupCost: cost => `${formatCurrency(cost)} upfront`,
+  formatUpkeepCost: cost => `${formatCurrency(cost)} per day`,
+  setupFallback: 'Instant setup',
+  upkeepFallback: 'No upkeep required'
+});
 
 function confirmLaunchWithDetails(definition = {}) {
   const resourceName = definition.singular || definition.name || 'app';

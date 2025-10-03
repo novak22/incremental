@@ -24,7 +24,9 @@ export function createLifecycleSummary(config = {}) {
     formatUpkeepHours = formatDailyHours,
     formatUpkeepCost = defaultFormatUpkeepCost,
     setupFallback = 'Instant',
-    upkeepFallback = 'No upkeep required'
+    upkeepFallback = 'No upkeep required',
+    setupJoiner = ' • ',
+    upkeepJoiner = ' • '
   } = config;
 
   const parse = value => {
@@ -50,7 +52,7 @@ export function createLifecycleSummary(config = {}) {
       parts.push(formatSetupCost(cost));
     }
 
-    return parts.length ? parts.join(' • ') : setupFallback;
+    return parts.length ? parts.join(setupJoiner) : setupFallback;
   }
 
   function describeUpkeepSummary(upkeep = {}) {
@@ -66,7 +68,7 @@ export function createLifecycleSummary(config = {}) {
       parts.push(formatUpkeepCost(cost));
     }
 
-    return parts.length ? parts.join(' • ') : upkeepFallback;
+    return parts.length ? parts.join(upkeepJoiner) : upkeepFallback;
   }
 
   return {
@@ -75,6 +77,67 @@ export function createLifecycleSummary(config = {}) {
   };
 }
 
+function resolveHoursFormatter({
+  baseFormatter,
+  suffix,
+  customFormatter
+}) {
+  if (typeof customFormatter === 'function') {
+    return hours => customFormatter(hours, { formatHoursValue: baseFormatter });
+  }
+  const resolvedSuffix = typeof suffix === 'string' ? suffix : ' per day';
+  return hours => `${baseFormatter(hours)}${resolvedSuffix}`;
+}
+
+export function createDailyLifecycleSummary(themeConfig = {}) {
+  const {
+    parseValue = defaultParseValue,
+    formatSetupDays,
+    formatHoursValue,
+    formatSetupHours,
+    formatUpkeepHours,
+    setupHoursSuffix = ' per day',
+    upkeepHoursSuffix = ' per day',
+    formatSetupCost,
+    formatUpkeepCost,
+    setupFallback = 'Instant launch',
+    upkeepFallback = 'No upkeep required',
+    setupJoiner,
+    upkeepJoiner
+  } = themeConfig;
+
+  const baseHoursFormatter =
+    typeof formatHoursValue === 'function'
+      ? value => formatHoursValue(value)
+      : value => `${defaultParseValue(value)}h`;
+
+  const resolvedSetupHours = resolveHoursFormatter({
+    baseFormatter: baseHoursFormatter,
+    suffix: setupHoursSuffix,
+    customFormatter: formatSetupHours
+  });
+
+  const resolvedUpkeepHours = resolveHoursFormatter({
+    baseFormatter: baseHoursFormatter,
+    suffix: upkeepHoursSuffix,
+    customFormatter: formatUpkeepHours
+  });
+
+  return createLifecycleSummary({
+    parseValue,
+    formatSetupDays,
+    formatSetupHours: resolvedSetupHours,
+    formatUpkeepHours: resolvedUpkeepHours,
+    formatSetupCost,
+    formatUpkeepCost,
+    setupFallback,
+    upkeepFallback,
+    setupJoiner,
+    upkeepJoiner
+  });
+}
+
 export default {
-  createLifecycleSummary
+  createLifecycleSummary,
+  createDailyLifecycleSummary
 };
