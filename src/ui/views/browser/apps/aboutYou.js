@@ -1,30 +1,30 @@
 import { getState } from '../../../../core/state.js';
 import { buildPlayerPanelModel } from '../../../player/model.js';
 import { computeDailySummary } from '../../../../game/summary.js';
-import yourNetworkApp from '../components/yournetwork.js';
+import aboutYouApp from '../components/aboutyou.js';
 import { getPageByType } from './pageLookup.js';
 
-export default function renderYourNetwork(context = {}, models = {}) {
+export default function renderAboutYou(context = {}, models = {}) {
   const page = getPageByType('profile');
   if (!page) return null;
 
   const refs = context.ensurePageContent?.(page, ({ body }) => {
-    if (!body.querySelector('[data-role="yournetwork-root"]')) {
+    if (!body.querySelector('[data-role="aboutyou-root"]')) {
       body.innerHTML = '';
       const wrapper = document.createElement('div');
-      wrapper.dataset.role = 'yournetwork-root';
+      wrapper.dataset.role = 'aboutyou-root';
       body.appendChild(wrapper);
     }
   });
   if (!refs) return null;
 
-  const mount = refs.body.querySelector('[data-role="yournetwork-root"]');
+  const mount = refs.body.querySelector('[data-role="aboutyou-root"]');
   if (!mount) return null;
 
   const state = getState();
   const profile = buildPlayerPanelModel(state);
   const dailySummary = computeDailySummary(state);
-  const summary = yourNetworkApp.render({
+  const summary = aboutYouApp.render({
     mount,
     profile,
     assetsModel: models.assets,

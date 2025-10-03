@@ -11,11 +11,11 @@ export const SERVICE_PAGES = [
     type: 'finance'
   },
   {
-    id: 'yournetwork',
-    slug: 'your-network',
-    label: 'YourNetwork',
-    headline: 'YourNetwork Professional Profile',
-    tagline: 'Showcase your creator CV, highlight skills, and celebrate portfolio wins.',
+    id: 'aboutyou',
+    slug: 'about-you',
+    label: 'AboutYou',
+    headline: 'AboutYou Personal Profile',
+    tagline: 'Spotlight your journey, celebrate progress, and plan your next win.',
     icon: '🧑‍🚀',
     type: 'profile'
   },

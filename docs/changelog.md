@@ -4,7 +4,7 @@
 - Browser homepage apps widget now includes an Arrange mode so players can drag tiles to swap spots, highlight favorites, and keep the order between sessions.
 - Asset Arcade workspace retired from the browser prototype and hidden from the homepage launcher while we explore refreshed asset flows.
 - Browser chrome now features a notification bell that mirrors the event log with unread badges, read tracking, and a mark-all control.
-- YourNetwork joins the browser apps lineup with a LinkedIn-inspired profile that showcases skills, study progress, equipment, portfolio highlights, and career metrics in one celebratory view.
+- AboutYou rebrands the browser profile hub with upbeat copy, refreshed styling, and tighter lists that only surface owned education tracks and equipped gear.
 - Trends Intelligence Lab refreshes the browser app with analytics-style header controls, overview metrics, sparkline cards, and an expanded watchlist panel while reusing existing niche data.
 - ServerHub launches as a cloud-inspired control center for Micro SaaS ventures with KPI hero metrics, app table + detail sidebar, upgrade shelf, and pricing tiers built on the existing SaaS backend.
 - BankApp now archives the last seven day-end ledgers and mirrors the shared activity log so the browser shell surfaces cashflow streaks without leaving the app.

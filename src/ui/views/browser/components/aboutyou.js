@@ -36,15 +36,15 @@ function deriveAvatarGlyph(summary = {}) {
 
 function createSnapshotStat(label, value) {
   const wrapper = document.createElement('div');
-  wrapper.className = 'yournetwork-hero__stat';
+  wrapper.className = 'aboutyou-hero__stat';
 
   const term = document.createElement('dt');
   term.textContent = label;
-  term.className = 'yournetwork-hero__label';
+  term.className = 'aboutyou-hero__label';
 
   const definition = document.createElement('dd');
   definition.textContent = value;
-  definition.className = 'yournetwork-hero__value';
+  definition.className = 'aboutyou-hero__value';
 
   wrapper.append(term, definition);
   return wrapper;
@@ -52,7 +52,7 @@ function createSnapshotStat(label, value) {
 
 function createProgressBar(percent, label) {
   const wrapper = document.createElement('div');
-  wrapper.className = 'yournetwork-progress';
+  wrapper.className = 'aboutyou-progress';
   const clamped = clampPercent(percent);
   wrapper.setAttribute('role', 'progressbar');
   wrapper.setAttribute('aria-valuemin', '0');
@@ -63,7 +63,7 @@ function createProgressBar(percent, label) {
   }
 
   const fill = document.createElement('span');
-  fill.className = 'yournetwork-progress__fill';
+  fill.className = 'aboutyou-progress__fill';
   fill.style.setProperty('--progress', `${clamped}%`);
   wrapper.appendChild(fill);
   return wrapper;
@@ -71,17 +71,17 @@ function createProgressBar(percent, label) {
 
 function createBadge(text, variant = 'info') {
   const badge = document.createElement('span');
-  badge.className = `yournetwork-badge yournetwork-badge--${variant}`;
+  badge.className = `aboutyou-badge aboutyou-badge--${variant}`;
   badge.textContent = text;
   return badge;
 }
 
 function createSection(title, subtitle) {
   const section = document.createElement('section');
-  section.className = 'yournetwork-section';
+  section.className = 'aboutyou-section';
 
   const header = document.createElement('header');
-  header.className = 'yournetwork-section__header';
+  header.className = 'aboutyou-section__header';
 
   const heading = document.createElement('h2');
   heading.textContent = title;
@@ -90,14 +90,14 @@ function createSection(title, subtitle) {
   if (subtitle) {
     const note = document.createElement('p');
     note.textContent = subtitle;
-    note.className = 'yournetwork-section__note';
+    note.className = 'aboutyou-section__note';
     header.appendChild(note);
   }
 
   section.appendChild(header);
 
   const body = document.createElement('div');
-  body.className = 'yournetwork-section__body';
+  body.className = 'aboutyou-section__body';
   section.appendChild(body);
 
   return { section, body };
@@ -205,35 +205,35 @@ function buildMetricEntries(summary = {}, state = {}, dailySummary = {}, highlig
 function renderProfileHeader(profile = {}, mount) {
   const summary = profile?.summary || {};
   const section = document.createElement('section');
-  section.className = 'yournetwork-hero';
+  section.className = 'aboutyou-hero';
 
   const identity = document.createElement('div');
-  identity.className = 'yournetwork-hero__identity';
+  identity.className = 'aboutyou-hero__identity';
 
   const avatar = document.createElement('div');
-  avatar.className = 'yournetwork-avatar';
+  avatar.className = 'aboutyou-avatar';
   avatar.textContent = deriveAvatarGlyph(summary);
   avatar.setAttribute('aria-hidden', 'true');
 
   const headline = document.createElement('div');
-  headline.className = 'yournetwork-hero__headline';
+  headline.className = 'aboutyou-hero__headline';
 
   const name = document.createElement('h1');
-  name.className = 'yournetwork-hero__name';
+  name.className = 'aboutyou-hero__name';
   name.textContent = 'You';
 
   const title = document.createElement('p');
-  title.className = 'yournetwork-hero__title';
+  title.className = 'aboutyou-hero__title';
   title.textContent = summary?.title || summary?.tier || 'Aspiring Creator';
 
   const tagline = document.createElement('p');
-  tagline.className = 'yournetwork-hero__tagline';
+  tagline.className = 'aboutyou-hero__tagline';
   tagline.textContent = summary?.note || 'Stack wins, celebrate streaks, and keep exploring new horizons.';
 
   const activeAssets = Number(summary?.activeAssets) || 0;
   if (activeAssets > 0) {
     const ventures = document.createElement('p');
-    ventures.className = 'yournetwork-hero__meta';
+    ventures.className = 'aboutyou-hero__meta';
     ventures.textContent = `${activeAssets} active venture${activeAssets === 1 ? '' : 's'} humming right now.`;
     headline.append(ventures);
   }
@@ -246,7 +246,7 @@ function renderProfileHeader(profile = {}, mount) {
   section.appendChild(identity);
 
   const snapshot = document.createElement('dl');
-  snapshot.className = 'yournetwork-hero__snapshot';
+  snapshot.className = 'aboutyou-hero__snapshot';
   snapshot.append(
     createSnapshotStat('Net worth', summary?.formatted?.current || '$0'),
     createSnapshotStat('Lifetime earned', summary?.formatted?.earned || '$0'),
@@ -261,27 +261,27 @@ function renderProfileHeader(profile = {}, mount) {
 
 function createSkillCard(skill) {
   const card = document.createElement('article');
-  card.className = 'yournetwork-card yournetwork-card--skill';
+  card.className = 'aboutyou-card aboutyou-card--skill';
   if (skill?.isMaxed) {
     card.classList.add('is-maxed');
   }
 
   const header = document.createElement('header');
-  header.className = 'yournetwork-card__header';
+  header.className = 'aboutyou-card__header';
 
   const name = document.createElement('h3');
-  name.className = 'yournetwork-card__title';
+  name.className = 'aboutyou-card__title';
   name.textContent = skill?.name || 'Skill';
 
   const level = document.createElement('span');
-  level.className = 'yournetwork-card__badge';
+  level.className = 'aboutyou-card__badge';
   level.textContent = `Lv ${skill?.level ?? 0}`;
 
   header.append(name, level);
   card.appendChild(header);
 
   const tier = document.createElement('p');
-  tier.className = 'yournetwork-card__subtitle';
+  tier.className = 'aboutyou-card__subtitle';
   tier.textContent = skill?.tierTitle || '';
   card.appendChild(tier);
 
@@ -289,7 +289,7 @@ function createSkillCard(skill) {
   card.appendChild(progress);
 
   const meta = document.createElement('p');
-  meta.className = 'yournetwork-card__meta';
+  meta.className = 'aboutyou-card__meta';
   meta.textContent = skill?.isMaxed
     ? `${skill?.xp} XP • Mastered`
     : `${skill?.xp} XP • ${skill?.remainingXp} XP to ${skill?.nextTier || 'next tier'}`;
@@ -308,11 +308,11 @@ function renderSkillsSection(skills = {}) {
     .filter(Boolean)
     .join(' • ');
   const { section, body } = createSection('Skills & Endorsements', summaryText);
-  body.classList.add('yournetwork-grid');
+  body.classList.add('aboutyou-grid');
 
   if (!items.length) {
     const empty = document.createElement('p');
-    empty.className = 'yournetwork-empty';
+    empty.className = 'aboutyou-empty';
     empty.textContent = 'Log XP across your hustles to reveal skill milestones.';
     body.appendChild(empty);
     return section;
@@ -327,14 +327,14 @@ function renderSkillsSection(skills = {}) {
 
 function createEducationCard(entry) {
   const card = document.createElement('article');
-  card.className = 'yournetwork-card yournetwork-card--education';
+  card.className = 'aboutyou-card aboutyou-card--education';
   card.dataset.state = entry?.state || 'available';
 
   const header = document.createElement('header');
-  header.className = 'yournetwork-card__header';
+  header.className = 'aboutyou-card__header';
 
   const name = document.createElement('h3');
-  name.className = 'yournetwork-card__title';
+  name.className = 'aboutyou-card__title';
   name.textContent = entry?.name || 'Study track';
 
   const status = createBadge(entry?.status || 'Available', entry?.completed ? 'success' : entry?.state === 'active' ? 'info' : 'muted');
@@ -343,7 +343,7 @@ function createEducationCard(entry) {
   card.appendChild(header);
 
   const summary = document.createElement('p');
-  summary.className = 'yournetwork-card__meta';
+  summary.className = 'aboutyou-card__meta';
   summary.textContent = entry?.summary || '';
   card.appendChild(summary);
 
@@ -353,7 +353,7 @@ function createEducationCard(entry) {
   }
 
   const note = document.createElement('p');
-  note.className = 'yournetwork-card__note';
+  note.className = 'aboutyou-card__note';
   note.textContent = entry?.note || '';
   card.appendChild(note);
 
@@ -366,19 +366,21 @@ function createEducationCard(entry) {
 
 function renderEducationSection(education = {}) {
   const items = Array.isArray(education?.items) ? education.items : [];
+  const visibleStates = new Set(['active', 'completed']);
+  const earned = items.filter(entry => visibleStates.has(entry?.state));
   const { section, body } = createSection('Education & Certifications', 'Active study tracks + completed accolades.');
-  body.classList.add('yournetwork-grid');
+  body.classList.add('aboutyou-grid');
 
-  if (!items.length) {
+  if (!earned.length) {
     const empty = document.createElement('p');
-    empty.className = 'yournetwork-empty';
+    empty.className = 'aboutyou-empty';
     empty.textContent = 'Browse Learnly to enroll in courses and unlock permanent bonuses.';
     body.appendChild(empty);
     return section;
   }
 
   const order = { active: 0, completed: 1, available: 2 };
-  items
+  earned
     .slice()
     .sort((a, b) => (order[a?.state] ?? 3) - (order[b?.state] ?? 3))
     .forEach(entry => body.appendChild(createEducationCard(entry)));
@@ -386,44 +388,43 @@ function renderEducationSection(education = {}) {
   return section;
 }
 
-function createEquipmentCard(entry, { locked = false } = {}) {
+function createEquipmentCard(entry) {
   const card = document.createElement('article');
-  card.className = 'yournetwork-card yournetwork-card--equipment';
-  if (locked || entry?.status === 'locked') {
-    card.classList.add('is-locked');
-  }
+  card.className = 'aboutyou-card aboutyou-card--equipment';
 
   const header = document.createElement('header');
-  header.className = 'yournetwork-card__header';
+  header.className = 'aboutyou-card__header';
 
   const name = document.createElement('h3');
-  name.className = 'yournetwork-card__title';
+  name.className = 'aboutyou-card__title';
   name.textContent = entry?.name || 'Equipment';
 
-  const badgeVariant = locked ? 'muted' : 'info';
-  const badgeLabel = locked ? 'Not yet purchased' : 'In loadout';
+  const status = typeof entry?.status === 'string' ? entry.status : 'Ready';
+  const normalized = status.trim().toLowerCase();
+  let badgeVariant = 'info';
+  if (normalized === 'active') badgeVariant = 'success';
+  if (normalized === 'retired' || normalized === 'stored') badgeVariant = 'muted';
+  const badgeLabel = normalized === 'active' ? 'In loadout' : status || 'Ready';
   const badge = createBadge(badgeLabel, badgeVariant);
 
   header.append(name, badge);
   card.appendChild(header);
 
   const summary = document.createElement('p');
-  summary.className = 'yournetwork-card__meta';
+  summary.className = 'aboutyou-card__meta';
   summary.textContent = entry?.summary || '';
   card.appendChild(summary);
 
   const focus = document.createElement('p');
-  focus.className = 'yournetwork-card__note';
+  focus.className = 'aboutyou-card__note';
   focus.textContent = entry?.focus || '';
   card.appendChild(focus);
 
   const cost = Number(entry?.cost) || 0;
   if (cost > 0) {
     const costNote = document.createElement('p');
-    costNote.className = 'yournetwork-card__note yournetwork-card__note--cost';
-    costNote.textContent = locked
-      ? `Investment: ${formatCurrency(cost)} when unlocked`
-      : `Purchased for ${formatCurrency(cost)}`;
+    costNote.className = 'aboutyou-card__note aboutyou-card__note--cost';
+    costNote.textContent = `Purchased for ${formatCurrency(cost)}`;
     card.appendChild(costNote);
   }
 
@@ -431,35 +432,33 @@ function createEquipmentCard(entry, { locked = false } = {}) {
 }
 
 function renderEquipmentSection(equipment = {}) {
-  const owned = Array.isArray(equipment?.items) ? equipment.items : [];
-  const locked = Array.isArray(equipment?.locked) ? equipment.locked : [];
+  const owned = Array.isArray(equipment?.items) ? equipment.items.filter(item => item?.status !== 'locked') : [];
   const { section, body } = createSection('Equipment Locker', 'Tools, rigs, and future upgrades powering your empire.');
-  body.classList.add('yournetwork-grid');
+  body.classList.add('aboutyou-grid');
 
-  if (!owned.length && !locked.length) {
+  if (!owned.length) {
     const empty = document.createElement('p');
-    empty.className = 'yournetwork-empty';
+    empty.className = 'aboutyou-empty';
     empty.textContent = equipment?.empty
       || 'No gear purchased yet. Explore Upgrades to expand your toolkit.';
     body.appendChild(empty);
     return section;
   }
 
-  owned.forEach(entry => body.appendChild(createEquipmentCard(entry, { locked: false })));
-  locked.forEach(entry => body.appendChild(createEquipmentCard(entry, { locked: true })));
+  owned.forEach(entry => body.appendChild(createEquipmentCard(entry)));
 
   return section;
 }
 
 function createAssetCard(entry) {
   const card = document.createElement('article');
-  card.className = 'yournetwork-card yournetwork-card--asset';
+  card.className = 'aboutyou-card aboutyou-card--asset';
 
   const header = document.createElement('header');
-  header.className = 'yournetwork-card__header';
+  header.className = 'aboutyou-card__header';
 
   const name = document.createElement('h3');
-  name.className = 'yournetwork-card__title';
+  name.className = 'aboutyou-card__title';
   name.textContent = entry?.name || 'Asset';
 
   const status = createBadge(entry?.status || 'Active', entry?.status === 'Active' ? 'success' : 'info');
@@ -468,19 +467,19 @@ function createAssetCard(entry) {
   card.appendChild(header);
 
   const summary = document.createElement('p');
-  summary.className = 'yournetwork-card__meta';
+  summary.className = 'aboutyou-card__meta';
   summary.textContent = `${entry?.definitionName || 'Venture'} • ${entry?.niche || 'Generalist'}`;
   card.appendChild(summary);
 
   const statRow = document.createElement('div');
-  statRow.className = 'yournetwork-asset__stats';
+  statRow.className = 'aboutyou-asset__stats';
 
   const lifetime = document.createElement('span');
-  lifetime.className = 'yournetwork-asset__stat';
+  lifetime.className = 'aboutyou-asset__stat';
   lifetime.textContent = `${formatCurrency(entry?.lifetime || 0)} lifetime`;
 
   const last = document.createElement('span');
-  last.className = 'yournetwork-asset__stat';
+  last.className = 'aboutyou-asset__stat';
   last.textContent = entry?.lastPayout > 0
     ? `${formatCurrency(entry.lastPayout)} last payout`
     : 'Next payout pending';
@@ -493,11 +492,11 @@ function createAssetCard(entry) {
 
 function renderAssetsSection(highlights = []) {
   const { section, body } = createSection('Portfolio Highlights', 'Spotlight your top performing builds.');
-  body.classList.add('yournetwork-grid');
+  body.classList.add('aboutyou-grid');
 
   if (!highlights.length) {
     const empty = document.createElement('p');
-    empty.className = 'yournetwork-empty';
+    empty.className = 'aboutyou-empty';
     empty.textContent = 'Launch a venture to showcase lifetime earnings here.';
     body.appendChild(empty);
     return section;
@@ -510,23 +509,23 @@ function renderAssetsSection(highlights = []) {
 function renderMetricsSection(metrics = []) {
   const { section, body } = createSection('Career Metrics', 'At-a-glance proof of your hustle legacy.');
   const list = document.createElement('dl');
-  list.className = 'yournetwork-stats';
+  list.className = 'aboutyou-stats';
 
   metrics.forEach(entry => {
     const item = document.createElement('div');
-    item.className = 'yournetwork-stat';
+    item.className = 'aboutyou-stat';
 
     const label = document.createElement('dt');
-    label.className = 'yournetwork-stat__label';
+    label.className = 'aboutyou-stat__label';
     label.textContent = entry?.label || '';
 
     const value = document.createElement('dd');
-    value.className = 'yournetwork-stat__value';
+    value.className = 'aboutyou-stat__value';
     value.textContent = entry?.value || '';
 
     if (entry?.meta) {
       const meta = document.createElement('span');
-      meta.className = 'yournetwork-stat__meta';
+      meta.className = 'aboutyou-stat__meta';
       meta.textContent = entry.meta;
       value.appendChild(document.createElement('br'));
       value.appendChild(meta);
@@ -545,7 +544,7 @@ function render(context = {}) {
   if (!mount) return null;
 
   mount.innerHTML = '';
-  mount.classList.add('yournetwork');
+  mount.classList.add('aboutyou');
 
   renderProfileHeader(profile, mount);
   mount.appendChild(renderSkillsSection(profile?.skills));
