@@ -4,38 +4,39 @@ import { performQualityAction } from '../../../../game/assets/index.js';
 import { formatCurrency as baseFormatCurrency, formatNetCurrency } from '../utils/formatting.js';
 import { createLifecycleSummary } from '../utils/lifecycleSummaries.js';
 import { showLaunchConfirmation } from '../utils/launchDialog.js';
-import { createWorkspacePathController } from '../utils/workspacePaths.js';
+import { createWorkspacePresenter } from '../utils/workspacePresenter.js';
 
 const VIEW_HOME = 'home';
 const VIEW_DETAIL = 'detail';
 const VIEW_PRICING = 'pricing';
 const VIEW_BLUEPRINTS = 'blueprints';
 
-let currentState = {
-  view: VIEW_HOME,
-  selectedBlogId: null
-};
-let currentModel = {
-  definition: null,
-  instances: [],
-  summary: {}
-};
-let currentMount = null;
-let currentPageMeta = null;
-
-const workspacePathController = createWorkspacePathController({
-  derivePath: () => {
-    switch (currentState.view) {
+const presenter = createWorkspacePresenter({
+  initialState: {
+    view: VIEW_HOME,
+    selectedBlogId: null
+  },
+  rootClassName: 'blogpress',
+  ensureSelection: ensureSelectedBlog,
+  derivePath: state => {
+    switch (state.view) {
       case VIEW_PRICING:
         return 'pricing';
       case VIEW_BLUEPRINTS:
         return 'blueprints';
       case VIEW_DETAIL:
-        return currentState.selectedBlogId ? `blog/${currentState.selectedBlogId}` : '';
+        return state.selectedBlogId ? `blog/${state.selectedBlogId}` : '';
       case VIEW_HOME:
       default:
         return '';
     }
+  },
+  renderLocked: model => renderLockedState(model.lock),
+  renderHeader,
+  renderCurrentView,
+  deriveSummary: (model, state, urlPath) => {
+    const summary = model.summary || {};
+    return { ...summary, urlPath };
   }
 });
 
@@ -84,29 +85,29 @@ function formatRange(range = {}) {
   return `${formatCurrency(min)} – ${formatCurrency(max)}`;
 }
 
-function ensureSelectedBlog() {
-  const instances = Array.isArray(currentModel.instances) ? currentModel.instances : [];
+function ensureSelectedBlog({ state, model }) {
+  const instances = Array.isArray(model.instances) ? model.instances : [];
   if (!instances.length) {
-    currentState.selectedBlogId = null;
-    if (currentState.view === VIEW_DETAIL) {
-      currentState.view = VIEW_HOME;
-    }
-    return;
+    const nextView = state.view === VIEW_DETAIL ? VIEW_HOME : state.view;
+    return { ...state, selectedBlogId: null, view: nextView };
   }
   const active = instances.find(entry => entry.status?.id === 'active');
-  const fallback = instances[0];
-  const target = instances.find(entry => entry.id === currentState.selectedBlogId);
-  currentState.selectedBlogId = (target || active || fallback)?.id || fallback.id;
+  const fallback = instances[0] || null;
+  const target = instances.find(entry => entry.id === state.selectedBlogId) || null;
+  const resolved = target || active || fallback;
+  const selectedBlogId = resolved ? resolved.id : null;
+  return { ...state, selectedBlogId };
 }
 
 function setView(view, options = {}) {
   const nextView = view || VIEW_HOME;
-  if (nextView === VIEW_DETAIL && options.blogId) {
-    currentState.selectedBlogId = options.blogId;
-  }
-  currentState.view = nextView;
-  ensureSelectedBlog();
-  render(currentModel, { mount: currentMount, page: currentPageMeta });
+  presenter.setState(state => {
+    const nextState = { ...state, view: nextView };
+    if (nextView === VIEW_DETAIL && options.blogId) {
+      nextState.selectedBlogId = options.blogId;
+    }
+    return nextState;
+  });
 }
 
 function handleQuickAction(instanceId, actionId) {
@@ -119,12 +120,14 @@ function handleNicheSelect(instanceId, value) {
   selectBlogpressNiche('blog', instanceId, value);
 }
 
-function createNavButton(label, view, { count = null } = {}) {
+function createNavButton(label, view, { count = null, isActive = false } = {}) {
   const button = document.createElement('button');
   button.type = 'button';
   button.className = 'blogpress-tab';
   button.dataset.view = view;
   button.textContent = label;
+  button.classList.toggle('is-active', isActive);
+  button.setAttribute('aria-pressed', String(isActive));
   if (count !== null) {
     const badge = document.createElement('span');
     badge.className = 'blogpress-tab__badge';
@@ -137,7 +140,7 @@ function createNavButton(label, view, { count = null } = {}) {
   return button;
 }
 
-function renderHeader(model) {
+function renderHeader(model, state = {}) {
   const header = document.createElement('header');
   header.className = 'blogpress__header';
 
@@ -153,10 +156,19 @@ function renderHeader(model) {
   nav.className = 'blogpress-tabs';
   const activeCount = model.summary?.active || 0;
   const setupCount = model.summary?.setup || 0;
+  const view = state.view || VIEW_HOME;
   nav.append(
-    createNavButton('My Blogs', VIEW_HOME, { count: activeCount || null }),
-    createNavButton('Pricing', VIEW_PRICING),
-    createNavButton('Blueprints', VIEW_BLUEPRINTS, { count: setupCount || null })
+    createNavButton('My Blogs', VIEW_HOME, {
+      count: activeCount || null,
+      isActive: view === VIEW_HOME || view === VIEW_DETAIL
+    }),
+    createNavButton('Pricing', VIEW_PRICING, {
+      isActive: view === VIEW_PRICING
+    }),
+    createNavButton('Blueprints', VIEW_BLUEPRINTS, {
+      count: setupCount || null,
+      isActive: view === VIEW_BLUEPRINTS
+    })
   );
 
   const actions = document.createElement('div');
@@ -208,7 +220,7 @@ function createTableCell(content, className) {
   return cell;
 }
 
-function renderHomeView(model) {
+function renderHomeView(model, state = {}) {
   const container = document.createElement('section');
   container.className = 'blogpress-view blogpress-view--home';
 
@@ -246,7 +258,7 @@ function renderHomeView(model) {
   instances.forEach(instance => {
     const row = document.createElement('tr');
     row.dataset.blogId = instance.id;
-    if (instance.id === currentState.selectedBlogId) {
+    if (instance.id === state.selectedBlogId) {
       row.classList.add('is-selected');
     }
 
@@ -715,10 +727,10 @@ function renderUpkeepPanel(instance) {
   return panel;
 }
 
-function renderDetailView(model) {
-  const instance = model.instances.find(entry => entry.id === currentState.selectedBlogId);
+function renderDetailView(model, state = {}) {
+  const instance = model.instances.find(entry => entry.id === state.selectedBlogId);
   if (!instance) {
-    return renderHomeView(model);
+    return renderHomeView(model, state);
   }
 
   const container = document.createElement('section');
@@ -914,67 +926,22 @@ function renderLockedState(lock) {
   return container;
 }
 
-function renderCurrentView(model) {
-  switch (currentState.view) {
+function renderCurrentView(model, state = {}) {
+  switch (state.view) {
     case VIEW_PRICING:
       return renderPricingView(model);
     case VIEW_BLUEPRINTS:
       return renderBlueprintView(model);
     case VIEW_DETAIL:
-      return renderDetailView(model);
+      return renderDetailView(model, state);
     case VIEW_HOME:
     default:
-      return renderHomeView(model);
+      return renderHomeView(model, state);
   }
 }
 
 export function render(model = {}, context = {}) {
-  currentModel = model || {};
-  if (context.mount) {
-    currentMount = context.mount;
-  }
-  if (context.page) {
-    currentPageMeta = context.page;
-  }
-  if (typeof context.onRouteChange === 'function') {
-    workspacePathController.setListener(context.onRouteChange);
-  }
-  ensureSelectedBlog();
-  workspacePathController.sync();
-
-  if (!currentMount) {
-    const summary = currentModel.summary || {};
-    const urlPath = workspacePathController.getPath();
-    return { ...summary, urlPath };
-  }
-
-  if (!currentModel.definition) {
-    currentMount.innerHTML = '';
-    currentMount.appendChild(renderLockedState(currentModel.lock));
-    const summary = currentModel.summary || {};
-    const urlPath = workspacePathController.getPath();
-    return { ...summary, urlPath };
-  }
-
-  currentMount.innerHTML = '';
-  const root = document.createElement('div');
-  root.className = 'blogpress';
-  root.appendChild(renderHeader(currentModel));
-  root.appendChild(renderCurrentView(currentModel));
-
-  currentMount.appendChild(root);
-
-  const activeNav = currentMount.querySelectorAll('.blogpress-tab');
-  activeNav.forEach(button => {
-    const isActive = button.dataset.view === currentState.view
-      || (currentState.view === VIEW_DETAIL && button.dataset.view === VIEW_HOME);
-    button.classList.toggle('is-active', isActive);
-    button.setAttribute('aria-pressed', String(isActive));
-  });
-
-  const summary = currentModel.summary || {};
-  const urlPath = workspacePathController.getPath();
-  return { ...summary, urlPath };
+  return presenter.render(model, context);
 }
 
 export default { render };
