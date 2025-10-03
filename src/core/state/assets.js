@@ -11,7 +11,7 @@ function resolveCurrentDay(context = {}) {
   return 1;
 }
 
-export function normalizeAssetInstance(definition, instance = {}, context = {}) {
+function normalizeAssetInstance(definition, instance = {}, context = {}) {
   const normalized = { ...instance };
   if (!normalized.id) {
     normalized.id = createId();

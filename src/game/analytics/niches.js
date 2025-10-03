@@ -268,4 +268,3 @@ export function archiveNicheAnalytics({ state = getState(), day, timestamp } = {
   }
 }
 
-export const NICHE_ANALYTICS_SNAPSHOT_LIMIT = NICHE_ANALYTICS_HISTORY_LIMIT;

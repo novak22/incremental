@@ -68,7 +68,7 @@ function migrateLegacySnapshot(snapshot, context) {
 
 const DEFAULT_MIGRATIONS = [migrateLegacySnapshot];
 
-export { SnapshotRepository, StateMigrationRunner, DEFAULT_MIGRATIONS };
+export { SnapshotRepository, StateMigrationRunner };
 
 export class StatePersistence {
   constructor({

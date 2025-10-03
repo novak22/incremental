@@ -1,10 +1,6 @@
 import { formatMoney, ensureArray } from '../../../../core/helpers.js';
-import {
-  getAssetDefinition,
-  getAssetState,
-  getState,
-  getUpgradeState
-} from '../../../../core/state.js';
+import { getAssetState, getState, getUpgradeState } from '../../../../core/state.js';
+import { getAssetDefinition } from '../../../../core/state/registry.js';
 
 const VIEW_CATALOG = 'catalog';
 const VIEW_PURCHASES = 'purchases';

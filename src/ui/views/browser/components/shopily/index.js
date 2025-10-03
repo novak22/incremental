@@ -10,13 +10,8 @@ import { createNavTabs } from '../common/navBuilders.js';
 import { renderWorkspaceLock } from '../common/renderWorkspaceLock.js';
 import { selectShopilyNiche } from '../../../../cards/model/index.js';
 import { performQualityAction } from '../../../../../game/assets/index.js';
-import {
-  getAssetDefinition,
-  getAssetState,
-  getState,
-  getUpgradeDefinition,
-  getUpgradeState
-} from '../../../../../core/state.js';
+import { getAssetState, getState, getUpgradeState } from '../../../../../core/state.js';
+import { getAssetDefinition, getUpgradeDefinition } from '../../../../../core/state/registry.js';
 import {
   VIEW_DASHBOARD,
   VIEW_UPGRADES,
