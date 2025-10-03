@@ -148,6 +148,9 @@ export function maybeTriggerAssetEvents({ definition, assetState, instance, inst
   };
 
   const existing = getAssetEvents(state, definition.id, instance.id);
+  if (existing.length > 0) {
+    return [];
+  }
 
   const context = {
     state,
