@@ -4,40 +4,17 @@ import { performQualityAction } from '../../../../game/assets/index.js';
 import { formatCurrency as baseFormatCurrency, formatNetCurrency } from '../utils/formatting.js';
 import { createLifecycleSummary } from '../utils/lifecycleSummaries.js';
 import { showLaunchConfirmation } from '../utils/launchDialog.js';
-import { createWorkspacePathController } from '../utils/workspacePaths.js';
+import { createWorkspacePresenter } from '../utils/workspacePresenter.js';
 
 const VIEW_HOME = 'home';
 const VIEW_DETAIL = 'detail';
 const VIEW_PRICING = 'pricing';
 const VIEW_BLUEPRINTS = 'blueprints';
 
-let currentState = {
+const INITIAL_STATE = {
   view: VIEW_HOME,
   selectedBlogId: null
 };
-let currentModel = {
-  definition: null,
-  instances: [],
-  summary: {}
-};
-let currentMount = null;
-let currentPageMeta = null;
-
-const workspacePathController = createWorkspacePathController({
-  derivePath: () => {
-    switch (currentState.view) {
-      case VIEW_PRICING:
-        return 'pricing';
-      case VIEW_BLUEPRINTS:
-        return 'blueprints';
-      case VIEW_DETAIL:
-        return currentState.selectedBlogId ? `blog/${currentState.selectedBlogId}` : '';
-      case VIEW_HOME:
-      default:
-        return '';
-    }
-  }
-});
 
 const formatCurrency = amount =>
   baseFormatCurrency(amount, { precision: 'integer', clampZero: true });
@@ -84,29 +61,35 @@ function formatRange(range = {}) {
   return `${formatCurrency(min)} – ${formatCurrency(max)}`;
 }
 
-function ensureSelectedBlog() {
-  const instances = Array.isArray(currentModel.instances) ? currentModel.instances : [];
+function ensureSelectedBlog(state = {}, model = {}) {
+  const draftState = state;
+  const instances = Array.isArray(model.instances) ? model.instances : [];
   if (!instances.length) {
-    currentState.selectedBlogId = null;
-    if (currentState.view === VIEW_DETAIL) {
-      currentState.view = VIEW_HOME;
+    draftState.selectedBlogId = null;
+    if (draftState.view === VIEW_DETAIL) {
+      draftState.view = VIEW_HOME;
     }
     return;
   }
   const active = instances.find(entry => entry.status?.id === 'active');
-  const fallback = instances[0];
-  const target = instances.find(entry => entry.id === currentState.selectedBlogId);
-  currentState.selectedBlogId = (target || active || fallback)?.id || fallback.id;
+  const fallback = instances[0] || null;
+  const target = instances.find(entry => entry.id === draftState.selectedBlogId);
+  const resolved = target || active || fallback;
+  draftState.selectedBlogId = resolved?.id ?? null;
 }
 
 function setView(view, options = {}) {
-  const nextView = view || VIEW_HOME;
-  if (nextView === VIEW_DETAIL && options.blogId) {
-    currentState.selectedBlogId = options.blogId;
-  }
-  currentState.view = nextView;
-  ensureSelectedBlog();
-  render(currentModel, { mount: currentMount, page: currentPageMeta });
+  presenter.updateState(currentState => {
+    const next = { ...currentState };
+    const nextView = view || VIEW_HOME;
+    if (nextView === VIEW_DETAIL && options.blogId) {
+      next.selectedBlogId = options.blogId;
+    }
+    next.view = nextView;
+    ensureSelectedBlog(next, presenter.getModel());
+    return next;
+  });
+  presenter.render(presenter.getModel());
 }
 
 function handleQuickAction(instanceId, actionId) {
@@ -137,7 +120,7 @@ function createNavButton(label, view, { count = null } = {}) {
   return button;
 }
 
-function renderHeader(model) {
+function renderHeader(model, _state = INITIAL_STATE) {
   const header = document.createElement('header');
   header.className = 'blogpress__header';
 
@@ -208,7 +191,7 @@ function createTableCell(content, className) {
   return cell;
 }
 
-function renderHomeView(model) {
+function renderHomeView(model, state = INITIAL_STATE) {
   const container = document.createElement('section');
   container.className = 'blogpress-view blogpress-view--home';
 
@@ -246,7 +229,7 @@ function renderHomeView(model) {
   instances.forEach(instance => {
     const row = document.createElement('tr');
     row.dataset.blogId = instance.id;
-    if (instance.id === currentState.selectedBlogId) {
+    if (instance.id === state.selectedBlogId) {
       row.classList.add('is-selected');
     }
 
@@ -715,10 +698,10 @@ function renderUpkeepPanel(instance) {
   return panel;
 }
 
-function renderDetailView(model) {
-  const instance = model.instances.find(entry => entry.id === currentState.selectedBlogId);
+function renderDetailView(model, state = INITIAL_STATE) {
+  const instance = model.instances.find(entry => entry.id === state.selectedBlogId);
   if (!instance) {
-    return renderHomeView(model);
+    return renderHomeView(model, state);
   }
 
   const container = document.createElement('section');
@@ -914,67 +897,90 @@ function renderLockedState(lock) {
   return container;
 }
 
-function renderCurrentView(model) {
-  switch (currentState.view) {
+function renderCurrentView(model, state = INITIAL_STATE) {
+  switch (state.view) {
     case VIEW_PRICING:
       return renderPricingView(model);
     case VIEW_BLUEPRINTS:
       return renderBlueprintView(model);
     case VIEW_DETAIL:
-      return renderDetailView(model);
+      return renderDetailView(model, state);
     case VIEW_HOME:
     default:
-      return renderHomeView(model);
+      return renderHomeView(model, state);
   }
 }
 
-export function render(model = {}, context = {}) {
-  currentModel = model || {};
-  if (context.mount) {
-    currentMount = context.mount;
-  }
-  if (context.page) {
-    currentPageMeta = context.page;
-  }
-  if (typeof context.onRouteChange === 'function') {
-    workspacePathController.setListener(context.onRouteChange);
-  }
-  ensureSelectedBlog();
-  workspacePathController.sync();
+function renderLockedWorkspace(model = {}, mount) {
+  if (!mount) return;
+  mount.innerHTML = '';
+  mount.appendChild(renderLockedState(model.lock));
+}
 
-  if (!currentMount) {
-    const summary = currentModel.summary || {};
-    const urlPath = workspacePathController.getPath();
-    return { ...summary, urlPath };
-  }
-
-  if (!currentModel.definition) {
-    currentMount.innerHTML = '';
-    currentMount.appendChild(renderLockedState(currentModel.lock));
-    const summary = currentModel.summary || {};
-    const urlPath = workspacePathController.getPath();
-    return { ...summary, urlPath };
-  }
-
-  currentMount.innerHTML = '';
+function renderWorkspaceBody(model, mount, context = {}, hooks = {}) {
+  if (!mount) return;
+  mount.innerHTML = '';
   const root = document.createElement('div');
   root.className = 'blogpress';
-  root.appendChild(renderHeader(currentModel));
-  root.appendChild(renderCurrentView(currentModel));
+  const headerRenderer = hooks.renderHeader || renderHeader;
+  const viewRenderer = hooks.renderCurrentView || renderCurrentView;
+  root.appendChild(headerRenderer(model, context.state));
+  root.appendChild(viewRenderer(model, context.state));
+  mount.appendChild(root);
+}
 
-  currentMount.appendChild(root);
+function deriveWorkspaceSummary(model = {}) {
+  const summary = model?.summary;
+  return summary && typeof summary === 'object' ? summary : {};
+}
 
-  const activeNav = currentMount.querySelectorAll('.blogpress-tab');
-  activeNav.forEach(button => {
-    const isActive = button.dataset.view === currentState.view
-      || (currentState.view === VIEW_DETAIL && button.dataset.view === VIEW_HOME);
+function deriveWorkspacePath(state = {}) {
+  switch (state.view) {
+    case VIEW_PRICING:
+      return 'pricing';
+    case VIEW_BLUEPRINTS:
+      return 'blueprints';
+    case VIEW_DETAIL:
+      return state.selectedBlogId ? `blog/${state.selectedBlogId}` : '';
+    case VIEW_HOME:
+    default:
+      return '';
+  }
+}
+
+function syncNavigation({ mount, state }) {
+  if (!mount) return;
+  const buttons = mount.querySelectorAll('.blogpress-tab');
+  const view = state?.view || VIEW_HOME;
+  buttons.forEach(button => {
+    const isActive = button.dataset.view === view
+      || (view === VIEW_DETAIL && button.dataset.view === VIEW_HOME);
     button.classList.toggle('is-active', isActive);
     button.setAttribute('aria-pressed', String(isActive));
   });
+}
 
-  const summary = currentModel.summary || {};
-  const urlPath = workspacePathController.getPath();
-  return { ...summary, urlPath };
+const presenterOptions = {
+  state: { ...INITIAL_STATE },
+  ensureSelection: ensureSelectedBlog,
+  renderLocked: renderLockedWorkspace,
+  renderHeader,
+  renderCurrentView,
+  deriveSummary: deriveWorkspaceSummary,
+  derivePath: deriveWorkspacePath,
+  afterRender: syncNavigation,
+  isLocked: model => !model?.definition
+};
+
+const presenter = createWorkspacePresenter({
+  ...presenterOptions,
+  renderBody(model, mount, context) {
+    renderWorkspaceBody(model, mount, context, presenterOptions);
+  }
+});
+
+export function render(model = {}, context = {}) {
+  return presenter.render(model, context);
 }
 
 export default { render };
