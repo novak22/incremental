@@ -35,7 +35,8 @@ test('browser view update flow routes through cards presenter and updates summar
 
   const advancedAsset = harness.assetsModule.ASSETS.find(asset => asset.tag?.type === 'advanced')
     || harness.assetsModule.ASSETS[0];
-  const { createAssetInstance, getAssetState } = harness.stateModule;
+  const { createAssetInstance } = harness.assetStateModule;
+  const { getAssetState } = harness.stateModule;
   const activeInstance = createAssetInstance(
     advancedAsset,
     {

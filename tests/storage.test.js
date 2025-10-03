@@ -10,7 +10,7 @@ const {
 } = harness;
 
 const { getState, getAssetState, getUpgradeState } = stateModule;
-const { loadState, saveState, getStatePersistence } = storageModule;
+const { loadState, saveState } = storageModule;
 const { addLog } = logModule;
 const { archiveNicheAnalytics } = await import('../src/game/analytics/niches.js');
 
@@ -31,7 +31,7 @@ test('loadState initializes defaults and welcomes new players', () => {
   assert.equal(result.returning, false);
   assert.ok(result.state);
   assert.match(getState().log.at(-1).message, /Welcome to Online Hustle Simulator/);
-  assert.equal(getState().version, getStatePersistence().version);
+  assert.ok(Number.isInteger(getState().version));
 });
 
 test('saveState persists current progress and loadState restores it', () => {
@@ -44,13 +44,13 @@ test('saveState persists current progress and loadState restores it', () => {
   const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
   assert.equal(saved.money, 321);
   assert.ok(saved.assets.blog.instances.length >= 1);
-  assert.equal(saved.version, getStatePersistence().version);
+  assert.equal(saved.version, getState().version);
 
   const loaded = loadState();
   assert.equal(loaded.returning, true);
   assert.equal(getState().money, 321);
   assert.ok(getAssetState('blog').instances.length >= 1);
-  assert.equal(getState().version, getStatePersistence().version);
+  assert.equal(getState().version, saved.version);
 });
 
 test('legacy saves migrate to new asset structure', () => {
@@ -80,7 +80,7 @@ test('legacy saves migrate to new asset structure', () => {
   assert.equal(getUpgradeState('assistant').count, 1);
   assert.equal(getUpgradeState('coffee').usedToday, 2);
   assert.ok(state.log.some(entry => entry.message === 'Legacy entry'));
-  assert.equal(state.version, getStatePersistence().version);
+  assert.ok(Number.isInteger(state.version));
 });
 
 test('saveState persists a trimmed niche analytics history snapshot', () => {

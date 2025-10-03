@@ -114,12 +114,6 @@ export function ensureEventState(target, { fallbackDay = 1 } = {}) {
     .filter(Boolean);
 }
 
-export function getEventState(target) {
-  if (!target || typeof target !== 'object') return { active: [] };
-  const active = Array.isArray(target.events?.active) ? target.events.active : [];
-  return { active };
-}
-
 export function addEvent(target, eventEntry) {
   if (!target) return null;
   ensureEventState(target);

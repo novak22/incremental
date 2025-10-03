@@ -1,27 +1,6 @@
 import { getAssetDefinition } from '../../core/state/registry.js';
 
-// Temporary compatibility layer for modules that still expect helper exports
-export {
-  buildAssetAction,
-  calculateAssetSalePrice,
-  sellAssetInstance,
-  setAssetInstanceName,
-  isLaunchAvailable
-} from './actions.js';
-export { formatMaintenanceSummary, maintenanceDetail } from './maintenance.js';
-export {
-  ownedDetail,
-  setupDetail,
-  setupCostDetail,
-  incomeDetail,
-  latestYieldDetail,
-  instanceLabel,
-  qualitySummaryDetail,
-  qualityProgressDetail
-} from './details.js';
-export { getDailyIncomeRange, rollDailyIncome, getIncomeRangeForDisplay } from './payout.js';
-
-export function fallbackAssetMetricId(definitionId, scope, type) {
+function fallbackAssetMetricId(definitionId, scope, type) {
   if (!definitionId) return null;
   if (scope === 'payout' && type === 'payout') {
     return `asset:${definitionId}:payout`;
@@ -48,9 +27,3 @@ export function getAssetMetricId(definitionOrId, scope, type) {
   return fallbackAssetMetricId(definition.id, scope, type);
 }
 
-const AssetHelpers = {
-  fallbackAssetMetricId,
-  getAssetMetricId
-};
-
-export default AssetHelpers;

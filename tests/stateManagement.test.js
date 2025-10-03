@@ -21,7 +21,7 @@ const {
   getAssetState,
   getUpgradeState
 } = stateModule;
-const { createAssetInstance, normalizeAssetInstance, normalizeAssetState } = assetStateModule;
+const { createAssetInstance, normalizeAssetState } = assetStateModule;
 const { getAssetDefinition } = registryModule;
 const nichesModule = await import('../src/core/state/niches.js');
 const { ensureNicheStateShape } = nichesModule;
@@ -38,23 +38,28 @@ test.beforeEach(() => {
   resetState();
 });
 
-test('normalizeAssetInstance enforces defaults and clamps values', () => {
+test('normalizeAssetState enforces instance defaults and clamps values', () => {
   const base = createAssetInstance(blogDefinition, {
     status: 'active',
     daysCompleted: 99,
     totalIncome: 123
   });
-  const normalized = normalizeAssetInstance(blogDefinition, {
-    id: base.id,
-    status: 'setup',
-    daysRemaining: -3,
-    daysCompleted: -1,
-    lastIncome: 'not-a-number',
-    totalIncome: undefined,
-    setupFundedToday: 'yes',
-    maintenanceFundedToday: 'no',
-    createdOnDay: -10
+  const normalizedState = normalizeAssetState(blogDefinition, {
+    instances: [
+      {
+        id: base.id,
+        status: 'setup',
+        daysRemaining: -3,
+        daysCompleted: -1,
+        lastIncome: 'not-a-number',
+        totalIncome: undefined,
+        setupFundedToday: 'yes',
+        maintenanceFundedToday: 'no',
+        createdOnDay: -10
+      }
+    ]
   });
+  const normalized = normalizedState.instances[0];
 
   assert.ok(normalized.id, 'instance should retain or generate id');
   assert.equal(normalized.status, 'setup');
@@ -67,13 +72,14 @@ test('normalizeAssetInstance enforces defaults and clamps values', () => {
   assert.equal(normalized.createdOnDay, 1, 'created day defaults to current day');
 });
 
-test('normalizeAssetInstance respects provided state context for createdOnDay', () => {
+test('normalizeAssetState respects provided state context for createdOnDay', () => {
   const contextState = { day: 9 };
-  const instance = normalizeAssetInstance(
+  const normalizedState = normalizeAssetState(
     blogDefinition,
-    { status: 'active' },
+    { instances: [{ status: 'active' }] },
     { state: contextState }
   );
+  const instance = normalizedState.instances[0];
 
   assert.equal(instance.createdOnDay, 9);
 });

@@ -118,4 +118,4 @@ function tryCatch(fn) {
   }
 }
 
-export { RESULT_STATUS, success, error, empty, from, tryCatch };
+export { success, error, empty, tryCatch };

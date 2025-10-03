@@ -196,13 +196,3 @@ export const getAssetState = (...args) => stateManager.getAssetState(...args);
 export const getUpgradeState = (...args) => stateManager.getUpgradeState(...args);
 export const countActiveAssetInstances = (...args) => stateManager.countActiveAssetInstances(...args);
 
-export {
-  configureRegistry,
-  getRegistrySnapshot,
-  getHustleDefinition,
-  getAssetDefinition,
-  getUpgradeDefinition,
-  getMetricDefinition
-} from './state/registry.js';
-export { createAssetInstance, normalizeAssetInstance, normalizeAssetState } from './state/assets.js';
-export { ensureNicheStateShape } from './state/niches.js';
