@@ -14,9 +14,7 @@ const initialView = resolveInitialView(document);
 setActiveView(initialView, document);
 const { returning, lastSaved } = loadState({
   onFirstLoad: () =>
-    addLog('Welcome to Online Hustle Simulator! Time to make that side cash.', 'info'),
-  onReturning: () =>
-    addLog('Welcome back! Your hustles kept buzzing while you were away.', 'info')
+    addLog('Welcome to Online Hustle Simulator! Time to make that side cash.', 'info')
 });
 if (returning) {
   handleOfflineProgress(lastSaved);

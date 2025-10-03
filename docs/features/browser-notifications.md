@@ -16,3 +16,4 @@
 - The browser notifications presenter renders the dropdown, updates the unread badge, and reuses the shared event log model for formatting.
 - `markLogEntryRead` and `markAllLogEntriesRead` helpers live in `src/core/log.js` and trigger UI refreshes when state changes.
 - Styling lives in `styles/browser.css` alongside other browser chrome rules, using the accent palette for unread indicators.
+- Logs generated for passive income ticks and completed upgrades are auto-marked as read so routine upkeep doesn't inflate the unread count.
