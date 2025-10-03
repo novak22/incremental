@@ -9,6 +9,8 @@ import {
 import { createCurrencyLifecycleSummary } from '../utils/lifecycleSummaries.js';
 import { showLaunchConfirmation } from '../utils/launchDialog.js';
 import { createWorkspacePresenter } from '../utils/workspacePresenter.js';
+import { createNavTabs } from './common/navBuilders.js';
+import { renderWorkspaceLock } from './common/renderWorkspaceLock.js';
 
 const VIEW_APPS = 'apps';
 const VIEW_UPGRADES = 'upgrades';
@@ -122,24 +124,6 @@ function handleQuickAction(instanceId, actionId) {
 function handleNicheSelect(instanceId, value) {
   if (!instanceId || !value) return;
   selectServerHubNiche('saas', instanceId, value);
-}
-
-function createNavButton(label, view, state = {}, { badge = null } = {}) {
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.className = 'serverhub-nav__button';
-  if (state.view === view) {
-    button.classList.add('is-active');
-  }
-  button.textContent = label;
-  if (badge !== null) {
-    const badgeEl = document.createElement('span');
-    badgeEl.className = 'serverhub-nav__badge';
-    badgeEl.textContent = badge;
-    button.appendChild(badgeEl);
-  }
-  button.addEventListener('click', () => setView(view));
-  return button;
 }
 
 function renderHeader(model, state = {}) {
@@ -857,16 +841,34 @@ function renderPricingView(model) {
 }
 
 function renderNav(model, state = {}) {
-  const nav = document.createElement('nav');
-  nav.className = 'serverhub-nav';
   const appsBadge = model.summary?.active || 0;
   const upgradesBadge = ensureArray(model.upgrades).filter(upgrade => upgrade.snapshot?.ready).length || null;
-  nav.append(
-    createNavButton('My Apps', VIEW_APPS, state, { badge: appsBadge || null }),
-    createNavButton('Upgrades', VIEW_UPGRADES, state, { badge: upgradesBadge || null }),
-    createNavButton('Pricing', VIEW_PRICING, state)
-  );
-  return nav;
+  return createNavTabs({
+    navClassName: 'serverhub-nav',
+    buttonClassName: 'serverhub-nav__button',
+    badgeClassName: 'serverhub-nav__badge',
+    datasetKey: 'view',
+    onSelect: setView,
+    buttons: [
+      {
+        label: 'My Apps',
+        view: VIEW_APPS,
+        badge: appsBadge || null,
+        isActive: state.view === VIEW_APPS
+      },
+      {
+        label: 'Upgrades',
+        view: VIEW_UPGRADES,
+        badge: upgradesBadge,
+        isActive: state.view === VIEW_UPGRADES
+      },
+      {
+        label: 'Pricing',
+        view: VIEW_PRICING,
+        isActive: state.view === VIEW_PRICING
+      }
+    ]
+  });
 }
 
 function renderWorkspaceView(model, state = {}) {
@@ -896,25 +898,21 @@ function renderBody(model = {}, mount, context = {}) {
   mount.appendChild(root);
 }
 
-function createLockedView(lock) {
-  const wrapper = document.createElement('section');
-  wrapper.className = 'serverhub serverhub--locked';
-  const message = document.createElement('p');
-  message.className = 'serverhub-empty';
-  if (lock?.type === 'skill') {
-    const courseNote = lock.courseName ? ` Complete ${lock.courseName} in Learnly to level up instantly.` : '';
-    message.textContent = `${lock.workspaceLabel || 'This console'} unlocks at ${lock.skillName} Lv ${lock.requiredLevel}.${courseNote}`;
-  } else {
-    message.textContent = 'ServerHub unlocks once the SaaS Micro-App blueprint is discovered.';
-  }
-  wrapper.appendChild(message);
-  return wrapper;
-}
-
 function renderLockedState(model = {}, mount) {
   if (!mount) return;
   mount.innerHTML = '';
-  mount.appendChild(createLockedView(model.lock));
+  mount.appendChild(
+    renderWorkspaceLock({
+      theme: {
+        container: 'serverhub',
+        locked: 'serverhub--locked',
+        message: 'serverhub-empty',
+        label: 'This console'
+      },
+      lock: model.lock,
+      fallbackMessage: 'ServerHub unlocks once the SaaS Micro-App blueprint is discovered.'
+    })
+  );
 }
 
 function deriveSummary(model = {}) {

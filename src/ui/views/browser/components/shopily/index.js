@@ -6,6 +6,8 @@ import {
 } from '../../utils/formatting.js';
 import { createCurrencyLifecycleSummary } from '../../utils/lifecycleSummaries.js';
 import { createTabbedWorkspacePresenter } from '../../utils/createTabbedWorkspacePresenter.js';
+import { createNavTabs } from '../common/navBuilders.js';
+import { renderWorkspaceLock } from '../common/renderWorkspaceLock.js';
 import { selectShopilyNiche } from '../../../../cards/model/index.js';
 import { performQualityAction } from '../../../../../game/assets/index.js';
 import {
@@ -203,25 +205,6 @@ function collectUpgradeHighlights(upgrade) {
   return highlights;
 }
 
-function createNavButton(label, view, state, { badge = null } = {}) {
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.className = 'shopily-nav__button';
-  button.dataset.view = view;
-  const isActive = state?.view === view;
-  button.classList.toggle('is-active', isActive);
-  button.setAttribute('aria-pressed', String(isActive));
-  button.textContent = label;
-  if (badge !== null) {
-    const badgeEl = document.createElement('span');
-    badgeEl.className = 'shopily-nav__badge';
-    badgeEl.textContent = badge;
-    button.appendChild(badgeEl);
-  }
-  button.addEventListener('click', () => setView(view));
-  return button;
-}
-
 function createLaunchButton(launch) {
   const button = document.createElement('button');
   button.type = 'button';
@@ -252,15 +235,35 @@ function renderTopBar(model, state, context = {}) {
   note.textContent = pageMeta?.tagline || 'Launch, nurture, and upgrade every store from one clean dashboard.';
   title.append(heading, note);
 
-  const nav = document.createElement('nav');
-  nav.className = 'shopily-nav';
   const activeCount = model.summary?.active || 0;
   const readyUpgrades = ensureArray(model.upgrades).filter(entry => entry?.snapshot?.ready).length;
-  nav.append(
-    createNavButton('My Stores', VIEW_DASHBOARD, state, { badge: activeCount || null }),
-    createNavButton('Upgrades', VIEW_UPGRADES, state, { badge: readyUpgrades || null }),
-    createNavButton('Shopily Pricing', VIEW_PRICING, state)
-  );
+  const nav = createNavTabs({
+    navClassName: 'shopily-nav',
+    buttonClassName: 'shopily-nav__button',
+    badgeClassName: 'shopily-nav__badge',
+    datasetKey: 'view',
+    withAriaPressed: true,
+    onSelect: setView,
+    buttons: [
+      {
+        label: 'My Stores',
+        view: VIEW_DASHBOARD,
+        badge: activeCount || null,
+        isActive: state?.view === VIEW_DASHBOARD
+      },
+      {
+        label: 'Upgrades',
+        view: VIEW_UPGRADES,
+        badge: readyUpgrades || null,
+        isActive: state?.view === VIEW_UPGRADES
+      },
+      {
+        label: 'Shopily Pricing',
+        view: VIEW_PRICING,
+        isActive: state?.view === VIEW_PRICING
+      }
+    ]
+  });
 
   const actions = document.createElement('div');
   actions.className = 'shopily-topbar__actions';
@@ -1162,21 +1165,6 @@ function renderPricingView(model) {
   return container;
 }
 
-function renderLockedState(lock) {
-  const section = document.createElement('section');
-  section.className = 'shopily shopily--locked';
-  const message = document.createElement('p');
-  message.className = 'shopily-empty';
-  if (lock?.type === 'skill') {
-    const courseNote = lock.courseName ? ` Complete ${lock.courseName} in Learnly to level up instantly.` : '';
-    message.textContent = `${lock.workspaceLabel || 'Shopily'} unlocks at ${lock.skillName} Lv ${lock.requiredLevel}.${courseNote}`;
-  } else {
-    message.textContent = 'Shopily unlocks once the Dropshipping blueprint is discovered.';
-  }
-  section.appendChild(message);
-  return section;
-}
-
 function renderHeader(model, state, context) {
   return renderTopBar(model, state, context);
 }
@@ -1207,7 +1195,18 @@ function syncNavigation({ mount, state }) {
 function renderLockedWorkspace(model = {}, mount) {
   if (!mount) return;
   mount.innerHTML = '';
-  mount.appendChild(renderLockedState(model.lock));
+  mount.appendChild(
+    renderWorkspaceLock({
+      theme: {
+        container: 'shopily',
+        locked: 'shopily--locked',
+        message: 'shopily-empty',
+        label: 'Shopily'
+      },
+      lock: model.lock,
+      fallbackMessage: 'Shopily unlocks once the Dropshipping blueprint is discovered.'
+    })
+  );
 }
 
 function deriveWorkspaceSummary(model = {}) {

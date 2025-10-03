@@ -7,6 +7,8 @@ import {
   formatPercent as baseFormatPercent
 } from '../utils/formatting.js';
 import { createWorkspacePresenter } from '../utils/workspacePresenter.js';
+import { createNavTabs } from './common/navBuilders.js';
+import { renderWorkspaceLock } from './common/renderWorkspaceLock.js';
 
 const VIEW_DASHBOARD = 'dashboard';
 const VIEW_DETAIL = 'detail';
@@ -64,19 +66,8 @@ function handleRename(instanceId, value) {
   setAssetInstanceName('vlog', instanceId, value || '');
 }
 
-function createNavButton(label, view) {
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.className = 'videotube-tab';
-  button.dataset.view = view;
-  button.textContent = label;
-  button.addEventListener('click', () => {
-    setView(view);
-  });
-  return button;
-}
-
-function renderHeader(model, _state) {
+function renderHeader(model, state) {
+  const currentState = state || (presenter.getState ? presenter.getState() : {});
   const header = document.createElement('header');
   header.className = 'videotube__header';
 
@@ -88,13 +79,29 @@ function renderHeader(model, _state) {
   note.textContent = 'Manage uploads, hype premieres, and celebrate every payout.';
   title.append(heading, note);
 
-  const nav = document.createElement('nav');
-  nav.className = 'videotube-tabs';
-  nav.append(
-    createNavButton('Dashboard', VIEW_DASHBOARD),
-    createNavButton('Video Details', VIEW_DETAIL),
-    createNavButton('Channel Analytics', VIEW_ANALYTICS)
-  );
+  const nav = createNavTabs({
+    navClassName: 'videotube-tabs',
+    buttonClassName: 'videotube-tab',
+    datasetKey: 'view',
+    onSelect: (view) => setView(view),
+    buttons: [
+      {
+        label: 'Dashboard',
+        view: VIEW_DASHBOARD,
+        isActive: currentState.view === VIEW_DASHBOARD
+      },
+      {
+        label: 'Video Details',
+        view: VIEW_DETAIL,
+        isActive: currentState.view === VIEW_DETAIL
+      },
+      {
+        label: 'Channel Analytics',
+        view: VIEW_ANALYTICS,
+        isActive: currentState.view === VIEW_ANALYTICS
+      }
+    ]
+  });
 
   const actions = document.createElement('div');
   actions.className = 'videotube__actions';
@@ -699,21 +706,6 @@ function renderAnalyticsView(model) {
   return container;
 }
 
-function renderLockedState(lock) {
-  const container = document.createElement('section');
-  container.className = 'videotube-view videotube-view--locked';
-  const message = document.createElement('p');
-  message.className = 'videotube-empty';
-  if (lock?.type === 'skill') {
-    const courseNote = lock.courseName ? ` Complete ${lock.courseName} in Learnly to level up instantly.` : '';
-    message.textContent = `${lock.workspaceLabel || 'This workspace'} unlocks at ${lock.skillName} Lv ${lock.requiredLevel}.${courseNote}`;
-  } else {
-    message.textContent = 'VideoTube unlocks once the Vlog blueprint is discovered.';
-  }
-  container.appendChild(message);
-  return container;
-}
-
 function renderCurrentView(model, state) {
   switch (state.view) {
     case VIEW_DETAIL:
@@ -760,8 +752,20 @@ const presenter = createWorkspacePresenter({
   ensureSelection: ensureSelectedVideo,
   deriveSummary,
   renderLocked(model, mount) {
+    if (!mount) return;
     mount.innerHTML = '';
-    mount.appendChild(renderLockedState(model.lock));
+    mount.appendChild(
+      renderWorkspaceLock({
+        theme: {
+          container: 'videotube-view',
+          locked: 'videotube-view--locked',
+          message: 'videotube-empty',
+          label: 'This workspace'
+        },
+        lock: model.lock,
+        fallbackMessage: 'VideoTube unlocks once the Vlog blueprint is discovered.'
+      })
+    );
   },
   renderBody(model, mount, context) {
     mount.innerHTML = '';

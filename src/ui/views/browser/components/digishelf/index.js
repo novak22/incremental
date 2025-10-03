@@ -8,6 +8,8 @@ import { formatCurrency as baseFormatCurrency } from '../../utils/formatting.js'
 import { createCurrencyLifecycleSummary } from '../../utils/lifecycleSummaries.js';
 import { showLaunchConfirmation } from '../../utils/launchDialog.js';
 import { createTabbedWorkspacePresenter } from '../../utils/createTabbedWorkspacePresenter.js';
+import { createNavTabs } from '../common/navBuilders.js';
+import { renderWorkspaceLock } from '../common/renderWorkspaceLock.js';
 import {
   VIEW_EBOOKS,
   VIEW_STOCK,
@@ -217,28 +219,31 @@ function renderHero(model, state = initialState) {
   return hero;
 }
 
-function createTabButton(label, view, state = initialState) {
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.className = 'digishelf-tab';
-  button.dataset.view = view;
-  const isActive = state.view === view;
-  button.classList.toggle('is-active', isActive);
-  button.setAttribute('aria-pressed', String(isActive));
-  button.textContent = label;
-  button.addEventListener('click', () => setView(view));
-  return button;
-}
-
 function renderTabs(state = initialState) {
-  const nav = document.createElement('nav');
-  nav.className = 'digishelf-tabs';
-  nav.append(
-    createTabButton('E-Books', VIEW_EBOOKS, state),
-    createTabButton('Stock Photos', VIEW_STOCK, state),
-    createTabButton('Pricing & Plans', VIEW_PRICING, state)
-  );
-  return nav;
+  return createNavTabs({
+    navClassName: 'digishelf-tabs',
+    buttonClassName: 'digishelf-tab',
+    datasetKey: 'view',
+    withAriaPressed: true,
+    onSelect: setView,
+    buttons: [
+      {
+        label: 'E-Books',
+        view: VIEW_EBOOKS,
+        isActive: state.view === VIEW_EBOOKS
+      },
+      {
+        label: 'Stock Photos',
+        view: VIEW_STOCK,
+        isActive: state.view === VIEW_STOCK
+      },
+      {
+        label: 'Pricing & Plans',
+        view: VIEW_PRICING,
+        isActive: state.view === VIEW_PRICING
+      }
+    ]
+  });
 }
 
 function renderStatusBadge(instance) {
@@ -802,21 +807,6 @@ function renderMain(model, state = initialState) {
   return wrapper;
 }
 
-function renderLockedState(lock) {
-  const wrapper = document.createElement('section');
-  wrapper.className = 'digishelf digishelf--locked';
-  const message = document.createElement('p');
-  message.className = 'digishelf-empty';
-  if (lock?.type === 'skill') {
-    const courseNote = lock.courseName ? ` Complete ${lock.courseName} in Learnly to level up instantly.` : '';
-    message.textContent = `${lock.workspaceLabel || 'DigiShelf'} unlocks at ${lock.skillName} Lv ${lock.requiredLevel}.${courseNote}`;
-  } else {
-    message.textContent = 'DigiShelf unlocks once the digital asset blueprints are discovered.';
-  }
-  wrapper.appendChild(message);
-  return wrapper;
-}
-
 function renderHeader(model, state, context) {
   const fragment = document.createDocumentFragment();
   fragment.append(
@@ -843,7 +833,18 @@ function syncNavigation({ mount, state }) {
 function renderLockedWorkspace(model = {}, mount) {
   if (!mount) return;
   mount.innerHTML = '';
-  mount.appendChild(renderLockedState(model.lock));
+  mount.appendChild(
+    renderWorkspaceLock({
+      theme: {
+        container: 'digishelf',
+        locked: 'digishelf--locked',
+        message: 'digishelf-empty',
+        label: 'DigiShelf'
+      },
+      lock: model.lock,
+      fallbackMessage: 'DigiShelf unlocks once the digital asset blueprints are discovered.'
+    })
+  );
 }
 
 function deriveWorkspaceSummary(model = {}) {
