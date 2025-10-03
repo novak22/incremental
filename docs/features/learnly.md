@@ -10,7 +10,7 @@ Reimagine the education experience inside the browser shell as a dedicated Learn
 
 ## Key Details
 - Catalog view organizes courses by skill constellations such as Writing & Storycraft, Promotion & Funnels, and Technical Skills. Badges surface the focus areas directly on each card.
-- Free Courses tab curates tuition-free jumpstarts that award enough XP to reach level 1 in their headline skill, unlocking BlogPress, VideoTube, DigiShelf, Shopily, and ServerHub the moment you graduate.
+- Free Courses tab curates tuition-free jumpstarts that now run as focused 4h/day intensives, awarding enough XP to reach level 1 in their headline skill and instantly unlock BlogPress, VideoTube, DigiShelf, Shopily, and ServerHub once you graduate.
 - Completed courses drop out of the catalog once you graduate so the grid always spotlights fresh study leads.
 - Course detail pages reuse existing descriptions, tuition, duration, and bonus definitions, adding sections for “What you’ll learn,” “Requirements,” and “Certificate of Completion.”
 - My Courses tab lists active and completed enrollments, displaying hours reserved per day, tuition already paid, and a drop-course confirmation that keeps tuition sunk.
