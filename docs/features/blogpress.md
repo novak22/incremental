@@ -17,6 +17,7 @@ BlogPress relocates the classic Personal Blog management experience into the bro
 - **Upgrade buttons → Action panel**: quality actions (Write Post, SEO Sprint, Backlink Outreach) display with their time/cost requirements and respect usage, upgrade, and time/money gates.
 - **Niche selector → Locked selector**: niches may be chosen once; after selection the dropdown is disabled and the panel reminds players the niche is locked.
 - **Payout recap → Modifier list**: the latest income breakdown is rendered as a list with the base payout and modifiers pulled from the stored breakdown entries.
+- **Income recap → Earnings ledger**: the detail view mirrors the classic asset card by bundling daily averages, lifetime totals, spend, net results, pending payouts, and upkeep status into a dedicated panel.
 
 ## Data & Logic
 - Uses `buildBlogpressModel` to adapt `getAssetState('blog')`, quality helpers, maintenance summaries, and niche popularity into a view model shared with the Browser shell.

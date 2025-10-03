@@ -20,6 +20,7 @@
 - Learnly graduates into a dedicated browser app with a course catalog, detail pages, My Courses hub, and pricing FAQ while reusing the existing education systems.
 - Learnly catalog now hides completed courses, floats active enrollments to the top of My Courses, and mirrors tab switches in the workspace URL bar for clearer navigation.
 - BlogPress brings the Personal Blog management flow into the browser shell with a table overview, detail inspector, pricing page, and one-click quality actions while reusing the existing passive-income logic.
+- BlogPress detail view now features an Income recap panel that mirrors the classic asset card with lifetime totals, daily averages, net earnings, pending payouts, and upkeep cues.
 - VideoTube graduates the vlog asset tools into a studio-style browser app with a channel dashboard, analytics view, niche selection, and launch workflow that reuse the existing vlog economy.
 - Shopily launches as the dropshipping control center with KPI hero, store table + sidebar, upgrade shelf, and pricing tier cards while reusing the established commerce backend.
 - DigiShelf consolidates Digital E-Book Series and Stock Photo Galleries into a SaaS-style browser workspace with unified stats, detail panels, and pricing guidance while reusing the original asset logic.
