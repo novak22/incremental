@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Random event engine now tracks multi-day boosts and setbacks for assets and niches, including the vlog’s viral streak migrating onto the shared system.
 - TimoDoro Task Log now spotlights completed work only, grouping hustle hours into Hustles, Education, Upkeep, and Upgrades with hour-focused summaries.
 - TimoDoro productivity hub joins the browser app roster, remixing the ToDo queue, upkeep logs, and daily summary stats into a dedicated focus workspace.
 - Browser homepage apps widget now includes an Arrange mode so players can drag tiles to swap spots, highlight favorites, and keep the order between sessions.

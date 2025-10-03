@@ -3,6 +3,7 @@ import { getAssetDefinition } from '../../core/state/registry.js';
 import { getAssetEffectMultiplier } from '../upgrades/effects.js';
 import { getInstanceNicheEffect } from './niches.js';
 import { applyAssetIncomeEducationBonus } from '../educationEffects.js';
+import { applyIncomeEvents, maybeTriggerAssetEvents } from '../events/index.js';
 import {
   getInstanceQualityRange,
   getOverallQualityRange
@@ -84,6 +85,11 @@ export function rollDailyIncome(definition, assetState, instance) {
     });
   }
 
+  const instanceIndex = Array.isArray(assetState?.instances)
+    ? assetState.instances.indexOf(instance)
+    : -1;
+  maybeTriggerAssetEvents({ definition, assetState, instance, instanceIndex });
+
   const nicheEffect = getInstanceNicheEffect(instance);
   if (nicheEffect) {
     const before = finalAmount;
@@ -100,6 +106,18 @@ export function rollDailyIncome(definition, assetState, instance) {
       });
     }
   }
+
+  const eventResult = applyIncomeEvents({ amount: finalAmount, definition, instance });
+  finalAmount = eventResult.amount;
+  eventResult.entries.forEach(entry => {
+    contributions.push({
+      id: entry.id,
+      label: entry.label,
+      amount: entry.amount,
+      type: entry.type,
+      percent: entry.percent
+    });
+  });
 
   const educationResult = applyAssetIncomeEducationBonus({
     assetId: definition.id,
