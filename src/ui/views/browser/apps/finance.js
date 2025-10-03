@@ -1,5 +1,4 @@
 import { formatHours, formatMoney } from '../../../../core/helpers.js';
-import { buildFinanceModel } from '../../../cards/model/index.js';
 import { getPageByType } from './pageLookup.js';
 
 function formatCurrency(amount) {
@@ -682,17 +681,6 @@ function renderFinanceEducation(entries = []) {
   return section;
 }
 
-function ensureFinanceModel(registries = {}, models = {}) {
-  if (models && typeof models.finance === 'object' && models.finance !== null) {
-    return models.finance;
-  }
-  const financeModel = buildFinanceModel(registries);
-  if (models) {
-    models.finance = financeModel;
-  }
-  return financeModel;
-}
-
 export default function renderFinance(context = {}, registries = {}, models = {}) {
   const page = getPageByType('finance');
   if (!page) return null;
@@ -703,7 +691,13 @@ export default function renderFinance(context = {}, registries = {}, models = {}
   });
   if (!refs) return null;
 
-  const financeModel = ensureFinanceModel(registries, models);
+  let financeModel = null;
+  if (models && typeof models.finance === 'object' && models.finance !== null) {
+    financeModel = models.finance;
+  } else {
+    console.warn('Finance view expected models.finance but it was missing. Rendering fallback view.');
+  }
+
   const model = financeModel || {};
 
   const container = document.createElement('div');
