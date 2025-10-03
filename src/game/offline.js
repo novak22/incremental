@@ -18,5 +18,4 @@ export function handleOfflineProgress(lastSaved) {
     }
   }
 
-  addLog('While you were away, the clock paused. Advance in-game days to keep assets earning.', 'info');
 }
