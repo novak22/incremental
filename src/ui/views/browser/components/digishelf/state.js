@@ -67,12 +67,10 @@ export function reduceToggleLaunch(state = initialState, model = {}) {
 }
 
 export function reduceOpenLaunch(state = initialState, model = {}) {
-  if (state.launchOpen) {
-    const next = { ...state };
-    ensureSelection(next, model);
-    return next;
-  }
-  const next = { ...state, launchOpen: true };
+  const next = {
+    ...state,
+    ...(state.launchOpen ? {} : { launchOpen: true })
+  };
   ensureSelection(next, model);
   return next;
 }
