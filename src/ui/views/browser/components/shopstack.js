@@ -10,6 +10,8 @@ const VIEW_CATALOG = 'catalog';
 const VIEW_PURCHASES = 'purchases';
 const VIEW_PRICING = 'pricing';
 
+const EXCLUDED_UPGRADES = new Set(['fulfillmentAutomation', 'globalSupplyMesh', 'whiteLabelAlliance']);
+
 let uiState = {
   view: VIEW_CATALOG,
   search: '',
@@ -231,6 +233,10 @@ function createStatusBadge(status) {
   return badge;
 }
 
+function isExcludedUpgrade(id) {
+  return EXCLUDED_UPGRADES.has(id);
+}
+
 function getAllItems() {
   const items = [];
   const categories = Array.isArray(currentModel.categories) ? currentModel.categories : [];
@@ -241,11 +247,24 @@ function getAllItems() {
       definitions.forEach(model => {
         const definition = currentDefinitions.get(model.id);
         if (!definition) return;
+        if (isExcludedUpgrade(model.id)) return;
         items.push({ category, family, model, definition });
       });
     });
   });
   return items;
+}
+
+function getVisibleOverview() {
+  return getAllItems().reduce(
+    (acc, item) => {
+      acc.total += 1;
+      if (item.model?.snapshot?.purchased) acc.purchased += 1;
+      if (item.model?.snapshot?.ready) acc.ready += 1;
+      return acc;
+    },
+    { purchased: 0, ready: 0, total: 0 }
+  );
 }
 
 function getFilteredItems() {
@@ -856,7 +875,7 @@ function buildHeader() {
 
   const summary = document.createElement('div');
   summary.className = 'shopstack-summary';
-  const overview = currentModel?.overview || {};
+  const overview = getVisibleOverview();
   const purchased = Number(overview.purchased || 0);
   const ready = Number(overview.ready || 0);
   const total = Number(overview.total || 0);
@@ -941,7 +960,7 @@ function renderApp() {
 }
 
 function computeMeta() {
-  const overview = currentModel?.overview || {};
+  const overview = getVisibleOverview();
   const ready = Number(overview.ready || 0);
   const purchased = Number(overview.purchased || 0);
   if (ready > 0) {

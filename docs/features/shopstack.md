@@ -10,6 +10,7 @@
 - Search filters by the backend-provided keyword index while category chips let players jump between Tech, Infra, Support, and other groupings as the catalog grows.
 - Locked items remain visible but greyed out, using live requirement checks and affordability flags so players know which milestones to chase next.
 - Clicking a card opens a sticky product detail panel with breadcrumbs, price, “Buy now” call-to-action, bonus highlights (effects, slot changes, unlock strings), and a requirement checklist that marks satisfied prerequisites.
+- High-tier commerce upgrades (Fulfillment Automation Suite, Global Supply Mesh, White-Label Alliance) now route to Shopily so the storefront keeps core hardware/infra gear while commerce teams shop inside their dedicated app.
 
 ## Purchase Flow & Detail Panel
 - The detail panel mirrors e-commerce PDPs with cost, status badge, affordability copy (“Need $X more”), and a deep-dive list built from the upgrade definition’s detail functions (e.g., payroll reminders, progress notes).

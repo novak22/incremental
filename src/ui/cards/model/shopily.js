@@ -209,6 +209,8 @@ function extractRelevantUpgrades(upgrades = [], state) {
         affects: upgrade.affects || {},
         effects: upgrade.effects || {},
         action: upgrade.action || null,
+        definition: upgrade,
+        boosts: upgrade.boosts || '',
         snapshot,
         status: describeUpgradeStatus(snapshot)
       };
