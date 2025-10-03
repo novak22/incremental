@@ -124,7 +124,7 @@ export function isValidNicheId(id) {
   return getNicheIdSet().has(id);
 }
 
-export function rollInitialNicheScore() {
+function rollInitialNicheScore() {
   const min = 25;
   const max = 95;
   const spread = max - min;

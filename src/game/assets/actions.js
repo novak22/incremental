@@ -196,16 +196,3 @@ export function setAssetInstanceName(assetId, instanceId, name) {
   return changed;
 }
 
-export function isLaunchAvailable(definition) {
-  return !isAssetPurchaseDisabled(definition);
-}
-
-const AssetActions = {
-  buildAssetAction,
-  calculateAssetSalePrice,
-  sellAssetInstance,
-  setAssetInstanceName,
-  isLaunchAvailable
-};
-
-export default AssetActions;

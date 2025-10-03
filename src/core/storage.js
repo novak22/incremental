@@ -37,7 +37,3 @@ export function saveState() {
   return persistence.save();
 }
 
-export function getStatePersistence() {
-  ensureStorageReference();
-  return persistence;
-}

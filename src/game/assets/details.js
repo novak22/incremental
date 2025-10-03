@@ -98,15 +98,3 @@ export function qualityProgressDetail(definition) {
   return `📈 Roadmap: ${lines}`;
 }
 
-const AssetDetails = {
-  ownedDetail,
-  setupDetail,
-  setupCostDetail,
-  incomeDetail,
-  latestYieldDetail,
-  instanceLabel,
-  qualitySummaryDetail,
-  qualityProgressDetail
-};
-
-export default AssetDetails;

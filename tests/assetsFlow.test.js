@@ -10,18 +10,18 @@ const {
   assetsModule,
   currencyModule
 } = harness;
+const assetActionsModule = await import('../src/game/assets/actions.js');
 
 const { getState, getAssetState } = stateModule;
 const { getAssetDefinition } = registryModule;
 const { createAssetInstance } = assetStateModule;
+const { sellAssetInstance, calculateAssetSalePrice } = assetActionsModule;
 
 const {
   allocateAssetMaintenance,
   closeOutDay,
   getIncomeRangeForDisplay,
-  performQualityAction,
-  sellAssetInstance,
-  calculateAssetSalePrice
+  performQualityAction
 } = assetsModule;
 
 const { spendMoney } = currencyModule;
