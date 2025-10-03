@@ -8,9 +8,18 @@ import browserView from '../../src/ui/views/browser/index.js';
 let dom;
 
 function loadBrowserShellHtml() {
-  const htmlUrl = new URL('../../browser.html', import.meta.url);
-  const filePath = fileURLToPath(htmlUrl);
-  return readFileSync(filePath, 'utf-8');
+  const browserShellUrl = new URL('../../browser.html', import.meta.url);
+
+  try {
+    const filePath = fileURLToPath(browserShellUrl);
+    return readFileSync(filePath, 'utf-8');
+  } catch (error) {
+    if (error?.code !== 'ENOENT') throw error;
+
+    const fallbackUrl = new URL('../../index.html', import.meta.url);
+    const fallbackPath = fileURLToPath(fallbackUrl);
+    return readFileSync(fallbackPath, 'utf-8');
+  }
 }
 
 export function ensureTestDom() {
