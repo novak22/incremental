@@ -785,6 +785,7 @@ export const UPGRADE_DEFINITIONS = [
     name: 'Automation Course',
     tag: { label: 'Boost', type: 'boost' },
     description: 'Unlocks smarter blogging tools, boosting blog income by +50%.',
+    surface: 'learnly',
     category: 'tech',
     family: 'workflow',
     cost: 260,

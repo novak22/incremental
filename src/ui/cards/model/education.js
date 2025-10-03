@@ -7,6 +7,7 @@ import {
 } from '../../../game/requirements.js';
 import { getTimeCap } from '../../../game/time.js';
 import { normalizeSkillList, getSkillDefinition } from '../../../game/skills/data.js';
+import { getUpgradeSnapshot } from './upgrades.js';
 
 export function buildSkillRewards(trackId) {
   const reward = KNOWLEDGE_REWARDS[trackId];
@@ -68,11 +69,54 @@ export function resolveTrack(definition) {
   };
 }
 
+export function buildLearnlyAddons(definitions = [], helpers = {}) {
+  const {
+    state: providedState = null,
+    getState: getStateFn = getState,
+    getUpgradeSnapshot: getUpgradeSnapshotFn = getUpgradeSnapshot
+  } = helpers;
+
+  const state = providedState || getStateFn();
+
+  return (definitions || [])
+    .filter(definition => definition?.surface === 'learnly')
+    .map(definition => {
+      const snapshot = getUpgradeSnapshotFn(definition, state);
+      const action = definition?.action || null;
+      const label =
+        typeof action?.label === 'function'
+          ? action.label(state)
+          : action?.label || definition?.actionLabel || 'Purchase';
+      const disabled =
+        typeof action?.disabled === 'function'
+          ? action.disabled(state)
+          : Boolean(action?.disabled);
+      const onClick = typeof action?.onClick === 'function' ? action.onClick : null;
+      return {
+        id: definition.id,
+        name: definition.name || definition.id,
+        description: definition.description || '',
+        tag: definition.tag || null,
+        cost: snapshot.cost,
+        snapshot,
+        action: onClick
+          ? {
+              label,
+              disabled,
+              onClick
+            }
+          : null
+      };
+    });
+}
+
 export function buildEducationModels(definitions = [], helpers = {}) {
   const {
     getState: getStateFn = getState,
     getKnowledgeProgress: getKnowledgeProgressFn = getKnowledgeProgress,
-    getTimeCap: getTimeCapFn = getTimeCap
+    getTimeCap: getTimeCapFn = getTimeCap,
+    getUpgradeSnapshot: getUpgradeSnapshotFn = getUpgradeSnapshot,
+    upgradeDefinitions = []
   } = helpers;
 
   const state = getStateFn();
@@ -117,8 +161,14 @@ export function buildEducationModels(definitions = [], helpers = {}) {
   const totalHours = queueEntries.reduce((sum, track) => sum + track.hoursPerDay, 0);
   const capHours = state ? getTimeCapFn(state) : 0;
 
+  const addons = buildLearnlyAddons(upgradeDefinitions, {
+    state,
+    getUpgradeSnapshot: getUpgradeSnapshotFn
+  });
+
   return {
     tracks,
+    addons,
     queue: {
       entries: queueEntries.map(track => ({ id: track.id, name: track.name, hoursPerDay: track.hoursPerDay })),
       totalHours,

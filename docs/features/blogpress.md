@@ -23,7 +23,7 @@ BlogPress relocates the classic Personal Blog management experience into the bro
 - Quick actions rely on `canPerformQualityAction`, `getQualityActionUsage`, and `performQualityAction` so availability, limits, and costs match the classic flow.
 - Niche selection calls through to `assignInstanceToNiche` but the UI only presents the dropdown when the instance is still unassigned.
 - Blueprint availability messages and disable reasons reuse `describeAssetLaunchAvailability` so timing/cash requirements stay consistent.
-- Pricing cards list every quality level from the definition and upgrades whose `affects.assets` target blogs (Automation Course, Editorial Pipeline Suite, etc.).
+- Pricing cards list every quality level from the definition and upgrades whose `affects.assets` target blogs (Automation Course now routes to Learnly’s Boosters tab for purchase, alongside Editorial Pipeline Suite, etc.).
 
 ## UI Notes
 - Navigation mirrors the browser shell approach: “My Blogs”, “Pricing”, and “Blueprints” tabs sit inside the header with a persistent “Spin up new blog” CTA.

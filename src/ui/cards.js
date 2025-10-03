@@ -35,7 +35,9 @@ function synthesizeModels(baseModels = {}, registries = {}, force = false) {
     generated = true;
   }
   if (force || !Array.isArray(models.education)) {
-    models.education = buildEducationModels(registries.education);
+    models.education = buildEducationModels(registries.education, {
+      upgradeDefinitions: registries.upgrades
+    });
     generated = true;
   }
   if (force || typeof models.assets !== 'object' || models.assets === null) {

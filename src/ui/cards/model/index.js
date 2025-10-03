@@ -14,7 +14,7 @@ import buildUpgradeModels, {
   getUpgradeSnapshot,
   describeUpgradeStatus
 } from './upgrades.js';
-import buildEducationModels, { buildSkillRewards, resolveTrack } from './education.js';
+import buildEducationModels, { buildLearnlyAddons, buildSkillRewards, resolveTrack } from './education.js';
 import buildFinanceModel from './finance/index.js';
 import {
   formatLabelFromKey,
@@ -40,7 +40,9 @@ function registerDefaultCardBuilders() {
   );
   registerModelBuilder(
     'education',
-    registries => buildEducationModels(registries.education),
+    registries => buildEducationModels(registries.education, {
+      upgradeDefinitions: registries.upgrades
+    }),
     { isDefault: true }
   );
   registerModelBuilder(
@@ -73,6 +75,7 @@ export {
   getUpgradeSnapshot,
   describeUpgradeStatus,
   buildEducationModels,
+  buildLearnlyAddons,
   buildSkillRewards,
   resolveTrack,
   buildFinanceModel,

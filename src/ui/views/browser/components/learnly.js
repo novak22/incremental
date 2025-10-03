@@ -3,11 +3,13 @@ import { describeTrackEducationBonuses } from '../../../../game/educationEffects
 import { dropKnowledgeTrack } from '../../../../game/requirements.js';
 import { formatCurrency as baseFormatCurrency } from '../utils/formatting.js';
 import { createWorkspacePathController } from '../utils/workspacePaths.js';
+import { describeUpgradeStatus } from '../../../cards/model/upgrades.js';
 
 const VIEW_CATALOG = 'catalog';
 const VIEW_DETAIL = 'detail';
 const VIEW_MY_COURSES = 'myCourses';
 const VIEW_PRICING = 'pricing';
+const VIEW_ADDONS = 'addons';
 
 const CATEGORY_DEFINITIONS = [
   { id: 'writing', label: 'Writing & Storycraft', skills: ['writing'] },
@@ -46,6 +48,12 @@ let currentContext = {
   catalogCourses: [],
   courseMap: new Map(),
   categories: [],
+  addons: [],
+  addonSummary: {
+    total: 0,
+    ready: 0,
+    purchased: 0
+  },
   summary: {
     total: 0,
     active: 0,
@@ -83,6 +91,39 @@ function describeSkills(skills = []) {
       return weight > 0 ? `${skill.name} (${weight}%)` : skill.name;
     })
     .join(' • ');
+}
+
+function buildAddon(addon = {}) {
+  if (!addon || typeof addon !== 'object') {
+    return {
+      id: '',
+      name: '',
+      description: '',
+      tag: null,
+      cost: 0,
+      snapshot: {},
+      action: null
+    };
+  }
+
+  const snapshot = addon.snapshot || {};
+  const action = addon.action && typeof addon.action.onClick === 'function'
+    ? {
+        label: addon.action.label || 'Purchase',
+        disabled: Boolean(addon.action.disabled),
+        onClick: addon.action.onClick
+      }
+    : null;
+
+  return {
+    id: addon.id,
+    name: addon.name || addon.id || '',
+    description: addon.description || '',
+    tag: addon.tag || null,
+    cost: Number(addon.cost) || Number(snapshot.cost) || 0,
+    snapshot,
+    action
+  };
 }
 
 function buildCourse(track, definitionMap) {
@@ -153,6 +194,10 @@ function buildContext(model = {}, definitions = []) {
   const catalogCourses = courses.filter(course => !course.progress.completed);
   const courseMap = new Map(courses.map(course => [course.id, course]));
 
+  const addons = Array.isArray(model?.addons)
+    ? model.addons.map(buildAddon).filter(addon => Boolean(addon?.id))
+    : [];
+
   const summary = courses.reduce(
     (acc, course) => {
       if (!course.progress.completed) {
@@ -169,6 +214,20 @@ function buildContext(model = {}, definitions = []) {
       return acc;
     },
     { total: 0, active: 0, completed: 0, dailyHours: 0, tuitionInvested: 0 }
+  );
+
+  const addonSummary = addons.reduce(
+    (acc, addon) => {
+      if (!addon?.id) return acc;
+      acc.total += 1;
+      if (addon.snapshot?.purchased) {
+        acc.purchased += 1;
+      } else if (addon.snapshot?.ready) {
+        acc.ready += 1;
+      }
+      return acc;
+    },
+    { total: 0, ready: 0, purchased: 0 }
   );
 
   const categoryCounts = new Map();
@@ -195,7 +254,7 @@ function buildContext(model = {}, definitions = []) {
     }
   });
 
-  return { courses, catalogCourses, courseMap, categories, summary };
+  return { courses, catalogCourses, courseMap, categories, summary, addons, addonSummary };
 }
 
 function ensureSelectedCourse() {
@@ -233,6 +292,10 @@ function handleOpenTab(tab) {
     setState({ tab, view: VIEW_MY_COURSES });
     return;
   }
+  if (tab === VIEW_ADDONS) {
+    setState({ tab, view: VIEW_ADDONS });
+    return;
+  }
   if (tab === VIEW_PRICING) {
     setState({ tab, view: VIEW_PRICING });
     return;
@@ -246,6 +309,13 @@ function handleEnroll(course) {
   if (typeof course.enrollAction?.onClick === 'function') {
     course.enrollAction.onClick();
   }
+}
+
+function handlePurchaseAddon(addon) {
+  if (!addon?.action?.onClick) return;
+  if (addon.snapshot?.purchased) return;
+  if (addon.action.disabled || !addon.snapshot?.ready) return;
+  addon.action.onClick();
 }
 
 function handleDrop(course) {
@@ -302,7 +372,8 @@ function renderHero() {
   metrics.append(
     createMetric('Active enrollments', `${currentContext.summary.active}`, currentContext.summary.active === 1 ? 'Course in progress' : 'Courses in progress'),
     createMetric('Daily hours reserved', formatHours(currentContext.summary.dailyHours), 'Held automatically each morning'),
-    createMetric('Total catalog', `${currentContext.summary.total}`, 'Tracks ready to enroll')
+    createMetric('Total catalog', `${currentContext.summary.total}`, 'Tracks ready to enroll'),
+    createMetric('Boosters ready', `${currentContext.addonSummary.ready}`, 'Add-ons queued for instant upgrades')
   );
 
   hero.append(title, metrics);
@@ -316,6 +387,7 @@ function renderTabs() {
   const tabs = [
     { id: VIEW_CATALOG, label: 'Catalog' },
     { id: VIEW_MY_COURSES, label: 'My Courses', badge: currentContext.summary.active || null },
+    { id: VIEW_ADDONS, label: 'Boosters', badge: currentContext.addonSummary.ready || null },
     { id: VIEW_PRICING, label: 'Pricing Info' }
   ];
 
@@ -462,6 +534,70 @@ function createCourseCard(course) {
   return card;
 }
 
+function createAddonCard(addon) {
+  const card = document.createElement('article');
+  card.className = 'learnly-card learnly-card--addon';
+  card.dataset.addonId = addon.id;
+
+  const badgeRow = document.createElement('div');
+  badgeRow.className = 'learnly-card__badges';
+  if (addon.tag?.label) {
+    const badge = document.createElement('span');
+    badge.className = 'learnly-badge';
+    badge.textContent = addon.tag.label;
+    badgeRow.appendChild(badge);
+  }
+  card.appendChild(badgeRow);
+
+  const title = document.createElement('h3');
+  title.className = 'learnly-card__title';
+  title.textContent = addon.name;
+  card.appendChild(title);
+
+  const summary = document.createElement('p');
+  summary.className = 'learnly-card__summary';
+  summary.textContent = addon.description || 'Turbocharge your study program with instant automation perks.';
+  card.appendChild(summary);
+
+  const stats = document.createElement('dl');
+  stats.className = 'learnly-card__stats';
+  [
+    { term: 'Cost', detail: addon.cost > 0 ? formatCurrency(addon.cost) : 'Included' },
+    { term: 'Status', detail: describeUpgradeStatus(addon.snapshot || {}) }
+  ].forEach(entry => {
+    const dt = document.createElement('dt');
+    dt.textContent = entry.term;
+    const dd = document.createElement('dd');
+    dd.textContent = entry.detail;
+    stats.append(dt, dd);
+  });
+  card.appendChild(stats);
+
+  const actions = document.createElement('div');
+  actions.className = 'learnly-card__actions';
+
+  const primaryButton = document.createElement('button');
+  primaryButton.type = 'button';
+  primaryButton.className = 'learnly-button learnly-button--primary';
+
+  if (addon.snapshot?.purchased) {
+    primaryButton.textContent = 'Owned';
+    primaryButton.disabled = true;
+  } else {
+    primaryButton.textContent = addon.action?.label || 'Purchase';
+    primaryButton.disabled = Boolean(addon.action?.disabled) || !addon.snapshot?.ready;
+    primaryButton.addEventListener('click', event => {
+      event.stopPropagation();
+      handlePurchaseAddon(addon);
+    });
+  }
+
+  actions.appendChild(primaryButton);
+  card.appendChild(actions);
+
+  return card;
+}
+
 function createProgressBar(course) {
   const wrapper = document.createElement('div');
   wrapper.className = 'learnly-progress';
@@ -485,6 +621,30 @@ function createProgressBar(course) {
 
   wrapper.append(label, bar);
   return wrapper;
+}
+
+function renderAddonsView() {
+  const section = document.createElement('section');
+  section.className = 'learnly-view learnly-view--addons';
+
+  const list = document.createElement('div');
+  list.className = 'learnly-grid';
+
+  if (!currentContext.addons.length) {
+    const empty = document.createElement('div');
+    empty.className = 'learnly-empty';
+    const message = document.createElement('p');
+    message.textContent = 'No boosters unlocked yet. Complete more courses to surface automation treats here!';
+    empty.appendChild(message);
+    list.appendChild(empty);
+  } else {
+    currentContext.addons.forEach(addon => {
+      list.appendChild(createAddonCard(addon));
+    });
+  }
+
+  section.appendChild(list);
+  return section;
 }
 
 function renderDetailView() {
@@ -785,6 +945,8 @@ function renderView() {
       return renderDetailView();
     case VIEW_MY_COURSES:
       return renderMyCoursesView();
+    case VIEW_ADDONS:
+      return renderAddonsView();
     case VIEW_PRICING:
       return renderPricingView();
     case VIEW_CATALOG:
@@ -807,6 +969,9 @@ function deriveWorkspacePath() {
   }
   if (currentState.view === VIEW_MY_COURSES) {
     return 'my-courses';
+  }
+  if (currentState.view === VIEW_ADDONS) {
+    return 'boosters';
   }
   if (currentState.view === VIEW_DETAIL) {
     const courseId = currentState.selectedCourseId;
