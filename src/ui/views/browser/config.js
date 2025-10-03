@@ -68,8 +68,8 @@ export const SERVICE_PAGES = [
     id: 'shopily',
     slug: 'shopily',
     label: 'Shopily',
-    headline: 'Shopily Storefront Studio',
-    tagline: 'Launch dropshipping brands, monitor ROI, and trigger upgrades.',
+    headline: '',
+    tagline: '',
     icon: '🛒',
     type: 'shopily'
   },
