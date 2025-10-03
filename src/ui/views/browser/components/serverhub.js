@@ -8,23 +8,11 @@ import {
 } from '../utils/formatting.js';
 import { createLifecycleSummary } from '../utils/lifecycleSummaries.js';
 import { showLaunchConfirmation } from '../utils/launchDialog.js';
+import { createWorkspacePresenter } from '../utils/workspacePresenter.js';
 
 const VIEW_APPS = 'apps';
 const VIEW_UPGRADES = 'upgrades';
 const VIEW_PRICING = 'pricing';
-
-let currentState = {
-  view: VIEW_APPS,
-  selectedAppId: null
-};
-let currentModel = {
-  instances: [],
-  summary: {},
-  upgrades: [],
-  pricing: []
-};
-let currentMount = null;
-let currentPageMeta = null;
 
 const formatCurrency = amount =>
   baseFormatCurrency(amount, { precision: 'integer', clampZero: true });
@@ -71,41 +59,65 @@ function confirmLaunchWithDetails(definition = {}) {
   });
 }
 
-function ensureSelectedApp() {
-  const instances = ensureArray(currentModel.instances);
+function ensureSelectedApp(state, model) {
+  const nextState = { ...state };
+  const instances = ensureArray(model.instances);
   if (!instances.length) {
-    currentState.selectedAppId = null;
-    return;
+    nextState.selectedAppId = null;
+    return nextState;
   }
   const active = instances.find(entry => entry.status?.id === 'active');
   const fallback = instances[0];
-  const target = instances.find(entry => entry.id === currentState.selectedAppId);
-  currentState.selectedAppId = (target || active || fallback)?.id || instances[0].id;
+  const target = instances.find(entry => entry.id === nextState.selectedAppId);
+  nextState.selectedAppId = (target || active || fallback)?.id || instances[0].id;
+  return nextState;
 }
 
+const workspacePresenter = createWorkspacePresenter({
+  rootClassName: 'serverhub',
+  getInitialState: () => ({
+    view: VIEW_APPS,
+    selectedAppId: null
+  }),
+  ensureSelected: ensureSelectedApp,
+  renderLockedState,
+  renderHeader,
+  renderMetrics,
+  renderNav,
+  renderBody,
+  deriveSummary
+});
+
 function setView(view) {
-  currentState = { ...currentState, view: view || VIEW_APPS };
-  ensureSelectedApp();
-  renderApp();
+  workspacePresenter.setState(state => ({
+    ...state,
+    view: view || VIEW_APPS
+  }));
 }
 
 function selectApp(appId) {
   if (!appId) return;
-  currentState = { ...currentState, selectedAppId: appId, view: VIEW_APPS };
-  renderApp();
+  workspacePresenter.setState(state => ({
+    ...state,
+    selectedAppId: appId,
+    view: VIEW_APPS
+  }));
 }
 
 function getSelectedApp() {
-  const instances = ensureArray(currentModel.instances);
-  return instances.find(entry => entry.id === currentState.selectedAppId) || null;
+  const state = workspacePresenter.getState();
+  const model = workspacePresenter.getModel();
+  const instances = ensureArray(model.instances);
+  return instances.find(entry => entry.id === state.selectedAppId) || null;
 }
 
 async function handleLaunch() {
-  const launch = currentModel.launch;
+  const model = workspacePresenter.getModel();
+  const launch = model.launch;
   if (!launch || launch.disabled) {
     return;
   }
-  const confirmed = await confirmLaunchWithDetails(currentModel.definition);
+  const confirmed = await confirmLaunchWithDetails(model.definition);
   if (!confirmed) {
     return;
   }
@@ -122,11 +134,11 @@ function handleNicheSelect(instanceId, value) {
   selectServerHubNiche('saas', instanceId, value);
 }
 
-function createNavButton(label, view, { badge = null } = {}) {
+function createNavButton(state = {}, label, view, { badge = null } = {}) {
   const button = document.createElement('button');
   button.type = 'button';
   button.className = 'serverhub-nav__button';
-  if (currentState.view === view) {
+  if (state.view === view) {
     button.classList.add('is-active');
   }
   button.textContent = label;
@@ -140,7 +152,7 @@ function createNavButton(label, view, { badge = null } = {}) {
   return button;
 }
 
-function renderHeader(model) {
+function renderHeader(model, { state = {} } = {}) {
   const header = document.createElement('header');
   header.className = 'serverhub-header';
 
@@ -177,8 +189,8 @@ function renderHeader(model) {
   upgradesButton.type = 'button';
   upgradesButton.className = 'serverhub-button serverhub-button--quiet';
   upgradesButton.textContent = 'Upgrades';
-  upgradesButton.ariaPressed = currentState.view === VIEW_UPGRADES ? 'true' : 'false';
-  if (currentState.view === VIEW_UPGRADES) {
+  upgradesButton.ariaPressed = state.view === VIEW_UPGRADES ? 'true' : 'false';
+  if (state.view === VIEW_UPGRADES) {
     upgradesButton.classList.add('is-active');
   }
   upgradesButton.addEventListener('click', () => setView(VIEW_UPGRADES));
@@ -187,8 +199,8 @@ function renderHeader(model) {
   pricingButton.type = 'button';
   pricingButton.className = 'serverhub-button serverhub-button--quiet';
   pricingButton.textContent = 'Pricing';
-  pricingButton.ariaPressed = currentState.view === VIEW_PRICING ? 'true' : 'false';
-  if (currentState.view === VIEW_PRICING) {
+  pricingButton.ariaPressed = state.view === VIEW_PRICING ? 'true' : 'false';
+  if (state.view === VIEW_PRICING) {
     pricingButton.classList.add('is-active');
   }
   pricingButton.addEventListener('click', () => setView(VIEW_PRICING));
@@ -280,7 +292,7 @@ function renderQuickAction(instance, actionId, label) {
   return button;
 }
 
-function renderAppsTable(instances) {
+function renderAppsTable(instances, state) {
   const wrapper = document.createElement('div');
   wrapper.className = 'serverhub-table-wrapper';
 
@@ -316,7 +328,7 @@ function renderAppsTable(instances) {
     const row = document.createElement('tr');
     row.dataset.appId = instance.id;
     row.className = 'serverhub-table__row';
-    if (instance.id === currentState.selectedAppId) {
+    if (instance.id === state.selectedAppId) {
       row.classList.add('is-selected');
     }
 
@@ -675,14 +687,14 @@ function renderDetailPanel(model) {
   return aside;
 }
 
-function renderAppsView(model) {
+function renderAppsView(model, state) {
   const container = document.createElement('section');
   container.className = 'serverhub-view serverhub-view--apps';
   const layout = document.createElement('div');
   layout.className = 'serverhub-layout';
 
   const allInstances = ensureArray(model.instances);
-  layout.append(renderAppsTable(allInstances), renderDetailPanel(model));
+  layout.append(renderAppsTable(allInstances, state), renderDetailPanel(model));
 
   container.appendChild(layout);
   return container;
@@ -854,28 +866,15 @@ function renderPricingView(model) {
   return container;
 }
 
-function renderNav(model) {
-  const nav = document.createElement('nav');
-  nav.className = 'serverhub-nav';
-  const appsBadge = model.summary?.active || 0;
-  const upgradesBadge = ensureArray(model.upgrades).filter(upgrade => upgrade.snapshot?.ready).length || null;
-  nav.append(
-    createNavButton('My Apps', VIEW_APPS, { badge: appsBadge || null }),
-    createNavButton('Upgrades', VIEW_UPGRADES, { badge: upgradesBadge || null }),
-    createNavButton('Pricing', VIEW_PRICING)
-  );
-  return nav;
-}
-
-function renderBody(model) {
-  switch (currentState.view) {
+function renderBody(model, { state = {} } = {}) {
+  switch (state.view) {
     case VIEW_UPGRADES:
       return renderUpgradesView(model);
     case VIEW_PRICING:
       return renderPricingView(model);
     case VIEW_APPS:
     default:
-      return renderAppsView(model);
+      return renderAppsView(model, state);
   }
 }
 
@@ -894,35 +893,26 @@ function renderLockedState(lock) {
   return wrapper;
 }
 
-function renderApp() {
-  if (!currentMount) return;
-  if (!currentModel.definition) {
-    currentMount.innerHTML = '';
-    currentMount.appendChild(renderLockedState(currentModel.lock));
-    return;
-  }
-
-  ensureSelectedApp();
-  currentMount.innerHTML = '';
-  const root = document.createElement('div');
-  root.className = 'serverhub';
-  root.append(
-    renderHeader(currentModel),
-    renderMetrics(currentModel),
-    renderNav(currentModel),
-    renderBody(currentModel)
+function renderNav(model, { state = {} } = {}) {
+  const nav = document.createElement('nav');
+  nav.className = 'serverhub-nav';
+  const appsBadge = model.summary?.active || 0;
+  const upgradesBadge = ensureArray(model.upgrades).filter(upgrade => upgrade.snapshot?.ready).length || null;
+  nav.append(
+    createNavButton(state, 'My Apps', VIEW_APPS, { badge: appsBadge || null }),
+    createNavButton(state, 'Upgrades', VIEW_UPGRADES, { badge: upgradesBadge || null }),
+    createNavButton(state, 'Pricing', VIEW_PRICING)
   );
-  currentMount.appendChild(root);
+  return nav;
 }
 
-function render(model, { mount, page }) {
-  currentModel = model || {};
-  currentMount = mount || null;
-  currentPageMeta = page || null;
-  ensureSelectedApp();
-  renderApp();
-  const meta = currentModel?.summary?.meta || 'Launch your first micro SaaS';
+function deriveSummary({ model } = {}) {
+  const meta = model?.summary?.meta || 'Launch your first micro SaaS';
   return { meta };
+}
+
+function render(model, options = {}) {
+  return workspacePresenter.render(model, options);
 }
 
 export default {
