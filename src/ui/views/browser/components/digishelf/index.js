@@ -16,6 +16,7 @@ import {
   initialState,
   ensureSelection,
   reduceSetView,
+  reduceOpenLaunch,
   reduceToggleLaunch,
   reduceSelectInstance,
   derivePath,
@@ -213,7 +214,7 @@ function selectInstance(type, id) {
 function handlePlanSelect(planId) {
   const model = presenter.getModel();
   presenter.updateState(state => {
-    const next = reduceToggleLaunch(state, model);
+    const next = reduceOpenLaunch(state, model);
     const targetView = planId === 'stockPhotos' ? VIEW_STOCK : VIEW_EBOOKS;
     return reduceSetView(next, model, targetView);
   });

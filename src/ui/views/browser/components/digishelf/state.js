@@ -66,6 +66,15 @@ export function reduceToggleLaunch(state = initialState, model = {}) {
   return next;
 }
 
+export function reduceOpenLaunch(state = initialState, model = {}) {
+  const next = {
+    ...state,
+    ...(state.launchOpen ? {} : { launchOpen: true })
+  };
+  ensureSelection(next, model);
+  return next;
+}
+
 export function reduceSelectInstance(state = initialState, model = {}, type, id) {
   const next = { ...state };
   if (type === 'stockPhotos') {
@@ -115,6 +124,7 @@ export default {
   ensureSelection,
   reduceSetView,
   reduceToggleLaunch,
+  reduceOpenLaunch,
   reduceSelectInstance,
   derivePath,
   getSelectedCollection,
