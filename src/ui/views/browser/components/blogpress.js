@@ -4,7 +4,7 @@ import { performQualityAction } from '../../../../game/assets/index.js';
 import { formatCurrency as baseFormatCurrency, formatNetCurrency } from '../utils/formatting.js';
 import { createLifecycleSummary } from '../utils/lifecycleSummaries.js';
 import { showLaunchConfirmation } from '../utils/launchDialog.js';
-import { createWorkspacePresenter } from '../utils/workspacePresenter.js';
+import { createTabbedWorkspacePresenter } from '../utils/createTabbedWorkspacePresenter.js';
 
 const VIEW_HOME = 'home';
 const VIEW_DETAIL = 'detail';
@@ -917,18 +917,6 @@ function renderLockedWorkspace(model = {}, mount) {
   mount.appendChild(renderLockedState(model.lock));
 }
 
-function renderWorkspaceBody(model, mount, context = {}, hooks = {}) {
-  if (!mount) return;
-  mount.innerHTML = '';
-  const root = document.createElement('div');
-  root.className = 'blogpress';
-  const headerRenderer = hooks.renderHeader || renderHeader;
-  const viewRenderer = hooks.renderCurrentView || renderCurrentView;
-  root.appendChild(headerRenderer(model, context.state));
-  root.appendChild(viewRenderer(model, context.state));
-  mount.appendChild(root);
-}
-
 function deriveWorkspaceSummary(model = {}) {
   const summary = model?.summary;
   return summary && typeof summary === 'object' ? summary : {};
@@ -960,23 +948,17 @@ function syncNavigation({ mount, state }) {
   });
 }
 
-const presenterOptions = {
+const presenter = createTabbedWorkspacePresenter({
+  className: 'blogpress',
   state: { ...INITIAL_STATE },
   ensureSelection: ensureSelectedBlog,
   renderLocked: renderLockedWorkspace,
   renderHeader,
-  renderCurrentView,
+  renderViews: renderCurrentView,
   deriveSummary: deriveWorkspaceSummary,
   derivePath: deriveWorkspacePath,
-  afterRender: syncNavigation,
+  syncNavigation,
   isLocked: model => !model?.definition
-};
-
-const presenter = createWorkspacePresenter({
-  ...presenterOptions,
-  renderBody(model, mount, context) {
-    renderWorkspaceBody(model, mount, context, presenterOptions);
-  }
 });
 
 export function render(model = {}, context = {}) {
