@@ -40,7 +40,13 @@ function normalizeLogEntry(entry) {
   normalized.id = typeof entry.id === 'string' && entry.id ? entry.id : createId();
   normalized.message = entry.message != null ? String(entry.message) : '';
   normalized.type = typeof entry.type === 'string' && entry.type ? entry.type : 'info';
-  normalized.read = entry.read === true || shouldAutoRead(normalized.type);
+  if (entry.read === true) {
+    normalized.read = true;
+  } else if (entry.read === false) {
+    normalized.read = false;
+  } else {
+    normalized.read = shouldAutoRead(normalized.type);
+  }
   return normalized;
 }
 

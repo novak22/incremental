@@ -122,6 +122,22 @@ test('ensureStateShape populates default hustle, asset, and upgrade state', () =
   }
 });
 
+test('ensureStateShape preserves explicit log read flags and seeds missing ones', () => {
+  const state = buildDefaultState();
+  state.log = [
+    { id: 'manual-unread', message: 'Keep me unread', timestamp: 1, type: 'info', read: false },
+    { id: 'manual-read', message: 'Already read', timestamp: 2, type: 'warning', read: true },
+    { id: 'auto-seed', message: 'Passive payout', timestamp: 3, type: 'passive:payout' }
+  ];
+
+  ensureStateShape(state);
+
+  const [manualUnread, manualRead, autoSeeded] = state.log;
+  assert.equal(manualUnread.read, false, 'explicit unread flag should be kept');
+  assert.equal(manualRead.read, true, 'explicit read flag should be kept');
+  assert.equal(autoSeeded.read, true, 'auto-read eligible entries without a flag should be seeded');
+});
+
 test('ensureNicheStateShape repairs popularity map and fallback day', () => {
   const state = {
     day: 4,
