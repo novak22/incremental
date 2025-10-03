@@ -9,6 +9,7 @@ import { advanceKnowledgeTracks, allocateDailyStudy } from './requirements.js';
 import { archiveDailyMetrics, resetDailyMetrics } from './metrics.js';
 import { rerollNichePopularity } from './assets/niches.js';
 import { computeDailySummary } from './summary.js';
+import { advanceEventsAfterDay } from './events/index.js';
 import { archiveNicheAnalytics } from './analytics/niches.js';
 
 export function endDay(auto = false) {
@@ -16,6 +17,7 @@ export function endDay(auto = false) {
   if (!state) return;
 
   closeOutDay();
+  advanceEventsAfterDay(state.day);
   advanceKnowledgeTracks();
   updateUI();
   const summary = computeDailySummary(state);

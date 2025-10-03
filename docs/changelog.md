@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Random event engine now tracks multi-day boosts and setbacks for assets and niches, including the vlog’s viral streak migrating onto the shared system.
 - TimoDoro productivity hub joins the browser app roster, remixing the ToDo queue, upkeep logs, and daily summary stats into a dedicated focus workspace.
 - Browser homepage apps widget now includes an Arrange mode so players can drag tiles to swap spots, highlight favorites, and keep the order between sessions.
 - Asset Arcade workspace retired from the browser prototype and hidden from the homepage launcher while we explore refreshed asset flows.

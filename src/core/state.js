@@ -7,6 +7,7 @@ import {
   normalizeSkillState
 } from '../game/skills/data.js';
 import { ensureNicheStateShape } from './state/niches.js';
+import { ensureEventState } from './state/events.js';
 import {
   ensureSlice as ensureHustleSlice,
   getSliceState as getHustleSliceState
@@ -93,6 +94,7 @@ class StateManager {
     this.ensureDailyMetrics(target);
     this.ensureMetricsHistory(target);
     ensureNicheStateShape(target, { fallbackDay: target.day || 1 });
+    ensureEventState(target, { fallbackDay: target.day || 1 });
 
     if (!Array.isArray(target.log)) {
       target.log = [];
@@ -124,6 +126,9 @@ class StateManager {
       niches: {
         popularity: {},
         lastRollDay: 0
+      },
+      events: {
+        active: []
       },
       metrics: {
         daily: this.createEmptyDailyMetrics(),

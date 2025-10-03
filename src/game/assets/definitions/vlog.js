@@ -19,29 +19,7 @@ const vlogDefinition = createAssetDefinition({
   income: {
     base: 34,
     variance: 0.2,
-    logType: 'passive',
-    modifier: (amount, context = {}) => {
-      const instance = context.instance;
-      const qualityLevel = instance?.quality?.level || 0;
-      let viralChance = qualityLevel >= 4 ? 0.24 : 0.18;
-      let viralMultiplier = qualityLevel >= 4 ? 3.5 : 3;
-      let payout = amount;
-      if (qualityLevel >= 3 && Math.random() < viralChance) {
-        const before = payout;
-        const raw = payout * viralMultiplier;
-        const after = Math.round(raw);
-        if (typeof context.recordModifier === 'function') {
-          const percent = before > 0 ? raw / before - 1 : null;
-          context.recordModifier('Viral surge', raw - before, {
-            id: 'vlog:viralSpike',
-            type: 'event',
-            percent
-          });
-        }
-        payout = after;
-      }
-      return payout;
-    }
+    logType: 'passive'
   },
   requirements: {
     equipment: ['camera']
