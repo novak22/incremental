@@ -6,6 +6,7 @@
 - TimoDoro Task Log now spotlights completed work only, grouping hustle hours into Hustles, Education, Upkeep, and Upgrades with hour-focused summaries.
 - TimoDoro productivity hub joins the browser app roster, remixing the ToDo queue, upkeep logs, and daily summary stats into a dedicated focus workspace.
 - Browser homepage apps widget now includes an Arrange mode so players can drag tiles to swap spots, highlight favorites, and keep the order between sessions.
+- Browser homepage widget headers now sport emoji icons that jump straight into the full TimoDoro and BankApp workspaces for faster follow-up from the snapshot view.
 - Asset Arcade workspace retired from the browser prototype and hidden from the homepage launcher while we explore refreshed asset flows.
 - Shopily’s upgrades tab now mirrors a mobile top-up catalog with ShopStack-grade detail panels while the Fulfillment Automation Suite, Global Supply Mesh, and White-Label Alliance migrate out of ShopStack into the dedicated commerce app.
 - Browser chrome now features a notification bell that mirrors the event log with unread badges, read tracking, and a mark-all control.

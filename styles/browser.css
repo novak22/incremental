@@ -559,6 +559,46 @@ a {
   font-weight: 700;
 }
 
+.browser-widget__title-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.15rem 0.55rem 0.15rem 0.4rem;
+  margin-inline-start: -0.4rem;
+  color: inherit;
+  text-decoration: none;
+  border-radius: var(--browser-radius-pill);
+  transition: color 140ms ease, background-color 140ms ease, box-shadow 140ms ease;
+}
+
+.browser-widget__title-link:hover,
+.browser-widget__title-link:focus-visible {
+  color: var(--browser-accent);
+  background-color: var(--browser-accent-soft);
+  text-decoration: none;
+}
+
+.browser-widget__title-link:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--browser-accent-soft);
+}
+
+.browser-widget__title-link.is-active {
+  color: var(--browser-accent);
+}
+
+.browser-widget__title-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1em;
+  line-height: 1;
+}
+
+.browser-widget__title-text {
+  font-weight: inherit;
+}
+
 .browser-widget__header p {
   margin: 0.2rem 0 0;
   color: var(--browser-muted);
