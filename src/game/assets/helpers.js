@@ -21,7 +21,7 @@ export {
 } from './details.js';
 export { getDailyIncomeRange, rollDailyIncome, getIncomeRangeForDisplay } from './payout.js';
 
-export function fallbackAssetMetricId(definitionId, scope, type) {
+function fallbackAssetMetricId(definitionId, scope, type) {
   if (!definitionId) return null;
   if (scope === 'payout' && type === 'payout') {
     return `asset:${definitionId}:payout`;
@@ -48,9 +48,3 @@ export function getAssetMetricId(definitionOrId, scope, type) {
   return fallbackAssetMetricId(definition.id, scope, type);
 }
 
-const AssetHelpers = {
-  fallbackAssetMetricId,
-  getAssetMetricId
-};
-
-export default AssetHelpers;
