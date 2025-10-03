@@ -869,6 +869,21 @@ function renderMain(model) {
   return wrapper;
 }
 
+function renderLockedState(lock) {
+  const wrapper = document.createElement('section');
+  wrapper.className = 'digishelf digishelf--locked';
+  const message = document.createElement('p');
+  message.className = 'digishelf-empty';
+  if (lock?.type === 'skill') {
+    const courseNote = lock.courseName ? ` Complete ${lock.courseName} in Learnly to level up instantly.` : '';
+    message.textContent = `${lock.workspaceLabel || 'DigiShelf'} unlocks at ${lock.skillName} Lv ${lock.requiredLevel}.${courseNote}`;
+  } else {
+    message.textContent = 'DigiShelf unlocks once the digital asset blueprints are discovered.';
+  }
+  wrapper.appendChild(message);
+  return wrapper;
+}
+
 function render(model, { mount, page } = {}) {
   if (mount) {
     currentMount = mount;
@@ -881,6 +896,13 @@ function render(model, { mount, page } = {}) {
   }
 
   currentModel = model || currentModel;
+  if (currentModel.lock) {
+    currentMount.innerHTML = '';
+    currentMount.appendChild(renderLockedState(currentModel.lock));
+    const meta = currentModel?.summary?.meta || currentModel?.overview?.meta || '';
+    return { meta };
+  }
+
   ensureState(currentModel);
 
   currentMount.innerHTML = '';

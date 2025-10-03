@@ -21,6 +21,7 @@ import {
 import { getUpgradeSnapshot, describeUpgradeStatus } from './upgrades.js';
 import { describeAssetLaunchAvailability } from './assets.js';
 import { registerModelBuilder } from '../modelBuilderRegistry.js';
+import { buildSkillLock } from './skillLocks.js';
 
 function clampNumber(value) {
   const number = Number(value);
@@ -385,6 +386,20 @@ export default function buildShopilyModel(assetDefinitions = [], upgradeDefiniti
       pricing: null,
       upgrades: [],
       launch: null
+    };
+  }
+
+  const lock = buildSkillLock(state, 'shopily');
+  if (lock) {
+    return {
+      definition: null,
+      instances: [],
+      summary: { total: 0, active: 0, setup: 0, needsUpkeep: 0, meta: lock.meta },
+      metrics: { totalStores: 0, dailySales: 0, dailyUpkeep: 0, netDaily: 0 },
+      pricing: null,
+      upgrades: [],
+      launch: null,
+      lock
     };
   }
 

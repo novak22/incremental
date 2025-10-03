@@ -20,6 +20,7 @@ import {
 import { setAssetInstanceName } from '../../../game/assets/actions.js';
 import { describeAssetLaunchAvailability } from './assets.js';
 import { registerModelBuilder } from '../modelBuilderRegistry.js';
+import { buildSkillLock } from './skillLocks.js';
 
 function clampNumber(value) {
   const number = Number(value);
@@ -387,6 +388,19 @@ export default function buildVideoTubeModel(assetDefinitions = [], state = getSt
       stats: { lifetime: 0, daily: 0, active: 0, averageQuality: 0, milestonePercent: 0 },
       analytics: { videos: [], niches: [] },
       launch: null
+    };
+  }
+
+  const lock = buildSkillLock(state, 'videotube');
+  if (lock) {
+    return {
+      definition: null,
+      instances: [],
+      summary: { total: 0, active: 0, setup: 0, meta: lock.meta },
+      stats: { lifetime: 0, daily: 0, active: 0, averageQuality: 0, milestonePercent: 0 },
+      analytics: { videos: [], niches: [] },
+      launch: null,
+      lock
     };
   }
 

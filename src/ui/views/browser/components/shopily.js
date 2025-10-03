@@ -1235,8 +1235,29 @@ function renderPricingView(model) {
   return container;
 }
 
+function renderLockedState(lock) {
+  const section = document.createElement('section');
+  section.className = 'shopily shopily--locked';
+  const message = document.createElement('p');
+  message.className = 'shopily-empty';
+  if (lock?.type === 'skill') {
+    const courseNote = lock.courseName ? ` Complete ${lock.courseName} in Learnly to level up instantly.` : '';
+    message.textContent = `${lock.workspaceLabel || 'Shopily'} unlocks at ${lock.skillName} Lv ${lock.requiredLevel}.${courseNote}`;
+  } else {
+    message.textContent = 'Shopily unlocks once the Dropshipping blueprint is discovered.';
+  }
+  section.appendChild(message);
+  return section;
+}
+
 function renderApp() {
   if (!currentMount) {
+    workspacePathController.sync();
+    return;
+  }
+  if (!currentModel.definition) {
+    currentMount.innerHTML = '';
+    currentMount.appendChild(renderLockedState(currentModel.lock));
     workspacePathController.sync();
     return;
   }

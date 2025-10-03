@@ -19,6 +19,7 @@ import {
 } from '../../../game/assets/quality.js';
 import { describeAssetLaunchAvailability } from './assets.js';
 import { registerModelBuilder } from '../modelBuilderRegistry.js';
+import { buildSkillLock } from './skillLocks.js';
 
 const QUICK_ACTION_MAP = {
   ebook: ['writeChapter'],
@@ -388,6 +389,33 @@ export default function buildDigishelfModel(assetDefinitions = [], state = getSt
   const definitionMap = new Map(ensureArray(assetDefinitions).map(definition => [definition?.id, definition]));
   const ebookDefinition = definitionMap.get('ebook') || null;
   const stockDefinition = definitionMap.get('stockPhotos') || null;
+
+  const lock = buildSkillLock(state, 'digishelf');
+  if (lock) {
+    const meta = lock.meta;
+    const buildLocked = () => ({
+      definition: null,
+      instances: [],
+      summary: { total: 0, active: 0, setup: 0, needsUpkeep: 0, meta },
+      launch: null,
+      plan: null
+    });
+    return {
+      ebook: buildLocked(),
+      stock: buildLocked(),
+      overview: {
+        ebooksActive: 0,
+        stockActive: 0,
+        totalDaily: 0,
+        ebookDaily: 0,
+        stockDaily: 0,
+        meta
+      },
+      pricing: [],
+      summary: { meta, totalActive: 0 },
+      lock
+    };
+  }
 
   const ebook = buildModelForDefinition(ebookDefinition, state, PLAN_COPY.ebook);
   const stock = buildModelForDefinition(stockDefinition, state, PLAN_COPY.stockPhotos);

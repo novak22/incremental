@@ -3517,6 +3517,10 @@ a {
   gap: 1.6rem;
 }
 
+.learnly-view--free {
+  gap: 1.2rem;
+}
+
 .learnly-filter {
   display: flex;
   flex-wrap: wrap;
@@ -3557,6 +3561,24 @@ a {
   gap: 1.4rem;
 }
 
+.learnly-free-intro {
+  background: var(--browser-panel);
+  border: 1px solid var(--browser-panel-border);
+  border-radius: var(--browser-radius-lg);
+  padding: 1.2rem 1.4rem;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.learnly-free-intro h2 {
+  margin: 0;
+}
+
+.learnly-free-intro p {
+  margin: 0;
+  color: var(--browser-muted);
+}
+
 .learnly-card {
   background: var(--browser-panel);
   border: 1px solid var(--browser-panel-border);
@@ -3569,6 +3591,11 @@ a {
   transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
 }
 
+.learnly-card--free {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(59, 130, 246, 0.04));
+  border-color: rgba(16, 185, 129, 0.45);
+}
+
 .learnly-card:hover,
 .learnly-card:focus-within {
   transform: translateY(-4px);
@@ -3576,10 +3603,20 @@ a {
   box-shadow: var(--browser-shadow-card);
 }
 
+.learnly-card--free:hover,
+.learnly-card--free:focus-within {
+  border-color: rgba(16, 185, 129, 0.6);
+}
+
 .learnly-card__badges {
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
+}
+
+.learnly-card--free .learnly-badge {
+  background: rgba(16, 185, 129, 0.18);
+  color: #047857;
 }
 
 .learnly-badge {
@@ -3600,6 +3637,25 @@ a {
   margin: 0;
   color: var(--browser-muted);
   line-height: 1.5;
+}
+
+.learnly-card__unlock {
+  margin: 0;
+  font-weight: 600;
+  color: #047857;
+}
+
+:root[data-browser-theme="night"] .learnly-card--free {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(59, 130, 246, 0.1));
+  border-color: rgba(16, 185, 129, 0.55);
+}
+
+:root[data-browser-theme="night"] .learnly-card--free .learnly-badge {
+  color: #bbf7d0;
+}
+
+:root[data-browser-theme="night"] .learnly-card__unlock {
+  color: #bbf7d0;
 }
 
 .learnly-card__stats {
@@ -3646,11 +3702,21 @@ a {
   box-shadow: 0 12px 26px rgba(37, 99, 235, 0.28);
 }
 
+.learnly-card--free .learnly-button--primary {
+  background: #10b981;
+  box-shadow: 0 12px 28px rgba(16, 185, 129, 0.32);
+}
+
 .learnly-button--primary:hover:not(:disabled),
 .learnly-button--primary:focus-visible:not(:disabled) {
   transform: translateY(-1px);
   box-shadow: 0 16px 30px rgba(37, 99, 235, 0.32);
   outline: none;
+}
+
+.learnly-card--free .learnly-button--primary:hover:not(:disabled),
+.learnly-card--free .learnly-button--primary:focus-visible:not(:disabled) {
+  box-shadow: 0 16px 32px rgba(16, 185, 129, 0.36);
 }
 
 .learnly-button--ghost {

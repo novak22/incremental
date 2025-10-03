@@ -3,11 +3,13 @@ import { describeTrackEducationBonuses } from '../../../../game/educationEffects
 import { dropKnowledgeTrack } from '../../../../game/requirements.js';
 import { formatCurrency as baseFormatCurrency } from '../utils/formatting.js';
 import { createWorkspacePathController } from '../utils/workspacePaths.js';
+import { getWorkspaceLockByCourse } from '../../../cards/model/skillLocks.js';
 
 const VIEW_CATALOG = 'catalog';
 const VIEW_DETAIL = 'detail';
 const VIEW_MY_COURSES = 'myCourses';
 const VIEW_PRICING = 'pricing';
+const VIEW_FREE = 'freeCourses';
 
 const CATEGORY_DEFINITIONS = [
   { id: 'writing', label: 'Writing & Storycraft', skills: ['writing'] },
@@ -44,6 +46,7 @@ let currentState = {
 let currentContext = {
   courses: [],
   catalogCourses: [],
+  freeCourses: [],
   courseMap: new Map(),
   categories: [],
   summary: {
@@ -150,7 +153,9 @@ function buildContext(model = {}, definitions = []) {
   const definitionMap = new Map((definitions || []).map(definition => [definition?.id, definition]).filter(Boolean));
   const tracks = Array.isArray(model?.tracks) ? model.tracks : [];
   const courses = tracks.map(track => buildCourse(track, definitionMap));
-  const catalogCourses = courses.filter(course => !course.progress.completed);
+  const freeCourses = courses.filter(course => course.tuition <= 0);
+  const paidCourses = courses.filter(course => course.tuition > 0);
+  const catalogCourses = paidCourses.filter(course => !course.progress.completed);
   const courseMap = new Map(courses.map(course => [course.id, course]));
 
   const summary = courses.reduce(
@@ -195,7 +200,7 @@ function buildContext(model = {}, definitions = []) {
     }
   });
 
-  return { courses, catalogCourses, courseMap, categories, summary };
+  return { courses, catalogCourses, freeCourses, courseMap, categories, summary };
 }
 
 function ensureSelectedCourse() {
@@ -205,7 +210,11 @@ function ensureSelectedCourse() {
   }
   if (!currentState.selectedCourseId || !currentContext.courseMap.has(currentState.selectedCourseId)) {
     const activeCourse = currentContext.courses.find(course => course.progress.enrolled && !course.progress.completed);
-    const fallback = currentContext.catalogCourses[0] || currentContext.courses[0];
+    const preferredList = currentState.tab === VIEW_FREE
+      ? currentContext.freeCourses
+      : currentContext.catalogCourses;
+    const preferred = preferredList.find(course => !course.progress.completed) || preferredList[0];
+    const fallback = preferred || currentContext.courses[0];
     currentState.selectedCourseId = (activeCourse || fallback)?.id || null;
   }
 }
@@ -223,14 +232,19 @@ function handleSelectCategory(categoryId) {
   setState({ category: categoryId || 'all', view: VIEW_CATALOG, tab: VIEW_CATALOG });
 }
 
-function handleOpenCourse(courseId) {
+function handleOpenCourse(courseId, sourceTab = currentState.tab || VIEW_CATALOG) {
   if (!courseId) return;
-  setState({ selectedCourseId: courseId, view: VIEW_DETAIL, tab: VIEW_CATALOG });
+  const tab = sourceTab || VIEW_CATALOG;
+  setState({ selectedCourseId: courseId, view: VIEW_DETAIL, tab });
 }
 
 function handleOpenTab(tab) {
   if (tab === VIEW_MY_COURSES) {
     setState({ tab, view: VIEW_MY_COURSES });
+    return;
+  }
+  if (tab === VIEW_FREE) {
+    setState({ tab, view: VIEW_FREE });
     return;
   }
   if (tab === VIEW_PRICING) {
@@ -313,8 +327,12 @@ function renderTabs() {
   const nav = document.createElement('nav');
   nav.className = 'learnly-tabs';
 
+  const freeBadge = currentContext.freeCourses
+    .filter(course => !course.progress.completed)
+    .length || null;
   const tabs = [
     { id: VIEW_CATALOG, label: 'Catalog' },
+    { id: VIEW_FREE, label: 'Free Courses', badge: freeBadge },
     { id: VIEW_MY_COURSES, label: 'My Courses', badge: currentContext.summary.active || null },
     { id: VIEW_PRICING, label: 'Pricing Info' }
   ];
@@ -323,7 +341,7 @@ function renderTabs() {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'learnly-tab';
-    if (currentState.tab === tab.id || (currentState.view === VIEW_DETAIL && tab.id === VIEW_CATALOG)) {
+    if (currentState.tab === tab.id) {
       button.classList.add('is-active');
     }
     button.textContent = tab.label;
@@ -387,10 +405,17 @@ function renderCatalogView() {
   return section;
 }
 
-function createCourseCard(course) {
+function createCourseCard(course, options = {}) {
   const card = document.createElement('article');
   card.className = 'learnly-card';
   card.dataset.courseId = course.id;
+  const variant = options.variant || null;
+  const unlockNote = options.unlockNote || null;
+  const tuitionLabel = options.tuitionLabel || (course.tuition > 0 ? formatCurrency(course.tuition) : 'Included');
+  const sourceTab = options.sourceTab || currentState.view;
+  if (variant === 'free') {
+    card.classList.add('learnly-card--free');
+  }
 
   const badgeRow = document.createElement('div');
   badgeRow.className = 'learnly-card__badges';
@@ -414,10 +439,17 @@ function createCourseCard(course) {
   summary.textContent = course.summary;
   card.appendChild(summary);
 
+  if (unlockNote) {
+    const unlock = document.createElement('p');
+    unlock.className = 'learnly-card__unlock';
+    unlock.textContent = unlockNote;
+    card.appendChild(unlock);
+  }
+
   const stats = document.createElement('dl');
   stats.className = 'learnly-card__stats';
   [
-    { term: 'Tuition', detail: course.tuition > 0 ? formatCurrency(course.tuition) : 'Included' },
+    { term: 'Tuition', detail: tuitionLabel },
     { term: 'Daily time', detail: `${formatHours(course.hoursPerDay)} / day` },
     { term: 'Course length', detail: formatDays(course.days) }
   ].forEach(entry => {
@@ -444,7 +476,7 @@ function createCourseCard(course) {
     primaryButton.textContent = 'Continue';
     primaryButton.addEventListener('click', event => {
       event.stopPropagation();
-      handleOpenCourse(course.id);
+      handleOpenCourse(course.id, sourceTab);
     });
   } else {
     primaryButton.textContent = course.enrollAction?.label || 'Enroll';
@@ -458,7 +490,7 @@ function createCourseCard(course) {
   actions.appendChild(primaryButton);
   card.appendChild(actions);
 
-  card.addEventListener('click', () => handleOpenCourse(course.id));
+  card.addEventListener('click', () => handleOpenCourse(course.id, sourceTab));
   return card;
 }
 
@@ -497,11 +529,29 @@ function renderDetailView() {
   const section = document.createElement('section');
   section.className = 'learnly-view learnly-view--detail';
 
+  const backTab = currentState.tab || VIEW_CATALOG;
+  let backLabel = '← Back to catalog';
+  let backView = VIEW_CATALOG;
+  switch (backTab) {
+    case VIEW_FREE:
+      backLabel = '← Back to free courses';
+      backView = VIEW_FREE;
+      break;
+    case VIEW_MY_COURSES:
+      backLabel = '← Back to My Courses';
+      backView = VIEW_MY_COURSES;
+      break;
+    default:
+      backLabel = '← Back to catalog';
+      backView = VIEW_CATALOG;
+      break;
+  }
+
   const backButton = document.createElement('button');
   backButton.type = 'button';
   backButton.className = 'learnly-back';
-  backButton.textContent = '← Back to catalog';
-  backButton.addEventListener('click', () => setState({ view: VIEW_CATALOG, tab: VIEW_CATALOG }));
+  backButton.textContent = backLabel;
+  backButton.addEventListener('click', () => setState({ view: backView, tab: backTab }));
   section.appendChild(backButton);
 
   const header = document.createElement('header');
@@ -533,7 +583,7 @@ function renderDetailView() {
   const highlights = document.createElement('div');
   highlights.className = 'learnly-detail__highlights';
   [
-    { label: 'Tuition', value: course.tuition > 0 ? formatCurrency(course.tuition) : 'Included' },
+    { label: 'Tuition', value: course.tuition > 0 ? formatCurrency(course.tuition) : 'Free' },
     { label: 'Daily study commitment', value: `${formatHours(course.hoursPerDay)} per day` },
     { label: 'Course length', value: formatDays(course.days) }
   ].forEach(entry => {
@@ -722,7 +772,7 @@ function createEnrollmentCard(course) {
   continueButton.type = 'button';
   continueButton.className = 'learnly-button learnly-button--primary';
   continueButton.textContent = course.progress.completed ? 'Review course' : 'Continue';
-  continueButton.addEventListener('click', () => handleOpenCourse(course.id));
+  continueButton.addEventListener('click', () => handleOpenCourse(course.id, VIEW_MY_COURSES));
   actions.appendChild(continueButton);
 
   if (course.progress.enrolled && !course.progress.completed) {
@@ -736,6 +786,56 @@ function createEnrollmentCard(course) {
 
   card.appendChild(actions);
   return card;
+}
+
+function renderFreeCoursesView() {
+  const section = document.createElement('section');
+  section.className = 'learnly-view learnly-view--free';
+
+  const intro = document.createElement('div');
+  intro.className = 'learnly-free-intro';
+  const heading = document.createElement('h2');
+  heading.textContent = 'Free courses';
+  const note = document.createElement('p');
+  note.textContent = 'Level cornerstone skills without tuition and unlock new workspaces as soon as you graduate.';
+  intro.append(heading, note);
+  section.appendChild(intro);
+
+  const grid = document.createElement('div');
+  grid.className = 'learnly-grid';
+  const courses = currentContext.freeCourses
+    .slice()
+    .sort((a, b) => Number(a.progress.completed) - Number(b.progress.completed));
+
+  if (!courses.length) {
+    const empty = document.createElement('div');
+    empty.className = 'learnly-empty';
+    const message = document.createElement('p');
+    message.textContent = 'No free tracks available right now. Check back after the next update!';
+    empty.appendChild(message);
+    grid.appendChild(empty);
+  } else {
+    courses.forEach(course => {
+      const lockInfo = getWorkspaceLockByCourse(course.id);
+      let unlockLabel = 'Earn skill XP to unlock more workspaces.';
+      if (lockInfo) {
+        unlockLabel = course.progress.completed
+          ? `${lockInfo.workspaceLabel} unlocked — enjoy the new workspace!`
+          : `Unlocks ${lockInfo.workspaceLabel} • Needs ${lockInfo.skillName} Lv ${lockInfo.requiredLevel}`;
+      }
+      grid.appendChild(
+        createCourseCard(course, {
+          variant: 'free',
+          unlockNote: unlockLabel,
+          tuitionLabel: 'Free',
+          sourceTab: VIEW_FREE
+        })
+      );
+    });
+  }
+
+  section.appendChild(grid);
+  return section;
 }
 
 function renderPricingView() {
@@ -785,6 +885,8 @@ function renderView() {
       return renderDetailView();
     case VIEW_MY_COURSES:
       return renderMyCoursesView();
+    case VIEW_FREE:
+      return renderFreeCoursesView();
     case VIEW_PRICING:
       return renderPricingView();
     case VIEW_CATALOG:
@@ -802,15 +904,32 @@ function draw() {
 }
 
 function deriveWorkspacePath() {
+  const activeTab = currentState.tab || VIEW_CATALOG;
+
   if (currentState.view === VIEW_PRICING) {
     return 'pricing';
   }
   if (currentState.view === VIEW_MY_COURSES) {
     return 'my-courses';
   }
+  if (currentState.view === VIEW_FREE) {
+    return 'free-courses';
+  }
   if (currentState.view === VIEW_DETAIL) {
     const courseId = currentState.selectedCourseId;
+    if (activeTab === VIEW_FREE) {
+      return courseId ? `free-courses/${courseId}` : 'free-courses';
+    }
+    if (activeTab === VIEW_MY_COURSES) {
+      return courseId ? `my-courses/${courseId}` : 'my-courses';
+    }
     return courseId ? `catalog/${courseId}` : 'catalog';
+  }
+  if (activeTab === VIEW_FREE) {
+    return 'free-courses';
+  }
+  if (activeTab === VIEW_MY_COURSES) {
+    return 'my-courses';
   }
   return 'catalog';
 }

@@ -19,6 +19,7 @@ import {
 } from '../../../game/assets/quality.js';
 import { describeAssetLaunchAvailability } from './assets.js';
 import { registerModelBuilder } from '../modelBuilderRegistry.js';
+import { buildSkillLock } from './skillLocks.js';
 
 function clampNumber(value) {
   const number = Number(value);
@@ -328,6 +329,18 @@ export default function buildBlogpressModel(assetDefinitions = [], upgradeDefini
       summary: { total: 0, active: 0, setup: 0, needsUpkeep: 0, meta: 'BlogPress locked' },
       pricing: null,
       launch: null
+    };
+  }
+
+  const lock = buildSkillLock(state, 'blogpress');
+  if (lock) {
+    return {
+      definition: null,
+      instances: [],
+      summary: { total: 0, active: 0, setup: 0, needsUpkeep: 0, meta: lock.meta },
+      pricing: null,
+      launch: null,
+      lock
     };
   }
 
