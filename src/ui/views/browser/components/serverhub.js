@@ -38,6 +38,52 @@ const ACTION_CONSOLE_ORDER = [
   { id: 'deployEdgeNodes', label: 'Deploy Edge Nodes' }
 ];
 
+function formatSetupSummary(setup = {}) {
+  const days = Number(setup.days) || 0;
+  const hoursPerDay = Number(setup.hoursPerDay) || 0;
+  const cost = Number(setup.cost) || 0;
+  const parts = [];
+  if (days > 0) {
+    parts.push(`${days} day${days === 1 ? '' : 's'}`);
+  }
+  if (hoursPerDay > 0) {
+    parts.push(`${formatHours(hoursPerDay)} per day`);
+  }
+  if (cost > 0) {
+    parts.push(`${formatCurrency(cost)} upfront`);
+  }
+  return parts.length ? parts.join(' • ') : 'Instant setup';
+}
+
+function formatUpkeepSummary(upkeep = {}) {
+  const hours = Number(upkeep.hours) || 0;
+  const cost = Number(upkeep.cost) || 0;
+  const parts = [];
+  if (hours > 0) {
+    parts.push(`${formatHours(hours)} per day`);
+  }
+  if (cost > 0) {
+    parts.push(`${formatCurrency(cost)} per day`);
+  }
+  return parts.length ? parts.join(' • ') : 'No upkeep required';
+}
+
+function confirmLaunchWithDetails(definition = {}) {
+  if (typeof window === 'undefined' || typeof window.confirm !== 'function') {
+    return true;
+  }
+  const resourceName = definition.singular || definition.name || 'app';
+  const setupSummary = formatSetupSummary(definition.setup);
+  const upkeepSummary = formatUpkeepSummary(definition.maintenance);
+  const message = [
+    `Ready to deploy the ${resourceName}?`,
+    `Setup commitment: ${setupSummary}.`,
+    `Daily upkeep: ${upkeepSummary}.`,
+    'Launch now?'
+  ].join('\n');
+  return window.confirm(message);
+}
+
 function ensureSelectedApp() {
   const instances = ensureArray(currentModel.instances);
   if (!instances.length) {
@@ -70,6 +116,9 @@ function getSelectedApp() {
 function handleLaunch() {
   const launch = currentModel.launch;
   if (!launch || launch.disabled) {
+    return;
+  }
+  if (!confirmLaunchWithDetails(currentModel.definition)) {
     return;
   }
   launch.onClick?.();

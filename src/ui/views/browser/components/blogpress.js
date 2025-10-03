@@ -40,6 +40,52 @@ const workspacePathController = createWorkspacePathController({
 const formatCurrency = amount =>
   baseFormatCurrency(amount, { precision: 'integer', clampZero: true });
 
+function describeSetupSummary(setup = {}) {
+  const days = Number(setup.days) || 0;
+  const hoursPerDay = Number(setup.hoursPerDay) || 0;
+  const cost = Number(setup.cost) || 0;
+  const parts = [];
+  if (days > 0) {
+    parts.push(`${days} day${days === 1 ? '' : 's'}`);
+  }
+  if (hoursPerDay > 0) {
+    parts.push(`${formatHours(hoursPerDay)} per day`);
+  }
+  if (cost > 0) {
+    parts.push(`$${formatMoney(cost)} upfront`);
+  }
+  return parts.length ? parts.join(' • ') : 'Instant launch';
+}
+
+function describeUpkeepSummary(upkeep = {}) {
+  const hours = Number(upkeep.hours) || 0;
+  const cost = Number(upkeep.cost) || 0;
+  const parts = [];
+  if (hours > 0) {
+    parts.push(`${formatHours(hours)} per day`);
+  }
+  if (cost > 0) {
+    parts.push(`$${formatMoney(cost)} per day`);
+  }
+  return parts.length ? parts.join(' • ') : 'No upkeep required';
+}
+
+function confirmBlogLaunch(definition = {}) {
+  if (typeof window === 'undefined' || typeof window.confirm !== 'function') {
+    return true;
+  }
+  const resourceName = definition.singular || definition.name || 'blog';
+  const setupSummary = describeSetupSummary(definition.setup);
+  const upkeepSummary = describeUpkeepSummary(definition.maintenance);
+  const message = [
+    `Ready to launch the ${resourceName}?`,
+    `Setup commitment: ${setupSummary}.`,
+    `Daily upkeep: ${upkeepSummary}.`,
+    'Launch now?'
+  ].join('\n');
+  return window.confirm(message);
+}
+
 function formatRange(range = {}) {
   const min = Number(range.min) || 0;
   const max = Number(range.max) || 0;
@@ -849,6 +895,9 @@ function renderBlueprintView(model) {
   button.disabled = launch.disabled || launch.availability?.disabled;
   button.addEventListener('click', () => {
     if (button.disabled) return;
+    if (!confirmBlogLaunch(model.definition)) {
+      return;
+    }
     launch.onClick?.();
     setView(VIEW_HOME);
   });
