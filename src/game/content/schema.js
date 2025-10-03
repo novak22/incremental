@@ -30,6 +30,7 @@ import { resolveRequirement as resolveUpgradeRequirement } from '../upgrades/req
 import { applyMetric, buildMetricConfig, normalizeSlotMap } from './schema/metrics.js';
 import {
   describeEffectSummary,
+  formatKeyLabel,
   formatSlotLabel,
   formatSlotMap,
   logUpgradeBlocked
