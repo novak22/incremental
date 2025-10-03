@@ -9,8 +9,6 @@ import { buildSkillsWidgetModel } from './skillsWidget/model.js';
 import { buildHeaderActionModel } from './headerAction/model.js';
 import { renderHeaderAction } from './headerAction/index.js';
 import { applyCardFilters } from './layout/index.js';
-import playerPresenterClassic from './views/classic/playerPresenter.js';
-import skillsWidgetPresenterClassic from './views/classic/skillsWidgetPresenter.js';
 
 function dispatchCardCollections(mode, activeView = getActiveView()) {
   cardCollectionService.refreshCollections();
@@ -63,13 +61,17 @@ export function updateUI() {
     renderDashboard(state, summary);
   }
   const presenters = activeView?.presenters || {};
-  const playerPresenter = presenters.player || playerPresenterClassic;
-  const skillsPresenter = presenters.skillsWidget || skillsWidgetPresenterClassic;
-  const playerModel = buildPlayerPanelModel(state);
-  playerPresenter?.render?.(playerModel);
+  const playerPresenter = presenters.player;
+  if (playerPresenter?.render) {
+    const playerModel = buildPlayerPanelModel(state);
+    playerPresenter.render(playerModel);
+  }
 
-  const skillsModel = buildSkillsWidgetModel(state);
-  skillsPresenter?.render?.(skillsModel);
+  const skillsPresenter = presenters.skillsWidget;
+  if (skillsPresenter?.render) {
+    const skillsModel = buildSkillsWidgetModel(state);
+    skillsPresenter.render(skillsModel);
+  }
 
   const headerModel = buildHeaderActionModel(state);
   renderHeaderAction(headerModel);

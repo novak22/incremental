@@ -7,12 +7,10 @@ import {
   buildTrendsModel,
   buildUpgradeModels
 } from './cards/model/index.js';
-import classicCardsPresenter, {
-  renderAll as renderClassicCards,
-  update as updateClassicCards,
-  updateCard as updateClassicCard,
-  refreshUpgradeSections as classicRefreshUpgradeSections
-} from './views/classic/cardsPresenter.js';
+import {
+  renderCollections as renderSharedCollections,
+  updateCollections as updateSharedCollections
+} from './cards/presenters/shared.js';
 
 function normalizeRegistries(registries = {}) {
   return {
@@ -57,8 +55,7 @@ function synthesizeModels(baseModels = {}, registries = {}, force = false) {
   return { models, generated };
 }
 
-export function renderCardCollections(registries = {}, models) {
-  const presenter = getActiveCardsPresenter();
+function preparePayload(registries = {}, models) {
   const normalizedRegistries = normalizeRegistries(registries);
   const hasModels = models !== undefined && models !== null;
   const { models: ensuredModels, generated } = synthesizeModels(
@@ -68,6 +65,12 @@ export function renderCardCollections(registries = {}, models) {
   );
   const payload = { registries: normalizedRegistries, models: ensuredModels };
   const presenterOptions = generated ? { skipCacheReset: true } : undefined;
+  return { payload, presenterOptions };
+}
+
+export function renderCardCollections(registries = {}, models) {
+  const presenter = getActiveCardsPresenter();
+  const { payload, presenterOptions } = preparePayload(registries, models);
   if (typeof presenter?.renderAll === 'function') {
     presenter.renderAll(payload, presenterOptions);
     return;
@@ -78,26 +81,18 @@ export function renderCardCollections(registries = {}, models) {
     return;
   }
 
-  renderClassicCards(payload, presenterOptions);
+  renderSharedCollections(payload, {}, presenterOptions);
 }
 
 export function updateAllCards(registries = {}, models) {
   const presenter = getActiveCardsPresenter();
-  const normalizedRegistries = normalizeRegistries(registries);
-  const hasModels = models !== undefined && models !== null;
-  const { models: ensuredModels, generated } = synthesizeModels(
-    hasModels ? models : {},
-    normalizedRegistries,
-    !hasModels
-  );
-  const payload = { registries: normalizedRegistries, models: ensuredModels };
-  const presenterOptions = generated ? { skipCacheReset: true } : undefined;
+  const { payload, presenterOptions } = preparePayload(registries, models);
   if (typeof presenter?.update === 'function') {
     presenter.update(payload, presenterOptions);
     return;
   }
 
-  updateClassicCards(payload, presenterOptions);
+  updateSharedCollections(payload, {}, presenterOptions);
 }
 
 export function updateCard(definition) {
@@ -107,7 +102,7 @@ export function updateCard(definition) {
     return;
   }
 
-  updateClassicCard(definition);
+  // Without an active presenter there is no card-specific view to update.
 }
 
 export function refreshUpgradeSections() {
@@ -117,6 +112,6 @@ export function refreshUpgradeSections() {
     return;
   }
 
-  classicRefreshUpgradeSections();
+  // No active presenter means there are no upgrade sections to refresh.
 }
 

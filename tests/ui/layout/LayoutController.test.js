@@ -1,73 +1,61 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { LayoutController } from '../../../src/ui/layout/LayoutController.js';
-import {
-  resetPreferenceAdapters,
-  getPreferenceAdapters,
-  ensureDefaultPreferenceAdapters
-} from '../../../src/ui/layout/preferenceAdapters.js';
 
-test('syncPreferencesFromDom delegates to registered adapters', () => {
-  const updates = [];
-  const elements = {
-    alpha: { toggle: { checked: true } },
-    beta: {}
+test('applyFilters uses the active view presenter when available', () => {
+  const applyCalls = [];
+  const presenter = {
+    initControls: () => {},
+    applyFilters: model => applyCalls.push(model)
   };
 
   const controller = new LayoutController({
-    getElement: key => elements[key] || {},
-    buildLayoutModel: () => ({}),
+    buildLayoutModel: models => ({ processed: models }),
+    getLayoutPreferences: () => ({}),
+    updateLayoutPreferences: () => {},
+    getActiveView: () => ({
+      id: 'browser',
+      presenters: { layout: presenter }
+    })
+  });
+
+  controller.applyFilters({ foo: 'bar' });
+
+  assert.equal(applyCalls.length, 1);
+  assert.deepEqual(applyCalls[0], { processed: { foo: 'bar' } });
+});
+
+test('handlePreferenceChange updates preferences and reapplies filters', () => {
+  const updates = [];
+  const applyCalls = [];
+  let onChangeHandler = null;
+
+  const presenter = {
+    initControls: options => {
+      onChangeHandler = options.onChange;
+    },
+    applyFilters: model => applyCalls.push(model)
+  };
+
+  const controller = new LayoutController({
+    buildLayoutModel: models => ({ filtered: models }),
     getLayoutPreferences: () => ({}),
     updateLayoutPreferences: (section, patch) => {
       updates.push({ section, patch });
     },
-    preferenceAdapters: [
-      {
-        section: 'alpha',
-        elementKey: 'alpha',
-        read(lookup) {
-          if (!lookup.toggle) return null;
-          return { enabled: Boolean(lookup.toggle.checked) };
-        }
-      },
-      {
-        section: 'beta',
-        elementKey: 'beta',
-        read() {
-          return null;
-        }
-      }
-    ],
-    logger: { error: () => {} }
+    getActiveView: () => ({
+      id: 'browser',
+      presenters: { layout: presenter }
+    })
   });
 
-  controller.syncPreferencesFromDom();
+  controller.applyFilters({ alpha: true });
+  assert.ok(onChangeHandler, 'initControls should provide an onChange handler');
+  assert.equal(applyCalls.length, 1);
 
-  assert.equal(updates.length, 1);
-  assert.deepEqual(updates[0], {
-    section: 'alpha',
-    patch: { enabled: true }
-  });
-});
+  onChangeHandler('layout', { condensed: true });
 
-test('init ensures default preference adapters are registered', () => {
-  resetPreferenceAdapters();
-
-  const controller = new LayoutController({
-    getElement: () => ({}),
-    buildLayoutModel: () => ({}),
-    getLayoutPreferences: () => ({}),
-    updateLayoutPreferences: () => {},
-    logger: { error: () => {} }
-  });
-
-  controller.init();
-
-  const sections = getPreferenceAdapters().map(adapter => adapter.section);
-  assert.ok(sections.includes('hustles'));
-  assert.ok(sections.includes('assets'));
-  assert.ok(sections.includes('upgrades'));
-  assert.ok(sections.includes('study'));
-
-  ensureDefaultPreferenceAdapters();
+  assert.deepEqual(updates, [{ section: 'layout', patch: { condensed: true } }]);
+  assert.equal(applyCalls.length, 2);
+  assert.deepEqual(applyCalls[1], { filtered: { alpha: true } });
 });

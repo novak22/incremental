@@ -1,7 +1,6 @@
 import { endDay } from '../../game/lifecycle.js';
 import { buildHeaderActionModel } from './model.js';
 import { getActiveView } from '../viewManager.js';
-import classicHeaderActionPresenter from '../views/classic/headerActionPresenter.js';
 
 const AUTO_FORWARD_MODES = ['paused', 'current', 'double'];
 const AUTO_FORWARD_INTERVALS = {
@@ -46,13 +45,7 @@ function refreshPresenterState() {
 function getPresenter() {
   refreshPresenterState();
   const view = getActiveView();
-  if (view?.presenters?.headerAction) {
-    return view.presenters.headerAction;
-  }
-  if (!view) {
-    return classicHeaderActionPresenter;
-  }
-  return null;
+  return view?.presenters?.headerAction ?? null;
 }
 
 function getNextMode(current) {

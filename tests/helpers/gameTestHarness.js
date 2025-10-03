@@ -24,11 +24,11 @@ export async function getGameTestHarness() {
   const offlineModule = await import('../../src/game/offline.js');
   const elementRegistryModule = await import('../../src/ui/elements/registry.js');
   const viewManagerModule = await import('../../src/ui/viewManager.js');
-  const classicViewModule = await import('../../src/ui/views/classic/index.js');
+  const browserViewModule = await import('../../src/ui/views/browser/index.js');
   const registryService = await import('../../src/game/registryService.js');
   const { ensureRegistryReady } = await import('../../src/game/registryBootstrap.js');
 
-  viewManagerModule.setActiveView(classicViewModule.default, document);
+  viewManagerModule.setActiveView(browserViewModule.default, document);
 
   registryService.resetRegistry();
   ensureRegistryReady();

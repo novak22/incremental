@@ -2,23 +2,30 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { ensureTestDom } from '../helpers/setupDom.js';
 
-test('event log panel toggles visibility from dashboard shortcut', async () => {
+test('notifications panel toggles visibility from browser chrome', async () => {
   ensureTestDom();
 
-  const { initLayoutControls } = await import('../../src/ui/layout/index.js');
-  initLayoutControls();
+  const notificationsPresenter = await import('../../src/ui/views/browser/notificationsPresenter.js');
+  const sampleEntry = {
+    id: 'test-entry',
+    message: 'Sample alert',
+    read: false,
+    type: 'info',
+    timeLabel: 'moments ago'
+  };
 
-  const trigger = document.getElementById('open-event-log');
-  const panel = document.getElementById('event-log-panel');
+  notificationsPresenter.default.render({ allEntries: [sampleEntry], emptyMessage: '' });
 
-  assert.ok(trigger, 'expected event log trigger');
-  assert.ok(panel, 'expected event log panel');
+  const button = document.getElementById('browser-notifications-button');
+  const panel = document.getElementById('browser-notifications-panel');
+
+  assert.ok(button, 'expected notifications trigger button');
+  assert.ok(panel, 'expected notifications panel');
   assert.equal(panel.hidden, true);
 
-  trigger.click();
+  button.click();
   assert.equal(panel.hidden, false);
 
-  const close = document.getElementById('event-log-close');
-  close.click();
+  button.click();
   assert.equal(panel.hidden, true);
 });
