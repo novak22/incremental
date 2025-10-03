@@ -19,6 +19,10 @@ const presenterState = {
   initialized: false
 };
 
+function isHustleEntry(entry) {
+  return typeof entry?.type === 'string' && entry.type.toLowerCase() === 'hustle';
+}
+
 function getRefs() {
   return getElement('browserNotifications') || {};
 }
@@ -116,13 +120,27 @@ function formatTypeLabel(type) {
 }
 
 function getUnreadEntries(entries = []) {
-  return entries.filter(entry => entry && entry.read !== true);
+  const unread = [];
+  entries.forEach(entry => {
+    if (!entry || entry.read === true) {
+      return;
+    }
+    if (isHustleEntry(entry)) {
+      entry.read = true;
+      if (entry?.id) {
+        markLogEntryRead(entry.id);
+      }
+      return;
+    }
+    unread.push(entry);
+  });
+  return unread;
 }
 
 function renderBadge(entries = []) {
   const { badge, button } = getRefs();
   if (!badge || !button) return;
-  const unread = entries.filter(entry => entry && entry.read !== true).length;
+  const unread = getUnreadEntries(entries).length;
   if (unread > 0) {
     badge.hidden = false;
     badge.textContent = unread > 99 ? '99+' : String(unread);
@@ -273,7 +291,7 @@ function render(model = {}) {
 
   const { markAll } = getRefs();
   if (markAll) {
-    const hasUnread = presenterState.entries.some(entry => entry && entry.read !== true);
+    const hasUnread = getUnreadEntries(presenterState.entries).length > 0;
     markAll.disabled = !hasUnread;
     markAll.setAttribute('aria-disabled', String(!hasUnread));
   }

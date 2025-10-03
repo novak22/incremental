@@ -69,3 +69,56 @@ test('notifications presenter hides panel once markup becomes available', async 
   assert.equal(panel.hidden, true);
   assert.equal(trigger.getAttribute('aria-expanded'), 'false');
 });
+
+test('hustle log entries are treated as read notifications', async () => {
+  const dom = new JSDOM(
+    `<!DOCTYPE html><body>
+      <div data-role="browser-notifications">
+        <button id="browser-notifications-button" aria-expanded="false"></button>
+        <div id="browser-notifications-panel" hidden></div>
+        <ol id="browser-notifications-list"></ol>
+        <p id="browser-notifications-empty" hidden></p>
+        <span id="browser-notifications-badge"></span>
+        <button id="browser-notifications-mark-all"></button>
+      </div>
+    </body>`,
+    { url: 'https://example.com' }
+  );
+
+  const { window } = dom;
+  global.window = window;
+  global.document = window.document;
+  global.Node = window.Node;
+  global.HTMLElement = window.HTMLElement;
+  global.requestAnimationFrame = window.requestAnimationFrame ?? (cb => setTimeout(cb, 16));
+  global.cancelAnimationFrame = window.cancelAnimationFrame ?? clearTimeout;
+
+  initElementRegistry(window.document, resolvers);
+
+  const presenterModule = await import('../../src/ui/views/browser/notificationsPresenter.js');
+  const presenter = presenterModule.default;
+
+  const entries = [
+    {
+      id: 'log:hustle',
+      message: 'Hustle payout landed.',
+      type: 'hustle',
+      read: false,
+      timeLabel: 'Now'
+    }
+  ];
+
+  presenter.render({ allEntries: entries, emptyMessage: 'Nothing to see here.' });
+
+  const list = window.document.getElementById('browser-notifications-list');
+  const badge = window.document.getElementById('browser-notifications-badge');
+  const empty = window.document.getElementById('browser-notifications-empty');
+
+  assert.equal(entries[0].read, true);
+  assert.equal(list.hidden, true);
+  assert.equal(list.childElementCount, 0);
+  assert.equal(badge.hidden, true);
+  assert.equal(badge.textContent, '0');
+  assert.equal(empty.hidden, false);
+  assert.equal(empty.textContent, 'Nothing to see here.');
+});

@@ -2,6 +2,7 @@
 
 ## Unreleased
 - Passive income and upgrade completion notifications now arrive pre-read, and the welcome-back alert no longer appears so the tray only spotlights actionable events.
+- Hustle payout log entries now default to read status so they no longer raise notification badges.
 - Random event engine now tracks multi-day boosts and setbacks for assets and niches, including the vlog’s viral streak migrating onto the shared system.
 - TimoDoro Task Log now spotlights completed work only, grouping hustle hours into Hustles, Education, Upkeep, and Upgrades with hour-focused summaries.
 - TimoDoro productivity hub joins the browser app roster, remixing the ToDo queue, upkeep logs, and daily summary stats into a dedicated focus workspace.
