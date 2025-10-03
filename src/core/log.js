@@ -6,15 +6,22 @@ import { getActiveView } from '../ui/viewManager.js';
 import { saveState } from './storage.js';
 import classicLogPresenter from '../ui/views/classic/logPresenter.js';
 
+const AUTO_READ_TYPES = new Set(['passive', 'upgrade']);
+
+function shouldAutoRead(type) {
+  return typeof type === 'string' && AUTO_READ_TYPES.has(type);
+}
+
 export function addLog(message, type = 'info') {
   const state = getState();
   if (!state) return;
+  const normalizedType = typeof type === 'string' && type ? type : 'info';
   const entry = {
     id: createId(),
     timestamp: Date.now(),
     message,
-    type,
-    read: false
+    type: normalizedType,
+    read: shouldAutoRead(normalizedType)
   };
   state.log.push(entry);
   if (state.log.length > MAX_LOG_ENTRIES) {
