@@ -7,7 +7,7 @@ import {
   initElementRegistry
 } from '../../../src/ui/elements/registry.js';
 import { setActiveView } from '../../../src/ui/viewManager.js';
-import classicView from '../../../src/ui/views/classic/index.js';
+import browserView from '../../../src/ui/views/browser/index.js';
 
 test('uses injected resolvers to look up DOM nodes', t => {
   const calls = [];
@@ -19,10 +19,14 @@ test('uses injected resolvers to look up DOM nodes', t => {
   };
 
   const resolvers = {
-    money: root => root.lookup('money'),
-    logNodes: root => ({
-      logFeed: root.lookup('log'),
-      logTip: root.lookup('tip')
+    browserSessionControls: root => ({
+      homeButton: root.lookup('homeButton'),
+      endDayButton: root.lookup('endDayButton')
+    }),
+    browserNotifications: root => ({
+      container: root.lookup('notifications'),
+      button: root.lookup('notificationsButton'),
+      list: root.lookup('notificationsList')
     })
   };
 
@@ -30,24 +34,34 @@ test('uses injected resolvers to look up DOM nodes', t => {
 
   t.after(() => {
     const root = typeof document !== 'undefined' ? document : null;
-    setActiveView(classicView, root);
+    setActiveView(browserView, root);
   });
 
-  assert.equal(getElement('money'), 'money-node');
-  assert.equal(getElement('money'), 'money-node', 'reuses cached value');
-  assert.deepEqual(calls, ['money']);
+  const sessionControls = getElement('browserSessionControls');
+  assert.deepEqual(sessionControls, {
+    homeButton: 'homeButton-node',
+    endDayButton: 'endDayButton-node'
+  });
+  assert.deepEqual(calls, ['homeButton', 'endDayButton']);
 
-  const logNodes = getElement('logNodes');
-  assert.deepEqual(logNodes, { logFeed: 'log-node', logTip: 'tip-node' });
-  assert.deepEqual(calls, ['money', 'log', 'tip']);
+  const notifications = getElement('browserNotifications');
+  assert.deepEqual(notifications, {
+    container: 'notifications-node',
+    button: 'notificationsButton-node',
+    list: 'notificationsList-node'
+  });
+  assert.deepEqual(calls, ['homeButton', 'endDayButton', 'notifications', 'notificationsButton', 'notificationsList']);
 
-  assert.equal(elements.money, 'money-node');
-  assert.equal(elements.money, 'money-node', 'proxy uses cached value');
-  assert.deepEqual(calls, ['money', 'log', 'tip']);
-
-  const proxyLogNodes = elements.logNodes;
-  assert.deepEqual(proxyLogNodes, { logFeed: 'log-node', logTip: 'tip-node' });
-  assert.deepEqual(calls, ['money', 'log', 'tip']);
+  assert.deepEqual(elements.browserSessionControls, sessionControls);
+  assert.deepEqual(
+    elements.browserNotifications,
+    notifications,
+    'proxy reuses cached notification lookup'
+  );
+  assert.deepEqual(
+    calls,
+    ['homeButton', 'endDayButton', 'notifications', 'notificationsButton', 'notificationsList']
+  );
 });
 
 test('returns null when no resolver is provided', t => {
@@ -56,9 +70,9 @@ test('returns null when no resolver is provided', t => {
 
   t.after(() => {
     const root = typeof document !== 'undefined' ? document : null;
-    setActiveView(classicView, root);
+    setActiveView(browserView, root);
   });
 
-  assert.equal(getElement('money'), null);
-  assert.equal(elements.money, null);
+  assert.equal(getElement('browserNotifications'), null);
+  assert.equal(elements.browserNotifications, null);
 });

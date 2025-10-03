@@ -1,4 +1,4 @@
-  import { ensureTestDom } from './setupDom.js';
+import { ensureTestDom } from './setupDom.js';
 
 let harness;
 
@@ -24,52 +24,73 @@ export async function getGameTestHarness() {
   const offlineModule = await import('../../src/game/offline.js');
   const elementRegistryModule = await import('../../src/ui/elements/registry.js');
   const viewManagerModule = await import('../../src/ui/viewManager.js');
-  const classicViewModule = await import('../../src/ui/views/classic/index.js');
+  const browserViewModule = await import('../../src/ui/views/browser/index.js');
   const registryService = await import('../../src/game/registryService.js');
   const { ensureRegistryReady } = await import('../../src/game/registryBootstrap.js');
 
-  viewManagerModule.setActiveView(classicViewModule.default, document);
+  viewManagerModule.setActiveView(browserViewModule.default, document);
 
   registryService.resetRegistry();
   ensureRegistryReady();
 
   const elements = {
-    get money() {
-      return elementRegistryModule.getElement('money');
+    get browserNavigation() {
+      return elementRegistryModule.getElement('browserNavigation');
     },
-    get logFeed() {
-      return (elementRegistryModule.getElement('logNodes') || {}).logFeed;
+    get browserSessionControls() {
+      return elementRegistryModule.getElement('browserSessionControls');
     },
-    get logTip() {
-      return (elementRegistryModule.getElement('logNodes') || {}).logTip;
+    get browserNotifications() {
+      return elementRegistryModule.getElement('browserNotifications');
     },
-    get day() {
-      return (elementRegistryModule.getElement('playerNodes') || {}).summary?.day;
+    get browserTabs() {
+      return elementRegistryModule.getElement('browserTabs');
     },
-    get time() {
-      return (elementRegistryModule.getElement('playerNodes') || {}).summary?.time;
+    get homepageWidgets() {
+      return elementRegistryModule.getElement('homepageWidgets');
     }
   };
 
   const resetState = () => {
     const nextState = stateModule.initializeState(stateModule.buildDefaultState());
-    const logNodes = elementRegistryModule.getElement('logNodes') || {};
-    if (logNodes.logFeed) {
-      logNodes.logFeed.innerHTML = '';
+    const notifications = elementRegistryModule.getElement('browserNotifications') || {};
+    if (notifications.list) {
+      notifications.list.innerHTML = '';
     }
-    if (logNodes.logTip) {
-      logNodes.logTip.style.display = 'block';
+    if (notifications.badge) {
+      notifications.badge.hidden = true;
+      notifications.badge.textContent = '0';
     }
-    const moneyNode = elementRegistryModule.getElement('money');
-    if (moneyNode) {
-      moneyNode.textContent = '';
+    const homepageWidgets = elementRegistryModule.getElement('homepageWidgets') || {};
+    const { todo, apps, bank } = homepageWidgets;
+    if (todo?.list) {
+      todo.list.innerHTML = '';
     }
-    const playerSummary = elementRegistryModule.getElement('playerNodes')?.summary || {};
-    if (playerSummary.time) {
-      playerSummary.time.textContent = '';
+    if (todo?.done) {
+      todo.done.innerHTML = '';
     }
-    if (playerSummary.day) {
-      playerSummary.day.textContent = '';
+    if (todo?.availableValue) {
+      todo.availableValue.textContent = '';
+    }
+    if (todo?.spentValue) {
+      todo.spentValue.textContent = '';
+    }
+    if (apps?.list) {
+      apps.list.innerHTML = '';
+    }
+    if (apps?.note) {
+      apps.note.textContent = '';
+    }
+    if (bank?.stats) {
+      bank.stats.innerHTML = '';
+    }
+    if (bank?.footnote) {
+      bank.footnote.hidden = true;
+      bank.footnote.textContent = '';
+    }
+    if (bank?.highlights) {
+      bank.highlights.hidden = true;
+      bank.highlights.innerHTML = '';
     }
     return nextState;
   };

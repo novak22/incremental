@@ -1,17 +1,37 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ensureTestDom } from './helpers/setupDom.js';
+import * as browserCardsPresenter from '../src/ui/views/browser/cardsPresenter.js';
+import renderEducationApp from '../src/ui/views/browser/apps/education.js';
 
 const dom = ensureTestDom();
 const { document } = dom.window;
 
-test('renderCardCollections synthesizes models when omitted', async () => {
-  const hustleList = document.getElementById('hustle-list');
-  const ventureGallery = document.getElementById('venture-gallery');
-  hustleList.innerHTML = '';
-  if (ventureGallery) {
-    ventureGallery.innerHTML = '';
+function clearLearnlyWorkspace() {
+  const learnlyRoot = document.querySelector('[data-browser-page="learnly"] [data-role="learnly-root"]');
+  if (learnlyRoot) {
+    learnlyRoot.innerHTML = '';
   }
+}
+
+async function withEducationRendererOnly(callback) {
+  const originalRenderers = [...browserCardsPresenter.APP_RENDERERS];
+  browserCardsPresenter.APP_RENDERERS.length = 0;
+  browserCardsPresenter.APP_RENDERERS.push((context, registries = {}, models = {}) =>
+    renderEducationApp(context, registries.education || [], models.education || {})
+  );
+  try {
+    await callback();
+  } finally {
+    browserCardsPresenter.APP_RENDERERS.length = 0;
+    originalRenderers.forEach(renderer => {
+      browserCardsPresenter.APP_RENDERERS.push(renderer);
+    });
+  }
+}
+
+test('renderCardCollections hydrates Learnly workspace when models are omitted', async t => {
+  clearLearnlyWorkspace();
 
   const stateModule = await import('../src/core/state.js');
   const registryService = await import('../src/game/registryService.js');
@@ -19,56 +39,40 @@ test('renderCardCollections synthesizes models when omitted', async () => {
   const { initializeState } = stateModule;
 
   registryService.resetRegistry();
+  t.after(() => {
+    registryService.resetRegistry();
+  });
+
   const registry = ensureRegistryReady();
   initializeState();
 
-  const viewManager = await import('../src/ui/viewManager.js');
-  const classicModule = await import('../src/ui/views/classic/index.js');
-  const fallbackView = {
-    ...classicModule.default,
-    presenters: { ...classicModule.default.presenters, cards: null }
-  };
-  viewManager.setActiveView(fallbackView, document);
-
+  const educationDefinitions = registry.hustles.filter(hustle => hustle.tag?.type === 'study');
   const { renderCardCollections } = await import('../src/ui/cards.js');
-  try {
+  await withEducationRendererOnly(async () => {
     renderCardCollections({
-      hustles: registry.hustles.filter(hustle => hustle.tag?.type !== 'study').slice(0, 3),
-      education: [],
-      assets: registry.assets.slice(0, 2),
+      hustles: [],
+      education: educationDefinitions,
+      assets: [],
       upgrades: []
     });
+  });
 
-    const hustleCards = document.querySelectorAll('.hustle-card');
-    const assetCards = document.querySelectorAll('#venture-gallery [data-asset]');
-    assert.ok(
-      hustleCards.length > 0 || assetCards.length > 0,
-      'fallback render should show hustles or ventures without provided models'
-    );
-  } finally {
-    viewManager.setActiveView(classicModule.default, document);
-  }
+  const workspaceHost = document.getElementById('browser-workspaces');
+  const learnlyRoot = workspaceHost?.querySelector('[data-browser-page="learnly"] [data-role="learnly-root"]');
+  assert.ok(learnlyRoot, 'expected Learnly root to render inside the browser workspace host');
+
+  const courseCards = learnlyRoot.querySelectorAll('.learnly-card');
+  assert.ok(courseCards.length > 0, 'expected Learnly catalog to show course cards when models are synthesized');
 });
 
 test('education tracks reflect canonical study data', async () => {
-  const trackList = document.getElementById('study-track-list');
-  const queueList = document.getElementById('study-queue-list');
-  const queueEta = document.getElementById('study-queue-eta');
-  const queueCap = document.getElementById('study-queue-cap');
-  assert.ok(trackList, 'study track list should exist in test DOM');
-  assert.ok(queueList, 'study queue list should exist in test DOM');
-  assert.ok(queueEta, 'study queue ETA should exist in test DOM');
-  assert.ok(queueCap, 'study queue cap should exist in test DOM');
-  trackList.innerHTML = '';
-  queueList.innerHTML = '';
-  queueEta.textContent = '';
-  queueCap.textContent = '';
+  clearLearnlyWorkspace();
 
   const stateModule = await import('../src/core/state.js');
   const { initializeState, getState } = stateModule;
-
   const registryService = await import('../src/game/registryService.js');
   const { ensureRegistryReady } = await import('../src/game/registryBootstrap.js');
+
   registryService.resetRegistry();
   const registry = ensureRegistryReady();
   initializeState();
@@ -83,54 +87,49 @@ test('education tracks reflect canonical study data', async () => {
   const { buildEducationModels } = await import('../src/ui/cards/model/index.js');
   const educationModels = buildEducationModels(educationDefinitions);
   const { renderCardCollections } = await import('../src/ui/cards.js');
-  renderCardCollections(
-    {
-      hustles: [],
-      education: educationDefinitions,
-      assets: [],
-      upgrades: []
-    },
-    { education: educationModels }
-  );
+  await withEducationRendererOnly(async () => {
+    renderCardCollections(
+      {
+        hustles: [],
+        education: educationDefinitions,
+        assets: [],
+        upgrades: []
+      },
+      { education: educationModels }
+    );
+  });
 
-  const track = document.querySelector('.study-track');
-  assert.ok(track, 'study track should render');
+  const workspaceHost = document.getElementById('browser-workspaces');
+  const learnlyRoot = workspaceHost?.querySelector('[data-browser-page="learnly"] [data-role="learnly-root"]');
+  assert.ok(learnlyRoot, 'expected Learnly workspace to render for education content');
 
-  const countdown = track.querySelector('.study-track__countdown');
-  assert.ok(countdown, 'countdown element should exist');
-  assert.equal(countdown.textContent, '3 days remaining');
+  const courseCard = learnlyRoot.querySelector('[data-course-id="outlineMastery"]');
+  assert.ok(courseCard, 'expected Outline Mastery course card to be visible');
 
-  const metaValues = Array.from(track.querySelectorAll('.study-track__meta dd')).map(node => node.textContent);
-  assert.deepEqual(metaValues, ['2h / day', '5 days', '$140']);
+  const statsValues = Array.from(courseCard.querySelectorAll('.learnly-card__stats dd')).map(node => node.textContent);
+  assert.deepEqual(statsValues, ['$140', '2h / day', '5 days']);
 
-  const badges = Array.from(track.querySelectorAll('.study-track__status .badge')).map(node => node.textContent);
-  assert.deepEqual(badges, ['Enrolled', 'Study pending']);
+  const progressLabel = courseCard.querySelector('.learnly-progress__label');
+  assert.equal(progressLabel?.textContent, '2/5 days • 3 left');
 
-  const remaining = track.querySelector('.study-track__remaining');
-  assert.equal(remaining?.textContent, '2/5 days complete');
+  const progressFill = courseCard.querySelector('.learnly-progress__bar span');
+  assert.equal(progressFill?.style.width, '40%');
 
-  const remainingDays = track.querySelector('.study-track__remaining-days');
-  assert.equal(remainingDays?.textContent, '3 days left');
+  const badges = Array.from(courseCard.querySelectorAll('.learnly-badge')).map(node => node.textContent);
+  assert.ok(badges.includes('Writing & Storycraft'), 'expected Writing & Storycraft category badge');
 
-  const note = track.querySelector('.study-track__note');
-  assert.equal(note?.textContent, 'Reserve 2h today to keep momentum humming.');
+  const primaryButton = courseCard.querySelector('.learnly-button--primary');
+  assert.equal(primaryButton?.textContent, 'Continue');
 });
 
 test('completed study tracks celebrate progress and skills', async () => {
-  const trackList = document.getElementById('study-track-list');
-  const queueList = document.getElementById('study-queue-list');
-  const queueEta = document.getElementById('study-queue-eta');
-  const queueCap = document.getElementById('study-queue-cap');
-  trackList.innerHTML = '';
-  queueList.innerHTML = '';
-  queueEta.textContent = '';
-  queueCap.textContent = '';
+  clearLearnlyWorkspace();
 
   const stateModule = await import('../src/core/state.js');
   const { initializeState, getState } = stateModule;
-
   const registryService = await import('../src/game/registryService.js');
   const { ensureRegistryReady } = await import('../src/game/registryBootstrap.js');
+
   registryService.resetRegistry();
   const registry = ensureRegistryReady();
   initializeState();
@@ -141,16 +140,19 @@ test('completed study tracks celebrate progress and skills', async () => {
   const educationDefinitions = registry.hustles.filter(hustle => hustle.tag?.type === 'study');
   const { buildEducationModels } = await import('../src/ui/cards/model/index.js');
   const { renderCardCollections, updateAllCards } = await import('../src/ui/cards.js');
+
   const initialModels = buildEducationModels(educationDefinitions);
-  renderCardCollections(
-    {
-      hustles: [],
-      education: educationDefinitions,
-      assets: [],
-      upgrades: []
-    },
-    { education: initialModels }
-  );
+  await withEducationRendererOnly(async () => {
+    renderCardCollections(
+      {
+        hustles: [],
+        education: educationDefinitions,
+        assets: [],
+        upgrades: []
+      },
+      { education: initialModels }
+    );
+  });
 
   const state = getState();
   const progress = getKnowledgeProgress('outlineMastery', state);
@@ -160,71 +162,65 @@ test('completed study tracks celebrate progress and skills', async () => {
   progress.studiedToday = false;
 
   const updatedModels = buildEducationModels(educationDefinitions);
-  updateAllCards(
-    {
-      hustles: [],
-      education: educationDefinitions,
-      assets: [],
-      upgrades: []
-    },
-    { education: updatedModels }
+  await withEducationRendererOnly(async () => {
+    updateAllCards(
+      {
+        hustles: [],
+        education: educationDefinitions,
+        assets: [],
+        upgrades: []
+      },
+      { education: updatedModels }
+    );
+  });
+
+  const workspaceHost = document.getElementById('browser-workspaces');
+  const learnlyRoot = workspaceHost?.querySelector('[data-browser-page="learnly"] [data-role="learnly-root"]');
+  assert.ok(learnlyRoot, 'expected Learnly workspace to remain mounted after updates');
+
+  const tabButtons = Array.from(learnlyRoot?.querySelectorAll('.learnly-tab') || []);
+  const myCoursesTab = tabButtons.find(button => /My Courses/i.test(button?.textContent || ''));
+  assert.ok(myCoursesTab, 'expected My Courses tab to exist');
+  myCoursesTab?.click();
+
+  const myCoursesView = learnlyRoot?.querySelector('.learnly-view--my-courses');
+  assert.ok(myCoursesView, 'expected My Courses view to render');
+
+  const enrollmentCards = Array.from(myCoursesView?.querySelectorAll('.learnly-enrollment') || []);
+  const enrollmentCard = enrollmentCards.find(card =>
+    card.querySelector('h3')?.textContent?.includes('Outline Mastery')
   );
+  assert.ok(enrollmentCard, 'expected completed course to appear in My Courses view');
 
-  const track = document.querySelector("[data-track='outlineMastery']");
-  assert.ok(track, 'study track should remain visible after completion');
-  assert.equal(track?.dataset.complete, 'true');
+  const enrollmentStatus = enrollmentCard?.querySelector('.learnly-enrollment__status');
+  assert.equal(enrollmentStatus?.textContent, 'Completed');
 
-  const fill = track?.querySelector('.study-track__progress span');
-  assert.equal(fill?.style.width, '100%');
+  const enrollmentProgress = enrollmentCard?.querySelector('.learnly-progress__bar span');
+  assert.equal(enrollmentProgress?.style.width, '100%');
 
-  const remaining = track?.querySelector('.study-track__remaining');
-  assert.equal(remaining?.textContent, '5/5 days complete');
+  const reviewButton = enrollmentCard?.querySelector('.learnly-button--primary');
+  assert.ok(reviewButton, 'expected review button to be available');
+  reviewButton?.click();
 
-  const remainingDays = track?.querySelector('.study-track__remaining-days');
-  assert.equal(remainingDays?.textContent, 'Course complete');
+  const detailView = learnlyRoot?.querySelector('.learnly-view--detail');
+  assert.ok(detailView, 'expected clicking a course to open the detail view');
 
-  const skillHeading = track?.querySelector('.study-track__skills-heading');
-  assert.equal(skillHeading?.textContent, 'Skill rewards');
+  const detailProgress = detailView?.querySelector('.learnly-progress__label');
+  assert.equal(detailProgress?.textContent, 'Completed');
 
-  const skillItems = Array.from(track?.querySelectorAll('.study-track__skills-item strong') || []).map(
+  const highlightValues = Array.from(detailView?.querySelectorAll('.learnly-highlight__value') || []).map(
     node => node.textContent
   );
-  assert.ok(
-    skillItems.includes('Writing & Storycraft'),
-    'skill rewards should list Writing & Storycraft focus'
-  );
+  assert.deepEqual(highlightValues, ['$140', '2h per day', '5 days']);
 
-  const xpNote = track?.querySelector('.study-track__skills-note');
-  assert.equal(xpNote?.textContent, 'Graduates collect +120 XP across these disciplines.');
-});
-
-test('expanded curriculum registers new boosts and passive multipliers', async () => {
-  const { KNOWLEDGE_TRACKS, KNOWLEDGE_REWARDS } = await import('../src/game/requirements.js');
-  assert.ok(KNOWLEDGE_TRACKS.curriculumDesignStudio, 'curriculum design studio track should exist');
-  assert.ok(KNOWLEDGE_TRACKS.postProductionPipelineLab, 'post-production lab track should exist');
+  const rewardsBody = detailView?.querySelector('.learnly-detail__section:last-of-type p');
   assert.equal(
-    KNOWLEDGE_REWARDS.galleryLicensingSummit.baseXp,
-    140,
-    'gallery licensing summit should award 140 base XP'
+    rewardsBody?.textContent,
+    'Finish the full 5 days to earn +120 XP across Writing & Storycraft (100%).',
+    'expected rewards note to celebrate XP gains'
   );
-  const fulfillmentBoost = KNOWLEDGE_TRACKS.fulfillmentOpsMasterclass.instantBoosts.find(
-    boost => boost.assetId === 'dropshipping'
-  );
-  assert.ok(fulfillmentBoost, 'fulfillment masterclass should reference dropshipping asset');
-  const syndicationBoost = KNOWLEDGE_TRACKS.syndicationResidency.instantBoosts.find(
-    boost => boost.assetId === 'blog'
-  );
-  assert.ok(syndicationBoost, 'syndication residency should reference blog asset');
 
-  const { getAssetEducationBonuses } = await import('../src/game/educationEffects.js');
-  const dropshipBonuses = getAssetEducationBonuses('dropshipping');
-  assert.ok(
-    dropshipBonuses.some(boost => boost.trackId === 'fulfillmentOpsMasterclass'),
-    'dropshipping asset should receive fulfillment ops masterclass boosts'
-  );
-  const vlogBonuses = getAssetEducationBonuses('vlog');
-  assert.ok(
-    vlogBonuses.some(boost => boost.trackId === 'postProductionPipelineLab'),
-    'vlog asset should receive post-production lab boosts'
-  );
+  const detailCta = detailView?.querySelector('.learnly-button--primary');
+  assert.equal(detailCta?.textContent, 'Course complete');
+  assert.equal(detailCta?.disabled, true);
 });

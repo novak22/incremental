@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { ensureTestDom } from '../helpers/setupDom.js';
 import { getGameTestHarness } from '../helpers/gameTestHarness.js';
 
-test('renderCards hydrates registry when service is empty', { concurrency: false }, async t => {
+test('renderCards hydrates browser homepage widgets when registry is empty', { concurrency: false }, async t => {
   ensureTestDom();
   const registryService = await import('../../src/game/registryService.js');
   const updateModule = await import('../../src/ui/update.js');
@@ -15,22 +15,28 @@ test('renderCards hydrates registry when service is empty', { concurrency: false
 
   updateModule.renderCards();
 
-  const hustleList = document.getElementById('hustle-list');
-  assert.ok(hustleList?.children.length > 0, 'expected hustle cards after fallback registry load');
+  const todoList = document.getElementById('browser-widget-todo-list');
+  assert.ok(todoList, 'expected todo list container to exist');
+
+  const workspaceHost = document.getElementById('browser-workspaces');
+  const workspaceSections = workspaceHost?.querySelectorAll('[data-browser-page]') ?? [];
+  assert.ok(workspaceSections.length > 0, 'expected workspace sections to be initialized');
+
+  const notificationsContainer = document.querySelector('[data-role="browser-notifications"]');
+  assert.ok(notificationsContainer, 'expected notifications container to exist after render');
 
   t.after(() => {
     registryService.resetRegistry();
   });
 });
 
-test('classic view update flow routes through cards presenter with dashboard and filters intact', { concurrency: false }, async t => {
+test('browser view update flow renders homepage widgets and workspaces', { concurrency: false }, async () => {
   ensureTestDom();
   const harness = await getGameTestHarness();
   const state = harness.resetState();
 
   const advancedAsset = harness.assetsModule.ASSETS.find(asset => asset.tag?.type === 'advanced')
     || harness.assetsModule.ASSETS[0];
-  const ventureRiskLevel = advancedAsset?.tag?.type === 'advanced' ? 'high' : 'medium';
   const { createAssetInstance, getAssetState } = harness.stateModule;
   const activeInstance = createAssetInstance(
     advancedAsset,
@@ -52,117 +58,39 @@ test('classic view update flow routes through cards presenter with dashboard and
 
   const updateModule = await import('../../src/ui/update.js');
   const layoutModule = await import('../../src/ui/layout/index.js');
-  const classicModule = await import('../../src/ui/views/classic/index.js');
 
   layoutModule.initLayoutControls();
-  const presenter = classicModule.default.presenters.cards;
-  const presenterCalls = [];
-  const originalRenderAll = presenter.renderAll;
-  const originalUpdate = presenter.update;
-  presenter.renderAll = payload => {
-    presenterCalls.push({ type: 'renderAll', payload });
-    return originalRenderAll(payload);
-  };
-  presenter.update = payload => {
-    presenterCalls.push({ type: 'update', payload });
-    return originalUpdate(payload);
-  };
-
-  t.after(() => {
-    presenter.renderAll = originalRenderAll;
-    presenter.update = originalUpdate;
-  });
 
   updateModule.renderCards();
   updateModule.updateUI();
 
-  assert.ok(
-    presenterCalls.some(call => call.type === 'renderAll'),
-    'expected cards presenter to handle initial render'
-  );
-  const updateCall = presenterCalls.find(call => call.type === 'update');
-  assert.ok(updateCall, 'expected cards presenter update to run');
+  const widgets = harness.elements.homepageWidgets;
+  const todoWidget = widgets?.todo;
+  assert.ok(todoWidget?.list, 'expected todo widget lookup');
+  assert.ok(todoWidget.list.children.length > 0, 'expected todo widget to list recommended actions');
+  assert.ok(todoWidget.done, 'expected todo done list lookup to exist');
 
-  const { registries, models } = updateCall.payload ?? {};
-  assert.ok(models, 'expected update payload to include view models');
-  assert.ok(Array.isArray(models.hustles), 'expected hustle models array');
-  assert.ok(Array.isArray(models.assets?.groups), 'expected asset group models');
-  assert.ok(Array.isArray(models.upgrades?.categories), 'expected upgrade category models');
-  assert.ok(Array.isArray(registries?.hustles), 'expected hustle registry list');
+  const bankWidget = widgets?.bank;
+  assert.ok(bankWidget?.stats, 'expected bank widget lookup');
+  assert.ok(bankWidget.stats.children.length > 0, 'expected bank widget statistics to render');
 
-  const netValueNode = document.getElementById('kpi-net-value');
-  assert.ok(netValueNode?.textContent?.trim().length > 0, 'expected dashboard KPI text content');
+  const appsWidget = widgets?.apps;
+  assert.ok(appsWidget?.list, 'expected apps widget lookup');
+  assert.ok(appsWidget.list.children.length > 0, 'expected apps widget to list available workspaces');
 
-  const hustleList = document.getElementById('hustle-list');
-  assert.ok(hustleList?.children.length > 0, 'expected hustle list to render cards');
+  const workspaceHost = document.getElementById('browser-workspaces');
+  assert.ok(workspaceHost, 'expected workspace host element');
 
-  const hustleCards = () => Array.from(hustleList.querySelectorAll('[data-hustle]'));
-  const totalCards = hustleCards().length;
-  assert.ok(totalCards > 0, 'expected hustle cards to be present for filtering');
+  const learnlyWorkspace = workspaceHost.querySelector('[data-browser-page="learnly"] [data-role="learnly-root"]');
+  assert.ok(learnlyWorkspace, 'expected Learnly workspace to mount inside the browser shell');
 
-  const availableToggle = document.getElementById('hustle-available-toggle');
-  availableToggle.checked = true;
-  layoutModule.applyCardFilters();
-  const visibleAfterAvailability = hustleCards().filter(card => !card.hidden).length;
-  assert.ok(
-    visibleAfterAvailability < totalCards,
-    'expected availability filter to hide unavailable hustles'
-  );
+  const financeWorkspace = workspaceHost.querySelector('[data-browser-page="bankapp"] .bankapp-section');
+  assert.ok(financeWorkspace, 'expected BankApp workspace content to render');
 
-  const searchInput = document.getElementById('hustle-search');
-  searchInput.value = 'Consult';
-  layoutModule.applyCardFilters();
-  const visibleAfterSearch = hustleCards().filter(card => !card.hidden).length;
-  assert.ok(
-    visibleAfterSearch <= visibleAfterAvailability,
-    'expected search filter to further reduce visible hustles'
-  );
+  const siteLaunchers = document.querySelectorAll('[data-site-target]');
+  assert.ok(siteLaunchers.length > 0, 'expected browser shell to expose site launch controls');
 
-  // Reset filters for cleanliness.
-  availableToggle.checked = false;
-  searchInput.value = '';
-  layoutModule.applyCardFilters();
-
-  const ventureGallery = document.getElementById('venture-gallery');
-  const ventureCards = () => Array.from(ventureGallery.querySelectorAll('[data-asset]'));
-  const visibleVentures = () => ventureCards().filter(card => !card.hidden);
-  assert.ok(ventureCards().length >= 2, 'expected venture cards to render for filtering');
-
-  const ventureActiveToggle = document.getElementById('venture-active-toggle');
-  ventureActiveToggle.checked = true;
-  layoutModule.applyCardFilters();
-  assert.ok(
-    visibleVentures().every(card => card.dataset.state === 'active'),
-    'expected active filter to show only active ventures'
-  );
-
-  ventureActiveToggle.checked = false;
-  const ventureMaintenanceToggle = document.getElementById('venture-maintenance-toggle');
-  ventureMaintenanceToggle.checked = true;
-  layoutModule.applyCardFilters();
-  assert.ok(
-    visibleVentures().every(card => card.dataset.needsMaintenance === 'true'),
-    'expected maintenance filter to surface upkeep-needy ventures'
-  );
-
-  ventureMaintenanceToggle.checked = false;
-  const ventureRiskToggle = document.getElementById('venture-risk-toggle');
-  ventureRiskToggle.checked = true;
-  layoutModule.applyCardFilters();
-  if (ventureRiskLevel === 'high') {
-    assert.equal(
-      visibleVentures().length,
-      0,
-      'expected risk filter to hide high-risk ventures'
-    );
-  } else {
-    assert.equal(
-      visibleVentures().length,
-      ventureCards().length,
-      'expected risk filter to keep medium-risk ventures visible'
-    );
-  }
-
-  ventureRiskToggle.checked = false;
-  layoutModule.applyCardFilters();
+  const notifications = harness.elements.browserNotifications;
+  assert.ok(notifications?.container, 'expected browser notifications container');
+  assert.ok(notifications.button, 'expected notifications trigger to be available');
 });
