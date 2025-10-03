@@ -169,6 +169,60 @@ test('buildDashboardViewModel produces derived dashboard sections', t => {
   assert.notEqual(viewModel.niche.highlights.hot.title, '');
 });
 
+test('buildDashboardViewModel hydrates maintenance notifications from state when service is empty', t => {
+  const snapshot = notificationsService.getSnapshot();
+  snapshot.forEach(entry => notificationsService.dismiss(entry.id));
+
+  const state = buildDefaultState();
+  state.day = 7;
+  state.money = 900;
+  state.timeLeft = 3;
+
+  const stubAsset = {
+    id: 'vm-hydrate-asset',
+    name: 'Hydration Rig',
+    singular: 'Hydration Rig',
+    maintenance: { cost: 25 }
+  };
+
+  const assets = getAssets();
+  assets.push(stubAsset);
+  t.after(() => {
+    assets.pop();
+    const cleanup = notificationsService.getSnapshot();
+    cleanup.forEach(entry => notificationsService.dismiss(entry.id));
+  });
+
+  state.assets[stubAsset.id] = {
+    instances: [
+      {
+        id: 'hydrate-1',
+        status: 'active',
+        maintenanceFundedToday: false
+      },
+      {
+        id: 'hydrate-2',
+        status: 'active',
+        maintenanceFundedToday: false
+      }
+    ]
+  };
+
+  const summary = createSummary();
+  const viewModel = buildDashboardViewModel(state, summary);
+
+  assert.ok(viewModel, 'view model should be created');
+  const { notifications } = viewModel;
+  assert.equal(notifications.entries.length, 1, 'expected derived maintenance alert');
+  const entry = notifications.entries[0];
+  assert.equal(entry.id, 'asset:vm-hydrate-asset:maintenance');
+  assert.ok(entry.message.includes('waiting on upkeep'));
+
+  const serviceSnapshot = notificationsService.getSnapshot();
+  assert.equal(serviceSnapshot.length, 1, 'service snapshot should be hydrated');
+  assert.equal(serviceSnapshot[0].id, entry.id);
+});
+
 test('buildDashboardViewModel includes niche analytics data', t => {
   const state = buildDefaultState();
   state.day = 5;

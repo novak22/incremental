@@ -1,4 +1,4 @@
-import { formatHours, formatMoney } from '../../core/helpers.js';
+import { formatHours, formatMoney, formatList } from '../../core/helpers.js';
 import { clampNumber, formatPercent, describeDelta } from './formatters.js';
 import { buildDailySummaries } from './passiveIncome.js';
 import {
@@ -10,6 +10,8 @@ import {
 import { buildStudyEnrollmentActionModel } from './knowledge.js';
 import notificationsService from '../notifications/service.js';
 import { collectNicheAnalytics, summarizeNicheHighlights } from '../../game/analytics/niches.js';
+import { getAssets } from '../../game/registryService.js';
+import { instanceLabel } from '../../game/assets/details.js';
 
 function createHighlightDefaults() {
   return {
@@ -201,8 +203,57 @@ function buildEventLog(state = {}) {
     .filter(Boolean);
 }
 
+function hydrateMaintenanceNotifications(state = {}) {
+  if (!state || typeof state !== 'object') {
+    return [];
+  }
+
+  try {
+    const assets = getAssets();
+    assets.forEach(definition => {
+      const assetState = state.assets?.[definition.id];
+      const instances = Array.isArray(assetState?.instances) ? assetState.instances : [];
+      const unfundedLabels = instances
+        .map((instance, index) => {
+          if (!instance || instance.status !== 'active') return null;
+          return instance.maintenanceFundedToday === false
+            ? instanceLabel(definition, index)
+            : null;
+        })
+        .filter(Boolean);
+
+      const notificationId = `asset:${definition.id}:maintenance`;
+
+      if (unfundedLabels.length > 0) {
+        const roster = formatList(unfundedLabels);
+        const message = unfundedLabels.length === 1
+          ? `${roster} is waiting on upkeep.`
+          : `${roster} are waiting on upkeep.`;
+        notificationsService.publish({
+          id: notificationId,
+          label: `${definition.name} needs upkeep`,
+          message,
+          action: { type: 'shell-tab', tabId: 'tab-ventures' }
+        });
+      } else {
+        notificationsService.dismiss(notificationId);
+      }
+    });
+  } catch (error) {
+    return [];
+  }
+
+  return notificationsService.getSnapshot();
+}
+
 function buildNotificationModel(state = {}) {
-  const entries = notificationsService.getSnapshot();
+  let entries = notificationsService.getSnapshot();
+  if (!entries.length) {
+    const hydrated = hydrateMaintenanceNotifications(state);
+    if (Array.isArray(hydrated) && hydrated.length) {
+      entries = hydrated;
+    }
+  }
   return {
     entries,
     emptyMessage: 'All clear. Nothing urgent on deck.'
