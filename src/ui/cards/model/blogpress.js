@@ -211,6 +211,14 @@ function buildBlogInstances(definition, state) {
     const label = instanceLabel(definition, index);
     const status = describeStatus(instance, definition);
     const averagePayout = calculateAveragePayout(instance, state);
+    const lifetimeIncome = Math.max(0, clampNumber(instance.totalIncome));
+    const estimatedSpend = estimateLifetimeSpend(definition, instance, state);
+    const lifetimeNet = lifetimeIncome - estimatedSpend;
+    const createdOnDay = Math.max(0, clampNumber(instance?.createdOnDay));
+    const currentDay = Math.max(1, clampNumber(state?.day) || 1);
+    const daysActive = instance.status === 'active' && createdOnDay > 0
+      ? Math.max(1, currentDay - createdOnDay + 1)
+      : 0;
     const qualityLevel = Math.max(0, clampNumber(instance?.quality?.level));
     const qualityInfo = getQualityLevel(definition, qualityLevel);
     const milestone = buildMilestoneProgress(definition, instance);
@@ -239,10 +247,12 @@ function buildBlogInstances(definition, state) {
       status,
       latestPayout: Math.max(0, clampNumber(instance.lastIncome)),
       averagePayout,
-      lifetimeIncome: Math.max(0, clampNumber(instance.totalIncome)),
-      estimatedSpend: estimateLifetimeSpend(definition, instance, state),
+      lifetimeIncome,
+      estimatedSpend,
+      lifetimeNet,
       maintenanceFunded: Boolean(instance.maintenanceFundedToday),
       pendingIncome: Math.max(0, clampNumber(instance.pendingIncome)),
+      daysActive,
       qualityLevel,
       qualityInfo: qualityInfo || null,
       qualityRange,
