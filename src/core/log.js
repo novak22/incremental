@@ -5,12 +5,7 @@ import { buildLogModel } from '../ui/log/model.js';
 import { getActiveView } from '../ui/viewManager.js';
 import { saveState } from './storage.js';
 import classicLogPresenter from '../ui/views/classic/logPresenter.js';
-
-const AUTO_READ_TYPES = new Set(['passive', 'upgrade']);
-
-function shouldAutoRead(type) {
-  return typeof type === 'string' && AUTO_READ_TYPES.has(type);
-}
+import { shouldAutoRead } from './loggingRules.js';
 
 export function addLog(message, type = 'info') {
   const state = getState();

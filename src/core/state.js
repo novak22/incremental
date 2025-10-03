@@ -1,5 +1,6 @@
 import { DEFAULT_DAY_HOURS } from './constants.js';
 import { structuredClone, createId } from './helpers.js';
+import { shouldAutoRead } from './loggingRules.js';
 import {
   createEmptyCharacterState,
   createEmptySkillState,
@@ -39,7 +40,7 @@ function normalizeLogEntry(entry) {
   normalized.id = typeof entry.id === 'string' && entry.id ? entry.id : createId();
   normalized.message = entry.message != null ? String(entry.message) : '';
   normalized.type = typeof entry.type === 'string' && entry.type ? entry.type : 'info';
-  normalized.read = entry.read === true;
+  normalized.read = entry.read === true || shouldAutoRead(normalized.type);
   return normalized;
 }
 
