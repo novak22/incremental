@@ -3,7 +3,8 @@ import todoWidget from './widgets/todoWidget.js';
 
 const state = {
   primaryButton: null,
-  onPrimaryAction: null
+  onPrimaryAction: null,
+  primaryButtonMinWidth: null
 };
 
 function resolveButtons() {
@@ -52,6 +53,7 @@ function renderAction(model) {
     : model?.button?.title || 'Wrap today when you are ready to reset the grind.';
 
   button.textContent = label;
+  ensurePrimaryButtonWidth(button, label);
   button.dataset.actionMode = hasTasks ? 'task' : (model?.button?.mode || 'end');
 
   if (hasTasks && nextTask?.id) {
@@ -74,6 +76,34 @@ function renderAction(model) {
   button.disabled = Boolean(model?.button?.disabled);
 
   bindPrimaryButton(button);
+}
+
+function ensurePrimaryButtonWidth(button, label) {
+  if (!button) return;
+
+  const measureWidth = () => {
+    button.style.removeProperty('--browser-session-button-width');
+    const width = Math.ceil(button.getBoundingClientRect().width);
+    if (width > 0) {
+      state.primaryButtonMinWidth = width;
+      button.style.setProperty('--browser-session-button-width', `${width}px`);
+    }
+  };
+
+  if (label === 'Next Task') {
+    measureWidth();
+    return;
+  }
+
+  if (state.primaryButtonMinWidth) {
+    button.style.setProperty('--browser-session-button-width', `${state.primaryButtonMinWidth}px`);
+    return;
+  }
+
+  const originalText = button.textContent;
+  button.textContent = 'Next Task';
+  measureWidth();
+  button.textContent = originalText;
 }
 
 function renderAutoForward() {
