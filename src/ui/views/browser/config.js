@@ -79,7 +79,7 @@ export const SERVICE_PAGES = [
     label: 'Shopily',
     headline: 'Shopily Storefront Studio',
     tagline: 'Launch dropshipping brands, monitor ROI, and trigger upgrades.',
-    icon: '🛒',
+    icon: '🛍️',
     type: 'shopily'
   },
   {
@@ -97,7 +97,7 @@ export const SERVICE_PAGES = [
     label: 'ShopStack',
     headline: 'ShopStack Upgrade Arcade',
     tagline: 'Install upgrades, stock products, and plan the next spike.',
-    icon: '🛍️',
+    icon: '🛒',
     type: 'upgrades'
   },
   {
