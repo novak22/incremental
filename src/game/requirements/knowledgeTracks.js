@@ -126,7 +126,7 @@ export const KNOWLEDGE_TRACKS = {
   ecomPlaybook: {
     id: 'ecomPlaybook',
     name: 'E-Commerce Playbook',
-    description: 'Bundle Promo Push yields +5; dropshipping profits +15%.',
+    description: 'Shadow a pro operator for 9 days (3h/day) to master funnels and fulfillment math.',
     hoursPerDay: 3,
     days: 9,
     tuition: 900,
@@ -148,7 +148,7 @@ export const KNOWLEDGE_TRACKS = {
   automationCourse: {
     id: 'automationCourse',
     name: 'Automation Architecture Course',
-    description: 'SaaS Bug Squash retainers +6; SaaS Micro-App subscriptions +15%.',
+    description: 'Pair-program with mentors for 15 days (6h/day) to architect a reliable micro-app.',
     hoursPerDay: 6,
     days: 15,
     tuition: 3000,
@@ -230,7 +230,7 @@ export const KNOWLEDGE_TRACKS = {
   postProductionPipelineLab: {
     id: 'postProductionPipelineLab',
     name: 'Post-Production Pipeline Lab',
-    description: 'Vlog Edit Rush payouts +25%; Weekly Vlog Channel income +15%.',
+    description: 'Run edit bays for 10 days (4h/day) to master color, captions, and delivery workflows.',
     hoursPerDay: 4,
     days: 10,
     tuition: 900,
@@ -252,7 +252,7 @@ export const KNOWLEDGE_TRACKS = {
   fulfillmentOpsMasterclass: {
     id: 'fulfillmentOpsMasterclass',
     name: 'Fulfillment Ops Masterclass',
-    description: 'Dropship Pack Party earnings +20%; dropshipping revenue +25%.',
+    description: 'Shadow a logistics crew for 10 days (4h/day) to automate pick, pack, and ship perfection.',
     hoursPerDay: 4,
     days: 10,
     tuition: 1200,
@@ -274,7 +274,7 @@ export const KNOWLEDGE_TRACKS = {
   customerRetentionClinic: {
     id: 'customerRetentionClinic',
     name: 'Customer Retention Clinic',
-    description: 'SaaS Bug Squash retainers +$5; SaaS Micro-App subscriptions +20%.',
+    description: 'Coach subscription success teams for 7 days (3h/day) to keep churn near zero.',
     hoursPerDay: 3,
     days: 7,
     tuition: 1000,
@@ -296,7 +296,7 @@ export const KNOWLEDGE_TRACKS = {
   narrationPerformanceWorkshop: {
     id: 'narrationPerformanceWorkshop',
     name: 'Narration Performance Workshop',
-    description: 'Audiobook Narration payouts +25%; e-book royalties +10%.',
+    description: 'Spend 7 days (3h/day) with vocal coaches to perfect audiobook cadence.',
     hoursPerDay: 3,
     days: 7,
     tuition: 900,
@@ -318,7 +318,7 @@ export const KNOWLEDGE_TRACKS = {
   galleryLicensingSummit: {
     id: 'galleryLicensingSummit',
     name: 'Gallery Licensing Summit',
-    description: 'Event Photo Gig bookings +20%; Stock Photo Gallery income +15%.',
+    description: 'Pitch curators for 8 days (4h/day) to secure premium gallery licensing deals.',
     hoursPerDay: 4,
     days: 8,
     tuition: 1100,
@@ -340,7 +340,7 @@ export const KNOWLEDGE_TRACKS = {
   syndicationResidency: {
     id: 'syndicationResidency',
     name: 'Syndication Residency',
-    description: 'Freelance Writing payouts +15%; Street Promo Sprint tips +$2; Blog Network income +12%.',
+    description: 'Curate partnerships for 9 days (4h/day) to syndicate your flagship content network.',
     hoursPerDay: 4,
     days: 9,
     tuition: 1000,
