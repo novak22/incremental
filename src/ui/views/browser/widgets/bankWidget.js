@@ -114,30 +114,6 @@ function createChip({ label, value, tone = 'neutral', note, position }) {
   return chip;
 }
 
-function extractPulseEntry(pulseEntries = [], preferredIds = []) {
-  if (!pulseEntries.length) return null;
-  if (preferredIds.length) {
-    const matchIndex = pulseEntries.findIndex(entry => preferredIds.includes(entry?.id));
-    if (matchIndex >= 0) {
-      return pulseEntries.splice(matchIndex, 1)[0];
-    }
-  }
-  return pulseEntries.shift() || null;
-}
-
-function resolvePulseChipConfig(entry, { fallbackLabel, fallbackDirection = 'in' }) {
-  const amount = Number(entry?.amount ?? 0);
-  const direction = entry?.direction || fallbackDirection;
-  const tone = amount > 0 ? (direction === 'out' ? 'out' : 'in') : 'neutral';
-  const signedAmount = direction === 'out' ? -Math.abs(amount) : Math.abs(amount);
-  return {
-    label: entry?.label || fallbackLabel,
-    value: formatSignedCurrency(signedAmount),
-    tone,
-    note: entry?.note || 'Live cash pulse'
-  };
-}
-
 function renderHighlights(header = {}) {
   if (!elements?.highlights) return;
 
@@ -167,33 +143,46 @@ function renderHighlights(header = {}) {
     })
   );
 
-  const pulseEntries = Array.isArray(header?.pulse) ? header.pulse.slice() : [];
-  const primaryPulse = extractPulseEntry(pulseEntries, ['active', 'passive', 'offline']);
-  const secondaryPulse = extractPulseEntry(pulseEntries, ['passive', 'offline', 'upkeep', 'tuition', 'investments']);
-
-  const primaryConfig = resolvePulseChipConfig(primaryPulse, {
-    fallbackLabel: 'Active',
-    fallbackDirection: 'in'
+  const pulseEntries = Array.isArray(header?.pulse) ? header.pulse : [];
+  const pulseMap = new Map();
+  pulseEntries.forEach(entry => {
+    if (!entry?.id) return;
+    pulseMap.set(entry.id, entry);
   });
-  chips.push(
-    createChip({
-      ...primaryConfig,
-      position: 'left'
-    })
-  );
 
-  const secondaryConfig = resolvePulseChipConfig(secondaryPulse, {
-    fallbackLabel: 'Passive',
-    fallbackDirection: 'in'
+  const orderedPulseSlots = [
+    { id: 'active', fallbackLabel: 'Active', fallbackDirection: 'in', position: 'left' },
+    { id: 'passive', fallbackLabel: 'Passive', fallbackDirection: 'in', position: 'right' },
+    { id: 'offline', fallbackLabel: 'Offline', fallbackDirection: 'in', position: 'left' },
+    { id: 'upkeep', fallbackLabel: 'Upkeep', fallbackDirection: 'out', position: 'right' },
+    { id: 'tuition', fallbackLabel: 'Tuition', fallbackDirection: 'out', position: 'left' },
+    { id: 'investments', fallbackLabel: 'Invest', fallbackDirection: 'out', position: 'right' }
+  ];
+
+  orderedPulseSlots.forEach(slot => {
+    const entry = pulseMap.get(slot.id);
+    if (!entry) return;
+    const amount = Number(entry?.amount ?? 0);
+    if (!Number.isFinite(amount) || amount === 0) return;
+    const direction = entry?.direction || slot.fallbackDirection;
+    const tone = amount > 0 ? (direction === 'out' ? 'out' : 'in') : 'neutral';
+    const signedAmount = direction === 'out' ? -Math.abs(amount) : Math.abs(amount);
+    chips.push(
+      createChip({
+        label: entry?.label || slot.fallbackLabel,
+        value: formatSignedCurrency(signedAmount),
+        tone,
+        note: entry?.note || 'Live cash pulse',
+        position: slot.position
+      })
+    );
   });
-  chips.push(
-    createChip({
-      ...secondaryConfig,
-      position: 'right'
-    })
-  );
 
   elements.highlights.innerHTML = '';
+  if (!chips.length) {
+    elements.highlights.hidden = true;
+    return;
+  }
   chips.forEach(chip => elements.highlights.appendChild(chip));
   elements.highlights.hidden = false;
 }
