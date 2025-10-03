@@ -6,26 +6,20 @@ import {
   formatCurrency as baseFormatCurrency,
   formatPercent as baseFormatPercent
 } from '../utils/formatting.js';
+import { createSharedPresenter } from './sharedPresenter.js';
 
 const VIEW_DASHBOARD = 'dashboard';
 const VIEW_DETAIL = 'detail';
 const VIEW_CREATE = 'create';
 const VIEW_ANALYTICS = 'analytics';
 
-let currentState = {
-  view: VIEW_DASHBOARD,
-  selectedVideoId: null
-};
-let currentModel = {
-  definition: null,
-  instances: [],
-  summary: {},
-  stats: {},
-  analytics: {},
-  launch: null
-};
-let currentMount = null;
-let currentPageMeta = null;
+const presenter = createSharedPresenter({
+  defaultState: {
+    view: VIEW_DASHBOARD,
+    selectedVideoId: null
+  },
+  rootClassName: 'videotube'
+});
 
 const formatCurrency = amount =>
   baseFormatCurrency(amount, { precision: 'integer', clampZero: true });
@@ -36,29 +30,32 @@ const formatPercent = value =>
     signDisplay: 'never'
   });
 
-function ensureSelectedVideo() {
-  const instances = Array.isArray(currentModel.instances) ? currentModel.instances : [];
+function ensureSelectedVideo(state = {}, model = {}) {
+  const instances = Array.isArray(model.instances) ? model.instances : [];
+  const nextState = { ...state };
   if (!instances.length) {
-    currentState.selectedVideoId = null;
-    if (currentState.view === VIEW_DETAIL) {
-      currentState.view = VIEW_DASHBOARD;
+    nextState.selectedVideoId = null;
+    if (nextState.view === VIEW_DETAIL) {
+      nextState.view = VIEW_DASHBOARD;
     }
-    return;
+    return nextState;
   }
   const active = instances.find(entry => entry.status?.id === 'active');
   const fallback = instances[0];
-  const target = instances.find(entry => entry.id === currentState.selectedVideoId);
-  currentState.selectedVideoId = (target || active || fallback)?.id || fallback.id;
+  const target = instances.find(entry => entry.id === nextState.selectedVideoId);
+  nextState.selectedVideoId = (target || active || fallback)?.id || fallback?.id || null;
+  return nextState;
 }
 
 function setView(view, options = {}) {
   const nextView = view || VIEW_DASHBOARD;
-  if (nextView === VIEW_DETAIL && options.videoId) {
-    currentState.selectedVideoId = options.videoId;
-  }
-  currentState.view = nextView;
-  ensureSelectedVideo();
-  render(currentModel, { mount: currentMount, page: currentPageMeta });
+  presenter.updateState(prevState => {
+    const nextState = { ...prevState, view: nextView };
+    if (nextView === VIEW_DETAIL && options.videoId) {
+      nextState.selectedVideoId = options.videoId;
+    }
+    return nextState;
+  });
 }
 
 function handleQuickAction(instanceId, actionId) {
@@ -88,7 +85,7 @@ function createNavButton(label, view) {
   return button;
 }
 
-function renderHeader(model) {
+function renderHeader(model, state = {}) {
   const header = document.createElement('header');
   header.className = 'videotube__header';
 
@@ -189,7 +186,7 @@ function renderNicheBadge(video) {
   return badge;
 }
 
-function renderDashboardTable(model) {
+function renderDashboardTable(model, state = {}) {
   const instances = Array.isArray(model.instances) ? model.instances : [];
   const table = document.createElement('table');
   table.className = 'videotube-table';
@@ -208,7 +205,7 @@ function renderDashboardTable(model) {
   instances.forEach(video => {
     const row = document.createElement('tr');
     row.dataset.videoId = video.id;
-    if (video.id === currentState.selectedVideoId) {
+    if (video.id === state.selectedVideoId) {
       row.classList.add('is-selected');
     }
 
@@ -276,11 +273,11 @@ function renderDashboardTable(model) {
   return table;
 }
 
-function renderDashboardView(model) {
+function renderDashboardView(model, state = {}) {
   const container = document.createElement('section');
   container.className = 'videotube-view videotube-view--dashboard';
   container.appendChild(renderStatsBar(model));
-  container.appendChild(renderDashboardTable(model));
+  container.appendChild(renderDashboardTable(model, state));
   return container;
 }
 
@@ -517,12 +514,12 @@ function renderActionsPanel(video) {
   return panel;
 }
 
-function renderDetailView(model) {
+function renderDetailView(model, state = {}) {
   const container = document.createElement('section');
   container.className = 'videotube-view videotube-view--detail';
 
   const instances = Array.isArray(model.instances) ? model.instances : [];
-  const video = instances.find(entry => entry.id === currentState.selectedVideoId);
+  const video = instances.find(entry => entry.id === state.selectedVideoId);
   if (!video) {
     const empty = document.createElement('p');
     empty.className = 'videotube-empty';
@@ -591,7 +588,6 @@ function renderCreateView(model) {
       nicheId: nicheInput.value || null
     });
     if (newId) {
-      currentState.selectedVideoId = newId;
       setView(VIEW_DETAIL, { videoId: newId });
     }
   });
@@ -727,24 +723,24 @@ function renderLockedState(lock) {
   return container;
 }
 
-function renderCurrentView(model) {
-  switch (currentState.view) {
+function renderCurrentView(model, state = {}) {
+  switch (state.view) {
     case VIEW_DETAIL:
-      return renderDetailView(model);
+      return renderDetailView(model, state);
     case VIEW_CREATE:
       return renderCreateView(model);
     case VIEW_ANALYTICS:
       return renderAnalyticsView(model);
     case VIEW_DASHBOARD:
     default:
-      return renderDashboardView(model);
+      return renderDashboardView(model, state);
   }
 }
 
-function updateActiveTab(root) {
+function updateActiveTab(root, state = {}) {
   const tabs = root.querySelectorAll('.videotube-tab');
   tabs.forEach(tab => {
-    if (tab.dataset.view === currentState.view) {
+    if (tab.dataset.view === state.view) {
       tab.classList.add('is-active');
     } else {
       tab.classList.remove('is-active');
@@ -752,36 +748,17 @@ function updateActiveTab(root) {
   });
 }
 
+presenter.registerHooks({
+  ensureSelectedVideo,
+  renderLockedState,
+  renderHeader,
+  renderCurrentView,
+  updateActiveTab,
+  deriveSummary: model => model?.summary || {}
+});
+
 export function render(model = {}, context = {}) {
-  currentModel = model || {};
-  if (context.mount) {
-    currentMount = context.mount;
-  }
-  if (context.page) {
-    currentPageMeta = context.page;
-  }
-  if (!currentMount) {
-    return currentModel.summary || {};
-  }
-
-  if (!currentModel.definition) {
-    currentMount.innerHTML = '';
-    currentMount.appendChild(renderLockedState(currentModel.lock));
-    return currentModel.summary || {};
-  }
-
-  ensureSelectedVideo();
-
-  currentMount.innerHTML = '';
-  const root = document.createElement('div');
-  root.className = 'videotube';
-  root.appendChild(renderHeader(currentModel));
-  const view = renderCurrentView(currentModel);
-  root.appendChild(view);
-  currentMount.appendChild(root);
-  updateActiveTab(root);
-
-  return currentModel.summary || {};
+  return presenter.render(model, context);
 }
 
 export default {
