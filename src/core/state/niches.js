@@ -35,6 +35,12 @@ function sanitizeAnalyticsEntry(entry) {
     : 'Untitled niche';
 
   const popularity = entry.popularity || {};
+  const history = Array.isArray(popularity.history)
+    ? popularity.history
+        .map(sanitizeScore)
+        .filter(value => value !== null)
+        .slice(-NICHE_ANALYTICS_HISTORY_LIMIT)
+    : [];
   const sanitized = {
     id,
     definition: { id, name: definitionName },
@@ -49,7 +55,8 @@ function sanitizeAnalyticsEntry(entry) {
       delta: sanitizeOptionalNumber(popularity.delta),
       multiplier: Number.isFinite(Number(popularity.multiplier))
         ? Number(popularity.multiplier)
-        : 1
+        : 1,
+      history
     },
     assetBreakdown: Array.isArray(entry.assetBreakdown)
       ? entry.assetBreakdown.map(sanitizeBreakdownEntry).filter(Boolean)

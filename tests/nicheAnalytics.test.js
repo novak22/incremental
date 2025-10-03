@@ -41,4 +41,55 @@ test('collectNicheAnalytics returns entries with sanitized numbers', () => {
   assert.equal(typeof entry.definition.name, 'string');
   assert.equal(typeof entry.trendImpact, 'number');
   assert.equal(typeof entry.netEarnings, 'number');
+  assert.equal(Array.isArray(entry.popularity.history), true, 'expected popularity history array');
+  assert.ok(entry.popularity.history.length >= 1, 'expected at least current score recorded');
+});
+
+test('collectNicheAnalytics includes rolling score history from snapshots', () => {
+  const state = getState();
+  state.niches.analyticsHistory = [
+    {
+      id: 'history-1',
+      day: 1,
+      recordedAt: Date.UTC(2024, 0, 1),
+      analytics: [
+        {
+          id: 'techInnovators',
+          definition: { id: 'techInnovators', name: 'Tech Innovators' },
+          watchlisted: false,
+          assetCount: 0,
+          netEarnings: 0,
+          trendImpact: 0,
+          baselineEarnings: 0,
+          popularity: { score: 55 }
+        }
+      ],
+      highlights: {}
+    },
+    {
+      id: 'history-2',
+      day: 2,
+      recordedAt: Date.UTC(2024, 0, 2),
+      analytics: [
+        {
+          id: 'techInnovators',
+          definition: { id: 'techInnovators', name: 'Tech Innovators' },
+          watchlisted: false,
+          assetCount: 0,
+          netEarnings: 0,
+          trendImpact: 0,
+          baselineEarnings: 0,
+          popularity: { score: 70 }
+        }
+      ],
+      highlights: {}
+    }
+  ];
+
+  const analytics = collectNicheAnalytics(state);
+  const entry = analytics.find(item => item.id === 'techInnovators');
+  assert.ok(entry, 'expected tech innovators entry');
+  const recent = entry.popularity.history.slice(-3);
+  assert.equal(recent.length, 3, 'expected last three readings to be available');
+  assert.deepEqual(recent, [55, 70, entry.popularity.score]);
 });

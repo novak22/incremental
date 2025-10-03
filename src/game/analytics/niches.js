@@ -14,6 +14,44 @@ function clampScore(value) {
   return Math.max(0, Math.min(100, Math.round(value)));
 }
 
+function sanitizeHistorySeries(history) {
+  if (!Array.isArray(history)) return [];
+  return history
+    .map(clampScore)
+    .filter(value => value !== null)
+    .slice(-NICHE_ANALYTICS_HISTORY_LIMIT);
+}
+
+function buildPopularityHistory(state, id, popularity = {}) {
+  const snapshots = Array.isArray(state?.niches?.analyticsHistory)
+    ? state.niches.analyticsHistory
+    : [];
+
+  const history = snapshots
+    .map(snapshot => {
+      if (!snapshot || !Array.isArray(snapshot.analytics)) return null;
+      const entry = snapshot.analytics.find(item => item?.id === id);
+      if (!entry) return null;
+      return clampScore(entry.popularity?.score);
+    })
+    .filter(value => value !== null);
+
+  const currentScore = clampScore(popularity.score);
+  if (currentScore !== null) {
+    history.push(currentScore);
+  }
+
+  if (history.length === 0) {
+    const previousScore = clampScore(popularity.previousScore);
+    if (previousScore !== null) {
+      history.push(previousScore);
+    }
+  }
+
+  const maxLength = NICHE_ANALYTICS_HISTORY_LIMIT;
+  return history.length > maxLength ? history.slice(-maxLength) : history;
+}
+
 function describeTrendStatus(entry) {
   if (!entry) return 'Steady';
   const { popularity = {}, assetCount, watchlisted } = entry;
@@ -91,13 +129,21 @@ export function collectNicheAnalytics(state = getState()) {
       name,
       count: Number.isFinite(count) ? count : 0
     }));
+    const popularity = entry.popularity || {};
     return {
       ...entry,
       assetBreakdown,
       netEarnings: roundCurrency(entry.netEarnings),
       trendImpact: roundCurrency(entry.trendImpact),
       baselineEarnings: roundCurrency(entry.baselineEarnings),
-      status: describeTrendStatus(entry)
+      status: describeTrendStatus(entry),
+      popularity: {
+        score: popularity.score,
+        previousScore: popularity.previousScore,
+        delta: popularity.delta,
+        multiplier: popularity.multiplier,
+        history: buildPopularityHistory(state, entry.id, popularity)
+      }
     };
   });
 }
@@ -149,6 +195,7 @@ function sanitizeAnalyticsEntry(entry) {
   if (!id) return null;
   const detail = createHighlightDetail(entry);
   const popularity = entry.popularity || {};
+  const history = sanitizeHistorySeries(popularity.history);
   return {
     id,
     definition: {
@@ -164,7 +211,8 @@ function sanitizeAnalyticsEntry(entry) {
       score: detail?.score,
       previousScore: clampScore(popularity.previousScore),
       delta: Number.isFinite(detail?.delta) ? detail.delta : null,
-      multiplier: Number.isFinite(detail?.multiplier) ? detail.multiplier : 1
+      multiplier: Number.isFinite(detail?.multiplier) ? detail.multiplier : 1,
+      history
     },
     assetBreakdown: Array.isArray(entry.assetBreakdown)
       ? entry.assetBreakdown.map(item => ({
