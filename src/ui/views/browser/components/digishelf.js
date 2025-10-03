@@ -46,6 +46,52 @@ function clampNumber(value) {
 const formatCurrency = amount =>
   baseFormatCurrency(amount, { precision: 'integer', clampZero: true });
 
+function describeLaunchSetup(setup = {}) {
+  const days = clampNumber(setup.days);
+  const hoursPerDay = clampNumber(setup.hoursPerDay);
+  const cost = clampNumber(setup.cost);
+  const parts = [];
+  if (days > 0) {
+    parts.push(`${days} day${days === 1 ? '' : 's'}`);
+  }
+  if (hoursPerDay > 0) {
+    parts.push(`${formatHours(hoursPerDay)} per day`);
+  }
+  if (cost > 0) {
+    parts.push(`$${formatMoney(cost)} upfront`);
+  }
+  return parts.length ? parts.join(' • ') : 'Instant launch';
+}
+
+function describeLaunchUpkeep(upkeep = {}) {
+  const hours = clampNumber(upkeep.hours);
+  const cost = clampNumber(upkeep.cost);
+  const parts = [];
+  if (hours > 0) {
+    parts.push(`${formatHours(hours)} per day`);
+  }
+  if (cost > 0) {
+    parts.push(`$${formatMoney(cost)} per day`);
+  }
+  return parts.length ? parts.join(' • ') : 'No upkeep required';
+}
+
+function confirmResourceLaunch(definition = {}) {
+  if (typeof window === 'undefined' || typeof window.confirm !== 'function') {
+    return true;
+  }
+  const resourceName = definition.singular || definition.name || 'resource';
+  const setupSummary = describeLaunchSetup(definition.setup);
+  const upkeepSummary = describeLaunchUpkeep(definition.maintenance);
+  const message = [
+    `Ready to publish the ${resourceName}?`,
+    `Setup commitment: ${setupSummary}.`,
+    `Daily upkeep: ${upkeepSummary}.`,
+    'Launch now?'
+  ].join('\n');
+  return window.confirm(message);
+}
+
 function ensureState(model) {
   const ebookInstances = Array.isArray(model.ebook?.instances) ? model.ebook.instances : [];
   const stockInstances = Array.isArray(model.stock?.instances) ? model.stock.instances : [];
@@ -182,6 +228,9 @@ function renderLaunchCard(assetId, model) {
   button.disabled = Boolean(model.launch.disabled || model.launch.availability?.disabled);
   button.addEventListener('click', () => {
     if (button.disabled) return;
+    if (!confirmResourceLaunch(model.definition)) {
+      return;
+    }
     model.launch.onClick?.();
   });
 

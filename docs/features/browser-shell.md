@@ -22,6 +22,7 @@
 - `todoWidget` now treats each hustle row as a full-width button that fires the action, logs completions with time data, and updates hours spent immediately.
 - `styles/browser.css` defines a reusable `.browser-widget` shell plus dedicated styling for the app roster and bank chips so every panel lines up cleanly.
 - Quick action view models provide payout, duration, and day metadata so the widget can track hours and reset completion history when a new day begins.
+- App launchers surface a confirmation dialog before creating new resources, summarizing setup time, upfront cash, and ongoing upkeep pulled from the underlying asset definitions.
 
 ## Multi-Tab Workspace System
 - A dedicated tab bar now sits beneath the chrome, rendering the launch view and each opened app as tabs with icons, titles, and close controls.
