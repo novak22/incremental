@@ -42,21 +42,13 @@ function createPageSection(page) {
   section.dataset.browserPage = page.id;
   section.id = `browser-page-${page.slug}`;
 
-  const header = document.createElement('header');
-  header.className = 'browser-page__header';
-  const title = document.createElement('h1');
-  title.textContent = page.headline;
-  const note = document.createElement('p');
-  note.textContent = page.tagline;
-  header.append(title, note);
-
   const body = document.createElement('div');
   body.className = 'browser-page__body';
 
-  section.append(header, body);
+  section.append(body);
   main.appendChild(section);
 
-  const refs = { section, header, note, body };
+  const refs = { section, body };
   pageSections.set(page.id, refs);
   return refs;
 }
