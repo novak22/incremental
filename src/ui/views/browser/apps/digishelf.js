@@ -1,4 +1,5 @@
 import digishelfApp from '../components/digishelf.js';
+import { setWorkspacePath } from '../layoutPresenter.js';
 import { getPageByType } from './pageLookup.js';
 
 export default function renderDigishelf(context = {}, definitions = [], model = {}) {
@@ -18,7 +19,17 @@ export default function renderDigishelf(context = {}, definitions = [], model = 
   const mount = refs.body.querySelector('[data-role="digishelf-root"]');
   if (!mount) return null;
 
-  const summary = digishelfApp.render(model, { mount, page, definitions });
+  const handleRouteChange = path => {
+    setWorkspacePath(page.id, path);
+  };
+  const summary = digishelfApp.render(model, {
+    mount,
+    page,
+    definitions,
+    onRouteChange: handleRouteChange,
+  });
+  const path = summary?.urlPath || '';
+  setWorkspacePath(page.id, path);
   const meta = summary?.meta || model?.summary?.meta || 'Publish your first resource';
-  return { id: page.id, meta };
+  return { id: page.id, meta, urlPath: path };
 }
