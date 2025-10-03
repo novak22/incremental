@@ -45,7 +45,7 @@ test('cardsPresenter dispatches to app modules and publishes summaries', async t
 
   const registrySummary = { registries: { foo: [] }, models: { bar: {} } };
   const stubConfigs = [
-    { id: 'yournetwork', meta: 'Profile ready' },
+    { id: 'aboutyou', meta: 'Profile ready' },
     { id: 'downwork', meta: 'Hustle ready' },
     { id: 'digishelf', meta: 'Shelf ready' },
     { id: 'serverhub', meta: 'Server ready' },

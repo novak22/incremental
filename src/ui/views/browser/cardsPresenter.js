@@ -1,7 +1,7 @@
 import { renderCollections, updateCollections } from '../../cards/presenters/shared.js';
 import { getElement } from '../../elements/registry.js';
 import { SERVICE_PAGES } from './config.js';
-import renderYourNetwork from './apps/yourNetwork.js';
+import renderAboutYou from './apps/aboutYou.js';
 import renderHustles from './apps/hustles.js';
 import renderTrends from './apps/trends.js';
 import renderDigishelf from './apps/digishelf.js';
@@ -128,7 +128,7 @@ function renderSiteList(summaries = []) {
 }
 
 export const APP_RENDERERS = [
-  (context, registries = {}, models = {}) => renderYourNetwork(context, models),
+  (context, registries = {}, models = {}) => renderAboutYou(context, models),
   (context, registries = {}, models = {}) =>
     renderHustles(context, registries.hustles || [], models.hustles || []),
   (context, registries = {}, models = {}) =>
