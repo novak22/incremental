@@ -5,6 +5,8 @@ import {
   formatSignedCurrency as baseFormatSignedCurrency
 } from '../utils/formatting.js';
 
+const HISTORY_LENGTH = 7;
+
 const SORT_OPTIONS = [
   { key: 'momentum', label: 'Highest Momentum' },
   { key: 'name', label: 'Name (A–Z)' },
@@ -65,9 +67,20 @@ function describeTrend(popularity = {}) {
 }
 
 function createSparklineSeries(popularity = {}) {
+  const history = Array.isArray(popularity.history)
+    ? popularity.history
+        .map(clampScore)
+        .filter(value => value !== null)
+    : [];
+  if (history.length >= 2) {
+    const trimmed = history.slice(-HISTORY_LENGTH);
+    if (trimmed.length >= 2) {
+      return trimmed;
+    }
+  }
   const score = clampScore(popularity.score);
   const previous = clampScore(popularity.previousScore);
-  const length = 7;
+  const length = HISTORY_LENGTH;
   if (score === null && previous === null) {
     return Array.from({ length }, () => 0);
   }

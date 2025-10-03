@@ -15,6 +15,11 @@ const DEFAULT_HIGHLIGHTS = {
   risk: { title: 'All calm', note: 'We’ll flag niches that are cooling off fast.' }
 };
 
+const DEFAULT_HISTORY_MODEL = {
+  entries: [],
+  emptyMessage: 'Complete a day with niches assigned to start logging history.'
+};
+
 const nicheViewState = {
   sort: 'impact',
   investedOnly: false,
@@ -415,6 +420,92 @@ function renderBoard(boardNode, entries, emptyMessages = DEFAULT_EMPTY_MESSAGES)
   boardNode.appendChild(fragment);
 }
 
+function renderHistory(container, history = DEFAULT_HISTORY_MODEL) {
+  if (!container) return;
+  container.innerHTML = '';
+  const entries = Array.isArray(history.entries) ? history.entries : [];
+  if (!entries.length) {
+    if (!history.emptyMessage) return;
+    const empty = document.createElement('li');
+    empty.className = 'analytics-history__empty';
+    empty.textContent = history.emptyMessage;
+    container.appendChild(empty);
+    return;
+  }
+
+  const fragment = document.createDocumentFragment();
+  entries.forEach(entry => {
+    if (!entry) return;
+    const item = document.createElement('li');
+    item.className = 'analytics-history__item';
+    if (entry.id) {
+      item.dataset.historyId = entry.id;
+    }
+
+    const header = document.createElement('div');
+    header.className = 'analytics-history__header';
+
+    const day = document.createElement('span');
+    day.className = 'analytics-history__day';
+    day.textContent = entry.dayLabel || 'Day –';
+    header.appendChild(day);
+
+    if (entry.recordedAtLabel) {
+      const time = document.createElement('time');
+      time.className = 'analytics-history__time';
+      time.textContent = entry.recordedAtLabel;
+      if (entry.recordedAtISO) {
+        time.dateTime = entry.recordedAtISO;
+      }
+      header.appendChild(time);
+    }
+
+    item.appendChild(header);
+
+    const highlightList = document.createElement('dl');
+    highlightList.className = 'analytics-history__highlights';
+
+    const rows = [
+      { label: 'Top boost', detail: entry.highlights?.hot || DEFAULT_HIGHLIGHTS.hot },
+      { label: 'Big swing', detail: entry.highlights?.swing || DEFAULT_HIGHLIGHTS.swing },
+      { label: 'Cooling risk', detail: entry.highlights?.risk || DEFAULT_HIGHLIGHTS.risk }
+    ];
+
+    rows.forEach(row => {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'analytics-history__row';
+
+      const term = document.createElement('dt');
+      term.textContent = row.label;
+      wrapper.appendChild(term);
+
+      const detail = row.detail || {};
+      const dd = document.createElement('dd');
+      dd.className = 'analytics-history__detail';
+
+      const value = document.createElement('span');
+      value.className = 'analytics-history__value';
+      value.textContent = detail.title || '';
+      dd.appendChild(value);
+
+      if (detail.note) {
+        const note = document.createElement('p');
+        note.className = 'analytics-history__note';
+        note.textContent = detail.note;
+        dd.appendChild(note);
+      }
+
+      wrapper.appendChild(dd);
+      highlightList.appendChild(wrapper);
+    });
+
+    item.appendChild(highlightList);
+    fragment.appendChild(item);
+  });
+
+  container.appendChild(fragment);
+}
+
 export function renderNicheWidget(viewModel) {
   currentViewModel = viewModel;
   setupNicheControls();
@@ -423,6 +514,7 @@ export function renderNicheWidget(viewModel) {
 
   const highlights = viewModel?.highlights || DEFAULT_HIGHLIGHTS;
   const board = viewModel?.board || { entries: [], emptyMessages: DEFAULT_EMPTY_MESSAGES };
+  const history = viewModel?.history || DEFAULT_HISTORY_MODEL;
   const watchlistCount = viewModel?.watchlistCount ?? 0;
 
   updateControlStates({ watchlistCount });
@@ -431,6 +523,7 @@ export function renderNicheWidget(viewModel) {
   const filtered = filterEntries(Array.isArray(board.entries) ? board.entries : []);
   const sorted = sortEntries(filtered);
   renderBoard(refs.board, sorted, board.emptyMessages || DEFAULT_EMPTY_MESSAGES);
+  renderHistory(refs.historyList, history);
 }
 
 export default {

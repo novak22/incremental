@@ -205,6 +205,7 @@ export class StatePersistence {
   save() {
     const state = this.getState();
     if (!state) return null;
+    this.ensureStateShape(state);
     const snapshot = this.clone(state);
     const lastSaved = this.now();
     const stateVersion = Number.isInteger(state.version) ? state.version : 0;
