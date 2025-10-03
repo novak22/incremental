@@ -8,7 +8,7 @@ import browserView from '../../src/ui/views/browser/index.js';
 let dom;
 
 function loadBrowserShellHtml() {
-  const htmlUrl = new URL('../../browser.html', import.meta.url);
+  const htmlUrl = new URL('../../index.html', import.meta.url);
   const filePath = fileURLToPath(htmlUrl);
   return readFileSync(filePath, 'utf-8');
 }
