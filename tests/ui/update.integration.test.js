@@ -747,3 +747,103 @@ test('renaming an asset refreshes dashboard quick actions and header suggestion 
   const headerTitle = headerButton.title || '';
   assert.ok(headerTitle.includes(renameTo), 'expected header suggestion to reflect the renamed asset');
 });
+
+test('quality actions immediately refresh dashboard recommendations and header prompts', { concurrency: false }, async t => {
+  ensureTestDom();
+  const harness = await getGameTestHarness();
+  const state = harness.resetState();
+
+  const { createAssetInstance } = harness.assetStateModule;
+  const { getAssetState } = harness.stateModule;
+  const { getAssetDefinition } = harness.registryModule;
+  const definition = getAssetDefinition('blog');
+  const writePostAction = definition?.quality?.actions?.find(entry => entry.id === 'writePost');
+  const originalDailyLimit = writePostAction?.dailyLimit;
+  if (writePostAction) {
+    writePostAction.dailyLimit = 3;
+  }
+  const instance = createAssetInstance(definition, { status: 'active' }, { state });
+  instance.quality.progress.posts = 1;
+  const assetState = getAssetState(definition.id, state);
+  assetState.instances = [instance];
+  state.money = 250;
+  state.timeLeft = 12;
+
+  const viewManager = await import('../../src/ui/viewManager.js');
+  const browserViewModule = await import('../../src/ui/views/browser/index.js');
+  const updateModule = await import('../../src/ui/update.js');
+  const invalidation = await import('../../src/core/events/invalidationBus.js');
+  const todoStateModule = await import('../../src/ui/views/browser/widgets/todoState.js');
+  const todoWidgetModule = await import('../../src/ui/views/browser/widgets/todoWidget.js');
+  const qualityModule = await import('../../src/game/assets/quality.js');
+
+  const browserView = browserViewModule.default;
+  const originalView = viewManager.getActiveView();
+  viewManager.setActiveView(browserView, document);
+
+  t.after(() => {
+    invalidation.consumeDirty();
+    viewManager.setActiveView(originalView ?? browserView, document);
+    if (writePostAction) {
+      writePostAction.dailyLimit = originalDailyLimit;
+    }
+  });
+
+  invalidation.consumeDirty();
+  updateModule.renderCards();
+  updateModule.updateUI();
+
+  const resolveLastModel = () => {
+    if (typeof todoStateModule.getLastModel === 'function') {
+      return todoStateModule.getLastModel();
+    }
+    if (todoStateModule.default && typeof todoStateModule.default.getLastModel === 'function') {
+      return todoStateModule.default.getLastModel();
+    }
+    return null;
+  };
+
+  const findQualityEntry = () => {
+    const model = resolveLastModel();
+    const entries = Array.isArray(model?.entries) ? model.entries : [];
+    return entries.find(entry => typeof entry?.id === 'string' && entry.id.includes(instance.id));
+  };
+
+  const resolveNextTask = () => {
+    if (typeof todoWidgetModule.peekNextTask === 'function') {
+      return todoWidgetModule.peekNextTask();
+    }
+    if (todoWidgetModule.default && typeof todoWidgetModule.default.peekNextTask === 'function') {
+      return todoWidgetModule.default.peekNextTask();
+    }
+    return null;
+  };
+
+  const initialEntry = findQualityEntry();
+  assert.ok(initialEntry, 'expected quality recommendation to appear in quick actions');
+  assert.match(initialEntry.meta || '', /2 posts to go/i, 'expected initial quick action meta to show remaining runs');
+  assert.equal(initialEntry.remainingRuns, 2, 'expected quick action to report two runs remaining');
+
+  const headerButton = document.getElementById('browser-session-button');
+  assert.ok(headerButton, 'expected to locate the header action button');
+  const initialTask = resolveNextTask();
+  assert.ok(initialTask, 'expected header suggestion to identify the next quality task');
+  assert.match(initialTask.meta || '', /2 posts to go/i, 'expected header to reflect initial quality progress');
+  assert.equal(headerButton.dataset.actionId, initialTask.id, 'expected header button to point at the next quality task');
+
+  qualityModule.performQualityAction(definition.id, instance.id, 'writePost');
+
+  const refreshedEntry = findQualityEntry();
+  assert.ok(refreshedEntry, 'expected quality recommendation to persist after running the action');
+  assert.match(refreshedEntry.meta || '', /1 posts to go/i, 'expected quick action meta to update remaining runs immediately');
+  assert.equal(refreshedEntry.remainingRuns, 1, 'expected quick action remaining runs to decrement immediately');
+
+  const refreshedTask = resolveNextTask();
+  assert.ok(refreshedTask, 'expected header suggestion to continue surfacing the quality task');
+  assert.match(refreshedTask.meta || '', /1 posts to go/i, 'expected header to reflect the latest quality progress');
+  assert.equal(
+    headerButton.dataset.actionId,
+    refreshedTask.id,
+    'expected header button dataset to stay synced with updated task data'
+  );
+});

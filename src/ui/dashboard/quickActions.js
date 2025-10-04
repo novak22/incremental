@@ -193,6 +193,12 @@ export function buildAssetUpgradeRecommendations(state) {
         const remainingRuns = estimateRemainingRuns(asset, instance, action, remaining, state);
         const repeatable = remainingRuns == null ? true : remainingRuns > 1;
         const metaParts = [];
+        const remainingNote = Number.isFinite(remaining) && remaining > 0
+          ? `${remaining} ${requirementLabel} to go`
+          : null;
+        if (remainingNote) {
+          metaParts.push(remainingNote);
+        }
         const runsNote = formatRemainingRuns(remainingRuns);
         if (runsNote) {
           metaParts.push(runsNote);
@@ -353,4 +359,3 @@ export function registerAssetUpgradeProvider() {
 
 registerQuickActionProvider();
 registerAssetUpgradeProvider();
-
