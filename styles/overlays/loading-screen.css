@@ -1,0 +1,137 @@
+/*
+ * Boot loading overlay that plays before the browser shell initializes.
+ * Designed to match the upbeat hustle aesthetic while staying lightweight.
+ */
+
+.boot-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.75rem;
+  padding: 2.5rem 1.5rem;
+  background: radial-gradient(120% 120% at 50% 20%, rgba(37, 99, 235, 0.22), transparent),
+    linear-gradient(160deg, var(--browser-surface), var(--browser-panel));
+  color: var(--browser-text);
+  text-align: center;
+  transition: opacity 320ms ease, visibility 320ms ease;
+}
+
+.boot-loader::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(37, 99, 235, 0.22) 1px, transparent 1px);
+  background-size: 32px 32px;
+  opacity: 0.22;
+  pointer-events: none;
+}
+
+.boot-loader__content {
+  position: relative;
+  z-index: 1;
+  max-width: 32rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.boot-loader__title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.boot-loader__subtitle {
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: var(--browser-muted);
+  margin: 0;
+}
+
+.boot-loader__orb {
+  position: relative;
+  z-index: 1;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.65), rgba(37, 99, 235, 0.65));
+  box-shadow: 0 18px 42px rgba(37, 99, 235, 0.35);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.boot-loader__orb::before,
+.boot-loader__orb::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.45);
+  animation: boot-loader-orb 1600ms ease-in-out infinite;
+}
+
+.boot-loader__orb::before {
+  width: 60%;
+  height: 60%;
+  animation-delay: -400ms;
+}
+
+.boot-loader__orb::after {
+  width: 85%;
+  height: 85%;
+}
+
+.boot-loader--is-exiting {
+  opacity: 0;
+  visibility: hidden;
+}
+
+:root[data-browser-theme="night"] .boot-loader {
+  background: radial-gradient(120% 120% at 50% 20%, rgba(139, 170, 255, 0.22), transparent),
+    linear-gradient(160deg, rgba(15, 17, 23, 0.94), rgba(27, 34, 51, 0.94));
+  color: var(--browser-text);
+}
+
+:root[data-browser-theme="night"] .boot-loader__subtitle {
+  color: rgba(235, 239, 255, 0.72);
+}
+
+:root[data-browser-theme="night"] .boot-loader__orb {
+  background: radial-gradient(circle at 30% 30%, rgba(235, 245, 255, 0.72), rgba(139, 170, 255, 0.72));
+  box-shadow: 0 20px 44px rgba(139, 170, 255, 0.35);
+}
+
+@keyframes boot-loader-orb {
+  0%,
+  100% {
+    transform: scale(0.9);
+    opacity: 0.75;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .boot-loader,
+  .boot-loader::after,
+  .boot-loader__orb,
+  .boot-loader__orb::before,
+  .boot-loader__orb::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0ms !important;
+  }
+
+  .boot-loader__orb::before,
+  .boot-loader__orb::after {
+    opacity: 0.45;
+    transform: scale(1);
+  }
+}

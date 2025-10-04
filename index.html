@@ -27,12 +27,26 @@
   <link rel="stylesheet" href="styles/workspaces/timodoro.css" />
   <!-- Overlays -->
   <link rel="stylesheet" href="styles/overlays/launch-dialog.css" />
+  <link rel="stylesheet" href="styles/overlays/loading-screen.css" />
   <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body data-ui-view="browser">
+  <div
+    id="boot-loader"
+    class="boot-loader"
+    role="status"
+    aria-live="polite"
+    aria-label="Loading Online Hustle Simulator"
+  >
+    <div class="boot-loader__orb" aria-hidden="true"></div>
+    <div class="boot-loader__content">
+      <p class="boot-loader__title">Spooling up your hustle HQ…</p>
+      <p class="boot-loader__subtitle">Gathering widgets, priming upgrades, syncing your streaks.</p>
+    </div>
+  </div>
   <div class="browser-shell" data-theme="day">
     <header class="browser-chrome" aria-label="Browser chrome">
       <div class="browser-chrome__cluster" aria-label="Navigation controls">
