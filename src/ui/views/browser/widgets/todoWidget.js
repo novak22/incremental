@@ -1,135 +1,38 @@
 import { formatHours } from '../../../../core/helpers.js';
 import { endDay } from '../../../../game/lifecycle.js';
+import todoDom from './todoDom.js';
+import todoState from './todoState.js';
 
-const completedItems = new Map();
 let elements = null;
 let initialized = false;
-let currentDay = null;
-let lastModel = null;
-const focusModes = ['money', 'upgrades', 'balanced'];
-let focusMode = 'balanced';
-let pendingEntries = [];
 
-function bindEndDay(button) {
-  if (!button || button.dataset.bound === 'true') return;
-  button.addEventListener('click', () => {
-    const handler = typeof lastModel?.onEndDay === 'function'
-      ? lastModel.onEndDay
-      : () => endDay(false);
-    handler();
-  });
-  button.dataset.bound = 'true';
+function defaultEndDay() {
+  endDay(false);
 }
 
-function isValidFocusMode(mode) {
-  return focusModes.includes(mode);
+function callEndDay() {
+  const model = todoState.getLastModel();
+  const handler = typeof model?.onEndDay === 'function' ? model.onEndDay : defaultEndDay;
+  handler();
 }
 
-function syncFocusButtons() {
-  if (!elements?.focusButtons) return;
-  elements.focusButtons.forEach(button => {
-    if (!button?.dataset) return;
-    const mode = button.dataset.focus;
-    const isActive = mode === focusMode;
-    button.classList.toggle('is-active', isActive);
-    button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
-  });
-}
-
-function setFocusMode(mode) {
-  const normalized = typeof mode === 'string' ? mode.toLowerCase() : '';
-  if (!isValidFocusMode(normalized) || normalized === focusMode) {
-    syncFocusButtons();
-    return;
+function handleFocusChange(mode) {
+  const changed = todoState.setFocusMode(mode);
+  todoDom.syncFocusButtons(elements?.focusButtons || [], todoState.getFocusMode());
+  if (changed) {
+    const model = todoState.getLastModel();
+    if (model) {
+      render(model);
+    }
   }
-  focusMode = normalized;
-  syncFocusButtons();
-  if (lastModel) {
-    render(lastModel);
-  }
-}
-
-function bindFocusControls(buttons) {
-  if (!Array.isArray(buttons) || !buttons.length) return;
-  buttons.forEach(button => {
-    if (!button || button.dataset.focusBound === 'true') return;
-    button.addEventListener('click', () => {
-      const mode = button.dataset.focus;
-      setFocusMode(mode);
-    });
-    button.dataset.focusBound = 'true';
-  });
-  syncFocusButtons();
 }
 
 function init(widgetElements = {}) {
-  if (initialized) return;
-  elements = { ...widgetElements };
-  if (!elements.listWrapper) {
-    const wrapper = elements.container?.querySelector?.('.todo-widget__list-wrapper');
-    if (wrapper) {
-      elements.listWrapper = wrapper;
-    }
-  }
-  if (elements?.focusButtons) {
-    elements.focusButtons = Array.from(elements.focusButtons);
-  } else if (elements?.focusGroup) {
-    const buttons = elements.focusGroup.querySelectorAll?.('[data-focus]');
-    if (buttons?.length) {
-      elements.focusButtons = Array.from(buttons);
-    }
-  }
+  elements = todoDom.prepareElements(widgetElements);
+  todoDom.bindEndDay(elements?.endDayButton, callEndDay);
+  todoDom.bindFocusControls(elements?.focusButtons, handleFocusChange, todoState.getFocusMode());
+  todoDom.syncFocusButtons(elements?.focusButtons || [], todoState.getFocusMode());
   initialized = true;
-  bindEndDay(elements?.endDayButton);
-  bindFocusControls(elements?.focusButtons);
-  if (elements?.doneHeading) {
-    elements.doneHeading.hidden = true;
-  }
-}
-
-function normalizeDay(day) {
-  const numeric = Number(day);
-  return Number.isFinite(numeric) ? numeric : null;
-}
-
-function resetCompletedForDay(day) {
-  const normalized = normalizeDay(day);
-  if (normalized === null) {
-    if (currentDay !== null) {
-      completedItems.clear();
-      currentDay = null;
-    }
-    return;
-  }
-  if (normalized !== currentDay) {
-    completedItems.clear();
-    currentDay = normalized;
-  }
-}
-
-function seedAutoCompletedEntries(entries = []) {
-  if (!Array.isArray(entries) || !entries.length) return;
-  entries.forEach((entry, index) => {
-    const id = entry?.id || `auto-${index}`;
-    if (!id) return;
-    const existing = completedItems.get(id);
-    const hours = Number(entry?.durationHours);
-    const durationHours = Number.isFinite(hours) && hours > 0 ? hours : 0;
-    const durationText = entry?.durationText || formatDuration(durationHours);
-    const count = Number.isFinite(entry?.count) && entry.count > 0 ? entry.count : 1;
-    const completedAt = existing?.completedAt ?? Date.now();
-
-    completedItems.set(id, {
-      id,
-      title: entry?.title || 'Scheduled work',
-      durationHours,
-      durationText,
-      repeatable: false,
-      remainingRuns: null,
-      count,
-      completedAt
-    });
-  });
 }
 
 function formatDuration(hours) {
@@ -154,38 +57,6 @@ function getAvailableMoney(model = {}) {
     return Infinity;
   }
   return Math.max(0, available);
-}
-
-function applyScrollerLimit(model = {}) {
-  if (!elements?.listWrapper) return;
-  const limit = Number(model?.scroller?.limit);
-  if (!Number.isFinite(limit) || limit <= 0) {
-    elements.listWrapper.style.removeProperty('--todo-widget-max-height');
-    elements.listWrapper.style.removeProperty('--todo-widget-row-height');
-    return;
-  }
-  const rows = Math.max(1, Math.floor(limit));
-  const rowHeight = Number(model?.scroller?.rowHeight);
-  if (Number.isFinite(rowHeight) && rowHeight > 0) {
-    elements.listWrapper.style.setProperty('--todo-widget-row-height', `${rowHeight}rem`);
-  } else {
-    elements.listWrapper.style.removeProperty('--todo-widget-row-height');
-  }
-  const maxHeight = `calc(var(--todo-widget-row-height, 4.5rem) * ${rows})`;
-  elements.listWrapper.style.setProperty('--todo-widget-max-height', maxHeight);
-}
-
-function getEffectiveRemainingRuns(entry = {}, completion) {
-  if (entry?.remainingRuns == null) {
-    return null;
-  }
-  const total = Number(entry.remainingRuns);
-  if (!Number.isFinite(total)) {
-    return null;
-  }
-  const used = Number(completion?.count);
-  const consumed = Number.isFinite(used) ? Math.max(0, used) : 0;
-  return Math.max(0, total - consumed);
 }
 
 function normalizeEntries(model = {}) {
@@ -327,74 +198,28 @@ function applyImmediateTimeDelta(model, hours) {
   model.hoursSpentLabel = formatHours(spent);
 }
 
-function renderHours(model = {}) {
-  if (elements?.availableValue) {
-    const available = Number(model.hoursAvailable);
-    const label = model.hoursAvailableLabel
-      || formatHours(Number.isFinite(available) ? Math.max(0, available) : 0);
-    elements.availableValue.textContent = label || '0h';
-  }
-  if (elements?.spentValue) {
-    const spent = Number(model.hoursSpent);
-    const label = model.hoursSpentLabel
-      || formatHours(Number.isFinite(spent) ? Math.max(0, spent) : 0);
-    elements.spentValue.textContent = label || '0h';
-  }
-}
-
-function updateNote(model = {}, pendingCount = 0) {
-  if (!elements?.note) return;
-  if (pendingCount > 0) {
-    elements.note.textContent = pendingCount === 1
-      ? '1 task ready to trigger.'
-      : `${pendingCount} tasks ready to trigger.`;
-    return;
-  }
-  elements.note.textContent = model.emptyMessage || 'Queue a hustle or upgrade to add new tasks.';
-}
-
-function renderEmptyState(message) {
-  if (!elements?.list) return;
-  elements.list.innerHTML = '';
-  const empty = document.createElement('li');
-  empty.className = 'todo-widget__empty';
-  const text = document.createElement('span');
-  text.className = 'todo-widget__empty-text';
-  text.textContent = message || 'No quick wins queued. Check upgrades or ventures.';
-  empty.appendChild(text);
-
-  if (elements?.endDayButton) {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'todo-widget__empty-action';
-    button.textContent = 'End Day';
-    bindEndDay(button);
-    empty.appendChild(button);
-  }
-
-  elements.list.appendChild(empty);
-}
-
 function handleCompletion(entry, model) {
   if (!entry) return false;
 
-  const existing = completedItems.get(entry.id);
+  const existing = todoState.getCompletion(entry.id);
   if (existing && !entry.repeatable) {
     return false;
   }
 
-  const previousModel = lastModel || model || {};
+  const previousModel = todoState.getLastModel() || model || {};
   const previousHoursAvailable = Number(previousModel?.hoursAvailable);
   const previousHoursSpent = Number(previousModel?.hoursSpent);
 
-  const previousModelRef = lastModel;
+  const previousModelRef = todoState.getLastModel();
   let triggeredUpdate = false;
   if (typeof entry.onClick === 'function') {
     entry.onClick();
-    triggeredUpdate = lastModel !== previousModelRef;
+    triggeredUpdate = todoState.getLastModel() !== previousModelRef;
   }
 
-  const refreshedModel = triggeredUpdate ? (lastModel || {}) : (model || previousModel || {});
+  const refreshedModel = triggeredUpdate
+    ? (todoState.getLastModel() || {})
+    : (model || previousModel || {});
   const duration = Number(entry.durationHours);
   const trackTime = Number.isFinite(duration) && duration > 0;
 
@@ -431,16 +256,12 @@ function handleCompletion(entry, model) {
   }
 
   const recordedDuration = Number.isFinite(effectiveDuration) ? effectiveDuration : duration;
-  const count = existing ? (existing.count || 1) + 1 : 1;
-  completedItems.set(entry.id, {
-    id: entry.id,
-    title: entry.title,
+
+  todoState.recordCompletion(entry, {
     durationHours: recordedDuration,
     durationText: entry.durationText,
     repeatable: entry.repeatable,
-    remainingRuns: entry.remainingRuns,
-    count,
-    completedAt: Date.now()
+    remainingRuns: entry.remainingRuns
   });
 
   if (!triggeredUpdate && trackTime) {
@@ -451,93 +272,6 @@ function handleCompletion(entry, model) {
   return true;
 }
 
-function createTask(entry, model) {
-  const item = document.createElement('li');
-  item.className = 'todo-widget__item';
-
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.className = 'todo-widget__task';
-  button.setAttribute('aria-label', `${entry.title} ${entry.meta}`.trim());
-
-  const checkbox = document.createElement('span');
-  checkbox.className = 'todo-widget__checkbox';
-  checkbox.textContent = '✓';
-
-  const content = document.createElement('div');
-  content.className = 'todo-widget__content';
-
-  const title = document.createElement('span');
-  title.className = 'todo-widget__title';
-  title.textContent = entry.title;
-  content.appendChild(title);
-
-  if (entry.meta) {
-    const meta = document.createElement('span');
-    meta.className = 'todo-widget__meta';
-    meta.textContent = entry.meta;
-    content.appendChild(meta);
-  }
-
-  button.addEventListener('click', () => {
-    if (button.getAttribute('aria-disabled') === 'true') return;
-    button.setAttribute('aria-disabled', 'true');
-    button.classList.add('is-complete');
-    const completed = handleCompletion(entry, model);
-    if (!completed) {
-      button.removeAttribute('aria-disabled');
-      button.classList.remove('is-complete');
-    }
-  });
-
-  button.append(checkbox, content);
-  item.appendChild(button);
-  return item;
-}
-
-function renderPending(entries, model) {
-  if (!elements?.list) return;
-  elements.list.innerHTML = '';
-  entries.forEach(entry => {
-    const task = createTask(entry, model);
-    elements.list.appendChild(task);
-  });
-}
-
-function renderCompleted() {
-  if (!elements?.done) return;
-  const entries = Array.from(completedItems.values()).sort((a, b) => b.completedAt - a.completedAt);
-  elements.done.innerHTML = '';
-  if (elements.doneHeading) {
-    elements.doneHeading.hidden = entries.length === 0;
-  }
-  if (!entries.length) {
-    const placeholder = document.createElement('li');
-    placeholder.className = 'todo-widget__empty';
-    placeholder.textContent = 'Nothing checked off yet.';
-    elements.done.appendChild(placeholder);
-    return;
-  }
-
-  entries.forEach(entry => {
-    const item = document.createElement('li');
-    item.className = 'todo-widget__done-item';
-
-    const title = document.createElement('span');
-    title.className = 'todo-widget__done-title';
-    title.textContent = entry.title;
-
-    const meta = document.createElement('span');
-    meta.className = 'todo-widget__done-meta';
-    const label = entry.durationText || formatDuration(entry.durationHours);
-    const countLabel = entry.count && entry.count > 1 ? ` ×${entry.count}` : '';
-    meta.textContent = `(${label}${countLabel})`;
-
-    item.append(title, meta);
-    elements.done.appendChild(item);
-  });
-}
-
 export function render(model = {}) {
   if (!initialized) {
     init(elements || {});
@@ -546,18 +280,19 @@ export function render(model = {}) {
     elements = {};
   }
 
-  lastModel = model || {};
-  syncFocusButtons();
-  resetCompletedForDay(model.day);
-  seedAutoCompletedEntries(model.autoCompletedEntries);
-  applyScrollerLimit(model);
+  const viewModel = model || {};
+  todoState.setLastModel(viewModel);
+  todoDom.syncFocusButtons(elements?.focusButtons || [], todoState.getFocusMode());
+  todoState.resetCompletedForDay(viewModel.day);
+  todoState.seedAutoCompletedEntries(viewModel.autoCompletedEntries, formatDuration);
+  todoDom.applyScrollerLimit(elements?.listWrapper, viewModel);
 
-  const entries = normalizeEntries(model);
-  const availableHours = getAvailableHours(model);
-  const availableMoney = getAvailableMoney(model);
+  const entries = normalizeEntries(viewModel);
+  const availableHours = getAvailableHours(viewModel);
+  const availableMoney = getAvailableMoney(viewModel);
   const pending = entries.filter(entry => {
-    const completion = completedItems.get(entry.id);
-    const remainingRuns = getEffectiveRemainingRuns(entry, completion);
+    const completion = todoState.getCompletion(entry.id);
+    const remainingRuns = todoState.getEffectiveRemainingRuns(entry, completion);
     const hasRunsLeft = remainingRuns === null || remainingRuns > 0;
     if (!hasRunsLeft) return false;
 
@@ -575,27 +310,29 @@ export function render(model = {}) {
     return entry.repeatable;
   });
 
-  const orderedPending = applyFocusOrdering(pending, focusMode);
-  pendingEntries = orderedPending;
+  const orderedPending = applyFocusOrdering(pending, todoState.getFocusMode());
+  todoState.setPendingEntries(orderedPending);
 
-  renderHours(model);
-  updateNote(model, orderedPending.length);
+  todoDom.renderHours(elements, viewModel, formatHours);
+  todoDom.updateNote(elements?.note, viewModel, orderedPending.length);
 
   if (!orderedPending.length) {
-    renderEmptyState(model.emptyMessage);
+    todoDom.renderEmptyState(elements?.list, viewModel.emptyMessage, callEndDay);
   } else {
-    renderPending(orderedPending, model);
+    todoDom.renderPending(elements?.list, orderedPending, viewModel, handleCompletion);
   }
 
-  renderCompleted();
+  const completedEntries = todoState.getCompletedEntries();
+  todoDom.renderCompleted(elements?.done, elements?.doneHeading, completedEntries, formatDuration);
 }
 
 export function hasPendingTasks() {
-  return pendingEntries.length > 0;
+  return todoState.getPendingEntries().length > 0;
 }
 
 export function peekNextTask() {
-  return pendingEntries.length ? pendingEntries[0] : null;
+  const pending = todoState.getPendingEntries();
+  return pending.length ? pending[0] : null;
 }
 
 export function runNextTask() {
@@ -603,7 +340,7 @@ export function runNextTask() {
   if (!next) {
     return false;
   }
-  return handleCompletion(next, lastModel);
+  return handleCompletion(next, todoState.getLastModel());
 }
 
 export default {
