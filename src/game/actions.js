@@ -9,8 +9,6 @@ export function executeAction(effect) {
   const dirtySections = consumeDirty();
   if (Object.keys(dirtySections).length > 0) {
     updateUI(dirtySections);
-  } else {
-    updateUI();
   }
   saveState();
 }

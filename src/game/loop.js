@@ -48,11 +48,15 @@ export function runGameLoop() {
   }
 
   const dirtySections = consumeDirty();
-  if (Object.keys(dirtySections).length > 0) {
-    updateUI(dirtySections);
-  } else {
-    updateUI();
+  if (Object.keys(dirtySections).length === 0) {
+    if (now - lastAutosave >= AUTOSAVE_INTERVAL_MS) {
+      saveState();
+      lastAutosave = now;
+    }
+    return;
   }
+
+  updateUI(dirtySections);
 
   if (now - lastAutosave >= AUTOSAVE_INTERVAL_MS) {
     saveState();
