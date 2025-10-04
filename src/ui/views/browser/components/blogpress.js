@@ -9,7 +9,15 @@ import { createNavTabs } from './common/navBuilders.js';
 import { createWorkspaceLockRenderer } from './common/renderWorkspaceLock.js';
 import { getWorkspaceLockTheme } from './common/workspaceLockThemes.js';
 import renderHomeView from './blogpress/views/homeView.js';
-import renderDetailView from './blogpress/views/detailView.js';
+import createBackButton from './blogpress/views/createBackButton.js';
+import { createDetailViewController } from './blogpress/views/createDetailViewController.js';
+import renderOverviewPanel from './blogpress/views/renderOverviewPanel.js';
+import renderNichePanel from './blogpress/views/renderNichePanel.js';
+import renderQualityPanel from './blogpress/views/renderQualityPanel.js';
+import renderIncomePanel from './blogpress/views/renderIncomePanel.js';
+import renderPayoutPanel from './blogpress/views/renderPayoutPanel.js';
+import renderActionPanel from './blogpress/views/renderActionPanel.js';
+import renderUpkeepPanel from './blogpress/views/renderUpkeepPanel.js';
 import renderPricingView from './blogpress/views/pricingView.js';
 import renderBlueprintsView from './blogpress/views/blueprintsView.js';
 
@@ -33,6 +41,17 @@ const formatCurrency = amount => baseFormatCurrency(amount, { precision: 'intege
 const { describeSetupSummary, describeUpkeepSummary } = createCurrencyLifecycleSummary({
   formatCurrency: value => `$${formatMoney(value)}`,
   formatDailyHours: hours => `${formatHours(hours)} per day`
+});
+
+const renderDetailView = createDetailViewController({
+  createBackButton,
+  renderOverviewPanel,
+  renderNichePanel,
+  renderQualityPanel,
+  renderIncomePanel,
+  renderPayoutPanel,
+  renderActionPanel,
+  renderUpkeepPanel
 });
 
 function confirmBlogLaunch(definition = {}) {
