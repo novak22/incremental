@@ -126,15 +126,40 @@ export function createConfiguredAssetWorkspace(config = {}) {
     selectNiche(assetKey, instanceId, value);
   };
 
+  const launchOverride = overrides.launch;
+
   let presenter;
+
+  const invokeLaunch = async (event = {}) => {
+    if (!presenter) {
+      return;
+    }
+    const model = presenter.getModel?.() || {};
+    const launch = model.launch;
+    if (!launch || launch.disabled) {
+      return;
+    }
+    if (typeof launchOverride === 'function') {
+      const outcome = await launchOverride({ presenter, model, launch, event });
+      if (outcome === false || outcome === true) {
+        return;
+      }
+    }
+    const handler = launch.onClick;
+    if (typeof handler === 'function') {
+      await handler(event);
+    }
+  };
 
   const helpers = {
     assetType: assetKey,
     actions: {
       quickAction,
-      selectNiche: typeof selectNiche === 'function' ? nicheSelect : noop
+      selectNiche: typeof selectNiche === 'function' ? nicheSelect : noop,
+      launch: invokeLaunch
     },
-    getPresenter: () => presenter
+    getPresenter: () => presenter,
+    getLaunch: () => presenter?.getModel?.()?.launch ?? null
   };
 
   const normalizedViews = views.map(view => {
@@ -149,6 +174,10 @@ export function createConfiguredAssetWorkspace(config = {}) {
     return normalized;
   });
 
+  const headerRenderer = typeof header === 'function'
+    ? (model, state, sharedContext) => header(model, state, { ...sharedContext, helpers })
+    : header;
+
   presenter = createAssetWorkspacePresenter({
     className,
     defaultView,
@@ -157,7 +186,7 @@ export function createConfiguredAssetWorkspace(config = {}) {
     deriveSummary,
     derivePath,
     renderLocked: typeof renderLocked === 'function' ? renderLocked : createLockRenderer(lock),
-    header,
+    header: headerRenderer,
     isLocked,
     views: normalizedViews,
     beforeRender,

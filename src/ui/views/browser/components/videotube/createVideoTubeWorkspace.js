@@ -6,7 +6,7 @@ import {
   formatCurrency as baseFormatCurrency,
   formatPercent as baseFormatPercent
 } from '../../utils/formatting.js';
-import { createAssetWorkspaceConfig } from '../../utils/createAssetWorkspaceConfig.js';
+import { registerAssetWorkspace, createActionDelegates } from '../../utils/assetWorkspaceRegistry.js';
 import { createVideoTubeHeader } from './header.js';
 import { createDashboardView } from './views/dashboardView.js';
 import { createDetailView } from './views/detailView.js';
@@ -65,12 +65,88 @@ function deriveSummary(model = {}) {
 const buildHeader = createVideoTubeHeader();
 
 let presenter;
+let renameAssetInstance = setAssetInstanceName;
 
 function showVideoDetail(videoId) {
   if (!videoId || !presenter) return;
   presenter.updateState(state => ({ ...state, selectedVideoId: videoId }));
   presenter.setView(VIEW_DETAIL);
 }
+
+function handleRename(instanceId, value) {
+  if (!instanceId) return;
+  renameAssetInstance('vlog', instanceId, value || '');
+}
+
+const videoTubeWorkspaceRegistration = registerAssetWorkspace({
+  assetType: 'vlog',
+  className: 'videotube',
+  defaultView: VIEW_DASHBOARD,
+  state: { view: VIEW_DASHBOARD, selectedVideoId: null },
+  ensureSelection: ensureSelectedVideo,
+  deriveSummary,
+  derivePath,
+  lock: {
+    theme: {
+      container: 'videotube-view',
+      locked: 'videotube-view--locked',
+      message: 'videotube-empty',
+      label: 'This workspace'
+    },
+    fallbackMessage: 'VideoTube unlocks once the Vlog blueprint is discovered.'
+  },
+  actions: {
+    performQualityAction,
+    selectNiche: selectVideoTubeNiche
+  },
+  header(model, state, context) {
+    return buildHeader(model, state, context);
+  },
+  views: [
+    {
+      id: VIEW_DASHBOARD,
+      label: 'Dashboard',
+      badge: { summary: 'active' },
+      createView: helpers =>
+        createDashboardView({
+          formatCurrency,
+          formatPercent,
+          formatHours,
+          onQuickAction: createActionDelegates(helpers).quickAction,
+          onSelectVideo: showVideoDetail
+        })
+    },
+    {
+      id: VIEW_DETAIL,
+      label: 'Video Details',
+      badge: ({ state }) => (state.selectedVideoId ? 1 : null),
+      createView: helpers =>
+        createDetailView({
+          formatCurrency,
+          formatHours,
+          onQuickAction: createActionDelegates(helpers).quickAction,
+          onRename: handleRename,
+          onNicheSelect: createActionDelegates(helpers).selectNiche
+        })
+    },
+    {
+      id: VIEW_CREATE,
+      label: 'Create',
+      hide: true,
+      createView: () =>
+        createCreateView({
+          formatCurrency,
+          formatHours,
+          onVideoCreated: showVideoDetail
+        })
+    },
+    {
+      id: VIEW_ANALYTICS,
+      label: 'Channel Analytics',
+      createView: () => createAnalyticsView({ formatCurrency })
+    }
+  ]
+});
 
 export function createVideoTubeWorkspace(overrides = {}) {
   const actions = {
@@ -79,79 +155,13 @@ export function createVideoTubeWorkspace(overrides = {}) {
     selectVideoTubeNiche: overrides.selectVideoTubeNiche ?? selectVideoTubeNiche
   };
 
-  const handleRename = (instanceId, value) => {
-    if (!instanceId) return;
-    actions.setAssetInstanceName('vlog', instanceId, value || '');
-  };
+  renameAssetInstance = actions.setAssetInstanceName;
 
-  presenter = createAssetWorkspaceConfig({
-    assetType: 'vlog',
-    className: 'videotube',
-    defaultView: VIEW_DASHBOARD,
-    state: { view: VIEW_DASHBOARD, selectedVideoId: null },
-    ensureSelection: ensureSelectedVideo,
-    deriveSummary,
-    derivePath,
-    lock: {
-      theme: {
-        container: 'videotube-view',
-        locked: 'videotube-view--locked',
-        message: 'videotube-empty',
-        label: 'This workspace'
-      },
-      fallbackMessage: 'VideoTube unlocks once the Vlog blueprint is discovered.'
-    },
+  presenter = videoTubeWorkspaceRegistration.createPresenter({
     actions: {
       performQualityAction: actions.performQualityAction,
       selectNiche: actions.selectVideoTubeNiche
-    },
-    header(model, state, context) {
-      return buildHeader(model, state, context);
-    },
-    views: [
-      {
-        id: VIEW_DASHBOARD,
-        label: 'Dashboard',
-        badge: { summary: 'active' },
-        createView: ({ actions }) =>
-          createDashboardView({
-            formatCurrency,
-            formatPercent,
-            formatHours,
-            onQuickAction: actions.quickAction,
-            onSelectVideo: showVideoDetail
-          })
-      },
-      {
-        id: VIEW_DETAIL,
-        label: 'Video Details',
-        badge: ({ state }) => (state.selectedVideoId ? 1 : null),
-        createView: ({ actions }) =>
-          createDetailView({
-            formatCurrency,
-            formatHours,
-            onQuickAction: actions.quickAction,
-            onRename: handleRename,
-            onNicheSelect: actions.selectNiche
-          })
-      },
-      {
-        id: VIEW_CREATE,
-        label: 'Create',
-        hide: true,
-        createView: () =>
-          createCreateView({
-            formatCurrency,
-            formatHours,
-            onVideoCreated: showVideoDetail
-          })
-      },
-      {
-        id: VIEW_ANALYTICS,
-        label: 'Channel Analytics',
-        createView: () => createAnalyticsView({ formatCurrency })
-      }
-    ]
+    }
   });
 
   return presenter;
