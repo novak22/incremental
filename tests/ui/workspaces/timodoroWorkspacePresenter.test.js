@@ -10,10 +10,17 @@ function withDom(t) {
   const dom = new JSDOM('<body><main id="mount"></main></body>', { url: 'http://localhost' });
   globalThis.window = dom.window;
   globalThis.document = dom.window.document;
+  const previousMutationObserver = globalThis.MutationObserver;
+  globalThis.MutationObserver = dom.window.MutationObserver;
   t.after(() => {
     dom.window.close();
     delete globalThis.window;
     delete globalThis.document;
+    if (previousMutationObserver) {
+      globalThis.MutationObserver = previousMutationObserver;
+    } else {
+      delete globalThis.MutationObserver;
+    }
   });
   return dom;
 }
@@ -115,7 +122,9 @@ test('timodoro component renders layout and populates lists', t => {
   assert.equal(available?.textContent, '4h', 'available hours should update');
   assert.equal(spent?.textContent, '2h', 'spent hours should update');
 
+  const todoPanel = mount.querySelector('[data-tab="todo"]');
   const donePanel = mount.querySelector('[data-tab="done"]');
+  assert.equal(todoPanel?.hidden, true, 'todo tab hides when done selected');
   assert.equal(donePanel?.hidden, false, 'done tab becomes visible after selecting it');
 
   const hustleItems = [
@@ -138,6 +147,59 @@ test('timodoro component renders layout and populates lists', t => {
   ];
   assert.equal(summaryItems.length, 1, 'summary list renders stats entries');
   assert.equal(summaryItems[0].querySelector('.timodoro-stats__label')?.textContent, 'Hours logged');
+});
+
+test('timodoro tabs follow workspace navigation path updates', async t => {
+  const dom = withDom(t);
+  const context = createContext(dom.window.document);
+
+  const viewModel = {
+    meta: 'Focus mode ready',
+    todoEntries: [],
+    completedGroups: {
+      hustles: [],
+      education: [],
+      upkeep: [],
+      upgrades: []
+    },
+    recurringEntries: [],
+    summaryEntries: [],
+    breakdownEntries: [],
+    hoursAvailableLabel: '0h',
+    hoursSpentLabel: '0h'
+  };
+
+  renderTimodoro(context, [], { timodoro: viewModel });
+
+  const mount = dom.window.document.querySelector('[data-role="timodoro-root"]');
+  assert.ok(mount, 'mount should be available after render');
+
+  const pageElement = mount?.closest('[data-browser-page]');
+  assert.ok(pageElement, 'page element should wrap mount');
+
+  const todoPanel = mount?.querySelector('[data-tab="todo"]');
+  const donePanel = mount?.querySelector('[data-tab="done"]');
+
+  assert.equal(todoPanel?.hidden, false, 'todo panel visible by default');
+  assert.equal(donePanel?.hidden, true, 'done panel hidden by default');
+
+  pageElement.dataset.browserPath = 'done';
+  await new Promise(resolve => setTimeout(resolve, 0));
+
+  assert.equal(todoPanel?.hidden, true, 'todo panel hides after switching to done');
+  assert.equal(donePanel?.hidden, false, 'done panel shows after switching to done');
+
+  pageElement.dataset.browserPath = 'todo';
+  await new Promise(resolve => setTimeout(resolve, 0));
+
+  assert.equal(todoPanel?.hidden, false, 'todo panel reappears when switching back');
+  assert.equal(donePanel?.hidden, true, 'done panel hides when switching back to todo');
+
+  pageElement.dataset.browserPath = 'mystery';
+  await new Promise(resolve => setTimeout(resolve, 0));
+
+  assert.equal(todoPanel?.hidden, false, 'unknown path defaults to todo panel');
+  assert.equal(donePanel?.hidden, true, 'done panel hides for unknown path');
 });
 
 test('renderTimodoro returns page summary using workspace renderer', t => {

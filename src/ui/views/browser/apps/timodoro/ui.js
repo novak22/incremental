@@ -3,6 +3,8 @@ import { createStat } from '../../components/widgets.js';
 import { getWorkspacePath } from '../../layout/workspaces.js';
 import { formatCurrency } from './model.js';
 
+const tabObserverMap = new WeakMap();
+
 const COMPLETED_GROUPS = [
   { key: 'hustles', label: 'Hustles', empty: 'No hustles wrapped yet.' },
   { key: 'education', label: 'Education', empty: 'No study blocks logged yet.' },
@@ -375,6 +377,49 @@ function buildTabPath(key) {
   return normalizeTabKey(key);
 }
 
+function syncTabFromPath(tabs, path) {
+  if (!tabs || typeof tabs.activate !== 'function') {
+    return;
+  }
+  const nextTab = deriveTabFromPath(path);
+  tabs.activate(nextTab, { notify: false });
+}
+
+function observePagePath(mount, tabs) {
+  if (!mount || !tabs || typeof MutationObserver !== 'function') {
+    return;
+  }
+
+  const existing = tabObserverMap.get(mount);
+  if (existing) {
+    existing.disconnect?.();
+    tabObserverMap.delete(mount);
+  }
+
+  const pageElement = mount.closest('[data-browser-page]');
+  if (!pageElement) {
+    return;
+  }
+
+  const observer = new MutationObserver(mutations => {
+    for (const mutation of mutations) {
+      if (mutation.type === 'attributes' && mutation.attributeName === 'data-browser-path') {
+        syncTabFromPath(tabs, pageElement.dataset.browserPath || '');
+      }
+    }
+  });
+
+  try {
+    observer.observe(pageElement, { attributes: true, attributeFilter: ['data-browser-path'] });
+    tabObserverMap.set(mount, observer);
+  } catch (error) {
+    observer.disconnect();
+    return;
+  }
+
+  syncTabFromPath(tabs, pageElement.dataset.browserPath || '');
+}
+
 function createTodoPanel(model = {}, config = TAB_CONFIGS[0]) {
   const panel = document.createElement('div');
   panel.className = 'timodoro-tabs__panel';
@@ -561,6 +606,8 @@ function render(model = {}, context = {}) {
 
   const activeTab = tabs.getActive?.() || initialTab;
   summary.urlPath = buildTabPath(activeTab);
+
+  observePagePath(mount, tabs);
 
   return summary;
 }
