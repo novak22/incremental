@@ -1,40 +1,24 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { JSDOM } from 'jsdom';
-import { register } from 'node:module';
-
-const loaderUrl = new URL('./helpers/videoTubeStubLoader.js', import.meta.url);
-let loaderRegistered = false;
-
-async function ensureLoaderRegistered() {
-  if (!loaderRegistered) {
-    register(loaderUrl, import.meta.url);
-    loaderRegistered = true;
-  }
-}
+import { createVideoTubeWorkspace } from '../../../src/ui/views/browser/components/videotube/createVideoTubeWorkspace.js';
 
 test('createVideoTubeWorkspace wires table selection and actions', async t => {
-  await ensureLoaderRegistered();
-
   const qualityCalls = [];
   const renameCalls = [];
   const nicheCalls = [];
 
-  globalThis.__videoTubeStubActive = true;
-  globalThis.__videoTubeQualityCalls = qualityCalls;
-  globalThis.__videoTubeRenameCalls = renameCalls;
-  globalThis.__videoTubeNicheCalls = nicheCalls;
-
-  t.after(() => {
-    globalThis.__videoTubeStubActive = false;
-    delete globalThis.__videoTubeQualityCalls;
-    delete globalThis.__videoTubeRenameCalls;
-    delete globalThis.__videoTubeNicheCalls;
+  const presenter = createVideoTubeWorkspace({
+    performQualityAction: (...args) => {
+      qualityCalls.push(args);
+    },
+    setAssetInstanceName: (...args) => {
+      renameCalls.push(args);
+    },
+    selectVideoTubeNiche: (...args) => {
+      nicheCalls.push(args);
+    }
   });
-
-  const { createVideoTubeWorkspace } = await import(
-    `../../../src/ui/views/browser/components/videotube/createVideoTubeWorkspace.js?stub=${Date.now()}`
-  );
 
   const dom = new JSDOM('<div id="mount"></div>', { url: 'http://localhost' });
   globalThis.window = dom.window;
@@ -105,7 +89,6 @@ test('createVideoTubeWorkspace wires table selection and actions', async t => {
     ]
   };
 
-  const presenter = createVideoTubeWorkspace();
   const mount = dom.window.document.getElementById('mount');
 
   presenter.render(model, { mount });

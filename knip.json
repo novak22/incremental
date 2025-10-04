@@ -1,0 +1,8 @@
+{
+  "$schema": "https://knip.dev/schema.json",
+  "entry": [
+    "src/main.js",
+    "src/ui/**/*.js",
+    "tests/**/*.js"
+  ]
+}

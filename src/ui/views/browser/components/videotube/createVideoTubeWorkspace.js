@@ -80,21 +80,6 @@ function deriveSummary(model = {}) {
   return model?.summary ?? {};
 }
 
-function handleQuickAction(instanceId, actionId) {
-  if (!instanceId || !actionId) return;
-  performQualityAction('vlog', instanceId, actionId);
-}
-
-function handleNicheSelect(instanceId, value) {
-  if (!instanceId) return;
-  selectVideoTubeNiche('vlog', instanceId, value);
-}
-
-function handleRename(instanceId, value) {
-  if (!instanceId) return;
-  setAssetInstanceName('vlog', instanceId, value || '');
-}
-
 const buildHeader = createVideoTubeHeader();
 
 let presenter;
@@ -105,7 +90,28 @@ function showVideoDetail(videoId) {
   presenter.setView(VIEW_DETAIL);
 }
 
-export function createVideoTubeWorkspace() {
+export function createVideoTubeWorkspace(overrides = {}) {
+  const actions = {
+    performQualityAction: overrides.performQualityAction ?? performQualityAction,
+    setAssetInstanceName: overrides.setAssetInstanceName ?? setAssetInstanceName,
+    selectVideoTubeNiche: overrides.selectVideoTubeNiche ?? selectVideoTubeNiche
+  };
+
+  const handleQuickAction = (instanceId, actionId) => {
+    if (!instanceId || !actionId) return;
+    actions.performQualityAction('vlog', instanceId, actionId);
+  };
+
+  const handleNicheSelect = (instanceId, value) => {
+    if (!instanceId || value == null) return;
+    actions.selectVideoTubeNiche('vlog', instanceId, value);
+  };
+
+  const handleRename = (instanceId, value) => {
+    if (!instanceId) return;
+    actions.setAssetInstanceName('vlog', instanceId, value || '');
+  };
+
   const renderDashboardView = createDashboardView({
     formatCurrency,
     formatPercent,
