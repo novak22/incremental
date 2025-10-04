@@ -9,7 +9,8 @@ const {
   assetStateModule,
   assetsModule,
   hustlesModule,
-  upgradesModule
+  upgradesModule,
+  currencyModule
 } = harness;
 
 const {
@@ -161,4 +162,40 @@ test('resetState clears runtime progress and log history', () => {
   const fresh = getState();
   assert.equal(fresh.money, 45);
   assert.equal(fresh.log.length, 0);
+});
+
+test('createStateManager produces isolated runtime instances', () => {
+  const { createStateManager } = stateModule;
+  const managerA = createStateManager();
+  const managerB = createStateManager();
+
+  const stateA = managerA.initializeState(managerA.buildDefaultState());
+  const stateB = managerB.initializeState(managerB.buildDefaultState());
+
+  stateA.money = 100;
+  stateB.money = 200;
+
+  assert.equal(managerA.getState().money, 100);
+  assert.equal(managerB.getState().money, 200);
+
+  const currencyA = currencyModule.createCurrencyModule({
+    stateManager: managerA,
+    addLog: () => {},
+    publish: () => {},
+    markDirty: () => {}
+  });
+
+  const currencyB = currencyModule.createCurrencyModule({
+    stateManager: managerB,
+    addLog: () => {},
+    publish: () => {},
+    markDirty: () => {}
+  });
+
+  currencyA.addMoney(50);
+  currencyB.spendMoney(25);
+
+  assert.equal(managerA.getState().money, 150);
+  assert.equal(managerB.getState().money, 175);
+  assert.notEqual(managerA.getState(), managerB.getState());
 });
