@@ -5,7 +5,13 @@ import {
   formatSignedCurrency as baseFormatSignedCurrency
 } from '../../utils/formatting.js';
 import { createCurrencyLifecycleSummary } from '../../utils/lifecycleSummaries.js';
-import { createAssetWorkspaceConfig } from '../../utils/createAssetWorkspaceConfig.js';
+import {
+  registerAssetWorkspace,
+  createActionDelegates,
+  createLaunchAction,
+  createLaunchButton,
+  withNavTheme
+} from '../../utils/assetWorkspaceRegistry.js';
 import { selectShopilyNiche } from '../../../../cards/model/index.js';
 import {
   VIEW_DASHBOARD,
@@ -38,37 +44,6 @@ const {
   }
 });
 
-function createLaunchButton(launch = {}) {
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.className = 'shopily-button shopily-button--primary';
-  button.textContent = launch?.label || 'Launch New Store';
-  button.disabled = Boolean(launch?.disabled);
-  const reasons = ensureArray(launch?.availability?.reasons).filter(Boolean);
-  if (reasons.length) {
-    button.title = reasons.join('\n');
-  }
-  button.addEventListener('click', () => {
-    if (button.disabled) return;
-    launch?.onClick?.();
-  });
-  return button;
-}
-
-function createLaunchAction(launch = {}) {
-  const reasons = ensureArray(launch?.availability?.reasons).filter(Boolean);
-  return {
-    label: launch?.label || 'Launch New Store',
-    className: 'shopily-button shopily-button--primary',
-    disabled: Boolean(launch?.disabled),
-    ...(reasons.length ? { title: reasons.join('\n') } : {}),
-    onClick: () => {
-      if (launch?.disabled) return;
-      launch?.onClick?.();
-    }
-  };
-}
-
 function deriveWorkspaceSummary(model = {}) {
   const summary = typeof model?.summary === 'object' && model.summary ? { ...model.summary } : {};
   if (!summary.meta) {
@@ -79,12 +54,12 @@ function deriveWorkspaceSummary(model = {}) {
 
 function renderDashboardSection(context) {
   const { model, state, updateState, helpers } = context;
-  const actions = helpers?.actions || {};
+  const delegates = createActionDelegates(helpers);
   const handlers = {
     onSelectStore: storeId => updateState(current => reduceSetView(current, model, VIEW_DASHBOARD, { storeId })),
     onShowUpgradesForStore: storeId => updateState(current => reduceSetView(current, model, VIEW_UPGRADES, { storeId })),
-    onRunAction: actions.quickAction || (() => {}),
-    onSelectNiche: actions.selectNiche || (() => {})
+    onRunAction: delegates.runAction,
+    onSelectNiche: delegates.selectNiche
   };
   const renderDashboard = renderDashboardView({
     model,
@@ -97,7 +72,13 @@ function renderDashboardSection(context) {
     },
     handlers,
     selectors: { getSelectedStore },
-    createLaunchButton
+    createLaunchButton: launch =>
+      createLaunchButton({
+        launch,
+        helpers,
+        label: 'Launch New Store',
+        className: 'shopily-button shopily-button--primary'
+      })
   });
   return renderDashboard(context);
 }
@@ -129,8 +110,7 @@ function renderPricingSection(context) {
   });
 }
 
-export function createShopilyWorkspacePresenter() {
-  const presenter = createAssetWorkspaceConfig({
+const { createPresenter: createShopilyWorkspacePresenter } = registerAssetWorkspace({
     assetType: 'dropshipping',
     className: 'shopily',
     defaultView: VIEW_DASHBOARD,
@@ -152,12 +132,17 @@ export function createShopilyWorkspacePresenter() {
     },
     header(model, _state, sharedContext) {
       const pageMeta = sharedContext.presenter?.getPage?.() || {};
-      const launch = model.launch || {};
-      const actions = launch ? [createLaunchAction(launch)] : [];
+      const launchAction = createLaunchAction({
+        launch: model.launch,
+        helpers: sharedContext.helpers,
+        context: sharedContext,
+        label: 'Launch New Store',
+        className: 'shopily-button shopily-button--primary'
+      });
       return {
         title: pageMeta.headline || 'Shopily Commerce Deck',
         subtitle: pageMeta.tagline || 'Launch, nurture, and upgrade every store from one clean dashboard.',
-        actions,
+        actions: launchAction ? [launchAction] : [],
         theme: {
           header: 'shopily-topbar',
           intro: 'shopily-topbar__intro',
@@ -169,13 +154,13 @@ export function createShopilyWorkspacePresenter() {
           button: 'shopily-nav__button',
           badge: 'shopily-nav__badge'
         },
-        nav: {
+        nav: withNavTheme('shopily', {
           theme: {
             nav: 'shopily-nav shopily-topbar__nav',
             button: 'shopily-nav__button',
             badge: 'shopily-nav__badge'
           }
-        }
+        })
       };
     },
     views: [
@@ -200,10 +185,10 @@ export function createShopilyWorkspacePresenter() {
         render: context => renderPricingSection(context)
       }
     ]
-  });
+  }
+);
 
-  return presenter;
-}
+export { createShopilyWorkspacePresenter };
 
 export default {
   createShopilyWorkspacePresenter

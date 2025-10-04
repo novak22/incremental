@@ -7,7 +7,12 @@ import {
 } from '../utils/formatting.js';
 import { createCurrencyLifecycleSummary } from '../utils/lifecycleSummaries.js';
 import { showLaunchConfirmation } from '../utils/launchDialog.js';
-import { createAssetWorkspaceConfig } from '../utils/createAssetWorkspaceConfig.js';
+import {
+  registerAssetWorkspace,
+  createActionDelegates,
+  createLaunchAction,
+  withNavTheme
+} from '../utils/assetWorkspaceRegistry.js';
 import { createWorkspaceLockRenderer } from './common/renderWorkspaceLock.js';
 import { createAppsView } from './serverhub/views/appsView.js';
 import { createUpgradesView } from './serverhub/views/upgradesView.js';
@@ -191,7 +196,19 @@ let presenter;
 const renderUpgradesView = createUpgradesView({ formatCurrency });
 const renderPricingView = createPricingView({ formatCurrency, formatHours });
 
-presenter = createAssetWorkspaceConfig({
+async function handleLaunch({ presenter, model, launch }) {
+  if (!presenter || !model || !launch || launch.disabled) {
+    return false;
+  }
+  const confirmed = await confirmLaunchWithDetails(model.definition);
+  if (!confirmed) {
+    return false;
+  }
+  launch.onClick?.();
+  return true;
+}
+
+const serverHubWorkspaceRegistration = registerAssetWorkspace({
   assetType: 'saas',
   className: 'serverhub',
   defaultView: VIEW_APPS,
@@ -201,20 +218,17 @@ presenter = createAssetWorkspaceConfig({
   derivePath,
   renderLocked,
   actions: {
-    selectNiche: selectServerHubNiche
+    selectNiche: selectServerHubNiche,
+    launch: handleLaunch
   },
   header(model, state, sharedContext) {
-    const launch = model.launch || {};
-    const reasons = ensureArray(launch.availability?.reasons).filter(Boolean);
-    const actions = [
-      {
-        label: '+ Deploy New App',
-        className: 'serverhub-button serverhub-button--primary',
-        disabled: launch.disabled,
-        ...(reasons.length ? { title: reasons.join('\n') } : {}),
-        onClick: () => handleLaunch(sharedContext.presenter)
-      }
-    ];
+    const launchAction = createLaunchAction({
+      launch: model.launch,
+      helpers: sharedContext.helpers,
+      context: sharedContext,
+      label: '+ Deploy New App',
+      className: 'serverhub-button serverhub-button--primary'
+    });
 
     const setupCount = model.summary?.setup || 0;
     const meta = setupCount > 0
@@ -238,14 +252,14 @@ presenter = createAssetWorkspaceConfig({
       title: 'ServerHub Cloud Console',
       subtitle: 'Deploy SaaS apps, monitor uptime, and optimize ROI.',
       meta,
-      actions,
-      nav: {
+      actions: launchAction ? [launchAction] : [],
+      nav: withNavTheme('serverhub', {
         theme: {
           nav: 'serverhub-nav',
           button: 'serverhub-nav__button',
           badge: 'serverhub-nav__badge'
         }
-      }
+      })
     };
   },
   views: [
@@ -253,8 +267,9 @@ presenter = createAssetWorkspaceConfig({
       id: VIEW_APPS,
       label: 'My Apps',
       badge: ({ model }) => model.summary?.active || null,
-      createView: ({ actions, getPresenter }) =>
-        createAppsView({
+      createView: helpers => {
+        const delegates = createActionDelegates(helpers);
+        return createAppsView({
           formatCurrency,
           formatNetCurrency,
           formatPercent,
@@ -262,11 +277,12 @@ presenter = createAssetWorkspaceConfig({
           kpiDescriptors: KPI_DESCRIPTORS,
           tableColumns: INSTANCE_TABLE_COLUMNS,
           actionConsoleOrder: ACTION_CONSOLE_ORDER,
-          onQuickAction: actions.quickAction,
-          onNicheSelect: actions.selectNiche,
-          onLaunch: () => handleLaunch(getPresenter()),
+          onQuickAction: delegates.quickAction,
+          onNicheSelect: delegates.selectNiche,
+          onLaunch: () => delegates.launch({ source: 'apps-view' }),
           getSelectedApp
-        })
+        });
+      }
     },
     {
       id: VIEW_UPGRADES,
@@ -284,6 +300,8 @@ presenter = createAssetWorkspaceConfig({
     }
   ]
 });
+
+presenter = serverHubWorkspaceRegistration.createPresenter();
 
 function render(model, context = {}) {
   const summary = presenter.render(model, context);

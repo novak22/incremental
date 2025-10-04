@@ -72,6 +72,9 @@ function createOverrideConfig(actions = {}, overrides = {}) {
   if (typeof actions.selectNiche === 'function' && normalized.selectNiche == null && normalized.selectAssetNiche == null) {
     normalized.selectNiche = actions.selectNiche;
   }
+  if (typeof actions.launch === 'function' && normalized.launch == null) {
+    normalized.launch = actions.launch;
+  }
   return normalized;
 }
 
