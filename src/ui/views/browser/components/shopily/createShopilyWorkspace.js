@@ -5,7 +5,7 @@ import {
   formatSignedCurrency as baseFormatSignedCurrency
 } from '../../utils/formatting.js';
 import { createCurrencyLifecycleSummary } from '../../utils/lifecycleSummaries.js';
-import { createConfiguredAssetWorkspace } from '../../utils/createConfiguredAssetWorkspace.js';
+import { createAssetWorkspaceConfig } from '../../utils/createAssetWorkspaceConfig.js';
 import { selectShopilyNiche } from '../../../../cards/model/index.js';
 import {
   VIEW_DASHBOARD,
@@ -130,7 +130,7 @@ function renderPricingSection(context) {
 }
 
 export function createShopilyWorkspacePresenter() {
-  const presenter = createConfiguredAssetWorkspace({
+  const presenter = createAssetWorkspaceConfig({
     assetType: 'dropshipping',
     className: 'shopily',
     defaultView: VIEW_DASHBOARD,
@@ -147,7 +147,7 @@ export function createShopilyWorkspacePresenter() {
       },
       fallbackMessage: 'Shopily unlocks once the Dropshipping blueprint is discovered.'
     },
-    overrides: {
+    actions: {
       selectNiche: selectShopilyNiche
     },
     header(model, _state, sharedContext) {

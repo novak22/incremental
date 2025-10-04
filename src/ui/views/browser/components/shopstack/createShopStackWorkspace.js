@@ -1,4 +1,4 @@
-import { createConfiguredAssetWorkspace } from '../../utils/createConfiguredAssetWorkspace.js';
+import { createAssetWorkspaceConfig } from '../../utils/createAssetWorkspaceConfig.js';
 import {
   initialState,
   ensureSelection as ensureCatalogSelection,
@@ -84,7 +84,7 @@ export function createShopStackWorkspacePresenter() {
     }
   }
 
-  presenter = createConfiguredAssetWorkspace({
+  presenter = createAssetWorkspaceConfig({
     assetType: 'shopstack',
     className: 'shopstack',
     defaultView: VIEW_CATALOG,

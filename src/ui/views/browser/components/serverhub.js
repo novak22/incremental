@@ -1,5 +1,4 @@
 import { ensureArray, formatHours } from '../../../../core/helpers.js';
-import { performQualityAction } from '../../../../game/assets/index.js';
 import { selectServerHubNiche } from '../../../cards/model/index.js';
 import {
   formatCurrency as baseFormatCurrency,
@@ -8,8 +7,7 @@ import {
 } from '../utils/formatting.js';
 import { createCurrencyLifecycleSummary } from '../utils/lifecycleSummaries.js';
 import { showLaunchConfirmation } from '../utils/launchDialog.js';
-import { createAssetWorkspacePresenter } from '../utils/createAssetWorkspace.js';
-import { renderWorkspaceLock } from './common/renderWorkspaceLock.js';
+import { createAssetWorkspaceConfig } from '../utils/createAssetWorkspaceConfig.js';
 import { createAppsView } from './serverhub/views/appsView.js';
 import { createUpgradesView } from './serverhub/views/upgradesView.js';
 import { createPricingView } from './serverhub/views/pricingView.js';
@@ -153,16 +151,6 @@ async function handleLaunch(presenterInstance) {
   launch.onClick?.();
 }
 
-function handleQuickAction(instanceId, actionId) {
-  if (!instanceId || !actionId) return;
-  performQualityAction('saas', instanceId, actionId);
-}
-
-function handleNicheSelect(instanceId, value) {
-  if (!instanceId || !value) return;
-  selectServerHubNiche('saas', instanceId, value);
-}
-
 function deriveSummary(model = {}) {
   const summary = model.summary;
   const isSummaryObject = summary && typeof summary === 'object' && !Array.isArray(summary);
@@ -194,38 +182,25 @@ function derivePath(state = {}) {
 
 let presenter;
 
-const renderAppsView = createAppsView({
-  formatCurrency,
-  formatNetCurrency,
-  formatPercent,
-  formatHours,
-  kpiDescriptors: KPI_DESCRIPTORS,
-  tableColumns: INSTANCE_TABLE_COLUMNS,
-  actionConsoleOrder: ACTION_CONSOLE_ORDER,
-  onQuickAction: handleQuickAction,
-  onNicheSelect: handleNicheSelect,
-  onLaunch: () => handleLaunch(presenter),
-  getSelectedApp
-});
-
 const renderUpgradesView = createUpgradesView({ formatCurrency });
 const renderPricingView = createPricingView({ formatCurrency, formatHours });
 
-presenter = createAssetWorkspacePresenter({
+presenter = createAssetWorkspaceConfig({
+  assetType: 'saas',
   className: 'serverhub',
   defaultView: VIEW_APPS,
   state: { view: VIEW_APPS, selectedAppId: null },
   ensureSelection,
   deriveSummary,
   derivePath,
-  renderLocked: (model = {}, mount) =>
-    renderWorkspaceLock(mount, {
-      theme: LOCK_THEME,
-      lock: model.lock,
-      fallbackMessage: LOCK_FALLBACK_MESSAGE
-    }),
-  isLocked: model => !model?.definition,
-  header(model, state, { setView }) {
+  lock: {
+    theme: LOCK_THEME,
+    fallbackMessage: LOCK_FALLBACK_MESSAGE
+  },
+  actions: {
+    selectNiche: selectServerHubNiche
+  },
+  header(model, state, sharedContext) {
     const launch = model.launch || {};
     const reasons = ensureArray(launch.availability?.reasons).filter(Boolean);
     const actions = [
@@ -234,7 +209,7 @@ presenter = createAssetWorkspacePresenter({
         className: 'serverhub-button serverhub-button--primary',
         disabled: launch.disabled,
         ...(reasons.length ? { title: reasons.join('\n') } : {}),
-        onClick: () => handleLaunch(presenter)
+        onClick: () => handleLaunch(sharedContext.presenter)
       }
     ];
 
@@ -275,7 +250,20 @@ presenter = createAssetWorkspacePresenter({
       id: VIEW_APPS,
       label: 'My Apps',
       badge: ({ model }) => model.summary?.active || null,
-      render: context => renderAppsView(context)
+      createView: ({ actions, getPresenter }) =>
+        createAppsView({
+          formatCurrency,
+          formatNetCurrency,
+          formatPercent,
+          formatHours,
+          kpiDescriptors: KPI_DESCRIPTORS,
+          tableColumns: INSTANCE_TABLE_COLUMNS,
+          actionConsoleOrder: ACTION_CONSOLE_ORDER,
+          onQuickAction: actions.quickAction,
+          onNicheSelect: actions.selectNiche,
+          onLaunch: () => handleLaunch(getPresenter()),
+          getSelectedApp
+        })
     },
     {
       id: VIEW_UPGRADES,

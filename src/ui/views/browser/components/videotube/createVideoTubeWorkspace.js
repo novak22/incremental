@@ -6,7 +6,7 @@ import {
   formatCurrency as baseFormatCurrency,
   formatPercent as baseFormatPercent
 } from '../../utils/formatting.js';
-import { createConfiguredAssetWorkspace } from '../../utils/createConfiguredAssetWorkspace.js';
+import { createAssetWorkspaceConfig } from '../../utils/createAssetWorkspaceConfig.js';
 import { createVideoTubeHeader } from './header.js';
 import { createDashboardView } from './views/dashboardView.js';
 import { createDetailView } from './views/detailView.js';
@@ -84,7 +84,7 @@ export function createVideoTubeWorkspace(overrides = {}) {
     actions.setAssetInstanceName('vlog', instanceId, value || '');
   };
 
-  presenter = createConfiguredAssetWorkspace({
+  presenter = createAssetWorkspaceConfig({
     assetType: 'vlog',
     className: 'videotube',
     defaultView: VIEW_DASHBOARD,
@@ -101,7 +101,7 @@ export function createVideoTubeWorkspace(overrides = {}) {
       },
       fallbackMessage: 'VideoTube unlocks once the Vlog blueprint is discovered.'
     },
-    overrides: {
+    actions: {
       performQualityAction: actions.performQualityAction,
       selectNiche: actions.selectVideoTubeNiche
     },
