@@ -170,10 +170,6 @@ export function createWorkspacePresenter(options = {}) {
     }
   }
 
-  function getPathController() {
-    return pathController;
-  }
-
   function render(nextModel = {}, context = {}) {
     currentModel = isObject(nextModel) ? nextModel : {};
 
@@ -260,8 +256,7 @@ export function createWorkspacePresenter(options = {}) {
     setMount,
     getPage,
     setPage,
-    setRouteChangeListener,
-    getPathController
+    setRouteChangeListener
   };
 }
 
