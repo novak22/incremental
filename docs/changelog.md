@@ -7,6 +7,7 @@
 - Content tracks lean on schema builders for courses, upgrades, and passive assets; boosts and events reuse the shared multi-day engine.
 - Passive income, education, and hustles remain tuned around upkeep-first scheduling so players stay in control of daily hours.
 - Routine hustle payouts and quality work logs now auto-dismiss so the notification bell spotlights urgent alerts.
+- ShopStack workspace trims unused detail builders to keep presenter imports lean.
 
 ## Recent Highlights
 - Passive assets gained Quality 4–5 payout milestones with clearer upkeep cues.
