@@ -20,7 +20,7 @@
 - `browser.html` now lays out three uniform widgets (tasks, apps, bank) so the homepage reads as a single column of quick actions.
 - Dashboard presenters initialize todo, apps, and bank widgets—each module keeps state in sync with the shared registries while remaining lazy-loaded.
 - `todoWidget` now treats each hustle row as a full-width button that fires the action, logs completions with time data, and updates hours spent immediately.
-- `styles/browser.css` defines a reusable `.browser-widget` shell plus dedicated styling for the app roster and bank chips so every panel lines up cleanly.
+- Modular widget styles in `styles/widgets/` define a reusable `.browser-widget` shell plus dedicated styling for the app roster and bank chips so every panel lines up cleanly.
 - Quick action view models provide payout, duration, and day metadata so the widget can track hours and reset completion history when a new day begins.
 - App launchers surface a confirmation dialog before creating new resources, summarizing setup time, upfront cash, and ongoing upkeep pulled from the underlying asset definitions.
 

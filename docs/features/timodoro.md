@@ -13,7 +13,7 @@
 ## Implementation Notes
 - `src/ui/views/browser/apps/timodoro.js` composes the ToDo models (`buildQuickActionModel`, `buildAssetActionModel`, `buildStudyEnrollmentActionModel`) with the existing daily summary selectors to render grouped completions, recurring upkeep, and headline stats.
 - The browser config in `src/ui/views/browser/config.js` now registers TimoDoro as a top-level service page, while `cardsPresenter.js` lists it so the workspace launcher and tab system can open it like other apps.
-- Fresh layout rules in `styles/browser.css` define the two-column grid, task list styling, and summary panels, borrowing the shared browser card components for consistency.
+- Fresh layout rules in `styles/workspaces/timodoro.css` define the two-column grid, task list styling, and summary panels, borrowing the shared browser card components for consistency.
 
 ## Future Work
 - Add historical filters so players can compare today’s effort with prior days and celebrate streaks.

@@ -8,7 +8,7 @@
 
 ## Implementation Notes
 - The launch stage now renders a single-column layout with `.browser-home__widgets` using CSS Grid to provide three equal columns on wide viewports, two columns on medium, and one column on narrow screens.
-- Widget cards reuse the existing presenter modules and simply stretch to fill each grid cell. Cards share a consistent padding, border radius, and drop shadow defined in `styles/browser.css` so they feel like a matched set.
+- Widget cards reuse the existing presenter modules and simply stretch to fill each grid cell. Cards share a consistent padding, border radius, and drop shadow defined across the modular widget styles in `styles/widgets/` so they feel like a matched set.
 - The apps widget reuses the existing `appsWidget` module. It now renders each workspace as a tile button with an icon, label, and optional status badge derived from the service summary metadata.
 - Widget headers add upbeat emoji icons that link straight into their full browser workspaces so players can hop from the homepage snapshot into BankApp or TimoDoro with one click.
 - A compact "Arrange" toggle in the apps widget header activates drag-and-drop sorting. Tiles swap positions on drop and the custom order is stored in local storage so it persists between sessions.

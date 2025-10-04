@@ -1,18 +1,11 @@
 # Browser UI stylesheet structure
 
-## Load order to enforce after splitting
-1. **Base / theme** – global tokens, layout shell, and utility rules that define `--browser-*` variables, chrome, tabs, layout wrappers, and home spacing helpers. (Current file lines 19-555.)
-2. **Shared widgets & utilities** – reusable widgets (todo, bank, apps), notifications, generic cards/pages, About You / Bank app details, and supporting animations. (Lines 556-2410.)
-3. **Workspace modules** – app-specific bundles loaded in the order they appear now so overrides cascade correctly:
-   - Digishelf (2411-2922)
-   - BlogPress (2928-3475)
-   - Learnly (3480-4022)
-   - ShopStack (4030-4575)
-   - VideoTube (4582-5051)
-   - Shopily (5056-5902)
-   - Trends (5908-6252)
-   - ServerHub (6259-7002)
-4. **Overlays & launch flows** – modal overlay shell, launch dialog skin, and keyframes (7007-7221).
+## Load order to keep in `index.html`
+1. **Base / theme** – global tokens and layout scaffolding from `styles/base/theme.css` followed by `styles/base/layout.css`.
+2. **Shared components** – cross-shell UI such as buttons, address bar, and notifications (`styles/components/buttons.css`, `styles/components/layout.css`, `styles/components/notifications.css`).
+3. **Dashboard widgets** – shared home widgets and helpers loaded in this sequence: `styles/widgets/widgets.css`, `styles/widgets/home.css`, `styles/widgets/apps.css`, `styles/widgets/todo.css`, `styles/widgets/bank.css`.
+4. **Workspace modules** – the general foundation in `styles/workspaces/workspaces.css` followed by app-specific files: `learnly.css`, `shopstack.css`, `videotube.css`, `shopily.css`, `serverhub.css`, and `timodoro.css`.
+5. **Overlays & launch flows** – modal overlay shell, launch dialog skin, and keyframes from `styles/overlays/launch-dialog.css`.
 
 Keeping this load order preserves variable definitions, shared utility mixins, and the expectation that workspace modules can rely on prior base/widget styles without redefining them.
 
