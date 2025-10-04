@@ -56,7 +56,7 @@ export function allocateAssetMaintenance() {
         if (state.timeLeft >= setupHours) {
           spendTime(setupHours);
           instance.setupFundedToday = true;
-          setupFunded.push(instanceLabel(definition, index));
+          setupFunded.push(instanceLabel(definition, index, { instance }));
           recordTimeContribution({
             key: getAssetMetricId(definition, 'setup', 'time'),
             label: `🚀 ${definition.singular || definition.name} prep`,
@@ -64,13 +64,13 @@ export function allocateAssetMaintenance() {
             category: 'setup'
           });
         } else {
-          setupMissed.push(instanceLabel(definition, index));
+          setupMissed.push(instanceLabel(definition, index, { instance }));
         }
         return;
       }
 
       if (instance.status === 'active') {
-        const label = instanceLabel(definition, index);
+        const label = instanceLabel(definition, index, { instance });
         const pendingIncome = Math.max(0, Number(instance.pendingIncome) || 0);
 
         const potentialAssistantHours = Math.min(assistantHoursRemaining, maintenanceHours);
@@ -178,7 +178,7 @@ export function closeOutDay() {
         if (instance.setupFundedToday) {
           instance.daysRemaining = Math.max(0, (instance.daysRemaining || totalSetupDays) - 1);
           instance.daysCompleted = Math.min(totalSetupDays, (instance.daysCompleted || 0) + 1);
-          const label = instanceLabel(definition, index);
+          const label = instanceLabel(definition, index, { instance });
           if (instance.daysRemaining <= 0) {
             instance.status = 'active';
             instance.setupFundedToday = false;
@@ -197,7 +197,7 @@ export function closeOutDay() {
             addLog(message, 'info');
           }
         } else {
-          const label = instanceLabel(definition, index);
+          const label = instanceLabel(definition, index, { instance });
           const message = definition.messages?.setupMissed
             ? definition.messages.setupMissed(label, assetState, instance)
             : `${label} did not receive setup time today, so progress paused.`;
@@ -219,7 +219,7 @@ export function closeOutDay() {
           instance.lastIncomeBreakdown = null;
           instance.pendingIncome = 0;
           instance.lastEducationBonuses = null;
-          const label = instanceLabel(definition, index);
+          const label = instanceLabel(definition, index, { instance });
           const message = definition.messages?.maintenanceSkipped
             ? definition.messages.maintenanceSkipped(label, assetState, instance)
             : `${label} skipped maintenance and earned nothing today.`;

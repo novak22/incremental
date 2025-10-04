@@ -105,7 +105,7 @@ function startAsset(definition) {
 
     markDirty(ASSET_CORE_UI_SECTIONS);
 
-    const label = instanceLabel(definition, assetState.instances.length - 1);
+    const label = instanceLabel(definition, assetState.instances.length - 1, { instance });
     const message = definition.messages?.setupStarted
       ? definition.messages.setupStarted(label, assetState, instance)
       : `You kicked off ${label}. Keep investing time until it launches.`;
@@ -145,7 +145,7 @@ export function sellAssetInstance(definition, instanceId) {
 
     const instance = instances[index];
     const price = calculateAssetSalePrice(instance);
-    const label = instanceLabel(definition, index);
+    const label = instanceLabel(definition, index, { instance });
 
     if (price > 0) {
       addMoney(price, `${label} sold off for $${formatMoney(price)}. Fresh funds unlocked!`, 'passive');
@@ -194,7 +194,7 @@ export function setAssetInstanceName(assetId, instanceId, name) {
       delete instance.customName;
     }
     changed = true;
-    markDirty(['cards', 'player']);
+    markDirty(['cards', 'player', 'dashboard', 'headerAction']);
 
     const labelBase = definition.singular || definition.name || 'Asset';
     const fallbackLabel = `${labelBase} #${index + 1}`;
