@@ -1,4 +1,4 @@
-export function renderPayoutPanel(video, { formatCurrency } = {}) {
+export default function renderPayoutPanel(video, { formatCurrency } = {}) {
   const panel = document.createElement('section');
   panel.className = 'videotube-panel';
 
@@ -34,5 +34,3 @@ export function renderPayoutPanel(video, { formatCurrency } = {}) {
 
   return panel;
 }
-
-export default renderPayoutPanel;

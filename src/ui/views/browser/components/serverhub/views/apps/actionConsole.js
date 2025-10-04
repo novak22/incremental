@@ -33,7 +33,7 @@ function createActionButton(action, label, instanceId, helpers) {
   return button;
 }
 
-export function renderActionConsole(instance, helpers) {
+export default function renderActionConsole(instance, helpers) {
   const section = document.createElement('section');
   section.className = 'serverhub-panel serverhub-panel--actions';
 
@@ -65,5 +65,3 @@ export function renderActionConsole(instance, helpers) {
 
   return section;
 }
-
-export default renderActionConsole;

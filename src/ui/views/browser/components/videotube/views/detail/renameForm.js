@@ -1,4 +1,4 @@
-export function renderRenameForm(video, { onRename } = {}) {
+export default function renderRenameForm(video, { onRename } = {}) {
   const form = document.createElement('form');
   form.className = 'videotube-rename';
   form.addEventListener('submit', event => {
@@ -25,5 +25,3 @@ export function renderRenameForm(video, { onRename } = {}) {
   form.append(label, input, submit);
   return form;
 }
-
-export default renderRenameForm;

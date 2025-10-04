@@ -1,4 +1,4 @@
-export function createProgressBar(course) {
+function createProgressBar(course) {
   const wrapper = document.createElement('div');
   wrapper.className = 'learnly-progress';
 
@@ -23,4 +23,7 @@ export function createProgressBar(course) {
   return wrapper;
 }
 
-export default createProgressBar;
+export { createProgressBar };
+
+const createProgressBarComponent = createProgressBar;
+export default createProgressBarComponent;

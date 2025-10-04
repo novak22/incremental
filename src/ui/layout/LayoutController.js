@@ -10,7 +10,7 @@ import {
   getPreferenceAdapters
 } from './preferenceAdapters.js';
 
-export class LayoutController {
+class LayoutController {
   constructor(options = {}) {
     this.getElement = options.getElement || getElement;
     this.buildLayoutModel = options.buildLayoutModel || buildLayoutModel;
@@ -163,4 +163,7 @@ export class LayoutController {
   }
 }
 
-export default LayoutController;
+export { LayoutController };
+
+const LayoutControllerClass = LayoutController;
+export default LayoutControllerClass;

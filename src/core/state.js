@@ -44,7 +44,7 @@ function normalizeLogEntry(entry) {
   return normalized;
 }
 
-export class StateManager {
+class StateManager {
   constructor() {
     this.state = null;
   }
