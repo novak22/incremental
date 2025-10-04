@@ -57,12 +57,26 @@
   gap: 0.65rem;
 }
 
+.bank-widget__column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.bank-widget__column--left {
+  align-items: flex-start;
+}
+
+.bank-widget__column--right {
+  align-items: flex-end;
+}
+
 .bank-widget__chip[data-position='left'] {
-  justify-self: start;
+  align-self: flex-start;
 }
 
 .bank-widget__chip[data-position='right'] {
-  justify-self: end;
+  align-self: flex-end;
 }
 
 .bank-widget__chip {
@@ -99,9 +113,13 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .bank-widget__column {
+    align-items: center;
+  }
+
   .bank-widget__chip[data-position='left'],
   .bank-widget__chip[data-position='right'] {
-    justify-self: center;
+    align-self: center;
     text-align: center;
   }
 }

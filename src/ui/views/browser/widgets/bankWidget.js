@@ -91,12 +91,15 @@ function renderFootnote(header = {}) {
   elements.footnote.textContent = `Lifetime earned ${earnedText} • Lifetime spent ${spentText}`;
 }
 
-function createChip({ label, value, tone = 'neutral', note, position }) {
+function createChip({ id, label, value, tone = 'neutral', note, position }) {
   const chip = document.createElement('span');
   chip.className = 'bank-widget__chip';
   chip.dataset.tone = tone;
   if (position) {
     chip.dataset.position = position;
+  }
+  if (id) {
+    chip.dataset.id = id;
   }
 
   const chipLabel = document.createElement('span');
@@ -117,28 +120,38 @@ function createChip({ label, value, tone = 'neutral', note, position }) {
 function renderHighlights(header = {}) {
   if (!elements?.highlights) return;
 
-  const chips = [];
+  const chipDefinitions = [];
 
-  function addChip({ label, amount = 0, direction = 'in', note = '', position = 'left', valueFormatter = formatSignedCurrency }) {
+  function scheduleChip({
+    id,
+    label,
+    amount = 0,
+    direction = 'in',
+    note = '',
+    position = 'left',
+    valueFormatter = formatSignedCurrency
+  }) {
     const numericAmount = Number(amount);
     const safeAmount = Number.isFinite(numericAmount) ? numericAmount : 0;
     const normalizedDirection = direction === 'out' ? 'out' : 'in';
     const tone = safeAmount === 0 ? 'neutral' : normalizedDirection === 'out' ? 'out' : 'in';
     const signedAmount = normalizedDirection === 'out' ? -Math.abs(safeAmount) : Math.abs(safeAmount);
+    const resolvedPosition = position === 'right' ? 'right' : 'left';
+    const resolvedValueFormatter = typeof valueFormatter === 'function' ? valueFormatter : formatSignedCurrency;
 
-    chips.push(
-      createChip({
-        label,
-        value: valueFormatter(signedAmount),
-        tone,
-        note,
-        position
-      })
-    );
+    chipDefinitions.push({
+      id,
+      label,
+      value: resolvedValueFormatter(signedAmount),
+      tone,
+      note,
+      position: resolvedPosition
+    });
   }
 
   const quick = header?.quickObligation || {};
-  addChip({
+  scheduleChip({
+    id: 'quick-obligation',
     label: quick?.label || 'Next due',
     amount: quick?.amount ?? 0,
     direction: quick?.direction || 'out',
@@ -150,7 +163,8 @@ function renderHighlights(header = {}) {
   const topLabel = top?.label || '—';
   const topAmount = Number(top?.amount ?? 0);
   const topNote = top?.note || (Number.isFinite(topAmount) && topAmount > 0 ? 'Highest payout logged today' : '');
-  addChip({
+  scheduleChip({
+    id: 'top-earner',
     label: 'Top earner',
     amount: topAmount,
     direction: top?.direction || 'in',
@@ -177,7 +191,8 @@ function renderHighlights(header = {}) {
 
   orderedPulseSlots.forEach(slot => {
     const entry = pulseMap.get(slot.id) || {};
-    addChip({
+    scheduleChip({
+      id: `pulse-${slot.id}`,
       label: entry?.label || slot.fallbackLabel,
       amount: entry?.amount ?? 0,
       direction: entry?.direction || slot.fallbackDirection,
@@ -186,8 +201,38 @@ function renderHighlights(header = {}) {
     });
   });
 
+  const leftDefinitions = chipDefinitions.filter(definition => definition.position === 'left');
+  const rightDefinitions = chipDefinitions.filter(definition => definition.position === 'right');
+
+  const topEarnerIndex = rightDefinitions.findIndex(definition => definition.id === 'top-earner');
+  if (topEarnerIndex >= 0) {
+    const [topDefinition] = rightDefinitions.splice(topEarnerIndex, 1);
+    rightDefinitions.push(topDefinition);
+  }
+
   elements.highlights.innerHTML = '';
-  chips.forEach(chip => elements.highlights.appendChild(chip));
+
+  const columns = [];
+  if (leftDefinitions.length > 0) {
+    const leftColumn = document.createElement('div');
+    leftColumn.className = 'bank-widget__column bank-widget__column--left';
+    leftDefinitions.forEach(definition => leftColumn.appendChild(createChip(definition)));
+    columns.push(leftColumn);
+  }
+
+  if (rightDefinitions.length > 0) {
+    const rightColumn = document.createElement('div');
+    rightColumn.className = 'bank-widget__column bank-widget__column--right';
+    rightDefinitions.forEach(definition => rightColumn.appendChild(createChip(definition)));
+    columns.push(rightColumn);
+  }
+
+  if (columns.length === 0) {
+    elements.highlights.hidden = true;
+    return;
+  }
+
+  columns.forEach(column => elements.highlights.appendChild(column));
   elements.highlights.hidden = false;
 }
 
