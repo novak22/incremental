@@ -10,6 +10,10 @@ import {
 } from '../../game/assets/quality/actions.js';
 import { getNextQualityLevel } from '../../game/assets/quality/levels.js';
 import { instanceLabel } from '../../game/assets/details.js';
+import {
+  registerActionProvider,
+  normalizeActionEntries
+} from '../actions/registry.js';
 
 function getQualitySnapshot(instance = {}) {
   const level = Math.max(0, clampNumber(instance?.quality?.level));
@@ -279,4 +283,57 @@ export function buildAssetActionModel(state = {}) {
     moneyAvailable: clampNumber(state.money)
   };
 }
+
+registerActionProvider(({ state }) => {
+  const model = buildQuickActionModel(state);
+  const entries = normalizeActionEntries(
+    (Array.isArray(model?.entries) ? model.entries : []).map((entry, index) => ({
+      ...entry,
+      focusCategory: entry?.focusCategory || 'hustle',
+      orderIndex: Number.isFinite(entry?.orderIndex) ? entry.orderIndex : index
+    }))
+  );
+
+  return {
+    id: 'quick-actions',
+    focusCategory: 'hustle',
+    entries,
+    metrics: {
+      emptyMessage: model?.emptyMessage,
+      buttonClass: model?.buttonClass,
+      defaultLabel: model?.defaultLabel,
+      hoursAvailable: model?.hoursAvailable,
+      hoursAvailableLabel: model?.hoursAvailableLabel,
+      hoursSpent: model?.hoursSpent,
+      hoursSpentLabel: model?.hoursSpentLabel,
+      moneyAvailable: model?.moneyAvailable,
+      scroller: model?.scroller
+    }
+  };
+});
+
+registerActionProvider(({ state }) => {
+  const model = buildAssetActionModel(state);
+  const entries = normalizeActionEntries(
+    (Array.isArray(model?.entries) ? model.entries : []).map((entry, index) => ({
+      ...entry,
+      meta: [entry?.subtitle, entry?.meta].filter(Boolean).join(' • ') || entry?.meta || '',
+      focusCategory: entry?.focusCategory || 'upgrade',
+      orderIndex: Number.isFinite(entry?.orderIndex) ? entry.orderIndex : index
+    }))
+  );
+
+  return {
+    id: 'asset-upgrades',
+    focusCategory: 'upgrade',
+    entries,
+    metrics: {
+      emptyMessage: model?.emptyMessage,
+      buttonClass: model?.buttonClass,
+      defaultLabel: model?.defaultLabel,
+      moneyAvailable: model?.moneyAvailable,
+      scroller: model?.scroller
+    }
+  };
+});
 
