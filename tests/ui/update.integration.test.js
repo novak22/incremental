@@ -413,7 +413,7 @@ test('state mutators mark dirty sections and drive partial UI refreshes', { conc
   assert.strictEqual(updatedInstance?.nicheId, targetNicheId, 'expected instance to adopt the chosen niche');
   assert.ok(callCounts.dashboard > 0, 'expected dashboard to refresh when changing an asset niche');
   assert.ok(callCounts.cards > 0, 'expected cards presenter to refresh when changing an asset niche');
-  assert.strictEqual(callCounts.player, 0, 'expected player panel to remain untouched for niche change');
+  assert.ok(callCounts.player > 0, 'expected player panel to refresh immediately for niche change');
   assert.strictEqual(callCounts.skills, 0, 'expected skills widget to remain untouched for niche change');
   assert.strictEqual(callCounts.header, 0, 'expected header action to remain untouched for niche change');
   const reassignedSummary = summaryModule.computeDailySummary(state);
