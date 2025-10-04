@@ -1,5 +1,6 @@
 import { formatMoney } from '../../../core/helpers.js';
 import { createAssetDefinition } from '../../content/schema.js';
+import { triggerQualityActionEvents } from '../../events/index.js';
 
 const dropshippingDefinition = createAssetDefinition({
   id: 'dropshipping',
@@ -82,6 +83,9 @@ const dropshippingDefinition = createAssetDefinition({
         progressKey: 'research',
         progressAmount: () => 1,
         skills: ['research'],
+        onComplete({ definition, instance, action }) {
+          triggerQualityActionEvents({ definition, instance, action: action || this });
+        },
         log: ({ label }) => `${label} spotted a trending micro-niche. Suppliers start calling back!`
       },
       {
@@ -93,6 +97,9 @@ const dropshippingDefinition = createAssetDefinition({
         progressKey: 'listing',
         progressAmount: () => 1,
         skills: ['promotion', { id: 'commerce', weight: 0.6 }],
+        onComplete({ definition, instance, action }) {
+          triggerQualityActionEvents({ definition, instance, action: action || this });
+        },
         log: ({ label }) => `${label} revamped copy and photos. Conversion rates begin to pop.`
       },
       {
@@ -104,6 +111,9 @@ const dropshippingDefinition = createAssetDefinition({
         progressKey: 'ads',
         progressAmount: () => 1,
         skills: ['promotion', { id: 'research', weight: 0.5 }],
+        onComplete({ definition, instance, action }) {
+          triggerQualityActionEvents({ definition, instance, action: action || this });
+        },
         log: ({ label }) => `${label} tested lookalike audiences. Click-through rates jump!`
       }
     ],

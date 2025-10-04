@@ -1,5 +1,6 @@
 import { formatMoney } from '../../../core/helpers.js';
 import { createAssetDefinition } from '../../content/schema.js';
+import { triggerQualityActionEvents } from '../../events/index.js';
 
 const saasDefinition = createAssetDefinition({
   id: 'saas',
@@ -88,6 +89,9 @@ const saasDefinition = createAssetDefinition({
         progressKey: 'features',
         progressAmount: () => 1,
         skills: ['software'],
+        onComplete({ definition, instance, action }) {
+          triggerQualityActionEvents({ definition, instance, action: action || this });
+        },
         log: ({ label }) => `${label} shipped a delightful feature. Beta users erupt in emoji reactions!`
       },
       {
@@ -99,6 +103,9 @@ const saasDefinition = createAssetDefinition({
         progressKey: 'stability',
         progressAmount: () => 1,
         skills: ['infrastructure'],
+        onComplete({ definition, instance, action }) {
+          triggerQualityActionEvents({ definition, instance, action: action || this });
+        },
         log: ({ label }) => `${label} patched outages and bolstered uptime. Pager alerts stay quiet.`
       },
       {
@@ -110,6 +117,9 @@ const saasDefinition = createAssetDefinition({
         progressKey: 'marketing',
         progressAmount: () => 1,
         skills: ['promotion'],
+        onComplete({ definition, instance, action }) {
+          triggerQualityActionEvents({ definition, instance, action: action || this });
+        },
         log: ({ label }) => `${label} launched a marketing sprint. Sign-ups trickle in all night.`
       },
       {
@@ -121,6 +131,9 @@ const saasDefinition = createAssetDefinition({
         progressKey: 'edge',
         requiresUpgrade: 'serverEdge',
         unavailableMessage: () => 'Activate the Edge Delivery Network upgrade to unlock global deployments.',
+        onComplete({ definition, instance, action }) {
+          triggerQualityActionEvents({ definition, instance, action: action || this });
+        },
         log: ({ label }) => `${label} pushed code to new edge regions. Enterprise clients cheer the instant load times!`
       }
     ],

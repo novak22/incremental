@@ -11,6 +11,7 @@ import { spendTime } from '../time.js';
 import { awardSkillProgress } from '../skills/index.js';
 import { markDirty } from '../../core/events/invalidationBus.js';
 import { instanceLabel } from './details.js';
+import { triggerQualityActionEvents } from '../events/index.js';
 
 function ensureUsageMap(instance) {
   if (!instance.dailyUsage || typeof instance.dailyUsage !== 'object') {
@@ -207,6 +208,7 @@ function runQualityAction(definition, instanceId, actionId) {
   const assetState = getAssetState(definition.id);
   const instance = assetState.instances.find(item => item.id === instanceId);
   if (!instance) return;
+  const instanceIndex = assetState.instances.indexOf(instance);
   if (instance.status !== 'active') {
     const label = getActionLabel(definition, assetState, instance);
     addLog(`${label} needs to finish setup before quality work will stick.`, 'warning');
@@ -286,11 +288,28 @@ function runQualityAction(definition, instanceId, actionId) {
     label: `${definition.singular || definition.name} quality work`
   });
 
-  if (typeof action.onComplete === 'function') {
-    action.onComplete({ state, definition, instance, quality });
-  }
-
   trackUsage(instance, action);
+
+  triggerQualityActionEvents({
+    definition,
+    assetState,
+    instance,
+    instanceIndex,
+    action,
+    context: { quality }
+  });
+
+  if (typeof action.onComplete === 'function') {
+    action.onComplete({
+      state,
+      definition,
+      assetState,
+      instance,
+      instanceIndex,
+      quality,
+      action
+    });
+  }
 
   const label = getActionLabel(definition, assetState, instance);
   if (typeof action.log === 'function') {
@@ -314,6 +333,31 @@ function runQualityAction(definition, instanceId, actionId) {
   }
 
   updateQualityLevel(definition, assetState, instance, quality);
+  if (!instance.quality) {
+    instance.quality = { level: quality.level, progress: { ...quality.progress } };
+  } else {
+    instance.quality.level = quality.level;
+    instance.quality.progress = { ...quality.progress };
+  }
+  if (Array.isArray(assetState.instances) && instanceIndex >= 0 && assetState.instances[instanceIndex]) {
+    assetState.instances[instanceIndex] = {
+      ...assetState.instances[instanceIndex],
+      quality: { level: quality.level, progress: { ...quality.progress } }
+    };
+  }
+  const rootState = getState();
+  const storedAssetState = rootState?.assets?.[definition.id];
+  if (
+    storedAssetState &&
+    Array.isArray(storedAssetState.instances) &&
+    instanceIndex >= 0 &&
+    storedAssetState.instances[instanceIndex]
+  ) {
+    storedAssetState.instances[instanceIndex] = {
+      ...storedAssetState.instances[instanceIndex],
+      quality: { level: quality.level, progress: { ...quality.progress } }
+    };
+  }
   markDirty('cards');
 }
 
