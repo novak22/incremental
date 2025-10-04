@@ -101,6 +101,7 @@ Each asset supports multiple instances, tracks setup progress, and rolls a daily
 ## Styling Workflow
 - `styles/browser.css` is generated; edit the source modules in `styles/base/`, `styles/components/`, `styles/widgets/`, `styles/workspaces/`, and `styles/overlays/` instead of modifying the bundle directly.
 - Run `npm run build:css` to regenerate the bundle after changing any module. The command runs automatically during `npm install` via the `prepare` hook but can be invoked manually while iterating on styles.
+- Before committing, re-run `npm run build:css` so the generated stylesheet stays in sync with your module changes.
 
 ## Testing
 1. Install dev dependencies with `npm install`.
@@ -122,5 +123,6 @@ Each asset supports multiple instances, tracks setup progress, and rolls a daily
 - **Adding Assets** – Add new definition modules under `src/game/assets/definitions/` and include them in the registry. Define setup/maintenance data, income ranges, requirement objects, and any custom log messages.
 - **Adding Upgrades** – Update `UPGRADES` in `src/game/upgrades.js` and ensure new upgrade IDs are handled in requirement checks.
 - After modifying content arrays, run through a manual day cycle: start builds, end the day, confirm log messaging, and verify save/load behaviour.
+- Before you push a branch, run `npm run build:css` alongside the automated tests so the committed stylesheet reflects any CSS module edits.
 
 For design context and tuning notes, see `docs/features/day-driven-assets.md`. Recent gameplay adjustments are tracked in `docs/changelog.md`.
