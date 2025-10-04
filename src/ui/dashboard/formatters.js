@@ -5,12 +5,7 @@ export function clampNumber(value) {
   return Number.isFinite(numeric) ? numeric : 0;
 }
 
-export function clampScore(value) {
-  if (!Number.isFinite(value)) return null;
-  return Math.max(0, Math.min(100, Math.round(value)));
-}
-
-export function getMetricLabel(entry = {}) {
+function getMetricLabel(entry = {}) {
   return entry.label
     || entry?.definition?.label
     || entry?.definition?.name
@@ -18,7 +13,7 @@ export function getMetricLabel(entry = {}) {
     || 'Metric';
 }
 
-export function extractIconPrefix(label) {
+function extractIconPrefix(label) {
   if (typeof label !== 'string') return '';
   const match = label.match(/^([^\w]*)/u);
   return match ? match[1].trim() : '';
@@ -65,7 +60,7 @@ export function formatPayoutEntries(entries = []) {
   });
 }
 
-export function formatSpendEntries(entries = []) {
+function formatSpendEntries(entries = []) {
   return entries.map(entry => {
     const amount = clampNumber(entry?.amount);
     return {
@@ -79,7 +74,7 @@ export function formatSpendEntries(entries = []) {
   });
 }
 
-export function formatStudyEntries(entries = []) {
+function formatStudyEntries(entries = []) {
   return entries.map(entry => {
     const hours = clampNumber(entry?.hoursPerDay);
     const remaining = Math.max(0, clampNumber(entry?.remainingDays));
@@ -121,16 +116,3 @@ export function formatPercent(value) {
   return `${sign}${percent}%`;
 }
 
-export default {
-  clampNumber,
-  clampScore,
-  getMetricLabel,
-  extractIconPrefix,
-  formatTimeEntries,
-  formatPayoutEntries,
-  formatSpendEntries,
-  formatStudyEntries,
-  buildSummaryPresentations,
-  describeDelta,
-  formatPercent
-};

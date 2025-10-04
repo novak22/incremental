@@ -280,9 +280,3 @@ export function buildAssetActionModel(state = {}) {
   };
 }
 
-export default {
-  buildQuickActions,
-  buildAssetUpgradeRecommendations,
-  buildQuickActionModel,
-  buildAssetActionModel
-};

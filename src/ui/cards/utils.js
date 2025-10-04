@@ -35,8 +35,3 @@ export function formatInstanceUpkeep(definition) {
   return parts.join(' • ');
 }
 
-export default {
-  formatLabelFromKey,
-  describeAssetCardSummary,
-  formatInstanceUpkeep
-};

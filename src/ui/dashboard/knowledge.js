@@ -30,7 +30,7 @@ export function computeStudyProgress(state = {}) {
   return { percent, summary };
 }
 
-export function buildStudyEnrollmentSuggestions(state = {}) {
+function buildStudyEnrollmentSuggestions(state = {}) {
   const suggestions = [];
 
   if (!state || typeof state !== 'object') {
@@ -121,8 +121,3 @@ export function buildStudyEnrollmentActionModel(state = {}) {
   };
 }
 
-export default {
-  computeStudyProgress,
-  buildStudyEnrollmentSuggestions,
-  buildStudyEnrollmentActionModel
-};
