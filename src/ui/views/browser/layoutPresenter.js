@@ -389,10 +389,6 @@ const layoutPresenter = {
 
 export default layoutPresenter;
 
-export function navigateToWorkspace(pageId, options) {
-  openWorkspace(pageId, options);
-}
-
 export function setWorkspacePath(pageId, path) {
   setWorkspacePathDom(pageId, path);
   if (navigationController.getCurrentPage() === pageId) {
