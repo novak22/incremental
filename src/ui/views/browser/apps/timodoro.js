@@ -4,6 +4,9 @@ import timodoroApp from './timodoro/ui.js';
 import { createWorkspaceRenderer } from '../utils/workspaceFactories.js';
 import { buildTimodoroViewModel } from './timodoro/model.js';
 import { buildActionQueue } from '../../../actions/registry.js';
+// Ensure default action providers register even when Timodoro loads first.
+import '../../../dashboard/quickActions.js';
+import '../../../dashboard/knowledge.js';
 
 const renderTimodoroWorkspace = createWorkspaceRenderer({
   pageType: 'timodoro',
