@@ -169,7 +169,9 @@ function renderHighlights(header = {}) {
   const orderedPulseSlots = [
     { id: 'active', fallbackLabel: 'Active', fallbackDirection: 'in', position: 'left' },
     { id: 'passive', fallbackLabel: 'Passive', fallbackDirection: 'in', position: 'right' },
+    { id: 'offline', fallbackLabel: 'Offline', fallbackDirection: 'in', position: 'left' },
     { id: 'upkeep', fallbackLabel: 'Upkeep', fallbackDirection: 'out', position: 'left' },
+    { id: 'tuition', fallbackLabel: 'Tuition', fallbackDirection: 'out', position: 'right' },
     { id: 'investments', fallbackLabel: 'Investments', fallbackDirection: 'out', position: 'right' }
   ];
 
