@@ -5,12 +5,22 @@ import { allocateAssetMaintenance, closeOutDay } from './assets/index.js';
 import { processAssistantPayroll } from './assistant.js';
 import { getTimeCap } from './time.js';
 import { updateUI } from '../ui/update.js';
+import { consumeDirty, markAllDirty, markDirty } from '../ui/invalidation.js';
 import { advanceKnowledgeTracks, allocateDailyStudy } from './requirements.js';
 import { archiveDailyMetrics, resetDailyMetrics } from './metrics.js';
 import { rerollNichePopularity } from './assets/niches.js';
 import { computeDailySummary } from './summary.js';
 import { advanceEventsAfterDay } from './events/index.js';
 import { archiveNicheAnalytics } from './analytics/niches.js';
+
+function flushUiWithFallback(fallbackToFull = false) {
+  const dirtySections = consumeDirty();
+  if (Object.keys(dirtySections).length > 0) {
+    updateUI(dirtySections);
+  } else if (fallbackToFull) {
+    updateUI();
+  }
+}
 
 export function endDay(auto = false) {
   const state = getState();
@@ -19,7 +29,8 @@ export function endDay(auto = false) {
   closeOutDay();
   advanceEventsAfterDay(state.day);
   advanceKnowledgeTracks();
-  updateUI();
+  markAllDirty();
+  flushUiWithFallback(true);
   const summary = computeDailySummary(state);
   archiveDailyMetrics({ state, summary, day: state.day });
   archiveNicheAnalytics({ state, summary, day: state.day, timestamp: Date.now() });
@@ -36,7 +47,8 @@ export function endDay(auto = false) {
   processAssistantPayroll();
   allocateDailyStudy();
   allocateAssetMaintenance();
-  updateUI();
+  markAllDirty();
+  flushUiWithFallback(true);
   saveState();
 }
 
@@ -45,7 +57,9 @@ export function checkDayEnd() {
   if (!state) return;
   if (state.timeLeft <= 0) {
     state.timeLeft = 0;
-    updateUI();
+    markDirty('dashboard');
+    markDirty('headerAction');
+    flushUiWithFallback(true);
     setTimeout(() => endDay(true), 400);
   }
 }
