@@ -14,7 +14,7 @@ export function startGameLoop() {
   setInterval(runGameLoop, 1000);
 }
 
-function runGameLoop() {
+export function runGameLoop() {
   const now = Date.now();
   for (const hustle of HUSTLES) {
     if (typeof hustle.process === 'function') {
@@ -50,6 +50,8 @@ function runGameLoop() {
   const dirtySections = consumeDirty();
   if (Object.keys(dirtySections).length > 0) {
     updateUI(dirtySections);
+  } else {
+    updateUI();
   }
 
   if (now - lastAutosave >= AUTOSAVE_INTERVAL_MS) {
