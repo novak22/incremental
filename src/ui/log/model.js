@@ -40,4 +40,3 @@ export function buildLogModel(state) {
   };
 }
 
-export default buildLogModel;

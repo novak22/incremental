@@ -378,7 +378,7 @@ function startVideoInstance(definition, options = {}, state = getState()) {
   return newInstance.id;
 }
 
-export default function buildVideoTubeModel(assetDefinitions = [], state = getState()) {
+function buildVideoTubeModel(assetDefinitions = [], state = getState()) {
   const definition = ensureArray(assetDefinitions).find(entry => entry?.id === 'vlog') || null;
   if (!definition) {
     return {

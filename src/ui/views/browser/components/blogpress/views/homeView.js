@@ -1,4 +1,4 @@
-export function renderSummaryBar(model = {}) {
+function renderSummaryBar(model = {}) {
   const summary = document.createElement('div');
   summary.className = 'blogpress-summary';
   const total = model.summary?.total || 0;
@@ -13,7 +13,7 @@ export function renderSummaryBar(model = {}) {
   return summary;
 }
 
-export function createTableCell(content, className) {
+function createTableCell(content, className) {
   const cell = document.createElement('td');
   if (className) {
     cell.className = className;

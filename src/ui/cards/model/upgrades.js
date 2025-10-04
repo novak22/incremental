@@ -110,15 +110,15 @@ const UPGRADE_FAMILY_COPY = {
   }
 };
 
-export function getUpgradeCategory(definition) {
+function getUpgradeCategory(definition) {
   return definition?.category || 'misc';
 }
 
-export function getUpgradeFamily(definition) {
+function getUpgradeFamily(definition) {
   return definition?.family || 'general';
 }
 
-export function getCategoryCopy(id) {
+function getCategoryCopy(id) {
   if (UPGRADE_CATEGORY_COPY[id]) {
     return UPGRADE_CATEGORY_COPY[id];
   }
@@ -130,7 +130,7 @@ export function getCategoryCopy(id) {
   };
 }
 
-export function getFamilyCopy(id) {
+function getFamilyCopy(id) {
   if (!id) {
     return UPGRADE_FAMILY_COPY.general;
   }
@@ -143,7 +143,7 @@ export function getFamilyCopy(id) {
   };
 }
 
-export function buildUpgradeCategories(definitions) {
+function buildUpgradeCategories(definitions) {
   const grouped = new Map();
   definitions.forEach(definition => {
     const categoryId = getUpgradeCategory(definition);

@@ -24,4 +24,3 @@ export function buildSkillsWidgetModel(state = {}) {
   };
 }
 
-export default buildSkillsWidgetModel;

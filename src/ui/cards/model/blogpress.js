@@ -320,7 +320,7 @@ function buildSummary(instances = []) {
   return { total, active, setup, needsUpkeep, meta };
 }
 
-export default function buildBlogpressModel(assetDefinitions = [], upgradeDefinitions = [], state = getState()) {
+function buildBlogpressModel(assetDefinitions = [], upgradeDefinitions = [], state = getState()) {
   const definition = ensureArray(assetDefinitions).find(entry => entry?.id === 'blog') || null;
   if (!definition) {
     return {

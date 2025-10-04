@@ -9,11 +9,11 @@ export function formatXp(value) {
   return numberFormatter.format(Math.max(0, Math.round(Number(value) || 0)));
 }
 
-export function findSkillTier(level) {
+function findSkillTier(level) {
   return SKILL_LEVELS.find(tier => tier.level === level) || SKILL_LEVELS[0];
 }
 
-export function findNextSkillTier(level) {
+function findNextSkillTier(level) {
   return SKILL_LEVELS.find(tier => tier.level === level + 1) || null;
 }
 

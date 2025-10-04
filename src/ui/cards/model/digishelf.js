@@ -385,7 +385,7 @@ function buildOverview(ebookSummary, stockSummary, ebookInstances = [], stockIns
   };
 }
 
-export default function buildDigishelfModel(assetDefinitions = [], state = getState()) {
+function buildDigishelfModel(assetDefinitions = [], state = getState()) {
   const definitionMap = new Map(ensureArray(assetDefinitions).map(definition => [definition?.id, definition]));
   const ebookDefinition = definitionMap.get('ebook') || null;
   const stockDefinition = definitionMap.get('stockPhotos') || null;

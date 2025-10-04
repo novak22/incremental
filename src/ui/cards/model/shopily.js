@@ -375,7 +375,7 @@ function buildPricing(definition, state) {
   };
 }
 
-export default function buildShopilyModel(assetDefinitions = [], upgradeDefinitions = [], state = getState()) {
+function buildShopilyModel(assetDefinitions = [], upgradeDefinitions = [], state = getState()) {
   const definition = ensureArray(assetDefinitions).find(entry => entry?.id === 'dropshipping') || null;
   if (!definition) {
     return {

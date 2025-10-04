@@ -54,10 +54,3 @@ export function subscribeToServiceSummaries(listener) {
   };
 }
 
-export default {
-  cachePayload,
-  getCachedPayload,
-  setServiceSummaries,
-  getLatestServiceSummaries,
-  subscribeToServiceSummaries
-};

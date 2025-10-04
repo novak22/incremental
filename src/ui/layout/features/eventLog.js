@@ -28,4 +28,3 @@ export function setupEventLog({ getElement } = {}) {
   });
 }
 
-export default setupEventLog;

@@ -122,7 +122,7 @@ export function rerollNichePopularity({ force = false } = {}) {
   return data.popularity;
 }
 
-export function getNichePopularity(nicheId, state = getState()) {
+function getNichePopularity(nicheId, state = getState()) {
   if (!nicheId) return null;
   const target = ensureNicheState(state);
   if (!target) return null;

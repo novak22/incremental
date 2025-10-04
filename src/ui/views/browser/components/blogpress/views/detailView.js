@@ -1,4 +1,4 @@
-export function createBackButton(onBack = () => {}, label = 'Back to blogs') {
+function createBackButton(onBack = () => {}, label = 'Back to blogs') {
   const button = document.createElement('button');
   button.type = 'button';
   button.className = 'blogpress-button blogpress-button--link';
@@ -7,7 +7,7 @@ export function createBackButton(onBack = () => {}, label = 'Back to blogs') {
   return button;
 }
 
-export function renderOverviewPanel(instance, formatCurrency) {
+function renderOverviewPanel(instance, formatCurrency) {
   const panel = document.createElement('article');
   panel.className = 'blogpress-panel blogpress-panel--overview';
 
@@ -52,7 +52,7 @@ export function renderOverviewPanel(instance, formatCurrency) {
   return panel;
 }
 
-export function renderNichePanel(instance, handlers = {}) {
+function renderNichePanel(instance, handlers = {}) {
   const panel = document.createElement('article');
   panel.className = 'blogpress-panel blogpress-panel--niche';
 
@@ -109,7 +109,7 @@ export function renderNichePanel(instance, handlers = {}) {
   return panel;
 }
 
-export function renderQualityPanel(instance, formatRange) {
+function renderQualityPanel(instance, formatRange) {
   const panel = document.createElement('article');
   panel.className = 'blogpress-panel blogpress-panel--quality';
 
@@ -160,7 +160,7 @@ export function renderQualityPanel(instance, formatRange) {
   return panel;
 }
 
-export function renderIncomePanel(instance, formatCurrency, formatNetCurrency) {
+function renderIncomePanel(instance, formatCurrency, formatNetCurrency) {
   const panel = document.createElement('article');
   panel.className = 'blogpress-panel blogpress-panel--income';
 
@@ -238,7 +238,7 @@ export function renderIncomePanel(instance, formatCurrency, formatNetCurrency) {
   return panel;
 }
 
-export function renderPayoutPanel(instance, formatCurrency) {
+function renderPayoutPanel(instance, formatCurrency) {
   const panel = document.createElement('article');
   panel.className = 'blogpress-panel blogpress-panel--payout';
   const title = document.createElement('h3');
@@ -279,7 +279,7 @@ export function renderPayoutPanel(instance, formatCurrency) {
   return panel;
 }
 
-export function renderActionPanel(instance, handlers = {}, formatHours, formatCurrency) {
+function renderActionPanel(instance, handlers = {}, formatHours, formatCurrency) {
   const panel = document.createElement('article');
   panel.className = 'blogpress-panel blogpress-panel--actions';
   const title = document.createElement('h3');
@@ -333,7 +333,7 @@ export function renderActionPanel(instance, handlers = {}, formatHours, formatCu
   return panel;
 }
 
-export function renderUpkeepPanel(instance) {
+function renderUpkeepPanel(instance) {
   const panel = document.createElement('article');
   panel.className = 'blogpress-panel blogpress-panel--upkeep';
   const title = document.createElement('h3');
