@@ -218,7 +218,7 @@ export function setNicheWatchlist(nicheId, watchlisted) {
     }
     data.watchlist = Array.from(list);
     if (changed) {
-      markDirty('cards');
+      markDirty(['cards', 'dashboard']);
     }
   });
   return changed;
