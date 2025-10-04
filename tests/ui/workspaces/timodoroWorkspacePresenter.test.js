@@ -2,31 +2,60 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { JSDOM } from 'jsdom';
 
-import { ensureElements, renderView } from '../../../src/ui/views/browser/apps/timodoro/ui.js';
+import timodoroApp from '../../../src/ui/views/browser/apps/timodoro/ui.js';
+import renderTimodoro from '../../../src/ui/views/browser/apps/timodoro.js';
 import { buildTimodoroViewModel } from '../../../src/ui/views/browser/apps/timodoro/model.js';
 
 function withDom(t) {
   const dom = new JSDOM('<body><main id="mount"></main></body>', { url: 'http://localhost' });
   globalThis.window = dom.window;
   globalThis.document = dom.window.document;
-  return dom;
-}
-
-test('ensureElements builds layout and renderView populates lists', t => {
-  const dom = withDom(t);
-
   t.after(() => {
     dom.window.close();
     delete globalThis.window;
     delete globalThis.document;
   });
+  return dom;
+}
 
-  const body = dom.window.document.body;
-  const refs = ensureElements(body);
-  assert.ok(refs?.root, 'timodoro root should be created');
-  assert.equal(refs.root.dataset.role, 'timodoro-root');
+function createContext(document) {
+  const sections = new Map();
+  const main = document.querySelector('main') || document.createElement('main');
+  if (!main.parentElement) {
+    document.body.appendChild(main);
+  }
+
+  return {
+    ensurePageContent(page, builder) {
+      let refs = sections.get(page.id);
+      if (!refs) {
+        const section = document.createElement('section');
+        section.dataset.browserPage = page.id;
+        const body = document.createElement('div');
+        body.className = 'browser-page__body';
+        section.appendChild(body);
+        main.appendChild(section);
+        refs = { section, body };
+        sections.set(page.id, refs);
+      }
+      if (typeof builder === 'function') {
+        builder(refs);
+      }
+      return refs;
+    }
+  };
+}
+
+test('timodoro component renders layout and populates lists', t => {
+  const dom = withDom(t);
+  const { document } = dom.window;
+
+  const mount = document.createElement('div');
+  mount.dataset.role = 'timodoro-root';
+  document.body.appendChild(mount);
 
   const viewModel = {
+    meta: '3 tasks logged • 6h logged • $320 earned',
     completedGroups: {
       hustles: [{ name: 'Logo sprint', detail: '2h logged' }],
       education: [],
@@ -42,32 +71,65 @@ test('ensureElements builds layout and renderView populates lists', t => {
       { label: 'Hours remaining', value: '4h' }
     ],
     hoursAvailableLabel: '4h',
-    hoursSpentLabel: '2h'
+    hoursSpentLabel: '2h',
+    recurringEmpty: 'No upkeep logged yet. Assistants will report here.'
   };
 
-  renderView(refs, viewModel);
+  const summary = timodoroApp.render(viewModel, { mount });
 
-  assert.equal(refs.availableValue.textContent, '4h', 'available hours should update');
-  assert.equal(refs.spentValue.textContent, '2h', 'spent hours should update');
+  assert.equal(summary.meta, viewModel.meta, 'render returns view model meta');
+  assert.equal(mount.className, 'timodoro', 'mount receives root class');
 
-  const hustleItems = [...refs.completedLists.hustles.querySelectorAll('.timodoro-list__item')];
+  const available = mount.querySelector('[data-role="timodoro-hours-available"]');
+  const spent = mount.querySelector('[data-role="timodoro-hours-spent"]');
+  assert.equal(available?.textContent, '4h', 'available hours should update');
+  assert.equal(spent?.textContent, '2h', 'spent hours should update');
+
+  const hustleItems = [
+    ...mount.querySelectorAll('[data-role="timodoro-completed-hustles"] .timodoro-list__item')
+  ];
   assert.equal(hustleItems.length, 1, 'hustle list renders completed task');
-  assert.equal(hustleItems[0].querySelector('.timodoro-list__name').textContent, 'Logo sprint');
+  assert.equal(hustleItems[0].querySelector('.timodoro-list__name')?.textContent, 'Logo sprint');
 
-  const educationEmpty = refs.completedLists.education.querySelector('.timodoro-list__empty');
+  const educationEmpty = mount
+    .querySelector('[data-role="timodoro-completed-education"] .timodoro-list__empty');
   assert.ok(educationEmpty, 'education bucket renders empty state');
   assert.equal(educationEmpty.textContent, 'No study blocks logged yet.');
 
-  const recurringEmpty = refs.recurringList.querySelector('.timodoro-list__empty');
+  const recurringEmpty = mount.querySelector('[data-role="timodoro-recurring"] .timodoro-list__empty');
   assert.ok(recurringEmpty, 'recurring list renders empty state');
   assert.equal(recurringEmpty.textContent, 'No upkeep logged yet. Assistants will report here.');
 
-  const summaryItems = [...refs.summaryList.querySelectorAll('.timodoro-stats__item')];
+  const summaryItems = [
+    ...mount.querySelectorAll('[data-role="timodoro-stats"] .timodoro-stats__item')
+  ];
   assert.equal(summaryItems.length, 1, 'summary list renders stats entries');
-  assert.equal(
-    summaryItems[0].querySelector('.timodoro-stats__label').textContent,
-    'Hours logged'
-  );
+  assert.equal(summaryItems[0].querySelector('.timodoro-stats__label')?.textContent, 'Hours logged');
+});
+
+test('renderTimodoro returns page summary using workspace renderer', t => {
+  const dom = withDom(t);
+  const context = createContext(dom.window.document);
+
+  const viewModel = {
+    meta: 'Focus mode ready',
+    completedGroups: {},
+    recurringEntries: [],
+    summaryEntries: [],
+    breakdownEntries: [],
+    hoursAvailableLabel: '6h',
+    hoursSpentLabel: '0h'
+  };
+
+  const summary = renderTimodoro(context, [], { timodoro: viewModel });
+
+  assert.ok(summary, 'summary is returned');
+  assert.equal(summary.id, 'timodoro', 'summary includes timodoro page id');
+  assert.equal(summary.meta, 'Focus mode ready', 'meta comes from provided view model');
+
+  const mount = dom.window.document.querySelector('[data-role="timodoro-root"]');
+  assert.ok(mount, 'workspace mount is created');
+  assert.equal(mount.className, 'timodoro', 'workspace renderer assigns root class');
 });
 
 test('buildTimodoroViewModel composes summary, recurring, and meta data', () => {

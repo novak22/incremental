@@ -6,34 +6,40 @@ import {
   buildStudyEnrollmentActionModel
 } from '../../../dashboard/model.js';
 import { composeTodoModel, createAutoCompletedEntries } from '../dashboardPresenter.js';
-import { getPageByType } from './pageLookup.js';
-import { ensureElements, renderView } from './timodoro/ui.js';
+import timodoroApp from './timodoro/ui.js';
+import { createWorkspaceRenderer } from '../utils/workspaceFactories.js';
 import { buildTimodoroViewModel } from './timodoro/model.js';
 
-export default function renderTimodoro(context = {}) {
-  const page = getPageByType('timodoro');
-  if (!page) return null;
+const renderTimodoroWorkspace = createWorkspaceRenderer({
+  pageType: 'timodoro',
+  mountRole: 'timodoro-root',
+  renderApp: (model, options) => timodoroApp.render(model, options),
+  deriveMeta: ({ summary, model, fallback }) => summary?.meta || model?.meta || fallback || '',
+  fallbackMeta: 'Productivity ready',
+});
 
-  const refs = context.ensurePageContent?.(page, ({ body }) => {
-    ensureElements(body);
-  });
-  if (!refs) return null;
+function resolveViewModel(model, state) {
+  if (model && typeof model === 'object') {
+    if (model.completedGroups || model.recurringEntries || model.summaryEntries) {
+      return model;
+    }
+    if (model.timodoro && typeof model.timodoro === 'object') {
+      return model.timodoro;
+    }
+  }
 
-  const dom = ensureElements(refs.body);
-  if (!dom) return null;
-
-  const state = getState() || {};
   const summary = computeDailySummary(state);
-
   const quickActions = buildQuickActionModel(state);
   const assetActions = buildAssetActionModel(state);
   const studyActions = buildStudyEnrollmentActionModel(state);
   const autoEntries = createAutoCompletedEntries(summary);
   const todoModel = composeTodoModel(quickActions, assetActions, studyActions, autoEntries);
 
-  const viewModel = buildTimodoroViewModel(state, summary, todoModel);
+  return buildTimodoroViewModel(state, summary, todoModel);
+}
 
-  renderView(dom, viewModel);
-
-  return { id: page.id, meta: viewModel.meta };
+export default function renderTimodoro(context = {}, definitions = [], model = {}) {
+  const state = getState() || {};
+  const viewModel = resolveViewModel(model, state);
+  return renderTimodoroWorkspace(context, definitions, viewModel);
 }
