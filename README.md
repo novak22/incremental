@@ -99,6 +99,12 @@ Each asset supports multiple instances, tracks setup progress, and rolls a daily
 3. Start the Vite development server with `npm run dev` and follow the command output to open the local URL in your browser.
 4. Build a production bundle with `npm run build`. Preview the output locally with `npm run preview`.
 
+## GitLab Pages Deployment Flow
+1. Push or merge to the `main` branch to trigger the GitLab Pages pipeline defined in `.gitlab-ci.yml`.
+2. The `pages` job runs on a Node 20 image, installs dependencies with `npm ci`, builds the Vite bundle, and copies the compiled output from `dist/` into a freshly created `public/` directory.
+3. The `public/` directory is uploaded as a job artifact so GitLab Pages can publish the site at your project’s Pages URL. Cached `node_modules/` data is reused between pipeline runs to keep installs snappy.
+4. If you need to update the deployment, repeat the process with another push to `main`; GitLab Pages will replace the previously published bundle once the pipeline finishes.
+
 ## Styling Workflow
 - The browser shell now links each modular stylesheet directly. Edit the files under `styles/base/`, `styles/components/`, `styles/widgets/`, `styles/workspaces/`, and `styles/overlays/` and the Vite dev server will hot-reload the updates.
 - Maintain the documented load order (base → components → widgets → workspaces → overlays) when adding new modules. Update the `<head>` of `index.html` with any additional `<link rel="stylesheet">` entries so the cascade remains intact.
