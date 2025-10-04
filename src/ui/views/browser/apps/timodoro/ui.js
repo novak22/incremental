@@ -1,5 +1,6 @@
 import { appendContent } from '../../components/common/domHelpers.js';
 import { createStat } from '../../components/widgets.js';
+import { formatCurrency } from './model.js';
 
 const COMPLETED_GROUPS = [
   { key: 'hustles', label: 'Hustles', empty: 'No hustles wrapped yet.' },
@@ -68,6 +69,46 @@ function createTaskList(entries = [], emptyText, datasetKey) {
   });
 
   return list;
+}
+
+function buildTodoItems(entries = []) {
+  return entries
+    .filter(Boolean)
+    .map((entry, index) => {
+      const detailParts = [];
+      if (entry.durationText) {
+        detailParts.push(entry.durationText);
+      }
+      if (entry.meta) {
+        detailParts.push(entry.meta);
+      }
+      const moneyCost = Number(entry.moneyCost);
+      if (Number.isFinite(moneyCost) && Math.abs(moneyCost) > 1e-4) {
+        detailParts.push(`Cost ${formatCurrency(Math.abs(moneyCost))}`);
+      }
+      const runsRemaining = Number(entry.remainingRuns ?? entry.upgradeRemaining);
+      if (Number.isFinite(runsRemaining) && runsRemaining > 0) {
+        detailParts.push(`Runs left ×${runsRemaining}`);
+      }
+
+      return {
+        name: entry.title || entry.name || `Task ${index + 1}`,
+        detail: detailParts.join(' • ')
+      };
+    });
+}
+
+function createTodoCard(model = {}) {
+  const card = createCard({
+    title: 'Todo Queue',
+    summary: 'Pull your next focus block straight from the backlog.'
+  });
+
+  const items = buildTodoItems(Array.isArray(model.todoEntries) ? model.todoEntries : []);
+  const emptyText = model.todoEmptyMessage || 'Queue a hustle or upgrade to add new tasks.';
+  card.appendChild(createTaskList(items, emptyText, 'timodoro-todo'));
+
+  return card;
 }
 
 function createCompletedSection(completedGroups = {}) {
@@ -217,21 +258,6 @@ function createSnapshotCard(model = {}) {
   return card;
 }
 
-function createTaskColumn(model = {}) {
-  const column = document.createElement('div');
-  column.className = 'timodoro__column timodoro__column--tasks';
-
-  const taskCard = createCard({
-    title: 'Task Log',
-    summary: 'Celebrate today’s finished focus blocks.'
-  });
-
-  taskCard.appendChild(createCompletedSection(model.completedGroups));
-  column.append(taskCard, createRecurringCard(model));
-
-  return column;
-}
-
 function createSummaryColumn(model = {}) {
   const column = document.createElement('div');
   column.className = 'timodoro__column timodoro__column--summary';
@@ -251,25 +277,112 @@ function createSummaryColumn(model = {}) {
   return column;
 }
 
-function createHeader() {
-  const header = document.createElement('header');
-  header.className = 'timodoro__header';
+const TAB_CONFIGS = [
+  { key: 'todo', label: 'TODO', buttonId: 'timodoro-tab-todo', panelId: 'timodoro-tabpanel-todo' },
+  { key: 'done', label: 'DONE', buttonId: 'timodoro-tab-done', panelId: 'timodoro-tabpanel-done' }
+];
 
-  const title = document.createElement('h1');
-  title.className = 'timodoro__title';
-  appendContent(title, 'TimoDoro');
+function createTodoPanel(model = {}, config = TAB_CONFIGS[0]) {
+  const panel = document.createElement('div');
+  panel.className = 'timodoro-tabs__panel';
+  panel.dataset.tab = config.key;
+  panel.id = config.panelId;
+  panel.hidden = true;
+  panel.setAttribute('role', 'tabpanel');
+  panel.setAttribute('aria-labelledby', config.buttonId);
 
-  const subtitle = document.createElement('p');
-  subtitle.className = 'timodoro__subtitle';
-  appendContent(subtitle, 'Track your hustle hours and assistant work.');
+  panel.appendChild(createTodoCard(model));
+  return panel;
+}
 
-  header.append(title, subtitle);
-  return header;
+function createDonePanel(model = {}, config = TAB_CONFIGS[1]) {
+  const panel = document.createElement('div');
+  panel.className = 'timodoro-tabs__panel';
+  panel.dataset.tab = config.key;
+  panel.id = config.panelId;
+  panel.hidden = true;
+  panel.setAttribute('role', 'tabpanel');
+  panel.setAttribute('aria-labelledby', config.buttonId);
+
+  const taskCard = createCard({
+    title: 'Task Log',
+    summary: 'Celebrate today’s finished focus blocks.'
+  });
+  taskCard.appendChild(createCompletedSection(model.completedGroups));
+
+  panel.append(taskCard, createRecurringCard(model));
+  return panel;
+}
+
+function createTabButton(config, onSelect) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'timodoro-tabs__button';
+  button.id = config.buttonId;
+  button.setAttribute('role', 'tab');
+  button.setAttribute('aria-controls', config.panelId);
+  button.setAttribute('aria-selected', 'false');
+  appendContent(button, config.label);
+  button.addEventListener('click', () => onSelect(config.key));
+  return button;
+}
+
+function createTabs(model = {}) {
+  const wrapper = document.createElement('section');
+  wrapper.className = 'timodoro-tabs';
+
+  const nav = document.createElement('div');
+  nav.className = 'timodoro-tabs__nav';
+  nav.setAttribute('role', 'tablist');
+
+  const panels = document.createElement('div');
+  panels.className = 'timodoro-tabs__panels';
+
+  const buttons = new Map();
+  const panelRefs = new Map();
+
+  const handleSelect = key => {
+    buttons.forEach((button, tabKey) => {
+      const active = tabKey === key;
+      button.classList.toggle('is-active', active);
+      button.setAttribute('aria-selected', active ? 'true' : 'false');
+      const panel = panelRefs.get(tabKey);
+      if (panel) {
+        panel.hidden = !active;
+      }
+    });
+  };
+
+  TAB_CONFIGS.forEach(config => {
+    const button = createTabButton(config, handleSelect);
+    buttons.set(config.key, button);
+    nav.appendChild(button);
+
+    const panel = config.key === 'done'
+      ? createDonePanel(model, config)
+      : createTodoPanel(model, config);
+    panelRefs.set(config.key, panel);
+    panels.appendChild(panel);
+  });
+
+  wrapper.append(nav, panels);
+
+  return { root: wrapper, activate: handleSelect };
+}
+
+function createTaskColumn(model = {}) {
+  const column = document.createElement('div');
+  column.className = 'timodoro__column timodoro__column--tasks';
+
+  const tabs = createTabs(model);
+  column.appendChild(tabs.root);
+  tabs.activate('todo');
+
+  return column;
 }
 
 function createLayout(model = {}) {
   const fragment = document.createDocumentFragment();
-  fragment.appendChild(createHeader());
 
   const grid = document.createElement('div');
   grid.className = 'timodoro__grid';

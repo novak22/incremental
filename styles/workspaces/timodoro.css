@@ -5,21 +5,51 @@
   gap: 1.8rem;
 }
 
-.timodoro__header {
+.timodoro-tabs {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 1.25rem;
 }
 
-.timodoro__title {
-  margin: 0;
-  font-size: 1.75rem;
+.timodoro-tabs__nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
 }
 
-.timodoro__subtitle {
-  margin: 0;
-  color: var(--browser-muted);
-  font-size: 0.95rem;
+.timodoro-tabs__button {
+  border: 1px solid var(--browser-panel-border);
+  border-radius: var(--browser-radius-pill, 999px);
+  background: rgba(148, 163, 184, 0.14);
+  color: inherit;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.5rem 1.1rem;
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+
+.timodoro-tabs__button.is-active {
+  border-color: var(--browser-accent, rgba(37, 99, 235, 0.7));
+  background: rgba(37, 99, 235, 0.18);
+  color: var(--browser-accent, rgb(37, 99, 235));
+}
+
+.timodoro-tabs__button:focus-visible {
+  outline: 2px solid var(--browser-accent, rgb(37, 99, 235));
+  outline-offset: 2px;
+}
+
+.timodoro-tabs__panels {
+  display: flex;
+  flex-direction: column;
+}
+
+.timodoro-tabs__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
 .timodoro__grid {
