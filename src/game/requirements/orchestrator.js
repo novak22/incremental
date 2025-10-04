@@ -3,6 +3,7 @@ import { formatList, formatMoney } from '../../core/helpers.js';
 import { markDirty } from '../../ui/invalidation.js';
 
 export const MIN_MANUAL_BUFFER_HOURS = Math.max(2, Math.round(DEFAULT_DAY_HOURS * 0.25));
+const STUDY_DIRTY_SECTIONS = Object.freeze(['cards', 'dashboard', 'player']);
 
 export function createRequirementsOrchestrator({
   getState,
@@ -56,7 +57,7 @@ export function createRequirementsOrchestrator({
 
     allocateDailyStudy({ trackIds: [id], triggeredByEnrollment: true });
 
-    markDirty('cards');
+    markDirty(STUDY_DIRTY_SECTIONS);
 
     return { success: true };
   }
@@ -80,7 +81,7 @@ export function createRequirementsOrchestrator({
 
     addLog(`You dropped ${track.name}. Tuition stays paid, but your schedule opens back up.`, 'warning');
 
-    markDirty('cards');
+    markDirty(STUDY_DIRTY_SECTIONS);
 
     return { success: true };
   }
@@ -99,6 +100,7 @@ export function createRequirementsOrchestrator({
 
     const maintenanceReserve = estimateMaintenanceReserve(state);
     let availableStudyTime = Math.max(0, state.timeLeft - maintenanceReserve - MIN_MANUAL_BUFFER_HOURS);
+    let dirty = false;
 
     for (const track of tracks) {
       const progress = getKnowledgeProgress(track.id);
@@ -108,6 +110,7 @@ export function createRequirementsOrchestrator({
       const hours = Number(track.hoursPerDay) || 0;
       if (hours <= 0) {
         progress.studiedToday = true;
+        dirty = true;
         continue;
       }
 
@@ -130,6 +133,7 @@ export function createRequirementsOrchestrator({
         category: 'study'
       });
       progress.studiedToday = true;
+      dirty = true;
       studied.push(track.name);
     }
 
@@ -138,8 +142,12 @@ export function createRequirementsOrchestrator({
       addLog(`${prefix} ${formatList(studied)}.`, 'info');
     }
 
-    if (studied.length || reserveSkipped.length || timeSkipped.length) {
-      markDirty('cards');
+    if (reserveSkipped.length || timeSkipped.length) {
+      dirty = true;
+    }
+
+    if (dirty) {
+      markDirty(STUDY_DIRTY_SECTIONS);
     }
 
     if (reserveSkipped.length) {
