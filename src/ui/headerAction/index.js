@@ -123,7 +123,3 @@ export function renderHeaderAction(model) {
   presenter?.renderAction?.(model);
 }
 
-export default {
-  initHeaderActionControls,
-  renderHeaderAction
-};

@@ -4,7 +4,7 @@ function isPlainObject(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
-export function normalizeRegistries(registries = {}) {
+function normalizeRegistries(registries = {}) {
   const normalized = isPlainObject(registries) ? { ...registries } : {};
   REGISTRY_KEYS.forEach(key => {
     const value = registries?.[key];
@@ -53,10 +53,3 @@ export function updateCollections(payload = {}, adapters = {}, options = {}) {
   return { registries: normalizedRegistries, models };
 }
 
-const sharedCollections = {
-  normalizeRegistries,
-  renderCollections,
-  updateCollections
-};
-
-export default sharedCollections;

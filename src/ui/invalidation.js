@@ -55,9 +55,3 @@ export function consumeDirty() {
 
 export { ALL_UI_SECTIONS };
 
-export default {
-  markDirty,
-  markAllDirty,
-  consumeDirty,
-  ALL_UI_SECTIONS
-};

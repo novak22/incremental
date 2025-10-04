@@ -233,6 +233,3 @@ export function buildDailySummaries(state = {}, summary = {}) {
   };
 }
 
-export default {
-  buildDailySummaries
-};

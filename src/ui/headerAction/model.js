@@ -37,7 +37,7 @@ function normalizeQuickAction(entry) {
   };
 }
 
-export function selectHeaderAction(state) {
+function selectHeaderAction(state) {
   const assetActions = buildAssetUpgradeRecommendations(state)
     .map(normalizeAssetRecommendation)
     .filter(Boolean)
@@ -80,4 +80,3 @@ export function buildHeaderActionModel(state) {
   };
 }
 
-export default buildHeaderActionModel;

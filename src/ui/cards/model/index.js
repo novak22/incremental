@@ -1,35 +1,17 @@
-import buildAssetModels, {
-  getAssetGroupLabel,
-  getAssetGroupId,
-  getAssetGroupNote,
-  describeAssetLaunchAvailability
-} from './assets.js';
+import buildAssetModels from './assets.js';
 import buildHustleModels from './hustles.js';
-import buildUpgradeModels, {
-  getUpgradeCategory,
-  getUpgradeFamily,
-  getCategoryCopy,
-  getFamilyCopy,
-  buildUpgradeCategories,
-  getUpgradeSnapshot,
-  describeUpgradeStatus
-} from './upgrades.js';
-import buildEducationModels, { buildSkillRewards, resolveTrack } from './education.js';
+import buildUpgradeModels from './upgrades.js';
+import buildEducationModels from './education.js';
 import buildFinanceModel from './finance/index.js';
+import { selectNiche as selectBlogpressNiche } from './blogpress.js';
+import { selectNiche as selectVideoTubeNiche } from './videotube.js';
 import {
-  formatLabelFromKey,
-  describeAssetCardSummary,
-  formatInstanceUpkeep
-} from '../utils.js';
-import buildBlogpressModel, { selectNiche as selectBlogpressNiche } from './blogpress.js';
-import buildVideoTubeModel, { selectNiche as selectVideoTubeNiche } from './videotube.js';
-import buildDigishelfModel, {
   selectDigishelfNiche,
   getQuickActionIds as getDigishelfQuickActionIds
 } from './digishelf.js';
-import buildShopilyModel, { selectNiche as selectShopilyNiche } from './shopily.js';
+import { selectNiche as selectShopilyNiche } from './shopily.js';
 import buildTrendsModel from './trends.js';
-import buildServerHubModel, { selectServerHubNiche } from './serverhub.js';
+import { selectServerHubNiche } from './serverhub.js';
 import { ensureDefaultBuilders, registerModelBuilder } from '../modelBuilderRegistry.js';
 
 function registerDefaultCardBuilders() {
@@ -64,36 +46,15 @@ ensureDefaultBuilders(registerDefaultCardBuilders);
 
 export {
   buildAssetModels,
-  getAssetGroupLabel,
-  getAssetGroupId,
-  getAssetGroupNote,
-  describeAssetLaunchAvailability,
   buildHustleModels,
   buildUpgradeModels,
-  getUpgradeCategory,
-  getUpgradeFamily,
-  getCategoryCopy,
-  getFamilyCopy,
-  buildUpgradeCategories,
-  getUpgradeSnapshot,
-  describeUpgradeStatus,
   buildEducationModels,
-  buildSkillRewards,
-  resolveTrack,
   buildFinanceModel,
-  formatLabelFromKey,
-  describeAssetCardSummary,
-  formatInstanceUpkeep,
-  buildBlogpressModel,
   selectBlogpressNiche,
-  buildVideoTubeModel,
   selectVideoTubeNiche,
-  buildDigishelfModel,
   selectDigishelfNiche,
   getDigishelfQuickActionIds,
-  buildShopilyModel,
   selectShopilyNiche,
   buildTrendsModel,
-  buildServerHubModel,
   selectServerHubNiche
 };

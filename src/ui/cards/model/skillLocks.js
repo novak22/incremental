@@ -1,7 +1,7 @@
 import { getSkillDefinition } from '../../../game/skills/data.js';
 import { KNOWLEDGE_TRACKS } from '../../../game/requirements.js';
 
-export const WORKSPACE_SKILL_LOCKS = {
+const WORKSPACE_SKILL_LOCKS = {
   blogpress: {
     workspaceLabel: 'BlogPress',
     skillId: 'writing',
@@ -88,6 +88,3 @@ export function getWorkspaceLockByCourse(courseId) {
   };
 }
 
-export function getWorkspaceSkillLockConfig(workspaceId) {
-  return WORKSPACE_SKILL_LOCKS[workspaceId] || null;
-}
