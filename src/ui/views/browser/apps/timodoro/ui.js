@@ -1,5 +1,6 @@
 import { appendContent } from '../../components/common/domHelpers.js';
 import { createStat } from '../../components/widgets.js';
+import { getWorkspacePath } from '../../layout/workspaces.js';
 import { formatCurrency } from './model.js';
 
 const COMPLETED_GROUPS = [
@@ -349,12 +350,38 @@ const TAB_CONFIGS = [
   { key: 'done', label: 'Done', buttonId: 'timodoro-tab-done', panelId: 'timodoro-tabpanel-done' }
 ];
 
+const DEFAULT_TAB_KEY = TAB_CONFIGS[0].key;
+
+function getTabConfig(key) {
+  return TAB_CONFIGS.find(config => config.key === key) || null;
+}
+
+function normalizeTabKey(key) {
+  const config = getTabConfig(key);
+  return config ? config.key : DEFAULT_TAB_KEY;
+}
+
+function deriveTabFromPath(path = '') {
+  if (!path) {
+    return DEFAULT_TAB_KEY;
+  }
+  const [segment] = String(path)
+    .split('/')
+    .filter(Boolean);
+  return normalizeTabKey(segment);
+}
+
+function buildTabPath(key) {
+  return normalizeTabKey(key);
+}
+
 function createTodoPanel(model = {}, config = TAB_CONFIGS[0]) {
   const panel = document.createElement('div');
   panel.className = 'timodoro-tabs__panel';
   panel.dataset.tab = config.key;
   panel.id = config.panelId;
-  panel.hidden = config.key !== 'todo';
+  panel.hidden = true;
+  panel.setAttribute('aria-hidden', 'true');
   panel.setAttribute('role', 'tabpanel');
   panel.setAttribute('aria-labelledby', config.buttonId);
 
@@ -367,7 +394,8 @@ function createDonePanel(model = {}, config = TAB_CONFIGS[1]) {
   panel.className = 'timodoro-tabs__panel';
   panel.dataset.tab = config.key;
   panel.id = config.panelId;
-  panel.hidden = config.key !== 'todo';
+  panel.hidden = true;
+  panel.setAttribute('aria-hidden', 'true');
   panel.setAttribute('role', 'tabpanel');
   panel.setAttribute('aria-labelledby', config.buttonId);
 
@@ -389,12 +417,15 @@ function createTabButton(config, onSelect) {
   button.setAttribute('role', 'tab');
   button.setAttribute('aria-controls', config.panelId);
   button.setAttribute('aria-selected', 'false');
+  button.tabIndex = -1;
   appendContent(button, config.label);
   button.addEventListener('click', () => onSelect(config.key));
   return button;
 }
 
-function createTabs(model = {}) {
+function createTabs(model = {}, options = {}) {
+  const { initialTab = DEFAULT_TAB_KEY, onSelect } = options;
+
   const wrapper = document.createElement('section');
   wrapper.className = 'timodoro-tabs';
 
@@ -408,20 +439,43 @@ function createTabs(model = {}) {
   const buttons = new Map();
   const panelRefs = new Map();
 
-  const handleSelect = key => {
+  let currentTab = null;
+
+  const notifySelect = key => {
+    if (typeof onSelect === 'function') {
+      onSelect(key);
+    }
+  };
+
+  const activate = (key, { notify = true } = {}) => {
+    const targetKey = normalizeTabKey(key);
+    if (currentTab === targetKey && notify) {
+      notifySelect(targetKey);
+      return currentTab;
+    }
+
     buttons.forEach((button, tabKey) => {
-      const active = tabKey === key;
+      const active = tabKey === targetKey;
       button.classList.toggle('is-active', active);
       button.setAttribute('aria-selected', active ? 'true' : 'false');
+      button.tabIndex = active ? 0 : -1;
       const panel = panelRefs.get(tabKey);
       if (panel) {
         panel.hidden = !active;
+        panel.setAttribute('aria-hidden', active ? 'false' : 'true');
       }
     });
+
+    currentTab = targetKey;
+    if (notify) {
+      notifySelect(targetKey);
+    }
+
+    return currentTab;
   };
 
   TAB_CONFIGS.forEach(config => {
-    const button = createTabButton(config, handleSelect);
+    const button = createTabButton(config, tabKey => activate(tabKey));
     buttons.set(config.key, button);
     nav.appendChild(button);
 
@@ -434,44 +488,79 @@ function createTabs(model = {}) {
 
   wrapper.append(nav, panels);
 
-  return { root: wrapper, activate: handleSelect };
+  activate(initialTab, { notify: false });
+
+  return {
+    root: wrapper,
+    activate: (key, options) => activate(key, options),
+    getActive: () => currentTab
+  };
 }
 
-function createTaskColumn(model = {}) {
+function createTaskColumn(model = {}, options = {}) {
   const column = document.createElement('div');
   column.className = 'timodoro__column timodoro__column--tasks';
 
-  const tabs = createTabs(model);
+  const tabs = createTabs(model, options);
   column.appendChild(tabs.root);
-  tabs.activate('todo');
 
-  return column;
+  return { column, tabs };
 }
 
-function createLayout(model = {}) {
+function createLayout(model = {}, options = {}) {
   const fragment = document.createDocumentFragment();
 
   const grid = document.createElement('div');
   grid.className = 'timodoro__grid';
 
-  grid.append(createTaskColumn(model), createSummaryColumn(model));
+  const { column, tabs } = createTaskColumn(model, options);
+
+  grid.append(column, createSummaryColumn(model));
   fragment.appendChild(grid);
 
-  return fragment;
+  return { fragment, tabs };
 }
 
 function render(model = {}, context = {}) {
-  const { mount } = context;
+  const { mount, page, onRouteChange } = context;
   const summary = { meta: model?.meta || 'Productivity ready' };
 
+  const resolveInitialTab = () => {
+    if (!page || typeof getWorkspacePath !== 'function') {
+      return DEFAULT_TAB_KEY;
+    }
+    try {
+      const path = getWorkspacePath(page.id);
+      return deriveTabFromPath(path);
+    } catch (error) {
+      return DEFAULT_TAB_KEY;
+    }
+  };
+
+  const initialTab = resolveInitialTab();
+
   if (!mount) {
+    summary.urlPath = buildTabPath(initialTab);
     return summary;
   }
 
   mount.innerHTML = '';
   mount.className = 'timodoro';
   mount.dataset.role = mount.dataset.role || 'timodoro-root';
-  mount.appendChild(createLayout(model));
+
+  const { fragment, tabs } = createLayout(model, {
+    initialTab,
+    onSelect: key => {
+      if (typeof onRouteChange === 'function') {
+        onRouteChange(buildTabPath(key));
+      }
+    }
+  });
+
+  mount.appendChild(fragment);
+
+  const activeTab = tabs.getActive?.() || initialTab;
+  summary.urlPath = buildTabPath(activeTab);
 
   return summary;
 }
