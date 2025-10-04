@@ -1,15 +1,29 @@
 import { ensureArray } from '../../../../../../core/helpers.js';
 import createUpgradeCard from '../upgradeCard.js';
+import {
+  collectDetailStrings,
+  collectUpgradeHighlights,
+  describeUpgradeAffordability,
+  describeUpgradeSnapshotTone,
+  getRequirementEntries
+} from '../helpers/upgrades.js';
 
 export function renderUpgradeDetail(upgrade, dependencies = {}) {
   const {
     formatCurrency = value => String(value ?? ''),
-    describeSnapshotTone = () => 'locked',
-    describeAffordability = () => 'Progress the requirements to unlock this purchase.',
-    collectHighlights = () => [],
-    collectRequirementEntries = () => [],
-    collectDetailStrings = () => []
+    describeSnapshotTone,
+    describeAffordability,
+    collectHighlights,
+    collectRequirementEntries,
+    collectDetailStrings: collectDetails
   } = dependencies;
+
+  const resolveSnapshotTone = describeSnapshotTone || describeUpgradeSnapshotTone;
+  const resolveHighlights = collectHighlights || collectUpgradeHighlights;
+  const resolveRequirements = collectRequirementEntries || getRequirementEntries;
+  const resolveDetails = collectDetails || collectDetailStrings;
+  const resolveAffordability =
+    describeAffordability || (currentUpgrade => describeUpgradeAffordability(currentUpgrade, { formatCurrency }));
 
   const detail = document.createElement('aside');
   detail.className = 'shopily-upgrade-detail';
@@ -22,7 +36,7 @@ export function renderUpgradeDetail(upgrade, dependencies = {}) {
     return detail;
   }
 
-  const tone = describeSnapshotTone(upgrade.snapshot);
+  const tone = resolveSnapshotTone(upgrade.snapshot);
 
   const header = document.createElement('header');
   header.className = 'shopily-upgrade-detail__header';
@@ -73,7 +87,7 @@ export function renderUpgradeDetail(upgrade, dependencies = {}) {
 
   const statusNote = document.createElement('p');
   statusNote.className = 'shopily-upgrade-detail__note';
-  statusNote.textContent = describeAffordability(upgrade);
+  statusNote.textContent = resolveAffordability(upgrade);
 
   statusRow.append(statusBadge, statusNote);
 
@@ -106,7 +120,7 @@ export function renderUpgradeDetail(upgrade, dependencies = {}) {
   highlightsHeading.textContent = 'Highlights';
   const highlightList = document.createElement('ul');
   highlightList.className = 'shopily-upgrade-detail__list';
-  const detailHighlights = collectHighlights(upgrade);
+  const detailHighlights = resolveHighlights(upgrade);
   if (!detailHighlights.length) {
     const item = document.createElement('li');
     item.textContent = 'Instantly boosts dropshipping payouts and action progress.';
@@ -126,7 +140,7 @@ export function renderUpgradeDetail(upgrade, dependencies = {}) {
   requirementsHeading.textContent = 'Prerequisites';
   const requirementList = document.createElement('ul');
   requirementList.className = 'shopily-upgrade-detail__requirements';
-  const requirementEntries = collectRequirementEntries(upgrade);
+  const requirementEntries = resolveRequirements(upgrade);
   if (!requirementEntries.length) {
     const item = document.createElement('li');
     item.className = 'shopily-upgrade-detail__requirement is-met';
@@ -157,7 +171,7 @@ export function renderUpgradeDetail(upgrade, dependencies = {}) {
   detailsHeading.textContent = 'Detailed specs';
   const detailList = document.createElement('ul');
   detailList.className = 'shopily-upgrade-detail__list';
-  const details = collectDetailStrings(upgrade.definition);
+  const details = resolveDetails(upgrade.definition);
   if (!details.length) {
     const item = document.createElement('li');
     item.textContent = 'No additional notes — install and enjoy the boost!';
@@ -186,12 +200,19 @@ export default function renderUpgradesView(options = {}) {
     formatters = {},
     handlers = {},
     selectors = {},
-    describeSnapshotTone = () => 'locked',
-    describeAffordability = () => 'Progress the requirements to unlock this purchase.',
-    collectHighlights = () => [],
-    collectRequirementEntries = () => [],
-    collectDetailStrings = () => []
+    describeSnapshotTone,
+    describeAffordability,
+    collectHighlights,
+    collectRequirementEntries,
+    collectDetailStrings: collectDetails
   } = options;
+
+  const resolveSnapshotTone = describeSnapshotTone || describeUpgradeSnapshotTone;
+  const resolveHighlights = collectHighlights || collectUpgradeHighlights;
+  const resolveRequirements = collectRequirementEntries || getRequirementEntries;
+  const resolveDetails = collectDetails || collectDetailStrings;
+  const resolveAffordability =
+    describeAffordability || (upgrade => describeUpgradeAffordability(upgrade, { formatCurrency: formatters.formatCurrency }));
 
   const container = document.createElement('section');
   container.className = 'shopily-view shopily-view--upgrades';
@@ -220,8 +241,8 @@ export default function renderUpgradesView(options = {}) {
       list.appendChild(
         createUpgradeCard(upgrade, state, {
           formatCurrency: formatters.formatCurrency,
-          describeSnapshotTone,
-          collectHighlights,
+          describeSnapshotTone: resolveSnapshotTone,
+          collectHighlights: resolveHighlights,
           onSelect: handlers.onSelectUpgrade
         })
       );
@@ -235,11 +256,11 @@ export default function renderUpgradesView(options = {}) {
     catalog,
     renderUpgradeDetail(selectedUpgrade, {
       formatCurrency: formatters.formatCurrency,
-      describeSnapshotTone,
-      describeAffordability,
-      collectHighlights,
-      collectRequirementEntries,
-      collectDetailStrings
+      describeSnapshotTone: resolveSnapshotTone,
+      describeAffordability: resolveAffordability,
+      collectHighlights: resolveHighlights,
+      collectRequirementEntries: resolveRequirements,
+      collectDetailStrings: resolveDetails
     })
   );
   container.appendChild(layout);

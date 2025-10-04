@@ -2660,35 +2660,43 @@
   border-radius: var(--browser-radius-lg);
   box-shadow: var(--browser-shadow-soft);
   padding: 1.35rem 1.5rem;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    "intro actions"
+    "nav nav";
   gap: 0.9rem;
 }
 
+.shopily-topbar__intro,
 .shopily-topbar__row {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.9rem;
-}
-
-.shopily-topbar__title {
+  grid-area: intro;
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
 }
 
+.shopily-topbar__heading,
 .shopily-topbar__title h1 {
   margin: 0;
   font-size: 1.6rem;
   font-weight: 700;
 }
 
+.shopily-topbar__tagline,
 .shopily-topbar__title p {
   margin: 0;
   color: var(--browser-muted);
   font-size: 0.95rem;
+}
+
+.shopily-topbar__actions {
+  grid-area: actions;
+  display: flex;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
 }
 
 .shopily-nav {
@@ -2697,6 +2705,10 @@
   gap: 0.45rem;
   padding-top: 0.55rem;
   border-top: 1px solid var(--browser-panel-border);
+}
+
+.shopily-topbar__nav {
+  grid-area: nav;
 }
 
 .shopily-nav__button {

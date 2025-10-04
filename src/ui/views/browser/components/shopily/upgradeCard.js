@@ -1,8 +1,13 @@
+import {
+  collectUpgradeHighlights,
+  describeUpgradeSnapshotTone
+} from './helpers/upgrades.js';
+
 export default function createUpgradeCard(upgrade, state = {}, dependencies = {}) {
   const {
     formatCurrency = value => String(value ?? ''),
-    describeSnapshotTone = () => 'locked',
-    collectHighlights = () => [],
+    describeSnapshotTone = describeUpgradeSnapshotTone,
+    collectHighlights = collectUpgradeHighlights,
     onSelect = () => {}
   } = dependencies;
 
