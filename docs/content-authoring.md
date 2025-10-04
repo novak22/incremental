@@ -1,15 +1,9 @@
-# Content Authoring Guide
+# Content Authoring Cheatsheet
 
-Designers shape new hustles, assets, and upgrades through the schema builders in `src/game/content/schema.js`. The helpers inject default copy, metrics wiring, and UI hooks so data stays declarative while runtime systems stay consistent.
+Use the schema helpers in `src/game/content/schema.js` so new definitions stay declarative and predictable.
 
-## Core Builders
-- `createAssetDefinition(config)` — Defines a passive asset with setup, upkeep, quality, and payout summaries. Extend detail stacks with `detailKeys` or tweak call-to-action copy with `actionLabels`.
-- `createInstantHustle(config)` — Captures instant hustles with time, cost, payout, and optional requirements. Use `onExecute` / `onComplete` for bespoke logic without skipping standard formatting.
-- `createUpgrade(config)` — Produces purchase or repeatable upgrades, normalizing requirements, lock states, and telemetry labels. Customize button text with `labels` and hook effects with `onPurchase`.
+- **Assets:** `createAssetDefinition(config)` handles setup, upkeep, quality, and payout strings. Provide only the unique numbers, flavor text, and optional detail keys.
+- **Instant Hustles:** `createInstantHustle(config)` covers time, cost, payout, and hooks. Override copy or effects through `labels`, `onExecute`, or `onComplete`.
+- **Upgrades:** `createUpgrade(config)` normalizes requirements and lock states. Supply bespoke button text with `labels` and effects via `onPurchase`.
 
-## Workflow
-1. Import the relevant builder in the destination module (assets, hustles, or upgrades).
-2. Pass only the unique tuning, flavor text, and optional hooks for the new content.
-3. Append the created definition to the exported collection so the loop picks it up.
-
-Keeping content declarative makes balancing, localization, and experimentation faster for the whole team.
+Workflow: import the helper, pass the custom config, and append the result to the relevant export. Keeping data declarative makes balancing and localization painless.
