@@ -8,6 +8,7 @@ import {
 import { createCurrencyLifecycleSummary } from '../utils/lifecycleSummaries.js';
 import { showLaunchConfirmation } from '../utils/launchDialog.js';
 import { createAssetWorkspaceConfig } from '../utils/createAssetWorkspaceConfig.js';
+import { createWorkspaceLockRenderer } from './common/renderWorkspaceLock.js';
 import { createAppsView } from './serverhub/views/appsView.js';
 import { createUpgradesView } from './serverhub/views/upgradesView.js';
 import { createPricingView } from './serverhub/views/pricingView.js';
@@ -24,6 +25,11 @@ const LOCK_THEME = {
 };
 
 const LOCK_FALLBACK_MESSAGE = 'ServerHub unlocks once the SaaS Micro-App blueprint is discovered.';
+
+const renderLocked = createWorkspaceLockRenderer({
+  theme: LOCK_THEME,
+  fallbackMessage: LOCK_FALLBACK_MESSAGE
+});
 
 const formatCurrency = amount => baseFormatCurrency(amount, { precision: 'integer', clampZero: true });
 const formatNetCurrency = amount => baseFormatNetCurrency(amount, { precision: 'integer' });
@@ -193,10 +199,7 @@ presenter = createAssetWorkspaceConfig({
   ensureSelection,
   deriveSummary,
   derivePath,
-  lock: {
-    theme: LOCK_THEME,
-    fallbackMessage: LOCK_FALLBACK_MESSAGE
-  },
+  renderLocked,
   actions: {
     selectNiche: selectServerHubNiche
   },

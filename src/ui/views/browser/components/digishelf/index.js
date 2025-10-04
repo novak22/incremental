@@ -8,7 +8,7 @@ import { formatCurrency as baseFormatCurrency } from '../../utils/formatting.js'
 import { createCurrencyLifecycleSummary } from '../../utils/lifecycleSummaries.js';
 import { showLaunchConfirmation } from '../../utils/launchDialog.js';
 import { createTabbedWorkspacePresenter } from '../../utils/createTabbedWorkspacePresenter.js';
-import { renderWorkspaceLock } from '../common/renderWorkspaceLock.js';
+import { createWorkspaceLockRenderer } from '../common/renderWorkspaceLock.js';
 import {
   VIEW_EBOOKS,
   VIEW_STOCK,
@@ -172,6 +172,11 @@ function deriveWorkspaceSummary(model = {}) {
   return summary;
 }
 
+const renderLocked = createWorkspaceLockRenderer({
+  theme: LOCK_THEME,
+  fallbackMessage: LOCK_FALLBACK_MESSAGE
+});
+
 const presenter = createTabbedWorkspacePresenter({
   className: 'digishelf',
   state: { ...initialState },
@@ -180,12 +185,7 @@ const presenter = createTabbedWorkspacePresenter({
   deriveSummary: deriveWorkspaceSummary,
   renderHeader,
   renderViews,
-  renderLocked: (model = {}, mount) =>
-    renderWorkspaceLock(mount, {
-      theme: LOCK_THEME,
-      lock: model.lock,
-      fallbackMessage: LOCK_FALLBACK_MESSAGE
-    }),
+  renderLocked,
   syncNavigation,
   isLocked: model => Boolean(model?.lock)
 });

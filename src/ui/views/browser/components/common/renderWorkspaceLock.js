@@ -53,3 +53,41 @@ export function renderWorkspaceLock(target, options = {}) {
 
   return container;
 }
+
+export function createWorkspaceLockRenderer(options = {}) {
+  const {
+    theme = {},
+    fallbackMessage = '',
+    selectLock,
+    selectTheme,
+    selectFallback
+  } = options;
+
+  const resolveLock = typeof selectLock === 'function'
+    ? (model, context) => selectLock(model, context)
+    : (model => model?.lock);
+
+  const resolveTheme = typeof selectTheme === 'function'
+    ? (model, context) => selectTheme(model, context) || {}
+    : () => theme || {};
+
+  const resolveFallback = typeof selectFallback === 'function'
+    ? (model, context) => selectFallback(model, context)
+    : () => fallbackMessage;
+
+  return (model = {}, mount, context) => {
+    if (!isElement(mount)) {
+      return null;
+    }
+
+    const lock = resolveLock(model, context);
+    const themeConfig = resolveTheme(model, context);
+    const fallback = resolveFallback(model, context);
+
+    return renderWorkspaceLock(mount, {
+      theme: themeConfig,
+      lock,
+      fallbackMessage: fallback
+    });
+  };
+}

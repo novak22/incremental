@@ -1,5 +1,5 @@
 import { createAssetWorkspacePresenter } from './createAssetWorkspace.js';
-import { renderWorkspaceLock } from '../components/common/renderWorkspaceLock.js';
+import { createWorkspaceLockRenderer } from '../components/common/renderWorkspaceLock.js';
 import { performQualityAction as defaultPerformQualityAction } from '../../../../game/assets/index.js';
 
 function noop() {}
@@ -71,15 +71,7 @@ function createLockRenderer(lockConfig = {}) {
   if (!lockConfig || typeof lockConfig !== 'object') {
     return undefined;
   }
-  const { theme, fallbackMessage } = lockConfig;
-  return (model = {}, mount) => {
-    if (!mount) return;
-    renderWorkspaceLock(mount, {
-      theme,
-      lock: model.lock,
-      fallbackMessage
-    });
-  };
+  return createWorkspaceLockRenderer(lockConfig);
 }
 
 function createViewRenderer(viewDefinition = {}, helpers) {
