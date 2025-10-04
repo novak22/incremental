@@ -42,6 +42,3 @@ export function createWorkspacePathController({ derivePath, listener: initialLis
   };
 }
 
-export default {
-  createWorkspacePathController
-};
