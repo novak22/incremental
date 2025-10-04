@@ -1,9 +1,9 @@
 import { formatDays, formatHours } from '../../../../../core/helpers.js';
 import { describeTrackEducationBonuses } from '../../../../../game/educationEffects.js';
 import { dropKnowledgeTrack } from '../../../../../game/requirements.js';
-import { formatCurrency as baseFormatCurrency } from '../utils/formatting.js';
-import { createTabbedWorkspacePresenter } from '../utils/createTabbedWorkspacePresenter.js';
-import { getWorkspaceLockByCourse } from '../cards/model/skillLocks.js';
+import { formatCurrency as baseFormatCurrency } from '../../utils/formatting.js';
+import { createTabbedWorkspacePresenter } from '../../utils/createTabbedWorkspacePresenter.js';
+import { getWorkspaceLockByCourse } from '../../../../cards/model/skillLocks.js';
 import {
   CATEGORY_DEFINITIONS,
   VIEW_CATALOG,
