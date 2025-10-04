@@ -57,17 +57,12 @@
   gap: 0.65rem;
 }
 
-.bank-widget__column {
-  display: grid;
-  gap: 0.65rem;
+.bank-widget__chip[data-position='left'] {
+  justify-self: start;
 }
 
-.bank-widget__column--left {
-  justify-items: start;
-}
-
-.bank-widget__column--right {
-  justify-items: end;
+.bank-widget__chip[data-position='right'] {
+  justify-self: end;
 }
 
 .bank-widget__chip {
@@ -104,13 +99,9 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .bank-widget__column {
-    justify-items: center;
-  }
-
-  .bank-widget__column--left,
-  .bank-widget__column--right {
-    align-self: stretch;
+  .bank-widget__chip[data-position='left'],
+  .bank-widget__chip[data-position='right'] {
+    justify-self: center;
     text-align: center;
   }
 }
