@@ -94,7 +94,7 @@ test('timodoro component renders layout and populates lists', t => {
   assert.ok(tabs[0].classList.contains('is-active'), 'TODO tab active by default');
 
   const todoItems = [
-    ...mount.querySelectorAll('[data-role="timodoro-todo"] .timodoro-list__item')
+    ...mount.querySelectorAll('[data-role="timodoro-todo-hustle"] .timodoro-list__item')
   ];
   assert.equal(todoItems.length, 1, 'todo tab renders active backlog');
   assert.equal(todoItems[0].querySelector('.timodoro-list__name')?.textContent, 'Draft pitch deck');
@@ -102,6 +102,11 @@ test('timodoro component renders layout and populates lists', t => {
     todoItems[0].querySelector('.timodoro-list__meta')?.textContent.includes('Cost $120'),
     'todo item includes cost detail'
   );
+
+  const upgradeEmpty = mount
+    .querySelector('[data-role="timodoro-todo-upgrade"] .timodoro-list__empty');
+  assert.ok(upgradeEmpty, 'upgrade lane renders empty state');
+  assert.equal(upgradeEmpty.textContent, 'Queue an upgrade to keep momentum.');
 
   tabs[1].click();
 
