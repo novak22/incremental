@@ -5,10 +5,8 @@ import {
   formatSignedCurrency as baseFormatSignedCurrency
 } from '../../utils/formatting.js';
 import { createCurrencyLifecycleSummary } from '../../utils/lifecycleSummaries.js';
-import { createAssetWorkspacePresenter } from '../../utils/createAssetWorkspace.js';
-import { renderWorkspaceLock } from '../common/renderWorkspaceLock.js';
+import { createConfiguredAssetWorkspace } from '../../utils/createConfiguredAssetWorkspace.js';
 import { selectShopilyNiche } from '../../../../cards/model/index.js';
-import { performQualityAction } from '../../../../../game/assets/index.js';
 import {
   VIEW_DASHBOARD,
   VIEW_UPGRADES,
@@ -39,16 +37,6 @@ const {
     upkeepFallback: 'No upkeep'
   }
 });
-
-function handleQuickAction(instanceId, actionId) {
-  if (!instanceId || !actionId) return;
-  performQualityAction('dropshipping', instanceId, actionId);
-}
-
-function handleNicheSelect(instanceId, value) {
-  if (!instanceId) return;
-  selectShopilyNiche('dropshipping', instanceId, value);
-}
 
 function createLaunchButton(launch = {}) {
   const button = document.createElement('button');
@@ -81,23 +69,6 @@ function createLaunchAction(launch = {}) {
   };
 }
 
-function renderLockedWorkspace(model = {}, mount) {
-  if (!mount) return;
-  mount.innerHTML = '';
-  mount.appendChild(
-    renderWorkspaceLock({
-      theme: {
-        container: 'shopily',
-        locked: 'shopily--locked',
-        message: 'shopily-empty',
-        label: 'Shopily'
-      },
-      lock: model.lock,
-      fallbackMessage: 'Shopily unlocks once the Dropshipping blueprint is discovered.'
-    })
-  );
-}
-
 function deriveWorkspaceSummary(model = {}) {
   const summary = typeof model?.summary === 'object' && model.summary ? { ...model.summary } : {};
   if (!summary.meta) {
@@ -107,12 +78,13 @@ function deriveWorkspaceSummary(model = {}) {
 }
 
 function renderDashboardSection(context) {
-  const { model, state, updateState } = context;
+  const { model, state, updateState, helpers } = context;
+  const actions = helpers?.actions || {};
   const handlers = {
     onSelectStore: storeId => updateState(current => reduceSetView(current, model, VIEW_DASHBOARD, { storeId })),
     onShowUpgradesForStore: storeId => updateState(current => reduceSetView(current, model, VIEW_UPGRADES, { storeId })),
-    onRunAction: handleQuickAction,
-    onSelectNiche: handleNicheSelect
+    onRunAction: actions.quickAction || (() => {}),
+    onSelectNiche: actions.selectNiche || (() => {})
   };
   const renderDashboard = renderDashboardView({
     model,
@@ -158,15 +130,26 @@ function renderPricingSection(context) {
 }
 
 export function createShopilyWorkspacePresenter() {
-  const presenter = createAssetWorkspacePresenter({
+  const presenter = createConfiguredAssetWorkspace({
+    assetType: 'dropshipping',
     className: 'shopily',
     defaultView: VIEW_DASHBOARD,
     state: { ...initialState },
     ensureSelection,
     deriveSummary: deriveWorkspaceSummary,
     derivePath,
-    renderLocked: renderLockedWorkspace,
-    isLocked: model => !model?.definition,
+    lock: {
+      theme: {
+        container: 'shopily',
+        locked: 'shopily--locked',
+        message: 'shopily-empty',
+        label: 'Shopily'
+      },
+      fallbackMessage: 'Shopily unlocks once the Dropshipping blueprint is discovered.'
+    },
+    overrides: {
+      selectNiche: selectShopilyNiche
+    },
     header(model, _state, sharedContext) {
       const pageMeta = sharedContext.presenter?.getPage?.() || {};
       const launch = model.launch || {};
@@ -199,7 +182,7 @@ export function createShopilyWorkspacePresenter() {
       {
         id: VIEW_DASHBOARD,
         label: 'My Stores',
-        badge: ({ model }) => model.summary?.active || null,
+        badge: { summary: 'active' },
         render: context => renderDashboardSection(context)
       },
       {
