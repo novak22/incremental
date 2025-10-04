@@ -19,6 +19,53 @@ let currentModel = { categories: [], overview: {} };
 let currentDefinitions = new Map();
 let currentMount = null;
 let currentPage = null;
+let routeListener = null;
+let lastRoutePath = null;
+
+function getSelectedCatalogItem(state = uiState) {
+  const selectedId = state?.selectedItemId;
+  if (!selectedId) return null;
+  return getAllItems().find(item => item.model.id === selectedId) || null;
+}
+
+function computeCatalogPath(state = uiState) {
+  const segments = ['catalog'];
+  const selected = getSelectedCatalogItem(state);
+  const filterCategory = state?.category && state.category !== 'all' ? state.category : null;
+  const selectedCategory = selected?.category?.id || null;
+  const categorySegment = selectedCategory || filterCategory;
+  if (categorySegment) {
+    segments.push(categorySegment);
+  }
+  const itemId = selected?.model?.id;
+  if (itemId) {
+    segments.push(itemId);
+  }
+  return segments.join('/');
+}
+
+function computePath(state = uiState) {
+  switch (state?.view) {
+    case VIEW_PURCHASES:
+      return 'purchases';
+    case VIEW_PRICING:
+      return 'pricing';
+    case VIEW_CATALOG:
+    default:
+      return computeCatalogPath(state || uiState);
+  }
+}
+
+function syncRoute(options = {}) {
+  const { force = false } = options || {};
+  const path = computePath();
+  const changed = path !== lastRoutePath;
+  if ((force || changed) && typeof routeListener === 'function') {
+    routeListener(path);
+  }
+  lastRoutePath = path;
+  return path;
+}
 
 function setState(partial) {
   const nextState = { ...uiState, ...partial };
@@ -33,6 +80,7 @@ function setState(partial) {
   uiState = nextState;
   ensureSelectedItem();
   renderApp();
+  syncRoute();
 }
 
 function formatPrice(amount = 0) {
@@ -585,7 +633,7 @@ function buildDetailView() {
   const container = document.createElement('aside');
   container.className = 'shopstack-detail';
 
-  const selected = getAllItems().find(item => item.model.id === uiState.selectedItemId);
+  const selected = getSelectedCatalogItem();
   if (!selected) {
     const empty = document.createElement('div');
     empty.className = 'shopstack-detail__empty';
@@ -979,11 +1027,16 @@ function render(model = {}, options = {}) {
   if (options.page) {
     currentPage = options.page;
   }
+  if ('onRouteChange' in options) {
+    routeListener = typeof options.onRouteChange === 'function' ? options.onRouteChange : null;
+  }
 
   ensureSelectedItem();
   renderApp();
 
-  return { meta: computeMeta() };
+  const urlPath = syncRoute({ force: true });
+
+  return { meta: computeMeta(), urlPath };
 }
 
 export default { render };
