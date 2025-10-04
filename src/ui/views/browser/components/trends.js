@@ -4,8 +4,17 @@ import {
   formatPercent as baseFormatPercent,
   formatSignedCurrency as baseFormatSignedCurrency
 } from '../utils/formatting.js';
-
-const HISTORY_LENGTH = 7;
+import {
+  filterState,
+  ensureRoot,
+  getCurrentModel,
+  getRefs,
+  getWatchlistCount,
+  setCurrentModel,
+  updateEntryWatchlist
+} from './trends/state.js';
+import { clampScore, buildSparkline } from './trends/sparkline.js';
+import { updateOverview } from './trends/overview.js';
 
 const SORT_OPTIONS = [
   { key: 'momentum', label: 'Highest Momentum' },
@@ -14,30 +23,9 @@ const SORT_OPTIONS = [
   { key: 'cooling', label: 'Cooling Off' }
 ];
 
-const DEFAULT_OVERVIEW = {
-  topBoost: { title: 'No boosts yet', note: 'Run hustles to reveal positive swings.' },
-  biggestDrop: { title: 'Stable so far', note: 'Downtrends will appear here.' },
-  bestPayout: { title: 'No payout spikes yet', note: 'Assign ventures to chase multipliers.' },
-  activeCount: { value: 0, note: 'Activate a venture to start the count.' }
-};
-
 const DEFAULT_EMPTY_MESSAGE = 'No niches match your filters yet.';
 
-const filterState = {
-  sort: 'momentum',
-  view: 'all',
-  search: '',
-  rawSearch: ''
-};
-
-let rootNode = null;
-let refs = null;
-let currentModel = null;
-
-function clampScore(value) {
-  if (!Number.isFinite(value)) return null;
-  return Math.max(0, Math.min(100, Math.round(value)));
-}
+const refs = getRefs();
 
 const formatPercent = value =>
   baseFormatPercent(value, { nullFallback: '0%', signDisplay: 'always' });
@@ -64,106 +52,6 @@ function describeTrend(popularity = {}) {
     return popularity.label;
   }
   return 'Trend pending';
-}
-
-function createSparklineSeries(popularity = {}) {
-  const history = Array.isArray(popularity.history)
-    ? popularity.history
-        .map(clampScore)
-        .filter(value => value !== null)
-    : [];
-  if (history.length >= 2) {
-    const trimmed = history.slice(-HISTORY_LENGTH);
-    if (trimmed.length >= 2) {
-      return trimmed;
-    }
-  }
-  const score = clampScore(popularity.score);
-  const previous = clampScore(popularity.previousScore);
-  const length = HISTORY_LENGTH;
-  if (score === null && previous === null) {
-    return Array.from({ length }, () => 0);
-  }
-  const start = previous !== null ? previous : score ?? 0;
-  const end = score !== null ? score : start;
-  return Array.from({ length }, (_, index) => {
-    const t = length === 1 ? 1 : index / (length - 1);
-    return start + (end - start) * t;
-  });
-}
-
-function buildSparkline(popularity = {}) {
-  const values = createSparklineSeries(popularity);
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const height = 42;
-  const width = 160;
-  const range = Math.max(1, max - min);
-  const hasSlope = values.some(value => value !== values[0]);
-  const NS = 'http://www.w3.org/2000/svg';
-  const svg = document.createElementNS(NS, 'svg');
-  svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
-  svg.setAttribute('preserveAspectRatio', 'none');
-  svg.classList.add('trends-card__sparkline');
-
-  if (!hasSlope) {
-    const line = document.createElementNS(NS, 'path');
-    const y = height / 2;
-    line.setAttribute('d', `M0 ${y} L${width} ${y}`);
-    line.setAttribute('vector-effect', 'non-scaling-stroke');
-    svg.appendChild(line);
-    return svg;
-  }
-
-  const points = values.map((value, index) => {
-    const x = (index / (values.length - 1)) * width;
-    const y = height - ((value - min) / range) * height;
-    return { x, y };
-  });
-
-  const path = document.createElementNS(NS, 'path');
-  const pathData = points
-    .map(({ x, y }, index) => `${index === 0 ? 'M' : 'L'}${x} ${y}`)
-    .join(' ');
-  path.setAttribute('d', pathData);
-  path.setAttribute('vector-effect', 'non-scaling-stroke');
-
-  const area = document.createElementNS(NS, 'path');
-  const areaData = `M0 ${height} ${pathData} L${width} ${height} Z`;
-  area.setAttribute('d', areaData);
-
-  svg.append(area, path);
-  return svg;
-}
-
-function ensureRefs() {
-  if (refs) return;
-  refs = {
-    header: {
-      searchInput: null,
-      sortSelect: null,
-      viewButtons: {}
-    },
-    overview: {
-      topBoost: {},
-      biggestDrop: {},
-      bestPayout: {},
-      activeCount: {}
-    },
-    grid: {
-      container: null,
-      empty: null,
-      footer: null,
-      meta: null
-    },
-    watchlist: {
-      container: null,
-      section: null,
-      empty: null,
-      meta: null
-    },
-    footerNote: null
-  };
 }
 
 function createOverviewCard(icon, label, key) {
@@ -250,7 +138,6 @@ function createToolbar() {
 }
 
 function buildLayout(container) {
-  ensureRefs();
   container.innerHTML = '';
 
   const header = document.createElement('header');
@@ -329,18 +216,6 @@ function buildLayout(container) {
   container.addEventListener('click', handleRootClick);
 }
 
-function ensureRoot(mount) {
-  if (!rootNode) {
-    rootNode = document.createElement('div');
-    rootNode.className = 'trends-app';
-    buildLayout(rootNode);
-  }
-  if (rootNode.parentElement !== mount) {
-    mount.innerHTML = '';
-    mount.appendChild(rootNode);
-  }
-}
-
 function normalizeModel(model = {}) {
   const highlights = model.highlights || {};
   const entries = Array.isArray(model?.board?.entries)
@@ -358,78 +233,6 @@ function normalizeModel(model = {}) {
     : entries.filter(entry => entry.watchlisted).length;
   const emptyMessages = model?.board?.emptyMessages || {};
   return { highlights, entries, watchlistCount, emptyMessages };
-}
-
-function computeOverview(entries = []) {
-  if (!entries.length) return DEFAULT_OVERVIEW;
-
-  const byImpactDesc = entries
-    .filter(entry => Number.isFinite(Number(entry.trendImpact)))
-    .slice()
-    .sort((a, b) => Number(b.trendImpact) - Number(a.trendImpact));
-  const positive = byImpactDesc.filter(entry => Number(entry.trendImpact) > 0);
-  const negative = entries
-    .filter(entry => Number(entry.trendImpact) < 0)
-    .slice()
-    .sort((a, b) => Number(a.trendImpact) - Number(b.trendImpact));
-  const bestPayout = entries
-    .slice()
-    .sort((a, b) => (Number(b.popularity?.multiplier) || 1) - (Number(a.popularity?.multiplier) || 1))[0];
-  const activeCount = entries.filter(entry => entry.assetCount > 0).length;
-
-  return {
-    topBoost: positive[0] || null,
-    biggestDrop: negative[0] || null,
-    bestPayout: bestPayout || null,
-    activeCount: { value: activeCount }
-  };
-}
-
-function updateOverview(entries = []) {
-  const overview = computeOverview(entries);
-
-  const renderEntry = (target, entry, fallback) => {
-    if (!target) return;
-    if (!entry) {
-      target.value.textContent = fallback?.title || '—';
-      target.note.textContent = fallback?.note || '';
-      return;
-    }
-    const name = entry.definition?.name || 'Untitled niche';
-    if (typeof entry === 'object' && 'value' in entry && !entry.definition) {
-      const countValue = Number(entry.value) || 0;
-      target.value.textContent = String(countValue);
-      target.note.textContent = countValue > 0
-        ? entry.note || (countValue === 1 ? 'Active niche today.' : 'Active niches today.')
-        : DEFAULT_OVERVIEW.activeCount.note;
-      return;
-    }
-    const impact = Number(entry.trendImpact) || 0;
-    const delta = Number(entry.popularity?.delta);
-    const multiplier = Number(entry.popularity?.multiplier) || 1;
-    const payoutText = formatPercent(multiplier - 1);
-    target.value.textContent = name;
-    if (impact > 0) {
-      target.note.textContent = `${formatSignedCurrency(impact)} impact • ${payoutText} payouts`;
-    } else if (impact < 0) {
-      target.note.textContent = `${formatSignedCurrency(impact)} impact`;
-    } else if (Number.isFinite(delta)) {
-      target.note.textContent = `${delta > 0 ? '+' : ''}${delta} pts momentum`;
-    } else {
-      target.note.textContent = payoutText;
-    }
-  };
-
-  renderEntry(refs.overview.topBoost, overview.topBoost, DEFAULT_OVERVIEW.topBoost);
-  renderEntry(refs.overview.biggestDrop, overview.biggestDrop, DEFAULT_OVERVIEW.biggestDrop);
-  renderEntry(refs.overview.bestPayout, overview.bestPayout, DEFAULT_OVERVIEW.bestPayout);
-
-  if (refs.overview.activeCount) {
-    const value = Number(overview.activeCount?.value) || 0;
-    refs.overview.activeCount.value.textContent = String(value);
-    const label = value === 1 ? 'Active niche today.' : 'Active niches today.';
-    refs.overview.activeCount.note.textContent = value ? label : DEFAULT_OVERVIEW.activeCount.note;
-  }
 }
 
 function createStat(label, value) {
@@ -650,7 +453,7 @@ function updateToolbarState() {
     refs.header.searchInput.value = filterState.rawSearch;
   }
 
-  const watchlistCount = currentModel?.watchlistCount || 0;
+  const watchlistCount = getWatchlistCount();
   const buttons = refs.header.viewButtons || {};
   Object.keys(buttons).forEach(view => {
     const button = buttons[view];
@@ -669,36 +472,17 @@ function updateToolbarState() {
   });
 }
 
-function updateEntryWatchlist(nicheId, watchlisted) {
-  if (!nicheId || !currentModel?.entries) return;
-  currentModel.entries.forEach(entry => {
-    if (entry?.id === nicheId) {
-      entry.watchlisted = watchlisted;
-    }
-  });
-  currentModel.watchlistCount = currentModel.entries.filter(entry => entry.watchlisted).length;
-}
-
-function handleRootClick(event) {
-  const button = event.target.closest('[data-trends-action]');
-  if (!button) return;
-  const action = button.dataset.trendsAction;
-  const nicheId = button.dataset.niche;
-  if (action !== 'watchlist' || !nicheId) return;
-  event.preventDefault();
-  const shouldWatch = button.getAttribute('aria-pressed') !== 'true';
-  setNicheWatchlist(nicheId, shouldWatch);
-  updateEntryWatchlist(nicheId, shouldWatch);
-  renderContent();
-}
-
 function renderContent() {
+  const currentModel = getCurrentModel();
   if (!currentModel) return;
   if (currentModel.watchlistCount === 0 && filterState.view === 'watchlist') {
     filterState.view = 'all';
   }
   updateToolbarState();
-  updateOverview(currentModel.entries);
+  updateOverview(currentModel.entries, refs.overview, {
+    formatPercent,
+    formatSignedCurrency
+  });
   const filtered = applyFilters(currentModel.entries);
   const sorted = sortEntries(filtered);
   renderGrid(sorted);
@@ -717,15 +501,28 @@ function createMeta(model = {}) {
   return `${entries.length} niches tracked`;
 }
 
+function handleRootClick(event) {
+  const button = event.target.closest('[data-trends-action]');
+  if (!button) return;
+  const action = button.dataset.trendsAction;
+  const nicheId = button.dataset.niche;
+  if (action !== 'watchlist' || !nicheId) return;
+  event.preventDefault();
+  const shouldWatch = button.getAttribute('aria-pressed') !== 'true';
+  setNicheWatchlist(nicheId, shouldWatch);
+  updateEntryWatchlist(nicheId, shouldWatch);
+  renderContent();
+}
+
 function render(model = {}, context = {}) {
   const { mount } = context;
   if (!mount) {
     return { meta: 'Trend scan ready' };
   }
-  ensureRoot(mount);
-  currentModel = normalizeModel(model);
+  ensureRoot(mount, buildLayout);
+  setCurrentModel(normalizeModel(model));
   renderContent();
-  return { meta: createMeta(currentModel) };
+  return { meta: createMeta(getCurrentModel()) };
 }
 
 export default { render };
