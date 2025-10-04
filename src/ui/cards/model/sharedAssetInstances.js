@@ -1,5 +1,6 @@
 import { ensureArray } from '../../../core/helpers.js';
 import { getAssignableNicheSummaries } from '../../../game/assets/niches.js';
+import { describeAssetLaunchAvailability } from './assets.js';
 import { clampNumber } from './sharedQuality.js';
 
 export function calculateAveragePayout(instance, state) {
@@ -77,6 +78,44 @@ export function buildPayoutBreakdown(instance, options = {}) {
   });
   const total = Math.max(0, clampNumber(breakdown?.total || instance?.lastIncome));
   return { entries, total };
+}
+
+export function createLaunchDescriptor(definition, state, options = {}) {
+  const availability = describeAssetLaunchAvailability(definition, state);
+  const launchAction = definition?.action || null;
+
+  const resolveFallbackLabel = () => {
+    const { fallbackLabel } = options;
+    if (typeof fallbackLabel === 'function') {
+      return fallbackLabel({ definition, state });
+    }
+    if (typeof fallbackLabel === 'string' && fallbackLabel.trim()) {
+      return fallbackLabel;
+    }
+    const baseName = definition?.singular || definition?.name || 'asset';
+    return `Launch ${baseName}`;
+  };
+
+  if (!launchAction) {
+    return {
+      label: resolveFallbackLabel(),
+      disabled: availability.disabled,
+      availability,
+      onClick: null
+    };
+  }
+
+  const resolveActionLabel = value =>
+    typeof value === 'function' ? value(state) : value;
+
+  return {
+    label: resolveActionLabel(launchAction.label),
+    disabled: typeof launchAction.disabled === 'function'
+      ? launchAction.disabled(state)
+      : Boolean(launchAction.disabled),
+    availability,
+    onClick: launchAction.onClick || null
+  };
 }
 
 export function mapNicheOptions(definition, state, options = {}) {
