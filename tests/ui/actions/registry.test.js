@@ -11,6 +11,7 @@ import {
   registerAssetUpgradeProvider
 } from '../../../src/ui/dashboard/quickActions.js';
 import { registerStudyEnrollmentProvider } from '../../../src/ui/dashboard/knowledge.js';
+import { resetRegistry } from '../../../src/game/registryService.js';
 
 function restoreDefaultProviders() {
   clearActionProviders();
@@ -133,5 +134,22 @@ test('action registry coordinates providers and auto-complete entries', async t 
     assert.ok(ids.includes('auto:study'));
     const upkeep = queue.autoCompletedEntries.find(entry => entry.id === 'auto:maint');
     assert.equal(upkeep.durationText, '2h');
+  });
+
+  await t.test('providers skip gracefully when registry data is unavailable', () => {
+    clearActionProviders();
+    resetRegistry();
+    t.after(() => {
+      restoreDefaultProviders();
+      resetRegistry();
+    });
+
+    registerQuickActionProvider();
+    registerAssetUpgradeProvider();
+    registerStudyEnrollmentProvider();
+
+    const queue = buildActionQueue({ state: {}, summary: {} });
+    assert.ok(Array.isArray(queue.entries));
+    assert.equal(queue.entries.length, 0);
   });
 });

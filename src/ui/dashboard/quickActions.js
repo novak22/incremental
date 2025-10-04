@@ -12,6 +12,10 @@ import {
 import { instanceLabel } from '../../game/assets/details.js';
 import { registerActionProvider, normalizeActionEntries } from '../actions/registry.js';
 
+function isRegistryNotLoaded(error) {
+  return error?.message?.includes('Registry definitions have not been loaded');
+}
+
 function getQualitySnapshot(instance = {}) {
   const level = Math.max(0, clampNumber(instance?.quality?.level));
   const progress = instance?.quality?.progress && typeof instance.quality.progress === 'object'
@@ -282,27 +286,41 @@ export function buildAssetActionModel(state = {}) {
 }
 
 function provideQuickActions({ state } = {}) {
-  const model = buildQuickActionModel(state || {});
-  const { entries = [], ...metrics } = model || {};
-  const normalizedEntries = normalizeActionEntries(entries, { focusCategory: 'hustle' });
-  return {
-    id: 'dashboard:quick-actions',
-    focusCategory: 'hustle',
-    entries: normalizedEntries,
-    metrics
-  };
+  try {
+    const model = buildQuickActionModel(state || {});
+    const { entries = [], ...metrics } = model || {};
+    const normalizedEntries = normalizeActionEntries(entries, { focusCategory: 'hustle' });
+    return {
+      id: 'dashboard:quick-actions',
+      focusCategory: 'hustle',
+      entries: normalizedEntries,
+      metrics
+    };
+  } catch (error) {
+    if (isRegistryNotLoaded(error)) {
+      return null;
+    }
+    throw error;
+  }
 }
 
 function provideAssetUpgrades({ state } = {}) {
-  const model = buildAssetActionModel(state || {});
-  const { entries = [], ...metrics } = model || {};
-  const normalizedEntries = normalizeActionEntries(entries, { focusCategory: 'upgrade' });
-  return {
-    id: 'dashboard:asset-upgrades',
-    focusCategory: 'upgrade',
-    entries: normalizedEntries,
-    metrics
-  };
+  try {
+    const model = buildAssetActionModel(state || {});
+    const { entries = [], ...metrics } = model || {};
+    const normalizedEntries = normalizeActionEntries(entries, { focusCategory: 'upgrade' });
+    return {
+      id: 'dashboard:asset-upgrades',
+      focusCategory: 'upgrade',
+      entries: normalizedEntries,
+      metrics
+    };
+  } catch (error) {
+    if (isRegistryNotLoaded(error)) {
+      return null;
+    }
+    throw error;
+  }
 }
 
 export function registerQuickActionProvider() {

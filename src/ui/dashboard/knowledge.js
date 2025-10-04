@@ -4,6 +4,10 @@ import { getHustles } from '../../game/registryService.js';
 import { KNOWLEDGE_TRACKS, getKnowledgeProgress } from '../../game/requirements.js';
 import { registerActionProvider, normalizeActionEntries } from '../actions/registry.js';
 
+function isRegistryNotLoaded(error) {
+  return error?.message?.includes('Registry definitions have not been loaded');
+}
+
 export function computeStudyProgress(state = {}) {
   const tracks = Object.values(KNOWLEDGE_TRACKS);
   if (!tracks.length) {
@@ -123,15 +127,22 @@ export function buildStudyEnrollmentActionModel(state = {}) {
 }
 
 function provideStudyEnrollments({ state } = {}) {
-  const model = buildStudyEnrollmentActionModel(state || {});
-  const { entries = [], ...metrics } = model || {};
-  const normalizedEntries = normalizeActionEntries(entries, { focusCategory: 'study' });
-  return {
-    id: 'dashboard:study-enrollment',
-    focusCategory: 'study',
-    entries: normalizedEntries,
-    metrics
-  };
+  try {
+    const model = buildStudyEnrollmentActionModel(state || {});
+    const { entries = [], ...metrics } = model || {};
+    const normalizedEntries = normalizeActionEntries(entries, { focusCategory: 'study' });
+    return {
+      id: 'dashboard:study-enrollment',
+      focusCategory: 'study',
+      entries: normalizedEntries,
+      metrics
+    };
+  } catch (error) {
+    if (isRegistryNotLoaded(error)) {
+      return null;
+    }
+    throw error;
+  }
 }
 
 export function registerStudyEnrollmentProvider() {
