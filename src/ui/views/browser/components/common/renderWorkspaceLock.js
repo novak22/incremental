@@ -1,4 +1,19 @@
-export function renderWorkspaceLock({ theme = {}, lock = null, fallbackMessage = '' } = {}) {
+function isElement(value) {
+  return value && typeof value === 'object' && value.nodeType === 1;
+}
+
+export function renderWorkspaceLock(target, options = {}) {
+  let mount;
+  let config;
+
+  if (isElement(target)) {
+    mount = target;
+    config = options || {};
+  } else {
+    config = target || {};
+  }
+
+  const { theme = {}, lock = null, fallbackMessage = '' } = config;
   const containerTag = theme.containerTag || 'section';
   const container = document.createElement(containerTag);
   const containerClasses = [];
@@ -30,5 +45,11 @@ export function renderWorkspaceLock({ theme = {}, lock = null, fallbackMessage =
   }
 
   container.appendChild(message);
+
+  if (mount) {
+    mount.innerHTML = '';
+    mount.appendChild(container);
+  }
+
   return container;
 }

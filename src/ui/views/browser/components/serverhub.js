@@ -18,6 +18,15 @@ const VIEW_APPS = 'apps';
 const VIEW_UPGRADES = 'upgrades';
 const VIEW_PRICING = 'pricing';
 
+const LOCK_THEME = {
+  container: 'serverhub',
+  locked: 'serverhub--locked',
+  message: 'serverhub-empty',
+  label: 'This console'
+};
+
+const LOCK_FALLBACK_MESSAGE = 'ServerHub unlocks once the SaaS Micro-App blueprint is discovered.';
+
 const formatCurrency = amount => baseFormatCurrency(amount, { precision: 'integer', clampZero: true });
 const formatNetCurrency = amount => baseFormatNetCurrency(amount, { precision: 'integer' });
 const formatPercent = value => baseFormatPercent(value, { nullFallback: '—', signDisplay: 'always' });
@@ -154,23 +163,6 @@ function handleNicheSelect(instanceId, value) {
   selectServerHubNiche('saas', instanceId, value);
 }
 
-function renderLockedState(model = {}, mount) {
-  if (!mount) return;
-  mount.innerHTML = '';
-  mount.appendChild(
-    renderWorkspaceLock({
-      theme: {
-        container: 'serverhub',
-        locked: 'serverhub--locked',
-        message: 'serverhub-empty',
-        label: 'This console'
-      },
-      lock: model.lock,
-      fallbackMessage: 'ServerHub unlocks once the SaaS Micro-App blueprint is discovered.'
-    })
-  );
-}
-
 function deriveSummary(model = {}) {
   const summary = model.summary;
   const isSummaryObject = summary && typeof summary === 'object' && !Array.isArray(summary);
@@ -226,7 +218,12 @@ presenter = createAssetWorkspacePresenter({
   ensureSelection,
   deriveSummary,
   derivePath,
-  renderLocked: renderLockedState,
+  renderLocked: (model = {}, mount) =>
+    renderWorkspaceLock(mount, {
+      theme: LOCK_THEME,
+      lock: model.lock,
+      fallbackMessage: LOCK_FALLBACK_MESSAGE
+    }),
   isLocked: model => !model?.definition,
   header(model, state, { setView }) {
     const launch = model.launch || {};
