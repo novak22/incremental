@@ -1,18 +1,6 @@
 import { setWorkspacePath } from '../layoutPresenter.js';
 import { getPageByType } from '../apps/pageLookup.js';
 
-function ensureWorkspaceMount({ body, role }) {
-  if (!body) return null;
-  let mount = body.querySelector(`[data-role="${role}"]`);
-  if (!mount) {
-    body.innerHTML = '';
-    mount = document.createElement('div');
-    mount.dataset.role = role;
-    body.appendChild(mount);
-  }
-  return mount;
-}
-
 function defaultDeriveMeta({ summary, model, fallback }) {
   return summary?.meta || model?.summary?.meta || fallback || '';
 }
@@ -35,7 +23,17 @@ export function createWorkspaceRenderer({
     if (!page) return null;
 
     const refs = context.ensurePageContent?.(page, ({ body }) => {
-      const mount = ensureWorkspaceMount({ body, role: mountRole });
+      let mount = null;
+      if (body) {
+        mount = body.querySelector(`[data-role="${mountRole}"]`);
+        if (!mount) {
+          body.innerHTML = '';
+          mount = document.createElement('div');
+          mount.dataset.role = mountRole;
+          body.appendChild(mount);
+        }
+      }
+
       if (mount && typeof prepareBody === 'function') {
         prepareBody({
           body,
@@ -83,5 +81,3 @@ export function createWorkspaceRenderer({
     return { id: page.id, meta, urlPath: path };
   };
 }
-
-export { ensureWorkspaceMount };
