@@ -54,9 +54,23 @@ export function latestYieldDetail(definition) {
   return `📊 Latest Yield: <strong>$${formatMoney(Math.round(average))}</strong> avg per active instance`;
 }
 
-export function instanceLabel(definition, index) {
-  const base = definition.singular || definition.name;
-  return `${base} #${index + 1}`;
+export function instanceLabel(definition, index, options = {}) {
+  const base = definition?.singular || definition?.name || 'Asset';
+  const normalizedIndex = Number.isFinite(index) && index >= 0 ? Math.floor(index) : 0;
+
+  let targetInstance = options?.instance || null;
+  if (!targetInstance && definition?.id) {
+    const assetState = getAssetState(definition.id);
+    const instances = Array.isArray(assetState?.instances) ? assetState.instances : [];
+    targetInstance = instances[normalizedIndex] || null;
+  }
+
+  const customName = typeof targetInstance?.customName === 'string' ? targetInstance.customName.trim() : '';
+  if (customName) {
+    return customName;
+  }
+
+  return `${base} #${normalizedIndex + 1}`;
 }
 
 export function qualitySummaryDetail(definition) {

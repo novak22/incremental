@@ -676,3 +676,74 @@ test('game loop leaves view untouched until sections are marked dirty', { concur
   const remainingDirty = invalidation.consumeDirty();
   assert.deepEqual(remainingDirty, {}, 'expected dirty registry to remain empty after targeted render');
 });
+
+test('renaming an asset refreshes dashboard quick actions and header suggestion immediately', { concurrency: false }, async t => {
+  ensureTestDom();
+  const harness = await getGameTestHarness();
+  const state = harness.resetState();
+
+  const { createAssetInstance } = harness.assetStateModule;
+  const { getAssetState } = harness.stateModule;
+  const { getAssetDefinition } = harness.registryModule;
+  const definition = getAssetDefinition('vlog');
+  const instance = createAssetInstance(definition, { status: 'active' }, { state });
+  const assetState = getAssetState(definition.id, state);
+  assetState.instances = [instance];
+  state.money = 1000;
+  state.timeLeft = 12;
+
+  const viewManager = await import('../../src/ui/viewManager.js');
+  const browserViewModule = await import('../../src/ui/views/browser/index.js');
+  const updateModule = await import('../../src/ui/update.js');
+  const invalidation = await import('../../src/ui/invalidation.js');
+  const todoStateModule = await import('../../src/ui/views/browser/widgets/todoState.js');
+  const actionsModule = await import('../../src/game/assets/actions.js');
+
+  const browserView = browserViewModule.default;
+  const originalView = viewManager.getActiveView();
+  viewManager.setActiveView(browserView, document);
+
+  t.after(() => {
+    invalidation.consumeDirty();
+    viewManager.setActiveView(originalView ?? browserView, document);
+  });
+
+  invalidation.consumeDirty();
+  updateModule.renderCards();
+  updateModule.updateUI();
+
+  const resolveLastModel = () => {
+    if (typeof todoStateModule.getLastModel === 'function') {
+      return todoStateModule.getLastModel();
+    }
+    if (todoStateModule.default && typeof todoStateModule.default.getLastModel === 'function') {
+      return todoStateModule.default.getLastModel();
+    }
+    return null;
+  };
+  const getAssetTodoEntry = () => {
+    const model = resolveLastModel();
+    const entries = Array.isArray(model?.entries) ? model.entries : [];
+    return entries.find(entry => typeof entry?.id === 'string' && entry.id.includes(instance.id));
+  };
+
+  const initialEntry = getAssetTodoEntry();
+  assert.ok(initialEntry, 'expected quick action entry for the asset to appear in the to-do list');
+
+  const headerButton = document.getElementById('browser-session-button');
+  assert.ok(headerButton, 'expected to locate the header action button');
+
+  const renameTo = 'Superstar Premiere';
+  const renamed = actionsModule.setAssetInstanceName(definition.id, instance.id, renameTo);
+  assert.strictEqual(renamed, true, 'expected asset rename to succeed');
+
+  const refreshedEntry = getAssetTodoEntry();
+  assert.ok(refreshedEntry, 'expected quick action entry to persist after rename');
+  assert.ok(
+    refreshedEntry.title.includes(renameTo),
+    'expected dashboard quick action entry to reflect the new asset title'
+  );
+
+  const headerTitle = headerButton.title || '';
+  assert.ok(headerTitle.includes(renameTo), 'expected header suggestion to reflect the renamed asset');
+});

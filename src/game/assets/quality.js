@@ -10,6 +10,7 @@ import { recordCostContribution, recordTimeContribution } from '../metrics.js';
 import { spendTime } from '../time.js';
 import { awardSkillProgress } from '../skills/index.js';
 import { markDirty } from '../../ui/invalidation.js';
+import { instanceLabel } from './details.js';
 
 function ensureUsageMap(instance) {
   if (!instance.dailyUsage || typeof instance.dailyUsage !== 'object') {
@@ -196,10 +197,8 @@ function resolveProgressAmount(action, context) {
 }
 
 function getActionLabel(definition, assetState, instance) {
-  const base = definition.singular || definition.name || 'Asset';
   const index = assetState.instances.indexOf(instance);
-  const number = index >= 0 ? index + 1 : 1;
-  return `${base} #${number}`;
+  return instanceLabel(definition, index, { instance });
 }
 
 function runQualityAction(definition, instanceId, actionId) {
