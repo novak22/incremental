@@ -103,7 +103,3 @@ export function buildOutflowLedger(summary = {}) {
   }));
 }
 
-export default {
-  buildInflowLedger,
-  buildOutflowLedger
-};

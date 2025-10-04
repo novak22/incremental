@@ -92,9 +92,3 @@ export function buildOpportunitySummary(assets, upgrades, hustles) {
   };
 }
 
-export default {
-  buildAssetOpportunities,
-  buildUpgradeOpportunities,
-  buildHustleOpportunities,
-  buildOpportunitySummary
-};

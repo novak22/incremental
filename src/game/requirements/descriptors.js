@@ -189,12 +189,3 @@ export function updateAssetCardLock(assetId, card, state = getState()) {
   card.classList.toggle('locked', locked);
 }
 
-export default {
-  buildAssetRequirementDescriptor,
-  describeRequirement,
-  formatAssetRequirementLabel,
-  summarizeAssetRequirements,
-  renderAssetRequirementDetail,
-  listAssetRequirementDescriptors,
-  updateAssetCardLock
-};

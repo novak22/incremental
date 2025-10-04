@@ -68,7 +68,7 @@ export function resolveTrack(definition) {
   };
 }
 
-export function buildEducationModels(definitions = [], helpers = {}) {
+function buildEducationModels(definitions = [], helpers = {}) {
   const {
     getState: getStateFn = getState,
     getKnowledgeProgress: getKnowledgeProgressFn = getKnowledgeProgress,

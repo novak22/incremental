@@ -5,7 +5,7 @@ import { getKnowledgeProgress } from '../../../../game/requirements.js';
 import { buildSkillRewards, resolveTrack } from '../education.js';
 import { ensureArray, toCurrency } from './utils.js';
 
-export function collectUnfundedUpkeep(assetDefinitions = [], state, services = {}) {
+function collectUnfundedUpkeep(assetDefinitions = [], state, services = {}) {
   const {
     getAssetState: getAssetStateFn = getAssetState,
     instanceLabel: instanceLabelFn = instanceLabel
@@ -35,7 +35,7 @@ export function collectUnfundedUpkeep(assetDefinitions = [], state, services = {
   return { total: toCurrency(total), count, entries };
 }
 
-export function collectTuitionCommitments(educationDefinitions = [], state, services = {}) {
+function collectTuitionCommitments(educationDefinitions = [], state, services = {}) {
   const {
     resolveTrack: resolveTrackFn = resolveTrack,
     getKnowledgeProgress: getKnowledgeProgressFn = getKnowledgeProgress,
@@ -129,8 +129,3 @@ export function buildObligations(state, assetDefinitions = [], educationDefiniti
   return { entries, quick };
 }
 
-export default {
-  collectUnfundedUpkeep,
-  collectTuitionCommitments,
-  buildObligations
-};

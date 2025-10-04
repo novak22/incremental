@@ -25,9 +25,3 @@ export function maintenanceDetail(definition) {
   return `🛠 Maintenance: <strong>${summary.parts.join(' + ')}</strong>`;
 }
 
-const MaintenanceHelpers = {
-  formatMaintenanceSummary,
-  maintenanceDetail
-};
-
-export default MaintenanceHelpers;

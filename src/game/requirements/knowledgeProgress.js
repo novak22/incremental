@@ -30,4 +30,3 @@ export function getKnowledgeProgress(id, target = getState()) {
   return progress;
 }
 
-export default getKnowledgeProgress;

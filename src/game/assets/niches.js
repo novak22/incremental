@@ -151,7 +151,7 @@ export function getInstanceNicheInfo(instance, state = getState()) {
   return { definition, popularity };
 }
 
-export function getAssignableNiches(definition) {
+function getAssignableNiches(definition) {
   if (!definition) return [];
   const tags = new Set(Array.isArray(definition.tags) ? definition.tags : []);
   const definitions = getNicheDefinitions();

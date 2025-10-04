@@ -71,7 +71,7 @@ export function describeAssetLaunchAvailability(definition, state = getState()) 
   return { disabled: reasons.length > 0, reasons, hours, cost };
 }
 
-export function buildAssetModels(definitions = [], helpers = {}) {
+function buildAssetModels(definitions = [], helpers = {}) {
   const {
     getState: getStateFn = getState,
     getAssetState: getAssetStateFn = getAssetState

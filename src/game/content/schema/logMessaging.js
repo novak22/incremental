@@ -48,7 +48,7 @@ export function formatSlotMap(map) {
     .join(', ');
 }
 
-export function describeTargetScope(scope) {
+function describeTargetScope(scope) {
   if (!scope || typeof scope !== 'object') return '';
   const tags = ensureArray(scope.tags).map(tag => `#${tag}`);
   const ids = ensureArray(scope.ids);

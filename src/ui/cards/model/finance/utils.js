@@ -8,7 +8,3 @@ export function ensureArray(value) {
   return Array.isArray(value) ? value : [];
 }
 
-export default {
-  toCurrency,
-  ensureArray
-};

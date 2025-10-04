@@ -43,4 +43,3 @@ export function resolveDetailEntry(entry) {
   return null;
 }
 
-export { countActiveInstances, describeKnowledgeProgress };

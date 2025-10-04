@@ -17,12 +17,12 @@ export const BUG_SQUASH_REQUIREMENTS = [{ assetId: 'saas', count: 1 }];
 export const NARRATION_REQUIREMENTS = [{ assetId: 'ebook', count: 1 }];
 export const STREET_PROMO_REQUIREMENTS = [{ assetId: 'blog', count: 2 }];
 
-export function getHustleRequirements(definition) {
+function getHustleRequirements(definition) {
   if (!definition) return [];
   return Array.isArray(definition.requirements) ? definition.requirements : [];
 }
 
-export function normalizeHustleDailyUsage(definition, state = getState()) {
+function normalizeHustleDailyUsage(definition, state = getState()) {
   if (!definition || typeof definition.getDailyUsage !== 'function') {
     const dayFromState = Number(state?.day);
     return {
@@ -49,7 +49,7 @@ export function normalizeHustleDailyUsage(definition, state = getState()) {
   return { limit, used, remaining, day };
 }
 
-export function describeDailyLimit(definition, state = getState()) {
+function describeDailyLimit(definition, state = getState()) {
   const usage = normalizeHustleDailyUsage(definition, state);
   if (!usage || !Number.isFinite(usage.limit) || usage.limit <= 0) return [];
   const { used, remaining, limit } = usage;

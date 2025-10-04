@@ -49,16 +49,11 @@ export {
   KNOWLEDGE_TRACKS,
   KNOWLEDGE_REWARDS,
   getKnowledgeProgress,
-  estimateManualMaintenanceReserve,
-  getDefinitionRequirements,
   buildAssetRequirementDescriptor,
-  describeRequirement,
   formatAssetRequirementLabel,
   summarizeAssetRequirements,
   renderAssetRequirementDetail,
   listAssetRequirementDescriptors,
   updateAssetCardLock,
-  isRequirementMet,
-  definitionRequirementsMet,
   assetRequirementsMetById
 };

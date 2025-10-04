@@ -121,7 +121,7 @@ function getQualityActionAvailabilityInternal(definition, instance, action, stat
   return { ...availability };
 }
 
-export function getQualityConfig(definition) {
+function getQualityConfig(definition) {
   return definition?.quality || null;
 }
 
@@ -149,7 +149,7 @@ export function getNextQualityLevel(definition, level) {
   return levels.find(entry => entry.level === level + 1) || null;
 }
 
-export function getHighestQualityLevel(definition) {
+function getHighestQualityLevel(definition) {
   const levels = getSortedLevels(definition);
   if (!levels.length) return null;
   return levels.at(-1);
@@ -170,7 +170,7 @@ function meetsRequirements(progress, requirements = {}) {
   return true;
 }
 
-export function calculateEligibleQualityLevel(definition, progress = {}) {
+function calculateEligibleQualityLevel(definition, progress = {}) {
   const levels = getSortedLevels(definition);
   if (!levels.length) return 0;
   let eligible = 0;
@@ -438,9 +438,4 @@ export function getQualityLevelSummary(definition) {
     income: level.income,
     requirements: level.requirements
   }));
-}
-
-export function getQualityNextRequirements(definition, level) {
-  const next = getNextQualityLevel(definition, level);
-  return next?.requirements || null;
 }
