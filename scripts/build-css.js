@@ -14,6 +14,15 @@ const sectionFileOrder = {
   base: ['theme.css', 'layout.css'],
   components: ['buttons.css', 'notifications.css'],
   widgets: ['widgets.css', 'home.css', 'apps.css', 'todo.css', 'bank.css'],
+  workspaces: [
+    'workspaces.css',
+    'learnly.css',
+    'shopstack.css',
+    'videotube.css',
+    'shopily.css',
+    'serverhub.css',
+    'timodoro.css',
+  ],
   overlays: ['launch-dialog.css'],
 };
 
