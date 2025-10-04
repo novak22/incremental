@@ -307,7 +307,7 @@
   gap: 1rem;
 }
 
-.shopily-detail__panels {
+.shopily-detail__panels, .shopily-detail__sections {
   display: grid;
   gap: 1rem;
 }

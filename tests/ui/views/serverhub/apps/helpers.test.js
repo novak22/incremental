@@ -4,7 +4,7 @@ import { JSDOM } from 'jsdom';
 
 import renderActionConsole from '../../../../../src/ui/views/browser/components/serverhub/views/apps/actionConsole.js';
 import { renderNicheCell } from '../../../../../src/ui/views/browser/components/serverhub/views/apps/nicheSelector.js';
-import renderDetailSidebar from '../../../../../src/ui/views/browser/components/serverhub/views/apps/detailSidebar.js';
+import { renderDetailPanel } from '../../../../../src/ui/views/browser/components/common/renderDetailPanel.js';
 
 function withDom(callback) {
   const dom = new JSDOM('<!doctype html><html><body></body></html>');
@@ -106,18 +106,19 @@ test('niche selector change triggers callback with selection', () => {
   });
 });
 
-test('detail sidebar renders empty guidance when no app selected', () => {
+test('detail panel renders empty guidance when no app selected', () => {
   withDom(() => {
-    const helpers = {
-      getSelectedApp: () => null
-    };
-
-    const aside = renderDetailSidebar(
-      { instances: [] },
-      { selectedAppId: null },
-      helpers,
-      { stats: [], panels: [], footer: null }
-    );
+    const aside = renderDetailPanel({
+      theme: {
+        container: 'serverhub-sidebar',
+        empty: 'serverhub-detail__empty'
+      },
+      isEmpty: true,
+      emptyState: {
+        title: 'Select an app',
+        message: 'Select an app to inspect uptime, payouts, and quality progress.'
+      }
+    });
 
     const empty = aside.querySelector('.serverhub-detail__empty');
     assert.ok(empty, 'expected empty state to render');

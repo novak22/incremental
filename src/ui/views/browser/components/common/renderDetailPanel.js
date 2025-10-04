@@ -43,6 +43,9 @@ function renderStats(stats = [], theme) {
     if (entry.tone) {
       item.dataset.tone = String(entry.tone);
     }
+    if (entry.dataset) {
+      applyDataset(item, entry.dataset);
+    }
     const label = document.createElement('span');
     label.className = theme.statLabel;
     appendContent(label, entry.label ?? '');
@@ -87,27 +90,30 @@ function renderSections(sections = [], theme, context) {
       const result = section.render({ section, theme, article, context }) ?? null;
       appendContent(article, result);
     } else {
-    if (section.body) {
-      const body = document.createElement('p');
-      body.className = theme.sectionBody;
-      appendContent(body, section.body);
-      article.appendChild(body);
+      if (section.body) {
+        const body = document.createElement('p');
+        body.className = theme.sectionBody;
+        appendContent(body, section.body);
+        article.appendChild(body);
+      }
+      if (Array.isArray(section.items)) {
+        const list = document.createElement('ul');
+        list.className = `${theme.sectionBody} ${theme.sectionBody}--list`.trim();
+        section.items.forEach(item => {
+          const li = document.createElement('li');
+          appendContent(li, item);
+          list.appendChild(li);
+        });
+        article.appendChild(list);
+      }
+      if (section.footer) {
+        const footer = document.createElement('footer');
+        appendContent(footer, section.footer);
+        article.appendChild(footer);
+      }
     }
-    if (Array.isArray(section.items)) {
-      const list = document.createElement('ul');
-      list.className = `${theme.sectionBody} ${theme.sectionBody}--list`.trim();
-      section.items.forEach(item => {
-        const li = document.createElement('li');
-        appendContent(li, item);
-        list.appendChild(li);
-      });
-      article.appendChild(list);
-    }
-    if (section.footer) {
-      const footer = document.createElement('footer');
-      appendContent(footer, section.footer);
-      article.appendChild(footer);
-    }
+    if (section.content) {
+      appendContent(article, section.content);
     }
     wrapper.appendChild(article);
   });

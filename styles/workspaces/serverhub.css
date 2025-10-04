@@ -117,7 +117,8 @@
 }
 
 .serverhub-kpis,
-.serverhub-kpis__grid {
+.serverhub-kpis__grid,
+.serverhub-view--apps .asset-kpis {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1rem;
