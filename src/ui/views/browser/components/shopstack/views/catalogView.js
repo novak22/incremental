@@ -1,12 +1,16 @@
 import { ensureArray } from '../../../../../../core/helpers.js';
 import {
-  buildDetailView,
+  buildDetailSections,
   buildHighlights,
   createBadge,
+  createDetailCta,
+  createDetailHeader,
+  createDetailPricing,
+  createEmptyDetail,
   createStatusBadge,
   describeStatus,
   formatPrice
-} from '../detailBuilders.js';
+} from '../detail/index.js';
 import { collectCatalogItems, filterCatalogItems, findCatalogItem } from '../catalogData.js';
 
 function createCatalogCard({ item, state, definitionMap, onSelect, onBuy }) {
@@ -205,11 +209,28 @@ export default function renderCatalogView({ model, state, definitionMap, handler
     })
   );
 
-  const detail = buildDetailView({
-    item: selected,
-    onBuy: handlers.onBuy,
-    definitionMap
-  });
+  const detail = document.createElement('aside');
+  detail.className = 'shopstack-detail';
+
+  if (!selected) {
+    detail.appendChild(createEmptyDetail());
+  } else {
+    const status = describeStatus(selected.model?.snapshot || {});
+    const header = createDetailHeader({ item: selected, status });
+    const priceRow = createDetailPricing({ item: selected });
+
+    const statusRow = document.createElement('div');
+    statusRow.className = 'shopstack-detail__status-row';
+    statusRow.appendChild(createStatusBadge(status));
+
+    const cta = createDetailCta({
+      status,
+      onClick: button => handlers.onBuy?.(selected.definition, button)
+    });
+
+    const sections = buildDetailSections(selected.definition, { definitionMap });
+    detail.append(header, priceRow, statusRow, cta, ...sections);
+  }
 
   section.append(catalog, detail);
   return section;

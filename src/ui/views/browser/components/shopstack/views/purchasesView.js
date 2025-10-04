@@ -3,7 +3,7 @@ import {
   collectDetailStrings,
   describeEffectSummary,
   stripHtml
-} from '../detailBuilders.js';
+} from '../detail/index.js';
 import { collectCatalogItems } from '../catalogData.js';
 
 function isRepeatableOwned(definition, upgradeState = {}) {
