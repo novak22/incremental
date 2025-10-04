@@ -22,6 +22,15 @@ const INITIAL_STATE = {
   selectedBlogId: null
 };
 
+const LOCK_THEME = {
+  container: 'blogpress-view',
+  locked: 'blogpress-view--locked',
+  message: 'blogpress-empty__message',
+  label: 'This workspace'
+};
+
+const LOCK_FALLBACK_MESSAGE = 'BlogPress unlocks once the Personal Blog blueprint is discovered.';
+
 const formatCurrency = amount => baseFormatCurrency(amount, { precision: 'integer', clampZero: true });
 
 const { describeSetupSummary, describeUpkeepSummary } = createCurrencyLifecycleSummary({
@@ -223,23 +232,6 @@ function renderViews(model, state = INITIAL_STATE) {
   }
 }
 
-function renderLockedWorkspace(model = {}, mount) {
-  if (!mount) return;
-  mount.innerHTML = '';
-  mount.appendChild(
-    renderWorkspaceLock({
-      theme: {
-        container: 'blogpress-view',
-        locked: 'blogpress-view--locked',
-        message: 'blogpress-empty__message',
-        label: 'This workspace'
-      },
-      lock: model.lock,
-      fallbackMessage: 'BlogPress unlocks once the Personal Blog blueprint is discovered.'
-    })
-  );
-}
-
 function deriveWorkspaceSummary(model = {}) {
   const summary = model?.summary;
   return summary && typeof summary === 'object' ? summary : {};
@@ -275,7 +267,12 @@ const presenter = createTabbedWorkspacePresenter({
   className: 'blogpress',
   state: { ...INITIAL_STATE },
   ensureSelection: ensureSelectedBlog,
-  renderLocked: renderLockedWorkspace,
+  renderLocked: (model = {}, mount) =>
+    renderWorkspaceLock(mount, {
+      theme: LOCK_THEME,
+      lock: model.lock,
+      fallbackMessage: LOCK_FALLBACK_MESSAGE
+    }),
   renderHeader,
   renderViews,
   deriveSummary: deriveWorkspaceSummary,

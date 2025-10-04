@@ -29,6 +29,15 @@ import renderInventoryTable from './inventoryTable.js';
 import renderDetailPane from './detailPane.js';
 import renderPricingCards from './pricingCards.js';
 
+const LOCK_THEME = {
+  container: 'digishelf',
+  locked: 'digishelf--locked',
+  message: 'digishelf-empty',
+  label: 'DigiShelf'
+};
+
+const LOCK_FALLBACK_MESSAGE = 'DigiShelf unlocks once the digital asset blueprints are discovered.';
+
 function clampNumber(value) {
   const number = Number(value);
   return Number.isFinite(number) ? number : 0;
@@ -153,23 +162,6 @@ function syncNavigation({ mount, state }) {
   });
 }
 
-function renderLockedWorkspace(model = {}, mount) {
-  if (!mount) return;
-  mount.innerHTML = '';
-  mount.appendChild(
-    renderWorkspaceLock({
-      theme: {
-        container: 'digishelf',
-        locked: 'digishelf--locked',
-        message: 'digishelf-empty',
-        label: 'DigiShelf'
-      },
-      lock: model.lock,
-      fallbackMessage: 'DigiShelf unlocks once the digital asset blueprints are discovered.'
-    })
-  );
-}
-
 function deriveWorkspaceSummary(model = {}) {
   const summary = typeof model?.summary === 'object' && model.summary
     ? { ...model.summary }
@@ -188,7 +180,12 @@ const presenter = createTabbedWorkspacePresenter({
   deriveSummary: deriveWorkspaceSummary,
   renderHeader,
   renderViews,
-  renderLocked: renderLockedWorkspace,
+  renderLocked: (model = {}, mount) =>
+    renderWorkspaceLock(mount, {
+      theme: LOCK_THEME,
+      lock: model.lock,
+      fallbackMessage: LOCK_FALLBACK_MESSAGE
+    }),
   syncNavigation,
   isLocked: model => Boolean(model?.lock)
 });

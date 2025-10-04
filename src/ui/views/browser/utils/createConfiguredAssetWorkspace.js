@@ -74,14 +74,11 @@ function createLockRenderer(lockConfig = {}) {
   const { theme, fallbackMessage } = lockConfig;
   return (model = {}, mount) => {
     if (!mount) return;
-    mount.innerHTML = '';
-    mount.appendChild(
-      renderWorkspaceLock({
-        theme,
-        lock: model.lock,
-        fallbackMessage
-      })
-    );
+    renderWorkspaceLock(mount, {
+      theme,
+      lock: model.lock,
+      fallbackMessage
+    });
   };
 }
 
