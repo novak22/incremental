@@ -14,12 +14,18 @@ import { advanceEventsAfterDay } from './events/index.js';
 import { archiveNicheAnalytics } from './analytics/niches.js';
 
 function flushUiWithFallback(fallbackToFull = false) {
-  const dirtySections = consumeDirty();
-  if (Object.keys(dirtySections).length > 0) {
-    updateUI(dirtySections);
-  } else if (fallbackToFull) {
-    updateUI();
+  let dirtySections = consumeDirty();
+  if (Object.keys(dirtySections).length === 0) {
+    if (!fallbackToFull) {
+      return;
+    }
+    markAllDirty();
+    dirtySections = consumeDirty();
+    if (Object.keys(dirtySections).length === 0) {
+      return;
+    }
   }
+  updateUI(dirtySections);
 }
 
 export function endDay(auto = false) {

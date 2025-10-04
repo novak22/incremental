@@ -470,7 +470,7 @@ test('firing an assistant marks cards dirty and refreshes card presenters', { co
   assert.ok(callCounts.header > 0, 'expected header action presenter to refresh after firing assistant');
 });
 
-test('game loop fallback renders dashboard and cards when no sections are dirty', { concurrency: false }, async t => {
+test('game loop leaves view untouched until sections are marked dirty', { concurrency: false }, async t => {
   ensureTestDom();
   const harness = await getGameTestHarness();
   harness.resetState();
@@ -485,7 +485,7 @@ test('game loop fallback renders dashboard and cards when no sections are dirty'
   const browserView = browserViewModule.default;
   const originalView = viewManager.getActiveView();
 
-  const callCounts = { dashboard: 0, cards: 0 };
+  const callCounts = { dashboard: 0, cards: 0, player: 0, skills: 0 };
 
   const stubView = {
     ...browserView,
@@ -495,6 +495,20 @@ test('game loop fallback renders dashboard and cards when no sections are dirty'
     },
     presenters: {
       ...browserView.presenters,
+      player: {
+        ...browserView.presenters?.player,
+        render: (...args) => {
+          callCounts.player += 1;
+          return browserView.presenters?.player?.render?.(...args);
+        }
+      },
+      skillsWidget: {
+        ...browserView.presenters?.skillsWidget,
+        render: (...args) => {
+          callCounts.skills += 1;
+          return browserView.presenters?.skillsWidget?.render?.(...args);
+        }
+      },
       cards: {
         ...browserView.presenters?.cards,
         renderAll: (...args) => {
@@ -524,9 +538,20 @@ test('game loop fallback renders dashboard and cards when no sections are dirty'
 
   loopModule.runGameLoop();
 
-  assert.ok(callCounts.dashboard > 0, 'expected dashboard fallback render when no dirty sections were marked');
-  assert.ok(callCounts.cards > 0, 'expected cards presenter to update during fallback render');
+  assert.strictEqual(callCounts.dashboard, 0, 'expected dashboard presenter to stay idle without dirty sections');
+  assert.strictEqual(callCounts.cards, 0, 'expected cards presenter to stay idle without dirty sections');
+  assert.strictEqual(callCounts.player, 0, 'expected player presenter to stay idle without dirty sections');
+  assert.strictEqual(callCounts.skills, 0, 'expected skills presenter to stay idle without dirty sections');
+
+  invalidation.markDirty(['dashboard', 'cards']);
+
+  loopModule.runGameLoop();
+
+  assert.ok(callCounts.dashboard > 0, 'expected dashboard to render after sections were marked dirty');
+  assert.ok(callCounts.cards > 0, 'expected cards presenter to update after sections were marked dirty');
+  assert.strictEqual(callCounts.player, 0, 'expected player presenter to stay idle when only dashboard and cards are dirty');
+  assert.strictEqual(callCounts.skills, 0, 'expected skills presenter to stay idle when only dashboard and cards are dirty');
 
   const remainingDirty = invalidation.consumeDirty();
-  assert.deepEqual(remainingDirty, {}, 'expected dirty registry to remain empty after fallback render');
+  assert.deepEqual(remainingDirty, {}, 'expected dirty registry to remain empty after targeted render');
 });
