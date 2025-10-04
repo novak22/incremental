@@ -9,6 +9,7 @@ import { buildSkillsWidgetModel } from './skillsWidget/model.js';
 import { buildHeaderActionModel } from './headerAction/model.js';
 import { renderHeaderAction } from './headerAction/index.js';
 import { applyCardFilters } from './layout/index.js';
+import { ALL_UI_SECTIONS } from './invalidation.js';
 
 function dispatchCardCollections(mode, activeView = getActiveView()) {
   cardCollectionService.refreshCollections();
@@ -49,36 +50,76 @@ export function renderCards() {
   applyCardFilters(models);
 }
 
-export function updateUI() {
+function buildDefaultOptions() {
+  return ALL_UI_SECTIONS.reduce((acc, section) => {
+    acc[section] = true;
+    return acc;
+  }, {});
+}
+
+function normalizeOptions(options) {
+  if (!options) {
+    return buildDefaultOptions();
+  }
+
+  return ALL_UI_SECTIONS.reduce((acc, section) => {
+    acc[section] = Boolean(options[section]);
+    return acc;
+  }, {});
+}
+
+function hasUpdates(flags) {
+  return ALL_UI_SECTIONS.some(section => flags[section]);
+}
+
+export function updateUI(options) {
   const state = getState();
   if (!state) return;
 
-  const summary = computeDailySummary(state);
+  const flags = normalizeOptions(options);
+  if (!hasUpdates(flags)) {
+    return;
+  }
+
   const activeView = getActiveView();
-  if (activeView?.renderDashboard) {
-    activeView.renderDashboard(state, summary);
-  } else {
-    renderDashboard(state, summary);
+
+  if (flags.dashboard) {
+    const summary = computeDailySummary(state);
+    if (activeView?.renderDashboard) {
+      activeView.renderDashboard(state, summary);
+    } else {
+      renderDashboard(state, summary);
+    }
   }
+
   const presenters = activeView?.presenters || {};
-  const playerPresenter = presenters.player;
-  if (playerPresenter?.render) {
-    const playerModel = buildPlayerPanelModel(state);
-    playerPresenter.render(playerModel);
+
+  if (flags.player) {
+    const playerPresenter = presenters.player;
+    if (playerPresenter?.render) {
+      const playerModel = buildPlayerPanelModel(state);
+      playerPresenter.render(playerModel);
+    }
   }
 
-  const skillsPresenter = presenters.skillsWidget;
-  if (skillsPresenter?.render) {
-    const skillsModel = buildSkillsWidgetModel(state);
-    skillsPresenter.render(skillsModel);
+  if (flags.skillsWidget) {
+    const skillsPresenter = presenters.skillsWidget;
+    if (skillsPresenter?.render) {
+      const skillsModel = buildSkillsWidgetModel(state);
+      skillsPresenter.render(skillsModel);
+    }
   }
 
-  const headerModel = buildHeaderActionModel(state);
-  renderHeaderAction(headerModel);
+  if (flags.headerAction) {
+    const headerModel = buildHeaderActionModel(state);
+    renderHeaderAction(headerModel);
+  }
 
-  const { registries, models, handled } = dispatchCardCollections('update', activeView);
-  if (!handled) {
-    updateAllCards(registries, models);
-    applyCardFilters(models);
+  if (flags.cards) {
+    const { registries, models, handled } = dispatchCardCollections('update', activeView);
+    if (!handled) {
+      updateAllCards(registries, models);
+      applyCardFilters(models);
+    }
   }
 }

@@ -94,3 +94,99 @@ test('browser view update flow routes through cards presenter and updates summar
   const todoList = document.getElementById('browser-widget-todo-list');
   assert.ok(todoList, 'expected todo widget to mount');
 });
+
+test('updateUI skips untouched presenters when sections are clean', { concurrency: false }, async t => {
+  ensureTestDom();
+  const harness = await getGameTestHarness();
+  harness.resetState();
+
+  const viewManager = await import('../../src/ui/viewManager.js');
+  const browserViewModule = await import('../../src/ui/views/browser/index.js');
+  const updateModule = await import('../../src/ui/update.js');
+  const invalidation = await import('../../src/ui/invalidation.js');
+
+  const originalView = viewManager.getActiveView();
+  const browserView = browserViewModule.default;
+
+  const callCounts = {
+    dashboard: 0,
+    player: 0,
+    skills: 0,
+    header: 0,
+    cards: 0
+  };
+
+  const stubView = {
+    ...browserView,
+    presenters: {
+      ...browserView.presenters,
+      player: {
+        render: () => {
+          callCounts.player += 1;
+        }
+      },
+      skillsWidget: {
+        render: () => {
+          callCounts.skills += 1;
+        }
+      },
+      headerAction: {
+        ...browserView.presenters?.headerAction,
+        renderAction: (...args) => {
+          callCounts.header += 1;
+          return browserView.presenters?.headerAction?.renderAction?.(...args);
+        }
+      },
+      cards: {
+        ...browserView.presenters?.cards,
+        renderAll: (...args) => {
+          browserView.presenters?.cards?.renderAll?.(...args);
+          return undefined;
+        },
+        update: (...args) => {
+          callCounts.cards += 1;
+          return browserView.presenters?.cards?.update?.(...args);
+        }
+      }
+    },
+    renderDashboard: (...args) => {
+      callCounts.dashboard += 1;
+      return browserView.renderDashboard?.(...args);
+    }
+  };
+
+  viewManager.setActiveView(stubView, document);
+
+  t.after(() => {
+    invalidation.consumeDirty();
+    viewManager.setActiveView(originalView ?? browserView, document);
+  });
+
+  updateModule.updateUI();
+
+  Object.keys(callCounts).forEach(key => {
+    callCounts[key] = 0;
+  });
+
+  invalidation.markDirty('cards');
+  const cardDirty = invalidation.consumeDirty();
+  updateModule.updateUI(cardDirty);
+
+  assert.strictEqual(callCounts.cards > 0, true, 'expected cards presenter to update when marked dirty');
+  assert.strictEqual(callCounts.dashboard, 0, 'expected dashboard presenter to stay idle during card-only refresh');
+  assert.strictEqual(callCounts.player, 0, 'expected player presenter to stay idle during card-only refresh');
+  assert.strictEqual(callCounts.skills, 0, 'expected skills presenter to stay idle during card-only refresh');
+  assert.strictEqual(callCounts.header, 0, 'expected header action presenter to stay idle during card-only refresh');
+
+  const previousCardCalls = callCounts.cards;
+
+  invalidation.markDirty(['dashboard', 'headerAction']);
+  const dashboardDirty = invalidation.consumeDirty();
+  updateModule.updateUI(dashboardDirty);
+
+  assert.strictEqual(callCounts.dashboard, 1, 'expected dashboard to refresh when marked dirty');
+  assert.strictEqual(callCounts.header, 1, 'expected header action to refresh when marked dirty');
+  assert.strictEqual(callCounts.player, 0, 'expected player presenter to remain untouched when not flagged');
+  assert.strictEqual(callCounts.skills, 0, 'expected skills presenter to remain untouched when not flagged');
+  assert.strictEqual(callCounts.cards, previousCardCalls, 'expected cards presenter not to re-render without dirty flag');
+});
