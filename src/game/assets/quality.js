@@ -204,19 +204,22 @@ function getActionLabel(definition, assetState, instance) {
 
 function runQualityAction(definition, instanceId, actionId) {
   const state = getState();
-  if (!state) return;
+  if (!state) return { qualityUpdated: false };
   const assetState = getAssetState(definition.id);
+  if (!assetState) {
+    return { qualityUpdated: false };
+  }
   const instance = assetState.instances.find(item => item.id === instanceId);
-  if (!instance) return;
+  if (!instance) return { qualityUpdated: false };
   const instanceIndex = assetState.instances.indexOf(instance);
   if (instance.status !== 'active') {
     const label = getActionLabel(definition, assetState, instance);
     addLog(`${label} needs to finish setup before quality work will stick.`, 'warning');
-    return;
+    return { qualityUpdated: false };
   }
   const config = getQualityConfig(definition);
   const action = config?.actions?.find(entry => entry.id === actionId);
-  if (!action) return;
+  if (!action) return { qualityUpdated: false };
 
   const context = createActionContext(definition, instance, state);
   const availability = evaluateActionAvailability(action, context);
@@ -226,25 +229,25 @@ function runQualityAction(definition, instanceId, actionId) {
       ? `${label} can’t run that move yet: ${availability.reason}`
       : `${label} can’t run that move yet.`;
     addLog(message, 'info');
-    return;
+    return { qualityUpdated: false };
   }
 
   const usage = getUsageStatus(instance, action);
   if (usage.exhausted) {
     const label = getActionLabel(definition, assetState, instance);
     addLog(`${label} already used that move today. Fresh inspiration returns tomorrow.`, 'info');
-    return;
+    return { qualityUpdated: false };
   }
 
   const timeCost = Math.max(0, Number(action.time) || 0);
   const moneyCost = Math.max(0, Number(action.cost) || 0);
   if (timeCost > 0 && state.timeLeft < timeCost) {
     addLog(`You need ${formatHours(timeCost)} free before diving into that quality push.`, 'warning');
-    return;
+    return { qualityUpdated: false };
   }
   if (moneyCost > 0 && state.money < moneyCost) {
     addLog(`You need $${formatMoney(moneyCost)} ready for that quality push.`, 'warning');
-    return;
+    return { qualityUpdated: false };
   }
 
   if (moneyCost > 0) {
@@ -358,7 +361,7 @@ function runQualityAction(definition, instanceId, actionId) {
       quality: { level: quality.level, progress: { ...quality.progress } }
     };
   }
-  markDirty('cards');
+  return { qualityUpdated: true };
 }
 
 function updateQualityLevel(definition, assetState, instance, quality) {
@@ -394,7 +397,10 @@ export function performQualityAction(assetId, instanceId, actionId) {
   const definition = getAssetDefinition(assetId);
   if (!definition) return;
   executeAction(() => {
-    runQualityAction(definition, instanceId, actionId);
+    const result = runQualityAction(definition, instanceId, actionId);
+    if (result?.qualityUpdated) {
+      markDirty(['cards', 'dashboard', 'headerAction']);
+    }
   });
   checkDayEnd();
 }
