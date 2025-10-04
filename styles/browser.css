@@ -2224,11 +2224,22 @@ a {
 .bank-widget__chip[data-tone='in'] .bank-widget__chip-value {
   color: var(--browser-positive);
 }
+
+@media (max-width: 680px) {
+  .bank-widget__highlights {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .bank-widget__column {
+    justify-items: center;
+  }
+
+  .bank-widget__column--left,
+  .bank-widget__column--right {
     align-self: stretch;
     text-align: center;
   }
 }
-
 .digishelf {
   display: flex;
   flex-direction: column;
