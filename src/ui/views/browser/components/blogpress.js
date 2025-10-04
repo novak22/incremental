@@ -6,7 +6,7 @@ import { createCurrencyLifecycleSummary } from '../utils/lifecycleSummaries.js';
 import { showLaunchConfirmation } from '../utils/launchDialog.js';
 import { createTabbedWorkspacePresenter } from '../utils/createTabbedWorkspacePresenter.js';
 import { createNavTabs } from './common/navBuilders.js';
-import { renderWorkspaceLock } from './common/renderWorkspaceLock.js';
+import { createWorkspaceLockRenderer } from './common/renderWorkspaceLock.js';
 import renderHomeView from './blogpress/views/homeView.js';
 import renderDetailView from './blogpress/views/detailView.js';
 import renderPricingView from './blogpress/views/pricingView.js';
@@ -263,16 +263,16 @@ function syncNavigation({ mount, state }) {
   });
 }
 
+const renderLocked = createWorkspaceLockRenderer({
+  theme: LOCK_THEME,
+  fallbackMessage: LOCK_FALLBACK_MESSAGE
+});
+
 const presenter = createTabbedWorkspacePresenter({
   className: 'blogpress',
   state: { ...INITIAL_STATE },
   ensureSelection: ensureSelectedBlog,
-  renderLocked: (model = {}, mount) =>
-    renderWorkspaceLock(mount, {
-      theme: LOCK_THEME,
-      lock: model.lock,
-      fallbackMessage: LOCK_FALLBACK_MESSAGE
-    }),
+  renderLocked,
   renderHeader,
   renderViews,
   deriveSummary: deriveWorkspaceSummary,
