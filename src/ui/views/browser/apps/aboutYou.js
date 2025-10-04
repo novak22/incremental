@@ -1,7 +1,7 @@
 import { getState } from '../../../../core/state.js';
 import { buildPlayerPanelModel } from '../../../player/model.js';
 import { computeDailySummary } from '../../../../game/summary.js';
-import aboutYouApp from '../components/aboutyou.js';
+import aboutYouApp from '../components/aboutyou/index.js';
 import { getPageByType } from './pageLookup.js';
 
 export default function renderAboutYou(context = {}, models = {}) {
