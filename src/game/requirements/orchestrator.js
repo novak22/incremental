@@ -218,7 +218,7 @@ export function createRequirementsOrchestrator({
     }
 
     if (completedToday.length || stalled.length) {
-      markDirty('cards');
+      markDirty(STUDY_DIRTY_SECTIONS);
     }
   }
 
