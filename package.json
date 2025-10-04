@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "build:css": "node scripts/build-css.js",
+    "prepare": "npm run build:css",
     "test": "node --test"
   },
   "devDependencies": {
