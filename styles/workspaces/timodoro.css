@@ -17,6 +17,11 @@
   gap: 0.75rem;
 }
 
+.timodoro-tabs__nav--inline {
+  margin: 0;
+  padding: 0;
+}
+
 .timodoro-tabs__button {
   border: 1px solid var(--browser-panel-border);
   border-radius: var(--browser-radius-pill, 999px);

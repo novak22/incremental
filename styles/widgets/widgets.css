@@ -158,6 +158,22 @@
   align-items: baseline;
 }
 
+.browser-card__header--stacked {
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 0.6rem;
+}
+
+.browser-card__header--stacked .timodoro-tabs__nav {
+  width: 100%;
+  margin-top: 0.25rem;
+}
+
+.browser-card__header--stacked .timodoro-tabs__button {
+  align-self: flex-start;
+}
+
 .browser-card__title {
   margin: 0;
   font-size: 1.2rem;

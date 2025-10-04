@@ -19,12 +19,15 @@ const TODO_GROUPS = [
   { key: 'other', label: 'Assist & extras', empty: 'No support tasks waiting on you.' }
 ];
 
-function createCard({ title, summary }) {
+function createCard({ title, summary, headerClass, headerContent }) {
   const card = document.createElement('article');
   card.className = 'browser-card timodoro-card';
 
   const header = document.createElement('header');
   header.className = 'browser-card__header';
+  if (headerClass) {
+    header.classList.add(headerClass);
+  }
 
   const heading = document.createElement('h2');
   heading.className = 'browser-card__title';
@@ -36,6 +39,10 @@ function createCard({ title, summary }) {
     description.className = 'browser-card__summary';
     appendContent(description, summary);
     header.appendChild(description);
+  }
+
+  if (headerContent) {
+    appendContent(header, headerContent);
   }
 
   card.appendChild(header);
@@ -107,14 +114,6 @@ function buildTodoGroups(entries = []) {
         detailParts.push(`Runs left ×${runsRemaining}`);
       }
 
-      const item = {
-        name: entry.title || entry.name || `Task ${index + 1}`
-      };
-
-      if (detailParts.length > 0) {
-        item.detail = detailParts.join(' • ');
-      }
-
       let groupKey = focus;
       if (groupKey === 'education') {
         groupKey = 'study';
@@ -126,16 +125,26 @@ function buildTodoGroups(entries = []) {
         groupKey = 'other';
       }
 
+      const item = {
+        name: entry.title || entry.name || `Task ${index + 1}`
+      };
+
+      if (groupKey !== 'study' && detailParts.length > 0) {
+        item.detail = detailParts.join(' • ');
+      }
+
       groups[groupKey].push(item);
     });
 
   return groups;
 }
 
-function createTodoCard(model = {}) {
+function createTodoCard(model = {}, options = {}) {
+  const { navigation } = options;
   const card = createCard({
     title: 'ToDo',
-    summary: 'Pull your next focus block straight from the backlog.'
+    headerClass: navigation ? 'browser-card__header--stacked' : undefined,
+    headerContent: navigation || null
   });
 
   const entries = Array.isArray(model.todoEntries) ? model.todoEntries : [];
@@ -420,7 +429,8 @@ function observePagePath(mount, tabs) {
   syncTabFromPath(tabs, pageElement.dataset.browserPath || '');
 }
 
-function createTodoPanel(model = {}, config = TAB_CONFIGS[0]) {
+function createTodoPanel(model = {}, config = TAB_CONFIGS[0], options = {}) {
+  const { navigation, labelId } = options;
   const panel = document.createElement('div');
   panel.className = 'timodoro-tabs__panel';
   panel.dataset.tab = config.key;
@@ -428,13 +438,14 @@ function createTodoPanel(model = {}, config = TAB_CONFIGS[0]) {
   panel.hidden = true;
   panel.setAttribute('aria-hidden', 'true');
   panel.setAttribute('role', 'tabpanel');
-  panel.setAttribute('aria-labelledby', config.buttonId);
+  panel.setAttribute('aria-labelledby', labelId || config.buttonId);
 
-  panel.appendChild(createTodoCard(model));
+  panel.appendChild(createTodoCard(model, { navigation }));
   return panel;
 }
 
-function createDonePanel(model = {}, config = TAB_CONFIGS[1]) {
+function createDonePanel(model = {}, config = TAB_CONFIGS[1], options = {}) {
+  const { navigation, labelId } = options;
   const panel = document.createElement('div');
   panel.className = 'timodoro-tabs__panel';
   panel.dataset.tab = config.key;
@@ -442,11 +453,13 @@ function createDonePanel(model = {}, config = TAB_CONFIGS[1]) {
   panel.hidden = true;
   panel.setAttribute('aria-hidden', 'true');
   panel.setAttribute('role', 'tabpanel');
-  panel.setAttribute('aria-labelledby', config.buttonId);
+  panel.setAttribute('aria-labelledby', labelId || config.buttonId);
 
   const taskCard = createCard({
     title: 'Done',
-    summary: 'Celebrate today’s finished focus blocks.'
+    summary: 'Celebrate today’s finished focus blocks.',
+    headerClass: navigation ? 'browser-card__header--stacked' : undefined,
+    headerContent: navigation || null
   });
   taskCard.appendChild(createCompletedSection(model.completedGroups));
 
@@ -454,11 +467,14 @@ function createDonePanel(model = {}, config = TAB_CONFIGS[1]) {
   return panel;
 }
 
-function createTabButton(config, onSelect) {
+function createTabButton(config, onSelect, options = {}) {
   const button = document.createElement('button');
   button.type = 'button';
   button.className = 'timodoro-tabs__button';
-  button.id = config.buttonId;
+  const buttonId = options.id || config.buttonId;
+  if (buttonId) {
+    button.id = buttonId;
+  }
   button.setAttribute('role', 'tab');
   button.setAttribute('aria-controls', config.panelId);
   button.setAttribute('aria-selected', 'false');
@@ -474,17 +490,14 @@ function createTabs(model = {}, options = {}) {
   const wrapper = document.createElement('section');
   wrapper.className = 'timodoro-tabs';
 
-  const nav = document.createElement('div');
-  nav.className = 'timodoro-tabs__nav';
-  nav.setAttribute('role', 'tablist');
-
   const panels = document.createElement('div');
   panels.className = 'timodoro-tabs__panels';
 
-  const buttons = new Map();
   const panelRefs = new Map();
+  const navigationSets = [];
 
   let currentTab = null;
+  let activateTab;
 
   const notifySelect = key => {
     if (typeof onSelect === 'function') {
@@ -492,19 +505,72 @@ function createTabs(model = {}, options = {}) {
     }
   };
 
-  const activate = (key, { notify = true } = {}) => {
+  const registerNavigation = buttons => {
+    if (buttons instanceof Map) {
+      navigationSets.push(buttons);
+    }
+  };
+
+  const setButtonState = (button, active) => {
+    if (!button) {
+      return;
+    }
+    button.classList.toggle('is-active', active);
+    button.setAttribute('aria-selected', active ? 'true' : 'false');
+    button.tabIndex = active ? 0 : -1;
+  };
+
+  const updateNavigationState = targetKey => {
+    navigationSets.forEach(buttons => {
+      buttons.forEach((button, tabKey) => {
+        setButtonState(button, tabKey === targetKey);
+      });
+    });
+  };
+
+  const handleButtonSelect = key => {
+    if (typeof activateTab === 'function') {
+      activateTab(key);
+    }
+  };
+
+  const buildButtonId = (config, suffix) => {
+    if (!config || !config.buttonId) {
+      return config?.buttonId;
+    }
+    return suffix ? `${config.buttonId}-${suffix}` : config.buttonId;
+  };
+
+  const buildNavigation = (idSuffix, extraClassName) => {
+    const nav = document.createElement('div');
+    nav.className = ['timodoro-tabs__nav', extraClassName].filter(Boolean).join(' ');
+    nav.setAttribute('role', 'tablist');
+
+    const buttons = new Map();
+
+    TAB_CONFIGS.forEach(config => {
+      const buttonId = buildButtonId(config, idSuffix);
+      const button = createTabButton(config, handleButtonSelect, { id: buttonId });
+      buttons.set(config.key, button);
+      nav.appendChild(button);
+    });
+
+    registerNavigation(buttons);
+
+    return { nav, buttons };
+  };
+
+  activateTab = (key, { notify = true } = {}) => {
     const targetKey = normalizeTabKey(key);
     if (currentTab === targetKey && notify) {
       notifySelect(targetKey);
       return currentTab;
     }
 
-    buttons.forEach((button, tabKey) => {
+    updateNavigationState(targetKey);
+
+    panelRefs.forEach((panel, tabKey) => {
       const active = tabKey === targetKey;
-      button.classList.toggle('is-active', active);
-      button.setAttribute('aria-selected', active ? 'true' : 'false');
-      button.tabIndex = active ? 0 : -1;
-      const panel = panelRefs.get(tabKey);
       if (panel) {
         panel.hidden = !active;
         panel.setAttribute('aria-hidden', active ? 'false' : 'true');
@@ -520,24 +586,26 @@ function createTabs(model = {}, options = {}) {
   };
 
   TAB_CONFIGS.forEach(config => {
-    const button = createTabButton(config, tabKey => activate(tabKey));
-    buttons.set(config.key, button);
-    nav.appendChild(button);
-
+    const idSuffix = config.key;
+    const { nav } = buildNavigation(idSuffix, 'timodoro-tabs__nav--inline');
+    const panelOptions = {
+      navigation: nav,
+      labelId: buildButtonId(config, idSuffix)
+    };
     const panel = config.key === 'done'
-      ? createDonePanel(model, config)
-      : createTodoPanel(model, config);
+      ? createDonePanel(model, config, panelOptions)
+      : createTodoPanel(model, config, panelOptions);
     panelRefs.set(config.key, panel);
     panels.appendChild(panel);
   });
 
-  wrapper.append(nav, panels);
+  wrapper.appendChild(panels);
 
-  activate(initialTab, { notify: false });
+  activateTab(initialTab, { notify: false });
 
   return {
     root: wrapper,
-    activate: (key, options) => activate(key, options),
+    activate: (key, options) => activateTab(key, options),
     getActive: () => currentTab
   };
 }
