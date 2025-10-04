@@ -817,4 +817,3 @@ export const UPGRADE_DEFINITIONS = [
   }
 ];
 
-export default UPGRADE_DEFINITIONS;

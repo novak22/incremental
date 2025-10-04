@@ -38,7 +38,7 @@ function registerMetric(index, metricId, definition, category, metricType) {
   });
 }
 
-export function attachHustleMetricIds(definition) {
+function attachHustleMetricIds(definition) {
   if (!definition || !definition.id) return definition;
   const metricIds = { ...(definition.metricIds || {}) };
   for (const type of METRIC_TYPES) {
@@ -55,7 +55,7 @@ export function attachHustleMetricIds(definition) {
   return definition;
 }
 
-export function attachAssetMetricIds(definition) {
+function attachAssetMetricIds(definition) {
   if (!definition || !definition.id) return definition;
   const metricIds = { ...(definition.metricIds || {}) };
   const setup = ensureObject(metricIds, 'setup');

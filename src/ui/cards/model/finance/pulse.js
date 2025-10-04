@@ -58,7 +58,3 @@ export function computeTopEarner(summary = {}) {
   return top;
 }
 
-export default {
-  buildPulseSummary,
-  computeTopEarner
-};

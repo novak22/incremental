@@ -88,7 +88,7 @@ function normalizeRequirementEntry(entry) {
   return null;
 }
 
-export function normalizeRequirementConfig(config) {
+function normalizeRequirementConfig(config) {
   const byType = {
     equipment: [],
     knowledge: [],

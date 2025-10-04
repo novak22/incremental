@@ -70,12 +70,12 @@ function buildBoostIndexes() {
 
 const BOOST_INDEX = buildBoostIndexes();
 
-export function getInstantHustleEducationBonuses(hustleId) {
+function getInstantHustleEducationBonuses(hustleId) {
   if (!hustleId) return [];
   return BOOST_INDEX.byHustle.get(hustleId) || [];
 }
 
-export function getAssetEducationBonuses(assetId) {
+function getAssetEducationBonuses(assetId) {
   if (!assetId) return [];
   return BOOST_INDEX.byAsset.get(assetId) || [];
 }

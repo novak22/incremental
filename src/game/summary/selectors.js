@@ -20,7 +20,7 @@ function normalizeCategory(entryCategory, fallbackCategory) {
   return 'general';
 }
 
-export function selectPassiveAssetSources(state = getState()) {
+function selectPassiveAssetSources(state = getState()) {
   if (!state) return new Map();
   const summaries = new Map();
 

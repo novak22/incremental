@@ -98,23 +98,3 @@ export function updateAllCards(registries = {}, models) {
   updateSharedCollections(payload, {}, presenterOptions);
 }
 
-export function updateCard(definition) {
-  const presenter = getActiveCardsPresenter();
-  if (presenter?.updateCard) {
-    presenter.updateCard(definition);
-    return;
-  }
-
-  renderSharedCollections();
-}
-
-export function refreshUpgradeSections() {
-  const presenter = getActiveCardsPresenter();
-  if (presenter?.refreshUpgradeSections) {
-    presenter.refreshUpgradeSections();
-    return;
-  }
-
-  renderSharedCollections();
-}
-

@@ -9,7 +9,7 @@ import {
 } from '../requirements.js';
 import { describeTrackEducationBonuses } from '../educationEffects.js';
 
-export function createKnowledgeTrackPresenter(track) {
+function createKnowledgeTrackPresenter(track) {
   let cachedSignature = null;
   let cachedViewModel = null;
 

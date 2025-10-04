@@ -202,7 +202,7 @@ function buildActivityFeed(state) {
     .reverse();
 }
 
-export function buildFinanceModel(registries = {}, helpers = {}, injected = {}) {
+function buildFinanceModel(registries = {}, helpers = {}, injected = {}) {
   const {
     getState: getStateFn = getState,
     computeDailySummary: computeDailySummaryFn = computeDailySummary,

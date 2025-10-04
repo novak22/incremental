@@ -231,10 +231,3 @@ export function getIncomeRangeForDisplay(assetId) {
   return getDailyIncomeRange(definition);
 }
 
-const Payout = {
-  getDailyIncomeRange,
-  rollDailyIncome,
-  getIncomeRangeForDisplay
-};
-
-export default Payout;

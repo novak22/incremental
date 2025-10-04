@@ -51,11 +51,3 @@ export function assetRequirementsMetById(id, state = getState()) {
   return definitionRequirementsMet(definition, state);
 }
 
-export default {
-  isEquipmentUnlocked,
-  isKnowledgeComplete,
-  hasExperience,
-  isRequirementMet,
-  definitionRequirementsMet,
-  assetRequirementsMetById
-};

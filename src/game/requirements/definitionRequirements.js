@@ -18,5 +18,3 @@ export function getDefinitionRequirements(definition) {
   return bundle;
 }
 
-export { EMPTY_REQUIREMENTS };
-export default getDefinitionRequirements;

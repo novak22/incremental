@@ -29,4 +29,3 @@ export function estimateManualMaintenanceReserve(state = getState()) {
   return Math.max(0, upkeepDemand);
 }
 
-export default estimateManualMaintenanceReserve;

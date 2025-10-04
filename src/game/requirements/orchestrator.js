@@ -209,4 +209,3 @@ export function createRequirementsOrchestrator({
   };
 }
 
-export default createRequirementsOrchestrator;
