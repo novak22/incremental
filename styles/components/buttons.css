@@ -1,0 +1,58 @@
+.browser-button {
+  font: inherit;
+  border: 1px solid var(--browser-panel-border);
+  background: var(--browser-panel-elevated);
+  color: inherit;
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: background 150ms ease, border-color 150ms ease, transform 150ms ease;
+}
+
+.browser-button:hover {
+  border-color: var(--browser-accent);
+  background: var(--browser-accent-soft);
+}
+
+.browser-button:active {
+  transform: translateY(1px);
+}
+
+.browser-button--primary {
+  background: var(--browser-accent);
+  color: #fff;
+  border-color: transparent;
+  font-weight: 600;
+}
+
+#browser-session-button {
+  justify-content: center;
+  min-width: var(--browser-session-button-width, auto);
+}
+
+.browser-button--icon {
+  padding: 0.45rem 0.65rem;
+}
+
+.browser-button--text {
+  padding: 0.2rem 0.4rem;
+  background: transparent;
+  border: none;
+  color: var(--browser-accent);
+  font-weight: 600;
+}
+
+.browser-button--text:hover,
+.browser-button--text:focus-visible {
+  background: var(--browser-accent-soft);
+  border: none;
+  outline: none;
+  color: var(--browser-accent);
+}
+
+.browser-button--text:active {
+  transform: none;
+}

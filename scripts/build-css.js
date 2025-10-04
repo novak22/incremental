@@ -10,6 +10,12 @@ const outputFile = path.join(stylesDir, 'browser.css');
 
 const sectionOrder = ['base', 'components', 'widgets', 'workspaces', 'overlays'];
 
+const sectionFileOrder = {
+  base: ['theme.css', 'layout.css'],
+  components: ['buttons.css', 'notifications.css'],
+  overlays: ['launch-dialog.css'],
+};
+
 async function readSectionFiles(section) {
   const sectionDir = path.join(stylesDir, section);
 
@@ -23,10 +29,21 @@ async function readSectionFiles(section) {
     throw error;
   }
 
+  const preferred = sectionFileOrder[section] ?? [];
+  const orderMap = new Map(preferred.map((name, index) => [name, index]));
+  const defaultRank = preferred.length;
+
   const files = entries
     .filter((entry) => entry.isFile() && entry.name.endsWith('.css'))
     .map((entry) => entry.name)
-    .sort();
+    .sort((a, b) => {
+      const rankA = orderMap.has(a) ? orderMap.get(a) : defaultRank;
+      const rankB = orderMap.has(b) ? orderMap.get(b) : defaultRank;
+      if (rankA !== rankB) {
+        return rankA - rankB;
+      }
+      return a.localeCompare(b);
+    });
 
   const contents = [];
   for (const file of files) {
