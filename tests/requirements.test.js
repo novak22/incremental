@@ -3,12 +3,16 @@ import assert from 'node:assert/strict';
 import { getGameTestHarness } from './helpers/gameTestHarness.js';
 
 const knowledgeTracksModule = await import('../src/game/requirements/knowledgeTracks.js');
+const knowledgeTrackDataModule = await import('../src/game/requirements/data/knowledgeTracks.json', {
+  with: { type: 'json' }
+});
 const maintenanceModule = await import('../src/game/requirements/maintenanceReserve.js');
 const descriptorsModule = await import('../src/game/requirements/descriptors.js');
 const orchestratorModule = await import('../src/game/requirements/orchestrator.js');
 const invalidationModule = await import('../src/core/events/invalidationBus.js');
 
 const { default: tracksDefaultExport, KNOWLEDGE_TRACKS: tracksCatalog, KNOWLEDGE_REWARDS: rewardCatalog } = knowledgeTracksModule;
+const knowledgeTrackData = knowledgeTrackDataModule.default;
 const { estimateManualMaintenanceReserve } = maintenanceModule;
 const { buildAssetRequirementDescriptor } = descriptorsModule;
 const {
@@ -52,6 +56,8 @@ test('knowledge track catalog exports remain consistent', () => {
   assert.equal(tracksDefaultExport, tracksCatalog);
   assert.ok(tracksCatalog.outlineMastery);
   assert.equal(rewardCatalog.outlineMastery.baseXp, 120);
+  assert.equal(tracksCatalog, knowledgeTrackData);
+  assert.equal(KNOWLEDGE_TRACKS, knowledgeTrackData);
 });
 
 test('descriptor builder reports current asset progress', () => {

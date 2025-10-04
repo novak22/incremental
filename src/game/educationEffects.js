@@ -1,6 +1,9 @@
+import knowledgeTrackData from './requirements/data/knowledgeTracks.json' with { type: 'json' };
 import { formatMoney, toNumber } from '../core/helpers.js';
 import { getState } from '../core/state.js';
-import { KNOWLEDGE_TRACKS, getKnowledgeProgress } from './requirements.js';
+import { getKnowledgeProgress } from './requirements.js';
+
+const KNOWLEDGE_TRACKS = knowledgeTrackData;
 
 function formatPercent(value) {
   const percent = toNumber(value) * 100;

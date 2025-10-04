@@ -1,13 +1,12 @@
+import knowledgeTrackData from '../requirements/data/knowledgeTracks.json' with { type: 'json' };
 import { formatDays, formatHours, formatMoney } from '../../core/helpers.js';
 import { getState } from '../../core/state.js';
 import { executeAction } from '../actions.js';
 import { checkDayEnd } from '../lifecycle.js';
-import {
-  KNOWLEDGE_TRACKS,
-  enrollInKnowledgeTrack,
-  getKnowledgeProgress
-} from '../requirements.js';
+import { enrollInKnowledgeTrack, getKnowledgeProgress } from '../requirements.js';
 import { describeTrackEducationBonuses } from '../educationEffects.js';
+
+const KNOWLEDGE_TRACKS = knowledgeTrackData;
 
 function createKnowledgeTrackPresenter(track) {
   let cachedSignature = null;
