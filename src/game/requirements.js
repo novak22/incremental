@@ -1,4 +1,4 @@
-import knowledgeTrackData from './requirements/data/knowledgeTracks.json' with { type: 'json' };
+import knowledgeTrackData from './requirements/data/knowledgeTracks.js';
 import { getState } from '../core/state.js';
 import { addLog } from '../core/log.js';
 import { spendMoney } from './currency.js';

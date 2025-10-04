@@ -1,4 +1,4 @@
-{
+const knowledgeTrackData = {
   "storycraftJumpstart": {
     "id": "storycraftJumpstart",
     "name": "Storycraft Jumpstart",
@@ -34,7 +34,7 @@
   "digitalShelfPrimer": {
     "id": "digitalShelfPrimer",
     "name": "Digital Shelf Primer",
-    "description": "Curate e-books and galleries for 3 days (4h/day) to master metadata, covers, and storefront polish — no tuition required.",
+    "description": "Curate e-books and galleries for 3 days (4h/day) to master metadata, covers, and storefront polish \u2014 no tuition required.",
     "hoursPerDay": 4,
     "days": 3,
     "tuition": 0,
@@ -365,4 +365,6 @@
       }
     ]
   }
-}
+};
+
+export default knowledgeTrackData;

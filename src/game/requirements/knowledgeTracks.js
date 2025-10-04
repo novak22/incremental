@@ -1,4 +1,4 @@
-import knowledgeTrackData from './data/knowledgeTracks.json' with { type: 'json' };
+import knowledgeTrackData from './data/knowledgeTracks.js';
 
 const KNOWLEDGE_TRACKS = knowledgeTrackData;
 

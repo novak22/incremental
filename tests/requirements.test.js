@@ -3,9 +3,7 @@ import assert from 'node:assert/strict';
 import { getGameTestHarness } from './helpers/gameTestHarness.js';
 
 const knowledgeTracksModule = await import('../src/game/requirements/knowledgeTracks.js');
-const knowledgeTrackDataModule = await import('../src/game/requirements/data/knowledgeTracks.json', {
-  with: { type: 'json' }
-});
+const knowledgeTrackDataModule = await import('../src/game/requirements/data/knowledgeTracks.js');
 const maintenanceModule = await import('../src/game/requirements/maintenanceReserve.js');
 const descriptorsModule = await import('../src/game/requirements/descriptors.js');
 const orchestratorModule = await import('../src/game/requirements/orchestrator.js');
