@@ -1,0 +1,183 @@
+import { formatHours } from '../../../../../core/helpers.js';
+import { performQualityAction } from '../../../../../game/assets/index.js';
+import { setAssetInstanceName } from '../../../../../game/assets/actions.js';
+import { selectVideoTubeNiche } from '../../../../cards/model/index.js';
+import {
+  formatCurrency as baseFormatCurrency,
+  formatPercent as baseFormatPercent
+} from '../../utils/formatting.js';
+import { createAssetWorkspacePresenter } from '../../utils/createAssetWorkspace.js';
+import { renderWorkspaceLock } from '../common/renderWorkspaceLock.js';
+import { createVideoTubeHeader } from './header.js';
+import { createDashboardView } from './views/dashboardView.js';
+import { createDetailView } from './views/detailView.js';
+import { createCreateView } from './views/createView.js';
+import { createAnalyticsView } from './views/analyticsView.js';
+
+const VIEW_DASHBOARD = 'dashboard';
+const VIEW_DETAIL = 'detail';
+const VIEW_CREATE = 'create';
+const VIEW_ANALYTICS = 'analytics';
+
+const formatCurrency = amount =>
+  baseFormatCurrency(amount, { precision: 'integer', clampZero: true });
+const formatPercent = value =>
+  baseFormatPercent(value, {
+    clampMin: 0,
+    clampMax: 1,
+    signDisplay: 'never'
+  });
+
+function ensureSelectedVideo(state = {}, model = {}) {
+  const instances = Array.isArray(model.instances) ? model.instances : [];
+  if (!instances.length) {
+    state.selectedVideoId = null;
+    if (state.view === VIEW_DETAIL) {
+      state.view = VIEW_DASHBOARD;
+    }
+    return;
+  }
+  const active = instances.find(entry => entry.status?.id === 'active');
+  const fallback = instances[0];
+  const target = instances.find(entry => entry.id === state.selectedVideoId);
+  state.selectedVideoId = (target || active || fallback)?.id || fallback.id;
+}
+
+function renderLockedState(model = {}, mount) {
+  if (!mount) return;
+  mount.innerHTML = '';
+  mount.appendChild(
+    renderWorkspaceLock({
+      theme: {
+        container: 'videotube-view',
+        locked: 'videotube-view--locked',
+        message: 'videotube-empty',
+        label: 'This workspace'
+      },
+      lock: model.lock,
+      fallbackMessage: 'VideoTube unlocks once the Vlog blueprint is discovered.'
+    })
+  );
+}
+
+function deriveSummary(model = {}) {
+  return model?.summary ?? {};
+}
+
+function handleQuickAction(instanceId, actionId) {
+  if (!instanceId || !actionId) return;
+  performQualityAction('vlog', instanceId, actionId);
+}
+
+function handleNicheSelect(instanceId, value) {
+  if (!instanceId) return;
+  selectVideoTubeNiche('vlog', instanceId, value);
+}
+
+function handleRename(instanceId, value) {
+  if (!instanceId) return;
+  setAssetInstanceName('vlog', instanceId, value || '');
+}
+
+const buildHeader = createVideoTubeHeader();
+
+let presenter;
+
+function showVideoDetail(videoId) {
+  if (!videoId || !presenter) return;
+  presenter.updateState(state => ({ ...state, selectedVideoId: videoId }));
+  presenter.setView(VIEW_DETAIL);
+}
+
+export function createVideoTubeWorkspace() {
+  const renderDashboardView = createDashboardView({
+    formatCurrency,
+    formatPercent,
+    formatHours,
+    onQuickAction: handleQuickAction,
+    onSelectVideo: showVideoDetail
+  });
+
+  const renderDetailView = createDetailView({
+    formatCurrency,
+    formatHours,
+    onQuickAction: handleQuickAction,
+    onRename: handleRename,
+    onNicheSelect: handleNicheSelect
+  });
+
+  const renderCreateView = createCreateView({
+    formatCurrency,
+    formatHours,
+    onVideoCreated: showVideoDetail
+  });
+
+  const renderAnalyticsView = createAnalyticsView({ formatCurrency });
+
+  presenter = createAssetWorkspacePresenter({
+    className: 'videotube',
+    defaultView: VIEW_DASHBOARD,
+    state: { view: VIEW_DASHBOARD, selectedVideoId: null },
+    ensureSelection: ensureSelectedVideo,
+    deriveSummary,
+    renderLocked: renderLockedState,
+    isLocked: model => !model?.definition,
+    header(model, state, context) {
+      return buildHeader(model, state, context);
+    },
+    afterRender({ mount }) {
+      if (!mount) return;
+      const header = mount.querySelector('.videotube__header');
+      if (!header) return;
+      const masthead = header.querySelector('.videotube__masthead');
+      const title = header.querySelector('.videotube__title');
+      const actions = header.querySelector('.videotube__actions');
+      if (title) {
+        const wrapper = masthead || document.createElement('div');
+        if (!masthead) {
+          wrapper.className = 'videotube__masthead';
+        }
+        if (!wrapper.contains(title)) {
+          wrapper.appendChild(title);
+        }
+        if (actions && !wrapper.contains(actions)) {
+          wrapper.appendChild(actions);
+        }
+        if (!masthead) {
+          header.insertBefore(wrapper, header.firstChild);
+        }
+      }
+    },
+    views: [
+      {
+        id: VIEW_DASHBOARD,
+        label: 'Dashboard',
+        badge: ({ model }) => (model.summary?.active ? model.summary.active : null),
+        render: context => renderDashboardView(context)
+      },
+      {
+        id: VIEW_DETAIL,
+        label: 'Video Details',
+        badge: ({ state }) => (state.selectedVideoId ? 1 : null),
+        render: context => renderDetailView(context)
+      },
+      {
+        id: VIEW_CREATE,
+        label: 'Create',
+        hide: true,
+        render: context => renderCreateView(context)
+      },
+      {
+        id: VIEW_ANALYTICS,
+        label: 'Channel Analytics',
+        render: context => renderAnalyticsView(context)
+      }
+    ]
+  });
+
+  return presenter;
+}
+
+export default {
+  createVideoTubeWorkspace
+};
