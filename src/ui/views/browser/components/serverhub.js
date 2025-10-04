@@ -183,14 +183,20 @@ function deriveSummary(model = {}) {
 }
 
 function derivePath(state = {}) {
-  switch (state.view) {
+  const view = state?.view;
+  switch (view) {
     case VIEW_UPGRADES:
       return 'upgrades';
     case VIEW_PRICING:
       return 'pricing';
     case VIEW_APPS:
-    default:
-      return '';
+    default: {
+      const appId = state?.selectedAppId;
+      if (appId != null && appId !== '') {
+        return `apps/${appId}`;
+      }
+      return 'apps';
+    }
   }
 }
 
