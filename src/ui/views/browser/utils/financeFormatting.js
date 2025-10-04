@@ -6,12 +6,13 @@ function normalizeAmount(value) {
 }
 
 function withCents(value) {
-  return Math.round(value * 100) / 100;
+  const magnitude = Math.abs(value);
+  return Math.round(magnitude * 100) / 100;
 }
 
 export function formatCurrency(amount) {
   const numeric = normalizeAmount(amount);
-  const absolute = Math.abs(withCents(numeric));
+  const absolute = withCents(numeric);
   const formatted = formatMoney(absolute);
   const prefix = numeric < 0 ? '-$' : '$';
   return `${prefix}${formatted}`;
@@ -19,7 +20,7 @@ export function formatCurrency(amount) {
 
 export function formatSignedCurrency(amount) {
   const numeric = normalizeAmount(amount);
-  const absolute = Math.abs(withCents(numeric));
+  const absolute = withCents(numeric);
   const formatted = formatMoney(absolute);
   const sign = numeric > 0 ? '+' : numeric < 0 ? '-' : '';
   return `${sign}$${formatted}`;
