@@ -13,11 +13,11 @@ import {
   getQualityTracks
 } from '../../../game/assets/quality.js';
 import { getUpgradeSnapshot, describeUpgradeStatus } from './upgrades.js';
-import { describeAssetLaunchAvailability } from './assets.js';
 import { registerModelBuilder } from '../modelBuilderRegistry.js';
 import { buildSkillLock } from './skillLocks.js';
 import {
-  buildDefaultSummary
+  buildDefaultSummary,
+  createLaunchDescriptor
 } from './sharedAssetInstances.js';
 import createAssetInstanceSnapshots from './createAssetInstanceSnapshots.js';
 
@@ -274,23 +274,9 @@ function buildShopilyModel(assetDefinitions = [], upgradeDefinitions = [], state
   const metrics = buildMetrics(instances, definition);
   const pricing = buildPricing(definition, state);
   const upgrades = extractRelevantUpgrades(upgradeDefinitions, state);
-  const availability = describeAssetLaunchAvailability(definition, state);
-  const launchAction = definition.action || null;
-  const launch = launchAction
-    ? {
-        label: typeof launchAction.label === 'function' ? launchAction.label(state) : launchAction.label,
-        disabled: typeof launchAction.disabled === 'function'
-          ? launchAction.disabled(state)
-          : Boolean(launchAction.disabled),
-        availability,
-        onClick: launchAction.onClick || null
-      }
-    : {
-        label: 'Launch Dropshipping Store',
-        disabled: availability.disabled,
-        availability,
-        onClick: null
-      };
+  const launch = createLaunchDescriptor(definition, state, {
+    fallbackLabel: 'Launch Dropshipping Store'
+  });
 
   return {
     definition,

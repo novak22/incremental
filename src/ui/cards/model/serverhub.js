@@ -4,7 +4,6 @@ import { formatMaintenanceSummary } from '../../../game/assets/maintenance.js';
 import {
   assignInstanceToNiche
 } from '../../../game/assets/niches.js';
-import { describeAssetLaunchAvailability } from './assets.js';
 import { registerModelBuilder } from '../modelBuilderRegistry.js';
 import { getUpgradeSnapshot, describeUpgradeStatus } from './upgrades.js';
 import { buildSkillLock } from './skillLocks.js';
@@ -13,7 +12,8 @@ import {
   buildMilestoneProgress
 } from './sharedQuality.js';
 import {
-  buildDefaultSummary
+  buildDefaultSummary,
+  createLaunchDescriptor
 } from './sharedAssetInstances.js';
 import createAssetInstanceSnapshots from './createAssetInstanceSnapshots.js';
 
@@ -122,28 +122,6 @@ function buildSummary(instances = [], definition) {
   };
 }
 
-function buildLaunch(definition, state) {
-  const availability = describeAssetLaunchAvailability(definition, state);
-  const launchAction = definition.action || null;
-  if (!launchAction) {
-    return {
-      label: `Deploy ${definition.singular || definition.name || 'app'}`,
-      disabled: availability.disabled,
-      availability,
-      onClick: null
-    };
-  }
-
-  return {
-    label: typeof launchAction.label === 'function' ? launchAction.label(state) : launchAction.label,
-    disabled: typeof launchAction.disabled === 'function'
-      ? launchAction.disabled(state)
-      : Boolean(launchAction.disabled),
-    availability,
-    onClick: launchAction.onClick || null
-  };
-}
-
 function buildPricingPlans(definition) {
   if (!definition?.quality?.levels) {
     return [];
@@ -212,7 +190,9 @@ function buildServerHubModel(assetDefinitions = [], upgradeDefinitions = [], sta
 
   const instances = buildInstances(saasDefinition, state);
   const summary = buildSummary(instances, saasDefinition);
-  const launch = buildLaunch(saasDefinition, state);
+  const launch = createLaunchDescriptor(saasDefinition, state, {
+    fallbackLabel: `Deploy ${saasDefinition.singular || saasDefinition.name || 'app'}`
+  });
   const upgrades = extractRelevantUpgrades(upgradeDefinitions, state);
   const pricing = buildPricingPlans(saasDefinition);
 

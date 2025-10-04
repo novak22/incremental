@@ -4,7 +4,6 @@ import { formatMaintenanceSummary } from '../../../game/assets/maintenance.js';
 import {
   assignInstanceToNiche
 } from '../../../game/assets/niches.js';
-import { describeAssetLaunchAvailability } from './assets.js';
 import { registerModelBuilder } from '../modelBuilderRegistry.js';
 import { buildSkillLock } from './skillLocks.js';
 import {
@@ -12,7 +11,8 @@ import {
   buildMilestoneProgress
 } from './sharedQuality.js';
 import {
-  buildDefaultSummary
+  buildDefaultSummary,
+  createLaunchDescriptor
 } from './sharedAssetInstances.js';
 import createAssetInstanceSnapshots from './createAssetInstanceSnapshots.js';
 
@@ -74,28 +74,6 @@ function buildInstances(definition, state) {
   });
 }
 
-function buildLaunch(definition, state) {
-  const availability = describeAssetLaunchAvailability(definition, state);
-  const launchAction = definition.action || null;
-  if (!launchAction) {
-    return {
-      label: `Launch ${definition.singular || definition.name || 'resource'}`,
-      disabled: availability.disabled,
-      availability,
-      onClick: null
-    };
-  }
-
-  return {
-    label: typeof launchAction.label === 'function' ? launchAction.label(state) : launchAction.label,
-    disabled: typeof launchAction.disabled === 'function'
-      ? launchAction.disabled(state)
-      : Boolean(launchAction.disabled),
-    availability,
-    onClick: launchAction.onClick || null
-  };
-}
-
 function buildPlan(definition, state, copy) {
   const setup = definition?.setup || {};
   const maintenance = definition?.maintenance || {};
@@ -141,7 +119,9 @@ function buildModelForDefinition(definition, state, copy) {
     fallbackLabel: definition.singular || definition.name || 'resource',
     includeNeedsUpkeep: true
   });
-  const launch = buildLaunch(definition, state);
+  const launch = createLaunchDescriptor(definition, state, {
+    fallbackLabel: `Launch ${definition.singular || definition.name || 'resource'}`
+  });
   const plan = buildPlan(definition, state, copy);
 
   return {
