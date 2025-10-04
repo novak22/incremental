@@ -21,6 +21,7 @@ import {
   getSliceState as getUpgradeSliceState
 } from './state/slices/upgrades.js';
 import { ensureSlice as ensureProgressSlice } from './state/slices/progress.js';
+import { isAutoReadType } from './logAutoReadTypes.js';
 
 function normalizeLogEntry(entry) {
   if (!entry || typeof entry !== 'object') {
@@ -39,7 +40,7 @@ function normalizeLogEntry(entry) {
   normalized.id = typeof entry.id === 'string' && entry.id ? entry.id : createId();
   normalized.message = entry.message != null ? String(entry.message) : '';
   normalized.type = typeof entry.type === 'string' && entry.type ? entry.type : 'info';
-  normalized.read = entry.read === true;
+  normalized.read = entry.read === true || isAutoReadType(normalized.type);
   return normalized;
 }
 
