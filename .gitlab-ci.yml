@@ -10,7 +10,13 @@ pages:
       - node_modules/
   script:
     - npm ci
-    - npm run build
+    - |
+      if [ -n "${CI_PAGES_URL}" ]; then
+        BASE_PATH="$(node -e 'const url = new URL(process.env.CI_PAGES_URL); const path = url.pathname.endsWith("/") ? url.pathname : url.pathname + "/"; process.stdout.write(path);')"
+      else
+        BASE_PATH="/${CI_PROJECT_NAME}/"
+      fi
+      npm run build -- --base "${BASE_PATH}"
     - rm -rf public
     - cp -r dist public
   artifacts:
