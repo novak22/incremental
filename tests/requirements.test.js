@@ -11,7 +11,11 @@ const invalidationModule = await import('../src/ui/invalidation.js');
 const { default: tracksDefaultExport, KNOWLEDGE_TRACKS: tracksCatalog, KNOWLEDGE_REWARDS: rewardCatalog } = knowledgeTracksModule;
 const { estimateManualMaintenanceReserve } = maintenanceModule;
 const { buildAssetRequirementDescriptor } = descriptorsModule;
-const { createRequirementsOrchestrator, MIN_MANUAL_BUFFER_HOURS } = orchestratorModule;
+const {
+  createRequirementsOrchestrator,
+  MIN_MANUAL_BUFFER_HOURS,
+  STUDY_DIRTY_SECTIONS
+} = orchestratorModule;
 const { consumeDirty } = invalidationModule;
 
 const harness = await getGameTestHarness();
@@ -165,6 +169,7 @@ test('advancing knowledge logs completions and clears daily flags', () => {
   enrollInKnowledgeTrack('photoLibrary');
   const logBaseline = state.log.length;
 
+  consumeDirty();
   advanceKnowledgeTracks();
   assert.equal(progress.daysCompleted, 1);
   assert.equal(progress.studiedToday, false);
@@ -178,6 +183,10 @@ test('advancing knowledge logs completions and clears daily flags', () => {
 
   assert.ok(progress.completed);
   assert.match(state.log.at(-1).message, /Finished .*Photo Catalog Curation/i);
+  const dirty = consumeDirty();
+  STUDY_DIRTY_SECTIONS.forEach(section => {
+    assert.ok(dirty[section]);
+  });
 });
 
 test('requirements orchestrator honors reserves and rewards completions', () => {
@@ -360,4 +369,87 @@ test('zero-hour study allocations still refresh dashboard and player views', () 
   orchestrator.allocateDailyStudy({ trackIds: [track.id] });
   assert.equal(progress.studiedToday, true);
   assert.deepEqual(consumeDirty(), { cards: true, dashboard: true, player: true });
+});
+
+test('knowledge track rollover invalidates study panels for completions and stalls', () => {
+  consumeDirty();
+  const logs = [];
+  const state = {
+    day: 9,
+    money: 150,
+    timeLeft: 5,
+    progress: {
+      knowledge: {
+        paidTrack: {
+          daysCompleted: 2,
+          studiedToday: true,
+          completed: false,
+          enrolled: true,
+          enrolledOnDay: 3,
+          skillRewarded: false
+        },
+        freeTrack: {
+          daysCompleted: 1,
+          studiedToday: false,
+          completed: false,
+          enrolled: true,
+          enrolledOnDay: 7,
+          skillRewarded: false
+        }
+      }
+    },
+    log: logs
+  };
+
+  const tracks = {
+    paidTrack: {
+      id: 'paidTrack',
+      name: 'Tuition Strategy Sprint',
+      days: 3,
+      hoursPerDay: 2,
+      tuition: 120
+    },
+    freeTrack: {
+      id: 'freeTrack',
+      name: 'Community Study Circle',
+      days: 4,
+      hoursPerDay: 1,
+      tuition: 0
+    }
+  };
+
+  const orchestrator = createRequirementsOrchestrator({
+    getState: () => state,
+    getKnowledgeProgress: id => state.progress.knowledge[id],
+    knowledgeTracks: tracks,
+    knowledgeRewards: {},
+    estimateMaintenanceReserve: () => 0,
+    spendMoney: () => {},
+    spendTime: () => {},
+    recordCostContribution: () => {},
+    recordTimeContribution: () => {},
+    awardSkillProgress: () => {},
+    addLog: (message, level) => logs.push({ message, level })
+  });
+
+  orchestrator.advanceKnowledgeTracks();
+
+  const dirty = consumeDirty();
+  STUDY_DIRTY_SECTIONS.forEach(section => {
+    assert.ok(dirty[section]);
+  });
+
+  assert.equal(state.progress.knowledge.paidTrack.completed, true);
+  assert.equal(state.progress.knowledge.paidTrack.enrolled, false);
+  assert.equal(state.progress.knowledge.paidTrack.studiedToday, false);
+  assert.equal(state.progress.knowledge.freeTrack.studiedToday, false);
+  assert.ok(
+    logs.some(log => log.level === 'info' && /Finished .*Tuition Strategy Sprint/.test(log.message))
+  );
+  assert.ok(
+    logs.some(log => log.level === 'warning' && /did not get study time today/.test(log.message))
+  );
+  STUDY_DIRTY_SECTIONS.forEach(section => {
+    assert.ok(dirty[section]);
+  });
 });
