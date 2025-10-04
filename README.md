@@ -99,9 +99,9 @@ Each asset supports multiple instances, tracks setup progress, and rolls a daily
 3. Optional: serve with a simple HTTP server (e.g., `npx serve .`) to avoid `localStorage` restrictions during local testing.
 
 ## Styling Workflow
-- `styles/browser.css` is generated; edit the source modules in `styles/base/`, `styles/components/`, `styles/widgets/`, `styles/workspaces/`, and `styles/overlays/` instead of modifying the bundle directly.
-- Run `npm run build:css` to regenerate the bundle after changing any module. The command runs automatically during `npm install` via the `prepare` hook but can be invoked manually while iterating on styles.
-- Before committing, re-run `npm run build:css` so the generated stylesheet stays in sync with your module changes.
+- The browser shell now links each modular stylesheet directly. Edit the files under `styles/base/`, `styles/components/`, `styles/widgets/`, `styles/workspaces/`, and `styles/overlays/` and the changes will load without a build step.
+- Maintain the documented load order (base → components → widgets → workspaces → overlays) when adding new modules. Update the `<head>` of `index.html` with any additional `<link rel="stylesheet">` entries so the cascade remains intact.
+- Keep selectors purpose-driven and scoped to their module so future contributors can find the owning file quickly.
 
 ## Testing
 1. Install dev dependencies with `npm install`.
@@ -123,6 +123,5 @@ Each asset supports multiple instances, tracks setup progress, and rolls a daily
 - **Adding Assets** – Add new definition modules under `src/game/assets/definitions/` and include them in the registry. Define setup/maintenance data, income ranges, requirement objects, and any custom log messages.
 - **Adding Upgrades** – Update `UPGRADES` in `src/game/upgrades.js` and ensure new upgrade IDs are handled in requirement checks.
 - After modifying content arrays, run through a manual day cycle: start builds, end the day, confirm log messaging, and verify save/load behaviour.
-- Before you push a branch, run `npm run build:css` alongside the automated tests so the committed stylesheet reflects any CSS module edits.
 
 For design context and tuning notes, see `docs/features/day-driven-assets.md`. Recent gameplay adjustments are tracked in `docs/changelog.md`.

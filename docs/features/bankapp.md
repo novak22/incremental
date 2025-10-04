@@ -16,7 +16,7 @@
 - `buildFinanceModel` in `src/ui/cards/model/finance.js` synthesizes cash summaries, ledger groups, obligations, pending income, asset ROI, study data, the rolling history archive, and recent log entries from the existing state selectors.
 - `renderFinancePage` in `src/ui/views/browser/cardsPresenter.js` assembles the new banking layout with reusable helper sections and styles, wiring in the ledger, obligations, pending income, performance table, opportunity queues, education tracker, history timeline, and activity feed before handing meta data back to the site list presenter.
 - The header summary reuses the classic dashboard totals to show Current balance, Net / Day, Daily +, and Daily - so both shells stay in sync.
-- `styles/browser.css` gained a `bankapp` design system (header summary strip, ledger grid, obligation cards, tables) so future browser apps can share the visual language.
+- `styles/widgets/widgets.css` hosts the `bankapp` design system (header summary strip, ledger grid, obligation cards, tables) so future browser apps can share the visual language.
 - BankApp registers as a new service page in `src/ui/views/browser/config.js`, allowing the browser shell navigation and history stacks to treat it like any other site.
 - Daily metrics now archive the last seven wrap-ups in state so the browser widget and BankApp page can render rolling trends without extra backend calls.
 
