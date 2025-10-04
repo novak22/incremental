@@ -1,4 +1,4 @@
-import { ensureArray, formatHours, formatMoney } from '../../../core/helpers.js';
+import { ensureArray } from '../../../core/helpers.js';
 import { getAssetState, getState } from '../../../core/state.js';
 import { instanceLabel } from '../../../game/assets/details.js';
 import { formatMaintenanceSummary } from '../../../game/assets/maintenance.js';
@@ -8,18 +8,18 @@ import {
   getInstanceNicheInfo
 } from '../../../game/assets/niches.js';
 import {
-  canPerformQualityAction,
   getInstanceQualityRange,
-  getNextQualityLevel,
-  getQualityActionAvailability,
-  getQualityActionUsage,
   getQualityActions,
-  getQualityLevel,
-  getQualityTracks
+  getQualityLevel
 } from '../../../game/assets/quality.js';
 import { describeAssetLaunchAvailability } from './assets.js';
 import { registerModelBuilder } from '../modelBuilderRegistry.js';
 import { buildSkillLock } from './skillLocks.js';
+import {
+  clampNumber,
+  buildActionSnapshot,
+  buildMilestoneProgress
+} from './sharedQuality.js';
 
 const QUICK_ACTION_MAP = {
   ebook: ['writeChapter'],
@@ -38,100 +38,6 @@ const PLAN_COPY = {
     cta: 'Open Gallery'
   }
 };
-
-function clampNumber(value) {
-  const number = Number(value);
-  return Number.isFinite(number) ? number : 0;
-}
-
-function buildMilestoneProgress(definition, instance) {
-  const quality = instance?.quality || {};
-  const level = Math.max(0, clampNumber(quality.level));
-  const nextLevel = getNextQualityLevel(definition, level);
-  const tracks = getQualityTracks(definition);
-  const progress = quality.progress || {};
-
-  if (!nextLevel?.requirements) {
-    return {
-      level,
-      percent: 1,
-      summary: 'Maxed out — future milestones queued for upcoming patches.',
-      nextLevel: null,
-      steps: []
-    };
-  }
-
-  let totalGoal = 0;
-  let totalCurrent = 0;
-  const steps = [];
-
-  Object.entries(nextLevel.requirements).forEach(([key, rawGoal]) => {
-    const goal = Math.max(0, clampNumber(rawGoal));
-    if (goal <= 0) return;
-    const current = Math.max(0, clampNumber(progress?.[key]));
-    const capped = Math.min(current, goal);
-    totalGoal += goal;
-    totalCurrent += capped;
-    const track = tracks?.[key] || {};
-    const label = track.shortLabel || track.label || key;
-    steps.push({
-      key,
-      label,
-      current: capped,
-      goal
-    });
-  });
-
-  const percent = totalGoal > 0 ? Math.min(1, totalCurrent / totalGoal) : 1;
-  const summary = steps.length
-    ? steps.map(step => `${step.current}/${step.goal} ${step.label}`).join(' • ')
-    : 'No requirements — milestone ready when upkeep is funded.';
-
-  return {
-    level,
-    percent,
-    summary,
-    nextLevel,
-    steps
-  };
-}
-
-function buildActionSnapshot(definition, instance, action, state) {
-  const timeCost = Math.max(0, clampNumber(action.time));
-  const moneyCost = Math.max(0, clampNumber(action.cost));
-  const usage = getQualityActionUsage(definition, instance, action);
-  const availability = getQualityActionAvailability(definition, instance, action, state);
-  const unlocked = Boolean(availability?.unlocked);
-  const canRun = canPerformQualityAction(definition, instance, action, state);
-  let disabledReason = '';
-
-  if (instance.status !== 'active') {
-    const remaining = Math.max(0, clampNumber(instance.daysRemaining));
-    disabledReason = remaining > 0
-      ? `Launch finishes in ${remaining} day${remaining === 1 ? '' : 's'}`
-      : 'Launch prep nearly wrapped';
-  } else if (!unlocked) {
-    disabledReason = availability?.reason || 'Requires an upgrade or course first.';
-  } else if (usage.remainingUses <= 0) {
-    disabledReason = 'Daily limit reached — try again tomorrow.';
-  } else if (timeCost > 0 && state.timeLeft < timeCost) {
-    disabledReason = `Need ${formatHours(timeCost)} free.`;
-  } else if (moneyCost > 0 && state.money < moneyCost) {
-    disabledReason = `Need $${formatMoney(moneyCost)} on hand.`;
-  }
-
-  return {
-    id: action.id,
-    label: action.label || 'Quality action',
-    time: timeCost,
-    cost: moneyCost,
-    available: canRun,
-    unlocked,
-    usage,
-    disabledReason,
-    skills: action.skills || []
-  };
-}
 
 function calculateAveragePayout(instance, state) {
   if (!instance || instance.status !== 'active') {
@@ -221,10 +127,21 @@ function buildInstances(definition, state) {
     const averagePayout = calculateAveragePayout(instance, state);
     const qualityLevel = Math.max(0, clampNumber(instance?.quality?.level));
     const qualityInfo = getQualityLevel(definition, qualityLevel);
-    const milestone = buildMilestoneProgress(definition, instance);
+    const milestone = buildMilestoneProgress(definition, instance, {
+      maxedSummary: 'Maxed out — future milestones queued for upcoming patches.',
+      readySummary: 'No requirements — milestone ready when upkeep is funded.'
+    });
     const qualityRange = getInstanceQualityRange(definition, instance);
     const payoutBreakdown = buildPayoutBreakdown(instance);
-    const actionSnapshots = actions.map(action => buildActionSnapshot(definition, instance, action, state));
+    const actionSnapshots = actions.map(action => buildActionSnapshot(definition, instance, action, state, {
+      lockedReason: 'Requires an upgrade or course first.',
+      inactiveCopy: remaining => remaining > 0
+        ? `Launch finishes in ${remaining} day${remaining === 1 ? '' : 's'}`
+        : 'Launch prep nearly wrapped',
+      decorate: ({ action: entry }) => ({
+        label: entry.label || 'Quality action'
+      })
+    }));
     const quickAction = actionSnapshots.find(entry => entry.available) || actionSnapshots[0] || null;
     const nicheInfo = getInstanceNicheInfo(instance, state);
     const niche = nicheInfo
