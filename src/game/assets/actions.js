@@ -194,7 +194,7 @@ export function setAssetInstanceName(assetId, instanceId, name) {
       delete instance.customName;
     }
     changed = true;
-    markDirty('cards');
+    markDirty(['cards', 'player']);
 
     const labelBase = definition.singular || definition.name || 'Asset';
     const fallbackLabel = `${labelBase} #${index + 1}`;
