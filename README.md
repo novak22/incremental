@@ -98,6 +98,11 @@ Each asset supports multiple instances, tracks setup progress, and rolls a daily
 2. Open `browser.html` in any modern browser. The project is a static ES-module bundle; no build tools required.
 3. Optional: serve with a simple HTTP server (e.g., `npx serve .`) to avoid `localStorage` restrictions during local testing.
 
+## Styling Workflow
+- `styles/browser.css` is generated. Edit source modules under `styles/base/`, `styles/components/`, `styles/widgets/`, `styles/workspaces/`, and `styles/overlays/`.
+- Run `npm run build:css` to concatenate the modules in that order into `styles/browser.css`. The command also runs automatically via the `prepare` lifecycle when you install dependencies.
+- Commit updates to both the module files and the generated bundle so the browser shell stays in sync for players who pull from `main`.
+
 ## Testing
 1. Install dev dependencies with `npm install`.
 2. Run the Node-based suite with `npm test` to exercise the day scheduler, maintenance flow, and knowledge tracks.
