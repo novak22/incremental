@@ -4,8 +4,7 @@ import { saveState } from '../core/storage.js';
 import { allocateAssetMaintenance, closeOutDay } from './assets/index.js';
 import { processAssistantPayroll } from './assistant.js';
 import { getTimeCap } from './time.js';
-import { updateUI } from '../ui/update.js';
-import { consumeDirty, markAllDirty, markDirty } from '../ui/invalidation.js';
+import { flushDirty, markAllDirty, markDirty } from '../core/events/invalidationBus.js';
 import { advanceKnowledgeTracks, allocateDailyStudy } from './requirements.js';
 import { archiveDailyMetrics, resetDailyMetrics } from './metrics.js';
 import { rerollNichePopularity } from './assets/niches.js';
@@ -14,18 +13,15 @@ import { advanceEventsAfterDay } from './events/index.js';
 import { archiveNicheAnalytics } from './analytics/niches.js';
 
 function flushUiWithFallback(fallbackToFull = false) {
-  let dirtySections = consumeDirty();
-  if (Object.keys(dirtySections).length === 0) {
-    if (!fallbackToFull) {
-      return;
-    }
-    markAllDirty();
-    dirtySections = consumeDirty();
-    if (Object.keys(dirtySections).length === 0) {
-      return;
-    }
+  const flushed = flushDirty();
+  if (flushed) {
+    return;
   }
-  updateUI(dirtySections);
+  if (!fallbackToFull) {
+    return;
+  }
+  markAllDirty();
+  flushDirty();
 }
 
 export function endDay(auto = false) {
@@ -45,6 +41,13 @@ export function endDay(auto = false) {
     : 'You called it a day. Fresh hustle awaits tomorrow.';
   addLog(`${message} Day ${state.day + 1} begins with renewed energy.`, 'info');
   state.day += 1;
+  if (state.hustles && typeof state.hustles === 'object') {
+    for (const hustleState of Object.values(state.hustles)) {
+      if (!hustleState || typeof hustleState !== 'object') continue;
+      hustleState.runsToday = 0;
+      hustleState.lastRunDay = state.day;
+    }
+  }
   rerollNichePopularity();
   state.dailyBonusTime = 0;
   getUpgradeState('coffee').usedToday = 0;

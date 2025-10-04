@@ -13,7 +13,7 @@ import {
   normalizeSkillList,
   normalizeSkillState
 } from './data.js';
-import { markDirty } from '../../ui/invalidation.js';
+import { markDirty } from '../../core/events/invalidationBus.js';
 
 const SKILL_UI_SECTIONS = ['dashboard', 'player', 'skillsWidget', 'headerAction'];
 

@@ -15,7 +15,7 @@ import {
 import { getHustleEffectMultiplier } from '../../upgrades/effects.js';
 import { applyMetric, normalizeHustleMetrics } from './metrics.js';
 import { logEducationPayoffSummary, logHustleBlocked } from './logMessaging.js';
-import { markDirty } from '../../../ui/invalidation.js';
+import { markDirty } from '../../../core/events/invalidationBus.js';
 
 function formatHourDetail(hours, effective) {
   if (!hours) return '⏳ Time: <strong>Instant</strong>';

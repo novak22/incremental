@@ -5,7 +5,7 @@ import { spendMoney } from './currency.js';
 import { gainTime } from './time.js';
 import { recordCostContribution } from './metrics.js';
 import { awardSkillProgress } from './skills/index.js';
-import { markDirty } from '../ui/invalidation.js';
+import { markDirty } from '../core/events/invalidationBus.js';
 
 const CORE_UI_SECTIONS = ['dashboard', 'player', 'skillsWidget', 'headerAction'];
 

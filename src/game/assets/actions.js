@@ -17,7 +17,7 @@ import { awardSkillProgress } from '../skills/index.js';
 import { getAssetEffectMultiplier } from '../upgrades/effects.js';
 import { instanceLabel } from './details.js';
 import { getAssetMetricId } from './helpers.js';
-import { markDirty } from '../../ui/invalidation.js';
+import { markDirty } from '../../core/events/invalidationBus.js';
 
 const ASSET_CORE_UI_SECTIONS = ['dashboard', 'headerAction', 'cards', 'player'];
 
