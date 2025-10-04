@@ -1,0 +1,10 @@
+dist
+node_modules
+coverage
+src
+styles
+tests
+docs
+index.html
+AGENTS.md
+README.md

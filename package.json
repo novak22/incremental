@@ -4,9 +4,24 @@
   "type": "module",
   "description": "Charming incremental game with modular browser CSS loaded directly",
   "scripts": {
-    "test": "node --test"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint '{src,tests}/**/*.js' '*.js'",
+    "test": "node --test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "devDependencies": {
-    "jsdom": "^23.0.0"
+    "@eslint/eslintrc": "^3.3.1",
+    "@vitest/coverage-v8": "^3.2.4",
+    "eslint": "^9.37.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-prettier": "^5.5.4",
+    "globals": "^16.4.0",
+    "jsdom": "^23.0.0",
+    "prettier": "^3.6.2",
+    "vite": "^7.1.9"
   }
 }
