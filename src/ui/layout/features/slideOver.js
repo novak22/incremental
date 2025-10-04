@@ -30,4 +30,3 @@ export function setupSlideOver({ getElement } = {}) {
   slideOver.hidePanel = hide;
 }
 
-export default setupSlideOver;

@@ -172,21 +172,21 @@ function renderBrowserCollections(registries = {}, models = {}) {
   setServiceSummaries(summaries);
 }
 
-export function renderAll(payload = {}) {
+function renderAll(payload = {}) {
   renderCollections(payload, {
     cache: cacheBrowserPayload,
     render: renderBrowserCollections
   });
 }
 
-export function update(payload = {}) {
+function update(payload = {}) {
   updateCollections(payload, {
     cache: cacheBrowserPayload,
     update: renderBrowserCollections
   });
 }
 
-export function updateCard() {
+function updateCard() {
   const cached = getCachedPayload();
   if (!cached) return;
   renderCollections(cached, {
@@ -195,7 +195,7 @@ export function updateCard() {
   });
 }
 
-export function refreshUpgradeSections() {
+function refreshUpgradeSections() {
   updateCard();
 }
 

@@ -79,4 +79,3 @@ export function setupKpiShortcuts({ getElement } = {}) {
   });
 }
 
-export default setupKpiShortcuts;

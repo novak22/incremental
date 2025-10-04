@@ -190,4 +190,3 @@ export function buildPlayerPanelModel(state = {}) {
   };
 }
 
-export default buildPlayerPanelModel;

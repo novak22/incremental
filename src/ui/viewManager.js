@@ -22,7 +22,3 @@ export function getActiveView() {
   return activeView;
 }
 
-export default {
-  setActiveView,
-  getActiveView
-};

@@ -9,7 +9,7 @@ export function isEquipmentUnlocked(id, state = getState()) {
   return Boolean(getUpgradeState(id, state).purchased);
 }
 
-export function isKnowledgeComplete(id, state = getState()) {
+function isKnowledgeComplete(id, state = getState()) {
   if (!id) return true;
   const track = KNOWLEDGE_TRACKS[id];
   if (!track) return true;
@@ -17,7 +17,7 @@ export function isKnowledgeComplete(id, state = getState()) {
   return progress.completed;
 }
 
-export function hasExperience(requirement, state = getState()) {
+function hasExperience(requirement, state = getState()) {
   if (!requirement?.assetId) return true;
   const targetCount = Number(requirement.count) || 0;
   if (targetCount <= 0) return true;

@@ -35,4 +35,3 @@ export function setupTabs({ getElement, onActivate } = {}) {
   return activate;
 }
 
-export default setupTabs;

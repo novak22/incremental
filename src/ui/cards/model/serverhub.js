@@ -414,7 +414,7 @@ function buildPricingPlans(definition) {
   ].filter(Boolean);
 }
 
-export default function buildServerHubModel(assetDefinitions = [], upgradeDefinitions = [], state = getState()) {
+function buildServerHubModel(assetDefinitions = [], upgradeDefinitions = [], state = getState()) {
   const definitionMap = new Map(ensureArray(assetDefinitions).map(definition => [definition?.id, definition]));
   const saasDefinition = definitionMap.get('saas') || null;
 

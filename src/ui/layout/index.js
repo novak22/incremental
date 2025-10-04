@@ -10,12 +10,3 @@ export function applyCardFilters(models) {
   layoutController.applyFilters(models);
 }
 
-export function activateShellPanel(panelId) {
-  layoutController.activateShellPanel(panelId);
-}
-
-export default {
-  initLayoutControls,
-  activateShellPanel,
-  applyCardFilters
-};

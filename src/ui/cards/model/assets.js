@@ -22,16 +22,16 @@ const ASSET_GROUP_ICONS = {
   Tech: '🚀'
 };
 
-export function getAssetGroupLabel(definition) {
+function getAssetGroupLabel(definition) {
   return definition?.tag?.label || 'Special';
 }
 
-export function getAssetGroupId(definition) {
+function getAssetGroupId(definition) {
   const label = getAssetGroupLabel(definition);
   return label.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 }
 
-export function getAssetGroupNote(label) {
+function getAssetGroupNote(label) {
   return ASSET_GROUP_NOTES[label] || 'Bundle kindred builds together to compare potential at a glance.';
 }
 

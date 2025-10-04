@@ -275,4 +275,3 @@ export function buildLayoutModel(models = {}) {
   };
 }
 
-export default buildLayoutModel;
