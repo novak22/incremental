@@ -10,7 +10,7 @@ function applyActiveState(button, isActive, activeClassName, withAriaPressed) {
   }
 }
 
-export function createNavButton({
+function createNavButton({
   className,
   label,
   view,
