@@ -1,5 +1,14 @@
 import { appendContent } from './domHelpers.js';
 
+function applyDataset(element, dataset = {}) {
+  if (!element || !dataset || typeof dataset !== 'object') return;
+  Object.entries(dataset).forEach(([key, value]) => {
+    if (value != null) {
+      element.dataset[key] = String(value);
+    }
+  });
+}
+
 const DEFAULT_THEME = {
   container: 'asset-detail',
   header: 'asset-detail__header',
@@ -34,6 +43,9 @@ function renderStats(stats = [], theme) {
     if (entry.tone) {
       item.dataset.tone = String(entry.tone);
     }
+    if (entry.dataset) {
+      applyDataset(item, entry.dataset);
+    }
     const label = document.createElement('span');
     label.className = theme.statLabel;
     appendContent(label, entry.label ?? '');
@@ -65,6 +77,9 @@ function renderSections(sections = [], theme) {
     if (section.tone) {
       article.dataset.tone = String(section.tone);
     }
+    if (section.dataset) {
+      applyDataset(article, section.dataset);
+    }
     if (section.title) {
       const heading = document.createElement('h3');
       heading.className = theme.sectionTitle;
@@ -91,6 +106,9 @@ function renderSections(sections = [], theme) {
       const footer = document.createElement('footer');
       appendContent(footer, section.footer);
       article.appendChild(footer);
+    }
+    if (section.content) {
+      appendContent(article, section.content);
     }
     wrapper.appendChild(article);
   });
@@ -150,6 +168,9 @@ function renderHeader(header = {}, theme) {
     status.className = header.status.className || theme.status;
     if (header.status.tone) {
       status.dataset.tone = String(header.status.tone);
+    }
+    if (header.status.dataset) {
+      applyDataset(status, header.status.dataset);
     }
     appendContent(status, header.status.label ?? header.status);
     wrapper.appendChild(status);

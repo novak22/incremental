@@ -116,13 +116,15 @@
   box-shadow: var(--browser-shadow-focus);
 }
 
-.serverhub-kpis {
+.serverhub-kpis,
+.serverhub-view--apps .asset-kpis {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1rem;
 }
 
-.serverhub-kpi {
+.serverhub-kpi,
+.serverhub-view--apps .asset-kpi {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
@@ -133,21 +135,24 @@
   padding: 1rem 1.2rem;
 }
 
-.serverhub-kpi__label {
+.serverhub-kpi__label,
+.serverhub-view--apps .asset-kpi__label {
   font-size: 0.75rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--browser-subtle);
 }
 
-.serverhub-kpi__value {
+.serverhub-kpi__value,
+.serverhub-view--apps .asset-kpi__value {
   margin: 0;
   font-size: 1.25rem;
   font-weight: 700;
   color: var(--browser-text);
 }
 
-.serverhub-kpi__note {
+.serverhub-kpi__note,
+.serverhub-view--apps .asset-kpi__note {
   margin: 0;
   font-size: 0.85rem;
   color: var(--browser-muted);
@@ -413,7 +418,8 @@
   color: var(--browser-accent);
 }
 
-.serverhub-detail__stats {
+.serverhub-detail__stats,
+.serverhub-view--apps .asset-detail__stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 1rem;
@@ -423,31 +429,36 @@
   padding: 1.2rem 1.3rem;
 }
 
-.serverhub-detail__stat {
+.serverhub-detail__stat,
+.serverhub-view--apps .asset-detail__stat {
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
 }
 
-.serverhub-detail__stat-label {
+.serverhub-detail__stat-label,
+.serverhub-view--apps .asset-detail__stat-label {
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--browser-subtle);
 }
 
-.serverhub-detail__stat-value {
+.serverhub-detail__stat-value,
+.serverhub-view--apps .asset-detail__stat-value {
   font-size: 1.05rem;
   font-weight: 700;
   color: var(--browser-text);
 }
 
-.serverhub-detail__stat-note {
+.serverhub-detail__stat-note,
+.serverhub-view--apps .asset-detail__stat-note {
   font-size: 0.85rem;
   color: var(--browser-muted);
 }
 
-.serverhub-detail__grid {
+.serverhub-detail__grid,
+.serverhub-view--apps .asset-detail__sections {
   display: grid;
   gap: 1rem;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));

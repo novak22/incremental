@@ -1,26 +1,36 @@
-function renderStatsBar(stats = {}, { formatCurrency, formatPercent }) {
-  const bar = document.createElement('div');
-  bar.className = 'videotube-stats';
+import { renderKpiGrid } from '../../common/renderKpiGrid.js';
+import { renderInstanceTable } from '../../common/renderInstanceTable.js';
 
-  const lifetime = document.createElement('article');
-  lifetime.className = 'videotube-stats__card';
-  lifetime.innerHTML = `<span>Total earned</span><strong>${formatCurrency(stats.lifetime)}</strong>`;
+const KPI_THEME = {
+  container: 'asset-kpis videotube-stats',
+  grid: 'asset-kpis__grid',
+  card: 'asset-kpi videotube-stats__card',
+  label: 'asset-kpi__label',
+  value: 'asset-kpi__value',
+  note: 'asset-kpi__note',
+  empty: 'asset-kpis__empty'
+};
 
-  const daily = document.createElement('article');
-  daily.className = 'videotube-stats__card';
-  daily.innerHTML = `<span>Daily payout</span><strong>${formatCurrency(stats.daily)}</strong>`;
+const TABLE_THEME = {
+  container: 'asset-table videotube-table-wrapper',
+  table: 'asset-table__table videotube-table',
+  headCell: 'asset-table__heading',
+  row: 'asset-table__row',
+  cell: 'asset-table__cell',
+  actionsCell: 'asset-table__cell--actions videotube-table__cell--actions',
+  actions: 'asset-table__actions',
+  actionButton: 'videotube-button videotube-button--ghost',
+  empty: 'asset-table__empty videotube-table__empty'
+};
 
-  const active = document.createElement('article');
-  active.className = 'videotube-stats__card';
-  active.innerHTML = `<span>Active uploads</span><strong>${stats.active || 0}</strong>`;
-
-  const momentum = document.createElement('article');
-  momentum.className = 'videotube-stats__card';
-  momentum.innerHTML = `<span>Milestone progress</span><strong>${formatPercent(stats.milestonePercent)}</strong>`;
-
-  bar.append(lifetime, daily, active, momentum);
-  return bar;
-}
+const TABLE_COLUMNS = [
+  { id: 'name', label: 'Video', cellClassName: 'videotube-table__cell--label', renderer: 'name' },
+  { id: 'latest', label: 'Latest payout', renderer: 'latest' },
+  { id: 'lifetime', label: 'Lifetime', renderer: 'lifetime' },
+  { id: 'quality', label: 'Quality', renderer: 'quality' },
+  { id: 'niche', label: 'Niche', renderer: 'niche' },
+  { id: 'quickAction', label: 'Quick action', renderer: 'quickAction' }
+];
 
 function renderQualityCell(video) {
   const wrapper = document.createElement('div');
@@ -61,100 +71,97 @@ function renderNicheBadge(video) {
   return badge;
 }
 
-function renderDashboardTable(instances = [], state = {}, helpers = {}) {
-  const { formatCurrency, formatHours, onQuickAction, onSelectVideo } = helpers;
-  const selectedId = state.selectedVideoId;
+function createMetricItems(stats = {}, formatters = {}) {
+  const formatCurrency = formatters.formatCurrency || (value => String(value ?? ''));
+  const formatPercent = formatters.formatPercent || (value => String(value ?? ''));
+  return [
+    { id: 'lifetime', label: 'Total earned', value: formatCurrency(stats.lifetime || 0) },
+    { id: 'daily', label: 'Daily payout', value: formatCurrency(stats.daily || 0) },
+    { id: 'active', label: 'Active uploads', value: stats.active || 0 },
+    { id: 'milestone', label: 'Milestone progress', value: formatPercent(stats.milestonePercent || 0) }
+  ];
+}
 
-  const table = document.createElement('table');
-  table.className = 'videotube-table';
-
-  const thead = document.createElement('thead');
-  const headRow = document.createElement('tr');
-  ['Video', 'Latest payout', 'Lifetime', 'Quality', 'Niche', 'Quick action'].forEach(label => {
-    const th = document.createElement('th');
-    th.textContent = label;
-    headRow.appendChild(th);
-  });
-  thead.appendChild(headRow);
-  table.appendChild(thead);
-
-  const tbody = document.createElement('tbody');
-  instances.forEach(video => {
-    const row = document.createElement('tr');
-    row.dataset.videoId = video.id;
-    if (video.id === selectedId) {
-      row.classList.add('is-selected');
-    }
-
-    row.addEventListener('click', () => {
-      onSelectVideo?.(video.id);
-    });
-
-    const nameCell = document.createElement('td');
-    nameCell.className = 'videotube-table__cell--label';
+const CELL_RENDERERS = {
+  name(video) {
+    const fragment = document.createDocumentFragment();
     const name = document.createElement('strong');
     name.textContent = video.label;
-    const status = document.createElement('span');
-    status.className = 'videotube-status';
-    status.textContent = video.status?.label || '';
-    nameCell.append(name, status);
-
-    const latestCell = document.createElement('td');
-    latestCell.textContent = formatCurrency(video.latestPayout);
-
-    const lifetimeCell = document.createElement('td');
-    lifetimeCell.textContent = formatCurrency(video.lifetimeIncome);
-
-    const qualityCell = document.createElement('td');
-    qualityCell.appendChild(renderQualityCell(video));
-
-    const nicheCell = document.createElement('td');
-    nicheCell.appendChild(renderNicheBadge(video));
-
-    const actionCell = document.createElement('td');
-    actionCell.className = 'videotube-table__cell--actions';
-    if (video.quickAction) {
-      const actionButton = document.createElement('button');
-      actionButton.type = 'button';
-      actionButton.className = 'videotube-button videotube-button--ghost';
-      actionButton.textContent = video.quickAction.label;
-      actionButton.disabled = !video.quickAction.available;
-      actionButton.title = video.quickAction.available
-        ? `${video.quickAction.effect} • ${formatHours(video.quickAction.time)} • ${formatCurrency(video.quickAction.cost)}`
-        : video.quickAction.disabledReason || 'Locked';
-      actionButton.addEventListener('click', event => {
-        event.stopPropagation();
-        if (actionButton.disabled) return;
-        onQuickAction?.(video.id, video.quickAction.id);
-      });
-      actionCell.appendChild(actionButton);
-    } else {
-      actionCell.textContent = 'No actions';
+    fragment.appendChild(name);
+    if (video.status?.label) {
+      const status = document.createElement('span');
+      status.className = 'videotube-status';
+      status.textContent = video.status.label;
+      fragment.appendChild(status);
     }
-
-    row.append(nameCell, latestCell, lifetimeCell, qualityCell, nicheCell, actionCell);
-    tbody.appendChild(row);
-  });
-
-  if (!tbody.children.length) {
-    const emptyRow = document.createElement('tr');
-    const cell = document.createElement('td');
-    cell.colSpan = 6;
-    cell.className = 'videotube-table__empty';
-    cell.textContent = 'No videos yet. Launch your first upload to start cashing in.';
-    emptyRow.appendChild(cell);
-    tbody.appendChild(emptyRow);
+    return fragment;
+  },
+  latest(video, context) {
+    return (context.formatCurrency || (value => String(value ?? '')))(video.latestPayout || 0);
+  },
+  lifetime(video, context) {
+    return (context.formatCurrency || (value => String(value ?? '')))(video.lifetimeIncome || 0);
+  },
+  quality(video) {
+    return renderQualityCell(video);
+  },
+  niche(video) {
+    return renderNicheBadge(video);
+  },
+  quickAction(video, context) {
+    if (!video.quickAction) {
+      return 'No actions';
+    }
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'videotube-button videotube-button--ghost';
+    button.textContent = video.quickAction.label;
+    button.disabled = !video.quickAction.available;
+    button.title = video.quickAction.available
+      ? `${video.quickAction.effect} • ${(context.formatHours || (value => String(value ?? '')))(video.quickAction.time)} • ${(context.formatCurrency || (value => String(value ?? '')))(video.quickAction.cost)}`
+      : video.quickAction.disabledReason || 'Locked';
+    button.addEventListener('click', event => {
+      event.stopPropagation();
+      if (button.disabled) return;
+      context.onQuickAction?.(video.id, video.quickAction.id);
+    });
+    return button;
   }
+};
 
-  table.appendChild(tbody);
-  return table;
+function mapVideoRows(instances = [], state = {}, dependencies = {}) {
+  const {
+    formatCurrency = value => String(value ?? ''),
+    formatHours = value => String(value ?? ''),
+    onQuickAction = () => {}
+  } = dependencies;
+
+  return (Array.isArray(instances) ? instances : [])
+    .filter(Boolean)
+    .map(video => {
+      const cells = TABLE_COLUMNS.map(column => {
+        const renderer = CELL_RENDERERS[column.renderer] || CELL_RENDERERS[column.id];
+        const content = renderer
+          ? renderer(video, { formatCurrency, formatHours, onQuickAction })
+          : video[column.id];
+        return {
+          className: column.cellClassName,
+          content: content ?? ''
+        };
+      });
+      return {
+        id: video.id,
+        isSelected: video.id === state.selectedVideoId,
+        cells
+      };
+    });
 }
 
 export function createDashboardView(options = {}) {
   const {
-    formatCurrency,
-    formatPercent,
-    formatHours,
+    formatCurrency = value => String(value ?? ''),
+    formatPercent = value => String(value ?? ''),
+    formatHours = value => String(value ?? ''),
     onQuickAction,
     onSelectVideo
   } = options;
@@ -163,15 +170,34 @@ export function createDashboardView(options = {}) {
     const container = document.createElement('section');
     container.className = 'videotube-view videotube-view--dashboard';
 
-    container.appendChild(renderStatsBar(model.stats || {}, { formatCurrency, formatPercent }));
-
-    const instances = Array.isArray(model.instances) ? model.instances : [];
     container.appendChild(
-      renderDashboardTable(instances, state, {
-        formatCurrency,
-        formatHours,
-        onQuickAction,
-        onSelectVideo
+      renderKpiGrid({
+        items: createMetricItems(model.stats, { formatCurrency, formatPercent }),
+        theme: KPI_THEME
+      })
+    );
+
+    const rows = mapVideoRows(model.instances, state, {
+      formatCurrency,
+      formatHours,
+      onQuickAction,
+      onSelectVideo
+    });
+
+    container.appendChild(
+      renderInstanceTable({
+        theme: TABLE_THEME,
+        columns: TABLE_COLUMNS.map(column => ({
+          id: column.id,
+          label: column.label,
+          className: 'asset-table__heading'
+        })),
+        rows,
+        selectedId: state.selectedVideoId,
+        onSelect: id => onSelectVideo?.(id),
+        emptyState: {
+          message: 'No videos yet. Launch your first upload to start cashing in.'
+        }
       })
     );
 
