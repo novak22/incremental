@@ -52,6 +52,10 @@
   gap: 1.5rem;
 }
 
+.timodoro-tabs__panel[hidden] {
+  display: none;
+}
+
 .timodoro__grid {
   display: grid;
   gap: 1.5rem;
