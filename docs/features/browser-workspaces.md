@@ -1,113 +1,53 @@
 # Browser Workspace Reference
 
 ## Overview
-This note captures the shared UI expectations for the browser-based workspaces and the module-specific requirements for ServerHub, VideoTube, Shopily, and Learnly. It details the views, state, handlers, and primary layout regions, highlights common affordances, and proposes a configuration schema capable of expressing all four experiences.
+The browser workspaces now sit on a shared presenter foundation. ServerHub, VideoTube, and Shopily each instantiate `createAssetWorkspacePresenter` to wire up navigation, summary derivation, lock handling, and shared header scaffolding, while Learnly relies on the tab-oriented `createTabbedWorkspacePresenter` to coordinate its richer catalog flows.【F:src/ui/views/browser/utils/createAssetWorkspace.js†L1-L120】【F:src/ui/views/browser/components/serverhub.js†L11-L292】【F:src/ui/views/browser/components/videotube/createVideoTubeWorkspace.js†L9-L175】【F:src/ui/views/browser/components/shopily/createShopilyWorkspace.js†L8-L218】【F:src/ui/views/browser/components/learnly/createLearnlyWorkspace.js†L1-L415】
+
+Despite the shared presenter plumbing, most view renderers still build bespoke DOM to deliver tailored dashboards, tables, and card grids (e.g., ServerHub's app layout, VideoTube's dashboard/detail stack, Shopily's store grid, and Learnly's catalog and tab navigation).【F:src/ui/views/browser/components/serverhub/views/appsView.js†L71-L149】【F:src/ui/views/browser/components/videotube/views/dashboardView.js†L1-L118】【F:src/ui/views/browser/components/videotube/views/detailView.js†L20-L52】【F:src/ui/views/browser/components/shopily/views/dashboardView.js†L16-L172】【F:src/ui/views/browser/components/learnly/views/catalogView.js†L5-L46】【F:src/ui/views/browser/components/learnly/views/tabNavigation.js†L3-L35】
 
 ## Module Breakdown
 
 ### ServerHub Cloud Console
-- **Views**: `apps` (default), `upgrades`, and `pricing`, switched with presenter state and header buttons.【F:src/ui/views/browser/components/serverhub.js†L33-L43】【F:src/ui/views/browser/components/serverhub.js†L129-L193】【F:src/ui/views/browser/components/serverhub.js†L840-L872】
-- **State Fields**: `view` and `selectedAppId`, maintained by the workspace presenter and `ensureSelectedApp` helper.【F:src/ui/views/browser/components/serverhub.js†L33-L104】
-- **Primary Handlers**: `setView`, `selectApp`, `handleLaunch` (with launch confirmation), `handleQuickAction`, and `handleNicheSelect` control navigation, launching, quality actions, and niche assignment.【F:src/ui/views/browser/components/serverhub.js†L83-L127】
-- **Layout Regions**:
-  - Header with title, action buttons (launch, pricing, upgrades), and optional setup meta badge.【F:src/ui/views/browser/components/serverhub.js†L129-L193】
-  - KPI belt summarizing hero metrics.【F:src/ui/views/browser/components/serverhub.js†L195-L227】
-  - Nav tabs for the three views.【F:src/ui/views/browser/components/serverhub.js†L840-L872】
-  - View bodies: app table plus detail sidebar, upgrade grid, and pricing cards respectively.【F:src/ui/views/browser/components/serverhub.js†L247-L402】【F:src/ui/views/browser/components/serverhub.js†L608-L760】【F:src/ui/views/browser/components/serverhub.js†L701-L760】【F:src/ui/views/browser/components/serverhub.js†L772-L836】
+- **Presenter**: Composed with `createAssetWorkspacePresenter`, including launch CTA wiring and navigation badges.【F:src/ui/views/browser/components/serverhub.js†L11-L292】
+- **Views**: `apps`, `upgrades`, and `pricing`, exposed through the shared presenter’s tab list.【F:src/ui/views/browser/components/serverhub.js†L270-L291】
+- **State Fields**: `view` and `selectedAppId`, maintained through `ensureSelection` and persisted in presenter state.【F:src/ui/views/browser/components/serverhub.js†L116-L126】【F:src/ui/views/browser/components/serverhub.js†L216-L292】
+- **Primary Handlers**: Launch confirmation, quick actions, and niche assignment are coordinated through dedicated helpers invoked by the presenter.【F:src/ui/views/browser/components/serverhub.js†L99-L155】
+- **Layout Regions**: The apps view pairs a KPI belt, table, and detail sidebar; upgrades render a bespoke card grid; pricing showcases plan cards with lifecycle copy.【F:src/ui/views/browser/components/serverhub/views/appsView.js†L71-L149】【F:src/ui/views/browser/components/serverhub/views/upgradesView.js†L28-L109】【F:src/ui/views/browser/components/serverhub/views/pricingView.js†L12-L73】
+- **Bespoke DOM**: All three views hand-build their markup for metrics, tables, and CTA panels, preserving the original ServerHub visual treatment.【F:src/ui/views/browser/components/serverhub/views/appsView.js†L71-L149】【F:src/ui/views/browser/components/serverhub/views/upgradesView.js†L28-L109】【F:src/ui/views/browser/components/serverhub/views/pricingView.js†L12-L73】
 
 ### VideoTube Studio
-- **Views**: `dashboard`, `detail`, `create`, and `analytics`, selectable via masthead nav tabs.【F:src/ui/views/browser/components/videotube.js†L13-L120】【F:src/ui/views/browser/components/videotube.js†L709-L720】
-- **State Fields**: `view` and `selectedVideoId`, managed through the presenter’s state machine and `ensureSelectedVideo` selection guard.【F:src/ui/views/browser/components/videotube.js†L27-L51】【F:src/ui/views/browser/components/videotube.js†L747-L754】
-- **Primary Handlers**: `setView`, `handleQuickAction`, `handleNicheSelect`, and `handleRename` support view routing, action triggers, niche assignment, and inline renaming.【F:src/ui/views/browser/components/videotube.js†L42-L113】【F:src/ui/views/browser/components/videotube.js†L123-L215】
-- **Layout Regions**:
-  - Header masthead with title, nav tabs, and “Create New Video” CTA.【F:src/ui/views/browser/components/videotube.js†L69-L120】
-  - Dashboard metrics bar and table of uploads.【F:src/ui/views/browser/components/videotube.js†L123-L235】
-  - Detail view grid with stats, progress, payout breakdown, actions, niche panel, and rename form.【F:src/ui/views/browser/components/videotube.js†L360-L546】
-  - Create view launch card and analytics view twin panels for top earners and niche performance.【F:src/ui/views/browser/components/videotube.js†L552-L706】
+- **Presenter**: Uses `createAssetWorkspacePresenter` with a VideoTube-specific header and selection guard to keep `selectedVideoId` in sync.【F:src/ui/views/browser/components/videotube/createVideoTubeWorkspace.js†L82-L175】
+- **Views**: `dashboard`, `detail`, `create`, and `analytics`, surfaced as presenter tabs (the create view remains hidden until triggered).【F:src/ui/views/browser/components/videotube/createVideoTubeWorkspace.js†L151-L174】
+- **State Fields**: `view` and `selectedVideoId`, with `ensureSelectedVideo` demoting to the dashboard when no videos exist.【F:src/ui/views/browser/components/videotube/createVideoTubeWorkspace.js†L31-L44】【F:src/ui/views/browser/components/videotube/createVideoTubeWorkspace.js†L117-L175】
+- **Primary Handlers**: Quick actions, niche selection, rename, and creation callbacks all channel through workspace-level helpers before invoking asset APIs.【F:src/ui/views/browser/components/videotube/createVideoTubeWorkspace.js†L67-L115】
+- **Layout Regions**: The dashboard combines a stats belt with a hand-crafted table, the detail view builds a renameable header plus panel grid, the creation card captures launch requirements, and analytics renders twin lists.【F:src/ui/views/browser/components/videotube/views/dashboardView.js†L1-L118】【F:src/ui/views/browser/components/videotube/views/detailView.js†L20-L52】【F:src/ui/views/browser/components/videotube/views/createView.js†L4-L102】【F:src/ui/views/browser/components/videotube/views/analyticsView.js†L4-L57】
+- **Bespoke DOM**: Each view manually assembles its section structure to support custom styling and interactive behaviors like quick actions and inline rename.【F:src/ui/views/browser/components/videotube/views/dashboardView.js†L1-L118】【F:src/ui/views/browser/components/videotube/views/detailView.js†L20-L52】【F:src/ui/views/browser/components/videotube/views/createView.js†L4-L102】【F:src/ui/views/browser/components/videotube/views/analyticsView.js†L4-L57】
 
 ### Shopily Commerce Deck
-- **Views**: `dashboard`, `upgrades`, and `pricing`, coordinated by a tabbed workspace presenter and helper reducers.【F:src/ui/views/browser/components/shopily/index.js†L8-L124】【F:src/ui/views/browser/components/shopily/index.js†L200-L311】
-- **State Fields**: `view`, `selectedStoreId`, and `selectedUpgradeId`, with selectors and reducers enforcing valid selections.【F:src/ui/views/browser/components/shopily/state.js†L1-L71】【F:src/ui/views/browser/components/shopily/state.js†L72-L116】
-- **Primary Handlers**: quick actions and niche selection for stores, navigation helpers (`setView`, `reduceSetView`), and upgrade selection callbacks passed into the views.【F:src/ui/views/browser/components/shopily/index.js†L37-L124】【F:src/ui/views/browser/components/shopily/index.js†L200-L311】
-- **Layout Regions**:
-  - Top bar combining headline, nav tabs with badges, and launch button.【F:src/ui/views/browser/components/shopily/index.js†L249-L311】
-  - Dashboard view hero (KPI metrics plus CTA), store table, and detail sidebar for the selected store.【F:src/ui/views/browser/components/shopily/views/dashboardView.js†L13-L172】
-  - Upgrades view grid of upgrade cards with status tones, requirement lists, and CTA button logic.【F:src/ui/views/browser/components/shopily/index.js†L86-L198】【F:src/ui/views/browser/components/shopily/index.js†L200-L311】
-  - Pricing view presenting plan cards via lifecycle summaries.【F:src/ui/views/browser/components/shopily/index.js†L200-L311】
+- **Presenter**: Built on `createAssetWorkspacePresenter` via `createShopilyWorkspacePresenter`, layering in state reducers for dual selections and custom launch actions.【F:src/ui/views/browser/components/shopily/createShopilyWorkspace.js†L13-L222】
+- **Views**: `dashboard`, `upgrades`, and `pricing`, with tab badges tracking active stores and ready upgrades.【F:src/ui/views/browser/components/shopily/createShopilyWorkspace.js†L197-L217】
+- **State Fields**: `view`, `selectedStoreId`, and `selectedUpgradeId`, enforced by `ensureSelection` and reducer utilities in `state.js`.【F:src/ui/views/browser/components/shopily/state.js†L1-L87】【F:src/ui/views/browser/components/shopily/createShopilyWorkspace.js†L159-L218】
+- **Primary Handlers**: Quick actions, niche selection, upgrade selection, and launch callouts route through helper callbacks before updating presenter state.【F:src/ui/views/browser/components/shopily/createShopilyWorkspace.js†L43-L157】
+- **Layout Regions**: The dashboard renders a hero band, store table, and detail sidebar; upgrades provide a status-aware detail pane; pricing cards reuse lifecycle summaries.【F:src/ui/views/browser/components/shopily/views/dashboardView.js†L16-L170】【F:src/ui/views/browser/components/shopily/views/upgradesView.js†L11-L193】【F:src/ui/views/browser/components/shopily/views/pricingView.js†L1-L101】
+- **Bespoke DOM**: Dashboard, upgrade, and pricing views remain handcrafted to support dual-column grids, requirement lists, and launch CTAs without generic widgets.【F:src/ui/views/browser/components/shopily/views/dashboardView.js†L16-L170】【F:src/ui/views/browser/components/shopily/views/upgradesView.js†L11-L193】【F:src/ui/views/browser/components/shopily/views/pricingView.js†L1-L101】
 
 ### Learnly Academy
-- **Views**: `catalog`, `freeCourses`, `myCourses`, `detail`, and `pricing`, toggled through tab buttons and per-view routers.【F:src/ui/views/browser/components/learnly.js†L8-L203】【F:src/ui/views/browser/components/learnly.js†L231-L283】【F:src/ui/views/browser/components/learnly.js†L841-L895】
-- **State Fields**: `view`, `tab`, `category`, and `selectedCourseId`, maintained in module scope with `setState` and `ensureSelectedCourse` ensuring valid selections.【F:src/ui/views/browser/components/learnly.js†L39-L226】
-- **Primary Handlers**: category selection, tab routing, course enrollment/drop, and course detail navigation (`handleSelectCategory`, `handleOpenTab`, `handleOpenCourse`, `handleEnroll`, `handleDrop`).【F:src/ui/views/browser/components/learnly.js†L222-L276】
-- **Layout Regions**:
-  - Hero band with academy title and KPI metrics.【F:src/ui/views/browser/components/learnly.js†L302-L324】
-  - Tab navigation with badges for free courses and active enrollments.【F:src/ui/views/browser/components/learnly.js†L326-L359】
-  - View bodies: catalog filter and card grid, detail view with highlights and CTA, enrollments list, free-course list, and FAQ-style pricing view.【F:src/ui/views/browser/components/learnly.js†L373-L523】【F:src/ui/views/browser/components/learnly.js†L522-L729】【F:src/ui/views/browser/components/learnly.js†L731-L879】
+- **Presenter**: Powered by `createTabbedWorkspacePresenter`, with custom before/after hooks that hydrate a derived catalog context and sync complex tab state.【F:src/ui/views/browser/components/learnly/createLearnlyWorkspace.js†L1-L415】
+- **Views**: `catalog`, `freeCourses`, `myCourses`, `detail`, and `pricing`, chosen through tab navigation plus presenter-controlled view switching.【F:src/ui/views/browser/components/learnly/createLearnlyWorkspace.js†L302-L371】
+- **State Fields**: `view`, `tab`, `category`, and `selectedCourseId`, maintained in presenter state with guard rails ensuring valid course selections.【F:src/ui/views/browser/components/learnly/createLearnlyWorkspace.js†L17-L214】【F:src/ui/views/browser/components/learnly/createLearnlyWorkspace.js†L382-L508】
+- **Primary Handlers**: Tab changes, category filters, course enrollment/drop, and course navigation update presenter state via shared handler closures.【F:src/ui/views/browser/components/learnly/createLearnlyWorkspace.js†L421-L505】
+- **Layout Regions**: Learnly builds a hero with metrics, tab navigation, catalog grid with filters, detailed course panels, enrollment lists, and FAQ-style pricing sections via bespoke DOM helpers.【F:src/ui/views/browser/components/learnly/createLearnlyWorkspace.js†L254-L371】【F:src/ui/views/browser/components/learnly/views/catalogView.js†L5-L46】【F:src/ui/views/browser/components/learnly/views/myCoursesView.js†L1-L56】【F:src/ui/views/browser/components/learnly/views/pricingView.js†L1-L40】
+- **Bespoke DOM**: Every view composes custom card grids, lists, and tab controls to match Learnly’s education motif instead of relying on shared asset widgets.【F:src/ui/views/browser/components/learnly/createLearnlyWorkspace.js†L254-L371】【F:src/ui/views/browser/components/learnly/views/catalogView.js†L5-L46】【F:src/ui/views/browser/components/learnly/views/tabNavigation.js†L3-L35】【F:src/ui/views/browser/components/learnly/views/detailView.js†L1-L160】
 
 ## Common Affordances & Deviations
-- **Nav Tabs**: All workspaces surface view switching via tab buttons or nav controls, often with badges to communicate counts.【F:src/ui/views/browser/components/serverhub.js†L840-L872】【F:src/ui/views/browser/components/videotube.js†L69-L120】【F:src/ui/views/browser/components/shopily/index.js†L249-L311】【F:src/ui/views/browser/components/learnly.js†L326-L359】 Learnly diverges by driving routing entirely through module-level state rather than a shared presenter.
-- **KPI Grids/Bars**: Each module highlights summary metrics near the top of the workspace (ServerHub hero metrics, VideoTube stats bar, Shopily hero metrics, Learnly hero band).【F:src/ui/views/browser/components/serverhub.js†L195-L227】【F:src/ui/views/browser/components/videotube.js†L123-L146】【F:src/ui/views/browser/components/shopily/views/dashboardView.js†L13-L172】【F:src/ui/views/browser/components/learnly.js†L302-L324】 VideoTube’s dashboard keeps metrics inline with the view content rather than a separate hero.
-- **Instance Tables**: ServerHub, VideoTube, and Shopily rely on sortable-like tables listing assets with action cells.【F:src/ui/views/browser/components/serverhub.js†L247-L402】【F:src/ui/views/browser/components/videotube.js†L187-L235】【F:src/ui/views/browser/components/shopily/views/dashboardView.js†L36-L133】 Learnly instead uses card grids and enrollment lists for catalog data.
-- **Detail Panels**: ServerHub and Shopily pair tables with sidebar detail panels for the selected asset, while VideoTube uses a dedicated detail view. Learnly’s detail view replaces the grid entirely and includes back navigation cues.【F:src/ui/views/browser/components/serverhub.js†L608-L760】【F:src/ui/views/browser/components/shopily/views/dashboardView.js†L152-L172】【F:src/ui/views/browser/components/videotube.js†L360-L546】【F:src/ui/views/browser/components/learnly.js†L522-L683】
-- **Launch Dialogs/CTAs**: ServerHub shows a launch confirmation modal before deploying apps, Shopily and VideoTube provide immediate CTA buttons, and Learnly’s enrollment CTA can trigger confirmation or direct enrollment/drop workflows.【F:src/ui/views/browser/components/serverhub.js†L106-L160】【F:src/ui/views/browser/components/shopily/views/dashboardView.js†L13-L172】【F:src/ui/views/browser/components/videotube.js†L69-L120】【F:src/ui/views/browser/components/learnly.js†L265-L279】【F:src/ui/views/browser/components/learnly.js†L663-L680】
+- **Nav Tabs**: All workspaces expose view switching via presenter-driven tab buttons, with badges derived from model summaries (e.g., active assets, free-course counts). Learnly’s navigation remains custom, but still hooks into the presenter’s tab state.【F:src/ui/views/browser/utils/createAssetWorkspace.js†L20-L70】【F:src/ui/views/browser/components/serverhub.js†L270-L291】【F:src/ui/views/browser/components/videotube/createVideoTubeWorkspace.js†L151-L174】【F:src/ui/views/browser/components/shopily/createShopilyWorkspace.js†L197-L217】【F:src/ui/views/browser/components/learnly/createLearnlyWorkspace.js†L302-L371】
+- **KPI Grids/Bars**: Each module fronts key metrics near the top of its dashboard—ServerHub through KPI cards, VideoTube via a stats belt, Shopily with hero metrics, and Learnly through hero metrics aligned with study hours.【F:src/ui/views/browser/components/serverhub/views/appsView.js†L71-L149】【F:src/ui/views/browser/components/videotube/views/dashboardView.js†L1-L38】【F:src/ui/views/browser/components/shopily/views/dashboardView.js†L13-L168】【F:src/ui/views/browser/components/learnly/createLearnlyWorkspace.js†L254-L300】
+- **Instance Tables & Detail Panels**: ServerHub and Shopily use tables plus detail panels, while VideoTube shifts details into a dedicated view and Learnly leans on card grids and enrollment lists instead of tabular layouts.【F:src/ui/views/browser/components/serverhub/views/appsView.js†L71-L149】【F:src/ui/views/browser/components/shopily/views/dashboardView.js†L36-L168】【F:src/ui/views/browser/components/videotube/views/detailView.js†L20-L52】【F:src/ui/views/browser/components/learnly/views/catalogView.js†L5-L46】
+- **Launch Dialogs/CTAs**: ServerHub still prompts with a confirmation dialog, Shopily and VideoTube surface launch/create CTAs inline, and Learnly’s enroll/drop actions update state directly with optional confirmations.【F:src/ui/views/browser/components/serverhub.js†L99-L145】【F:src/ui/views/browser/components/shopily/createShopilyWorkspace.js†L43-L80】【F:src/ui/views/browser/components/videotube/views/createView.js†L29-L83】【F:src/ui/views/browser/components/learnly/createLearnlyWorkspace.js†L458-L505】
 - **Module-Specific Deviations**:
-  - ServerHub emphasizes a persistent detail sidebar and action console ordering for SaaS quality actions.【F:src/ui/views/browser/components/serverhub.js†L26-L127】【F:src/ui/views/browser/components/serverhub.js†L608-L760】
-  - VideoTube uniquely supports a creation wizard view and inline rename controls within the detail header.【F:src/ui/views/browser/components/videotube.js†L515-L569】
-  - Shopily relies on shared reducers to sync URL paths and selection between views, along with upgrade requirement formatting utilities.【F:src/ui/views/browser/components/shopily/state.js†L1-L116】【F:src/ui/views/browser/components/shopily/index.js†L63-L198】
-  - Learnly runs a custom state container (no presenter) with route syncing via `workspacePathController` and extensive card-based catalog layouts.【F:src/ui/views/browser/components/learnly.js†L222-L953】
+  - ServerHub prioritizes action consoles and lifecycle pricing details to reinforce SaaS management beats.【F:src/ui/views/browser/components/serverhub/views/appsView.js†L69-L149】【F:src/ui/views/browser/components/serverhub/views/pricingView.js†L12-L73】
+  - VideoTube maintains unique flows for inline rename and analytics summaries tied to quality progress.【F:src/ui/views/browser/components/videotube/createVideoTubeWorkspace.js†L101-L144】【F:src/ui/views/browser/components/videotube/views/analyticsView.js†L4-L57】
+  - Shopily leans on reducer helpers for cross-view selections and upgrade requirement formatting to support its store lifecycle storytelling.【F:src/ui/views/browser/components/shopily/state.js†L1-L87】【F:src/ui/views/browser/components/shopily/views/upgradesView.js†L11-L193】
+  - Learnly orchestrates a derived catalog context with hero metrics, category filters, and lock lookups to support education progression, standing apart from the asset-first modules.【F:src/ui/views/browser/components/learnly/createLearnlyWorkspace.js†L254-L508】
 
-## Proposed Configuration Schema
-The following schema captures the structural needs of all four workspaces. Each workspace module can be described with a single configuration object that downstream renderers interpret.
-
-```ts
-interface WorkspaceConfig {
-  id: string;                     // e.g., "serverhub", "videotube"
-  title: string;                  // Masthead heading
-  tagline: string;                // Subheading or hero note
-  state: {
-    defaultView: string;          // Initial view id
-    selections?: Record<string, { default?: string | null; source: 'table' | 'list' | 'tab'; }>; // e.g., selectedAppId
-    extra?: Record<string, any>;  // Module-specific view state (e.g., learnly.tab or category)
-  };
-  navTabs: Array<{
-    id: string;
-    label: string;
-    badgeSource?: 'summary.hero' | 'summary.counts' | 'custom';
-    targetView: string;
-  }>;
-  hero?: {
-    metrics: Array<{ id: string; label: string; format: 'currency' | 'percent' | 'integer' | 'duration'; source: string }>;
-    actions?: Array<{ id: string; label: string; intent: 'launch' | 'route' | 'custom'; view?: string; confirm?: boolean }>;
-  };
-  handlers: {
-    launch?: { action: 'launchAsset'; assetType: string; confirmDetails?: 'lifecycle' | 'simple' };
-    quickActions?: Array<{ assetType: string; actions: string[] }>;
-    nicheSelect?: { assetType: string };
-    rename?: { assetType: string; field: 'name' | 'title' };
-    enroll?: { enrollAction: string; dropAction?: string };
-  };
-  views: Record<string, ViewConfig>;
-}
-
-interface ViewConfig {
-  kind: 'table' | 'detail' | 'grid' | 'form' | 'faq';
-  regions: Array<
-    | { slot: 'metrics'; component: 'kpiBar' | 'statsGrid'; source: string }
-    | { slot: 'primary'; component: 'table'; source: string; columns: ColumnConfig[]; selection?: string; actions?: ActionCellConfig[] }
-    | { slot: 'primary'; component: 'cardGrid'; source: string; filters?: FilterConfig[] }
-    | { slot: 'sidebar'; component: 'detailPanel'; source: string; sections: DetailSectionConfig[] }
-    | { slot: 'primary'; component: 'panelGrid'; panels: PanelConfig[] }
-    | { slot: 'primary'; component: 'formCard'; fields: FormFieldConfig[] }
-    | { slot: 'primary'; component: 'faqList'; entries: FAQEntryConfig[] }
-  >;
-  emptyStates?: Record<string, { message: string; action?: string }>;
-  transitions?: Array<{ trigger: 'rowClick' | 'button' | 'tab'; targetView: string; selection?: string }>;
-}
-```
-
-- **ServerHub**: defines an `apps` view with a `table` region bound to SaaS instances and a `detailPanel` sidebar, plus `upgrades` (panel grid) and `pricing` (card grid). `handlers.launch` uses lifecycle confirmation, and `handlers.quickActions` enumerate the action console IDs.
-- **VideoTube**: maps `dashboard` to a metrics region and upload table, `detail` to a stats grid with panel grid and rename form, `create` to a form card, and `analytics` to a panel grid fed by aggregate analytics. `handlers.rename` and `handlers.quickActions` reference vlog assets.
-- **Shopily**: configures `dashboard` with hero metrics, store table, and store detail sidebar; `upgrades` with panel cards summarizing requirements; `pricing` with lifecycle card grid. Selection metadata covers both stores and upgrades.
-- **Learnly**: employs extra state (`tab`, `category`), a card grid catalog with filter controls, a detail view with highlight sections and CTA, an enrollment list (detailPanel variant without table), and a pricing FAQ list. `handlers.enroll` describes enrollment/drop flows instead of launch.
-
-Renderer implementations can read the shared schema to assemble consistent workspace shells while honoring module-specific nuances.
+Renderer implementations can continue to lean on the shared presenters while evolving bespoke view markup where the experience demands specialized layouts.
