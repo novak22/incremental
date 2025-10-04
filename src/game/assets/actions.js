@@ -19,7 +19,7 @@ import { instanceLabel } from './details.js';
 import { getAssetMetricId } from './helpers.js';
 import { markDirty } from '../../ui/invalidation.js';
 
-const ASSET_CORE_UI_SECTIONS = ['dashboard', 'headerAction', 'cards'];
+const ASSET_CORE_UI_SECTIONS = ['dashboard', 'headerAction', 'cards', 'player'];
 
 function getEffectiveSetupHours(definition) {
   const base = Number(definition.setup?.hoursPerDay) || 0;

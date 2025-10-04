@@ -453,6 +453,29 @@ test('state mutators mark dirty sections and drive partial UI refreshes', { conc
   assert.ok(callCounts.cards > 0, 'expected cards presenter to refresh when selling asset');
   const postSaleDirty = invalidation.consumeDirty();
   assert.deepStrictEqual(postSaleDirty, {}, 'expected executeAction to consume dirty sections after sale');
+
+  // Relaunch an instance that has not generated income yet and make sure the player panel updates when selling it.
+  resetCounts();
+  invalidation.consumeDirty();
+  state.money = Math.max(state.money, 1000);
+  state.timeLeft = 24;
+  const relaunchAction = assetsActionsModule.buildAssetAction(launchable);
+  relaunchAction.onClick();
+  const relaunchState = harness.stateModule.getAssetState(launchable.id, state);
+  const zeroInstance = relaunchState.instances.at(-1);
+  assert.ok(zeroInstance, 'expected a relaunched asset instance for zero-income sale test');
+  zeroInstance.lastIncome = 0;
+  zeroInstance.lastIncomeBreakdown = { total: 0, entries: [] };
+
+  resetCounts();
+  invalidation.consumeDirty();
+  const zeroSold = assetsActionsModule.sellAssetInstance(launchable, zeroInstance.id);
+  assert.strictEqual(zeroSold, true, 'expected zero-income sale to succeed');
+  assert.ok(callCounts.player > 0, 'expected player panel to refresh when selling a zero-income asset');
+  assert.ok(callCounts.dashboard > 0, 'expected dashboard to refresh when selling a zero-income asset');
+  assert.ok(callCounts.cards > 0, 'expected cards presenter to refresh when selling a zero-income asset');
+  const postZeroSaleDirty = invalidation.consumeDirty();
+  assert.deepStrictEqual(postZeroSaleDirty, {}, 'expected executeAction to consume dirty sections after zero-income sale');
 });
 
 test('firing an assistant marks cards dirty and refreshes card presenters', { concurrency: false }, async t => {
