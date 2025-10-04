@@ -19,12 +19,18 @@
   gap: 0.85rem;
 }
 
-.videotube__title h1 {
+.videotube__title {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.videotube__title-heading {
   margin: 0;
   font-size: 1.55rem;
 }
 
-.videotube__title p {
+.videotube__subtitle {
   margin: 0;
   color: var(--browser-muted);
   font-size: 0.95rem;

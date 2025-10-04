@@ -148,29 +148,6 @@ export function createVideoTubeWorkspace(overrides = {}) {
     header(model, state, context) {
       return buildHeader(model, state, context);
     },
-    afterRender({ mount }) {
-      if (!mount) return;
-      const header = mount.querySelector('.videotube__header');
-      if (!header) return;
-      const masthead = header.querySelector('.videotube__masthead');
-      const title = header.querySelector('.videotube__title');
-      const actions = header.querySelector('.videotube__actions');
-      if (title) {
-        const wrapper = masthead || document.createElement('div');
-        if (!masthead) {
-          wrapper.className = 'videotube__masthead';
-        }
-        if (!wrapper.contains(title)) {
-          wrapper.appendChild(title);
-        }
-        if (actions && !wrapper.contains(actions)) {
-          wrapper.appendChild(actions);
-        }
-        if (!masthead) {
-          header.insertBefore(wrapper, header.firstChild);
-        }
-      }
-    },
     views: [
       {
         id: VIEW_DASHBOARD,

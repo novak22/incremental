@@ -97,6 +97,13 @@ test('createVideoTubeWorkspace wires table selection and actions', async t => {
   assert.ok(header, 'workspace header should render');
   assert.match(header.textContent, /VideoTube Studio/, 'expected VideoTube title');
 
+  const masthead = header.querySelector('.videotube__masthead');
+  assert.ok(masthead, 'header should render masthead wrapper');
+  assert.ok(
+    masthead.querySelector('.videotube__actions'),
+    'masthead should group primary actions with title'
+  );
+
   const navButtons = [...mount.querySelectorAll('.videotube-tab')];
   assert.equal(navButtons.length, 3, 'nav renders dashboard, detail, and analytics views');
   assert.deepEqual(

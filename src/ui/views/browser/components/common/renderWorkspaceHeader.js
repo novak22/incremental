@@ -93,54 +93,71 @@ export function renderWorkspaceHeader(options = {}) {
     actions,
     nav,
     theme: themeOverride = {},
-    description
+    description,
+    layout = {}
   } = options;
 
   const theme = { ...DEFAULT_THEME, ...themeOverride };
   const header = document.createElement('header');
   header.className = className || theme.header;
 
+  let intro;
+  let introContent;
+
   if (title || subtitle || meta || badges?.length) {
-    const intro = document.createElement('div');
-    intro.className = theme.intro;
+    intro = document.createElement('div');
+    intro.className = layout.introClassName || theme.intro;
+
+    introContent = intro;
+    if (layout.titleGroupClass) {
+      const titleGroup = document.createElement('div');
+      titleGroup.className = layout.titleGroupClass;
+      intro.appendChild(titleGroup);
+      introContent = titleGroup;
+    }
 
     if (title) {
       const heading = document.createElement('h1');
       heading.className = theme.title;
       appendContent(heading, title);
-      intro.appendChild(heading);
+      introContent.appendChild(heading);
     }
 
     if (subtitle) {
       const subheading = document.createElement('p');
       subheading.className = theme.subtitle;
       appendContent(subheading, subtitle);
-      intro.appendChild(subheading);
+      introContent.appendChild(subheading);
     }
 
     const badgeList = renderBadges(badges, theme);
     if (badgeList) {
-      intro.appendChild(badgeList);
+      introContent.appendChild(badgeList);
     }
 
     if (meta || description) {
       const metaNode = document.createElement('p');
       metaNode.className = theme.meta;
       appendContent(metaNode, meta ?? description ?? '');
-      intro.appendChild(metaNode);
+      introContent.appendChild(metaNode);
     }
 
     header.appendChild(intro);
   }
 
+  let actionsRow = null;
   if (Array.isArray(actions) && actions.length) {
-    const actionsRow = document.createElement('div');
+    actionsRow = document.createElement('div');
     actionsRow.className = theme.actions;
     actions.forEach(action => {
       if (!action) return;
       actionsRow.appendChild(createActionButton(action, theme));
     });
-    header.appendChild(actionsRow);
+    if (layout.wrapIntroWithActions && intro) {
+      intro.appendChild(actionsRow);
+    } else {
+      header.appendChild(actionsRow);
+    }
   }
 
   const navNode = resolveNavConfig(nav, theme);

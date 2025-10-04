@@ -10,9 +10,16 @@ export function createVideoTubeHeader() {
 
     return {
       className: 'videotube__header',
+      layout: {
+        introClassName: 'videotube__masthead',
+        titleGroupClass: 'videotube__title',
+        wrapIntroWithActions: true
+      },
       theme: {
         header: 'videotube__header',
-        intro: 'videotube__title',
+        intro: 'videotube__masthead',
+        title: 'videotube__title-heading',
+        subtitle: 'videotube__subtitle',
         actions: 'videotube__actions',
         actionButton: 'videotube-button',
         nav: 'videotube-tabs',
