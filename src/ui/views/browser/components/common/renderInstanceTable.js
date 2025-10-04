@@ -194,6 +194,3 @@ export function renderInstanceTable(options = {}) {
   return container;
 }
 
-export default {
-  renderInstanceTable
-};

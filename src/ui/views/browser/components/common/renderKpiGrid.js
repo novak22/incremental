@@ -78,6 +78,3 @@ export function renderKpiGrid(options = {}) {
   return section;
 }
 
-export default {
-  renderKpiGrid
-};

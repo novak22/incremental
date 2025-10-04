@@ -151,6 +151,3 @@ export function renderWorkspaceHeader(options = {}) {
   return header;
 }
 
-export default {
-  renderWorkspaceHeader
-};
