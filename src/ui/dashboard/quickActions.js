@@ -73,6 +73,17 @@ function estimateRemainingRuns(asset, instance, action, remaining, state) {
   return Math.max(1, Math.ceil(remaining / progressPerRun));
 }
 
+function formatRemainingRuns(remainingRuns) {
+  if (!Number.isFinite(remainingRuns)) {
+    return null;
+  }
+  const runs = Math.max(0, Math.ceil(remainingRuns));
+  if (runs <= 0) {
+    return null;
+  }
+  return runs === 1 ? '1 remaining run' : `${runs} remaining runs`;
+}
+
 export function buildQuickActions(state) {
   const items = [];
   for (const hustle of getHustles()) {
@@ -175,13 +186,22 @@ export function buildAssetUpgradeRecommendations(state) {
           effortParts.push(`$${formatMoney(moneyCost)}`);
         }
         const progressNote = `${Math.min(current, target)}/${target} logged (${percentComplete}% complete)`;
-        const meta = effortParts.length ? `${progressNote} • ${effortParts.join(' • ')}` : progressNote;
         const actionLabel = typeof action.label === 'function'
           ? action.label({ definition: asset, instance, state })
           : action.label;
         const buttonLabel = actionLabel || 'Boost Quality';
         const remainingRuns = estimateRemainingRuns(asset, instance, action, remaining, state);
         const repeatable = remainingRuns == null ? true : remainingRuns > 1;
+        const metaParts = [];
+        const runsNote = formatRemainingRuns(remainingRuns);
+        if (runsNote) {
+          metaParts.push(runsNote);
+        }
+        metaParts.push(progressNote);
+        if (effortParts.length) {
+          metaParts.push(...effortParts);
+        }
+        const meta = metaParts.join(' • ');
 
         suggestions.push({
           id: `asset-upgrade:${asset.id}:${instance.id}:${action.id}:${key}`,
