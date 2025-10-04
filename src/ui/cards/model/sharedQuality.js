@@ -1,11 +1,11 @@
 import { formatHours, formatMoney } from '../../../core/helpers.js';
 import {
   canPerformQualityAction,
-  getNextQualityLevel,
   getQualityActionAvailability,
   getQualityActionUsage,
   getQualityTracks
-} from '../../../game/assets/quality.js';
+} from '../../../game/assets/quality/actions.js';
+import { getNextQualityLevel } from '../../../game/assets/quality/levels.js';
 
 export function clampNumber(value) {
   const number = Number(value);

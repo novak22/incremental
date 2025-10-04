@@ -7,11 +7,11 @@ import {
 } from '../../../game/assets/niches.js';
 import {
   canPerformQualityAction,
-  getNextQualityLevel,
   getQualityActionAvailability,
   getQualityActionUsage,
   getQualityTracks
-} from '../../../game/assets/quality.js';
+} from '../../../game/assets/quality/actions.js';
+import { getNextQualityLevel } from '../../../game/assets/quality/levels.js';
 import { getUpgradeSnapshot, describeUpgradeStatus } from './upgrades.js';
 import { registerModelBuilder } from '../modelBuilderRegistry.js';
 import { buildSkillLock } from './skillLocks.js';

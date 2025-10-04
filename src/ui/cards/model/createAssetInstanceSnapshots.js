@@ -3,7 +3,8 @@ import { getAssetState } from '../../../core/state.js';
 import { instanceLabel } from '../../../game/assets/details.js';
 import { formatMaintenanceSummary } from '../../../game/assets/maintenance.js';
 import { getInstanceNicheInfo } from '../../../game/assets/niches.js';
-import { getInstanceQualityRange, getQualityActions, getQualityLevel } from '../../../game/assets/quality.js';
+import { getQualityActions } from '../../../game/assets/quality/actions.js';
+import { getInstanceQualityRange, getQualityLevel } from '../../../game/assets/quality/levels.js';
 import {
   clampNumber,
   buildActionSnapshot as buildSharedActionSnapshot

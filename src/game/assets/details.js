@@ -1,10 +1,8 @@
 import { formatDays, formatHours, formatList, formatMoney } from '../../core/helpers.js';
 import { getAssetState } from '../../core/state.js';
 import { getDailyIncomeRange } from './payout.js';
-import {
-  getQualityLevelSummary,
-  getQualityTracks
-} from './quality.js';
+import { getQualityTracks } from './quality/actions.js';
+import { getQualityLevelSummary } from './quality/levels.js';
 
 export function ownedDetail(definition) {
   const assetState = getAssetState(definition.id);

@@ -4,11 +4,11 @@ import { getAssetState } from '../../core/state.js';
 import { getAssets, getHustles } from '../../game/registryService.js';
 import {
   canPerformQualityAction,
-  getNextQualityLevel,
   getQualityActions,
   getQualityTracks,
   performQualityAction
-} from '../../game/assets/quality.js';
+} from '../../game/assets/quality/actions.js';
+import { getNextQualityLevel } from '../../game/assets/quality/levels.js';
 import { instanceLabel } from '../../game/assets/details.js';
 
 function getQualitySnapshot(instance = {}) {

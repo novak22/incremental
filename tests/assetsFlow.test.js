@@ -11,6 +11,8 @@ const {
   currencyModule
 } = harness;
 const assetActionsModule = await import('../src/game/assets/actions.js');
+const qualityActionsModule = await import('../src/game/assets/quality/actions.js');
+const qualityLevelsModule = await import('../src/game/assets/quality/levels.js');
 
 const { getState, getAssetState } = stateModule;
 const { getAssetDefinition } = registryModule;
@@ -23,6 +25,12 @@ const {
   getIncomeRangeForDisplay,
   performQualityAction
 } = assetsModule;
+
+const {
+  getQualityActionUsage,
+  getQualityActions
+} = qualityActionsModule;
+const { getQualityLevelSummary } = qualityLevelsModule;
 
 const { spendMoney } = currencyModule;
 
@@ -141,6 +149,19 @@ test('income range for display reflects quality floor and ceiling', () => {
   assert.equal(range.max, 84);
 });
 
+test('quality level summary helper mirrors asset definition ordering', () => {
+  const summary = getQualityLevelSummary(blogDefinition);
+  assert.ok(Array.isArray(summary) && summary.length > 0, 'summary should include entries');
+  const configLevels = Array.isArray(blogDefinition?.quality?.levels)
+    ? blogDefinition.quality.levels
+    : [];
+  assert.equal(summary.length, configLevels.length, 'summary length should match configured levels');
+  if (configLevels.length) {
+    assert.equal(summary[0].level, configLevels[0].level, 'first level should match config order');
+    assert.equal(summary.at(-1).level, configLevels.at(-1).level, 'last level should match config order');
+  }
+});
+
 test('spending money during maintenance does not go negative', () => {
   const state = getState();
   state.money = 10;
@@ -202,17 +223,28 @@ test('quality action daily limit blocks repeat work until the next day', () => {
 
   const instanceId = instance.id;
   const startingTime = state.timeLeft;
+  const seoAction = getQualityActions(blogDefinition).find(entry => entry.id === 'seoSprint');
+  assert.ok(seoAction, 'expected SEO sprint quality action');
 
   performQualityAction('blog', instanceId, 'seoSprint');
   assert.ok(Math.abs(state.timeLeft - (startingTime - 2)) < 1e-6, 'first sprint should spend time');
+  let refreshedInstance = getAssetState('blog').instances.find(item => item.id === instanceId);
+  let usage = getQualityActionUsage(blogDefinition, refreshedInstance, seoAction);
+  assert.equal(usage.usedToday, 1, 'usage should record the first sprint');
 
   const afterFirstSprint = state.timeLeft;
   performQualityAction('blog', instanceId, 'seoSprint');
   assert.ok(Math.abs(state.timeLeft - afterFirstSprint) < 1e-6, 'daily limit should block repeat time spend');
+  refreshedInstance = getAssetState('blog').instances.find(item => item.id === instanceId);
+  usage = getQualityActionUsage(blogDefinition, refreshedInstance, seoAction);
+  assert.equal(usage.usedToday, 1, 'usage should not increase when limit blocks action');
 
   advanceToNextDay();
   performQualityAction('blog', instanceId, 'seoSprint');
   assert.ok(Math.abs(state.timeLeft - (24 - 2)) < 1e-6, 'daily limit should reset on the next day');
+  refreshedInstance = getAssetState('blog').instances.find(item => item.id === instanceId);
+  usage = getQualityActionUsage(blogDefinition, refreshedInstance, seoAction);
+  assert.equal(usage.usedToday, 1, 'usage should reset after the next day');
 });
 
 test('selling an asset instance removes it and scales by quality multiplier', () => {

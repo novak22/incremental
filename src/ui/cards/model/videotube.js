@@ -6,11 +6,8 @@ import {
   assignInstanceToNiche,
   getInstanceNicheInfo
 } from '../../../game/assets/niches.js';
-import {
-  getInstanceQualityRange,
-  getQualityActions,
-  getQualityLevel
-} from '../../../game/assets/quality.js';
+import { getQualityActions } from '../../../game/assets/quality/actions.js';
+import { getInstanceQualityRange, getQualityLevel } from '../../../game/assets/quality/levels.js';
 import { setAssetInstanceName } from '../../../game/assets/actions.js';
 import { describeAssetLaunchAvailability } from './assets.js';
 import { registerModelBuilder } from '../modelBuilderRegistry.js';
