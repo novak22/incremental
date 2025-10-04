@@ -117,10 +117,19 @@ function createChip({ label, value, tone = 'neutral', note, position }) {
 function renderHighlights(header = {}) {
   if (!elements?.highlights) return;
 
-  const chips = [];
+  const columns = {
+    left: [],
+    right: []
+  };
+
+  function pushChip(chip) {
+    if (!chip) return;
+    const position = chip.dataset.position === 'right' ? 'right' : 'left';
+    columns[position].push(chip);
+  }
   const quick = header?.quickObligation || null;
   const quickAmount = Math.max(0, Number(quick?.amount ?? 0));
-  chips.push(
+  pushChip(
     createChip({
       label: quick?.label || 'Next due',
       value: formatCurrency(quickAmount),
@@ -133,7 +142,7 @@ function renderHighlights(header = {}) {
   const top = header?.topEarner || null;
   const topAmount = Math.max(0, Number(top?.amount ?? 0));
   const topLabel = top?.label || '—';
-  chips.push(
+  pushChip(
     createChip({
       label: 'Top earner',
       value: `${topLabel} • ${formatCurrency(topAmount)}`,
@@ -167,7 +176,7 @@ function renderHighlights(header = {}) {
     const direction = entry?.direction || slot.fallbackDirection;
     const tone = amount > 0 ? (direction === 'out' ? 'out' : 'in') : 'neutral';
     const signedAmount = direction === 'out' ? -Math.abs(amount) : Math.abs(amount);
-    chips.push(
+    pushChip(
       createChip({
         label: entry?.label || slot.fallbackLabel,
         value: formatSignedCurrency(signedAmount),
@@ -179,11 +188,17 @@ function renderHighlights(header = {}) {
   });
 
   elements.highlights.innerHTML = '';
-  if (!chips.length) {
+  const totalChips = columns.left.length + columns.right.length;
+  if (!totalChips) {
     elements.highlights.hidden = true;
     return;
   }
-  chips.forEach(chip => elements.highlights.appendChild(chip));
+  ['left', 'right'].forEach(side => {
+    const column = document.createElement('div');
+    column.className = `bank-widget__column bank-widget__column--${side}`;
+    columns[side].forEach(chip => column.appendChild(chip));
+    elements.highlights.appendChild(column);
+  });
   elements.highlights.hidden = false;
 }
 

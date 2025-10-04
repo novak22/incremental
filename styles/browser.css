@@ -1167,6 +1167,19 @@ a {
   gap: 0.65rem;
 }
 
+.bank-widget__column {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.bank-widget__column--left {
+  justify-items: start;
+}
+
+.bank-widget__column--right {
+  justify-items: end;
+}
+
 .bank-widget__chip {
   display: inline-flex;
   align-items: center;
@@ -1177,14 +1190,6 @@ a {
   border: 1px solid var(--browser-panel-border);
   font-size: 0.84rem;
   line-height: 1;
-}
-
-.bank-widget__chip[data-position='left'] {
-  justify-self: start;
-}
-
-.bank-widget__chip[data-position='right'] {
-  justify-self: end;
 }
 
 .bank-widget__chip-label {
