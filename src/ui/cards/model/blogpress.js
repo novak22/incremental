@@ -1,128 +1,11 @@
-import { ensureArray, formatHours, formatMoney } from '../../../core/helpers.js';
-import { getAssetState, getState } from '../../../core/state.js';
-import { instanceLabel } from '../../../game/assets/details.js';
-import { formatMaintenanceSummary } from '../../../game/assets/maintenance.js';
-import {
-  assignInstanceToNiche,
-  getInstanceNicheInfo
-} from '../../../game/assets/niches.js';
-import {
-  canPerformQualityAction,
-  getQualityActionAvailability,
-  getQualityActionUsage,
-  getQualityActions,
-  getQualityTracks
-} from '../../../game/assets/quality/actions.js';
-import {
-  getInstanceQualityRange,
-  getNextQualityLevel,
-  getQualityLevel
-} from '../../../game/assets/quality/levels.js';
+import { ensureArray } from '../../../core/helpers.js';
+import { getState } from '../../../core/state.js';
+import { assignInstanceToNiche } from '../../../game/assets/niches.js';
 import { describeAssetLaunchAvailability } from './assets.js';
 import { registerModelBuilder } from '../modelBuilderRegistry.js';
 import { buildSkillLock } from './skillLocks.js';
-import {
-  calculateAveragePayout,
-  describeInstanceStatus,
-  estimateLifetimeSpend,
-  buildPayoutBreakdown,
-  mapNicheOptions,
-  buildDefaultSummary
-} from './sharedAssetInstances.js';
-
-function clampNumber(value) {
-  const number = Number(value);
-  return Number.isFinite(number) ? number : 0;
-}
-
-function buildMilestoneProgress(definition, instance) {
-  const quality = instance?.quality || {};
-  const level = Math.max(0, clampNumber(quality.level));
-  const nextLevel = getNextQualityLevel(definition, level);
-  const tracks = getQualityTracks(definition);
-  const progress = quality.progress || {};
-
-  if (!nextLevel?.requirements) {
-    return {
-      level,
-      percent: 1,
-      summary: 'Maxed out — future milestones queued for future builds.',
-      nextLevel: null,
-      steps: []
-    };
-  }
-
-  let totalGoal = 0;
-  let totalCurrent = 0;
-  const steps = [];
-
-  Object.entries(nextLevel.requirements).forEach(([key, rawGoal]) => {
-    const goal = Math.max(0, clampNumber(rawGoal));
-    if (goal <= 0) return;
-    const current = Math.max(0, clampNumber(progress?.[key]));
-    const capped = Math.min(current, goal);
-    totalGoal += goal;
-    totalCurrent += capped;
-    const track = tracks?.[key] || {};
-    const label = track.shortLabel || track.label || key;
-    steps.push({
-      key,
-      label,
-      current: capped,
-      goal
-    });
-  });
-
-  const percent = totalGoal > 0 ? Math.min(1, totalCurrent / totalGoal) : 1;
-  const summary = steps.length
-    ? steps.map(step => `${step.current}/${step.goal} ${step.label}`).join(' • ')
-    : 'No requirements — quality milestone is ready to trigger.';
-
-  return {
-    level,
-    percent,
-    summary,
-    nextLevel,
-    steps
-  };
-}
-
-function buildActionSnapshot(definition, instance, action, state) {
-  const timeCost = Math.max(0, clampNumber(action.time));
-  const moneyCost = Math.max(0, clampNumber(action.cost));
-  const usage = getQualityActionUsage(definition, instance, action);
-  const availability = getQualityActionAvailability(definition, instance, action, state);
-  const unlocked = Boolean(availability?.unlocked);
-  const canRun = canPerformQualityAction(definition, instance, action, state);
-  let disabledReason = '';
-
-  if (instance.status !== 'active') {
-    const remaining = Math.max(0, clampNumber(instance.daysRemaining));
-    disabledReason = remaining > 0
-      ? `Launch finishes in ${remaining} day${remaining === 1 ? '' : 's'}`
-      : 'Launch prep wrapping up soon';
-  } else if (!unlocked) {
-    disabledReason = availability?.reason || 'Requires an upgrade first.';
-  } else if (usage.remainingUses <= 0) {
-    disabledReason = 'Daily limit reached — try again tomorrow.';
-  } else if (timeCost > 0 && state.timeLeft < timeCost) {
-    disabledReason = `Need ${formatHours(timeCost)} free.`;
-  } else if (moneyCost > 0 && state.money < moneyCost) {
-    disabledReason = `Need $${formatMoney(moneyCost)} on hand.`;
-  }
-
-  return {
-    id: action.id,
-    label: action.label || 'Quality push',
-    time: timeCost,
-    cost: moneyCost,
-    available: canRun,
-    unlocked,
-    usage,
-    disabledReason,
-    skills: action.skills || []
-  };
-}
+import { clampNumber } from './sharedQuality.js';
+import { formatBlogpressModel } from '../../blogpress/blogModel.js';
 
 function extractRelevantUpgrades(upgrades = []) {
   return ensureArray(upgrades)
@@ -143,77 +26,7 @@ function extractRelevantUpgrades(upgrades = []) {
     }));
 }
 
-function buildBlogInstances(definition, state) {
-  const assetState = getAssetState('blog', state) || { instances: [] };
-  const instances = ensureArray(assetState.instances);
-  const actions = getQualityActions(definition);
-  const nicheOptions = mapNicheOptions(definition, state);
-  const maintenance = formatMaintenanceSummary(definition);
-
-  return instances.map((instance, index) => {
-    const label = instanceLabel(definition, index);
-    const status = describeInstanceStatus(instance, definition);
-    const averagePayout = calculateAveragePayout(instance, state);
-    const lifetimeIncome = Math.max(0, clampNumber(instance.totalIncome));
-    const estimatedSpend = estimateLifetimeSpend(definition, instance, state);
-    const lifetimeNet = lifetimeIncome - estimatedSpend;
-    const createdOnDay = Math.max(0, clampNumber(instance?.createdOnDay));
-    const currentDay = Math.max(1, clampNumber(state?.day) || 1);
-    const daysActive = instance.status === 'active' && createdOnDay > 0
-      ? Math.max(1, currentDay - createdOnDay + 1)
-      : 0;
-    const qualityLevel = Math.max(0, clampNumber(instance?.quality?.level));
-    const qualityInfo = getQualityLevel(definition, qualityLevel);
-    const milestone = buildMilestoneProgress(definition, instance);
-    const qualityRange = getInstanceQualityRange(definition, instance);
-    const payoutBreakdown = buildPayoutBreakdown(instance);
-    const actionSnapshots = actions.map(action => buildActionSnapshot(definition, instance, action, state));
-    const quickAction = actionSnapshots.find(entry => entry.available) || actionSnapshots[0] || null;
-    const nicheInfo = getInstanceNicheInfo(instance, state);
-    const niche = nicheInfo
-      ? {
-          id: nicheInfo.definition?.id || '',
-          name: nicheInfo.definition?.name || nicheInfo.definition?.id || '',
-          summary: nicheInfo.popularity?.summary || '',
-          label: nicheInfo.popularity?.label || '',
-          multiplier: nicheInfo.popularity?.multiplier || 1,
-          score: clampNumber(nicheInfo.popularity?.score),
-          delta: Number.isFinite(Number(nicheInfo.popularity?.delta))
-            ? Number(nicheInfo.popularity.delta)
-            : null
-        }
-      : null;
-
-    return {
-      id: instance.id,
-      label,
-      status,
-      latestPayout: Math.max(0, clampNumber(instance.lastIncome)),
-      averagePayout,
-      lifetimeIncome,
-      estimatedSpend,
-      lifetimeNet,
-      maintenanceFunded: Boolean(instance.maintenanceFundedToday),
-      pendingIncome: Math.max(0, clampNumber(instance.pendingIncome)),
-      daysActive,
-      qualityLevel,
-      qualityInfo: qualityInfo || null,
-      qualityRange,
-      milestone,
-      payoutBreakdown,
-      actions: actionSnapshots,
-      quickAction,
-      niche,
-      nicheLocked: Boolean(instance.nicheId),
-      nicheOptions,
-      maintenance,
-      definition,
-      instance
-    };
-  });
-}
-
-function buildPricing(definition, upgrades = [], state) {
+function buildPricing(definition, upgrades = [], { nicheOptions = [] } = {}) {
   const setup = definition?.setup || {};
   const maintenance = definition?.maintenance || {};
   const quality = definition?.quality || {};
@@ -233,7 +46,9 @@ function buildPricing(definition, upgrades = [], state) {
     cost: Math.max(0, clampNumber(action.cost))
   }));
   const upgradesList = extractRelevantUpgrades(upgrades);
-  const nicheOptions = mapNicheOptions(definition, state).sort((a, b) => b.score - a.score);
+  const sortedNicheOptions = ensureArray(nicheOptions)
+    .slice()
+    .sort((a, b) => (b.score || 0) - (a.score || 0));
 
   return {
     setup,
@@ -241,17 +56,9 @@ function buildPricing(definition, upgrades = [], state) {
     levels,
     actions,
     upgrades: upgradesList,
-    topNiches: nicheOptions.slice(0, 3),
-    nicheCount: nicheOptions.length
+    topNiches: sortedNicheOptions.slice(0, 3),
+    nicheCount: sortedNicheOptions.length
   };
-}
-
-function buildSummary(instances = []) {
-  return buildDefaultSummary(instances, {
-    fallbackLabel: 'blog',
-    includeNeedsUpkeep: true,
-    setupMeta: 'Launch prep in progress'
-  });
 }
 
 function buildBlogpressModel(assetDefinitions = [], upgradeDefinitions = [], state = getState()) {
@@ -278,9 +85,8 @@ function buildBlogpressModel(assetDefinitions = [], upgradeDefinitions = [], sta
     };
   }
 
-  const instances = buildBlogInstances(definition, state);
-  const summary = buildSummary(instances);
-  const pricing = buildPricing(definition, upgradeDefinitions, state);
+  const { summary, instances, nicheOptions } = formatBlogpressModel({ definition, state });
+  const pricing = buildPricing(definition, upgradeDefinitions, { nicheOptions });
   const availability = describeAssetLaunchAvailability(definition, state);
   const launchAction = definition.action || null;
   const launch = launchAction

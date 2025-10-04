@@ -1,4 +1,5 @@
 import { formatHours, formatMoney } from '../../../../core/helpers.js';
+import { getState } from '../../../../core/state.js';
 import { selectBlogpressNiche } from '../../../cards/model/index.js';
 import { performQualityAction } from '../../../../game/assets/index.js';
 import { formatCurrency as baseFormatCurrency, formatNetCurrency } from '../utils/formatting.js';
@@ -8,6 +9,7 @@ import { createTabbedWorkspacePresenter } from '../utils/createTabbedWorkspacePr
 import { createNavTabs } from './common/navBuilders.js';
 import { createWorkspaceLockRenderer } from './common/renderWorkspaceLock.js';
 import { getWorkspaceLockTheme } from './common/workspaceLockThemes.js';
+import { formatBlogpressModel } from '../../../blogpress/blogModel.js';
 import renderHomeView from './blogpress/views/homeView.js';
 import createBackButton from './blogpress/views/createBackButton.js';
 import { createDetailViewController } from './blogpress/views/createDetailViewController.js';
@@ -297,6 +299,19 @@ const presenter = createTabbedWorkspacePresenter({
   isLocked: model => !model?.definition
 });
 
+function prepareModelForRender(model = {}) {
+  if (!model?.definition || model?.lock) {
+    return model;
+  }
+  const formatted = formatBlogpressModel({ definition: model.definition, state: getState() });
+  return {
+    ...model,
+    summary: formatted.summary,
+    instances: formatted.instances,
+    nicheOptions: formatted.nicheOptions
+  };
+}
+
 function setView(view, options = {}) {
   presenter.updateState(currentState => {
     const next = { ...currentState };
@@ -311,7 +326,8 @@ function setView(view, options = {}) {
 }
 
 export function render(model = {}, context = {}) {
-  return presenter.render(model, context);
+  const preparedModel = prepareModelForRender(model);
+  return presenter.render(preparedModel, context);
 }
 
 export default { render };
