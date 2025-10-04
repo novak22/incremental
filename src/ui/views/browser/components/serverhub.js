@@ -182,6 +182,18 @@ function deriveSummary(model = {}) {
   return { meta };
 }
 
+function derivePath(state = {}) {
+  switch (state.view) {
+    case VIEW_UPGRADES:
+      return 'upgrades';
+    case VIEW_PRICING:
+      return 'pricing';
+    case VIEW_APPS:
+    default:
+      return '';
+  }
+}
+
 let presenter;
 
 const renderAppsView = createAppsView({
@@ -207,6 +219,7 @@ presenter = createAssetWorkspacePresenter({
   state: { view: VIEW_APPS, selectedAppId: null },
   ensureSelection,
   deriveSummary,
+  derivePath,
   renderLocked: renderLockedState,
   isLocked: model => !model?.definition,
   header(model, state, { setView }) {
@@ -219,16 +232,6 @@ presenter = createAssetWorkspacePresenter({
         disabled: launch.disabled,
         ...(reasons.length ? { title: reasons.join('\n') } : {}),
         onClick: () => handleLaunch(presenter)
-      },
-      {
-        label: 'Pricing',
-        className: `serverhub-button serverhub-button--quiet${state.view === VIEW_PRICING ? ' is-active' : ''}`,
-        onClick: () => setView(VIEW_PRICING)
-      },
-      {
-        label: 'Upgrades',
-        className: `serverhub-button serverhub-button--quiet${state.view === VIEW_UPGRADES ? ' is-active' : ''}`,
-        onClick: () => setView(VIEW_UPGRADES)
       }
     ];
 
@@ -291,7 +294,8 @@ presenter = createAssetWorkspacePresenter({
 function render(model, context = {}) {
   const summary = presenter.render(model, context);
   const meta = summary?.meta || 'Launch your first micro SaaS';
-  return { meta };
+  const urlPath = summary?.urlPath || '';
+  return { meta, urlPath };
 }
 
 export default {

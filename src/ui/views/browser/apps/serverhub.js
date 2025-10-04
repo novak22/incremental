@@ -20,5 +20,6 @@ export default function renderServerHub(context = {}, definitions = [], model = 
 
   const summary = serverhubApp.render(model, { mount, page, definitions });
   const meta = summary?.meta || model?.summary?.meta || 'Launch your first micro SaaS';
-  return { id: page.id, meta };
+  const urlPath = summary?.urlPath || '';
+  return { id: page.id, meta, urlPath };
 }
