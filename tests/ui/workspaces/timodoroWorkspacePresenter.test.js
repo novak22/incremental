@@ -56,6 +56,15 @@ test('timodoro component renders layout and populates lists', t => {
 
   const viewModel = {
     meta: '3 tasks logged • 6h logged • $320 earned',
+    todoEntries: [
+      {
+        title: 'Draft pitch deck',
+        durationText: '2h focus',
+        meta: 'Client work',
+        moneyCost: 120
+      }
+    ],
+    todoEmptyMessage: 'Queue a hustle or upgrade to add new tasks.',
     completedGroups: {
       hustles: [{ name: 'Logo sprint', detail: '2h logged' }],
       education: [],
@@ -80,10 +89,34 @@ test('timodoro component renders layout and populates lists', t => {
   assert.equal(summary.meta, viewModel.meta, 'render returns view model meta');
   assert.equal(mount.className, 'timodoro', 'mount receives root class');
 
+  const tabs = [...mount.querySelectorAll('.timodoro-tabs__button')];
+  assert.equal(tabs.length, 2, 'two navigation tabs rendered');
+  assert.ok(tabs[0].classList.contains('is-active'), 'TODO tab active by default');
+
+  const todoItems = [
+    ...mount.querySelectorAll('[data-role="timodoro-todo-hustle"] .timodoro-list__item')
+  ];
+  assert.equal(todoItems.length, 1, 'todo tab renders active backlog');
+  assert.equal(todoItems[0].querySelector('.timodoro-list__name')?.textContent, 'Draft pitch deck');
+  assert.ok(
+    todoItems[0].querySelector('.timodoro-list__meta')?.textContent.includes('Cost $120'),
+    'todo item includes cost detail'
+  );
+
+  const upgradeEmpty = mount
+    .querySelector('[data-role="timodoro-todo-upgrade"] .timodoro-list__empty');
+  assert.ok(upgradeEmpty, 'upgrade lane renders empty state');
+  assert.equal(upgradeEmpty.textContent, 'Queue an upgrade to keep momentum.');
+
+  tabs[1].click();
+
   const available = mount.querySelector('[data-role="timodoro-hours-available"]');
   const spent = mount.querySelector('[data-role="timodoro-hours-spent"]');
   assert.equal(available?.textContent, '4h', 'available hours should update');
   assert.equal(spent?.textContent, '2h', 'spent hours should update');
+
+  const donePanel = mount.querySelector('[data-tab="done"]');
+  assert.equal(donePanel?.hidden, false, 'done tab becomes visible after selecting it');
 
   const hustleItems = [
     ...mount.querySelectorAll('[data-role="timodoro-completed-hustles"] .timodoro-list__item')
@@ -165,13 +198,25 @@ test('buildTimodoroViewModel composes summary, recurring, and meta data', () => 
   const todoModel = {
     hoursAvailable: 3,
     hoursAvailableLabel: '3h ready',
-    hoursSpent: 5
+    hoursSpent: 5,
+    entries: [
+      { title: 'Design Blitz', durationText: '2h focus' }
+    ],
+    emptyMessage: 'Queue something inspiring.'
   };
 
   const viewModel = buildTimodoroViewModel(state, summary, todoModel);
 
   assert.equal(viewModel.hoursAvailableLabel, '3h ready', 'uses provided available label');
   assert.equal(viewModel.hoursSpentLabel, '5h', 'formats supplied hours spent');
+
+  assert.equal(viewModel.todoEntries.length, 1, 'todo entries forwarded from todo model');
+  assert.equal(viewModel.todoEntries[0].title, 'Design Blitz', 'retains source todo data');
+  assert.equal(
+    viewModel.todoEmptyMessage,
+    'Queue something inspiring.',
+    'passes through todo empty state message'
+  );
 
   assert.equal(viewModel.summaryEntries.length, 3, 'summary entries include hours, earnings, time used');
   assert.equal(viewModel.breakdownEntries.length, 3, 'breakdown includes active, upkeep, remaining');

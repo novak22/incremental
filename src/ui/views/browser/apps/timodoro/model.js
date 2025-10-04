@@ -153,6 +153,8 @@ export function buildTimodoroViewModel(state = {}, summary = {}, todoModel = {})
   const recurringEntries = buildRecurringEntries(summary);
   const summaryEntries = buildSummaryEntries(summary, todoModel, state);
   const breakdownEntries = buildBreakdown(summary, todoModel, state);
+  const todoEntries = Array.isArray(todoModel?.entries) ? todoModel.entries : [];
+  const todoEmptyMessage = todoModel?.emptyMessage;
 
   const availableLabel = todoModel?.hoursAvailableLabel
     || formatHours(Number(todoModel?.hoursAvailable) || Number(state?.timeLeft) || 0);
@@ -169,6 +171,8 @@ export function buildTimodoroViewModel(state = {}, summary = {}, todoModel = {})
     recurringEntries,
     summaryEntries,
     breakdownEntries,
+    todoEntries,
+    todoEmptyMessage,
     hoursAvailableLabel: availableLabel,
     hoursSpentLabel: spentLabel,
     meta
