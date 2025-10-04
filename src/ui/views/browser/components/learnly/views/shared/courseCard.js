@@ -5,7 +5,7 @@ function resolveCategoryLabel(categoryId) {
   return CATEGORY_DEFINITIONS.find(entry => entry.id === categoryId)?.label || null;
 }
 
-export function createCourseCard({
+function createCourseCard({
   course,
   formatters,
   handlers,
@@ -109,4 +109,7 @@ export function createCourseCard({
   return card;
 }
 
-export default createCourseCard;
+export { createCourseCard };
+
+const createCourseCardComponent = createCourseCard;
+export default createCourseCardComponent;

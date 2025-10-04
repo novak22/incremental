@@ -1,4 +1,4 @@
-export function renderQualityPanel(video, { formatHours } = {}) {
+export default function renderQualityPanel(video, { formatHours } = {}) {
   const panel = document.createElement('section');
   panel.className = 'videotube-panel';
 
@@ -40,5 +40,3 @@ export function renderQualityPanel(video, { formatHours } = {}) {
 
   return panel;
 }
-
-export default renderQualityPanel;

@@ -16,7 +16,7 @@ function renderNicheBadge(video) {
   return badge;
 }
 
-export function renderNichePanel(video, { onNicheSelect } = {}) {
+export default function renderNichePanel(video, { onNicheSelect } = {}) {
   const panel = document.createElement('section');
   panel.className = 'videotube-panel';
 
@@ -71,5 +71,3 @@ export function renderNichePanel(video, { onNicheSelect } = {}) {
 
   return panel;
 }
-
-export default renderNichePanel;

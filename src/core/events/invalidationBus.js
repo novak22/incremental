@@ -106,9 +106,4 @@ export function flushDirty() {
   return dirty;
 }
 
-export function resetInvalidationBus() {
-  dirtySections.clear();
-  topicListeners.clear();
-}
-
 export { ALL_UI_SECTIONS };

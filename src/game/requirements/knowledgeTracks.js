@@ -97,4 +97,7 @@ export const KNOWLEDGE_REWARDS = {
   }
 };
 
-export default KNOWLEDGE_TRACKS;
+export { KNOWLEDGE_TRACKS };
+
+const knowledgeTrackCatalog = KNOWLEDGE_TRACKS;
+export default knowledgeTrackCatalog;

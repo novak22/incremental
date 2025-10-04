@@ -1,4 +1,4 @@
-export function renderStatsGrid(video, { formatCurrency } = {}) {
+export default function renderStatsGrid(video, { formatCurrency } = {}) {
   const stats = document.createElement('dl');
   stats.className = 'videotube-stats-grid';
 
@@ -25,5 +25,3 @@ export function renderStatsGrid(video, { formatCurrency } = {}) {
 
   return stats;
 }
-
-export default renderStatsGrid;

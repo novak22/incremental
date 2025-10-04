@@ -1,10 +1,20 @@
 import { STORAGE_KEY } from './constants.js';
 import { structuredClone } from './helpers.js';
-import { defaultStateManager } from './state.js';
+import {
+  defaultStateManager,
+  createStateManager,
+  buildDefaultState as buildDefaultStateWithDefault,
+  initializeState as initializeStateWithDefault,
+  replaceState as replaceStateWithDefault,
+  ensureStateShape as ensureStateShapeWithDefault,
+  getState as getStateWithDefault,
+  getAssetState as getAssetStateWithDefault,
+  getUpgradeState as getUpgradeStateWithDefault
+} from './state.js';
 import { StatePersistence } from './persistence/index.js';
 
 export function createStorage({
-  stateManager = defaultStateManager,
+  stateManager,
   storageKey = STORAGE_KEY,
   storage = globalThis?.localStorage,
   clone = structuredClone,
@@ -14,18 +24,44 @@ export function createStorage({
   repository,
   migrationRunner
 } = {}) {
+  const resolvedStateManager =
+    stateManager === null ? createStateManager() : stateManager ?? defaultStateManager;
+  const usingDefaultManager = resolvedStateManager === defaultStateManager;
+
+  const buildDefaultState = usingDefaultManager
+    ? (...args) => buildDefaultStateWithDefault(...args)
+    : (...args) => resolvedStateManager.buildDefaultState(...args);
+  const initializeState = usingDefaultManager
+    ? (...args) => initializeStateWithDefault(...args)
+    : (...args) => resolvedStateManager.initializeState(...args);
+  const replaceState = usingDefaultManager
+    ? (...args) => replaceStateWithDefault(...args)
+    : (...args) => resolvedStateManager.replaceState(...args);
+  const ensureStateShape = usingDefaultManager
+    ? (...args) => ensureStateShapeWithDefault(...args)
+    : (...args) => resolvedStateManager.ensureStateShape(...args);
+  const getState = usingDefaultManager
+    ? (...args) => getStateWithDefault(...args)
+    : (...args) => resolvedStateManager.getState(...args);
+  const getAssetState = usingDefaultManager
+    ? (...args) => getAssetStateWithDefault(...args)
+    : (...args) => resolvedStateManager.getAssetState(...args);
+  const getUpgradeState = usingDefaultManager
+    ? (...args) => getUpgradeStateWithDefault(...args)
+    : (...args) => resolvedStateManager.getUpgradeState(...args);
+
   const persistence = new StatePersistence({
     storageKey,
     storage,
     clone,
     now,
-    buildDefaultState: (...args) => stateManager.buildDefaultState(...args),
-    initializeState: (...args) => stateManager.initializeState(...args),
-    replaceState: (...args) => stateManager.replaceState(...args),
-    ensureStateShape: (...args) => stateManager.ensureStateShape(...args),
-    getState: (...args) => stateManager.getState(...args),
-    getAssetState: (...args) => stateManager.getAssetState(...args),
-    getUpgradeState: (...args) => stateManager.getUpgradeState(...args),
+    buildDefaultState,
+    initializeState,
+    replaceState,
+    ensureStateShape,
+    getState,
+    getAssetState,
+    getUpgradeState,
     migrations,
     logger,
     repository,

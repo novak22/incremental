@@ -215,7 +215,7 @@ export function describeUpgradeStatus({ purchased, ready, affordable, disabled }
   return 'Progress for this soon';
 }
 
-export function buildUpgradeModels(definitions = [], helpers = {}) {
+function buildUpgradeModels(definitions = [], helpers = {}) {
   const { getState: getStateFn = getState } = helpers;
   const state = getStateFn();
   const categories = buildUpgradeCategories(definitions).map(category => ({
@@ -282,4 +282,7 @@ function describeOverviewNote({ total, purchased, ready }) {
   return 'Meet the prerequisites or save up to line up your next power spike.';
 }
 
-export default buildUpgradeModels;
+export { buildUpgradeModels };
+
+const buildUpgradeModelsDefault = buildUpgradeModels;
+export default buildUpgradeModelsDefault;

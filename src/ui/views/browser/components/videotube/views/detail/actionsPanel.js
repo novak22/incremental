@@ -1,4 +1,4 @@
-export function renderActionsPanel(video, { formatCurrency, formatHours, onQuickAction } = {}) {
+export default function renderActionsPanel(video, { formatCurrency, formatHours, onQuickAction } = {}) {
   const panel = document.createElement('section');
   panel.className = 'videotube-panel';
 
@@ -51,5 +51,3 @@ export function renderActionsPanel(video, { formatCurrency, formatHours, onQuick
   panel.appendChild(list);
   return panel;
 }
-
-export default renderActionsPanel;
