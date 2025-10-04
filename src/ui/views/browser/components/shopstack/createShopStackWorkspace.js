@@ -1,4 +1,4 @@
-import { createAssetWorkspacePresenter } from '../../utils/createAssetWorkspace.js';
+import { createConfiguredAssetWorkspace } from '../../utils/createConfiguredAssetWorkspace.js';
 import {
   initialState,
   ensureSelection as ensureCatalogSelection,
@@ -84,13 +84,15 @@ export function createShopStackWorkspacePresenter() {
     }
   }
 
-  presenter = createAssetWorkspacePresenter({
+  presenter = createConfiguredAssetWorkspace({
+    assetType: 'shopstack',
     className: 'shopstack',
     defaultView: VIEW_CATALOG,
     state: { ...initialState },
     ensureSelection,
     deriveSummary: model => deriveWorkspaceSummary(model, definitionMap),
     derivePath,
+    isLocked: () => false,
     header(model, _state, sharedContext) {
       const pageMeta = sharedContext.presenter?.getPage?.() || {};
       return {
