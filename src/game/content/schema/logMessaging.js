@@ -7,9 +7,9 @@ export function logHustleBlocked(reason) {
   addLog(reason, 'warning');
 }
 
-export function logEducationBonusSummary(summary) {
+export function logEducationPayoffSummary(summary) {
   if (!summary) return;
-  addLog(`Your studies kicked in: ${summary}.`, 'info');
+  addLog(`Your studies kicked in: ${summary}.`, 'educationPayoff');
 }
 
 export function logUpgradeBlocked({ context, config, consumes }) {
