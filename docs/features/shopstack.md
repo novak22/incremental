@@ -29,4 +29,4 @@
 ## Implementation Notes
 - Upgrade state now records the in-game day of purchase so My Purchases can timestamp owned items without altering payout logic.
 - The ShopStack renderer exposes `data-upgrade` attributes on cards to keep shared layout filters functional across browser shells.
-- Styles live in `styles/browser.css` and respect the existing theme variables so day/night mode flips without extra overrides.
+- Styles live in `styles/workspaces/shopstack.css` and respect the existing theme variables so day/night mode flips without extra overrides.

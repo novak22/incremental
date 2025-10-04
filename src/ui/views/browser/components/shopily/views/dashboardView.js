@@ -1,58 +1,56 @@
-import { renderKpiGrid } from '../../common/renderKpiGrid.js';
-import { renderInstanceTable } from '../../common/renderInstanceTable.js';
-import { renderDetailPanel } from '../../common/renderDetailPanel.js';
 import { ensureArray } from '../../../../../../core/helpers.js';
 
 const KPI_THEME = {
-  container: 'asset-kpis shopily-metrics',
-  grid: 'asset-kpis__grid',
-  card: 'asset-kpi shopily-metric',
-  label: 'asset-kpi__label shopily-metric__label',
-  value: 'asset-kpi__value shopily-metric__value',
-  note: 'asset-kpi__note shopily-metric__note',
-  empty: 'asset-kpis__empty shopily-metrics__empty'
+  container: 'shopily-metrics',
+  grid: 'shopily-metrics__grid',
+  card: 'shopily-metric',
+  label: 'shopily-metric__label',
+  value: 'shopily-metric__value',
+  note: 'shopily-metric__note',
+  empty: 'shopily-metrics__empty'
 };
 
+const TABLE_COLUMNS = [
+  { id: 'label', label: 'Store', cellClassName: 'shopily-table__cell--label', renderer: 'name' },
+  { id: 'niche', label: 'Niche', renderer: 'niche' },
+  { id: 'latestPayout', label: 'Daily Earnings', renderer: 'earnings' },
+  { id: 'maintenanceCost', label: 'Upkeep', renderer: 'upkeep' },
+  { id: 'roi', label: 'ROI', renderer: 'roi' },
+  { id: 'actions', label: 'Actions', cellClassName: 'shopily-table__cell--actions', renderer: 'actions' }
+];
+
 const TABLE_THEME = {
-  container: 'asset-table shopily-table-wrapper',
-  table: 'asset-table__table shopily-table',
-  headCell: 'asset-table__heading',
-  row: 'asset-table__row',
-  cell: 'asset-table__cell shopily-table__cell',
-  actionsCell: 'asset-table__cell--actions shopily-table__cell--actions',
-  actions: 'asset-table__actions shopily-table__actions',
+  container: 'shopily-table-container',
+  table: 'shopily-table',
+  headCell: 'shopily-table__heading',
+  row: 'shopily-table__row',
+  cell: 'shopily-table__cell',
+  actionsCell: 'shopily-table__cell--actions',
+  actions: 'shopily-table__actions',
   actionButton: 'shopily-button shopily-button--ghost',
-  empty: 'asset-table__empty shopily-table__empty'
+  empty: 'shopily-table__empty'
 };
 
 const DETAIL_THEME = {
-  container: 'asset-detail shopily-detail',
+  container: 'shopily-detail',
   header: 'shopily-detail__header',
   title: 'shopily-detail__title',
   subtitle: 'shopily-detail__subtitle',
   status: 'shopily-status',
-  stats: 'asset-detail__stats shopily-stats',
-  stat: 'asset-detail__stat shopily-stats__row',
-  statLabel: 'asset-detail__stat-label',
-  statValue: 'asset-detail__stat-value',
-  statNote: 'asset-detail__stat-note',
-  sections: 'asset-detail__sections shopily-detail__sections',
-  section: 'asset-detail__section shopily-panel',
-  sectionTitle: 'asset-detail__section-title',
-  sectionBody: 'asset-detail__section-body shopily-panel__note',
-  actions: 'asset-detail__actions shopily-detail__actions',
-  actionButton: 'shopily-button shopily-button--secondary',
-  empty: 'asset-detail__empty shopily-detail__empty'
+  tabs: 'shopily-detail__tabs',
+  stats: 'shopily-detail__stats',
+  stat: 'shopily-detail__stat',
+  statLabel: 'shopily-detail__stat-label',
+  statValue: 'shopily-detail__stat-value',
+  statNote: 'shopily-detail__stat-note',
+  sections: 'shopily-detail__panels',
+  section: 'shopily-panel',
+  sectionTitle: 'shopily-panel__title',
+  sectionBody: 'shopily-panel__body',
+  actions: 'shopily-detail__actions',
+  actionButton: 'shopily-button',
+  empty: 'shopily-detail__empty'
 };
-
-const TABLE_COLUMNS = [
-  { id: 'name', label: 'Store', cellClassName: 'shopily-table__cell--label', renderer: 'name' },
-  { id: 'niche', label: 'Niche', renderer: 'niche' },
-  { id: 'earnings', label: 'Daily Earnings', renderer: 'earnings' },
-  { id: 'upkeep', label: 'Upkeep', renderer: 'upkeep' },
-  { id: 'roi', label: 'ROI', renderer: 'roi' },
-  { id: 'actions', label: 'Actions', renderer: 'actions' }
-];
 
 function describeMetricTone(value) {
   const numeric = Number(value) || 0;
@@ -61,17 +59,11 @@ function describeMetricTone(value) {
   return 'neutral';
 }
 
-function formatNicheDelta(delta, formatPercent) {
-  if (delta === null || delta === undefined) return '';
-  const numeric = Number(delta);
-  if (!Number.isFinite(numeric) || numeric === 0) return '';
-  const icon = numeric > 0 ? '⬆️' : '⬇️';
-  return `${icon} ${Math.abs(Math.round(numeric * 100))}%`;
-}
-
-function createMetricItems(metrics = {}, formatters = {}) {
-  const formatCurrency = formatters.formatCurrency || (value => String(value ?? ''));
-  const formatSignedCurrency = formatters.formatSignedCurrency || (value => String(value ?? ''));
+function mapHeroMetrics(metrics = {}, formatters = {}) {
+  const {
+    formatCurrency = value => String(value ?? ''),
+    formatSignedCurrency = value => String(value ?? '')
+  } = formatters;
   return [
     {
       id: 'totalStores',
@@ -104,12 +96,16 @@ function createMetricItems(metrics = {}, formatters = {}) {
   ];
 }
 
-function renderHero(model, dependencies = {}) {
-  const {
-    formatters = {},
-    createLaunchButton = () => document.createElement('button')
-  } = dependencies;
+function formatNicheDelta(delta, formatPercent) {
+  if (delta === null || delta === undefined) return '';
+  const numeric = Number(delta);
+  if (!Number.isFinite(numeric) || numeric === 0) return '';
+  const icon = numeric > 0 ? '⬆️' : '⬇️';
+  return `${icon} ${Math.abs(Math.round(numeric * 100))}%`;
+}
 
+function renderHero(model, dependencies = {}) {
+  const { formatters = {}, createLaunchButton = () => document.createElement('button'), renderKpiGrid } = dependencies;
   const hero = document.createElement('section');
   hero.className = 'shopily-hero';
 
@@ -126,331 +122,302 @@ function renderHero(model, dependencies = {}) {
   ctaRow.appendChild(createLaunchButton(model.launch));
 
   body.append(headline, summary, ctaRow);
-
-  const metrics = renderKpiGrid({
-    items: createMetricItems(model.metrics, formatters),
-    theme: KPI_THEME,
-    emptyState: {
-      message: 'Launch a store to start charting sales momentum.'
-    }
-  });
-
-  hero.append(body, metrics);
+  hero.append(body, renderKpiGrid({ items: mapHeroMetrics(model.metrics, formatters), theme: KPI_THEME }));
   return hero;
 }
 
-function mapTableColumns(columns = []) {
-  return columns.map(column => ({
-    id: column.id,
-    label: column.label,
-    className: 'asset-table__heading shopily-table__heading'
-  }));
+function renderNameCell(instance, handlers = {}) {
+  const { onSelectStore = () => {} } = handlers;
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'shopily-table__link';
+  button.textContent = instance.label;
+  button.addEventListener('click', event => {
+    event.stopPropagation();
+    onSelectStore(instance.id);
+  });
+  return button;
 }
 
-function createNicheCell(store, formatters = {}) {
-  const formatPercent = formatters.formatPercent || (value => String(value ?? ''));
+function renderNicheCell(instance, formatters = {}) {
+  const { formatPercent = value => String(value ?? '') } = formatters;
   const wrapper = document.createElement('div');
   wrapper.className = 'shopily-niche';
-
-  if (store.niche) {
+  if (instance.niche) {
     const name = document.createElement('strong');
     name.className = 'shopily-niche__name';
-    name.textContent = store.niche.name;
-
+    name.textContent = instance.niche.name;
     const trend = document.createElement('span');
     trend.className = 'shopily-niche__trend';
-    const delta = formatNicheDelta(store.niche.delta, formatPercent);
-    trend.textContent = delta || `${formatPercent(store.niche.multiplier - 1)} boost`;
+    const delta = formatNicheDelta(instance.niche.delta, formatPercent);
+    trend.textContent = delta || `${formatPercent(instance.niche.multiplier - 1)} boost`;
     wrapper.append(name, trend);
-  } else {
-    wrapper.textContent = 'Unassigned';
+    return wrapper;
   }
-
+  wrapper.textContent = 'Unassigned';
   return wrapper;
 }
 
-function createStoreRowActions(store, handlers = {}) {
-  const actions = [];
-  if (typeof handlers.onShowUpgradesForStore === 'function') {
-    actions.push({
-      id: 'upgrade',
-      label: 'Upgrade Store',
-      className: 'shopily-button shopily-button--ghost',
-      onSelect: () => handlers.onShowUpgradesForStore(store.id)
-    });
-  }
-  actions.push({
-    id: 'viewDetails',
-    label: 'View Details',
-    className: 'shopily-button shopily-button--link',
-    onSelect: () => handlers.onSelectStore?.(store.id)
-  });
-  return actions;
+function mapTableColumns() {
+  return TABLE_COLUMNS.map(column => ({
+    id: column.id,
+    label: column.label,
+    className: 'shopily-table__heading'
+  }));
 }
 
-const CELL_RENDERERS = {
-  name(store) {
-    return store.label;
-  },
-  niche(store, context) {
-    return createNicheCell(store, context.formatters);
-  },
-  earnings(store, context) {
-    return (context.formatters.formatCurrency || (value => String(value ?? '')))(store.latestPayout || 0);
-  },
-  upkeep(store, context) {
-    return (context.formatters.formatCurrency || (value => String(value ?? '')))(store.maintenanceCost || 0);
-  },
-  roi(store, context) {
-    return (context.formatters.formatPercent || (value => String(value ?? '')))(store.roi);
-  }
-};
-
-function mapStoreRows(instances, state = {}, dependencies = {}) {
+function mapTableRows(instances, state, dependencies = {}) {
   const { formatters = {}, handlers = {} } = dependencies;
-  return ensureArray(instances)
-    .filter(Boolean)
-    .map(store => {
-      const cells = TABLE_COLUMNS
-        .filter(column => column.id !== 'actions')
-        .map(column => {
-          const renderer = CELL_RENDERERS[column.renderer] || CELL_RENDERERS[column.id];
-          const content = renderer ? renderer(store, { formatters, handlers }) : store[column.id];
-          return {
-            className: column.cellClassName,
-            content: content ?? ''
-          };
-        });
-      return {
-        id: store.id,
-        isSelected: store.id === state.selectedStoreId,
-        cells,
-        actions: createStoreRowActions(store, handlers)
-      };
-    });
-}
-
-function mapDetailStats(store, formatters = {}) {
   const formatCurrency = formatters.formatCurrency || (value => String(value ?? ''));
-  const formatSignedCurrency = formatters.formatSignedCurrency || (value => String(value ?? ''));
   const formatPercent = formatters.formatPercent || (value => String(value ?? ''));
-  return [
-    { label: 'Latest payout', value: formatCurrency(store.latestPayout || 0) },
-    { label: 'Average / day', value: formatCurrency(store.averagePayout || 0) },
-    { label: 'Lifetime sales', value: formatCurrency(store.lifetimeIncome || 0) },
-    { label: 'Lifetime spend', value: formatCurrency(store.lifetimeSpend || 0) },
-    { label: 'Profit to date', value: formatSignedCurrency(store.profit || 0) },
-    { label: 'Lifetime ROI', value: formatPercent(store.roi) },
-    { label: 'Resale value', value: formatCurrency(store.resaleValue || 0) }
-  ];
+  const rows = [];
+  const selectedId = state.selectedStoreId;
+  ensureArray(instances).forEach(instance => {
+    const cells = [];
+    const actions = [];
+    TABLE_COLUMNS.forEach(column => {
+      if (!column) return;
+      const cell = { className: column.cellClassName };
+      switch (column.renderer) {
+        case 'name':
+          cell.content = renderNameCell(instance, handlers);
+          break;
+        case 'niche':
+          cell.content = renderNicheCell(instance, formatters);
+          break;
+        case 'earnings':
+          cell.content = formatCurrency(instance.latestPayout || 0);
+          break;
+        case 'upkeep':
+          cell.content = formatCurrency(instance.maintenanceCost || 0);
+          break;
+        case 'roi':
+          cell.content = formatPercent(instance.roi);
+          break;
+        case 'actions':
+          actions.push(
+            {
+              id: 'upgrade',
+              label: 'Upgrade Store',
+              className: 'shopily-button shopily-button--ghost',
+              onSelect(rowId) {
+                handlers.onShowUpgradesForStore?.(rowId);
+              }
+            },
+            {
+              id: 'details',
+              label: 'View Details',
+              className: 'shopily-button shopily-button--link',
+              onSelect(rowId) {
+                handlers.onSelectStore?.(rowId);
+              }
+            }
+          );
+          return;
+        default:
+          cell.content = instance[column.id];
+      }
+      cells.push(cell);
+    });
+    rows.push({
+      id: instance.id,
+      cells,
+      actions: actions.filter(Boolean),
+      isSelected: instance.id === selectedId
+    });
+  });
+  return rows;
 }
 
-function appendNode(fragment, node) {
-  if (!node) return;
-  fragment.appendChild(node);
-}
-
-function createTextElement(tag, className, text) {
-  const element = document.createElement(tag);
-  if (className) {
-    element.className = className;
-  }
-  if (text != null) {
-    element.textContent = text;
-  }
-  return element;
-}
-
-function createHealthSection(store, formatters = {}) {
-  const fragment = document.createDocumentFragment();
-  if (store.pendingIncome > 0) {
-    appendNode(fragment, createTextElement(
-      'p',
-      'shopily-panel__hint',
-      `Pending payouts: ${(formatters.formatCurrency || (value => String(value ?? '')))(store.pendingIncome)} once upkeep clears.`
-    ));
-  }
-  if (!store.maintenanceFunded) {
-    appendNode(fragment, createTextElement(
-      'p',
-      'shopily-panel__warning',
-      'Maintenance unfunded — cover daily upkeep to avoid shutdowns.'
-    ));
-  }
-  const maintenanceParts = ensureArray(store.maintenance?.parts);
-  if (maintenanceParts.length) {
-    appendNode(fragment, createTextElement(
-      'p',
-      'shopily-panel__note',
-      `Daily upkeep: ${maintenanceParts.join(' • ')}`
-    ));
-  }
-  if (!fragment.childNodes.length) {
-    return null;
-  }
+function mapStoreTable(instances, state, dependencies = {}) {
   return {
-    className: 'shopily-panel',
-    title: 'Operations',
-    content: fragment
+    theme: TABLE_THEME,
+    columns: mapTableColumns(),
+    rows: mapTableRows(instances, state, dependencies),
+    selectedId: state.selectedStoreId,
+    onSelect(id) {
+      dependencies.handlers?.onSelectStore?.(id);
+    },
+    emptyState: {
+      message: 'No stores yet. Launch your first shop to start capturing daily sales.'
+    }
   };
 }
 
-function createQualitySection(store) {
-  if (!store.milestone) {
-    return null;
-  }
+function createStatsSection(instance, helpers = {}) {
+  const {
+    formatCurrency = value => String(value ?? ''),
+    formatSignedCurrency = value => String(value ?? ''),
+    formatPercent = value => String(value ?? '')
+  } = helpers;
   const fragment = document.createDocumentFragment();
-  if (store.qualityInfo?.description) {
-    appendNode(fragment, createTextElement('p', 'shopily-panel__note', store.qualityInfo.description));
+  const list = document.createElement('dl');
+  list.className = 'shopily-stats';
+  const entries = [
+    { label: 'Latest payout', value: formatCurrency(instance.latestPayout || 0) },
+    { label: 'Average / day', value: formatCurrency(instance.averagePayout || 0) },
+    { label: 'Lifetime sales', value: formatCurrency(instance.lifetimeIncome || 0) },
+    { label: 'Lifetime spend', value: formatCurrency(instance.lifetimeSpend || 0) },
+    { label: 'Profit to date', value: formatSignedCurrency(instance.profit || 0) },
+    { label: 'Lifetime ROI', value: formatPercent(instance.roi) },
+    { label: 'Resale value', value: formatCurrency(instance.resaleValue || 0) }
+  ];
+  entries.forEach(entry => {
+    const row = document.createElement('div');
+    row.className = 'shopily-stats__row';
+    const term = document.createElement('dt');
+    term.textContent = entry.label;
+    const value = document.createElement('dd');
+    value.textContent = entry.value;
+    row.append(term, value);
+    list.appendChild(row);
+  });
+  fragment.appendChild(list);
+  if (!instance.maintenanceFunded) {
+    const warning = document.createElement('p');
+    warning.className = 'shopily-panel__warning';
+    warning.textContent = 'Maintenance unfunded — cover daily upkeep to avoid shutdowns.';
+    fragment.appendChild(warning);
+  }
+  if (ensureArray(instance.maintenance?.parts).length) {
+    const upkeep = document.createElement('p');
+    upkeep.className = 'shopily-panel__note';
+    upkeep.textContent = `Daily upkeep: ${instance.maintenance.parts.join(' • ')}`;
+    fragment.appendChild(upkeep);
+  }
+  return fragment;
+}
+
+function createQualitySection(instance, helpers = {}) {
+  const fragment = document.createDocumentFragment();
+  if (instance.qualityInfo?.description) {
+    const note = document.createElement('p');
+    note.className = 'shopily-panel__note';
+    note.textContent = instance.qualityInfo.description;
+    fragment.appendChild(note);
   }
   const progress = document.createElement('div');
   progress.className = 'shopily-progress';
   const fill = document.createElement('div');
   fill.className = 'shopily-progress__fill';
-  fill.style.setProperty('--shopily-progress', String((store.milestone.percent || 0) * 100));
+  fill.style.setProperty('--shopily-progress', String((instance.milestone?.percent || 0) * 100));
   progress.appendChild(fill);
-  fragment.appendChild(progress);
-  appendNode(fragment, createTextElement(
-    'p',
-    'shopily-panel__note',
-    store.milestone?.summary || 'Push quality actions to unlock the next tier.'
-  ));
-  return {
-    className: 'shopily-panel',
-    title: `Quality ${store.qualityLevel}`,
-    content: fragment
-  };
+  const summary = document.createElement('p');
+  summary.className = 'shopily-panel__note';
+  summary.textContent = instance.milestone?.summary || 'Push quality actions to unlock the next tier.';
+  fragment.append(progress, summary);
+  return fragment;
 }
 
-function createNicheSection(store, dependencies = {}) {
-  const { formatters = {}, handlers = {} } = dependencies;
-  const formatPercent = formatters.formatPercent || (value => String(value ?? ''));
+function createNicheSection(instance, helpers = {}) {
+  const { formatPercent = value => String(value ?? ''), onSelectNiche = () => {} } = helpers;
   const fragment = document.createDocumentFragment();
-
-  if (store.niche) {
-    appendNode(fragment, createTextElement('p', 'shopily-panel__lead', store.niche.name));
-    const delta = formatNicheDelta(store.niche.delta, formatPercent);
-    const boost = formatPercent(store.niche.multiplier - 1);
-    const summary = store.niche.summary || 'Trend snapshot unavailable.';
-    const extra = delta ? ` (${delta})` : boost !== '—' ? ` (${boost})` : '';
-    appendNode(fragment, createTextElement('p', 'shopily-panel__note', `${summary}${extra}`.trim()));
+  if (instance.niche) {
+    const lead = document.createElement('p');
+    lead.className = 'shopily-panel__lead';
+    lead.textContent = instance.niche.name;
+    const vibe = document.createElement('p');
+    vibe.className = 'shopily-panel__note';
+    const delta = formatNicheDelta(instance.niche.delta, formatPercent);
+    const boost = formatPercent(instance.niche.multiplier - 1);
+    vibe.textContent = `${instance.niche.summary || 'Trend snapshot unavailable.'} ${delta ? `(${delta})` : boost !== '—' ? `(${boost})` : ''}`.trim();
+    fragment.append(lead, vibe);
   } else {
-    appendNode(fragment, createTextElement(
-      'p',
-      'shopily-panel__note',
-      'No niche assigned yet. Pick a trending lane for bonus payouts.'
-    ));
+    const empty = document.createElement('p');
+    empty.className = 'shopily-panel__note';
+    empty.textContent = 'No niche assigned yet. Pick a trending lane for bonus payouts.';
+    fragment.appendChild(empty);
   }
-
-  if (!store.nicheLocked && ensureArray(store.nicheOptions).length) {
-    const field = createTextElement('label', 'shopily-field', 'Assign niche');
+  if (!instance.nicheLocked && ensureArray(instance.nicheOptions).length) {
+    const field = document.createElement('label');
+    field.className = 'shopily-field';
+    field.textContent = 'Assign niche';
     const select = document.createElement('select');
     select.className = 'shopily-select';
     const placeholder = document.createElement('option');
     placeholder.value = '';
     placeholder.textContent = 'Choose a niche';
     select.appendChild(placeholder);
-    ensureArray(store.nicheOptions).forEach(option => {
+    instance.nicheOptions.forEach(option => {
       const optionEl = document.createElement('option');
       optionEl.value = option.id;
       optionEl.textContent = `${option.name} — ${formatPercent(option.multiplier - 1)} boost`;
       select.appendChild(optionEl);
     });
-    select.value = store.niche?.id || '';
+    select.value = instance.niche?.id || '';
     select.addEventListener('change', event => {
-      const value = event.target.value || null;
-      handlers.onSelectNiche?.(store.id, value);
+      onSelectNiche(instance.id, event.target.value || null);
     });
     field.appendChild(select);
     fragment.appendChild(field);
-  } else if (store.nicheLocked && store.niche) {
-    appendNode(fragment, createTextElement(
-      'p',
-      'shopily-panel__hint',
-      'Niche locked in — upgrades can refresh trend strength.'
-    ));
+  } else if (instance.nicheLocked && instance.niche) {
+    const locked = document.createElement('p');
+    locked.className = 'shopily-panel__hint';
+    locked.textContent = 'Niche locked in — upgrades can refresh trend strength.';
+    fragment.appendChild(locked);
   }
-
-  return {
-    className: 'shopily-panel',
-    title: 'Audience niche',
-    content: fragment
-  };
+  return fragment;
 }
 
-function createPayoutSection(store, formatters = {}) {
-  const formatCurrency = formatters.formatCurrency || (value => String(value ?? ''));
-  const formatPercent = formatters.formatPercent || (value => String(value ?? ''));
+function createPayoutSection(instance, helpers = {}) {
+  const { formatCurrency = value => String(value ?? ''), formatPercent = value => String(value ?? '') } = helpers;
   const fragment = document.createDocumentFragment();
-  const entries = ensureArray(store.payoutBreakdown?.entries);
-
+  const entries = ensureArray(instance.payoutBreakdown?.entries);
   if (!entries.length) {
-    appendNode(fragment, createTextElement(
-      'p',
-      'shopily-panel__note',
-      'No payout modifiers yet. Unlock upgrades and courses to stack multipliers.'
-    ));
+    const note = document.createElement('p');
+    note.className = 'shopily-panel__note';
+    note.textContent = 'No payout modifiers yet. Unlock upgrades and courses to stack multipliers.';
+    fragment.appendChild(note);
   } else {
     const list = document.createElement('ul');
     list.className = 'shopily-list';
     entries.forEach(entry => {
       const item = document.createElement('li');
       item.className = 'shopily-list__item';
-      const label = createTextElement('span', 'shopily-list__label', entry.label);
+      const label = document.createElement('span');
+      label.className = 'shopily-list__label';
+      label.textContent = entry.label;
+      const value = document.createElement('span');
+      value.className = 'shopily-list__value';
       const amount = formatCurrency(entry.amount || 0);
-      const percent = entry.percent !== null && entry.percent !== undefined
-        ? ` (${formatPercent(entry.percent)})`
-        : '';
-      const value = createTextElement('span', 'shopily-list__value', `${amount}${percent}`);
+      const percent = entry.percent !== null && entry.percent !== undefined ? ` (${formatPercent(entry.percent)})` : '';
+      value.textContent = `${amount}${percent}`;
       item.append(label, value);
       list.appendChild(item);
     });
     fragment.appendChild(list);
   }
-
-  appendNode(fragment, createTextElement(
-    'p',
-    'shopily-panel__note',
-    `Yesterday’s total: ${formatCurrency(store.payoutBreakdown?.total || 0)}`
-  ));
-
-  return {
-    className: 'shopily-panel',
-    title: 'Payout recap',
-    content: fragment
-  };
+  const total = document.createElement('p');
+  total.className = 'shopily-panel__note';
+  total.textContent = `Yesterday’s total: ${formatCurrency(instance.payoutBreakdown?.total || 0)}`;
+  fragment.appendChild(total);
+  return fragment;
 }
 
-function createActionSection(store, dependencies = {}) {
-  const { formatters = {}, handlers = {} } = dependencies;
-  const actions = ensureArray(store.actions);
+function createActionSection(instance, helpers = {}) {
+  const { formatHours = value => String(value ?? ''), formatCurrency = value => String(value ?? ''), onRunAction = () => {} } = helpers;
+  const fragment = document.createDocumentFragment();
+  const actions = ensureArray(instance.actions);
   if (!actions.length) {
-    return {
-      className: 'shopily-panel',
-      title: 'Quality actions',
-      content: createTextElement(
-        'p',
-        'shopily-panel__note',
-        'No actions unlocked yet. Install upgrades to expand your playbook.'
-      )
-    };
+    const empty = document.createElement('p');
+    empty.className = 'shopily-panel__note';
+    empty.textContent = 'No actions unlocked yet. Install upgrades to expand your playbook.';
+    fragment.appendChild(empty);
+    return fragment;
   }
-
-  const formatHours = formatters.formatHours || (value => String(value ?? ''));
-  const formatCurrency = formatters.formatCurrency || (value => String(value ?? ''));
   const list = document.createElement('ul');
   list.className = 'shopily-action-list';
-
   actions.forEach(action => {
     const item = document.createElement('li');
     item.className = 'shopily-action';
-
-    const label = createTextElement('div', 'shopily-action__label', action.label);
-    const meta = createTextElement(
-      'div',
-      'shopily-action__meta',
-      `${action.time > 0 ? formatHours(action.time) : 'Instant'} • ${action.cost > 0 ? formatCurrency(action.cost) : 'No spend'}`
-    );
+    const label = document.createElement('div');
+    label.className = 'shopily-action__label';
+    label.textContent = action.label;
+    const meta = document.createElement('div');
+    meta.className = 'shopily-action__meta';
+    const time = action.time > 0 ? formatHours(action.time) : 'Instant';
+    const cost = action.cost > 0 ? formatCurrency(action.cost) : 'No spend';
+    meta.textContent = `${time} • ${cost}`;
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'shopily-button shopily-button--secondary';
@@ -461,29 +428,100 @@ function createActionSection(store, dependencies = {}) {
     }
     button.addEventListener('click', () => {
       if (button.disabled) return;
-      handlers.onRunAction?.(store.id, action.id);
+      onRunAction(instance.id, action.id);
     });
-
     item.append(label, meta, button);
     list.appendChild(item);
   });
-
-  return {
-    className: 'shopily-panel',
-    title: 'Quality actions',
-    content: list
-  };
+  fragment.appendChild(list);
+  return fragment;
 }
 
-function mapDetailSections(store, dependencies = {}) {
-  const sections = [
-    createHealthSection(store, dependencies.formatters),
-    createQualitySection(store),
-    createNicheSection(store, dependencies),
-    createPayoutSection(store, dependencies.formatters),
-    createActionSection(store, dependencies)
-  ];
-  return sections.filter(Boolean);
+function mapDetailSections(instance, helpers = {}) {
+  const sections = [];
+  if (instance.pendingIncome > 0) {
+    sections.push({
+      className: 'shopily-detail__notice',
+      render: ({ article }) => {
+        const notice = document.createElement('p');
+        notice.className = 'shopily-panel__hint';
+        notice.textContent = `Pending payouts: ${helpers.formatCurrency(instance.pendingIncome)} once upkeep clears.`;
+        const parent = article.parentNode;
+        if (parent) {
+          parent.replaceChild(notice, article);
+        }
+      }
+    });
+  }
+  sections.push({
+    className: 'shopily-panel',
+    title: 'Store health',
+    render: ({ article }) => {
+      article.appendChild(createStatsSection(instance, helpers));
+    }
+  });
+  sections.push({
+    className: 'shopily-panel',
+    title: `Quality ${instance.qualityLevel}`,
+    render: ({ article }) => {
+      article.appendChild(createQualitySection(instance, helpers));
+    }
+  });
+  sections.push({
+    className: 'shopily-panel',
+    title: 'Audience niche',
+    render: ({ article }) => {
+      article.appendChild(createNicheSection(instance, helpers));
+    }
+  });
+  sections.push({
+    className: 'shopily-panel',
+    title: 'Payout recap',
+    render: ({ article }) => {
+      article.appendChild(createPayoutSection(instance, helpers));
+    }
+  });
+  sections.push({
+    className: 'shopily-panel',
+    title: 'Quality actions',
+    render: ({ article }) => {
+      article.appendChild(createActionSection(instance, helpers));
+    }
+  });
+  return sections;
+}
+
+function mapStoreDetail(model, state, dependencies = {}) {
+  const { selectors = {}, formatters = {}, handlers = {} } = dependencies;
+  const instance = selectors.getSelectedStore ? selectors.getSelectedStore(state, model) : null;
+  if (!instance) {
+    return {
+      theme: DETAIL_THEME,
+      className: 'shopily-detail',
+      isEmpty: true,
+      emptyState: {
+        message: 'Select a store to inspect payouts, niches, and upgrades.'
+      }
+    };
+  }
+  const helpers = {
+    ...formatters,
+    onRunAction: handlers.onRunAction,
+    onSelectNiche: handlers.onSelectNiche
+  };
+  return {
+    theme: DETAIL_THEME,
+    className: 'shopily-detail',
+    header: {
+      title: instance.label,
+      status: {
+        className: 'shopily-status',
+        label: instance.status?.label || 'Setup',
+        dataset: { state: instance.status?.id || 'setup' }
+      }
+    },
+    sections: mapDetailSections(instance, helpers)
+  };
 }
 
 export default function renderDashboardView(options = {}) {
@@ -496,58 +534,29 @@ export default function renderDashboardView(options = {}) {
     createLaunchButton = () => document.createElement('button')
   } = options;
 
-  const container = document.createElement('section');
-  container.className = 'shopily-view shopily-view--dashboard';
+  return function renderDashboardSection(viewContext = {}) {
+    const {
+      model: viewModel = model,
+      state: viewState = state,
+      renderKpiGrid,
+      renderInstanceTable,
+      renderDetailPanel
+    } = viewContext;
 
-  container.appendChild(renderHero(model, { formatters, createLaunchButton }));
+    const container = document.createElement('section');
+    container.className = 'shopily-view shopily-view--dashboard';
 
-  const grid = document.createElement('div');
-  grid.className = 'shopily-grid';
+    container.appendChild(renderHero(viewModel, { formatters, createLaunchButton, renderKpiGrid }));
 
-  const rows = mapStoreRows(model.instances, state, { formatters, handlers });
-  const table = renderInstanceTable({
-    theme: TABLE_THEME,
-    columns: mapTableColumns(TABLE_COLUMNS),
-    rows,
-    selectedId: state.selectedStoreId,
-    onSelect: id => handlers.onSelectStore?.(id),
-    emptyState: {
-      message: 'No stores yet. Launch your first shop to start capturing daily sales.'
-    }
-  });
+    const grid = document.createElement('div');
+    grid.className = 'shopily-grid';
+    const instances = ensureArray(viewModel.instances);
+    grid.append(
+      renderInstanceTable(mapStoreTable(instances, viewState, { formatters, handlers })),
+      renderDetailPanel(mapStoreDetail(viewModel, viewState, { selectors, formatters, handlers }))
+    );
 
-  const selectedStore = typeof selectors.getSelectedStore === 'function'
-    ? selectors.getSelectedStore(state, model)
-    : null;
-
-  const detail = renderDetailPanel({
-    theme: DETAIL_THEME,
-    isEmpty: !selectedStore,
-    emptyState: {
-      title: 'Select a store',
-      message: 'Pick a storefront to inspect payouts, niches, and quality plays.'
-    },
-    header: selectedStore
-      ? {
-          title: selectedStore.label,
-          subtitle: selectedStore.pendingIncome > 0
-            ? `${(formatters.formatCurrency || (value => String(value ?? '')))(selectedStore.pendingIncome)} waiting in pending payouts.`
-            : undefined,
-          status: {
-            className: 'shopily-status',
-            dataset: { state: selectedStore.status?.id || 'setup' },
-            label: selectedStore.status?.label || 'Setup'
-          }
-        }
-      : undefined,
-    stats: selectedStore ? mapDetailStats(selectedStore, formatters) : [],
-    sections: selectedStore
-      ? mapDetailSections(selectedStore, { formatters, handlers })
-      : []
-  });
-
-  grid.append(table, detail);
-  container.appendChild(grid);
-
-  return container;
+    container.appendChild(grid);
+    return container;
+  };
 }

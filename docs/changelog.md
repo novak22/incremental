@@ -1,7 +1,7 @@
 # Changelog
 
 ## Unreleased
-- Browser shell stylesheet now lives in modular source folders with a documented build step (`npm run build:css`) to regenerate the bundled `browser.css` before commits.
+- Browser shell stylesheet now lives in modular source folders that load directly via `<link>` tags in `index.html`, removing the bundle build step while preserving the base → component → widget → workspace → overlay cascade.
 - Browser chrome gains a partial invalidation system so background ticks and actions only refresh the dashboard, cards, and widgets that actually changed.
 - Knowledge tracks retune advanced business courses with longer sessions, higher tuitions, and refreshed hustle/asset bonuses while Free Course jumpstarts shift to 4h/day intensives.
 - Learnly adds a Free Courses tab stocked with XP-rich jumpstarts that unlock BlogPress, VideoTube, DigiShelf, Shopily, and ServerHub once you hit level 1 in their focus skill.
@@ -16,6 +16,7 @@
 - Browser chrome now features a notification bell that mirrors the event log with unread badges, read tracking, and a mark-all control.
 - AboutYou rebrands the browser profile hub with upbeat copy, refreshed styling, and tighter lists that only surface owned education tracks and equipped gear.
 - Browser shell app launchers now open themed confirmation modals before spinning up new blogs, SaaS apps, galleries, or e-book series, highlighting setup time, upfront spend, and daily upkeep before the action fires.
+- ServerHub, Shopily, and VideoTube dashboards now lean on shared KPI grids, instance tables, and detail panels so their layouts stay in sync while sharing styling updates.
 - Trends Intelligence Lab refreshes the browser app with analytics-style header controls, overview metrics, sparkline cards, and an expanded watchlist panel while reusing existing niche data.
 - Trends Intelligence Lab now includes a Name (A–Z) sort so players can scan niches alphabetically alongside momentum filters.
 - Trends analytics now archive a rolling seven-day highlight recap in local storage and surface it in the dashboard for fast comparisons across days.

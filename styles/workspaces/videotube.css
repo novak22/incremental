@@ -105,7 +105,8 @@
   box-shadow: none;
 }
 
-.videotube-stats {
+.videotube-stats,
+.videotube-stats__grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 0.75rem;
@@ -120,32 +121,41 @@
   gap: 0.3rem;
 }
 
-.videotube-stats__card span {
+.videotube-stats__card span,
+.videotube-stats__label,
+.videotube-stats__note {
   font-size: 0.8rem;
   color: var(--browser-text-subtle);
 }
 
-.videotube-stats__card strong {
+.videotube-stats__card strong,
+.videotube-stats__value {
   font-size: 1.15rem;
   color: var(--browser-text-strong);
+}
+
+.videotube-table-container {
+  background: var(--browser-surface-base);
+  border-radius: 1rem;
+  overflow: hidden;
 }
 
 .videotube-table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  background: var(--browser-surface-base);
-  border-radius: 1rem;
-  overflow: hidden;
 }
 
 .videotube-table th,
-.videotube-table td {
+.videotube-table td,
+.videotube-table__heading,
+.videotube-table__cell {
   padding: 0.9rem 1rem;
   text-align: left;
 }
 
-.videotube-table thead th {
+.videotube-table thead th,
+.videotube-table__heading {
   background: var(--browser-surface-muted);
   font-size: 0.85rem;
   color: var(--browser-text-subtle);
@@ -165,6 +175,7 @@
   background: var(--browser-primary-surface-transparent, rgba(73, 94, 255, 0.08));
 }
 
+
 .videotube-table__cell--label {
   display: flex;
   flex-direction: column;
@@ -180,10 +191,27 @@
   text-align: right;
 }
 
+.videotube-table__actions {
+  display: inline-flex;
+  gap: 0.4rem;
+  justify-content: flex-end;
+}
+
+.videotube-table__action-empty {
+  color: var(--videotube-text-muted, var(--browser-text-subtle));
+}
+
 .videotube-table__empty {
   text-align: center;
   padding: 2.5rem 1rem;
   color: var(--browser-text-subtle);
+}
+
+.videotube-dashboard {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  align-items: start;
 }
 
 .videotube-quality {
@@ -379,6 +407,16 @@
   font-size: 1.5rem;
 }
 
+.videotube-detail__title {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.videotube-detail__panels {
+  display: grid;
+  gap: 1rem;
+}
+
 .videotube-rename {
   display: flex;
   gap: 0.5rem;
@@ -402,6 +440,12 @@
 
 .videotube-stats-grid dd {
   margin: 0 0 0.5rem;
+  font-weight: 600;
+}
+
+.videotube-panel__title {
+  margin: 0;
+  font-size: 1rem;
   font-weight: 600;
 }
 

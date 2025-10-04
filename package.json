@@ -2,9 +2,8 @@
   "name": "online-hustle-simulator",
   "version": "0.1.0",
   "type": "module",
+  "description": "Charming incremental game with modular browser CSS loaded directly",
   "scripts": {
-    "build:css": "node scripts/build-css.js",
-    "prepare": "npm run build:css",
     "test": "node --test"
   },
   "devDependencies": {
