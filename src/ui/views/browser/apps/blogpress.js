@@ -22,16 +22,17 @@ export default function renderBlogpress(context = {}, definitions = [], model = 
   const mount = refs.body.querySelector('[data-role="blogpress-root"]');
   if (!mount) return null;
 
-  const definition = ensureArray(definitions).find(entry => entry?.id === 'blog')
-    || model.definition
-    || null;
+  const availableDefinition = ensureArray(definitions).find(entry => entry?.id === 'blog');
   const isLocked = Boolean(model?.lock);
+  const definition = !isLocked
+    ? (availableDefinition || model.definition || null)
+    : model.definition;
   const formatted = !isLocked && definition
     ? formatBlogpressModel(definition, getState())
     : null;
   const composedModel = {
     ...model,
-    definition,
+    ...(!isLocked ? { definition } : {}),
     ...(formatted || {})
   };
 
