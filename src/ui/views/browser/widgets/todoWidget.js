@@ -59,7 +59,7 @@ function getAvailableMoney(model = {}) {
   return Math.max(0, available);
 }
 
-function normalizeEntries(model = {}) {
+export function normalizeEntries(model = {}) {
   const entries = Array.isArray(model.entries) ? model.entries : [];
   return entries
     .map((entry, index) => {

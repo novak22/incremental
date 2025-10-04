@@ -10,6 +10,7 @@ import {
   performQualityAction
 } from '../../game/assets/quality.js';
 import { instanceLabel } from '../../game/assets/details.js';
+import { registerActionProvider, normalizeActionEntries } from '../actions/registry.js';
 
 function getQualitySnapshot(instance = {}) {
   const level = Math.max(0, clampNumber(instance?.quality?.level));
@@ -279,4 +280,39 @@ export function buildAssetActionModel(state = {}) {
     moneyAvailable: clampNumber(state.money)
   };
 }
+
+function provideQuickActions({ state } = {}) {
+  const model = buildQuickActionModel(state || {});
+  const { entries = [], ...metrics } = model || {};
+  const normalizedEntries = normalizeActionEntries(entries, { focusCategory: 'hustle' });
+  return {
+    id: 'dashboard:quick-actions',
+    focusCategory: 'hustle',
+    entries: normalizedEntries,
+    metrics
+  };
+}
+
+function provideAssetUpgrades({ state } = {}) {
+  const model = buildAssetActionModel(state || {});
+  const { entries = [], ...metrics } = model || {};
+  const normalizedEntries = normalizeActionEntries(entries, { focusCategory: 'upgrade' });
+  return {
+    id: 'dashboard:asset-upgrades',
+    focusCategory: 'upgrade',
+    entries: normalizedEntries,
+    metrics
+  };
+}
+
+export function registerQuickActionProvider() {
+  return registerActionProvider('dashboard:quick-actions', provideQuickActions);
+}
+
+export function registerAssetUpgradeProvider() {
+  return registerActionProvider('dashboard:asset-upgrades', provideAssetUpgrades);
+}
+
+registerQuickActionProvider();
+registerAssetUpgradeProvider();
 

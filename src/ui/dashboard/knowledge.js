@@ -2,6 +2,7 @@ import { formatHours, formatMoney } from '../../core/helpers.js';
 import { clampNumber } from './formatters.js';
 import { getHustles } from '../../game/registryService.js';
 import { KNOWLEDGE_TRACKS, getKnowledgeProgress } from '../../game/requirements.js';
+import { registerActionProvider, normalizeActionEntries } from '../actions/registry.js';
 
 export function computeStudyProgress(state = {}) {
   const tracks = Object.values(KNOWLEDGE_TRACKS);
@@ -120,4 +121,22 @@ export function buildStudyEnrollmentActionModel(state = {}) {
     hoursSpentLabel: formatHours(hoursSpent)
   };
 }
+
+function provideStudyEnrollments({ state } = {}) {
+  const model = buildStudyEnrollmentActionModel(state || {});
+  const { entries = [], ...metrics } = model || {};
+  const normalizedEntries = normalizeActionEntries(entries, { focusCategory: 'study' });
+  return {
+    id: 'dashboard:study-enrollment',
+    focusCategory: 'study',
+    entries: normalizedEntries,
+    metrics
+  };
+}
+
+export function registerStudyEnrollmentProvider() {
+  return registerActionProvider('dashboard:study-enrollment', provideStudyEnrollments);
+}
+
+registerStudyEnrollmentProvider();
 

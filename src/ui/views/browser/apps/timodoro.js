@@ -1,14 +1,9 @@
 import { getState } from '../../../../core/state.js';
 import { computeDailySummary } from '../../../../game/summary.js';
-import {
-  buildQuickActionModel,
-  buildAssetActionModel,
-  buildStudyEnrollmentActionModel
-} from '../../../dashboard/model.js';
-import { composeTodoModel, createAutoCompletedEntries } from '../dashboardPresenter.js';
 import timodoroApp from './timodoro/ui.js';
 import { createWorkspaceRenderer } from '../utils/workspaceFactories.js';
 import { buildTimodoroViewModel } from './timodoro/model.js';
+import { buildActionQueue } from '../../../actions/registry.js';
 
 const renderTimodoroWorkspace = createWorkspaceRenderer({
   pageType: 'timodoro',
@@ -29,11 +24,7 @@ function resolveViewModel(model, state) {
   }
 
   const summary = computeDailySummary(state);
-  const quickActions = buildQuickActionModel(state);
-  const assetActions = buildAssetActionModel(state);
-  const studyActions = buildStudyEnrollmentActionModel(state);
-  const autoEntries = createAutoCompletedEntries(summary);
-  const todoModel = composeTodoModel(quickActions, assetActions, studyActions, autoEntries);
+  const todoModel = buildActionQueue({ state, summary });
 
   return buildTimodoroViewModel(state, summary, todoModel);
 }
