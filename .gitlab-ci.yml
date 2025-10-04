@@ -1,0 +1,21 @@
+stages:
+  - deploy
+
+pages:
+  image: node:20
+  stage: deploy
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}
+    paths:
+      - node_modules/
+  script:
+    - npm ci
+    - npm run build
+    - rm -rf public
+    - cp -r dist public
+  artifacts:
+    paths:
+      - public
+    expire_in: 1 week
+  only:
+    - main
