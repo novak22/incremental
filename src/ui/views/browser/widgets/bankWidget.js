@@ -117,40 +117,47 @@ function createChip({ label, value, tone = 'neutral', note, position }) {
 function renderHighlights(header = {}) {
   if (!elements?.highlights) return;
 
-  const columns = {
-    left: [],
-    right: []
-  };
+  const chips = [];
 
-  function pushChip(chip) {
-    if (!chip) return;
-    const position = chip.dataset.position === 'right' ? 'right' : 'left';
-    columns[position].push(chip);
+  function addChip({ label, amount = 0, direction = 'in', note = '', position = 'left', valueFormatter = formatSignedCurrency }) {
+    const numericAmount = Number(amount);
+    const safeAmount = Number.isFinite(numericAmount) ? numericAmount : 0;
+    const normalizedDirection = direction === 'out' ? 'out' : 'in';
+    const tone = safeAmount === 0 ? 'neutral' : normalizedDirection === 'out' ? 'out' : 'in';
+    const signedAmount = normalizedDirection === 'out' ? -Math.abs(safeAmount) : Math.abs(safeAmount);
+
+    chips.push(
+      createChip({
+        label,
+        value: valueFormatter(signedAmount),
+        tone,
+        note,
+        position
+      })
+    );
   }
-  const quick = header?.quickObligation || null;
-  const quickAmount = Math.max(0, Number(quick?.amount ?? 0));
-  pushChip(
-    createChip({
-      label: quick?.label || 'Next due',
-      value: formatCurrency(quickAmount),
-      tone: quickAmount > 0 ? 'out' : 'neutral',
-      note: quick?.note || '',
-      position: 'left'
-    })
-  );
 
-  const top = header?.topEarner || null;
-  const topAmount = Math.max(0, Number(top?.amount ?? 0));
+  const quick = header?.quickObligation || {};
+  addChip({
+    label: quick?.label || 'Next due',
+    amount: quick?.amount ?? 0,
+    direction: quick?.direction || 'out',
+    note: quick?.note || '',
+    position: 'left'
+  });
+
+  const top = header?.topEarner || {};
   const topLabel = top?.label || '—';
-  pushChip(
-    createChip({
-      label: 'Top earner',
-      value: `${topLabel} • ${formatCurrency(topAmount)}`,
-      tone: topAmount > 0 ? 'in' : 'neutral',
-      note: topAmount > 0 ? 'Highest payout logged today' : '',
-      position: 'right'
-    })
-  );
+  const topAmount = Number(top?.amount ?? 0);
+  const topNote = top?.note || (Number.isFinite(topAmount) && topAmount > 0 ? 'Highest payout logged today' : '');
+  addChip({
+    label: 'Top earner',
+    amount: topAmount,
+    direction: top?.direction || 'in',
+    note: topNote,
+    position: 'right',
+    valueFormatter: amount => `${topLabel} • ${formatSignedCurrency(amount)}`
+  });
 
   const pulseEntries = Array.isArray(header?.pulse) ? header.pulse : [];
   const pulseMap = new Map();
@@ -163,42 +170,24 @@ function renderHighlights(header = {}) {
     { id: 'active', fallbackLabel: 'Active', fallbackDirection: 'in', position: 'left' },
     { id: 'passive', fallbackLabel: 'Passive', fallbackDirection: 'in', position: 'right' },
     { id: 'offline', fallbackLabel: 'Offline', fallbackDirection: 'in', position: 'left' },
-    { id: 'upkeep', fallbackLabel: 'Upkeep', fallbackDirection: 'out', position: 'right' },
-    { id: 'tuition', fallbackLabel: 'Tuition', fallbackDirection: 'out', position: 'left' },
-    { id: 'investments', fallbackLabel: 'Invest', fallbackDirection: 'out', position: 'right' }
+    { id: 'upkeep', fallbackLabel: 'Upkeep', fallbackDirection: 'out', position: 'left' },
+    { id: 'tuition', fallbackLabel: 'Tuition', fallbackDirection: 'out', position: 'right' },
+    { id: 'investments', fallbackLabel: 'Investments', fallbackDirection: 'out', position: 'right' }
   ];
 
   orderedPulseSlots.forEach(slot => {
-    const entry = pulseMap.get(slot.id);
-    if (!entry) return;
-    const amount = Number(entry?.amount ?? 0);
-    if (!Number.isFinite(amount) || amount === 0) return;
-    const direction = entry?.direction || slot.fallbackDirection;
-    const tone = amount > 0 ? (direction === 'out' ? 'out' : 'in') : 'neutral';
-    const signedAmount = direction === 'out' ? -Math.abs(amount) : Math.abs(amount);
-    pushChip(
-      createChip({
-        label: entry?.label || slot.fallbackLabel,
-        value: formatSignedCurrency(signedAmount),
-        tone,
-        note: entry?.note || 'Live cash pulse',
-        position: slot.position
-      })
-    );
+    const entry = pulseMap.get(slot.id) || {};
+    addChip({
+      label: entry?.label || slot.fallbackLabel,
+      amount: entry?.amount ?? 0,
+      direction: entry?.direction || slot.fallbackDirection,
+      note: entry?.note || 'Live cash pulse',
+      position: slot.position
+    });
   });
 
   elements.highlights.innerHTML = '';
-  const totalChips = columns.left.length + columns.right.length;
-  if (!totalChips) {
-    elements.highlights.hidden = true;
-    return;
-  }
-  ['left', 'right'].forEach(side => {
-    const column = document.createElement('div');
-    column.className = `bank-widget__column bank-widget__column--${side}`;
-    columns[side].forEach(chip => column.appendChild(chip));
-    elements.highlights.appendChild(column);
-  });
+  chips.forEach(chip => elements.highlights.appendChild(chip));
   elements.highlights.hidden = false;
 }
 
