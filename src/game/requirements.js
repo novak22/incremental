@@ -4,7 +4,8 @@ import { spendMoney } from './currency.js';
 import { spendTime } from './time.js';
 import { recordCostContribution, recordTimeContribution } from './metrics.js';
 import { awardSkillProgress } from './skills/index.js';
-import knowledgeTracks, { KNOWLEDGE_REWARDS, KNOWLEDGE_TRACKS } from './requirements/knowledgeTracks.js';
+import knowledgeTrackCatalog from './requirements/data/knowledgeTracks.json' with { type: 'json' };
+import { KNOWLEDGE_REWARDS } from './requirements/knowledgeTracks.js';
 import { getKnowledgeProgress } from './requirements/knowledgeProgress.js';
 import { estimateManualMaintenanceReserve } from './requirements/maintenanceReserve.js';
 import { getDefinitionRequirements } from './requirements/definitionRequirements.js';
@@ -24,10 +25,12 @@ import {
 } from './requirements/checks.js';
 import { createRequirementsOrchestrator } from './requirements/orchestrator.js';
 
+export const KNOWLEDGE_TRACKS = knowledgeTrackCatalog;
+
 const orchestrator = createRequirementsOrchestrator({
   getState,
   getKnowledgeProgress,
-  knowledgeTracks,
+  knowledgeTracks: KNOWLEDGE_TRACKS,
   knowledgeRewards: KNOWLEDGE_REWARDS,
   estimateMaintenanceReserve: estimateManualMaintenanceReserve,
   spendMoney,
@@ -46,7 +49,6 @@ export const {
 } = orchestrator;
 
 export {
-  KNOWLEDGE_TRACKS,
   KNOWLEDGE_REWARDS,
   getKnowledgeProgress,
   buildAssetRequirementDescriptor,

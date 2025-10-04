@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import knowledgeTrackCatalog from '../src/game/requirements/data/knowledgeTracks.json' with { type: 'json' };
 import { getGameTestHarness } from './helpers/gameTestHarness.js';
 
 const knowledgeTracksModule = await import('../src/game/requirements/knowledgeTracks.js');
@@ -50,6 +51,7 @@ test.beforeEach(() => {
 
 test('knowledge track catalog exports remain consistent', () => {
   assert.equal(tracksDefaultExport, tracksCatalog);
+  assert.equal(tracksDefaultExport, knowledgeTrackCatalog);
   assert.ok(tracksCatalog.outlineMastery);
   assert.equal(rewardCatalog.outlineMastery.baseXp, 120);
 });
