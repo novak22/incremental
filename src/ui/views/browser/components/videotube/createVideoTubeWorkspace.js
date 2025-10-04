@@ -7,6 +7,7 @@ import {
   formatPercent as baseFormatPercent
 } from '../../utils/formatting.js';
 import { registerAssetWorkspace, createActionDelegates } from '../../utils/assetWorkspaceRegistry.js';
+import { getWorkspaceLockTheme } from '../common/workspaceLockThemes.js';
 import { createVideoTubeHeader } from './header.js';
 import { createDashboardView } from './views/dashboardView.js';
 import { createDetailView } from './views/detailView.js';
@@ -67,6 +68,11 @@ const buildHeader = createVideoTubeHeader();
 let presenter;
 let renameAssetInstance = setAssetInstanceName;
 
+const {
+  theme: VIDEOTUBE_LOCK_THEME,
+  fallbackMessage: VIDEOTUBE_LOCK_FALLBACK_MESSAGE
+} = getWorkspaceLockTheme('videotube');
+
 function showVideoDetail(videoId) {
   if (!videoId || !presenter) return;
   presenter.updateState(state => ({ ...state, selectedVideoId: videoId }));
@@ -87,13 +93,8 @@ const videoTubeWorkspaceRegistration = registerAssetWorkspace({
   deriveSummary,
   derivePath,
   lock: {
-    theme: {
-      container: 'videotube-view',
-      locked: 'videotube-view--locked',
-      message: 'videotube-empty',
-      label: 'This workspace'
-    },
-    fallbackMessage: 'VideoTube unlocks once the Vlog blueprint is discovered.'
+    theme: VIDEOTUBE_LOCK_THEME,
+    fallbackMessage: VIDEOTUBE_LOCK_FALLBACK_MESSAGE
   },
   actions: {
     performQualityAction,

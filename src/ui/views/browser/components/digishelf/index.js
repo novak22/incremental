@@ -9,6 +9,7 @@ import { createCurrencyLifecycleSummary } from '../../utils/lifecycleSummaries.j
 import { showLaunchConfirmation } from '../../utils/launchDialog.js';
 import { createTabbedWorkspacePresenter } from '../../utils/createTabbedWorkspacePresenter.js';
 import { createWorkspaceLockRenderer } from '../common/renderWorkspaceLock.js';
+import { getWorkspaceLockTheme } from '../common/workspaceLockThemes.js';
 import {
   VIEW_EBOOKS,
   VIEW_STOCK,
@@ -29,14 +30,10 @@ import renderInventoryTable from './inventoryTable.js';
 import renderDetailPane from './detailPane.js';
 import renderPricingCards from './pricingCards.js';
 
-const LOCK_THEME = {
-  container: 'digishelf',
-  locked: 'digishelf--locked',
-  message: 'digishelf-empty',
-  label: 'DigiShelf'
-};
-
-const LOCK_FALLBACK_MESSAGE = 'DigiShelf unlocks once the digital asset blueprints are discovered.';
+const {
+  theme: DIGISHELF_LOCK_THEME,
+  fallbackMessage: DIGISHELF_LOCK_FALLBACK_MESSAGE
+} = getWorkspaceLockTheme('digishelf');
 
 function clampNumber(value) {
   const number = Number(value);
@@ -173,8 +170,8 @@ function deriveWorkspaceSummary(model = {}) {
 }
 
 const renderLocked = createWorkspaceLockRenderer({
-  theme: LOCK_THEME,
-  fallbackMessage: LOCK_FALLBACK_MESSAGE
+  theme: DIGISHELF_LOCK_THEME,
+  fallbackMessage: DIGISHELF_LOCK_FALLBACK_MESSAGE
 });
 
 const presenter = createTabbedWorkspacePresenter({

@@ -13,6 +13,7 @@ import {
   withNavTheme
 } from '../../utils/assetWorkspaceRegistry.js';
 import { selectShopilyNiche } from '../../../../cards/model/index.js';
+import { getWorkspaceLockTheme } from '../common/workspaceLockThemes.js';
 import {
   VIEW_DASHBOARD,
   VIEW_UPGRADES,
@@ -43,6 +44,11 @@ const {
     upkeepFallback: 'No upkeep'
   }
 });
+
+const {
+  theme: SHOPILY_LOCK_THEME,
+  fallbackMessage: SHOPILY_LOCK_FALLBACK_MESSAGE
+} = getWorkspaceLockTheme('shopily');
 
 function deriveWorkspaceSummary(model = {}) {
   const summary = typeof model?.summary === 'object' && model.summary ? { ...model.summary } : {};
@@ -119,13 +125,8 @@ const { createPresenter: createShopilyWorkspacePresenter } = registerAssetWorksp
     deriveSummary: deriveWorkspaceSummary,
     derivePath,
     lock: {
-      theme: {
-        container: 'shopily',
-        locked: 'shopily--locked',
-        message: 'shopily-empty',
-        label: 'Shopily'
-      },
-      fallbackMessage: 'Shopily unlocks once the Dropshipping blueprint is discovered.'
+      theme: SHOPILY_LOCK_THEME,
+      fallbackMessage: SHOPILY_LOCK_FALLBACK_MESSAGE
     },
     actions: {
       selectNiche: selectShopilyNiche

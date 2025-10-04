@@ -7,6 +7,7 @@ import { showLaunchConfirmation } from '../utils/launchDialog.js';
 import { createTabbedWorkspacePresenter } from '../utils/createTabbedWorkspacePresenter.js';
 import { createNavTabs } from './common/navBuilders.js';
 import { createWorkspaceLockRenderer } from './common/renderWorkspaceLock.js';
+import { getWorkspaceLockTheme } from './common/workspaceLockThemes.js';
 import renderHomeView from './blogpress/views/homeView.js';
 import renderDetailView from './blogpress/views/detailView.js';
 import renderPricingView from './blogpress/views/pricingView.js';
@@ -22,14 +23,10 @@ const INITIAL_STATE = {
   selectedBlogId: null
 };
 
-const LOCK_THEME = {
-  container: 'blogpress-view',
-  locked: 'blogpress-view--locked',
-  message: 'blogpress-empty__message',
-  label: 'This workspace'
-};
-
-const LOCK_FALLBACK_MESSAGE = 'BlogPress unlocks once the Personal Blog blueprint is discovered.';
+const {
+  theme: BLOGPRESS_LOCK_THEME,
+  fallbackMessage: BLOGPRESS_LOCK_FALLBACK_MESSAGE
+} = getWorkspaceLockTheme('blogpress');
 
 const formatCurrency = amount => baseFormatCurrency(amount, { precision: 'integer', clampZero: true });
 
@@ -264,8 +261,8 @@ function syncNavigation({ mount, state }) {
 }
 
 const renderLocked = createWorkspaceLockRenderer({
-  theme: LOCK_THEME,
-  fallbackMessage: LOCK_FALLBACK_MESSAGE
+  theme: BLOGPRESS_LOCK_THEME,
+  fallbackMessage: BLOGPRESS_LOCK_FALLBACK_MESSAGE
 });
 
 const presenter = createTabbedWorkspacePresenter({

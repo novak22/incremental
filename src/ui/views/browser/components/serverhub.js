@@ -14,6 +14,7 @@ import {
   withNavTheme
 } from '../utils/assetWorkspaceRegistry.js';
 import { createWorkspaceLockRenderer } from './common/renderWorkspaceLock.js';
+import { getWorkspaceLockTheme } from './common/workspaceLockThemes.js';
 import { createAppsView } from './serverhub/views/appsView.js';
 import { createUpgradesView } from './serverhub/views/upgradesView.js';
 import { createPricingView } from './serverhub/views/pricingView.js';
@@ -22,18 +23,14 @@ const VIEW_APPS = 'apps';
 const VIEW_UPGRADES = 'upgrades';
 const VIEW_PRICING = 'pricing';
 
-const LOCK_THEME = {
-  container: 'serverhub',
-  locked: 'serverhub--locked',
-  message: 'serverhub-empty',
-  label: 'This console'
-};
-
-const LOCK_FALLBACK_MESSAGE = 'ServerHub unlocks once the SaaS Micro-App blueprint is discovered.';
+const {
+  theme: SERVERHUB_LOCK_THEME,
+  fallbackMessage: SERVERHUB_LOCK_FALLBACK_MESSAGE
+} = getWorkspaceLockTheme('serverhub');
 
 const renderLocked = createWorkspaceLockRenderer({
-  theme: LOCK_THEME,
-  fallbackMessage: LOCK_FALLBACK_MESSAGE
+  theme: SERVERHUB_LOCK_THEME,
+  fallbackMessage: SERVERHUB_LOCK_FALLBACK_MESSAGE
 });
 
 const formatCurrency = amount => baseFormatCurrency(amount, { precision: 'integer', clampZero: true });
