@@ -35,6 +35,7 @@ import {
   formatSlotMap,
   logUpgradeBlocked
 } from './schema/logMessaging.js';
+import { markDirty } from '../../ui/invalidation.js';
 
 export { createInstantHustle } from './schema/assetActions.js';
 
@@ -359,6 +360,7 @@ export function createUpgrade(config, hooks = {}) {
             config.logType || 'upgrade'
           );
         }
+        markDirty('cards');
       });
       checkDayEnd();
     }

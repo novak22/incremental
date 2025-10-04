@@ -5,6 +5,9 @@ import { spendMoney } from './currency.js';
 import { gainTime } from './time.js';
 import { recordCostContribution } from './metrics.js';
 import { awardSkillProgress } from './skills/index.js';
+import { markDirty } from '../ui/invalidation.js';
+
+const CORE_UI_SECTIONS = ['dashboard', 'player', 'skillsWidget', 'headerAction'];
 
 export const ASSISTANT_CONFIG = {
   hiringCost: 180,
@@ -64,6 +67,7 @@ export function hireAssistant() {
   upgrade.count = currentCount + 1;
   state.bonusTime += ASSISTANT_CONFIG.hoursPerAssistant;
   gainTime(ASSISTANT_CONFIG.hoursPerAssistant);
+  markDirty(CORE_UI_SECTIONS);
   addLog(
     `You hired a virtual assistant! They add +${ASSISTANT_CONFIG.hoursPerAssistant}h and expect $${ASSISTANT_CONFIG.hourlyRate}/hr.`,
     'upgrade'
@@ -85,6 +89,7 @@ export function fireAssistant() {
   upgrade.count = currentCount - 1;
   state.bonusTime = Math.max(0, state.bonusTime - ASSISTANT_CONFIG.hoursPerAssistant);
   state.timeLeft -= ASSISTANT_CONFIG.hoursPerAssistant;
+  markDirty(CORE_UI_SECTIONS);
   addLog(
     `You let an assistant go. Daily support drops by ${ASSISTANT_CONFIG.hoursPerAssistant}h, but payroll eases a bit.`,
     'info'

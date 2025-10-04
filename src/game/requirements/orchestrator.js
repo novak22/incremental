@@ -1,5 +1,6 @@
 import { DEFAULT_DAY_HOURS } from '../../core/constants.js';
 import { formatList, formatMoney } from '../../core/helpers.js';
+import { markDirty } from '../../ui/invalidation.js';
 
 export const MIN_MANUAL_BUFFER_HOURS = Math.max(2, Math.round(DEFAULT_DAY_HOURS * 0.25));
 
@@ -55,6 +56,8 @@ export function createRequirementsOrchestrator({
 
     allocateDailyStudy({ trackIds: [id], triggeredByEnrollment: true });
 
+    markDirty('cards');
+
     return { success: true };
   }
 
@@ -76,6 +79,8 @@ export function createRequirementsOrchestrator({
     progress.enrolledOnDay = null;
 
     addLog(`You dropped ${track.name}. Tuition stays paid, but your schedule opens back up.`, 'warning');
+
+    markDirty('cards');
 
     return { success: true };
   }
@@ -131,6 +136,10 @@ export function createRequirementsOrchestrator({
     if (studied.length) {
       const prefix = triggeredByEnrollment ? 'Class time booked today for' : 'Study sessions reserved for';
       addLog(`${prefix} ${formatList(studied)}.`, 'info');
+    }
+
+    if (studied.length || reserveSkipped.length || timeSkipped.length) {
+      markDirty('cards');
     }
 
     if (reserveSkipped.length) {
@@ -198,6 +207,10 @@ export function createRequirementsOrchestrator({
     }
     if (stalled.length) {
       addLog(`${formatList(stalled)} did not get study time today. Progress paused.`, 'warning');
+    }
+
+    if (completedToday.length || stalled.length) {
+      markDirty('cards');
     }
   }
 

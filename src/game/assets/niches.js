@@ -4,6 +4,7 @@ import { getAssetState, getState } from '../../core/state.js';
 import { getAssetDefinition } from '../../core/state/registry.js';
 import { getNicheDefinition, getNicheDefinitions } from './nicheData.js';
 import { NICHE_ANALYTICS_HISTORY_LIMIT } from '../../core/state/niches.js';
+import { markDirty } from '../../ui/invalidation.js';
 
 const POPULARITY_MIN = 25;
 const POPULARITY_MAX = 95;
@@ -216,6 +217,9 @@ export function setNicheWatchlist(nicheId, watchlisted) {
       changed = true;
     }
     data.watchlist = Array.from(list);
+    if (changed) {
+      markDirty('cards');
+    }
   });
   return changed;
 }
@@ -251,6 +255,8 @@ export function assignInstanceToNiche(assetId, instanceId, nicheId) {
       delete instance.nicheId;
     }
     changed = true;
+
+    markDirty('cards');
 
     const labelBase = assetDefinition.singular || assetDefinition.name || 'Asset';
     const label = `${labelBase} #${index + 1}`;
