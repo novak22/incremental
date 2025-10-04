@@ -357,6 +357,119 @@ test('state mutators mark dirty sections and drive partial UI refreshes', { conc
   assert.deepStrictEqual(postSaleDirty, {}, 'expected executeAction to consume dirty sections after sale');
 });
 
+test('firing an assistant marks cards dirty and refreshes card presenters', { concurrency: false }, async t => {
+  ensureTestDom();
+  const harness = await getGameTestHarness();
+  const state = harness.resetState();
+
+  const viewManager = await import('../../src/ui/viewManager.js');
+  const browserViewModule = await import('../../src/ui/views/browser/index.js');
+  const updateModule = await import('../../src/ui/update.js');
+  const invalidation = await import('../../src/ui/invalidation.js');
+
+  const { hireAssistant, fireAssistant } = harness.assistantModule;
+
+  const browserView = browserViewModule.default;
+  const originalView = viewManager.getActiveView();
+  const originalConsumeDirty = invalidation.consumeDirty;
+
+  const callCounts = {
+    dashboard: 0,
+    player: 0,
+    skills: 0,
+    header: 0,
+    cards: 0
+  };
+
+  const stubView = {
+    ...browserView,
+    presenters: {
+      ...browserView.presenters,
+      player: {
+        render: (...args) => {
+          callCounts.player += 1;
+          return browserView.presenters?.player?.render?.(...args);
+        }
+      },
+      skillsWidget: {
+        render: (...args) => {
+          callCounts.skills += 1;
+          return browserView.presenters?.skillsWidget?.render?.(...args);
+        }
+      },
+      headerAction: {
+        ...browserView.presenters?.headerAction,
+        renderAction: (...args) => {
+          callCounts.header += 1;
+          return browserView.presenters?.headerAction?.renderAction?.(...args);
+        }
+      },
+      cards: {
+        ...browserView.presenters?.cards,
+        renderAll: (...args) => {
+          browserView.presenters?.cards?.renderAll?.(...args);
+          return undefined;
+        },
+        update: (...args) => {
+          callCounts.cards += 1;
+          return browserView.presenters?.cards?.update?.(...args);
+        }
+      }
+    },
+    renderDashboard: (...args) => {
+      callCounts.dashboard += 1;
+      return browserView.renderDashboard?.(...args);
+    }
+  };
+
+  viewManager.setActiveView(stubView, document);
+
+  t.after(() => {
+    originalConsumeDirty();
+    viewManager.setActiveView(originalView ?? browserView, document);
+  });
+
+  const resetCounts = () => {
+    Object.keys(callCounts).forEach(key => {
+      callCounts[key] = 0;
+    });
+  };
+
+  updateModule.renderCards();
+  updateModule.updateUI();
+
+  state.money = 1000;
+  state.timeLeft = 24;
+
+  const hired = hireAssistant();
+  assert.strictEqual(hired, true, 'expected to hire an assistant for the setup step');
+  const hireDirty = originalConsumeDirty();
+  updateModule.updateUI(hireDirty);
+  resetCounts();
+
+  const fired = fireAssistant();
+  assert.strictEqual(fired, true, 'expected to fire the assistant during the test');
+  const dirtySections = originalConsumeDirty();
+
+  const expectedSections = ['cards', 'dashboard', 'headerAction', 'player', 'skillsWidget'];
+  assert.deepStrictEqual(
+    Object.keys(dirtySections).sort(),
+    expectedSections.sort(),
+    'expected firing assistant to flag cards along with core presenters'
+  );
+  expectedSections.forEach(section => {
+    assert.strictEqual(dirtySections[section], true, `expected ${section} to be marked dirty when firing assistant`);
+  });
+
+  updateModule.updateUI(dirtySections);
+
+  assert.ok(callCounts.cards > 0, 'expected cards presenter to refresh after firing assistant');
+  assert.ok(callCounts.dashboard > 0, 'expected dashboard to refresh after firing assistant');
+  assert.ok(callCounts.player > 0, 'expected player presenter to refresh after firing assistant');
+  assert.ok(callCounts.skills > 0, 'expected skills presenter to refresh after firing assistant');
+  assert.ok(callCounts.header > 0, 'expected header action presenter to refresh after firing assistant');
+});
+
 test('game loop fallback renders dashboard and cards when no sections are dirty', { concurrency: false }, async t => {
   ensureTestDom();
   const harness = await getGameTestHarness();
