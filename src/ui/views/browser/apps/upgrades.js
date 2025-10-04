@@ -1,4 +1,4 @@
-import shopstackApp from '../components/shopstack.js';
+import shopstackApp from '../components/shopstack/index.js';
 import { setWorkspacePath } from '../layoutPresenter.js';
 import { getPageByType } from './pageLookup.js';
 
