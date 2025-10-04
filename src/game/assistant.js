@@ -90,6 +90,7 @@ export function fireAssistant() {
   state.bonusTime = Math.max(0, state.bonusTime - ASSISTANT_CONFIG.hoursPerAssistant);
   state.timeLeft -= ASSISTANT_CONFIG.hoursPerAssistant;
   markDirty(CORE_UI_SECTIONS);
+  markDirty('cards');
   addLog(
     `You let an assistant go. Daily support drops by ${ASSISTANT_CONFIG.hoursPerAssistant}h, but payroll eases a bit.`,
     'info'
