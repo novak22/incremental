@@ -19,6 +19,22 @@ const VIEW_DETAIL = 'detail';
 const VIEW_CREATE = 'create';
 const VIEW_ANALYTICS = 'analytics';
 
+function derivePath(state = {}) {
+  switch (state.view) {
+    case VIEW_ANALYTICS:
+      return 'analytics';
+    case VIEW_DETAIL: {
+      const videoId = state.selectedVideoId;
+      return videoId ? `videos/${videoId}` : 'videos';
+    }
+    case VIEW_CREATE:
+      return 'create';
+    case VIEW_DASHBOARD:
+    default:
+      return 'dashboard';
+  }
+}
+
 const formatCurrency = amount =>
   baseFormatCurrency(amount, { precision: 'integer', clampZero: true });
 const formatPercent = value =>
@@ -120,6 +136,7 @@ export function createVideoTubeWorkspace() {
     state: { view: VIEW_DASHBOARD, selectedVideoId: null },
     ensureSelection: ensureSelectedVideo,
     deriveSummary,
+    derivePath,
     renderLocked: renderLockedState,
     isLocked: model => !model?.definition,
     header(model, state, context) {

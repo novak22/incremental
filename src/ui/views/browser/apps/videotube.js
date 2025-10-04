@@ -1,4 +1,5 @@
 import videotubeApp from '../components/videotube.js';
+import { setWorkspacePath } from '../layoutPresenter.js';
 import { getPageByType } from './pageLookup.js';
 
 export default function renderVideoTube(context = {}, definitions = [], model = {}) {
@@ -18,7 +19,20 @@ export default function renderVideoTube(context = {}, definitions = [], model = 
   const mount = refs.body.querySelector('[data-role="videotube-root"]');
   if (!mount) return null;
 
-  const summary = videotubeApp.render(model, { mount, page, definitions });
+  const handleRouteChange = path => {
+    setWorkspacePath(page.id, path);
+  };
+
+  const summary = videotubeApp.render(model, {
+    mount,
+    page,
+    definitions,
+    onRouteChange: handleRouteChange
+  });
+
+  const path = summary?.urlPath || '';
+  setWorkspacePath(page.id, path);
+
   const meta = summary?.meta || model?.summary?.meta || 'Launch your first video';
-  return { id: page.id, meta };
+  return { id: page.id, meta, urlPath: path };
 }
