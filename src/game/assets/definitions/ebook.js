@@ -1,5 +1,6 @@
 import { formatMoney } from '../../../core/helpers.js';
 import { createAssetDefinition } from '../../content/schema.js';
+import { triggerQualityActionEvents } from '../../events/index.js';
 
 const ebookDefinition = createAssetDefinition({
   id: 'ebook',
@@ -80,6 +81,9 @@ const ebookDefinition = createAssetDefinition({
         progressKey: 'chapters',
         progressAmount: () => 1,
         skills: ['writing'],
+        onComplete({ definition, instance, action }) {
+          triggerQualityActionEvents({ definition, instance, action: action || this });
+        },
         log: ({ label }) => `${label} gained another gripping chapter. Cliffhangers everywhere!`
       },
       {
@@ -91,6 +95,9 @@ const ebookDefinition = createAssetDefinition({
         progressKey: 'cover',
         progressAmount: () => 1,
         skills: ['visual', { id: 'editing', weight: 0.6 }],
+        onComplete({ definition, instance, action }) {
+          triggerQualityActionEvents({ definition, instance, action: action || this });
+        },
         log: ({ label }) => `${label} unveiled a shiny cover mockup. Bookstores swoon.`
       },
       {
@@ -102,6 +109,9 @@ const ebookDefinition = createAssetDefinition({
         progressKey: 'reviews',
         progressAmount: () => 1,
         skills: ['audience'],
+        onComplete({ definition, instance, action }) {
+          triggerQualityActionEvents({ definition, instance, action: action || this });
+        },
         log: ({ label }) => `${label} nudged superfans for reviews. Star ratings climb skyward!`
       }
     ],

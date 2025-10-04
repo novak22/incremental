@@ -1,5 +1,6 @@
 import { formatMoney } from '../../../core/helpers.js';
 import { createAssetDefinition } from '../../content/schema.js';
+import { triggerQualityActionEvents } from '../../events/index.js';
 
 const vlogDefinition = createAssetDefinition({
   id: 'vlog',
@@ -84,6 +85,9 @@ const vlogDefinition = createAssetDefinition({
         progressKey: 'videos',
         progressAmount: () => 1,
         skills: ['visual'],
+        onComplete({ definition, instance, action }) {
+          triggerQualityActionEvents({ definition, instance, action: action || this });
+        },
         log: ({ label }) => `${label} filmed an energetic episode. B-roll glitter everywhere!`
       },
       {
@@ -95,6 +99,9 @@ const vlogDefinition = createAssetDefinition({
         progressKey: 'edits',
         progressAmount: () => 1,
         skills: ['editing'],
+        onComplete({ definition, instance, action }) {
+          triggerQualityActionEvents({ definition, instance, action: action || this });
+        },
         log: ({ label }) => `${label} tightened jump cuts and color graded every frame.`
       },
       {
@@ -106,6 +113,9 @@ const vlogDefinition = createAssetDefinition({
         progressKey: 'promotion',
         progressAmount: () => 1,
         skills: ['promotion'],
+        onComplete({ definition, instance, action }) {
+          triggerQualityActionEvents({ definition, instance, action: action || this });
+        },
         log: ({ label }) => `${label} teased the drop on socials. Chat bubbles explode with hype!`
       }
     ],

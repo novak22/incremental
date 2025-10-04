@@ -135,7 +135,14 @@ function hasEventWithTone(events, tone, templateId) {
   return events.some(event => event.tone === tone || (templateId && event.templateId === templateId));
 }
 
-export function maybeTriggerAssetEvents({ definition, assetState, instance, instanceIndex }) {
+export function maybeTriggerAssetEvents({
+  definition,
+  assetState,
+  instance,
+  instanceIndex,
+  trigger = 'payout',
+  context: additionalContext = {}
+}) {
   const state = getState();
   if (!state || !instance?.id) return [];
   ensureEventState(state, { fallbackDay: state.day || 1 });
@@ -159,10 +166,14 @@ export function maybeTriggerAssetEvents({ definition, assetState, instance, inst
     instance,
     instanceIndex,
     target,
-    existing
+    existing,
+    trigger,
+    ...additionalContext
   };
 
   for (const blueprint of ASSET_EVENT_BLUEPRINTS) {
+    const blueprintTrigger = blueprint.trigger || 'payout';
+    if (blueprintTrigger !== trigger) continue;
     if (typeof blueprint.appliesTo === 'function' && !blueprint.appliesTo(context)) continue;
     if (typeof blueprint.canTrigger === 'function' && !blueprint.canTrigger(context)) continue;
     if (hasEventWithTone(existing, blueprint.tone, blueprint.id)) continue;
@@ -187,6 +198,30 @@ export function maybeTriggerAssetEvents({ definition, assetState, instance, inst
   }
 
   return created;
+}
+
+export function triggerQualityActionEvents({
+  definition,
+  assetState,
+  instance,
+  instanceIndex,
+  action,
+  context: additionalContext = {}
+}) {
+  if (!definition || !instance || !action) return [];
+  const resolvedAssetState = assetState || getAssetState(definition.id);
+  const resolvedInstanceIndex =
+    typeof instanceIndex === 'number' && instanceIndex >= 0
+      ? instanceIndex
+      : resolvedAssetState?.instances?.indexOf(instance) ?? -1;
+  return maybeTriggerAssetEvents({
+    definition,
+    assetState: resolvedAssetState,
+    instance,
+    instanceIndex: resolvedInstanceIndex,
+    trigger: 'qualityAction',
+    context: { ...additionalContext, action }
+  });
 }
 
 function applyEventListToAmount({ amount, events }) {

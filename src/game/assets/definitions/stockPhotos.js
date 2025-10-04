@@ -1,5 +1,6 @@
 import { formatMoney } from '../../../core/helpers.js';
 import { createAssetDefinition } from '../../content/schema.js';
+import { triggerQualityActionEvents } from '../../events/index.js';
 
 const stockPhotosDefinition = createAssetDefinition({
   id: 'stockPhotos',
@@ -83,6 +84,9 @@ const stockPhotosDefinition = createAssetDefinition({
         progressKey: 'shoots',
         progressAmount: () => 1,
         skills: ['visual'],
+        onComplete({ definition, instance, action }) {
+          triggerQualityActionEvents({ definition, instance, action: action || this });
+        },
         log: ({ label }) => `${label} staged a dazzling shoot. Props now live rent-free in your studio.`
       },
       {
@@ -94,6 +98,9 @@ const stockPhotosDefinition = createAssetDefinition({
         progressKey: 'editing',
         progressAmount: () => 1,
         skills: ['editing'],
+        onComplete({ definition, instance, action }) {
+          triggerQualityActionEvents({ definition, instance, action: action || this });
+        },
         log: ({ label }) => `${label} batch-edited a gallery. Clients cheer at the crisp exports!`
       },
       {
@@ -105,6 +112,9 @@ const stockPhotosDefinition = createAssetDefinition({
         progressKey: 'marketing',
         progressAmount: () => 1,
         skills: ['promotion'],
+        onComplete({ definition, instance, action }) {
+          triggerQualityActionEvents({ definition, instance, action: action || this });
+        },
         log: ({ label }) => `${label} ran a marketplace feature promo. Download counters spin faster!`
       }
     ],

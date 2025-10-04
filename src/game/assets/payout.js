@@ -88,7 +88,13 @@ export function rollDailyIncome(definition, assetState, instance) {
   const instanceIndex = Array.isArray(assetState?.instances)
     ? assetState.instances.indexOf(instance)
     : -1;
-  maybeTriggerAssetEvents({ definition, assetState, instance, instanceIndex });
+  maybeTriggerAssetEvents({
+    definition,
+    assetState,
+    instance,
+    instanceIndex,
+    trigger: 'payout'
+  });
 
   const nicheEffect = getInstanceNicheEffect(instance);
   if (nicheEffect) {

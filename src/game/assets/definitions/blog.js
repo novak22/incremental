@@ -1,4 +1,5 @@
 import { formatMoney } from '../../../core/helpers.js';
+import { triggerQualityActionEvents } from '../../events/index.js';
 import { createAssetDefinition } from '../../content/schema.js';
 
 const blogDefinition = createAssetDefinition({
@@ -77,6 +78,9 @@ const blogDefinition = createAssetDefinition({
         progressKey: 'posts',
         progressAmount: () => 1,
         skills: ['writing'],
+        onComplete({ definition, instance, action }) {
+          triggerQualityActionEvents({ definition, instance, action: action || this });
+        },
         log: ({ label }) => `${label} published a sparkling post. Subscribers sip the fresh ideas!`
       },
       {
@@ -87,6 +91,9 @@ const blogDefinition = createAssetDefinition({
         dailyLimit: 1,
         progressKey: 'seo',
         skills: ['promotion'],
+        onComplete({ definition, instance, action }) {
+          triggerQualityActionEvents({ definition, instance, action: action || this });
+        },
         log: ({ label }) => `${label} ran an SEO tune-up. Keywords now shimmy to the top.`
       },
       {
@@ -97,6 +104,9 @@ const blogDefinition = createAssetDefinition({
         dailyLimit: 1,
         progressKey: 'outreach',
         skills: ['audience', { id: 'promotion', weight: 0.5 }],
+        onComplete({ definition, instance, action }) {
+          triggerQualityActionEvents({ definition, instance, action: action || this });
+        },
         log: ({ label }) => `${label} charmed partners into fresh backlinks. Authority climbs!`
       }
     ],
