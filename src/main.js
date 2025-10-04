@@ -8,6 +8,7 @@ import { initHeaderActionControls } from './ui/headerAction/index.js';
 import { setActiveView } from './ui/viewManager.js';
 import { resolveInitialView } from './ui/views/registry.js';
 import { ensureRegistryReady } from './game/registryBootstrap.js';
+import { dismissBootLoader } from './ui/bootLoader.js';
 
 ensureRegistryReady();
 const initialView = resolveInitialView(document);
@@ -25,6 +26,10 @@ updateUI();
 initLayoutControls();
 initHeaderActionControls();
 startGameLoop();
+
+window.requestAnimationFrame(() => {
+  dismissBootLoader();
+});
 
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {

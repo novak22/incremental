@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Added a browser boot loading screen with a pulsing orb and upbeat copy that fades away once the shell finishes rendering.
 - Browser shell stylesheet now lives in modular source folders that load directly via `<link>` tags in `index.html`, removing the bundle build step while preserving the base → component → widget → workspace → overlay cascade.
 - Browser chrome gains a partial invalidation system so background ticks and actions only refresh the dashboard, cards, and widgets that actually changed.
 - Knowledge tracks retune advanced business courses with longer sessions, higher tuitions, and refreshed hustle/asset bonuses while Free Course jumpstarts shift to 4h/day intensives.
