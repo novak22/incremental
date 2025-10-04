@@ -6,11 +6,13 @@ const knowledgeTracksModule = await import('../src/game/requirements/knowledgeTr
 const maintenanceModule = await import('../src/game/requirements/maintenanceReserve.js');
 const descriptorsModule = await import('../src/game/requirements/descriptors.js');
 const orchestratorModule = await import('../src/game/requirements/orchestrator.js');
+const invalidationModule = await import('../src/ui/invalidation.js');
 
 const { default: tracksDefaultExport, KNOWLEDGE_TRACKS: tracksCatalog, KNOWLEDGE_REWARDS: rewardCatalog } = knowledgeTracksModule;
 const { estimateManualMaintenanceReserve } = maintenanceModule;
 const { buildAssetRequirementDescriptor } = descriptorsModule;
 const { createRequirementsOrchestrator, MIN_MANUAL_BUFFER_HOURS } = orchestratorModule;
+const { consumeDirty } = invalidationModule;
 
 const harness = await getGameTestHarness();
 const {
@@ -245,4 +247,117 @@ test('requirements orchestrator honors reserves and rewards completions', () => 
   assert.ok(awardPayload);
   assert.equal(awardPayload.label, track.name);
   assert.ok(logs.some(log => log.message.includes('Finished')));
+});
+
+test('study enrollment updates player and dashboard sections alongside cards', () => {
+  consumeDirty();
+  const state = {
+    day: 1,
+    money: 500,
+    timeLeft: 12,
+    progress: { knowledge: {} },
+    log: []
+  };
+
+  const track = {
+    id: 'paidTrack',
+    name: 'Tuition Strategy Sprint',
+    days: 2,
+    hoursPerDay: 3,
+    tuition: 150
+  };
+
+  const ensureProgress = id => {
+    if (!state.progress.knowledge[id]) {
+      state.progress.knowledge[id] = {
+        daysCompleted: 0,
+        studiedToday: false,
+        completed: false,
+        enrolled: false,
+        enrolledOnDay: null
+      };
+    }
+    return state.progress.knowledge[id];
+  };
+
+  const orchestrator = createRequirementsOrchestrator({
+    getState: () => state,
+    getKnowledgeProgress: ensureProgress,
+    knowledgeTracks: { [track.id]: track },
+    knowledgeRewards: {},
+    estimateMaintenanceReserve: () => 0,
+    spendMoney: amount => {
+      state.money -= amount;
+    },
+    spendTime: hours => {
+      state.timeLeft -= hours;
+    },
+    recordCostContribution: () => {},
+    recordTimeContribution: () => {},
+    awardSkillProgress: () => {},
+    addLog: () => {}
+  });
+
+  const enrollResult = orchestrator.enrollInKnowledgeTrack(track.id);
+  assert.ok(enrollResult.success);
+  assert.deepEqual(consumeDirty(), { cards: true, dashboard: true, player: true });
+
+  const dropResult = orchestrator.dropKnowledgeTrack(track.id);
+  assert.ok(dropResult.success);
+  assert.deepEqual(consumeDirty(), { cards: true, dashboard: true, player: true });
+});
+
+test('zero-hour study allocations still refresh dashboard and player views', () => {
+  consumeDirty();
+  const state = {
+    day: 4,
+    money: 200,
+    timeLeft: 6,
+    progress: { knowledge: {} },
+    log: []
+  };
+
+  const track = {
+    id: 'freeTrack',
+    name: 'Flash Study Jam',
+    days: 1,
+    hoursPerDay: 0,
+    tuition: 0
+  };
+
+  const ensureProgress = id => {
+    if (!state.progress.knowledge[id]) {
+      state.progress.knowledge[id] = {
+        daysCompleted: 0,
+        studiedToday: false,
+        completed: false,
+        enrolled: false,
+        enrolledOnDay: null
+      };
+    }
+    return state.progress.knowledge[id];
+  };
+
+  const orchestrator = createRequirementsOrchestrator({
+    getState: () => state,
+    getKnowledgeProgress: ensureProgress,
+    knowledgeTracks: { [track.id]: track },
+    knowledgeRewards: {},
+    estimateMaintenanceReserve: () => 0,
+    spendMoney: () => {},
+    spendTime: () => {},
+    recordCostContribution: () => {},
+    recordTimeContribution: () => {},
+    awardSkillProgress: () => {},
+    addLog: () => {}
+  });
+
+  orchestrator.enrollInKnowledgeTrack(track.id);
+  consumeDirty();
+  const progress = ensureProgress(track.id);
+  progress.studiedToday = false;
+
+  orchestrator.allocateDailyStudy({ trackIds: [track.id] });
+  assert.equal(progress.studiedToday, true);
+  assert.deepEqual(consumeDirty(), { cards: true, dashboard: true, player: true });
 });

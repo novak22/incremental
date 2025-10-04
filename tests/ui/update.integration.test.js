@@ -202,6 +202,9 @@ test('state mutators mark dirty sections and drive partial UI refreshes', { conc
   const invalidation = await import('../../src/ui/invalidation.js');
   const assetsActionsModule = await import('../../src/game/assets/actions.js');
   const skillsModule = await import('../../src/game/skills/index.js');
+  const nichesModule = await import('../../src/game/assets/niches.js');
+  const summaryModule = await import('../../src/game/summary.js');
+  const dashboardModelModule = await import('../../src/ui/dashboard/model.js');
 
   const originalView = viewManager.getActiveView();
   const browserView = browserViewModule.default;
@@ -326,8 +329,16 @@ test('state mutators mark dirty sections and drive partial UI refreshes', { conc
   invalidation.consumeDirty();
   state.money = 1000;
   state.timeLeft = 24;
-  const launchable = harness.assetsModule.ASSETS.find(asset => Array.isArray(asset?.skills?.setup) && asset.skills.setup.length);
-  assert.ok(launchable, 'expected to find an asset with setup skills for testing');
+  const launchable = harness.assetsModule.ASSETS.find(asset => {
+    if (!Array.isArray(asset?.skills?.setup) || asset.skills.setup.length === 0) {
+      return false;
+    }
+    const options = nichesModule.getAssignableNicheSummaries(asset, state);
+    const uniqueIds = new Set(options.map(entry => entry?.definition?.id).filter(Boolean));
+    return uniqueIds.size >= 2;
+  }) || harness.assetsModule.ASSETS.find(asset => Array.isArray(asset?.skills?.setup) && asset.skills.setup.length)
+    || harness.assetsModule.ASSETS[0];
+  assert.ok(launchable, 'expected to find an asset with setup skills and multiple niche options for testing');
   const launchAction = assetsActionsModule.buildAssetAction(launchable);
   launchAction.onClick();
   assert.ok(callCounts.dashboard > 0, 'expected dashboard to refresh when launching asset');
@@ -342,16 +353,57 @@ test('state mutators mark dirty sections and drive partial UI refreshes', { conc
   const assetState = harness.stateModule.getAssetState(launchable.id, state);
   const [firstInstance] = assetState.instances;
   assert.ok(firstInstance, 'expected a launched asset instance for sale test');
-  firstInstance.lastIncome = 48;
+  firstInstance.lastIncome = 180;
+  firstInstance.lastIncomeBreakdown = {
+    total: 180,
+    entries: [
+      { type: 'niche', amount: 60, label: 'Trend boost' }
+    ]
+  };
+
+  // Seed predictable niche analytics for the assignment flow.
+  const assignableNiches = nichesModule.getAssignableNicheSummaries(launchable, state);
+  const uniqueOptions = [];
+  const seenNicheIds = new Set();
+  assignableNiches.forEach(entry => {
+    const id = entry?.definition?.id;
+    if (!id || seenNicheIds.has(id)) return;
+    seenNicheIds.add(id);
+    uniqueOptions.push(entry);
+  });
+  assert.ok(uniqueOptions.length >= 2, 'expected at least two assignable niches for the asset');
+
+  const initialNicheId = uniqueOptions[0].definition.id;
+  const targetNicheId = uniqueOptions[1].definition.id;
+  const initialNicheName = uniqueOptions[0].definition.name || initialNicheId;
+  const targetNicheName = uniqueOptions[1].definition.name || targetNicheId;
+
+  state.niches = {
+    popularity: {
+      [initialNicheId]: { score: 64, previousScore: 52 },
+      [targetNicheId]: { score: 88, previousScore: 70 }
+    },
+    watchlist: [],
+    lastRollDay: state.day || 1
+  };
+
+  resetCounts();
+  invalidation.consumeDirty();
+  const initialAssignment = nichesModule.assignInstanceToNiche(launchable.id, firstInstance.id, initialNicheId);
+  assert.strictEqual(initialAssignment, true, 'expected initial niche assignment to succeed');
+  const baselineSummary = summaryModule.computeDailySummary(state);
+  const baselineViewModel = dashboardModelModule.buildDashboardViewModel(state, baselineSummary);
+  const initialBoardEntry = baselineViewModel.niche.board.entries.find(entry => entry.id === initialNicheId);
+  assert.ok(initialBoardEntry, 'expected board entry for initial niche after assignment');
+  assert.strictEqual(initialBoardEntry.assetCount, 1, 'expected initial niche to count the assigned venture');
+  const baselineHotTitle = baselineViewModel.niche.highlights.hot?.title || '';
+  assert.ok(
+    baselineHotTitle.includes(initialNicheName),
+    'expected hot highlight to mention the initial niche'
+  );
+  invalidation.consumeDirty();
 
   // Reassigning the instance to a new niche should refresh cards and dashboard analytics.
-  const nichesModule = await import('../../src/game/assets/niches.js');
-  const assignableNiches = nichesModule.getAssignableNicheSummaries(launchable, state);
-  assert.ok(assignableNiches.length > 0, 'expected at least one assignable niche for the asset');
-  const nextNiche = assignableNiches.find(entry => entry?.definition?.id !== firstInstance.nicheId)
-    || assignableNiches[0];
-  const targetNicheId = nextNiche.definition.id;
-
   resetCounts();
   invalidation.consumeDirty();
   const reassigned = nichesModule.assignInstanceToNiche(launchable.id, firstInstance.id, targetNicheId);
@@ -364,6 +416,29 @@ test('state mutators mark dirty sections and drive partial UI refreshes', { conc
   assert.strictEqual(callCounts.player, 0, 'expected player panel to remain untouched for niche change');
   assert.strictEqual(callCounts.skills, 0, 'expected skills widget to remain untouched for niche change');
   assert.strictEqual(callCounts.header, 0, 'expected header action to remain untouched for niche change');
+  const reassignedSummary = summaryModule.computeDailySummary(state);
+  const reassignedViewModel = dashboardModelModule.buildDashboardViewModel(state, reassignedSummary);
+  const nicheBoardEntries = reassignedViewModel.niche.board.entries;
+  const reassignedTargetEntry = nicheBoardEntries.find(entry => entry.id === targetNicheId);
+  assert.ok(reassignedTargetEntry, 'expected board entry for target niche after reassignment');
+  assert.strictEqual(
+    reassignedTargetEntry.assetCount,
+    1,
+    'expected target niche to show the reassigned venture immediately'
+  );
+  const vacatedEntry = nicheBoardEntries.find(entry => entry.id === initialNicheId);
+  assert.ok(vacatedEntry, 'expected board entry for initial niche to persist after reassignment');
+  assert.strictEqual(vacatedEntry.assetCount, 0, 'expected initial niche to drop to zero ventures after reassignment');
+  const reassignedHotTitle = reassignedViewModel.niche.highlights.hot?.title || '';
+  assert.ok(
+    reassignedHotTitle.includes(targetNicheName),
+    'expected hot highlight to follow the reassigned niche without extra actions'
+  );
+  assert.notStrictEqual(
+    reassignedHotTitle,
+    baselineHotTitle,
+    'expected hot highlight to refresh with new niche details after reassignment'
+  );
   const postNicheDirty = invalidation.consumeDirty();
   assert.deepStrictEqual(postNicheDirty, {}, 'expected executeAction to consume dirty sections after niche change');
 

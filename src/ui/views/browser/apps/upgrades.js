@@ -1,36 +1,21 @@
 import shopstackApp from '../components/shopstack/index.js';
-import { setWorkspacePath } from '../layoutPresenter.js';
-import { getPageByType } from './pageLookup.js';
+import { createWorkspaceRenderer } from '../utils/workspaceFactories.js';
 
-export default function renderUpgrades(context = {}, definitions = [], models = {}) {
-  const page = getPageByType('upgrades');
-  if (!page) return null;
-
-  const refs = context.ensurePageContent?.(page, ({ body }) => {
-    if (!body.querySelector('[data-role="shopstack-root"]')) {
-      body.innerHTML = '';
-      const wrapper = document.createElement('div');
-      wrapper.dataset.role = 'shopstack-root';
-      body.appendChild(wrapper);
-    }
-  });
-  if (!refs) return null;
-
-  const mount = refs.body.querySelector('[data-role="shopstack-root"]');
-  if (!mount) return null;
-
-  const handleRouteChange = path => {
-    setWorkspacePath(page.id, path);
-  };
-
-  const summary = shopstackApp.render(models, {
+const renderShopstackWorkspace = createWorkspaceRenderer({
+  pageType: 'upgrades',
+  mountRole: 'shopstack-root',
+  renderApp: (models, options) => shopstackApp.render(models, options),
+  buildRenderOptions: ({ mount, page, definitions, onRouteChange }) => ({
     mount,
     page,
     definitions,
-    onRouteChange: handleRouteChange
-  });
-  const path = summary?.urlPath || '';
-  setWorkspacePath(page.id, path);
-  const meta = summary?.meta || models?.overview?.note || 'Browse upgrades for upcoming boosts';
-  return { id: page.id, meta, urlPath: path };
+    onRouteChange,
+  }),
+  deriveMeta: ({ summary, model, fallback }) =>
+    summary?.meta || model?.overview?.note || model?.summary?.meta || fallback || '',
+  fallbackMeta: 'Browse upgrades for upcoming boosts',
+});
+
+export default function renderUpgrades(context = {}, definitions = [], models = {}) {
+  return renderShopstackWorkspace(context, definitions, models);
 }
