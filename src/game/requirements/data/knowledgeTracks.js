@@ -1,0 +1,370 @@
+const knowledgeTrackData = {
+  "storycraftJumpstart": {
+    "id": "storycraftJumpstart",
+    "name": "Storycraft Jumpstart",
+    "description": "Outline pillar posts for 3 days (4h/day) and polish headlines without paying tuition.",
+    "hoursPerDay": 4,
+    "days": 3,
+    "tuition": 0,
+    "instantBoosts": [
+      {
+        "assetId": "blog",
+        "assetName": "Personal Blog Network",
+        "type": "multiplier",
+        "amount": 0.05
+      }
+    ]
+  },
+  "vlogStudioJumpstart": {
+    "id": "vlogStudioJumpstart",
+    "name": "Creator Studio Jumpstart",
+    "description": "Shadow a creator coach for 3 days (4h/day) to frame shots, light sets, and warm up edits. Tuition free.",
+    "hoursPerDay": 4,
+    "days": 3,
+    "tuition": 0,
+    "instantBoosts": [
+      {
+        "assetId": "vlog",
+        "assetName": "Weekly Vlog Channel",
+        "type": "multiplier",
+        "amount": 0.05
+      }
+    ]
+  },
+  "digitalShelfPrimer": {
+    "id": "digitalShelfPrimer",
+    "name": "Digital Shelf Primer",
+    "description": "Curate e-books and galleries for 3 days (4h/day) to master metadata, covers, and storefront polish \u2014 no tuition required.",
+    "hoursPerDay": 4,
+    "days": 3,
+    "tuition": 0,
+    "instantBoosts": [
+      {
+        "assetId": "ebook",
+        "assetName": "Digital E-Book Series",
+        "type": "multiplier",
+        "amount": 0.05
+      },
+      {
+        "assetId": "stockPhotos",
+        "assetName": "Stock Photo Gallery",
+        "type": "multiplier",
+        "amount": 0.05
+      }
+    ]
+  },
+  "commerceLaunchPrimer": {
+    "id": "commerceLaunchPrimer",
+    "name": "Commerce Launch Primer",
+    "description": "Shadow a fulfillment lead for 3 days (4h/day) to set up shipping flows and customer support scripts for free.",
+    "hoursPerDay": 4,
+    "days": 3,
+    "tuition": 0,
+    "instantBoosts": [
+      {
+        "assetId": "dropshipping",
+        "assetName": "Dropshipping Product Lab",
+        "type": "multiplier",
+        "amount": 0.05
+      }
+    ]
+  },
+  "microSaasJumpstart": {
+    "id": "microSaasJumpstart",
+    "name": "Micro SaaS Jumpstart",
+    "description": "Pair with senior engineers for 3 days (4h/day) to ship deploy scripts and uptime monitors with zero tuition.",
+    "hoursPerDay": 4,
+    "days": 3,
+    "tuition": 0,
+    "instantBoosts": [
+      {
+        "assetId": "saas",
+        "assetName": "SaaS Micro-App",
+        "type": "multiplier",
+        "amount": 0.05
+      }
+    ]
+  },
+  "outlineMastery": {
+    "id": "outlineMastery",
+    "name": "Outline Mastery Workshop",
+    "description": "Deep-dive into narrative scaffolding for 5 days (2h/day). Tuition due upfront.",
+    "hoursPerDay": 2,
+    "days": 5,
+    "tuition": 140,
+    "instantBoosts": [
+      {
+        "hustleId": "freelance",
+        "hustleName": "Freelance Writing",
+        "type": "multiplier",
+        "amount": 0.25
+      },
+      {
+        "hustleId": "audiobookNarration",
+        "hustleName": "Audiobook Narration Gig",
+        "type": "multiplier",
+        "amount": 0.15
+      }
+    ]
+  },
+  "photoLibrary": {
+    "id": "photoLibrary",
+    "name": "Photo Catalog Curation",
+    "description": "Archive, tag, and light-edit your best work for 4 days (1.5h/day). Tuition due upfront.",
+    "hoursPerDay": 1.5,
+    "days": 4,
+    "tuition": 95,
+    "instantBoosts": [
+      {
+        "hustleId": "eventPhotoGig",
+        "hustleName": "Event Photo Gig",
+        "type": "multiplier",
+        "amount": 0.2
+      }
+    ]
+  },
+  "ecomPlaybook": {
+    "id": "ecomPlaybook",
+    "name": "E-Commerce Playbook",
+    "description": "Shadow a pro operator for 9 days (3h/day) to master funnels and fulfillment math.",
+    "hoursPerDay": 3,
+    "days": 9,
+    "tuition": 900,
+    "instantBoosts": [
+      {
+        "hustleId": "bundlePush",
+        "hustleName": "Bundle Promo Push",
+        "type": "flat",
+        "amount": 5
+      },
+      {
+        "assetId": "dropshipping",
+        "assetName": "Dropshipping Product Lab",
+        "type": "multiplier",
+        "amount": 0.15
+      }
+    ]
+  },
+  "automationCourse": {
+    "id": "automationCourse",
+    "name": "Automation Architecture Course",
+    "description": "Pair-program with mentors for 15 days (6h/day) to architect a reliable micro-app.",
+    "hoursPerDay": 6,
+    "days": 15,
+    "tuition": 3000,
+    "instantBoosts": [
+      {
+        "hustleId": "saasBugSquash",
+        "hustleName": "SaaS Bug Squash",
+        "type": "flat",
+        "amount": 6
+      },
+      {
+        "assetId": "saas",
+        "assetName": "SaaS Micro-App",
+        "type": "multiplier",
+        "amount": 0.15
+      }
+    ]
+  },
+  "brandVoiceLab": {
+    "id": "brandVoiceLab",
+    "name": "Brand Voice Lab",
+    "description": "Work with pitch coaches for 4 days (1h/day) to sharpen live Q&A charisma.",
+    "hoursPerDay": 1,
+    "days": 4,
+    "tuition": 120,
+    "instantBoosts": [
+      {
+        "hustleId": "audienceCall",
+        "hustleName": "Audience Q&A Blast",
+        "type": "flat",
+        "amount": 4
+      }
+    ]
+  },
+  "guerillaBuzzWorkshop": {
+    "id": "guerillaBuzzWorkshop",
+    "name": "Guerrilla Buzz Workshop",
+    "description": "Field-test hype hooks for 6 days (1.5h/day) with a crew of street marketers.",
+    "hoursPerDay": 1.5,
+    "days": 6,
+    "tuition": 180,
+    "instantBoosts": [
+      {
+        "hustleId": "streetPromoSprint",
+        "hustleName": "Street Promo Sprint",
+        "type": "multiplier",
+        "amount": 0.25
+      },
+      {
+        "hustleId": "surveySprint",
+        "hustleName": "Micro Survey Dash",
+        "type": "flat",
+        "amount": 1.5
+      }
+    ]
+  },
+  "curriculumDesignStudio": {
+    "id": "curriculumDesignStudio",
+    "name": "Curriculum Design Studio",
+    "description": "Prototype interactive lesson plans for 6 days (2.5h/day) with veteran educators.",
+    "hoursPerDay": 2.5,
+    "days": 6,
+    "tuition": 280,
+    "instantBoosts": [
+      {
+        "hustleId": "popUpWorkshop",
+        "hustleName": "Pop-Up Workshop",
+        "type": "multiplier",
+        "amount": 0.3
+      },
+      {
+        "hustleId": "bundlePush",
+        "hustleName": "Bundle Promo Push",
+        "type": "multiplier",
+        "amount": 0.15
+      }
+    ]
+  },
+  "postProductionPipelineLab": {
+    "id": "postProductionPipelineLab",
+    "name": "Post-Production Pipeline Lab",
+    "description": "Run edit bays for 10 days (4h/day) to master color, captions, and delivery workflows.",
+    "hoursPerDay": 4,
+    "days": 10,
+    "tuition": 900,
+    "instantBoosts": [
+      {
+        "hustleId": "vlogEditRush",
+        "hustleName": "Vlog Edit Rush",
+        "type": "multiplier",
+        "amount": 0.25
+      },
+      {
+        "assetId": "vlog",
+        "assetName": "Weekly Vlog Channel",
+        "type": "multiplier",
+        "amount": 0.15
+      }
+    ]
+  },
+  "fulfillmentOpsMasterclass": {
+    "id": "fulfillmentOpsMasterclass",
+    "name": "Fulfillment Ops Masterclass",
+    "description": "Shadow a logistics crew for 10 days (4h/day) to automate pick, pack, and ship perfection.",
+    "hoursPerDay": 4,
+    "days": 10,
+    "tuition": 1200,
+    "instantBoosts": [
+      {
+        "hustleId": "dropshipPackParty",
+        "hustleName": "Dropship Pack Party",
+        "type": "multiplier",
+        "amount": 0.2
+      },
+      {
+        "assetId": "dropshipping",
+        "assetName": "Dropshipping Product Lab",
+        "type": "multiplier",
+        "amount": 0.25
+      }
+    ]
+  },
+  "customerRetentionClinic": {
+    "id": "customerRetentionClinic",
+    "name": "Customer Retention Clinic",
+    "description": "Coach subscription success teams for 7 days (3h/day) to keep churn near zero.",
+    "hoursPerDay": 3,
+    "days": 7,
+    "tuition": 1000,
+    "instantBoosts": [
+      {
+        "hustleId": "saasBugSquash",
+        "hustleName": "SaaS Bug Squash",
+        "type": "flat",
+        "amount": 5
+      },
+      {
+        "assetId": "saas",
+        "assetName": "SaaS Micro-App",
+        "type": "multiplier",
+        "amount": 0.2
+      }
+    ]
+  },
+  "narrationPerformanceWorkshop": {
+    "id": "narrationPerformanceWorkshop",
+    "name": "Narration Performance Workshop",
+    "description": "Spend 7 days (3h/day) with vocal coaches to perfect audiobook cadence.",
+    "hoursPerDay": 3,
+    "days": 7,
+    "tuition": 900,
+    "instantBoosts": [
+      {
+        "hustleId": "audiobookNarration",
+        "hustleName": "Audiobook Narration",
+        "type": "multiplier",
+        "amount": 0.25
+      },
+      {
+        "assetId": "ebook",
+        "assetName": "Digital E-Book Series",
+        "type": "multiplier",
+        "amount": 0.1
+      }
+    ]
+  },
+  "galleryLicensingSummit": {
+    "id": "galleryLicensingSummit",
+    "name": "Gallery Licensing Summit",
+    "description": "Pitch curators for 8 days (4h/day) to secure premium gallery licensing deals.",
+    "hoursPerDay": 4,
+    "days": 8,
+    "tuition": 1100,
+    "instantBoosts": [
+      {
+        "hustleId": "eventPhotoGig",
+        "hustleName": "Event Photo Gig",
+        "type": "multiplier",
+        "amount": 0.2
+      },
+      {
+        "assetId": "stockPhotos",
+        "assetName": "Stock Photo Gallery",
+        "type": "multiplier",
+        "amount": 0.15
+      }
+    ]
+  },
+  "syndicationResidency": {
+    "id": "syndicationResidency",
+    "name": "Syndication Residency",
+    "description": "Curate partnerships for 9 days (4h/day) to syndicate your flagship content network.",
+    "hoursPerDay": 4,
+    "days": 9,
+    "tuition": 1000,
+    "instantBoosts": [
+      {
+        "hustleId": "freelance",
+        "hustleName": "Freelance Writing",
+        "type": "multiplier",
+        "amount": 0.15
+      },
+      {
+        "hustleId": "streetPromoSprint",
+        "hustleName": "Street Promo Sprint",
+        "type": "flat",
+        "amount": 2
+      },
+      {
+        "assetId": "blog",
+        "assetName": "Personal Blog Network",
+        "type": "multiplier",
+        "amount": 0.12
+      }
+    ]
+  }
+};
+
+export default knowledgeTrackData;
