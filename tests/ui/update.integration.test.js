@@ -344,6 +344,29 @@ test('state mutators mark dirty sections and drive partial UI refreshes', { conc
   assert.ok(firstInstance, 'expected a launched asset instance for sale test');
   firstInstance.lastIncome = 48;
 
+  // Reassigning the instance to a new niche should refresh cards and dashboard analytics.
+  const nichesModule = await import('../../src/game/assets/niches.js');
+  const assignableNiches = nichesModule.getAssignableNicheSummaries(launchable, state);
+  assert.ok(assignableNiches.length > 0, 'expected at least one assignable niche for the asset');
+  const nextNiche = assignableNiches.find(entry => entry?.definition?.id !== firstInstance.nicheId)
+    || assignableNiches[0];
+  const targetNicheId = nextNiche.definition.id;
+
+  resetCounts();
+  invalidation.consumeDirty();
+  const reassigned = nichesModule.assignInstanceToNiche(launchable.id, firstInstance.id, targetNicheId);
+  assert.strictEqual(reassigned, true, 'expected assignInstanceToNiche to succeed');
+  const updatedAssetState = harness.stateModule.getAssetState(launchable.id, state);
+  const updatedInstance = updatedAssetState.instances.find(entry => entry?.id === firstInstance.id);
+  assert.strictEqual(updatedInstance?.nicheId, targetNicheId, 'expected instance to adopt the chosen niche');
+  assert.ok(callCounts.dashboard > 0, 'expected dashboard to refresh when changing an asset niche');
+  assert.ok(callCounts.cards > 0, 'expected cards presenter to refresh when changing an asset niche');
+  assert.strictEqual(callCounts.player, 0, 'expected player panel to remain untouched for niche change');
+  assert.strictEqual(callCounts.skills, 0, 'expected skills widget to remain untouched for niche change');
+  assert.strictEqual(callCounts.header, 0, 'expected header action to remain untouched for niche change');
+  const postNicheDirty = invalidation.consumeDirty();
+  assert.deepStrictEqual(postNicheDirty, {}, 'expected executeAction to consume dirty sections after niche change');
+
   resetCounts();
   invalidation.consumeDirty();
   const sold = assetsActionsModule.sellAssetInstance(launchable, firstInstance.id);

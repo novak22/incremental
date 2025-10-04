@@ -256,7 +256,7 @@ export function assignInstanceToNiche(assetId, instanceId, nicheId) {
     }
     changed = true;
 
-    markDirty('cards');
+    markDirty(['cards', 'dashboard']);
 
     const labelBase = assetDefinition.singular || assetDefinition.name || 'Asset';
     const label = `${labelBase} #${index + 1}`;
