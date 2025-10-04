@@ -14,7 +14,7 @@ import {
 } from '../../educationEffects.js';
 import { getHustleEffectMultiplier } from '../../upgrades/effects.js';
 import { applyMetric, normalizeHustleMetrics } from './metrics.js';
-import { logEducationBonusSummary, logHustleBlocked } from './logMessaging.js';
+import { logEducationPayoffSummary, logHustleBlocked } from './logMessaging.js';
 import { markDirty } from '../../../ui/invalidation.js';
 
 function formatHourDetail(hours, effective) {
@@ -282,7 +282,7 @@ export function createInstantHustle(config) {
 
       if (appliedBonuses.length) {
         const summary = formatEducationBonusSummary(appliedBonuses);
-        logEducationBonusSummary(summary);
+        logEducationPayoffSummary(summary);
       }
     }
 

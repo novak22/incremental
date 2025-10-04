@@ -7,7 +7,8 @@ const TYPE_LABELS = {
   success: 'Success',
   warning: 'Alert',
   danger: 'Alert',
-  info: 'Update'
+  info: 'Update',
+  educationpayoff: 'Study Boost'
 };
 
 const presenterState = {
