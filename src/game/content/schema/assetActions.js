@@ -15,6 +15,7 @@ import {
 import { getHustleEffectMultiplier } from '../../upgrades/effects.js';
 import { applyMetric, normalizeHustleMetrics } from './metrics.js';
 import { logEducationBonusSummary, logHustleBlocked } from './logMessaging.js';
+import { markDirty } from '../../../ui/invalidation.js';
 
 function formatHourDetail(hours, effective) {
   if (!hours) return '⏳ Time: <strong>Instant</strong>';
@@ -291,6 +292,7 @@ export function createInstantHustle(config) {
     }
 
     config.onComplete?.(context);
+    markDirty('cards');
   }
 
   definition.action = {

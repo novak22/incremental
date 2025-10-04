@@ -17,6 +17,9 @@ import { awardSkillProgress } from '../skills/index.js';
 import { getAssetEffectMultiplier } from '../upgrades/effects.js';
 import { instanceLabel } from './details.js';
 import { getAssetMetricId } from './helpers.js';
+import { markDirty } from '../../ui/invalidation.js';
+
+const ASSET_CORE_UI_SECTIONS = ['dashboard', 'headerAction', 'cards'];
 
 function getEffectiveSetupHours(definition) {
   const base = Number(definition.setup?.hoursPerDay) || 0;
@@ -83,18 +86,24 @@ function startAsset(definition) {
       });
     }
 
-    awardSkillProgress({
+    const skillXpAwarded = awardSkillProgress({
       skills: definition.skills?.setup,
       timeSpentHours: setupHours,
       moneySpent: setupCost,
       label: definition.name
     });
 
+    if (skillXpAwarded > 0) {
+      markDirty(['player', 'skillsWidget']);
+    }
+
     const assetState = getAssetState(definition.id);
     const instance = createAssetInstance(definition, {
       setupFundedToday: setupHours > 0
     });
     assetState.instances.push(instance);
+
+    markDirty(ASSET_CORE_UI_SECTIONS);
 
     const label = instanceLabel(definition, assetState.instances.length - 1);
     const message = definition.messages?.setupStarted
@@ -151,6 +160,7 @@ export function sellAssetInstance(definition, instanceId) {
     }
 
     instances.splice(index, 1);
+    markDirty(ASSET_CORE_UI_SECTIONS);
     sold = true;
   });
 
@@ -184,6 +194,7 @@ export function setAssetInstanceName(assetId, instanceId, name) {
       delete instance.customName;
     }
     changed = true;
+    markDirty('cards');
 
     const labelBase = definition.singular || definition.name || 'Asset';
     const fallbackLabel = `${labelBase} #${index + 1}`;

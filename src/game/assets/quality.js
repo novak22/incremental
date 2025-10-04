@@ -9,6 +9,7 @@ import { checkDayEnd } from '../lifecycle.js';
 import { recordCostContribution, recordTimeContribution } from '../metrics.js';
 import { spendTime } from '../time.js';
 import { awardSkillProgress } from '../skills/index.js';
+import { markDirty } from '../../ui/invalidation.js';
 
 function ensureUsageMap(instance) {
   if (!instance.dailyUsage || typeof instance.dailyUsage !== 'object') {
@@ -314,6 +315,7 @@ function runQualityAction(definition, instanceId, actionId) {
   }
 
   updateQualityLevel(definition, assetState, instance, quality);
+  markDirty('cards');
 }
 
 function updateQualityLevel(definition, assetState, instance, quality) {

@@ -13,6 +13,9 @@ import {
   normalizeSkillList,
   normalizeSkillState
 } from './data.js';
+import { markDirty } from '../../ui/invalidation.js';
+
+const SKILL_UI_SECTIONS = ['dashboard', 'player', 'skillsWidget', 'headerAction'];
 
 const TIME_XP_RATE = 5;
 const MONEY_XP_INTERVAL = 25;
@@ -113,6 +116,10 @@ export function awardSkillProgress({
   character.level = calculateCharacterLevel(character.xp);
   if (character.level > beforeCharacterLevel) {
     logCharacterLevelUp(character.level, label);
+  }
+
+  if (totalAwarded > 0) {
+    markDirty(SKILL_UI_SECTIONS);
   }
 
   return totalAwarded;
