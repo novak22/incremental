@@ -95,19 +95,27 @@ Each asset supports multiple instances, tracks setup progress, and rolls a daily
 
 ## Running the Project Locally
 1. Clone the repository or download the source.
-2. Open `browser.html` in any modern browser. The project is a static ES-module bundle; no build tools required.
-3. Optional: serve with a simple HTTP server (e.g., `npx serve .`) to avoid `localStorage` restrictions during local testing.
+2. Install dependencies with `npm install`.
+3. Start the Vite development server with `npm run dev` and follow the command output to open the local URL in your browser.
+4. Build a production bundle with `npm run build`. Preview the output locally with `npm run preview`.
 
 ## Styling Workflow
-- The browser shell now links each modular stylesheet directly. Edit the files under `styles/base/`, `styles/components/`, `styles/widgets/`, `styles/workspaces/`, and `styles/overlays/` and the changes will load without a build step.
+- The browser shell now links each modular stylesheet directly. Edit the files under `styles/base/`, `styles/components/`, `styles/widgets/`, `styles/workspaces/`, and `styles/overlays/` and the Vite dev server will hot-reload the updates.
 - Maintain the documented load order (base → components → widgets → workspaces → overlays) when adding new modules. Update the `<head>` of `index.html` with any additional `<link rel="stylesheet">` entries so the cascade remains intact.
 - Keep selectors purpose-driven and scoped to their module so future contributors can find the owning file quickly.
 
 ## Testing
 1. Install dev dependencies with `npm install`.
 2. Run the Node-based suite with `npm test` to exercise the day scheduler, maintenance flow, and knowledge tracks.
-3. A GitHub Actions workflow runs the same command on every push and pull request targeting `main`.
-4. Manual spot-check: launch a blog and e-book after Outline Mastery, advance several days, and confirm Quality 0–1 payouts exceed upkeep before and after buying the Automation Course.
+3. Lint the project with `npm run lint` to catch module import issues and general code-quality concerns.
+4. Format code with `npm run format` (or `npm run format:check` in CI-safe mode) to apply the shared Prettier style.
+5. A GitHub Actions workflow runs linting, tests, and the production build on every push and pull request targeting `main`.
+6. Manual spot-check: launch a blog and e-book after Outline Mastery, advance several days, and confirm Quality 0–1 payouts exceed upkeep before and after buying the Automation Course.
+
+## Development Tooling
+- **Vite Dev Server** – Handles module resolution and hot module replacement for quick iteration. Use `npm run dev` to launch it locally.
+- **ESLint** – Enforces the ES module conventions used across `src/` and highlights missing imports. Run it with `npm run lint` (auto-fix coming soon).
+- **Prettier** – Keeps formatting consistent across modules and docs. Run `npm run format` to apply updates before committing.
 
 ## Roadmap
 - Expand hustle variety (recurring retainers, seasonal gigs) to diversify daily decision making.
