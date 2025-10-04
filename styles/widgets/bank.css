@@ -1,0 +1,100 @@
+.bank-widget {
+  padding: 0.95rem 1.15rem 1.2rem;
+}
+
+.bank-widget .browser-widget__header {
+  gap: 0.65rem;
+}
+
+.bank-widget__stats {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+.bank-widget__stat {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.85rem 0.9rem;
+  border-radius: var(--browser-radius-md);
+  background: var(--browser-panel-elevated);
+  border: 1px solid var(--browser-panel-border);
+}
+
+.bank-widget__label {
+  font-size: 0.8rem;
+  color: var(--browser-subtle);
+  font-weight: 600;
+}
+
+.bank-widget__value {
+  font-size: 1.08rem;
+  font-weight: 700;
+}
+
+.bank-widget__value.is-positive {
+  color: var(--browser-positive);
+}
+
+.bank-widget__value.is-negative {
+  color: var(--browser-danger);
+}
+
+.bank-widget__footnote {
+  margin: 0;
+  color: var(--browser-muted);
+  font-size: 0.82rem;
+}
+
+.bank-widget__highlights {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.bank-widget__column {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.bank-widget__column--left {
+  justify-items: start;
+}
+
+.bank-widget__column--right {
+  justify-items: end;
+}
+
+.bank-widget__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.52rem 0.82rem;
+  border-radius: var(--browser-radius-pill);
+  background: var(--browser-panel-elevated);
+  border: 1px solid var(--browser-panel-border);
+  font-size: 0.84rem;
+  line-height: 1;
+}
+
+.bank-widget__chip-label {
+  font-weight: 600;
+  color: var(--browser-subtle);
+}
+
+.bank-widget__chip-value {
+  font-weight: 700;
+}
+
+.bank-widget__chip[data-tone='out'] .bank-widget__chip-value {
+  color: var(--browser-danger);
+}
+
+.bank-widget__chip[data-tone='in'] .bank-widget__chip-value {
+  color: var(--browser-positive);
+}
