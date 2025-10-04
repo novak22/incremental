@@ -87,4 +87,3 @@ export function getWorkspaceLockByCourse(courseId) {
     courseName: courseDefinition?.name || config.courseName || null
   };
 }
-
