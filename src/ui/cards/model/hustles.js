@@ -2,7 +2,7 @@ import { getState } from '../../../core/state.js';
 import { formatHours, formatMoney } from '../../../core/helpers.js';
 import { describeHustleRequirements, getHustleDailyUsage } from '../../../game/hustles/helpers.js';
 
-export function buildHustleModels(definitions = [], helpers = {}) {
+export default function buildHustleModels(definitions = [], helpers = {}) {
   const {
     getState: getStateFn = getState,
     describeRequirements = describeHustleRequirements,
@@ -94,5 +94,3 @@ export function buildHustleModels(definitions = [], helpers = {}) {
     };
   });
 }
-
-export default buildHustleModels;

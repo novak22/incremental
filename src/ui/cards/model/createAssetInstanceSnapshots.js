@@ -24,7 +24,7 @@ function defaultLabelBuilder(definition, _instance, index) {
   return instanceLabel(definition, index);
 }
 
-export function createAssetInstanceSnapshots(definition, state, options = {}) {
+export default function createAssetInstanceSnapshots(definition, state, options = {}) {
   if (!definition) {
     return [];
   }
@@ -172,5 +172,3 @@ export function createAssetInstanceSnapshots(definition, state, options = {}) {
 
   return snapshots;
 }
-
-export default createAssetInstanceSnapshots;

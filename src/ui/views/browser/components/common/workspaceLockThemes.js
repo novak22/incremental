@@ -1,7 +1,7 @@
 const lock = (theme, fallbackMessage) =>
   Object.freeze({ theme: Object.freeze(theme), fallbackMessage });
 
-export const WORKSPACE_LOCK_THEMES = new Map([
+const WORKSPACE_LOCK_THEMES = new Map([
   [
     'blogpress',
     lock(
@@ -75,4 +75,7 @@ export function getWorkspaceLockTheme(id) {
   };
 }
 
-export default WORKSPACE_LOCK_THEMES;
+export { WORKSPACE_LOCK_THEMES };
+
+const workspaceLockThemes = WORKSPACE_LOCK_THEMES;
+export default workspaceLockThemes;

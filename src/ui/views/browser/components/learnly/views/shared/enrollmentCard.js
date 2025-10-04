@@ -1,6 +1,6 @@
 import { createProgressBar } from './progressBar.js';
 
-export function createEnrollmentCard({ course, formatters, handlers, sourceTab }) {
+function createEnrollmentCard({ course, formatters, handlers, sourceTab }) {
   const { formatCurrency, formatHours, formatDays } = formatters;
   const { onOpenCourse, onDropCourse } = handlers;
 
@@ -71,4 +71,7 @@ export function createEnrollmentCard({ course, formatters, handlers, sourceTab }
   return card;
 }
 
-export default createEnrollmentCard;
+export { createEnrollmentCard };
+
+const createEnrollmentCardComponent = createEnrollmentCard;
+export default createEnrollmentCardComponent;

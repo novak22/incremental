@@ -1,4 +1,4 @@
-export function renderQualityPanel(instance) {
+export default function renderQualityPanel(instance) {
   if (!instance.milestone) {
     return null;
   }
@@ -37,5 +37,3 @@ export function renderQualityPanel(instance) {
   section.append(progress, summary);
   return section;
 }
-
-export default renderQualityPanel;
