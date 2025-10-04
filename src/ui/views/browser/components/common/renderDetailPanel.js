@@ -21,6 +21,15 @@ const DEFAULT_THEME = {
   empty: 'asset-detail__empty'
 };
 
+function applyDataset(element, dataset = {}) {
+  if (!element || !dataset || typeof dataset !== 'object') return;
+  Object.entries(dataset).forEach(([key, value]) => {
+    if (value != null) {
+      element.dataset[key] = String(value);
+    }
+  });
+}
+
 function renderStats(stats = [], theme) {
   if (!Array.isArray(stats) || stats.length === 0) {
     return null;
@@ -52,7 +61,7 @@ function renderStats(stats = [], theme) {
   return list;
 }
 
-function renderSections(sections = [], theme) {
+function renderSections(sections = [], theme, context) {
   if (!Array.isArray(sections) || sections.length === 0) {
     return null;
   }
@@ -65,12 +74,19 @@ function renderSections(sections = [], theme) {
     if (section.tone) {
       article.dataset.tone = String(section.tone);
     }
+    if (section.dataset) {
+      applyDataset(article, section.dataset);
+    }
     if (section.title) {
       const heading = document.createElement('h3');
       heading.className = theme.sectionTitle;
       appendContent(heading, section.title);
       article.appendChild(heading);
     }
+    if (typeof section.render === 'function') {
+      const result = section.render({ section, theme, article, context }) ?? null;
+      appendContent(article, result);
+    } else {
     if (section.body) {
       const body = document.createElement('p');
       body.className = theme.sectionBody;
@@ -91,6 +107,7 @@ function renderSections(sections = [], theme) {
       const footer = document.createElement('footer');
       appendContent(footer, section.footer);
       article.appendChild(footer);
+    }
     }
     wrapper.appendChild(article);
   });
@@ -150,6 +167,9 @@ function renderHeader(header = {}, theme) {
     status.className = header.status.className || theme.status;
     if (header.status.tone) {
       status.dataset.tone = String(header.status.tone);
+    }
+    if (header.status.dataset) {
+      applyDataset(status, header.status.dataset);
     }
     appendContent(status, header.status.label ?? header.status);
     wrapper.appendChild(status);
@@ -222,7 +242,7 @@ export function renderDetailPanel(options = {}) {
     container.appendChild(statsNode);
   }
 
-  const sectionsNode = renderSections(sections, theme);
+  const sectionsNode = renderSections(sections, theme, context);
   if (sectionsNode) {
     container.appendChild(sectionsNode);
   }

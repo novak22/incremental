@@ -114,7 +114,7 @@ function renderDashboardSection(context) {
     onRunAction: handleQuickAction,
     onSelectNiche: handleNicheSelect
   };
-  return renderDashboardView({
+  const renderDashboard = renderDashboardView({
     model,
     state,
     formatters: {
@@ -127,6 +127,7 @@ function renderDashboardSection(context) {
     selectors: { getSelectedStore },
     createLaunchButton
   });
+  return renderDashboard(context);
 }
 
 function renderUpgradesSection(context) {

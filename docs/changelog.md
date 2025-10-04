@@ -16,6 +16,7 @@
 - Browser chrome now features a notification bell that mirrors the event log with unread badges, read tracking, and a mark-all control.
 - AboutYou rebrands the browser profile hub with upbeat copy, refreshed styling, and tighter lists that only surface owned education tracks and equipped gear.
 - Browser shell app launchers now open themed confirmation modals before spinning up new blogs, SaaS apps, galleries, or e-book series, highlighting setup time, upfront spend, and daily upkeep before the action fires.
+- ServerHub, Shopily, and VideoTube dashboards now lean on shared KPI grids, instance tables, and detail panels so their layouts stay in sync while sharing styling updates.
 - Trends Intelligence Lab refreshes the browser app with analytics-style header controls, overview metrics, sparkline cards, and an expanded watchlist panel while reusing existing niche data.
 - Trends Intelligence Lab now includes a Name (A–Z) sort so players can scan niches alphabetically alongside momentum filters.
 - Trends analytics now archive a rolling seven-day highlight recap in local storage and surface it in the dashboard for fast comparisons across days.
