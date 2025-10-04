@@ -265,6 +265,3 @@ export function createAssetWorkspacePresenter(config = {}) {
   };
 }
 
-export default {
-  createAssetWorkspacePresenter
-};
