@@ -171,8 +171,3 @@ export function buildContext(model = {}, definitions = []) {
   return { courses, catalogCourses, freeCourses, courseMap, categories, summary };
 }
 
-export default {
-  buildContext,
-  createEmptyContext,
-  describeSkills
-};

@@ -110,7 +110,3 @@ export function createUpgradesView({ formatCurrency }) {
     return container;
   };
 }
-
-export default {
-  createUpgradesView
-};

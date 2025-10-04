@@ -260,7 +260,3 @@ export function renderDetailPanel(options = {}) {
 
   return container;
 }
-
-export default {
-  renderDetailPanel
-};

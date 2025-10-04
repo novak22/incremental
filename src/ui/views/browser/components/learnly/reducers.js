@@ -61,9 +61,3 @@ export function deriveWorkspacePath(state = {}) {
   return 'catalog';
 }
 
-export default {
-  INITIAL_STATE,
-  ensureSelectedCourse,
-  deriveSummaryFromContext,
-  deriveWorkspacePath
-};

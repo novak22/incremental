@@ -221,10 +221,6 @@ function handlePlanSelect(planId) {
   presenter.render(model);
 }
 
-function render(model = {}, context = {}) {
+export default function renderDigishelfWorkspace(model = {}, context = {}) {
   return presenter.render(model, context);
 }
-
-export default { render };
-
-export { render };

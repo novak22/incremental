@@ -116,17 +116,3 @@ export function getSelectedInstance(state = initialState, model = {}) {
   return instances.find(entry => entry.id === id) || instances[0] || null;
 }
 
-export default {
-  VIEW_EBOOKS,
-  VIEW_STOCK,
-  VIEW_PRICING,
-  initialState,
-  ensureSelection,
-  reduceSetView,
-  reduceToggleLaunch,
-  reduceOpenLaunch,
-  reduceSelectInstance,
-  derivePath,
-  getSelectedCollection,
-  getSelectedInstance
-};

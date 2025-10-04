@@ -73,7 +73,3 @@ export function createPricingView({ formatCurrency, formatHours }) {
     return container;
   };
 }
-
-export default {
-  createPricingView
-};

@@ -297,8 +297,6 @@ function setView(view, options = {}) {
   presenter.render(presenter.getModel());
 }
 
-export function render(model = {}, context = {}) {
+export default function renderBlogpressWorkspace(model = {}, context = {}) {
   return presenter.render(model, context);
 }
-
-export default { render };

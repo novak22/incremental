@@ -2,14 +2,14 @@ import { ensureArray } from '../../../../../../core/helpers.js';
 import { getAssetState, getState, getUpgradeState } from '../../../../../../core/state.js';
 import { getAssetDefinition, getUpgradeDefinition } from '../../../../../../core/state/registry.js';
 
-export const UPGRADE_STATUS_TONES = {
+const UPGRADE_STATUS_TONES = {
   owned: 'owned',
   ready: 'ready',
   unaffordable: 'unaffordable',
   locked: 'locked'
 };
 
-export function formatKeyLabel(key) {
+function formatKeyLabel(key) {
   if (!key) return '';
   return String(key)
     .replace(/([a-z])([A-Z])/g, '$1 $2')
@@ -17,7 +17,7 @@ export function formatKeyLabel(key) {
     .replace(/^./, char => char.toUpperCase());
 }
 
-export function formatSlotLabel(slot, amount) {
+function formatSlotLabel(slot, amount) {
   const label = formatKeyLabel(slot);
   const value = Math.abs(Number(amount) || 0);
   const rounded = Number.isInteger(value) ? value : Number(value.toFixed(2));
@@ -25,7 +25,7 @@ export function formatSlotLabel(slot, amount) {
   return `${rounded} ${label} slot${plural}`;
 }
 
-export function formatSlotMap(map) {
+function formatSlotMap(map) {
   if (!map || typeof map !== 'object') return '';
   return Object.entries(map)
     .map(([slot, amount]) => formatSlotLabel(slot, amount))
@@ -76,7 +76,7 @@ function isRequirementMet(requirement) {
   }
 }
 
-export function formatRequirementHtml(requirement) {
+function formatRequirementHtml(requirement) {
   if (!requirement) return 'Requires: <strong>Prerequisites</strong>';
   if (requirement.detail) return requirement.detail;
   switch (requirement.type) {
@@ -121,7 +121,7 @@ export function collectDetailStrings(definition) {
     .filter(Boolean);
 }
 
-export function describeEffectSummary(effects = {}, affects = {}) {
+function describeEffectSummary(effects = {}, affects = {}) {
   const effectParts = [];
   Object.entries(effects).forEach(([effect, value]) => {
     const numeric = Number(value);
@@ -178,16 +178,3 @@ export function collectUpgradeHighlights(upgrade) {
   return highlights;
 }
 
-export default {
-  UPGRADE_STATUS_TONES,
-  describeUpgradeSnapshotTone,
-  describeUpgradeAffordability,
-  getRequirementEntries,
-  collectUpgradeHighlights,
-  collectDetailStrings,
-  describeEffectSummary,
-  formatKeyLabel,
-  formatSlotLabel,
-  formatSlotMap,
-  formatRequirementHtml
-};

@@ -23,4 +23,3 @@ export function createProgressBar(course) {
   return wrapper;
 }
 
-export default createProgressBar;

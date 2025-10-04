@@ -24,7 +24,7 @@ export function createBankSection(title, note) {
   return { section, body };
 }
 
-export function createLedgerColumn(title, entries = [], direction = 'in') {
+function createLedgerColumn(title, entries = [], direction = 'in') {
   const column = document.createElement('article');
   column.className = `bankapp-ledger__column bankapp-ledger__column--${direction}`;
 

@@ -105,9 +105,4 @@ function ensureDefaultPreferenceAdapters() {
   defaultsRegistered = true;
 }
 
-export {
-  registerPreferenceAdapter,
-  getPreferenceAdapters,
-  resetPreferenceAdapters,
-  ensureDefaultPreferenceAdapters
-};
+export { getPreferenceAdapters, resetPreferenceAdapters, ensureDefaultPreferenceAdapters };

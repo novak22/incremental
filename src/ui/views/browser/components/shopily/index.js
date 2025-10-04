@@ -2,12 +2,6 @@ import { createShopilyWorkspacePresenter } from './createShopilyWorkspace.js';
 
 const presenter = createShopilyWorkspacePresenter();
 
-function render(model = {}, context = {}) {
+export default function renderShopilyWorkspace(model = {}, context = {}) {
   return presenter.render(model, context);
 }
-
-export default {
-  render
-};
-
-export { render };

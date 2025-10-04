@@ -1,4 +1,4 @@
-import serverhubApp from '../components/serverhub.js';
+import renderServerHubWorkspace from '../components/serverhub.js';
 import { setWorkspacePath } from '../layoutPresenter.js';
 import { getPageByType } from './pageLookup.js';
 
@@ -23,7 +23,7 @@ export default function renderServerHub(context = {}, definitions = [], model = 
     setWorkspacePath(page.id, path);
   };
 
-  const summary = serverhubApp.render(model, {
+  const summary = renderServerHubWorkspace(model, {
     mount,
     page,
     definitions,

@@ -10,6 +10,3 @@ export function createLearnlyWorkspace() {
   };
 }
 
-export default {
-  createLearnlyWorkspace
-};

@@ -297,13 +297,9 @@ presenter = createAssetWorkspacePresenter({
   ]
 });
 
-function render(model, context = {}) {
+export default function renderServerHubWorkspace(model, context = {}) {
   const summary = presenter.render(model, context);
   const meta = summary?.meta || 'Launch your first micro SaaS';
   const urlPath = summary?.urlPath || '';
   return { meta, urlPath };
 }
-
-export default {
-  render
-};

@@ -1,4 +1,4 @@
-export function renderQualityPanel(instance) {
+function renderQualityPanel(instance) {
   if (!instance.milestone) {
     return null;
   }

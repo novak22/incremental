@@ -109,4 +109,3 @@ export function createCourseCard({
   return card;
 }
 
-export default createCourseCard;

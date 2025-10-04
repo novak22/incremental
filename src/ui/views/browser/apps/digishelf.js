@@ -1,4 +1,4 @@
-import digishelfApp from '../components/digishelf.js';
+import renderDigishelfWorkspace from '../components/digishelf.js';
 import { setWorkspacePath } from '../layoutPresenter.js';
 import { getPageByType } from './pageLookup.js';
 
@@ -22,7 +22,7 @@ export default function renderDigishelf(context = {}, definitions = [], model = 
   const handleRouteChange = path => {
     setWorkspacePath(page.id, path);
   };
-  const summary = digishelfApp.render(model, {
+  const summary = renderDigishelfWorkspace(model, {
     mount,
     page,
     definitions,

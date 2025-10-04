@@ -126,7 +126,3 @@ export function renderLearnlyView({ state, context, handlers, formatters, descri
   }
 }
 
-export default {
-  renderLearnlyHeader,
-  renderLearnlyView
-};

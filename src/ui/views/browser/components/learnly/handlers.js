@@ -95,6 +95,3 @@ export function createLearnlyHandlers({ presenter, rerender }) {
   return handlers;
 }
 
-export default {
-  createLearnlyHandlers
-};

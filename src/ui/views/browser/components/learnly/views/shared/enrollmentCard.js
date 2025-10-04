@@ -71,4 +71,3 @@ export function createEnrollmentCard({ course, formatters, handlers, sourceTab }
   return card;
 }
 
-export default createEnrollmentCard;

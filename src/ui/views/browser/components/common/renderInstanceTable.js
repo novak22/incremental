@@ -193,7 +193,3 @@ export function renderInstanceTable(options = {}) {
   container.appendChild(table);
   return container;
 }
-
-export default {
-  renderInstanceTable
-};

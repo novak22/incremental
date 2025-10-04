@@ -153,7 +153,3 @@ export function mapAppsTable(instances, state, helpers = {}) {
     emptyState: createEmptyState(helpers)
   };
 }
-
-export default {
-  mapAppsTable
-};

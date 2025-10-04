@@ -1,4 +1,4 @@
-import learnlyApp from '../components/learnly.js';
+import renderLearnlyWorkspace from '../components/learnly.js';
 import { setWorkspacePath } from '../layoutPresenter.js';
 import { getPageByType } from './pageLookup.js';
 
@@ -24,7 +24,12 @@ export default function renderEducation(context = {}, definitions = [], model = 
     setWorkspacePath(page.id, path);
   };
 
-  const summary = learnlyApp.render(model, { mount, page, definitions, onRouteChange: handleRouteChange });
+  const summary = renderLearnlyWorkspace(model, {
+    mount,
+    page,
+    definitions,
+    onRouteChange: handleRouteChange
+  });
   const path = summary?.urlPath || '';
   setWorkspacePath(page.id, path);
   const meta = summary?.meta || 'Browse the catalog';

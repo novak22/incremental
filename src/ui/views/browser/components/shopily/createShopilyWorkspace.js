@@ -222,6 +222,4 @@ export function createShopilyWorkspacePresenter() {
   return presenter;
 }
 
-export default {
-  createShopilyWorkspacePresenter
-};
+export default createShopilyWorkspacePresenter;

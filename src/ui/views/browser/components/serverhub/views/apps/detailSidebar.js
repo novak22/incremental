@@ -130,7 +130,3 @@ export function mapDetailSidebar(model = {}, state = {}, helpers = {}) {
     sections: mapDetailSections(selected, helpers)
   };
 }
-
-export default {
-  mapDetailSidebar
-};

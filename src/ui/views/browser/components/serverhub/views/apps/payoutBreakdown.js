@@ -1,6 +1,6 @@
 import { ensureArray } from '../../../../../../../core/helpers.js';
 
-export function renderPayoutBreakdown(instance, { formatCurrency, formatPercent }) {
+function renderPayoutBreakdown(instance, { formatCurrency, formatPercent }) {
   const section = document.createElement('section');
   section.className = 'serverhub-panel';
 

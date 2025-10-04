@@ -1,4 +1,4 @@
-import blogpressApp from '../components/blogpress.js';
+import renderBlogpressWorkspace from '../components/blogpress.js';
 import { setWorkspacePath } from '../layoutPresenter.js';
 import { getPageByType } from './pageLookup.js';
 
@@ -22,7 +22,7 @@ export default function renderBlogpress(context = {}, definitions = [], model = 
   const handleRouteChange = path => {
     setWorkspacePath(page.id, path);
   };
-  const summary = blogpressApp.render(model, { mount, page, onRouteChange: handleRouteChange });
+  const summary = renderBlogpressWorkspace(model, { mount, page, onRouteChange: handleRouteChange });
   const path = summary?.urlPath || '';
   setWorkspacePath(page.id, path);
   const meta = summary?.meta || model?.summary?.meta || 'Launch your first blog';

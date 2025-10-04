@@ -1,4 +1,4 @@
-import shopilyApp from '../components/shopily.js';
+import renderShopilyWorkspace from '../components/shopily.js';
 import { setWorkspacePath } from '../layoutPresenter.js';
 import { getPageByType } from './pageLookup.js';
 
@@ -22,7 +22,7 @@ export default function renderShopily(context = {}, definitions = [], model = {}
   const handleRouteChange = path => {
     setWorkspacePath(page.id, path);
   };
-  const summary = shopilyApp.render(model, { mount, page, onRouteChange: handleRouteChange });
+  const summary = renderShopilyWorkspace(model, { mount, page, onRouteChange: handleRouteChange });
   const path = summary?.urlPath || '';
   setWorkspacePath(page.id, path);
   const meta = summary?.meta || model?.summary?.meta || 'Launch your first store';

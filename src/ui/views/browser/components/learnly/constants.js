@@ -16,11 +16,3 @@ export const CATEGORY_DEFINITIONS = [
   { id: 'general', label: 'Multidisciplinary', skills: [] }
 ];
 
-export default {
-  VIEW_CATALOG,
-  VIEW_DETAIL,
-  VIEW_MY_COURSES,
-  VIEW_PRICING,
-  VIEW_FREE,
-  CATEGORY_DEFINITIONS
-};

@@ -77,7 +77,3 @@ export function renderKpiGrid(options = {}) {
   section.appendChild(grid);
   return section;
 }
-
-export default {
-  renderKpiGrid
-};

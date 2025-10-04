@@ -128,7 +128,3 @@ export function createAppsView(options = {}) {
     return section;
   };
 }
-
-export default {
-  createAppsView
-};

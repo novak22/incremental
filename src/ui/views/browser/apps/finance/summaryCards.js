@@ -61,7 +61,3 @@ export function renderSummaryFootnote(model = {}) {
   return footnote;
 }
 
-export default {
-  renderSummaryCards,
-  renderSummaryFootnote
-};

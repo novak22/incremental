@@ -104,8 +104,3 @@ export function renderNichePanel(instance, helpers) {
   section.appendChild(field);
   return section;
 }
-
-export default {
-  renderNicheCell,
-  renderNichePanel
-};

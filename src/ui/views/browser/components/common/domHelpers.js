@@ -28,9 +28,4 @@ function appendContent(target, content) {
   }
 }
 
-export { isNodeLike, appendContent };
-
-export default {
-  isNodeLike,
-  appendContent
-};
+export { appendContent };
