@@ -486,6 +486,7 @@ function buildCatalogToolbar() {
   searchInput.type = 'search';
   searchInput.placeholder = 'Search ShopStack inventory';
   searchInput.value = uiState.search;
+  searchInput.dataset.role = 'shopstack-search-input';
   searchInput.addEventListener('input', event => {
     setState({ search: event.target.value });
   });
@@ -978,6 +979,12 @@ function renderPricingStage(content) {
 function renderApp() {
   if (!currentMount) return;
   let root = currentMount.querySelector('.shopstack');
+  const activeElement = document.activeElement;
+  const restoreSearchFocus =
+    root && root.contains(activeElement) && activeElement?.dataset?.role === 'shopstack-search-input';
+  const selection = restoreSearchFocus && typeof activeElement.selectionStart === 'number' && typeof activeElement.selectionEnd === 'number'
+    ? { start: activeElement.selectionStart, end: activeElement.selectionEnd }
+    : null;
   if (!root) {
     root = document.createElement('div');
     root.className = 'shopstack';
@@ -1001,6 +1008,20 @@ function renderApp() {
   }
 
   root.appendChild(content);
+
+  if (restoreSearchFocus) {
+    const nextSearchInput = root.querySelector('[data-role="shopstack-search-input"]');
+    if (nextSearchInput) {
+      nextSearchInput.focus();
+      if (selection && typeof nextSearchInput.setSelectionRange === 'function') {
+        try {
+          nextSearchInput.setSelectionRange(selection.start, selection.end);
+        } catch (error) {
+          // Ignore browsers that do not support setting selection on type="search".
+        }
+      }
+    }
+  }
 }
 
 function computeMeta() {
