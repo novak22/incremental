@@ -8,14 +8,16 @@ import {
 } from '../../../game/assets/niches.js';
 import {
   canPerformQualityAction,
-  getInstanceQualityRange,
-  getNextQualityLevel,
   getQualityActionAvailability,
   getQualityActionUsage,
   getQualityActions,
-  getQualityLevel,
   getQualityTracks
-} from '../../../game/assets/quality.js';
+} from '../../../game/assets/quality/actions.js';
+import {
+  getInstanceQualityRange,
+  getNextQualityLevel,
+  getQualityLevel
+} from '../../../game/assets/quality/levels.js';
 import { describeAssetLaunchAvailability } from './assets.js';
 import { registerModelBuilder } from '../modelBuilderRegistry.js';
 import { buildSkillLock } from './skillLocks.js';
