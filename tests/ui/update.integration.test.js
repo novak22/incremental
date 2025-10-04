@@ -356,3 +356,64 @@ test('state mutators mark dirty sections and drive partial UI refreshes', { conc
   const postSaleDirty = invalidation.consumeDirty();
   assert.deepStrictEqual(postSaleDirty, {}, 'expected executeAction to consume dirty sections after sale');
 });
+
+test('game loop fallback renders dashboard and cards when no sections are dirty', { concurrency: false }, async t => {
+  ensureTestDom();
+  const harness = await getGameTestHarness();
+  harness.resetState();
+
+  const loopModule = await import('../../src/game/loop.js');
+  const hustlesModule = await import('../../src/game/hustles.js');
+  const viewManager = await import('../../src/ui/viewManager.js');
+  const browserViewModule = await import('../../src/ui/views/browser/index.js');
+  const updateModule = await import('../../src/ui/update.js');
+  const invalidation = await import('../../src/ui/invalidation.js');
+
+  const browserView = browserViewModule.default;
+  const originalView = viewManager.getActiveView();
+
+  const callCounts = { dashboard: 0, cards: 0 };
+
+  const stubView = {
+    ...browserView,
+    renderDashboard: (...args) => {
+      callCounts.dashboard += 1;
+      return browserView.renderDashboard?.(...args);
+    },
+    presenters: {
+      ...browserView.presenters,
+      cards: {
+        ...browserView.presenters?.cards,
+        renderAll: (...args) => {
+          return browserView.presenters?.cards?.renderAll?.(...args);
+        },
+        update: (...args) => {
+          callCounts.cards += 1;
+          return browserView.presenters?.cards?.update?.(...args);
+        }
+      }
+    }
+  };
+
+  viewManager.setActiveView(stubView, document);
+
+  const originalHustles = [...hustlesModule.HUSTLES];
+  hustlesModule.HUSTLES.splice(0, hustlesModule.HUSTLES.length);
+
+  t.after(() => {
+    hustlesModule.HUSTLES.splice(0, hustlesModule.HUSTLES.length, ...originalHustles);
+    invalidation.consumeDirty();
+    viewManager.setActiveView(originalView ?? browserView, document);
+  });
+
+  invalidation.consumeDirty();
+  updateModule.renderCards();
+
+  loopModule.runGameLoop();
+
+  assert.ok(callCounts.dashboard > 0, 'expected dashboard fallback render when no dirty sections were marked');
+  assert.ok(callCounts.cards > 0, 'expected cards presenter to update during fallback render');
+
+  const remainingDirty = invalidation.consumeDirty();
+  assert.deepEqual(remainingDirty, {}, 'expected dirty registry to remain empty after fallback render');
+});
