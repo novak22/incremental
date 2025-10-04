@@ -1,6 +1,5 @@
 import { getAssetDefinition } from '../state/registry.js';
 import { createAssetInstance } from '../state/assets.js';
-import { getAssetState, getUpgradeState } from '../state.js';
 import { SnapshotRepository } from './snapshotRepository.js';
 import { StateMigrationRunner } from './stateMigrationRunner.js';
 import { success, error, empty, tryCatch } from './result.js';
@@ -23,7 +22,9 @@ function migrateLegacySnapshot(snapshot, context) {
   migrated.day = snapshot.day ?? migrated.day;
   migrated.lastSaved = snapshot.lastSaved || context.now();
 
-  if (snapshot.blog) {
+  const { getAssetState, getUpgradeState } = context.stateAccess || {};
+
+  if (snapshot.blog && typeof getAssetState === 'function') {
     const blogState = getAssetState('blog', migrated);
     const blogDefinition = getAssetDefinition('blog');
     const legacyInstances = Array.isArray(snapshot.blog.instances)
@@ -55,12 +56,14 @@ function migrateLegacySnapshot(snapshot, context) {
     }
   }
 
-  if (snapshot.assistantHired) {
+  if (snapshot.assistantHired && typeof getUpgradeState === 'function') {
     const assistant = getUpgradeState('assistant', migrated);
     assistant.count = Math.max(1, Number(assistant.count) || 0);
   }
 
-  getUpgradeState('coffee', migrated).usedToday = snapshot.coffeesToday || 0;
+  if (typeof getUpgradeState === 'function') {
+    getUpgradeState('coffee', migrated).usedToday = snapshot.coffeesToday || 0;
+  }
 
   migrated.log = Array.isArray(snapshot.log) ? snapshot.log : [];
   return migrated;
@@ -81,6 +84,8 @@ export class StatePersistence {
     replaceState,
     ensureStateShape,
     getState,
+    getAssetState,
+    getUpgradeState,
     migrations = DEFAULT_MIGRATIONS,
     logger = console,
     repository,
@@ -94,6 +99,12 @@ export class StatePersistence {
     this.replaceState = replaceState;
     this.ensureStateShape = ensureStateShape;
     this.getState = getState;
+    this.stateAccess = {
+      getAssetState:
+        typeof getAssetState === 'function' ? getAssetState : () => ({ instances: [] }),
+      getUpgradeState:
+        typeof getUpgradeState === 'function' ? getUpgradeState : () => ({})
+    };
     this.logger = logger;
 
     this.repository =
@@ -249,7 +260,8 @@ export class StatePersistence {
       defaultState: this.clone(defaultState),
       clone: this.clone,
       now: this.now,
-      version: this.version
+      version: this.version,
+      stateAccess: this.stateAccess
     };
   }
 }

@@ -44,7 +44,7 @@ function normalizeLogEntry(entry) {
   return normalized;
 }
 
-class StateManager {
+export class StateManager {
   constructor() {
     this.state = null;
   }
@@ -182,18 +182,33 @@ class StateManager {
   }
 }
 
-const stateManager = new StateManager();
+export function createStateManager() {
+  return new StateManager();
+}
 
-export const createEmptyDailyMetrics = (...args) => stateManager.createEmptyDailyMetrics(...args);
-export const ensureDailyMetrics = (...args) => stateManager.ensureDailyMetrics(...args);
-export const ensureMetricsHistory = (...args) => stateManager.ensureMetricsHistory(...args);
-export const ensureStateShape = (...args) => stateManager.ensureStateShape(...args);
-export const buildDefaultState = (...args) => stateManager.buildDefaultState(...args);
-export const initializeState = (...args) => stateManager.initializeState(...args);
-export const replaceState = (...args) => stateManager.replaceState(...args);
-export const getState = (...args) => stateManager.getState(...args);
-export const getHustleState = (...args) => stateManager.getHustleState(...args);
-export const getAssetState = (...args) => stateManager.getAssetState(...args);
-export const getUpgradeState = (...args) => stateManager.getUpgradeState(...args);
-export const countActiveAssetInstances = (...args) => stateManager.countActiveAssetInstances(...args);
+export const defaultStateManager = createStateManager();
+
+export const createEmptyDailyMetrics = (...args) =>
+  defaultStateManager.createEmptyDailyMetrics(...args);
+export const ensureDailyMetrics = (...args) =>
+  defaultStateManager.ensureDailyMetrics(...args);
+export const ensureMetricsHistory = (...args) =>
+  defaultStateManager.ensureMetricsHistory(...args);
+export const ensureStateShape = (...args) =>
+  defaultStateManager.ensureStateShape(...args);
+export const buildDefaultState = (...args) =>
+  defaultStateManager.buildDefaultState(...args);
+export const initializeState = (...args) =>
+  defaultStateManager.initializeState(...args);
+export const replaceState = (...args) =>
+  defaultStateManager.replaceState(...args);
+export const getState = (...args) => defaultStateManager.getState(...args);
+export const getHustleState = (...args) =>
+  defaultStateManager.getHustleState(...args);
+export const getAssetState = (...args) =>
+  defaultStateManager.getAssetState(...args);
+export const getUpgradeState = (...args) =>
+  defaultStateManager.getUpgradeState(...args);
+export const countActiveAssetInstances = (...args) =>
+  defaultStateManager.countActiveAssetInstances(...args);
 

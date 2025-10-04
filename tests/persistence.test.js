@@ -47,6 +47,8 @@ function createPersistence({ storage, migrations = [] } = {}) {
     },
     ensureStateShape: () => {},
     getState: () => state,
+    getAssetState: () => ({ instances: [] }),
+    getUpgradeState: () => ({}),
     logger: { error: () => {} },
     repository,
     migrationRunner
