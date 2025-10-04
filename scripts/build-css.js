@@ -13,6 +13,7 @@ const sectionOrder = ['base', 'components', 'widgets', 'workspaces', 'overlays']
 const sectionFileOrder = {
   base: ['theme.css', 'layout.css'],
   components: ['buttons.css', 'notifications.css'],
+  widgets: ['widgets.css', 'home.css', 'apps.css', 'todo.css', 'bank.css'],
   overlays: ['launch-dialog.css'],
 };
 
