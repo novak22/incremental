@@ -1,4 +1,5 @@
 import serverhubApp from '../components/serverhub.js';
+import { setWorkspacePath } from '../layoutPresenter.js';
 import { getPageByType } from './pageLookup.js';
 
 export default function renderServerHub(context = {}, definitions = [], model = {}) {
@@ -18,8 +19,19 @@ export default function renderServerHub(context = {}, definitions = [], model = 
   const mount = refs.body.querySelector('[data-role="serverhub-root"]');
   if (!mount) return null;
 
-  const summary = serverhubApp.render(model, { mount, page, definitions });
-  const meta = summary?.meta || model?.summary?.meta || 'Launch your first micro SaaS';
+  const handleRouteChange = path => {
+    setWorkspacePath(page.id, path);
+  };
+
+  const summary = serverhubApp.render(model, {
+    mount,
+    page,
+    definitions,
+    onRouteChange: handleRouteChange
+  });
+
   const urlPath = summary?.urlPath || '';
+  setWorkspacePath(page.id, urlPath);
+  const meta = summary?.meta || model?.summary?.meta || 'Launch your first micro SaaS';
   return { id: page.id, meta, urlPath };
 }
