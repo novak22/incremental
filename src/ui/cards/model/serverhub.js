@@ -4,7 +4,6 @@ import { instanceLabel } from '../../../game/assets/details.js';
 import { formatMaintenanceSummary } from '../../../game/assets/maintenance.js';
 import {
   assignInstanceToNiche,
-  getAssignableNicheSummaries,
   getInstanceNicheInfo
 } from '../../../game/assets/niches.js';
 import {
@@ -21,76 +20,14 @@ import {
   buildActionSnapshot,
   buildMilestoneProgress
 } from './sharedQuality.js';
-
-function calculateAveragePayout(instance, state) {
-  if (!instance || instance.status !== 'active') {
-    return 0;
-  }
-  const totalIncome = Math.max(0, clampNumber(instance.totalIncome));
-  const createdOnDay = Math.max(1, clampNumber(instance.createdOnDay) || 1);
-  const currentDay = Math.max(1, clampNumber(state?.day) || 1);
-  const daysActive = Math.max(1, currentDay - createdOnDay + 1);
-  if (totalIncome <= 0) {
-    return 0;
-  }
-  return totalIncome / daysActive;
-}
-
-function describeStatus(instance, definition) {
-  const status = instance?.status === 'active' ? 'active' : 'setup';
-  if (status === 'active') {
-    return { id: 'active', label: 'Active' };
-  }
-  const totalDays = Math.max(0, clampNumber(definition?.setup?.days));
-  const completed = Math.max(0, clampNumber(instance?.daysCompleted));
-  const remaining = Math.max(0, clampNumber(instance?.daysRemaining));
-  const progress = totalDays > 0 ? Math.min(1, completed / totalDays) : 0;
-  return {
-    id: 'setup',
-    label: `Setup ${completed}/${totalDays} days`,
-    remaining,
-    progress
-  };
-}
-
-function estimateLifetimeSpend(definition, instance, state) {
-  const setupCost = Math.max(0, clampNumber(definition?.setup?.cost));
-  const upkeepCost = Math.max(0, clampNumber(definition?.maintenance?.cost));
-  if (upkeepCost <= 0) {
-    return setupCost;
-  }
-  const createdOnDay = Math.max(1, clampNumber(instance?.createdOnDay) || 1);
-  const currentDay = Math.max(1, clampNumber(state?.day) || 1);
-  const elapsedDays = Math.max(0, currentDay - createdOnDay + 1);
-  return setupCost + upkeepCost * elapsedDays;
-}
-
-function buildPayoutBreakdown(instance) {
-  const breakdown = instance?.lastIncomeBreakdown;
-  const entries = ensureArray(breakdown?.entries).map(entry => ({
-    id: entry?.id || entry?.label || 'modifier',
-    label: entry?.label || 'Modifier',
-    amount: Math.max(0, clampNumber(entry?.amount)),
-    percent: Number.isFinite(Number(entry?.percent)) ? Number(entry.percent) : null,
-    type: entry?.type || 'modifier'
-  }));
-  const total = Math.max(0, clampNumber(breakdown?.total || instance?.lastIncome));
-  return { entries, total };
-}
-
-function mapNicheOptions(definition, state) {
-  return ensureArray(getAssignableNicheSummaries(definition, state)).map(entry => ({
-    id: entry?.definition?.id || '',
-    name: entry?.definition?.name || entry?.definition?.id || '',
-    summary: entry?.popularity?.summary || '',
-    label: entry?.popularity?.label || '',
-    multiplier: entry?.popularity?.multiplier || 1,
-    score: clampNumber(entry?.popularity?.score),
-    delta: Number.isFinite(Number(entry?.popularity?.delta))
-      ? Number(entry?.popularity.delta)
-      : null
-  })).filter(option => option.id && option.name);
-}
+import {
+  calculateAveragePayout,
+  describeInstanceStatus,
+  estimateLifetimeSpend,
+  buildPayoutBreakdown,
+  mapNicheOptions,
+  buildDefaultSummary
+} from './sharedAssetInstances.js';
 
 function extractRelevantUpgrades(upgrades = [], state) {
   return ensureArray(upgrades)
@@ -123,13 +60,13 @@ function buildInstances(definition, state) {
   const assetState = getAssetState(definition.id, state) || { instances: [] };
   const instances = ensureArray(assetState.instances);
   const actions = getQualityActions(definition);
-  const nicheOptions = mapNicheOptions(definition, state);
+  const nicheOptions = mapNicheOptions(definition, state, { includeDelta: true });
   const maintenance = formatMaintenanceSummary(definition);
   const upkeepCost = Math.max(0, clampNumber(definition?.maintenance?.cost));
 
   return instances.map((instance, index) => {
     const label = instanceLabel(definition, index);
-    const status = describeStatus(instance, definition);
+    const status = describeInstanceStatus(instance, definition);
     const averagePayout = calculateAveragePayout(instance, state);
     const qualityLevel = Math.max(0, clampNumber(instance?.quality?.level));
     const qualityInfo = getQualityLevel(definition, qualityLevel);
@@ -203,44 +140,39 @@ function buildInstances(definition, state) {
   }).sort((a, b) => b.latestPayout - a.latestPayout);
 }
 
-function buildSummary(instances = [], definition, state) {
-  const total = instances.length;
+function buildSummary(instances = [], definition) {
+  const baseSummary = buildDefaultSummary(instances, {
+    fallbackLabel: definition?.singular || definition?.name || 'SaaS app',
+    includeNeedsUpkeep: true,
+    activeMeta: ({ active }) => `${active} SaaS app${active === 1 ? '' : 's'} live`,
+    setupMeta: 'Launch prep underway',
+    emptyMeta: 'Launch your first micro SaaS'
+  });
+
   const activeInstances = instances.filter(entry => entry.status?.id === 'active');
-  const active = activeInstances.length;
-  const setup = total - active;
-  const needsUpkeep = activeInstances.filter(entry => !entry.maintenanceFunded).length;
   const dailyRevenue = activeInstances.reduce((sum, entry) => sum + entry.latestPayout, 0);
   const upkeepCost = Math.max(0, clampNumber(definition?.maintenance?.cost));
-  const dailyUpkeep = active * upkeepCost;
+  const dailyUpkeep = baseSummary.active * upkeepCost;
   const netDaily = dailyRevenue - dailyUpkeep;
-
-  let meta = '';
-  if (active > 0) {
-    meta = `${active} SaaS app${active === 1 ? '' : 's'} live`;
-  } else if (setup > 0) {
-    meta = 'Launch prep underway';
-  } else {
-    meta = 'Launch your first micro SaaS';
-  }
 
   const hero = [
     {
       id: 'active',
       label: 'Total SaaS Apps Active',
-      value: active,
-      note: `${total} deployed`
+      value: baseSummary.active,
+      note: `${baseSummary.total} deployed`
     },
     {
       id: 'revenue',
       label: 'Daily Revenue',
       value: dailyRevenue,
-      note: active > 0 ? 'Yesterday\'s subscriptions' : 'No revenue yet'
+      note: baseSummary.active > 0 ? 'Yesterday\'s subscriptions' : 'No revenue yet'
     },
     {
       id: 'upkeep',
       label: 'Daily Upkeep',
       value: dailyUpkeep,
-      note: active > 0 ? 'Server & support budget' : 'No upkeep'
+      note: baseSummary.active > 0 ? 'Server & support budget' : 'No upkeep'
     },
     {
       id: 'net',
@@ -251,15 +183,11 @@ function buildSummary(instances = [], definition, state) {
   ];
 
   return {
-    total,
-    active,
-    setup,
-    needsUpkeep,
+    ...baseSummary,
     dailyRevenue,
     dailyUpkeep,
     netDaily,
-    hero,
-    meta
+    hero
   };
 }
 
@@ -352,7 +280,7 @@ function buildServerHubModel(assetDefinitions = [], upgradeDefinitions = [], sta
   }
 
   const instances = buildInstances(saasDefinition, state);
-  const summary = buildSummary(instances, saasDefinition, state);
+  const summary = buildSummary(instances, saasDefinition);
   const launch = buildLaunch(saasDefinition, state);
   const upgrades = extractRelevantUpgrades(upgradeDefinitions, state);
   const pricing = buildPricingPlans(saasDefinition);

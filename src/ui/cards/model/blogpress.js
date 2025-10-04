@@ -4,7 +4,6 @@ import { instanceLabel } from '../../../game/assets/details.js';
 import { formatMaintenanceSummary } from '../../../game/assets/maintenance.js';
 import {
   assignInstanceToNiche,
-  getAssignableNicheSummaries,
   getInstanceNicheInfo
 } from '../../../game/assets/niches.js';
 import {
@@ -20,6 +19,14 @@ import {
 import { describeAssetLaunchAvailability } from './assets.js';
 import { registerModelBuilder } from '../modelBuilderRegistry.js';
 import { buildSkillLock } from './skillLocks.js';
+import {
+  calculateAveragePayout,
+  describeInstanceStatus,
+  estimateLifetimeSpend,
+  buildPayoutBreakdown,
+  mapNicheOptions,
+  buildDefaultSummary
+} from './sharedAssetInstances.js';
 
 function clampNumber(value) {
   const number = Number(value);
@@ -115,73 +122,6 @@ function buildActionSnapshot(definition, instance, action, state) {
   };
 }
 
-function calculateAveragePayout(instance, state) {
-  if (!instance || instance.status !== 'active') {
-    return 0;
-  }
-  const totalIncome = Math.max(0, clampNumber(instance.totalIncome));
-  const createdOnDay = Math.max(1, clampNumber(instance.createdOnDay) || 1);
-  const currentDay = Math.max(1, clampNumber(state?.day) || 1);
-  const daysActive = Math.max(1, currentDay - createdOnDay + 1);
-  if (totalIncome <= 0) {
-    return 0;
-  }
-  return totalIncome / daysActive;
-}
-
-function describeStatus(instance, definition) {
-  const status = instance?.status === 'active' ? 'active' : 'setup';
-  if (status === 'active') {
-    return { id: 'active', label: 'Active' };
-  }
-  const totalDays = Math.max(0, clampNumber(definition?.setup?.days));
-  const completed = Math.max(0, clampNumber(instance?.daysCompleted));
-  const remaining = Math.max(0, clampNumber(instance?.daysRemaining));
-  const progress = totalDays > 0 ? Math.min(1, completed / totalDays) : 0;
-  return {
-    id: 'setup',
-    label: `Setup ${completed}/${totalDays} days`,
-    remaining,
-    progress
-  };
-}
-
-function estimateLifetimeSpend(definition, instance, state) {
-  const setupCost = Math.max(0, clampNumber(definition?.setup?.cost));
-  const upkeepCost = Math.max(0, clampNumber(definition?.maintenance?.cost));
-  if (upkeepCost <= 0) {
-    return setupCost;
-  }
-  const createdOnDay = Math.max(1, clampNumber(instance?.createdOnDay) || 1);
-  const currentDay = Math.max(1, clampNumber(state?.day) || 1);
-  const elapsedDays = Math.max(0, currentDay - createdOnDay + 1);
-  return setupCost + upkeepCost * elapsedDays;
-}
-
-function buildPayoutBreakdown(instance) {
-  const breakdown = instance?.lastIncomeBreakdown;
-  const entries = ensureArray(breakdown?.entries).map(entry => ({
-    id: entry?.id || entry?.label || 'modifier',
-    label: entry?.label || 'Modifier',
-    amount: Math.max(0, clampNumber(entry?.amount)),
-    percent: Number.isFinite(Number(entry?.percent)) ? Number(entry.percent) : null,
-    type: entry?.type || 'modifier'
-  }));
-  const total = Math.max(0, clampNumber(breakdown?.total || instance?.lastIncome));
-  return { entries, total };
-}
-
-function mapNicheOptions(definition, state) {
-  return ensureArray(getAssignableNicheSummaries(definition, state)).map(entry => ({
-    id: entry?.definition?.id || '',
-    name: entry?.definition?.name || entry?.definition?.id || '',
-    summary: entry?.popularity?.summary || '',
-    score: clampNumber(entry?.popularity?.score),
-    label: entry?.popularity?.label || '',
-    multiplier: entry?.popularity?.multiplier || 1
-  })).filter(option => option.id && option.name);
-}
-
 function extractRelevantUpgrades(upgrades = []) {
   return ensureArray(upgrades)
     .filter(upgrade => {
@@ -210,7 +150,7 @@ function buildBlogInstances(definition, state) {
 
   return instances.map((instance, index) => {
     const label = instanceLabel(definition, index);
-    const status = describeStatus(instance, definition);
+    const status = describeInstanceStatus(instance, definition);
     const averagePayout = calculateAveragePayout(instance, state);
     const lifetimeIncome = Math.max(0, clampNumber(instance.totalIncome));
     const estimatedSpend = estimateLifetimeSpend(definition, instance, state);
@@ -305,19 +245,11 @@ function buildPricing(definition, upgrades = [], state) {
 }
 
 function buildSummary(instances = []) {
-  const total = instances.length;
-  const active = instances.filter(entry => entry.status?.id === 'active').length;
-  const setup = total - active;
-  const needsUpkeep = instances.filter(entry => !entry.maintenanceFunded && entry.status?.id === 'active').length;
-  let meta = '';
-  if (active > 0) {
-    meta = `${active} blog${active === 1 ? '' : 's'} live`;
-  } else if (setup > 0) {
-    meta = 'Launch prep in progress';
-  } else {
-    meta = 'Launch your first blog';
-  }
-  return { total, active, setup, needsUpkeep, meta };
+  return buildDefaultSummary(instances, {
+    fallbackLabel: 'blog',
+    includeNeedsUpkeep: true,
+    setupMeta: 'Launch prep in progress'
+  });
 }
 
 function buildBlogpressModel(assetDefinitions = [], upgradeDefinitions = [], state = getState()) {
