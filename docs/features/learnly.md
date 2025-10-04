@@ -18,3 +18,12 @@ Reimagine the education experience inside the browser shell as a dedicated Learn
 - Pricing Info tab explains tuition, time reservation, and graduation rewards so new players understand how Learnly interacts with their schedule and income.
 - Browser navigation mirrors Learnly’s tabs, mapping the workspace URL to `/catalog`, `/my-courses`, or `/pricing` for easy orientation.
 - The module reuses the existing knowledge track registry so XP rewards, unlocks, and study progress remain in sync with backend systems.
+
+## Workspace Architecture
+- The Learnly workspace is orchestrated by `createTabbedWorkspacePresenter`, which builds tab navigation, hero metrics, and view routing so catalog, free courses, My Courses, detail, and pricing screens share URL segments and state transitions.【F:src/ui/views/browser/components/learnly/createLearnlyWorkspace.js†L378-L502】
+- Tab buttons surface badges for free offerings and active enrollments, while the hero band highlights total catalog size, reserved hours, and current enrollments drawn from the aggregated course context.【F:src/ui/views/browser/components/learnly/createLearnlyWorkspace.js†L278-L319】【F:src/ui/views/browser/components/learnly/views/tabNavigation.js†L3-L37】
+- Course detail pages now include back-navigation tied to the originating tab, skill highlight lists, and CTAs that enroll or deep link into My Courses depending on progress state.【F:src/ui/views/browser/components/learnly/views/detailView.js†L9-L139】【F:src/ui/views/browser/components/learnly/views/detailView.js†L140-L175】
+- My Courses sorts in-progress enrollments to the top and reiterates reserved time and sunk tuition so the daily plan is visible without opening detail views.【F:src/ui/views/browser/components/learnly/views/myCoursesView.js†L4-L55】
+
+## Follow-up Tech Debt
+- Dropping a course still relies on the browser `window.confirm` prompt; swap in the shared shell modal so the experience matches other workspace confirmations and remains themeable.【F:src/ui/views/browser/components/learnly/createLearnlyWorkspace.js†L494-L503】
