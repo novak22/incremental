@@ -9,7 +9,7 @@ import { checkDayEnd } from '../lifecycle.js';
 import { recordCostContribution, recordTimeContribution } from '../metrics.js';
 import { spendTime } from '../time.js';
 import { awardSkillProgress } from '../skills/index.js';
-import { markDirty } from '../../ui/invalidation.js';
+import { markDirty } from '../../core/events/invalidationBus.js';
 import { instanceLabel } from './details.js';
 
 function ensureUsageMap(instance) {

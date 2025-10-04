@@ -9,7 +9,14 @@ import { buildSkillsWidgetModel } from './skillsWidget/model.js';
 import { buildHeaderActionModel } from './headerAction/model.js';
 import { renderHeaderAction } from './headerAction/index.js';
 import { applyCardFilters } from './layout/index.js';
-import { ALL_UI_SECTIONS } from './invalidation.js';
+import {
+  ALL_UI_SECTIONS,
+  EVENT_TOPICS,
+  subscribe,
+  subscribeToInvalidation
+} from '../core/events/invalidationBus.js';
+import { getElement } from './elements/registry.js';
+import { flashValue } from './effects.js';
 
 function dispatchCardCollections(mode, activeView = getActiveView()) {
   cardCollectionService.refreshCollections();
@@ -48,6 +55,36 @@ export function renderCards() {
     renderCardCollections(registries, models);
   }
   applyCardFilters(models);
+}
+
+function handleMoneyChanged(event = {}) {
+  const moneyNode = getElement('money');
+  if (!moneyNode) {
+    return;
+  }
+  const negative = event.direction === 'spend' || Number(event.amount) < 0;
+  flashValue(moneyNode, negative);
+}
+
+let subscriptionsInitialized = false;
+let unsubscribeInvalidation = null;
+let unsubscribeMoneyChanged = null;
+
+export function ensureUpdateSubscriptions() {
+  if (subscriptionsInitialized) {
+    return;
+  }
+  unsubscribeInvalidation = subscribeToInvalidation(updateUI);
+  unsubscribeMoneyChanged = subscribe(EVENT_TOPICS.moneyChanged, handleMoneyChanged);
+  subscriptionsInitialized = true;
+}
+
+export function teardownUpdateSubscriptions() {
+  unsubscribeInvalidation?.();
+  unsubscribeMoneyChanged?.();
+  subscriptionsInitialized = false;
+  unsubscribeInvalidation = null;
+  unsubscribeMoneyChanged = null;
 }
 
 function buildDefaultOptions() {
@@ -123,3 +160,5 @@ export function updateUI(options) {
     }
   }
 }
+
+ensureUpdateSubscriptions();

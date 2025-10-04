@@ -1,6 +1,6 @@
 import { DEFAULT_DAY_HOURS } from '../../core/constants.js';
 import { formatList, formatMoney } from '../../core/helpers.js';
-import { markDirty } from '../../ui/invalidation.js';
+import { markDirty } from '../../core/events/invalidationBus.js';
 
 export const MIN_MANUAL_BUFFER_HOURS = Math.max(2, Math.round(DEFAULT_DAY_HOURS * 0.25));
 export const STUDY_DIRTY_SECTIONS = Object.freeze(['cards', 'dashboard', 'player']);

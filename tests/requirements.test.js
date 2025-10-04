@@ -6,7 +6,7 @@ const knowledgeTracksModule = await import('../src/game/requirements/knowledgeTr
 const maintenanceModule = await import('../src/game/requirements/maintenanceReserve.js');
 const descriptorsModule = await import('../src/game/requirements/descriptors.js');
 const orchestratorModule = await import('../src/game/requirements/orchestrator.js');
-const invalidationModule = await import('../src/ui/invalidation.js');
+const invalidationModule = await import('../src/core/events/invalidationBus.js');
 
 const { default: tracksDefaultExport, KNOWLEDGE_TRACKS: tracksCatalog, KNOWLEDGE_REWARDS: rewardCatalog } = knowledgeTracksModule;
 const { estimateManualMaintenanceReserve } = maintenanceModule;

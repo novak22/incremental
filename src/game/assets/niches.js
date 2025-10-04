@@ -4,7 +4,7 @@ import { getAssetState, getState } from '../../core/state.js';
 import { getAssetDefinition } from '../../core/state/registry.js';
 import { getNicheDefinition, getNicheDefinitions } from './nicheData.js';
 import { NICHE_ANALYTICS_HISTORY_LIMIT } from '../../core/state/niches.js';
-import { markDirty } from '../../ui/invalidation.js';
+import { markDirty } from '../../core/events/invalidationBus.js';
 
 const POPULARITY_MIN = 25;
 const POPULARITY_MAX = 95;

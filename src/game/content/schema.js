@@ -35,7 +35,7 @@ import {
   formatSlotMap,
   logUpgradeBlocked
 } from './schema/logMessaging.js';
-import { markDirty } from '../../ui/invalidation.js';
+import { markDirty } from '../../core/events/invalidationBus.js';
 
 export { createInstantHustle } from './schema/assetActions.js';
 

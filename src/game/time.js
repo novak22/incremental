@@ -1,5 +1,5 @@
 import { getState } from '../core/state.js';
-import { markDirty } from '../ui/invalidation.js';
+import { markDirty } from '../core/events/invalidationBus.js';
 
 const TIME_UI_SECTIONS = ['dashboard', 'player', 'skillsWidget', 'headerAction'];
 
