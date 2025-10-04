@@ -148,20 +148,6 @@ function getSelectedApp(model = {}, state = {}) {
   return instances.find(entry => entry.id === state.selectedAppId) || null;
 }
 
-async function handleLaunch(presenterInstance) {
-  if (!presenterInstance) return;
-  const model = presenterInstance.getModel() || {};
-  const launch = model.launch;
-  if (!launch || launch.disabled) {
-    return;
-  }
-  const confirmed = await confirmLaunchWithDetails(model.definition);
-  if (!confirmed) {
-    return;
-  }
-  launch.onClick?.();
-}
-
 function deriveSummary(model = {}) {
   const summary = model.summary;
   const isSummaryObject = summary && typeof summary === 'object' && !Array.isArray(summary);
@@ -196,15 +182,45 @@ let presenter;
 const renderUpgradesView = createUpgradesView({ formatCurrency });
 const renderPricingView = createPricingView({ formatCurrency, formatHours });
 
-async function handleLaunch({ presenter, model, launch }) {
+async function handleLaunch(context = {}) {
+  if (!context) {
+    return false;
+  }
+
+  if (typeof context.getModel === 'function') {
+    const presenterInstance = context;
+    const model = presenterInstance.getModel?.() || {};
+    const launch = model.launch;
+    if (!launch || launch.disabled) {
+      return false;
+    }
+    const confirmed = await confirmLaunchWithDetails(model.definition);
+    if (!confirmed) {
+      return false;
+    }
+    if (typeof launch.onClick === 'function') {
+      await launch.onClick();
+    }
+    return true;
+  }
+
+  const presenter = context.presenter;
+  const model = context.model ?? presenter?.getModel?.() ?? {};
+  const launch = context.launch ?? model.launch;
+
   if (!presenter || !model || !launch || launch.disabled) {
     return false;
   }
+
   const confirmed = await confirmLaunchWithDetails(model.definition);
   if (!confirmed) {
     return false;
   }
-  launch.onClick?.();
+
+  if (typeof launch.onClick === 'function') {
+    await launch.onClick(context.event);
+  }
+
   return true;
 }
 
