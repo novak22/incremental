@@ -1,20 +1,15 @@
 import { ensureArray, formatHours, formatMoney } from '../../../core/helpers.js';
-import { getAssetState, getState } from '../../../core/state.js';
+import { getState } from '../../../core/state.js';
 import { calculateAssetSalePrice } from '../../../game/assets/actions.js';
-import { instanceLabel } from '../../../game/assets/details.js';
 import { formatMaintenanceSummary } from '../../../game/assets/maintenance.js';
 import {
   assignInstanceToNiche,
-  getInstanceNicheInfo
 } from '../../../game/assets/niches.js';
 import {
   canPerformQualityAction,
-  getInstanceQualityRange,
   getNextQualityLevel,
   getQualityActionAvailability,
   getQualityActionUsage,
-  getQualityActions,
-  getQualityLevel,
   getQualityTracks
 } from '../../../game/assets/quality.js';
 import { getUpgradeSnapshot, describeUpgradeStatus } from './upgrades.js';
@@ -22,13 +17,9 @@ import { describeAssetLaunchAvailability } from './assets.js';
 import { registerModelBuilder } from '../modelBuilderRegistry.js';
 import { buildSkillLock } from './skillLocks.js';
 import {
-  calculateAveragePayout,
-  describeInstanceStatus,
-  estimateLifetimeSpend,
-  buildPayoutBreakdown,
-  mapNicheOptions,
   buildDefaultSummary
 } from './sharedAssetInstances.js';
+import createAssetInstanceSnapshots from './createAssetInstanceSnapshots.js';
 
 function clampNumber(value) {
   const number = Number(value);
@@ -154,73 +145,21 @@ function extractRelevantUpgrades(upgrades = [], state) {
 }
 
 function buildShopInstances(definition, state) {
-  const assetState = getAssetState('dropshipping', state) || { instances: [] };
-  const instances = ensureArray(assetState.instances);
-  const actions = getQualityActions(definition);
-  const nicheOptions = mapNicheOptions(definition, state, { includeDelta: true });
   const maintenance = formatMaintenanceSummary(definition);
-  const upkeepCost = Math.max(0, clampNumber(definition?.maintenance?.cost));
 
-  return instances.map((instance, index) => {
-    const label = instanceLabel(definition, index);
-    const status = describeInstanceStatus(instance, definition);
-    const averagePayout = calculateAveragePayout(instance, state);
-    const qualityLevel = Math.max(0, clampNumber(instance?.quality?.level));
-    const qualityInfo = getQualityLevel(definition, qualityLevel);
-    const milestone = buildMilestoneProgress(definition, instance);
-    const qualityRange = getInstanceQualityRange(definition, instance);
-    const payoutBreakdown = buildPayoutBreakdown(instance);
-    const actionSnapshots = actions.map(action => buildActionSnapshot(definition, instance, action, state));
-    const quickAction = actionSnapshots.find(entry => entry.available) || actionSnapshots[0] || null;
-    const nicheInfo = getInstanceNicheInfo(instance, state);
-    const niche = nicheInfo
-      ? {
-          id: nicheInfo.definition?.id || '',
-          name: nicheInfo.definition?.name || nicheInfo.definition?.id || '',
-          summary: nicheInfo.popularity?.summary || '',
-          label: nicheInfo.popularity?.label || '',
-          multiplier: nicheInfo.popularity?.multiplier || 1,
-          score: clampNumber(nicheInfo.popularity?.score),
-          delta: Number.isFinite(Number(nicheInfo.popularity?.delta))
-            ? Number(nicheInfo.popularity.delta)
-            : null
-        }
-      : null;
-
-    const lifetimeIncome = Math.max(0, clampNumber(instance.totalIncome));
-    const lifetimeSpend = estimateLifetimeSpend(definition, instance, state);
-    const profit = lifetimeIncome - lifetimeSpend;
-    const roi = lifetimeSpend > 0 ? profit / lifetimeSpend : null;
-    const resaleValue = Math.max(0, clampNumber(calculateAssetSalePrice(instance)));
-
-    return {
-      id: instance.id,
-      label,
-      status,
-      latestPayout: Math.max(0, clampNumber(instance.lastIncome)),
-      averagePayout,
-      lifetimeIncome,
-      lifetimeSpend,
-      profit,
-      roi,
-      resaleValue,
-      maintenanceCost: upkeepCost,
-      maintenanceFunded: Boolean(instance.maintenanceFundedToday),
-      pendingIncome: Math.max(0, clampNumber(instance.pendingIncome)),
-      qualityLevel,
-      qualityInfo: qualityInfo || null,
-      qualityRange,
-      milestone,
-      payoutBreakdown,
-      actions: actionSnapshots,
-      quickAction,
-      niche,
-      nicheLocked: Boolean(instance.nicheId),
-      nicheOptions,
-      maintenance,
-      definition,
-      instance
-    };
+  return createAssetInstanceSnapshots(definition, state, {
+    includeNicheDelta: true,
+    maintenanceSummary: maintenance,
+    maintenanceCostKey: 'maintenanceCost',
+    buildMilestone: (assetDefinition, instance) => buildMilestoneProgress(assetDefinition, instance),
+    buildActionSnapshot: (assetDefinition, instance, action, ctxState) =>
+      buildActionSnapshot(assetDefinition, instance, action, ctxState),
+    quickActionSelector: actionSnapshots =>
+      actionSnapshots.find(entry => entry.available) || actionSnapshots[0] || null,
+    decorate: (snapshot, { instance }) => ({
+      ...snapshot,
+      resaleValue: Math.max(0, clampNumber(calculateAssetSalePrice(instance)))
+    })
   });
 }
 

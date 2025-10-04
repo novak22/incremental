@@ -1,32 +1,20 @@
 import { ensureArray } from '../../../core/helpers.js';
-import { getAssetState, getState } from '../../../core/state.js';
-import { instanceLabel } from '../../../game/assets/details.js';
+import { getState } from '../../../core/state.js';
 import { formatMaintenanceSummary } from '../../../game/assets/maintenance.js';
 import {
-  assignInstanceToNiche,
-  getInstanceNicheInfo
+  assignInstanceToNiche
 } from '../../../game/assets/niches.js';
-import {
-  getInstanceQualityRange,
-  getQualityActions,
-  getQualityLevel
-} from '../../../game/assets/quality.js';
 import { describeAssetLaunchAvailability } from './assets.js';
 import { registerModelBuilder } from '../modelBuilderRegistry.js';
 import { buildSkillLock } from './skillLocks.js';
 import {
   clampNumber,
-  buildActionSnapshot,
   buildMilestoneProgress
 } from './sharedQuality.js';
 import {
-  calculateAveragePayout,
-  describeInstanceStatus,
-  estimateLifetimeSpend,
-  buildPayoutBreakdown,
-  mapNicheOptions,
   buildDefaultSummary
 } from './sharedAssetInstances.js';
+import createAssetInstanceSnapshots from './createAssetInstanceSnapshots.js';
 
 const QUICK_ACTION_MAP = {
   ebook: ['writeChapter'],
@@ -55,25 +43,16 @@ function extractProgress(instance = {}) {
 }
 
 function buildInstances(definition, state) {
-  const assetState = getAssetState(definition.id, state) || { instances: [] };
-  const instances = ensureArray(assetState.instances);
-  const actions = getQualityActions(definition);
-  const nicheOptions = mapNicheOptions(definition, state);
   const maintenance = formatMaintenanceSummary(definition);
 
-  return instances.map((instance, index) => {
-    const label = instanceLabel(definition, index);
-    const status = describeInstanceStatus(instance, definition);
-    const averagePayout = calculateAveragePayout(instance, state);
-    const qualityLevel = Math.max(0, clampNumber(instance?.quality?.level));
-    const qualityInfo = getQualityLevel(definition, qualityLevel);
-    const milestone = buildMilestoneProgress(definition, instance, {
-      maxedSummary: 'Maxed out — future milestones queued for upcoming patches.',
-      readySummary: 'No requirements — milestone ready when upkeep is funded.'
-    });
-    const qualityRange = getInstanceQualityRange(definition, instance);
-    const payoutBreakdown = buildPayoutBreakdown(instance);
-    const actionSnapshots = actions.map(action => buildActionSnapshot(definition, instance, action, state, {
+  return createAssetInstanceSnapshots(definition, state, {
+    maintenanceSummary: maintenance,
+    buildMilestone: (assetDefinition, instance) =>
+      buildMilestoneProgress(assetDefinition, instance, {
+        maxedSummary: 'Maxed out — future milestones queued for upcoming patches.',
+        readySummary: 'No requirements — milestone ready when upkeep is funded.'
+      }),
+    actionOptions: {
       lockedReason: 'Requires an upgrade or course first.',
       inactiveCopy: remaining => remaining > 0
         ? `Launch finishes in ${remaining} day${remaining === 1 ? '' : 's'}`
@@ -81,55 +60,17 @@ function buildInstances(definition, state) {
       decorate: ({ action: entry }) => ({
         label: entry.label || 'Quality action'
       })
-    }));
-    const quickAction = actionSnapshots.find(entry => entry.available) || actionSnapshots[0] || null;
-    const nicheInfo = getInstanceNicheInfo(instance, state);
-    const niche = nicheInfo
-      ? {
-          id: nicheInfo.definition?.id || '',
-          name: nicheInfo.definition?.name || nicheInfo.definition?.id || '',
-          summary: nicheInfo.popularity?.summary || '',
-          label: nicheInfo.popularity?.label || '',
-          multiplier: nicheInfo.popularity?.multiplier || 1,
-          score: clampNumber(nicheInfo.popularity?.score),
-          delta: Number.isFinite(Number(nicheInfo.popularity?.delta))
-            ? Number(nicheInfo.popularity.delta)
-            : null
-        }
-      : null;
-
-    const estimatedSpend = estimateLifetimeSpend(definition, instance, state);
-    const lifetimeIncome = Math.max(0, clampNumber(instance.totalIncome));
-    const profit = lifetimeIncome - estimatedSpend;
-    const roi = estimatedSpend > 0 ? profit / estimatedSpend : null;
-
-    return {
-      id: instance.id,
-      label,
-      status,
-      latestPayout: Math.max(0, clampNumber(instance.lastIncome)),
-      averagePayout,
-      lifetimeIncome,
-      estimatedSpend,
-      profit,
-      roi,
-      maintenanceFunded: Boolean(instance.maintenanceFundedToday),
-      pendingIncome: Math.max(0, clampNumber(instance.pendingIncome)),
-      qualityLevel,
-      qualityInfo: qualityInfo || null,
-      qualityRange,
-      milestone,
-      payoutBreakdown,
-      actions: actionSnapshots,
-      quickAction,
-      niche,
-      nicheLocked: Boolean(instance.nicheId),
-      nicheOptions,
-      maintenance,
-      definition,
-      instance,
-      progress: extractProgress(instance)
-    };
+    },
+    quickActionSelector: actionSnapshots =>
+      actionSnapshots.find(entry => entry.available) || actionSnapshots[0] || null,
+    progressBuilder: instance => extractProgress(instance),
+    decorate: snapshot => {
+      const { lifetimeSpend, ...rest } = snapshot;
+      return {
+        ...rest,
+        estimatedSpend: lifetimeSpend
+      };
+    }
   });
 }
 
