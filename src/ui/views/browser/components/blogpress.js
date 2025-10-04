@@ -8,6 +8,7 @@ import { createTabbedWorkspacePresenter } from '../utils/createTabbedWorkspacePr
 import { createNavTabs } from './common/navBuilders.js';
 import { createWorkspaceLockRenderer } from './common/renderWorkspaceLock.js';
 import { getWorkspaceLockTheme } from './common/workspaceLockThemes.js';
+import { summarizeBlogpressInstances } from '../../../blogpress/blogModel.js';
 import renderHomeView from './blogpress/views/homeView.js';
 import renderDetailView from './blogpress/views/detailView.js';
 import renderPricingView from './blogpress/views/pricingView.js';
@@ -230,8 +231,13 @@ function renderViews(model, state = INITIAL_STATE) {
 }
 
 function deriveWorkspaceSummary(model = {}) {
-  const summary = model?.summary;
-  return summary && typeof summary === 'object' ? summary : {};
+  if (model?.summary && typeof model.summary === 'object') {
+    return model.summary;
+  }
+  if (Array.isArray(model.instances)) {
+    return summarizeBlogpressInstances(model.instances);
+  }
+  return summarizeBlogpressInstances([]);
 }
 
 function deriveWorkspacePath(state = {}) {
