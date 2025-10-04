@@ -1,15 +1,10 @@
 import { MAX_LOG_ENTRIES } from './constants.js';
 import { createId } from './helpers.js';
 import { getState } from './state.js';
+import { isAutoReadType } from './logAutoReadTypes.js';
 import { buildLogModel } from '../ui/log/model.js';
 import { getActiveView } from '../ui/viewManager.js';
 import { saveState } from './storage.js';
-
-const AUTO_READ_TYPES = new Set(['passive', 'upgrade']);
-
-function shouldAutoRead(type) {
-  return typeof type === 'string' && AUTO_READ_TYPES.has(type);
-}
 
 export function addLog(message, type = 'info') {
   const state = getState();
@@ -20,7 +15,7 @@ export function addLog(message, type = 'info') {
     timestamp: Date.now(),
     message,
     type: normalizedType,
-    read: shouldAutoRead(normalizedType)
+    read: isAutoReadType(normalizedType)
   };
   state.log.push(entry);
   if (state.log.length > MAX_LOG_ENTRIES) {

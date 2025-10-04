@@ -69,3 +69,56 @@ test('notifications presenter hides panel once markup becomes available', async 
   assert.equal(panel.hidden, true);
   assert.equal(trigger.getAttribute('aria-expanded'), 'false');
 });
+
+test('notifications badge ignores auto-read log types', async () => {
+  const dom = new JSDOM(
+    `<!DOCTYPE html><body>
+      <div data-role="browser-notifications">
+        <button id="browser-notifications-button" aria-expanded="false"></button>
+        <div id="browser-notifications-panel" hidden></div>
+        <ol id="browser-notifications-list"></ol>
+        <p id="browser-notifications-empty"></p>
+        <span id="browser-notifications-badge"></span>
+        <button id="browser-notifications-mark-all"></button>
+      </div>
+    </body>`,
+    { url: 'https://example.com' }
+  );
+
+  const { window } = dom;
+  global.window = window;
+  global.document = window.document;
+  global.Node = window.Node;
+  global.HTMLElement = window.HTMLElement;
+  global.requestAnimationFrame = window.requestAnimationFrame ?? (cb => setTimeout(cb, 16));
+  global.cancelAnimationFrame = window.cancelAnimationFrame ?? clearTimeout;
+
+  initElementRegistry(window.document, resolvers);
+
+  const stateModule = await import('../../src/core/state.js');
+  const logModule = await import('../../src/core/log.js');
+  const { buildEventLogModel } = await import('../../src/ui/dashboard/model.js');
+  const presenterModule = await import('../../src/ui/views/browser/notificationsPresenter.js');
+  const presenter = presenterModule.default;
+
+  stateModule.initializeState();
+
+  logModule.addLog('Queued a routine hustle.', 'hustle');
+  logModule.addLog('Asset polishing complete.', 'quality');
+  logModule.addLog('Funds dipped under upkeep budget.', 'warning');
+
+  const model = buildEventLogModel(stateModule.getState());
+  presenter.render(model);
+
+  const badge = window.document.getElementById('browser-notifications-badge');
+  assert.equal(badge.hidden, false);
+  assert.equal(badge.textContent, '1');
+
+  const listItems = window.document.querySelectorAll('#browser-notifications-list li');
+  assert.equal(listItems.length, 1);
+  assert.match(listItems[0].textContent, /Funds dipped under upkeep budget./);
+
+  const unreadEntries = stateModule.getState().log.filter(entry => entry.read !== true);
+  assert.equal(unreadEntries.length, 1);
+  assert.equal(unreadEntries[0].type, 'warning');
+});
