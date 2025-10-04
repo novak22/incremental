@@ -9,6 +9,13 @@ const COMPLETED_GROUPS = [
   { key: 'upgrades', label: 'Upgrades', empty: 'No upgrade pushes finished yet.' }
 ];
 
+const TODO_GROUPS = [
+  { key: 'hustle', label: 'Hustles queued', empty: 'Line up a gig to stack this lane.' },
+  { key: 'upgrade', label: 'Upgrades to trigger', empty: 'Queue an upgrade to keep momentum.' },
+  { key: 'study', label: 'Study & training', empty: 'No study blocks queued yet.' },
+  { key: 'other', label: 'Assist & extras', empty: 'No support tasks waiting on you.' }
+];
+
 function createCard({ title, summary }) {
   const card = document.createElement('article');
   card.className = 'browser-card timodoro-card';
@@ -71,15 +78,21 @@ function createTaskList(entries = [], emptyText, datasetKey) {
   return list;
 }
 
-function buildTodoItems(entries = []) {
-  return entries
+function buildTodoGroups(entries = []) {
+  const groups = TODO_GROUPS.reduce((map, group) => {
+    map[group.key] = [];
+    return map;
+  }, {});
+
+  entries
     .filter(Boolean)
-    .map((entry, index) => {
+    .forEach((entry, index) => {
       const detailParts = [];
       if (entry.durationText) {
         detailParts.push(entry.durationText);
       }
-      if (entry.meta) {
+      const focus = typeof entry.focusCategory === 'string' ? entry.focusCategory.toLowerCase() : '';
+      if (entry.meta && focus !== 'upgrade') {
         detailParts.push(entry.meta);
       }
       const moneyCost = Number(entry.moneyCost);
@@ -91,22 +104,76 @@ function buildTodoItems(entries = []) {
         detailParts.push(`Runs left ×${runsRemaining}`);
       }
 
-      return {
-        name: entry.title || entry.name || `Task ${index + 1}`,
-        detail: detailParts.join(' • ')
+      const item = {
+        name: entry.title || entry.name || `Task ${index + 1}`
       };
+
+      if (detailParts.length > 0) {
+        item.detail = detailParts.join(' • ');
+      }
+
+      let groupKey = focus;
+      if (groupKey === 'education') {
+        groupKey = 'study';
+      }
+      if (!groupKey) {
+        groupKey = 'hustle';
+      }
+      if (!groups[groupKey]) {
+        groupKey = 'other';
+      }
+
+      groups[groupKey].push(item);
     });
+
+  return groups;
 }
 
 function createTodoCard(model = {}) {
   const card = createCard({
-    title: 'Todo Queue',
+    title: 'ToDo',
     summary: 'Pull your next focus block straight from the backlog.'
   });
 
-  const items = buildTodoItems(Array.isArray(model.todoEntries) ? model.todoEntries : []);
-  const emptyText = model.todoEmptyMessage || 'Queue a hustle or upgrade to add new tasks.';
-  card.appendChild(createTaskList(items, emptyText, 'timodoro-todo'));
+  const entries = Array.isArray(model.todoEntries) ? model.todoEntries : [];
+  const groups = buildTodoGroups(entries);
+  const totalTasks = TODO_GROUPS.reduce((total, config) => total + (groups[config.key]?.length || 0), 0);
+
+  if (totalTasks === 0) {
+    const emptyText = model.todoEmptyMessage || 'Queue a hustle or upgrade to add new tasks.';
+    card.appendChild(createTaskList([], emptyText, 'timodoro-todo'));
+    return card;
+  }
+
+  const section = document.createElement('section');
+  section.className = 'timodoro-section';
+
+  const heading = document.createElement('h3');
+  heading.className = 'timodoro-section__title';
+  appendContent(heading, 'Up next');
+  section.appendChild(heading);
+
+  const groupsWrapper = document.createElement('div');
+  groupsWrapper.className = 'timodoro-section__groups';
+
+  TODO_GROUPS.forEach(config => {
+    const group = document.createElement('section');
+    group.className = 'timodoro-subsection';
+
+    const title = document.createElement('h4');
+    title.className = 'timodoro-subsection__title';
+    appendContent(title, config.label);
+
+    const items = groups[config.key] || [];
+    const emptyMessage = config.key === 'hustle' ? (model.todoEmptyMessage || config.empty) : config.empty;
+    const list = createTaskList(items, emptyMessage, `timodoro-todo-${config.key}`);
+
+    group.append(title, list);
+    groupsWrapper.appendChild(group);
+  });
+
+  section.appendChild(groupsWrapper);
+  card.appendChild(section);
 
   return card;
 }
@@ -278,8 +345,8 @@ function createSummaryColumn(model = {}) {
 }
 
 const TAB_CONFIGS = [
-  { key: 'todo', label: 'TODO', buttonId: 'timodoro-tab-todo', panelId: 'timodoro-tabpanel-todo' },
-  { key: 'done', label: 'DONE', buttonId: 'timodoro-tab-done', panelId: 'timodoro-tabpanel-done' }
+  { key: 'todo', label: 'ToDo', buttonId: 'timodoro-tab-todo', panelId: 'timodoro-tabpanel-todo' },
+  { key: 'done', label: 'Done', buttonId: 'timodoro-tab-done', panelId: 'timodoro-tabpanel-done' }
 ];
 
 function createTodoPanel(model = {}, config = TAB_CONFIGS[0]) {
@@ -287,7 +354,7 @@ function createTodoPanel(model = {}, config = TAB_CONFIGS[0]) {
   panel.className = 'timodoro-tabs__panel';
   panel.dataset.tab = config.key;
   panel.id = config.panelId;
-  panel.hidden = true;
+  panel.hidden = config.key !== 'todo';
   panel.setAttribute('role', 'tabpanel');
   panel.setAttribute('aria-labelledby', config.buttonId);
 
@@ -300,12 +367,12 @@ function createDonePanel(model = {}, config = TAB_CONFIGS[1]) {
   panel.className = 'timodoro-tabs__panel';
   panel.dataset.tab = config.key;
   panel.id = config.panelId;
-  panel.hidden = true;
+  panel.hidden = config.key !== 'todo';
   panel.setAttribute('role', 'tabpanel');
   panel.setAttribute('aria-labelledby', config.buttonId);
 
   const taskCard = createCard({
-    title: 'Task Log',
+    title: 'Done',
     summary: 'Celebrate today’s finished focus blocks.'
   });
   taskCard.appendChild(createCompletedSection(model.completedGroups));
