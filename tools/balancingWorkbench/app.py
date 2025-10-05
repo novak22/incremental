@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import io
 import json
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Iterable, Tuple
@@ -13,10 +14,13 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
+ROOT = Path(__file__).resolve().parents[2]
+
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
 from scripts import economy_simulations as sim
 from scripts.economy_simulations import SimulationConfig, compute_education_roi
-
-ROOT = Path(__file__).resolve().parents[1]
 DATA_PATH = ROOT / "docs" / "normalized_economy.json"
 OUTPUT_DIR = ROOT / "docs" / "economy_sim_report_assets"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
