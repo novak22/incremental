@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- TODO/action queue now runs through the shared action-provider registry so dashboard widgets and TimoDoro stay aligned, and the landing page no longer swallows the default workspace when tasks populate mid-load.
 - Browser shell keeps the tabbed chrome, notification bell, and modular stylesheets; add new surfaces by pairing a presenter with a stylesheet.
 - Home dashboard stays focused on the three core widgets (ToDo, cash snapshot, app tiles) with drag-to-arrange and End Day gating.
 - Workspace roster (BankApp, Learnly, Shopily, VideoTube, DigiShelf, ServerHub) shares KPI grids, detail panes, and launch confirmations.
