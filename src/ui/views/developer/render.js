@@ -475,6 +475,25 @@ function buildActionBadges(definition, stateEntry) {
   return badges;
 }
 
+function summarizeActionInstanceCounts(entries) {
+  return entries.reduce(
+    (summary, entry) => {
+      const counts = entry?.counts;
+      if (!counts) {
+        return summary;
+      }
+
+      summary.total += Number(counts.total) || 0;
+      Object.entries(counts.statuses || {}).forEach(([status, count]) => {
+        const normalized = typeof status === 'string' ? status : 'unknown';
+        summary.statuses[normalized] = (summary.statuses[normalized] || 0) + (Number(count) || 0);
+      });
+      return summary;
+    },
+    { total: 0, statuses: {} }
+  );
+}
+
 function collectActionSnapshots(state) {
   const slice = state?.actions;
   if (!slice || typeof slice !== 'object') {
@@ -577,6 +596,34 @@ function buildCountsSummary(counts) {
     parts.push(`${formatStatusLabel(status)} ${count}`);
   });
   return parts.join(' • ');
+}
+
+function renderActionStats(container, entries) {
+  const statsSection = container.querySelector('#developer-actions-stats');
+  const statsList = container.querySelector('[data-dev-actions-stats]');
+  if (!statsSection || !statsList) {
+    return;
+  }
+
+  const doc = statsList.ownerDocument || container.ownerDocument || document;
+  statsList.innerHTML = '';
+
+  if (!entries.length) {
+    statsSection.hidden = true;
+    return;
+  }
+
+  const summary = summarizeActionInstanceCounts(entries);
+  appendStatRow(doc, statsList, 'Total instances', Math.max(0, Math.floor(summary.total)));
+
+  Object.entries(summary.statuses)
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .forEach(([status, count]) => {
+      const label = formatStatusLabel(status);
+      appendStatRow(doc, statsList, `${label} instances`, Math.max(0, Math.floor(count)));
+    });
+
+  statsSection.hidden = false;
 }
 
 function buildProgressHoursSummary(progress) {
@@ -841,6 +888,7 @@ function renderActionMemory(container, state) {
   const doc = list.ownerDocument || container.ownerDocument || document;
   const entries = collectActionSnapshots(state);
 
+  renderActionStats(container, entries);
   list.innerHTML = '';
 
   if (!entries.length) {
