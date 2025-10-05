@@ -6,6 +6,9 @@ import { KNOWLEDGE_TRACKS, getKnowledgeProgress } from '../../../game/requiremen
 import { describeTrackEducationBonuses } from '../../../game/educationEffects.js';
 import { getUpgrades } from '../../../game/registryService.js';
 
+const REGISTRY_FALLBACK_MESSAGE =
+  'Upgrade registry is still stretching awake—peek back in a blink!';
+
 function countActiveAssets(state) {
   if (!state?.assets) return 0;
   return Object.values(state.assets).reduce((total, assetState) => {
@@ -179,24 +182,49 @@ function renderUpgradeBuffs(container, state) {
   const empty = container.querySelector('#developer-upgrades-empty');
   if (!list) return;
 
-  const owned = getUpgrades()
-    .filter(definition => getUpgradeState(definition.id, state)?.purchased)
-    .map(definition => ({
-      id: definition.id,
-      name: definition.name,
-      boosts: definition.boosts || definition.description || '',
-      tag: definition.tag?.label || null
-    }))
-    .filter(entry => Boolean(entry.boosts));
+  if (empty && !empty.dataset.defaultText) {
+    empty.dataset.defaultText = empty.textContent || '';
+  }
+
+  let owned = [];
+
+  try {
+    owned = getUpgrades()
+      .filter(definition => getUpgradeState(definition.id, state)?.purchased)
+      .map(definition => ({
+        id: definition.id,
+        name: definition.name,
+        boosts: definition.boosts || definition.description || '',
+        tag: definition.tag?.label || null
+      }))
+      .filter(entry => Boolean(entry.boosts));
+  } catch (error) {
+    list.innerHTML = '';
+    if (empty) {
+      empty.textContent = REGISTRY_FALLBACK_MESSAGE;
+      empty.hidden = false;
+    }
+    return;
+  }
 
   list.innerHTML = '';
 
   if (!owned.length) {
-    if (empty) empty.hidden = false;
+    if (empty) {
+      if (empty.dataset.defaultText) {
+        empty.textContent = empty.dataset.defaultText;
+      }
+      empty.hidden = false;
+    }
     return;
   }
 
-  if (empty) empty.hidden = true;
+  if (empty) {
+    if (empty.dataset.defaultText) {
+      empty.textContent = empty.dataset.defaultText;
+    }
+    empty.hidden = true;
+  }
 
   owned.forEach(entry => {
     const item = container.ownerDocument.createElement('li');
