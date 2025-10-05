@@ -152,3 +152,28 @@ test('normalizeActionEntries mirrors todo normalization rules', () => {
   assert.equal(entry.durationText, formatHours(3));
   assert.equal(entry.moneyPerHour, 30);
 });
+
+test('normalizeActionEntries preserves explicit focus buckets', () => {
+  const entries = normalizeActionEntries([
+    { id: 'bucketed', focusBucket: 'study', focusCategory: 'hustle' }
+  ]);
+  assert.equal(entries.length, 1);
+  assert.equal(entries[0].focusBucket, 'study');
+
+  const restore = clearActionProviders();
+  try {
+    registerActionProvider(() => ({
+      id: 'bucket-provider',
+      entries: [
+        { id: 'queue-bucketed', focusBucket: 'study', focusCategory: 'hustle' }
+      ],
+      metrics: {}
+    }));
+
+    const queue = buildActionQueue({ state: {} });
+    assert.equal(queue.entries.length, 1);
+    assert.equal(queue.entries[0].focusBucket, 'study');
+  } finally {
+    restore();
+  }
+});
