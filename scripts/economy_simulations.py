@@ -2,7 +2,7 @@ import json
 import math
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -17,6 +17,22 @@ BASE_DAY_HOURS = 14
 ASSISTANT_HIRE_COST = 180
 ASSISTANT_HOURLY_RATE = 8
 ASSISTANT_HOURS_PER_DAY = 3
+
+
+@dataclass
+class SimulationConfig:
+    """Runtime knobs that balance the core simulation."""
+
+    starting_cash: float = STARTING_CASH
+    base_day_hours: float = BASE_DAY_HOURS
+    assistant_hire_cost: float = ASSISTANT_HIRE_COST
+    assistant_hourly_rate: float = ASSISTANT_HOURLY_RATE
+    assistant_hours_per_day: float = ASSISTANT_HOURS_PER_DAY
+    blog_income_multiplier: float = 1.0
+    freelance_income_multiplier: float = 1.0
+    survey_income_multiplier: float = 1.0
+    blog_setup_cost_multiplier: float = 1.0
+    blog_maintenance_cost_multiplier: float = 1.0
 
 
 def load_data():
@@ -40,28 +56,43 @@ class SimulationMetrics:
         }
 
 
-def run_simulation(data, days=30, assistants=0, build_blog=True):
+def run_simulation(
+    data,
+    days: int = 30,
+    assistants: int = 0,
+    build_blog: bool = True,
+    config: Optional[SimulationConfig] = None,
+):
+    if config is None:
+        config = SimulationConfig()
+
     assets = data['assets']
     hustles = data['hustles']
 
-    cash = STARTING_CASH - assistants * ASSISTANT_HIRE_COST
-    day_hours = BASE_DAY_HOURS + assistants * ASSISTANT_HOURS_PER_DAY
-    assistant_daily_cost = assistants * ASSISTANT_HOURS_PER_DAY * ASSISTANT_HOURLY_RATE
+    cash = config.starting_cash - assistants * config.assistant_hire_cost
+    day_hours = config.base_day_hours + assistants * config.assistant_hours_per_day
+    assistant_daily_cost = (
+        assistants * config.assistant_hours_per_day * config.assistant_hourly_rate
+    )
 
     blog_def = assets['blog']
     blog_setup_hours = blog_def['schedule']['setup_minutes_per_day'] / 60
     blog_setup_days = blog_def['schedule']['setup_days']
     blog_maintenance_hours = blog_def['maintenance_time'] / 60
-    blog_maintenance_cost = blog_def['maintenance_cost']
-    blog_income_avg = (blog_def['quality_curve'][0]['income_min'] + blog_def['quality_curve'][0]['income_max']) / 2
+    blog_maintenance_cost = blog_def['maintenance_cost'] * config.blog_maintenance_cost_multiplier
+    blog_income_avg = (
+        (blog_def['quality_curve'][0]['income_min'] + blog_def['quality_curve'][0]['income_max'])
+        / 2
+        * config.blog_income_multiplier
+    )
 
     freelance_def = hustles['freelance']
     freelance_hours = freelance_def['setup_time'] / 60
-    freelance_income = freelance_def['base_income']
+    freelance_income = freelance_def['base_income'] * config.freelance_income_multiplier
 
     survey_def = hustles['surveySprint']
     survey_hours = survey_def['setup_time'] / 60
-    survey_income = survey_def['base_income']
+    survey_income = survey_def['base_income'] * config.survey_income_multiplier
     survey_limit = survey_def['daily_limit']
 
     blog_started = False
@@ -83,8 +114,9 @@ def run_simulation(data, days=30, assistants=0, build_blog=True):
         hustle_runs_today = {'freelance': 0, 'survey': 0}
 
         # Attempt to start blog setup if desired
-        if build_blog and not blog_started and cash >= blog_def['setup_cost']:
-            cash -= blog_def['setup_cost']
+        blog_setup_cost = blog_def['setup_cost'] * config.blog_setup_cost_multiplier
+        if build_blog and not blog_started and cash >= blog_setup_cost:
+            cash -= blog_setup_cost
             blog_started = True
             blog_progress = 0
 

@@ -101,6 +101,12 @@ Each asset supports multiple instances, tracks setup progress, and rolls a daily
 2. Open `browser.html` in any modern browser. The project is a static ES-module bundle; no build tools required.
 3. Optional: serve with a simple HTTP server (e.g., `npx serve .`) to avoid `localStorage` restrictions during local testing.
 
+## Economy Balancing Workbench
+- Explore early-game economy tweaks with the Streamlit dashboard in `tools/balancingWorkbench/`. Install dependencies with
+  `pip install -r tools/balancingWorkbench/requirements.txt` and launch via `streamlit run tools/balancingWorkbench/app.py`.
+- Adjust sliders to test new multipliers; export refreshed plots into `docs/economy_sim_report_assets` using the built-in
+  snapshot button before updating `docs/normalized_economy.json`.
+
 ## Styling Workflow
 - The browser shell now links each modular stylesheet directly. Edit the files under `styles/base/`, `styles/components/`, `styles/widgets/`, `styles/workspaces/`, and `styles/overlays/` and the changes will load without a build step.
 - Maintain the documented load order (base → components → widgets → workspaces → overlays) when adding new modules. Update the `<head>` of `index.html` with any additional `<link rel="stylesheet">` entries so the cascade remains intact.
