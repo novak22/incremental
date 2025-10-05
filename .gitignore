@@ -1,5 +1,9 @@
 node_modules/
 
+# Python artifacts
+__pycache__/
+.venv/
+
 # macOS
 .DS_Store
 
