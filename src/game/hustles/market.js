@@ -404,13 +404,23 @@ export function rollDailyOffers({
         preservedOffers.push(structuredClone(offer));
       }
 
-      activity.total += spawnCount;
-      activity.variants.set(
-        selectedVariant.id,
-        (activity.variants.get(selectedVariant.id) || 0) + spawnCount
-      );
       pendingAdds.set(selectedVariant.id, pendingCount + spawnCount);
       slotsRemaining -= spawnCount;
+    }
+
+    if (pendingAdds.size > 0) {
+      let addedToTemplate = 0;
+      for (const [variantId, addedCount] of pendingAdds.entries()) {
+        if (addedCount <= 0) continue;
+        addedToTemplate += addedCount;
+        activity.variants.set(
+          variantId,
+          (activity.variants.get(variantId) || 0) + addedCount
+        );
+      }
+      if (addedToTemplate > 0) {
+        activity.total += addedToTemplate;
+      }
     }
   }
 
