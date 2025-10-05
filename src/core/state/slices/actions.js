@@ -4,6 +4,7 @@ import knowledgeTrackData from '../../../game/requirements/data/knowledgeTracks.
 import { createRegistrySliceManager } from './factory.js';
 
 const KNOWLEDGE_TRACKS = knowledgeTrackData;
+const MAX_ACTION_INSTANCES = 50;
 
 function resolveDefinition(id) {
   return getActionDefinition(id) || getHustleDefinition(id);
@@ -224,7 +225,9 @@ function normalizeActionState(definition, entry = {}, context) {
       ? defaults.instances
       : [];
 
-  normalized.instances = sourceInstances.map(instance => normalizeActionInstance(definition, instance, context));
+  const trimmedInstances = sourceInstances.slice(0, MAX_ACTION_INSTANCES);
+
+  normalized.instances = trimmedInstances.map(instance => normalizeActionInstance(definition, instance, context));
 
   return normalized;
 }
