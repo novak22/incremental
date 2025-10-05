@@ -52,5 +52,6 @@
 - Market offers render in the same cards as variant rows: available offers get bright accept buttons while upcoming variants show unlock timers and remain disabled until their window opens.
 - The finance dashboard separates hustle commitments from fresh offers, highlighting urgent deadlines with warning tones and mirroring the same progress meters for consistency.
 - Hustle browser cards now offer a manual "Roll a fresh offer" button when a template has no active variants so players can nudge the market without relying on legacy instant runs.
+- When manual rerolls are disabled, hustle cards swap the queue button for a cheerful "Check back tomorrow" hint instead of falling back to hidden instant actions.
 - Dashboard quick actions surface active offers only. When the market is empty they present a "Check back tomorrow" guidance tile instead of invoking hidden instant-action fallbacks.
-- `createInstantHustle` still exposes an `action.onClick` for tests and tooling, but it is flagged with `isLegacyInstant`/`hiddenFromMarket` so production UI layers depend exclusively on offer acceptance.
+- `createInstantHustle` still exposes an `action.onClick` for tests and tooling, but it is flagged with `isLegacyInstant`/`hiddenFromMarket` and UI layers ignore it when building hustle cards or quick actions so production surfaces depend exclusively on offer acceptance.

@@ -221,25 +221,33 @@ function createHustleCard(definition, model) {
 
   const actions = document.createElement('div');
   actions.className = 'browser-card__actions';
-  if (definition.action && model.action?.label) {
+  const hasButton = definition.action && model.action?.label;
+  if (hasButton) {
     const queueButton = document.createElement('button');
     queueButton.type = 'button';
-    queueButton.className = 'browser-card__button browser-card__button--primary';
+    const variant = model.action.className === 'secondary' ? 'secondary' : 'primary';
+    queueButton.className = `browser-card__button browser-card__button--${variant}`;
     queueButton.textContent = model.action.label;
     queueButton.disabled = Boolean(model.action.disabled);
-    const handleClick =
-      typeof model.action?.onClick === 'function'
-        ? model.action.onClick
-        : definition.action.onClick;
-    if (typeof handleClick === 'function') {
+    if (typeof model.action?.onClick === 'function') {
       queueButton.addEventListener('click', () => {
         if (queueButton.disabled) return;
-        handleClick();
+        model.action.onClick();
       });
     }
     actions.appendChild(queueButton);
   }
-  card.appendChild(actions);
+
+  if (model.action?.guidance) {
+    const note = document.createElement('p');
+    note.className = 'browser-card__note';
+    note.textContent = model.action.guidance;
+    actions.appendChild(note);
+  }
+
+  if (actions.childElementCount > 0) {
+    card.appendChild(actions);
+  }
 
   if (Array.isArray(model.commitments) && model.commitments.length) {
     const commitmentsSection = createCardSection(

@@ -131,6 +131,42 @@ test('buildHustleModels surfaces multi-day offers with daily requirements', () =
   assert.equal(entry.meta.includes('Manual completion'), true, 'summary should reflect manual completion rule');
 });
 
+test('buildHustleModels provides guidance when no offers or manual rerolls exist', () => {
+  const hustles = [
+    {
+      id: 'empty-market',
+      name: 'Empty Market Hustle',
+      description: 'Wait for tomorrow\'s leads.',
+      time: 2,
+      payout: { amount: 80 },
+      action: {
+        label: 'Legacy Run',
+        onClick: () => {}
+      }
+    }
+  ];
+
+  const models = buildHustleModels(hustles, {
+    getState: () => ({ day: 3 }),
+    describeRequirements: () => [],
+    getUsage: () => null,
+    formatHours: value => `${value}h`,
+    formatMoney: value => value.toFixed(0),
+    getOffers: () => [],
+    getAcceptedOffers: () => [],
+    collectCommitments: () => [],
+    rollOffers: null
+  });
+
+  assert.equal(models.length, 1);
+  const [model] = models;
+  assert.equal(model.offers.length, 0);
+  assert.equal(model.action.label, 'Check back tomorrow');
+  assert.equal(model.action.disabled, true);
+  assert.equal(model.action.onClick, null);
+  assert.match(model.action.guidance, /tomorrow/i);
+});
+
 test('buildUpgradeModels groups families in sorted order', () => {
   const upgrades = [
     {

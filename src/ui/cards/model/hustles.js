@@ -356,16 +356,25 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
         className: 'primary',
         onClick: ready ? primaryOffer.onAccept : null
       };
-    } else {
+    } else if (typeof rollOffers === 'function') {
       const rerollLabel = definition.market?.manualRerollLabel || 'Roll a fresh offer';
-      const canReroll = typeof rollOffers === 'function';
+      const rerollGuidance = definition.market?.manualRerollHelp || 'Spin up a new lead if you can\'t wait for tomorrow.';
       actionConfig = {
         label: rerollLabel,
-        disabled: !canReroll,
+        disabled: false,
         className: 'secondary',
-        onClick: canReroll
-          ? () => rollOffers({ templates: [definition], day: currentDay, state })
-          : null
+        onClick: () => rollOffers({ templates: [definition], day: currentDay, state }),
+        guidance: rerollGuidance
+      };
+    } else {
+      const emptyLabel = definition.market?.emptyActionLabel || 'Check back tomorrow';
+      const emptyGuidance = definition.market?.emptyGuidance || 'Fresh leads roll in with tomorrow\'s market refresh.';
+      actionConfig = {
+        label: emptyLabel,
+        disabled: true,
+        className: 'secondary',
+        onClick: null,
+        guidance: emptyGuidance
       };
     }
 
