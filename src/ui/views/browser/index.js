@@ -5,6 +5,7 @@ import cardsPresenter from './cardsPresenter.js';
 import layoutPresenter from './layoutPresenter.js';
 import headerActionPresenter from './headerActionPresenter.js';
 import logPresenter from './logPresenter.js';
+import { hideDeveloperView } from '../developer/index.js';
 
 const browserView = {
   id: 'browser',
@@ -16,6 +17,9 @@ const browserView = {
     layout: layoutPresenter,
     headerAction: headerActionPresenter,
     log: logPresenter
+  },
+  onActivate({ root } = {}) {
+    hideDeveloperView(root);
   },
   renderDashboard(state, summary) {
     baseRenderDashboard(state, summary, dashboardPresenter);

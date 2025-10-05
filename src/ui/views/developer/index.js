@@ -17,6 +17,19 @@ function toggleBrowserShell(rootDocument, hidden) {
   }
 }
 
+export function hideDeveloperView(rootDocument) {
+  const doc = rootDocument || document;
+  const container = doc.getElementById('developer-root');
+
+  if (container) {
+    container.hidden = true;
+    container.setAttribute('aria-hidden', 'true');
+  }
+
+  doc.body?.classList.remove('developer-view-active');
+  toggleBrowserShell(doc, false);
+}
+
 function bindRefresh(rootDocument) {
   const doc = rootDocument || document;
   const button = doc.getElementById('developer-refresh-button');

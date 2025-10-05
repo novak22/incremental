@@ -8,6 +8,7 @@ import {
   unregisterView,
   resolveInitialView
 } from '../../../src/ui/views/registry.js';
+import browserView from '../../../src/ui/views/browser/index.js';
 
 function withDom(html, options = {}) {
   const dom = new JSDOM(html, options);
@@ -125,4 +126,29 @@ test('developer view can be requested via body dataset', t => {
     url: 'https://example.com/',
     expectedId: 'developer'
   });
+});
+
+test('browser view activation restores default chrome', t => {
+  const html =
+    '<!DOCTYPE html><html><body class="developer-view-active"><div class="browser-shell" hidden aria-hidden="true"></div><div id="developer-root"></div></body></html>';
+
+  const { dom, restore } = withDom(html, { url: 'https://example.com/' });
+
+  t.after(restore);
+
+  const doc = dom.window.document;
+  const container = doc.getElementById('developer-root');
+  const shell = doc.querySelector('.browser-shell');
+
+  container.hidden = false;
+  container.removeAttribute('hidden');
+  container.removeAttribute('aria-hidden');
+
+  browserView.onActivate({ root: doc });
+
+  assert.equal(container.hidden, true);
+  assert.equal(container.getAttribute('aria-hidden'), 'true');
+  assert.equal(doc.body.classList.contains('developer-view-active'), false);
+  assert.equal(shell.hasAttribute('hidden'), false);
+  assert.equal(shell.getAttribute('aria-hidden'), null);
 });
