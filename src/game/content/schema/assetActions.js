@@ -116,6 +116,12 @@ export function createInstantHustle(config) {
     };
   }
 
+  const progressDefaults = {
+    type: 'instant',
+    completion: 'instant',
+    ...(config.progress || {})
+  };
+
   const baseDefinition = {
     ...config,
     type: 'hustle',
@@ -136,10 +142,31 @@ export function createInstantHustle(config) {
     progress: config.progress
   };
 
+  const acceptHooks = [];
+  if (Array.isArray(config.acceptHooks)) {
+    for (const hook of config.acceptHooks) {
+      if (typeof hook === 'function') {
+        acceptHooks.push(hook);
+      }
+    }
+  }
+  if (typeof config.onAccept === 'function') {
+    acceptHooks.push(config.onAccept);
+  }
+
   const definition = createContractTemplate(baseDefinition, {
-    progress: {
-      type: 'instant',
-      completion: 'instant'
+    dailyLimit: metadata.dailyLimit,
+    availability: config.availability,
+    progress: progressDefaults,
+    accept: {
+      progress: progressDefaults,
+      hooks: acceptHooks.map(hook => context => {
+        hook({
+          ...context,
+          metadata: context.metadata || metadata,
+          definition: context.definition || definition
+        });
+      })
     }
   });
 

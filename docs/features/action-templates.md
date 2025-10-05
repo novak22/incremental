@@ -27,6 +27,8 @@ Creates a contract-style template that ensures:
 - `progress` merges template defaults with any values supplied at definition time.
 - `acceptInstance({...})` wraps `acceptActionInstance`, merging progress overrides so callers can
   tweak hours, deadlines, or custom labels without rebuilding the base metadata.
+- Logging hooks can be attached through `options.accept.hooks` or `options.accept.onAccepted` to
+  centralize analytics or status updates immediately after an instance is accepted.
 
 Use this builder for instant hustles, asset upkeep actions, and exploratory contracts that share a
 single-instance queue.
@@ -44,10 +46,10 @@ log manual study time while respecting shared progress metadata.
 
 ## Integration Points
 
-- **Hustles:** `createInstantHustle` now pipes its definition through `createContractTemplate` to
-  inherit availability, progress, and limit logic before wiring logging hooks. When the action runs
-  it calls `definition.acceptInstance` so overrides (deadline, hours required, manual completion)
-  flow through a single wrapper.
+- **Hustles:** `createInstantHustle` now pipes its definition through `createContractTemplate`,
+  passing in daily limits, availability overrides, and instant-progress defaults. Hustle configs can
+  also supply `acceptHooks` or `onAccept` callbacks that log acceptance state without bypassing the
+  template wrapper.
 - **Study Tracks:** `src/game/actions/definitions.js` routes knowledge track entries through
   `createStudyTemplate` so accepted study sessions use the same progress metadata as any other
   contract.
@@ -68,7 +70,12 @@ const definition = createContractTemplate({
   dailyLimit: 1,
   progress: { completion: 'manual' }
 }, {
-  progress: { type: 'project', hoursPerDay: 2 }
+  progress: { type: 'project', hoursPerDay: 2 },
+  accept: {
+    onAccepted: ({ instance, metadata }) => {
+      logEvent('exploration-accepted', { id: instance.id, deadline: metadata.deadlineDay });
+    }
+  }
 });
 
 definition.action = {

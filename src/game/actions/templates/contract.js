@@ -100,6 +100,21 @@ function mergeOverrides(baseOverrides = {}, incomingOverrides = {}) {
   return merged;
 }
 
+function normalizeAcceptHooks(options = {}) {
+  const hooks = [];
+  if (Array.isArray(options.hooks)) {
+    for (const hook of options.hooks) {
+      if (typeof hook === 'function') {
+        hooks.push(hook);
+      }
+    }
+  }
+  if (typeof options.onAccepted === 'function') {
+    hooks.push(options.onAccepted);
+  }
+  return hooks;
+}
+
 export function createContractTemplate(definition, options = {}) {
   const template = {
     ...definition,
@@ -125,6 +140,7 @@ export function createContractTemplate(definition, options = {}) {
 
   const baseAcceptOverrides = mergeOverrides(options.accept?.overrides, {});
   const acceptProgressDefaults = mergeProgress(options.accept?.progress, progressDefaults) || mergedProgress;
+  const acceptHooks = normalizeAcceptHooks(options.accept);
 
   template.acceptInstance = ({ overrides = {}, ...rest } = {}) => {
     const combinedOverrides = mergeOverrides(baseAcceptOverrides, overrides);
@@ -134,10 +150,22 @@ export function createContractTemplate(definition, options = {}) {
     } else {
       delete combinedOverrides.progress;
     }
-    return acceptActionInstance(template, {
+    const instance = acceptActionInstance(template, {
       ...rest,
       overrides: combinedOverrides
     });
+    if (instance && acceptHooks.length) {
+      const hookContext = {
+        ...rest,
+        definition: template,
+        instance,
+        overrides: combinedOverrides
+      };
+      for (const hook of acceptHooks) {
+        hook(hookContext);
+      }
+    }
+    return instance;
   };
 
   return template;
