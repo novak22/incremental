@@ -51,8 +51,13 @@ function createTrack(percent, tone) {
 function describeDeadline(remainingDays) {
   const remaining = safeNumber(remainingDays);
   if (!Number.isFinite(remaining)) return '';
-  if (remaining <= 0) return 'Due today';
-  if (remaining === 1) return 'Due tomorrow';
+  if (remaining < 0) {
+    const overdueDays = Math.ceil(Math.abs(remaining));
+    if (overdueDays <= 1) return 'Running a little late (1 day overdue)';
+    return `Running a little late (${overdueDays} days overdue)`;
+  }
+  if (remaining <= 1) return 'Due today';
+  if (remaining <= 2) return 'Due tomorrow';
   return `${remaining} days remaining`;
 }
 
