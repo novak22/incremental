@@ -68,7 +68,14 @@ test('timodoro component renders layout and populates lists', t => {
         title: 'Draft pitch deck',
         durationText: '2h focus',
         meta: 'Client work',
-        moneyCost: 120
+        moneyCost: 120,
+        focusCategory: 'hustle'
+      },
+      {
+        title: 'Research module',
+        durationText: '1h study',
+        meta: 'Curriculum update',
+        focusCategory: 'education'
       }
     ],
     todoEmptyMessage: 'Queue a hustle or upgrade to add new tasks.',
@@ -110,6 +117,12 @@ test('timodoro component renders layout and populates lists', t => {
     todoItems[0].querySelector('.timodoro-list__meta')?.textContent.includes('Cost $120'),
     'todo item includes cost detail'
   );
+
+  const studyItems = [
+    ...mount.querySelectorAll('[data-role="timodoro-todo-study"] .timodoro-list__item')
+  ];
+  assert.equal(studyItems.length, 1, 'study bucket renders education entry');
+  assert.equal(studyItems[0].querySelector('.timodoro-list__name')?.textContent, 'Research module');
 
   const upgradeEmpty = mount
     .querySelector('[data-role="timodoro-todo-upgrade"] .timodoro-list__empty');
