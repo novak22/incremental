@@ -370,6 +370,17 @@
         </div>
       </section>
 
+      <section class="developer-card developer-card--wide" aria-labelledby="developer-actions-heading">
+        <header class="developer-card__header">
+          <h2 id="developer-actions-heading" class="developer-card__title">Action memory</h2>
+          <p class="developer-card__subtitle">Every action definition currently tracked in save data.</p>
+        </header>
+        <div class="developer-card__body developer-actions">
+          <p id="developer-actions-empty" class="developer-empty" hidden>No action runs logged yet.</p>
+          <ul id="developer-actions-list" class="developer-actions__list" aria-live="polite"></ul>
+        </div>
+      </section>
+
       <section class="developer-card" aria-labelledby="developer-state-heading">
         <header class="developer-card__header">
           <h2 id="developer-state-heading" class="developer-card__title">Raw state snapshot</h2>

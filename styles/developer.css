@@ -284,6 +284,285 @@ body:not(.developer-view-active) #developer-root {
   font-weight: 700;
 }
 
+.developer-card--wide {
+  grid-column: 1 / -1;
+}
+
+.developer-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.developer-actions__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.developer-actions__item {
+  background: rgba(8, 12, 22, 0.65);
+  border-radius: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.developer-actions__item-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.developer-actions__item-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.developer-actions__item-title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.developer-actions__item-id {
+  margin: 0;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary-on-dark, rgba(245, 247, 251, 0.55));
+}
+
+.developer-actions__badges,
+.developer-actions__instance-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.developer-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary-on-dark, rgba(245, 247, 251, 0.8));
+}
+
+.developer-badge--accent {
+  background: linear-gradient(135deg, rgba(91, 141, 239, 0.9), rgba(142, 101, 255, 0.9));
+  color: #ffffff;
+  box-shadow: 0 0.4rem 1rem rgba(94, 118, 255, 0.25);
+}
+
+.developer-badge--neutral {
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+}
+
+.developer-badge--muted {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary-on-dark, rgba(245, 247, 251, 0.7));
+}
+
+.developer-badge--status-active {
+  background: rgba(81, 176, 255, 0.32);
+  color: #e9f6ff;
+}
+
+.developer-badge--status-completed {
+  background: rgba(123, 235, 190, 0.32);
+  color: #ecfff6;
+}
+
+.developer-badge--status-pending {
+  background: rgba(255, 219, 141, 0.32);
+  color: #fff8e4;
+}
+
+.developer-badge--status-unknown {
+  background: rgba(255, 255, 255, 0.18);
+  color: #f5f7fb;
+}
+
+.developer-actions__description {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--text-secondary-on-dark, rgba(245, 247, 251, 0.75));
+}
+
+.developer-actions__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem 1.1rem;
+  margin: 0;
+}
+
+.developer-actions__stat {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 0.9rem;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.developer-actions__stat dt {
+  margin: 0;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary-on-dark, rgba(245, 247, 251, 0.6));
+}
+
+.developer-actions__stat dd {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.developer-actions__instances {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.developer-actions__instances-title {
+  margin: 0;
+  font-size: 0.95rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary-on-dark, rgba(245, 247, 251, 0.62));
+}
+
+.developer-actions__instance-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.developer-actions__instance {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 1rem;
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.developer-actions__instance-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.developer-actions__instance-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.developer-actions__instance-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.developer-actions__instance-id {
+  margin: 0;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary-on-dark, rgba(245, 247, 251, 0.55));
+}
+
+.developer-actions__instance-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.65rem 1rem;
+  margin: 0;
+}
+
+.developer-actions__instance-stats .developer-actions__stat {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.developer-actions__instance-notes {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary-on-dark, rgba(245, 247, 251, 0.75));
+  font-style: italic;
+}
+
+.developer-actions__instance-log {
+  background: rgba(8, 12, 22, 0.55);
+  border-radius: 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  padding: 0.9rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.developer-actions__instance-log-title {
+  margin: 0;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary-on-dark, rgba(245, 247, 251, 0.6));
+}
+
+.developer-actions__instance-log-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.5rem 1rem;
+}
+
+.developer-actions__instance-log-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 0.6rem;
+  padding: 0.4rem 0.6rem;
+}
+
+.developer-actions__instance-log-day {
+  font-weight: 600;
+}
+
+.developer-actions__instance-log-hours {
+  color: var(--text-secondary-on-dark, rgba(245, 247, 251, 0.75));
+}
+
+.developer-actions__empty {
+  margin: 0;
+}
+
 .developer-json {
   background: rgba(0, 0, 0, 0.45);
   border-radius: 1rem;
