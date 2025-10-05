@@ -3,7 +3,12 @@ import { createStorage } from './core/storage.js';
 import { defaultStateManager } from './core/state.js';
 import { createCurrencyModule } from './game/currency.js';
 import { createActionExecutor } from './game/actions.js';
-import { renderCards, updateUI } from './ui/update.js';
+import {
+  renderCards,
+  updateUI,
+  ensureUpdateSubscriptions,
+  teardownUpdateSubscriptions
+} from './ui/update.js';
 import { initLayoutControls } from './ui/layout/index.js';
 import { resetTick, startGameLoop } from './game/loop.js';
 import { handleOfflineProgress } from './game/offline.js';
@@ -35,6 +40,7 @@ ensureRegistryReady();
 const appContext = createAppContext();
 const initialView = resolveInitialView(document);
 setActiveView(initialView, document);
+ensureUpdateSubscriptions();
 const { loadState, saveState } = appContext.storage;
 const { returning, lastSaved } = loadState({
   onFirstLoad: () =>
@@ -60,4 +66,7 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
-window.addEventListener('beforeunload', saveState);
+window.addEventListener('beforeunload', () => {
+  teardownUpdateSubscriptions();
+  saveState();
+});

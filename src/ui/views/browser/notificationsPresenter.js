@@ -2,6 +2,7 @@ import { getElement } from '../../elements/registry.js';
 import { getState } from '../../../core/state.js';
 import { markAllLogEntriesRead, markLogEntryRead } from '../../../core/log.js';
 import { buildEventLogModel } from '../../dashboard/model.js';
+import { activateShellPanel } from '../../layout/index.js';
 
 const TYPE_LABELS = {
   success: 'Success',
@@ -19,6 +20,37 @@ const presenterState = {
   keydownHandler: null,
   initialized: false
 };
+
+function resolveShellPanelTarget(action = {}) {
+  if (!action || typeof action !== 'object') {
+    return null;
+  }
+
+  const panelId = typeof action.panelId === 'string' && action.panelId.trim();
+  if (panelId) {
+    return panelId;
+  }
+
+  const targetId = typeof action.targetId === 'string' && action.targetId.trim();
+  if (targetId) {
+    return targetId;
+  }
+
+  const tabId = typeof action.tabId === 'string' && action.tabId.trim();
+  if (!tabId) {
+    return null;
+  }
+
+  if (tabId.startsWith('panel-')) {
+    return tabId;
+  }
+
+  if (tabId.startsWith('tab-')) {
+    return `panel-${tabId.slice(4)}`;
+  }
+
+  return tabId;
+}
 
 function getRefs() {
   return getElement('browserNotifications') || {};
@@ -195,6 +227,14 @@ function createEntryButton(entry) {
   }
 
   button.addEventListener('click', () => {
+    if (entry?.action?.type === 'shell-tab') {
+      const targetPanel = resolveShellPanelTarget(entry.action);
+      if (targetPanel) {
+        activateShellPanel(targetPanel);
+        togglePanel(false);
+      }
+    }
+
     if (entry.read === true) {
       return;
     }

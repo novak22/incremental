@@ -103,6 +103,10 @@ test('updateUI skips untouched presenters when sections are clean', { concurrenc
   const viewManager = await import('../../src/ui/viewManager.js');
   const browserViewModule = await import('../../src/ui/views/browser/index.js');
   const updateModule = await import('../../src/ui/update.js');
+  updateModule.ensureUpdateSubscriptions();
+  t.after(() => {
+    updateModule.teardownUpdateSubscriptions();
+  });
   const invalidation = await import('../../src/core/events/invalidationBus.js');
 
   const originalView = viewManager.getActiveView();
@@ -199,6 +203,10 @@ test('state mutators mark dirty sections and drive partial UI refreshes', { conc
   const viewManager = await import('../../src/ui/viewManager.js');
   const browserViewModule = await import('../../src/ui/views/browser/index.js');
   const updateModule = await import('../../src/ui/update.js');
+  updateModule.ensureUpdateSubscriptions();
+  t.after(() => {
+    updateModule.teardownUpdateSubscriptions();
+  });
   const invalidation = await import('../../src/core/events/invalidationBus.js');
   const assetsActionsModule = await import('../../src/game/assets/actions.js');
   const skillsModule = await import('../../src/game/skills/index.js');
@@ -486,6 +494,10 @@ test('firing an assistant marks cards dirty and refreshes card presenters', { co
   const viewManager = await import('../../src/ui/viewManager.js');
   const browserViewModule = await import('../../src/ui/views/browser/index.js');
   const updateModule = await import('../../src/ui/update.js');
+  updateModule.ensureUpdateSubscriptions();
+  t.after(() => {
+    updateModule.teardownUpdateSubscriptions();
+  });
   const invalidation = await import('../../src/core/events/invalidationBus.js');
 
   const { hireAssistant, fireAssistant } = harness.assistantModule;
@@ -601,6 +613,10 @@ test('game loop leaves view untouched until sections are marked dirty', { concur
   const viewManager = await import('../../src/ui/viewManager.js');
   const browserViewModule = await import('../../src/ui/views/browser/index.js');
   const updateModule = await import('../../src/ui/update.js');
+  updateModule.ensureUpdateSubscriptions();
+  t.after(() => {
+    updateModule.teardownUpdateSubscriptions();
+  });
   const invalidation = await import('../../src/core/events/invalidationBus.js');
 
   const browserView = browserViewModule.default;
@@ -695,6 +711,10 @@ test('renaming an asset refreshes dashboard quick actions and header suggestion 
   const viewManager = await import('../../src/ui/viewManager.js');
   const browserViewModule = await import('../../src/ui/views/browser/index.js');
   const updateModule = await import('../../src/ui/update.js');
+  updateModule.ensureUpdateSubscriptions();
+  t.after(() => {
+    updateModule.teardownUpdateSubscriptions();
+  });
   const invalidation = await import('../../src/core/events/invalidationBus.js');
   const todoStateModule = await import('../../src/ui/views/browser/widgets/todoState.js');
   const todoWidgetModule = await import('../../src/ui/views/browser/widgets/todoWidget.js');
@@ -773,6 +793,10 @@ test('quality actions immediately refresh dashboard recommendations and header p
   const viewManager = await import('../../src/ui/viewManager.js');
   const browserViewModule = await import('../../src/ui/views/browser/index.js');
   const updateModule = await import('../../src/ui/update.js');
+  updateModule.ensureUpdateSubscriptions();
+  t.after(() => {
+    updateModule.teardownUpdateSubscriptions();
+  });
   const invalidation = await import('../../src/core/events/invalidationBus.js');
   const todoStateModule = await import('../../src/ui/views/browser/widgets/todoState.js');
   const todoWidgetModule = await import('../../src/ui/views/browser/widgets/todoWidget.js');
