@@ -1,5 +1,6 @@
 import { buildAssetUpgradeRecommendations, buildQuickActions } from '../dashboard/quickActions.js';
 import { formatHours } from '../../core/helpers.js';
+import { collectActionProviders } from '../actions/registry.js';
 
 function formatActionLabel(base, timeCost) {
   if (!base) return '';
@@ -12,33 +13,65 @@ function formatActionLabel(base, timeCost) {
 
 function normalizeAssetRecommendation(entry) {
   if (!entry) return null;
-  const label = entry.buttonLabel || entry.title;
+  const source = entry.raw || entry;
+  const label = source.buttonLabel || source.primaryLabel || source.title || entry.title;
+  const timeCost = Number.isFinite(source.timeCost)
+    ? source.timeCost
+    : Number.isFinite(entry.timeCost)
+      ? entry.timeCost
+      : entry.durationHours || 0;
+  const description = source.subtitle || source.description || source.meta || entry.meta || entry.title;
   return {
     id: entry.id,
     mode: 'asset',
-    buttonText: formatActionLabel(label || entry.title, entry.timeCost),
-    description: entry.subtitle || entry.meta || entry.title,
+    buttonText: formatActionLabel(label, timeCost),
+    description,
     onClick: entry.onClick,
-    timeCost: entry.timeCost || 0
+    timeCost
   };
 }
 
 function normalizeQuickAction(entry) {
   if (!entry) return null;
-  const primary = entry.primaryLabel || 'Queue';
-  const fullLabel = `${primary} ${entry.label}`.trim();
+  const source = entry.raw || entry;
+  const primary = source.primaryLabel || source.buttonLabel || 'Queue';
+  const label = source.label || source.title || entry.title || '';
+  const fullLabel = `${primary} ${label}`.trim();
+  const timeCost = Number.isFinite(source.timeCost)
+    ? source.timeCost
+    : Number.isFinite(entry.timeCost)
+      ? entry.timeCost
+      : entry.durationHours || 0;
   return {
     id: entry.id,
     mode: 'hustle',
-    buttonText: formatActionLabel(fullLabel, entry.timeCost),
-    description: entry.description,
+    buttonText: formatActionLabel(fullLabel, timeCost),
+    description: source.description || source.subtitle || entry.description || '',
     onClick: entry.onClick,
-    timeCost: entry.timeCost || 0
+    timeCost
   };
 }
 
 function selectHeaderAction(state) {
-  const assetActions = buildAssetUpgradeRecommendations(state)
+  const providerSnapshots = collectActionProviders({ state }) || [];
+  const assetSnapshots = providerSnapshots
+    .filter(snapshot => snapshot.id === 'asset-upgrades' || snapshot.focusCategory === 'upgrade');
+  const quickSnapshots = providerSnapshots
+    .filter(snapshot => snapshot.id === 'quick-actions' || snapshot.focusCategory === 'hustle');
+
+  const assetEntries = assetSnapshots.flatMap(snapshot => snapshot.entries || []);
+  const quickEntries = quickSnapshots.flatMap(snapshot => snapshot.entries || []);
+
+  const normalizedAssetEntries = assetSnapshots.length
+    ? assetEntries
+    : buildAssetUpgradeRecommendations(state).map(entry => ({
+        ...entry,
+        raw: entry,
+        durationHours: entry.timeCost,
+        timeCost: entry.timeCost
+      }));
+
+  const assetActions = normalizedAssetEntries
     .map(normalizeAssetRecommendation)
     .filter(Boolean)
     .sort((a, b) => (b.timeCost || 0) - (a.timeCost || 0));
@@ -46,7 +79,16 @@ function selectHeaderAction(state) {
     return assetActions[0];
   }
 
-  const quickActions = buildQuickActions(state)
+  const normalizedQuickEntries = quickSnapshots.length
+    ? quickEntries
+    : buildQuickActions(state).map(entry => ({
+        ...entry,
+        raw: entry,
+        durationHours: entry.durationHours,
+        timeCost: entry.durationHours
+      }));
+
+  const quickActions = normalizedQuickEntries
     .map(normalizeQuickAction)
     .filter(Boolean)
     .sort((a, b) => (b.timeCost || 0) - (a.timeCost || 0));

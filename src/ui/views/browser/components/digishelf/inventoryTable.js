@@ -1,4 +1,5 @@
 import createStatusBadge from './statusBadge.js';
+import { collectActionProviders } from '../../../../actions/registry.js';
 
 const QUICK_ACTION_LABELS = {
   ebook: {
@@ -13,6 +14,55 @@ const QUICK_ACTION_LABELS = {
 function clampNumber(value) {
   const number = Number(value);
   return Number.isFinite(number) ? number : 0;
+}
+
+function parseUpgradeActionId(identifier = '') {
+  if (typeof identifier !== 'string') return null;
+  const match = /^asset-upgrade:([^:]+):([^:]+):([^:]+):/.exec(identifier);
+  if (!match) return null;
+  return {
+    assetId: match[1],
+    instanceId: match[2],
+    actionId: match[3]
+  };
+}
+
+function buildRecommendedQuickActionMap(state = {}, assetType = '') {
+  if (!assetType) return new Map();
+  const snapshots = collectActionProviders({ state }) || [];
+  const upgradeProvider = snapshots.find(snapshot => snapshot.id === 'asset-upgrades'
+    || snapshot.focusCategory === 'upgrade');
+  if (!upgradeProvider) {
+    return new Map();
+  }
+
+  const map = new Map();
+  upgradeProvider.entries.forEach(entry => {
+    const source = entry.raw || {};
+    const identifier = source.id || entry.id;
+    const parsed = parseUpgradeActionId(identifier);
+    if (!parsed || parsed.assetId !== assetType) return;
+    const { instanceId, actionId } = parsed;
+    if (!instanceId || !actionId) return;
+    const list = map.get(instanceId) || [];
+    if (!list.includes(actionId)) {
+      list.push(actionId);
+      map.set(instanceId, list);
+    }
+  });
+
+  return map;
+}
+
+function mergeQuickActionIds(primary = [], fallback = []) {
+  const seen = new Set();
+  const merged = [];
+  [...primary, ...fallback].forEach(id => {
+    if (!id || seen.has(id)) return;
+    seen.add(id);
+    merged.push(id);
+  });
+  return merged;
 }
 
 function renderUpkeepCell(instance) {
@@ -259,20 +309,24 @@ export default function renderInventoryTable(options = {}) {
     emptyRow.appendChild(emptyCell);
     tbody.appendChild(emptyRow);
   } else {
+    const recommendedQuickActions = buildRecommendedQuickActionMap(state, type);
     instances.forEach(instance => {
+      const fallbackIds = type === 'ebook' ? quickActions.ebook || [] : quickActions.stockPhotos || [];
+      const recommended = recommendedQuickActions.get(instance.id) || [];
+      const mergedQuickActions = mergeQuickActionIds(recommended, fallbackIds);
       const row = type === 'ebook'
         ? renderEbookRow(instance, state, {
             formatCurrency: formatters.formatCurrency,
             onSelectInstance: handlers.onSelectInstance,
             onRunQuickAction: handlers.onRunQuickAction,
-            quickActions: quickActions.ebook || []
+            quickActions: mergedQuickActions
           })
         : renderStockRow(instance, state, {
             formatCurrency: formatters.formatCurrency,
             formatHours: formatters.formatHours,
             onSelectInstance: handlers.onSelectInstance,
             onRunQuickAction: handlers.onRunQuickAction,
-            quickActions: quickActions.stockPhotos || []
+            quickActions: mergedQuickActions
           });
       tbody.appendChild(row);
     });
