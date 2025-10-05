@@ -1,56 +1,62 @@
 import assert from 'node:assert/strict';
 import { afterEach, beforeEach, describe, it } from 'node:test';
 
+import { applyFocusOrdering } from '../../../../../src/ui/views/browser/widgets/todoWidget.js';
 import {
-  applyFocusOrdering,
-  focusBucketComparators,
-  focusOrdering
-} from '../../../../../src/ui/views/browser/widgets/todoWidget.js';
+  getFocusModeConfig,
+  getFocusBucketComparator,
+  hasFocusBucket,
+  registerFocusBucket
+} from '../../../../../src/ui/actions/focusBuckets.js';
 
 describe('todoWidget focus ordering', () => {
   describe('provider-defined buckets', () => {
+    let hadStudyBucket;
     let originalStudyComparator;
-    let originalMoneyOrder;
-    let originalUpgradeOrder;
-    let originalBalancedOrder;
-    let originalBalancedInterleave;
+    let originalMoneyConfig;
+    let originalUpgradeConfig;
+    let originalBalancedConfig;
 
     beforeEach(() => {
-      originalStudyComparator = focusBucketComparators.study;
-      originalMoneyOrder = [...(focusOrdering.money.order || [])];
-      originalUpgradeOrder = [...(focusOrdering.upgrades.order || [])];
-      originalBalancedOrder = [...(focusOrdering.balanced.order || [])];
-      originalBalancedInterleave = Array.isArray(focusOrdering.balanced.interleave)
-        ? [...focusOrdering.balanced.interleave]
-        : [];
+      hadStudyBucket = hasFocusBucket('study');
+      originalStudyComparator = hadStudyBucket ? getFocusBucketComparator('study') : null;
+      originalMoneyConfig = getFocusModeConfig('money');
+      originalUpgradeConfig = getFocusModeConfig('upgrades');
+      originalBalancedConfig = getFocusModeConfig('balanced');
     });
 
     afterEach(() => {
-      if (typeof originalStudyComparator === 'function') {
-        focusBucketComparators.study = originalStudyComparator;
-      } else {
-        delete focusBucketComparators.study;
-      }
-      focusOrdering.money.order = [...originalMoneyOrder];
-      focusOrdering.upgrades.order = [...originalUpgradeOrder];
-      focusOrdering.balanced.order = [...originalBalancedOrder];
-      focusOrdering.balanced.interleave = [...originalBalancedInterleave];
+      registerFocusBucket({
+        name: 'study',
+        comparator: hadStudyBucket ? originalStudyComparator : null,
+        modes: {
+          money: originalMoneyConfig,
+          upgrades: originalUpgradeConfig,
+          balanced: originalBalancedConfig
+        }
+      });
     });
 
     it('orders custom buckets based on configuration priorities', () => {
-      focusBucketComparators.study = entries => [...entries].sort((a, b) => {
-        const orderA = Number.isFinite(a?.orderIndex) ? a.orderIndex : Infinity;
-        const orderB = Number.isFinite(b?.orderIndex) ? b.orderIndex : Infinity;
-        if (orderA !== orderB) {
-          return orderA - orderB;
+      registerFocusBucket({
+        name: 'study',
+        comparator: entries => [...entries].sort((a, b) => {
+          const orderA = Number.isFinite(a?.orderIndex) ? a.orderIndex : Infinity;
+          const orderB = Number.isFinite(b?.orderIndex) ? b.orderIndex : Infinity;
+          if (orderA !== orderB) {
+            return orderA - orderB;
+          }
+          return (a?.id || '').localeCompare(b?.id || '');
+        }),
+        modes: {
+          money: { order: ['hustle', 'study', 'upgrade'] },
+          upgrades: { order: ['upgrade', 'study', 'hustle'] },
+          balanced: {
+            order: ['upgrade', 'study', 'hustle'],
+            interleave: ['upgrade', 'study', 'hustle']
+          }
         }
-        return (a?.id || '').localeCompare(b?.id || '');
       });
-
-      focusOrdering.money.order = ['hustle', 'study', 'upgrade'];
-      focusOrdering.upgrades.order = ['upgrade', 'study', 'hustle'];
-      focusOrdering.balanced.order = ['upgrade', 'study', 'hustle'];
-      focusOrdering.balanced.interleave = ['upgrade', 'study', 'hustle'];
 
       const entries = [
         { id: 'upgrade-slow', focusCategory: 'upgrade', upgradeRemaining: 5, durationHours: 1 },
