@@ -203,7 +203,8 @@ export function buildStudyActionsFromProvider(state, provider) {
 
   return {
     entries,
-    emptyMessage: metrics.emptyMessage || 'No study tracks are ready to enroll right now.',
+    emptyMessage: metrics.emptyMessage
+      || 'No active study tracks at the moment. Enroll in a course to add one.',
     moneyAvailable: metrics.moneyAvailable != null
       ? clampNumber(metrics.moneyAvailable)
       : clampNumber(state?.money),
