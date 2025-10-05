@@ -10,6 +10,23 @@ import {
 } from '../../../src/ui/views/browser/components/shopstack/state.js';
 import { createDefinitionMap } from '../../../src/ui/views/browser/components/shopstack/catalogData.js';
 
+function setupDomEnvironment(t) {
+  const dom = new JSDOM('<div id="root"></div>');
+  globalThis.window = dom.window;
+  globalThis.document = dom.window.document;
+  globalThis.Node = dom.window.Node;
+
+  t.after(() => {
+    dom.window.close();
+    delete globalThis.window;
+    delete globalThis.document;
+    delete globalThis.Node;
+  });
+
+  const mount = dom.window.document.getElementById('root');
+  return { dom, mount };
+}
+
 function createSampleModel() {
   return {
     categories: [
@@ -67,20 +84,74 @@ function createSampleDefinitions(events) {
   ];
 }
 
+function createMultiCategoryModel() {
+  return {
+    categories: [
+      {
+        id: 'automation',
+        copy: { label: 'Automation' },
+        families: [
+          {
+            id: 'assistants',
+            copy: { label: 'Assistants' },
+            definitions: [
+              {
+                id: 'speedBoost',
+                name: 'Speed Boost',
+                cost: 1200,
+                description: 'Make fulfillment sparkle.',
+                filters: { search: 'speed boost assistant sparkle' },
+                snapshot: { ready: true, affordable: true },
+                tag: { label: 'Tech', type: 'tech' }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'support',
+        copy: { label: 'Support' },
+        families: [
+          {
+            id: 'crew',
+            copy: { label: 'Crew' },
+            definitions: [
+              {
+                id: 'supportBeacon',
+                name: 'Support Beacon',
+                cost: 900,
+                description: 'A friendly help desk at the ready.',
+                filters: { search: 'support beacon help desk' },
+                snapshot: { ready: true, affordable: true },
+                tag: { label: 'Support', type: 'support' }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  };
+}
+
+function createMultiCategoryDefinitions(events) {
+  return [
+    {
+      id: 'speedBoost',
+      name: 'Speed Boost',
+      details: ['Faster packing runs'],
+      action: { onClick: () => events.push('speedBoost') }
+    },
+    {
+      id: 'supportBeacon',
+      name: 'Support Beacon',
+      details: ['Round-the-clock helpers'],
+      action: { onClick: () => events.push('supportBeacon') }
+    }
+  ];
+}
+
 test('createShopStackWorkspacePresenter renders catalog interactions and tabs', async t => {
-  const dom = new JSDOM('<div id="root"></div>');
-  globalThis.window = dom.window;
-  globalThis.document = dom.window.document;
-  globalThis.Node = dom.window.Node;
-
-  t.after(() => {
-    dom.window.close();
-    delete globalThis.window;
-    delete globalThis.document;
-    delete globalThis.Node;
-  });
-
-  const mount = dom.window.document.getElementById('root');
+  const { dom, mount } = setupDomEnvironment(t);
   const events = [];
   const model = createSampleModel();
   const definitions = createSampleDefinitions(events);
@@ -132,4 +203,38 @@ test('createShopStackWorkspacePresenter renders catalog interactions and tabs', 
 
   presenter.setView(VIEW_PRICING);
   assert.ok(mount.querySelector('.shopstack-pricing'));
+});
+
+test('shopstack catalog buttons trigger rerenders for selection changes', async t => {
+  const { dom, mount } = setupDomEnvironment(t);
+  const events = [];
+  const model = createMultiCategoryModel();
+  const definitions = createMultiCategoryDefinitions(events);
+
+  const presenter = createShopStackWorkspacePresenter();
+  presenter.render(model, { mount, definitions });
+
+  const cards = [...mount.querySelectorAll('.shopstack-card')];
+  assert.equal(cards.length, 2);
+  const supportCard = cards.find(card => card.dataset.upgrade === 'supportBeacon');
+  assert.ok(supportCard, 'support card should render');
+
+  supportCard.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
+  const detailTitle = mount.querySelector('.shopstack-detail__title');
+  assert.match(detailTitle.textContent, /Support Beacon/);
+
+  const categoryButtons = [...mount.querySelectorAll('.shopstack-chip')];
+  const supportButton = categoryButtons.find(button => button.textContent.includes('Support'));
+  assert.ok(supportButton, 'support category button should exist');
+
+  supportButton.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
+
+  const updatedButtons = [...mount.querySelectorAll('.shopstack-chip')];
+  const activeButton = updatedButtons.find(button => button.classList.contains('is-active'));
+  assert.ok(activeButton, 'an active category button should be highlighted');
+  assert.match(activeButton.textContent, /Support/);
+
+  const filteredCards = [...mount.querySelectorAll('.shopstack-card')];
+  assert.equal(filteredCards.length, 1);
+  assert.equal(filteredCards[0].dataset.upgrade, 'supportBeacon');
 });
