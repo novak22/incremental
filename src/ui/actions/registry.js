@@ -64,7 +64,7 @@ export function normalizeActionEntries(source = []) {
         : null;
       const orderIndex = Number.isFinite(entry?.orderIndex) ? entry.orderIndex : index;
 
-      return {
+      const normalizedEntry = {
         id,
         title: entry?.title || 'Action',
         meta,
@@ -80,6 +80,53 @@ export function normalizeActionEntries(source = []) {
         upgradeRemaining,
         orderIndex
       };
+
+      if (entry?.subtitle) {
+        normalizedEntry.subtitle = entry.subtitle;
+      }
+      if (entry?.description) {
+        normalizedEntry.description = entry.description;
+      }
+      if (entry?.buttonLabel) {
+        normalizedEntry.buttonLabel = entry.buttonLabel;
+      }
+      if (entry?.primaryLabel && !normalizedEntry.buttonLabel) {
+        normalizedEntry.buttonLabel = entry.primaryLabel;
+      }
+      if (entry?.metaClass) {
+        normalizedEntry.metaClass = entry.metaClass;
+      }
+      if (entry?.defaultLabel) {
+        normalizedEntry.defaultLabel = entry.defaultLabel;
+      }
+      if (entry?.payoutText) {
+        normalizedEntry.payoutText = entry.payoutText;
+      }
+      if (entry?.durationText && entry.durationText !== normalizedEntry.durationText) {
+        normalizedEntry.durationText = entry.durationText;
+      }
+
+      const rawTime = coerceNumber(entry?.timeCost, null);
+      if (Number.isFinite(rawTime)) {
+        normalizedEntry.timeCost = Math.max(0, rawTime);
+      }
+
+      if (!normalizedEntry.timeCost && normalizedEntry.durationHours > 0) {
+        normalizedEntry.timeCost = normalizedEntry.durationHours;
+      }
+
+      const rawMoney = coerceNumber(entry?.moneyCost, null);
+      if (Number.isFinite(rawMoney) && rawMoney > 0) {
+        normalizedEntry.moneyCost = rawMoney;
+      }
+
+      if (!normalizedEntry.payoutText && entry?.payoutText) {
+        normalizedEntry.payoutText = entry.payoutText;
+      }
+
+      normalizedEntry.raw = entry;
+
+      return normalizedEntry;
     })
     .filter(Boolean);
 }
@@ -132,6 +179,39 @@ export function clearActionProviders() {
   return () => {
     providers = previous.slice();
   };
+}
+
+export function collectActionProviders({ state = {}, summary = {} } = {}) {
+  const snapshots = [];
+
+  providers.forEach(provider => {
+    if (typeof provider !== 'function') return;
+
+    let result;
+    try {
+      result = provider({ state, summary });
+    } catch (error) {
+      result = null;
+    }
+
+    if (!result) return;
+
+    const focusCategory = result.focusCategory || null;
+    const normalized = normalizeActionEntries(result.entries).map((entry, index) => ({
+      ...entry,
+      focusCategory: entry.focusCategory || focusCategory,
+      orderIndex: Number.isFinite(entry.orderIndex) ? entry.orderIndex : index
+    }));
+
+    snapshots.push({
+      id: result.id || null,
+      focusCategory,
+      entries: normalized,
+      metrics: result.metrics || {}
+    });
+  });
+
+  return snapshots;
 }
 
 function applyMetrics(target, metrics = {}) {
@@ -191,25 +271,11 @@ export function buildActionQueue({ state = {}, summary = {} } = {}) {
     autoCompletedEntries: createAutoCompletedEntries(summary)
   };
 
-  providers.forEach(provider => {
-    if (typeof provider !== 'function') return;
-    let result;
-    try {
-      result = provider({ state, summary });
-    } catch (error) {
-      result = null;
-    }
-    if (!result) return;
+  const snapshots = collectActionProviders({ state, summary });
 
-    const focusCategory = result.focusCategory || null;
-    const normalized = normalizeActionEntries(result.entries).map((entry, index) => ({
-      ...entry,
-      focusCategory: entry.focusCategory || focusCategory,
-      orderIndex: Number.isFinite(entry.orderIndex) ? entry.orderIndex : index
-    }));
-
-    queue.entries.push(...normalized);
-    applyMetrics(queue, result.metrics);
+  snapshots.forEach(snapshot => {
+    queue.entries.push(...snapshot.entries);
+    applyMetrics(queue, snapshot.metrics);
   });
 
   if (!queue.entries.length && !queue.emptyMessage) {
@@ -232,6 +298,7 @@ export function buildActionQueue({ state = {}, summary = {} } = {}) {
 export default {
   registerActionProvider,
   clearActionProviders,
+  collectActionProviders,
   buildActionQueue,
   normalizeActionEntries
 };

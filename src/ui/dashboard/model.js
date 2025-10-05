@@ -11,6 +11,7 @@ import { buildStudyEnrollmentActionModel } from './knowledge.js';
 import { getAssetState } from '../../core/state.js';
 import { getAssets, getUpgrades } from '../../game/registryService.js';
 import { collectNicheAnalytics, summarizeNicheHighlights } from '../../game/analytics/niches.js';
+import { collectActionProviders } from '../actions/registry.js';
 
 function createHighlightDefaults() {
   return {
@@ -266,15 +267,204 @@ export function buildDashboardViewModel(state, summary = {}) {
   };
 
   const daily = buildDailySummaries(state, summary);
+  const providerSnapshots = collectActionProviders({ state, summary }) || [];
+
+  function selectProvider(id, focusCategory) {
+    return providerSnapshots.find(snapshot => snapshot.id === id)
+      || providerSnapshots.find(snapshot => snapshot.focusCategory === focusCategory)
+      || null;
+  }
+
+  function buildQuickActionsFromProvider(provider) {
+    if (!provider) {
+      return buildQuickActionModel(state);
+    }
+
+    const metrics = provider.metrics || {};
+    const entries = (provider.entries || []).map(entry => {
+      const source = entry.raw || {};
+      const title = source.title || entry.title;
+      const subtitle = source.subtitle || source.description || '';
+      const buttonLabel = source.buttonLabel || source.primaryLabel || metrics.defaultLabel || 'Queue';
+      const durationHours = Number.isFinite(entry.timeCost)
+        ? entry.timeCost
+        : Number.isFinite(source.timeCost)
+          ? source.timeCost
+          : entry.durationHours;
+      const payout = Number.isFinite(source.payout)
+        ? source.payout
+        : entry.payout;
+      const payoutText = source.payoutText || entry.payoutText || entry.meta || '';
+      const meta = source.meta || entry.meta || payoutText;
+      return {
+        id: entry.id,
+        title,
+        subtitle,
+        buttonLabel,
+        onClick: entry.onClick,
+        payout,
+        payoutText,
+        durationHours,
+        durationText: source.durationText || entry.durationText,
+        meta,
+        repeatable: source.repeatable ?? entry.repeatable,
+        remainingRuns: source.remainingRuns ?? entry.remainingRuns
+      };
+    });
+
+    const baseHours = clampNumber(state.baseTime)
+      + clampNumber(state.bonusTime)
+      + clampNumber(state.dailyBonusTime);
+    const hoursAvailable = metrics.hoursAvailable != null
+      ? Math.max(0, clampNumber(metrics.hoursAvailable))
+      : Math.max(0, clampNumber(state.timeLeft));
+    const hoursSpent = metrics.hoursSpent != null
+      ? Math.max(0, clampNumber(metrics.hoursSpent))
+      : Math.max(0, baseHours - hoursAvailable);
+
+    const scroller = metrics.scroller;
+    const model = {
+      entries,
+      emptyMessage: metrics.emptyMessage || 'No ready actions. Check upgrades or ventures.',
+      buttonClass: metrics.buttonClass || 'primary',
+      defaultLabel: metrics.defaultLabel || 'Queue',
+      hoursAvailable,
+      hoursAvailableLabel: metrics.hoursAvailableLabel || formatHours(hoursAvailable),
+      hoursSpent,
+      hoursSpentLabel: metrics.hoursSpentLabel || formatHours(hoursSpent),
+      day: clampNumber(state.day),
+      moneyAvailable: metrics.moneyAvailable != null
+        ? clampNumber(metrics.moneyAvailable)
+        : clampNumber(state.money)
+    };
+
+    if (scroller) {
+      model.scroller = scroller;
+    }
+
+    return model;
+  }
+
+  function buildAssetActionsFromProvider(provider) {
+    if (!provider) {
+      return buildAssetActionModel(state);
+    }
+
+    const metrics = provider.metrics || {};
+    const entries = (provider.entries || []).map(entry => {
+      const source = entry.raw || {};
+      const title = source.title || entry.title;
+      const subtitle = source.subtitle || source.description || '';
+      const meta = source.meta || entry.meta || '';
+      const metaClass = source.metaClass || '';
+      const timeCost = Number.isFinite(source.timeCost)
+        ? source.timeCost
+        : Number.isFinite(entry.timeCost)
+          ? entry.timeCost
+          : entry.durationHours;
+      const moneyCost = Number.isFinite(source.moneyCost)
+        ? source.moneyCost
+        : entry.moneyCost;
+      return {
+        id: entry.id,
+        title,
+        subtitle,
+        meta,
+        metaClass,
+        buttonLabel: source.buttonLabel || metrics.defaultLabel || 'Boost',
+        onClick: entry.onClick,
+        timeCost: Number.isFinite(timeCost) ? timeCost : 0,
+        durationHours: Number.isFinite(timeCost) ? timeCost : 0,
+        durationText: source.durationText || entry.durationText,
+        moneyCost,
+        repeatable: source.repeatable ?? entry.repeatable,
+        remainingRuns: source.remainingRuns ?? entry.remainingRuns
+      };
+    });
+
+    return {
+      entries,
+      emptyMessage: metrics.emptyMessage
+        || 'Every venture is humming along. Check back after today’s upkeep.',
+      buttonClass: metrics.buttonClass || 'secondary',
+      defaultLabel: metrics.defaultLabel || 'Boost',
+      scroller: metrics.scroller || { limit: 6 },
+      moneyAvailable: metrics.moneyAvailable != null
+        ? clampNumber(metrics.moneyAvailable)
+        : clampNumber(state.money)
+    };
+  }
+
+  function buildStudyActionsFromProvider(provider) {
+    if (!provider) {
+      return buildStudyEnrollmentActionModel(state);
+    }
+
+    const metrics = provider.metrics || {};
+    const entries = (provider.entries || []).map(entry => {
+      const source = entry.raw || {};
+      const title = source.title || entry.title;
+      const subtitle = source.subtitle || source.description || '';
+      const meta = source.meta || entry.meta || '';
+      const timeCost = Number.isFinite(source.timeCost)
+        ? source.timeCost
+        : Number.isFinite(entry.timeCost)
+          ? entry.timeCost
+          : entry.durationHours;
+      const moneyCost = Number.isFinite(source.moneyCost)
+        ? source.moneyCost
+        : entry.moneyCost;
+      return {
+        id: entry.id,
+        title,
+        subtitle,
+        meta,
+        buttonLabel: source.buttonLabel || metrics.defaultLabel || 'Enroll',
+        onClick: entry.onClick,
+        timeCost: Number.isFinite(timeCost) ? timeCost : 0,
+        durationHours: Number.isFinite(timeCost) ? timeCost : 0,
+        durationText: source.durationText || entry.durationText,
+        moneyCost,
+        repeatable: source.repeatable ?? entry.repeatable,
+        remainingRuns: source.remainingRuns ?? entry.remainingRuns
+      };
+    });
+
+    const baseHours = clampNumber(state.baseTime)
+      + clampNumber(state.bonusTime)
+      + clampNumber(state.dailyBonusTime);
+    const hoursAvailable = metrics.hoursAvailable != null
+      ? Math.max(0, clampNumber(metrics.hoursAvailable))
+      : Math.max(0, clampNumber(state.timeLeft));
+    const hoursSpent = metrics.hoursSpent != null
+      ? Math.max(0, clampNumber(metrics.hoursSpent))
+      : Math.max(0, baseHours - hoursAvailable);
+
+    return {
+      entries,
+      emptyMessage: metrics.emptyMessage || 'No study tracks are ready to enroll right now.',
+      moneyAvailable: metrics.moneyAvailable != null
+        ? clampNumber(metrics.moneyAvailable)
+        : clampNumber(state.money),
+      hoursAvailable,
+      hoursAvailableLabel: metrics.hoursAvailableLabel || formatHours(hoursAvailable),
+      hoursSpent,
+      hoursSpentLabel: metrics.hoursSpentLabel || formatHours(hoursSpent)
+    };
+  }
+
+  const quickProvider = selectProvider('quick-actions', 'hustle');
+  const assetProvider = selectProvider('asset-upgrades', 'upgrade');
+  const studyProvider = selectProvider('study-enrollment', 'study');
 
   return {
     session,
     headerMetrics: daily.headerMetrics,
     kpis: daily.kpis,
     queue: daily.queue,
-    quickActions: buildQuickActionModel(state),
-    assetActions: buildAssetActionModel(state),
-    studyActions: buildStudyEnrollmentActionModel(state),
+    quickActions: buildQuickActionsFromProvider(quickProvider),
+    assetActions: buildAssetActionsFromProvider(assetProvider),
+    studyActions: buildStudyActionsFromProvider(studyProvider),
     notifications: buildNotificationModel(state),
     eventLog: buildEventLogModel(state),
     dailyStats: daily.dailyStats,
