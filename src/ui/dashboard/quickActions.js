@@ -386,13 +386,14 @@ registerActionProvider(({ state }) => {
   const entries = (Array.isArray(model?.entries) ? model.entries : []).map((entry, index) => ({
     ...entry,
     meta: [entry?.subtitle, entry?.meta].filter(Boolean).join(' • ') || entry?.meta || '',
-    focusCategory: entry?.focusCategory || 'upgrade',
+    focusCategory: entry?.focusCategory || 'commitment',
+    focusBucket: entry?.focusBucket || 'commitment',
     orderIndex: Number.isFinite(entry?.orderIndex) ? entry.orderIndex : index
   }));
 
   return {
     id: 'asset-upgrades',
-    focusCategory: 'upgrade',
+    focusCategory: 'commitment',
     entries,
     metrics: {
       emptyMessage: model?.emptyMessage,
