@@ -60,6 +60,27 @@ export function createRequirementsOrchestrator({
     return abandonActionInstance(definition, active.id, { state: workingState });
   }
 
+  function removeCompletedStudyInstances(trackId, state = getState()) {
+    const workingState = state || getState();
+    if (!workingState) return false;
+    const definition = getActionDefinition(getStudyActionId(trackId));
+    if (!definition) return false;
+
+    const { instances } = getStudyActionSnapshot(trackId, workingState);
+    if (!instances?.length) return false;
+
+    let removed = false;
+    instances
+      .filter(instance => instance?.completed)
+      .forEach(instance => {
+        if (abandonActionInstance(definition, instance.id, { state: workingState })) {
+          removed = true;
+        }
+      });
+
+    return removed;
+  }
+
   function evaluateStudyProgress(track, state = getState()) {
     const progress = getKnowledgeProgress(track.id, state);
     const { active, completed } = getStudyActionSnapshot(track.id, state);
@@ -272,6 +293,10 @@ export function createRequirementsOrchestrator({
             });
           }
           progress.skillRewarded = true;
+          dirty = true;
+        }
+
+        if (removeCompletedStudyInstances(id, state)) {
           dirty = true;
         }
       } else if (isActive && !participated) {
