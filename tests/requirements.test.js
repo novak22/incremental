@@ -29,7 +29,9 @@ const {
 const {
   getState,
   getUpgradeState,
-  getAssetState
+  getAssetState,
+  getActionState,
+  ensureStateShape
 } = stateModule;
 
 const {
@@ -221,6 +223,44 @@ test('advancing knowledge logs completions and clears daily flags', () => {
   STUDY_DIRTY_SECTIONS.forEach(section => {
     assert.ok(dirty[section]);
   });
+});
+
+test('legacy study progress seeds action instances during state ensure', () => {
+  const state = getState();
+  state.day = 6;
+
+  const trackId = 'outlineMastery';
+  const actionId = `study-${trackId}`;
+  const progress = getKnowledgeProgress(trackId);
+  progress.enrolled = true;
+  progress.enrolledOnDay = 4;
+  progress.daysCompleted = 2;
+  progress.studiedToday = true;
+  progress.completed = false;
+
+  delete state.actions[actionId];
+  state.hustles = {};
+
+  ensureStateShape(state);
+
+  const seeded = getActionState(actionId);
+  const activeInstance = seeded.instances.find(instance => instance.accepted && !instance.completed);
+  assert.ok(activeInstance, 'legacy knowledge enrollment should create an active study instance');
+  assert.equal(activeInstance.acceptedOnDay, 4, 'enrollment day should persist on the seeded instance');
+  assert.ok(
+    activeInstance.progress.daysCompleted >= 2,
+    'seeded instance should include recorded study days in its completion count'
+  );
+  assert.equal(activeInstance.progress.completed, false, 'partially completed study should remain active');
+  assert.equal(
+    activeInstance.progress.lastWorkedDay,
+    state.day,
+    'studying today should set the last worked day to the current day'
+  );
+  assert.ok(
+    activeInstance.progress.dailyLog[state.day],
+    'current day study log should persist on the seeded instance'
+  );
 });
 
 test('manual study reminders and completions trigger logs and rewards', () => {

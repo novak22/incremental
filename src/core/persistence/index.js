@@ -5,6 +5,7 @@ import { StateMigrationRunner } from './stateMigrationRunner.js';
 import { success, error, empty, tryCatch } from './result.js';
 import { syncNicheTrendSnapshots } from '../../game/events/syncNicheTrendSnapshots.js';
 import { maybeSpawnNicheEvents } from '../../game/events/index.js';
+import { createDefaultHustleMarketState } from '../state/slices/hustleMarket.js';
 
 function migrateLegacySnapshot(snapshot, context) {
   if (!snapshot || typeof snapshot !== 'object') {
@@ -71,6 +72,100 @@ function migrateLegacySnapshot(snapshot, context) {
   return migrated;
 }
 
+function cloneValue(value, clone) {
+  if (typeof clone === 'function') {
+    try {
+      return clone(value);
+    } catch (error) {
+      // fall back to shallow structures below
+    }
+  }
+
+  if (Array.isArray(value)) {
+    return value.map(item => cloneValue(item, clone));
+  }
+
+  if (value && typeof value === 'object') {
+    return { ...value };
+  }
+
+  return value;
+}
+
+function isPlainObject(value) {
+  return value != null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function migrateLegacyHustlesToActions(snapshot, context) {
+  if (!snapshot || typeof snapshot !== 'object') {
+    return snapshot;
+  }
+
+  const migrated = { ...snapshot };
+  const defaultState = isPlainObject(context?.defaultState) ? context.defaultState : {};
+  const clone = typeof context?.clone === 'function' ? context.clone : value => cloneValue(value);
+
+  const defaultActions = isPlainObject(defaultState.actions)
+    ? cloneValue(defaultState.actions, clone)
+    : {};
+  const existingActions = isPlainObject(snapshot.actions)
+    ? cloneValue(snapshot.actions, clone)
+    : {};
+
+  migrated.actions = { ...defaultActions, ...existingActions };
+
+  const ensureActionEntry = id => {
+    if (!id) return null;
+    if (!isPlainObject(migrated.actions[id])) {
+      const fallback = isPlainObject(defaultActions[id]) ? defaultActions[id] : {};
+      migrated.actions[id] = cloneValue(fallback, clone) || {};
+    }
+    return migrated.actions[id];
+  };
+
+  const legacyHustles = isPlainObject(snapshot.hustles) ? snapshot.hustles : null;
+  if (legacyHustles) {
+    for (const [id, legacyEntry] of Object.entries(legacyHustles)) {
+      if (!legacyEntry || typeof legacyEntry !== 'object') continue;
+      const target = ensureActionEntry(id);
+      if (!target) continue;
+
+      if (legacyEntry.runsToday != null && target.runsToday == null) {
+        target.runsToday = legacyEntry.runsToday;
+      }
+
+      if (legacyEntry.lastRunDay != null && target.lastRunDay == null) {
+        target.lastRunDay = legacyEntry.lastRunDay;
+      }
+
+      if (Array.isArray(legacyEntry.instances)) {
+        const hasTargetInstances = Array.isArray(target.instances) && target.instances.length > 0;
+        if (!hasTargetInstances) {
+          target.instances = cloneValue(legacyEntry.instances, clone);
+        }
+      }
+
+      for (const [key, value] of Object.entries(legacyEntry)) {
+        if (key === 'runsToday' || key === 'lastRunDay' || key === 'instances') continue;
+        if (target[key] === undefined) {
+          target[key] = cloneValue(value, clone);
+        }
+      }
+    }
+
+    migrated.hustles = {};
+  }
+
+  if (!isPlainObject(migrated.hustleMarket)) {
+    const defaultMarket = isPlainObject(defaultState.hustleMarket)
+      ? defaultState.hustleMarket
+      : createDefaultHustleMarketState();
+    migrated.hustleMarket = cloneValue(defaultMarket, clone);
+  }
+
+  return migrated;
+}
+
 function removeLegacyNicheRollDay(snapshot) {
   if (!snapshot || typeof snapshot !== 'object') {
     return snapshot;
@@ -94,7 +189,11 @@ function removeLegacyNicheRollDay(snapshot) {
   return migrated;
 }
 
-const DEFAULT_MIGRATIONS = [migrateLegacySnapshot, removeLegacyNicheRollDay];
+const DEFAULT_MIGRATIONS = [
+  migrateLegacySnapshot,
+  removeLegacyNicheRollDay,
+  migrateLegacyHustlesToActions
+];
 
 export { SnapshotRepository, StateMigrationRunner };
 
@@ -305,4 +404,3 @@ export class StatePersistence {
     };
   }
 }
-

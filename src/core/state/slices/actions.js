@@ -321,41 +321,39 @@ function seedKnowledgeStudyInstances({ state, sliceState }) {
 
 function migrateLegacyHustleProgress({ state, sliceState }) {
   const legacy = state?.hustles;
-  if (!legacy || typeof legacy !== 'object') {
-    return;
-  }
+  if (legacy && typeof legacy === 'object') {
+    for (const [id, legacyEntry] of Object.entries(legacy)) {
+      if (!legacyEntry) continue;
+      const definition = resolveDefinition(id);
+      if (!definition) continue;
+      const target = sliceState[id];
+      if (!target) continue;
 
-  for (const [id, legacyEntry] of Object.entries(legacy)) {
-    if (!legacyEntry) continue;
-    const definition = resolveDefinition(id);
-    if (!definition) continue;
-    const target = sliceState[id];
-    if (!target) continue;
-
-    if (legacyEntry.runsToday != null) {
-      const runs = toNumber(legacyEntry.runsToday, 0);
-      const defaultRuns = toNumber(definition?.defaultState?.runsToday, 0);
-      if (target.runsToday == null || target.runsToday === defaultRuns) {
-        target.runsToday = runs >= 0 ? runs : 0;
+      if (legacyEntry.runsToday != null) {
+        const runs = toNumber(legacyEntry.runsToday, 0);
+        const defaultRuns = toNumber(definition?.defaultState?.runsToday, 0);
+        if (target.runsToday == null || target.runsToday === defaultRuns) {
+          target.runsToday = runs >= 0 ? runs : 0;
+        }
       }
-    }
 
-    if (legacyEntry.lastRunDay != null) {
-      const lastRun = toNumber(legacyEntry.lastRunDay, 0);
-      const defaultLastRun = toNumber(definition?.defaultState?.lastRunDay, 0);
-      if (target.lastRunDay == null || target.lastRunDay === defaultLastRun) {
-        target.lastRunDay = lastRun >= 0 ? Math.floor(lastRun) : 0;
+      if (legacyEntry.lastRunDay != null) {
+        const lastRun = toNumber(legacyEntry.lastRunDay, 0);
+        const defaultLastRun = toNumber(definition?.defaultState?.lastRunDay, 0);
+        if (target.lastRunDay == null || target.lastRunDay === defaultLastRun) {
+          target.lastRunDay = lastRun >= 0 ? Math.floor(lastRun) : 0;
+        }
       }
-    }
 
-    if ((!Array.isArray(target.instances) || target.instances.length === 0) && Array.isArray(legacyEntry.instances)) {
-      target.instances = legacyEntry.instances.map(instance => normalizeActionInstance(definition, instance, { state }));
-    }
+      if ((!Array.isArray(target.instances) || target.instances.length === 0) && Array.isArray(legacyEntry.instances)) {
+        target.instances = legacyEntry.instances.map(instance => normalizeActionInstance(definition, instance, { state }));
+      }
 
-    for (const [key, value] of Object.entries(legacyEntry)) {
-      if (key === 'runsToday' || key === 'lastRunDay' || key === 'instances') continue;
-      if (target[key] === undefined) {
-        target[key] = value;
+      for (const [key, value] of Object.entries(legacyEntry)) {
+        if (key === 'runsToday' || key === 'lastRunDay' || key === 'instances') continue;
+        if (target[key] === undefined) {
+          target[key] = value;
+        }
       }
     }
   }
