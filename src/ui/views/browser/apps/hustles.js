@@ -89,17 +89,36 @@ function createOfferItem(offer) {
   actions.className = 'browser-card__actions';
   const button = document.createElement('button');
   button.type = 'button';
-  button.className = offer.ready
+  const locked = Boolean(offer.locked);
+  const ready = Boolean(offer.ready);
+  button.className = ready
     ? 'browser-card__button browser-card__button--primary'
     : 'browser-card__button';
-  button.textContent = offer.ready ? 'Accept offer' : 'Upcoming';
-  button.disabled = !offer.ready;
-  if (offer.ready && typeof offer.onAccept === 'function') {
+  if (locked) {
+    button.textContent = 'Locked';
+  } else if (ready) {
+    button.textContent = 'Accept offer';
+  } else {
+    button.textContent = 'Upcoming';
+  }
+  button.disabled = !ready;
+  if (locked && offer.unlockHint) {
+    button.title = offer.unlockHint;
+  }
+  if (ready && typeof offer.onAccept === 'function') {
     button.addEventListener('click', () => {
       offer.onAccept();
     });
   }
   actions.appendChild(button);
+
+  if (locked && offer.unlockHint) {
+    const note = document.createElement('p');
+    note.className = 'browser-card__note';
+    note.textContent = offer.unlockHint;
+    actions.appendChild(note);
+  }
+
   item.appendChild(actions);
 
   return item;

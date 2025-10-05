@@ -11,13 +11,21 @@ const {
   getAvailableOffers,
   getClaimedOffers,
   acceptHustleOffer,
-  HUSTLE_TEMPLATES
+  HUSTLE_TEMPLATES,
+  describeHustleRequirements
 } = hustlesModule;
 const { getState, getActionState } = stateModule;
 
 test.beforeEach(() => {
   harness.resetState();
 });
+
+function findEligibleTemplate(state) {
+  return HUSTLE_TEMPLATES.find(template => {
+    const descriptors = describeHustleRequirements(template, state) || [];
+    return descriptors.every(entry => entry?.met !== false);
+  }) || HUSTLE_TEMPLATES[0];
+}
 
 test('HUSTLE_TEMPLATES includes only market-ready hustles', () => {
   const hasStudyEntries = HUSTLE_TEMPLATES.some(template => template?.tag?.type === 'study');
@@ -147,6 +155,26 @@ test('acceptHustleOffer claims offers and records accepted state', () => {
   assert.equal(actionState.instances[0].id, accepted.instanceId);
 });
 
+test('acceptHustleOffer rejects offers when requirements are not met', () => {
+  const state = getState();
+  state.day = 6;
+  const template = HUSTLE_TEMPLATES.find(entry => Array.isArray(entry?.requirements) && entry.requirements.length);
+  assert.ok(template, 'expected a template with explicit requirements');
+
+  const [offer] = rollDailyOffers({ templates: [template], day: state.day, now: 800, state, rng: () => 0 });
+  assert.ok(offer, 'expected a rolled offer for requirement gating');
+
+  const attempt = acceptHustleOffer(offer.id, { state });
+  assert.equal(attempt, null, 'unmet requirements should block acceptance');
+
+  const claimedOffers = getClaimedOffers(state, { day: state.day });
+  assert.equal(claimedOffers.length, 0, 'offer should remain unclaimed when requirements fail');
+
+  const availableOffers = getAvailableOffers(state, { day: state.day });
+  const stillAvailable = availableOffers.some(entry => entry.id === offer.id);
+  assert.equal(stillAvailable, true, 'offer should remain in the market for later attempts');
+});
+
 test('acceptHustleOffer seeds progress overrides from metadata', () => {
   const state = getState();
   state.day = 10;
@@ -212,7 +240,7 @@ test('availability selectors can include claimed offers when requested', () => {
   const state = getState();
   state.day = 6;
 
-  const template = HUSTLE_TEMPLATES[1] || HUSTLE_TEMPLATES[0];
+  const template = findEligibleTemplate(state);
 
   const [offer] = rollDailyOffers({ templates: [template], day: 6, now: 100, state, rng: () => 0 });
   acceptHustleOffer(offer.id, { state });
@@ -229,7 +257,7 @@ test('expired offers and claims are pruned on reroll', () => {
   const state = getState();
   state.day = 3;
 
-  const template = HUSTLE_TEMPLATES[2] || HUSTLE_TEMPLATES[0];
+  const template = findEligibleTemplate(state);
 
   const [offer] = rollDailyOffers({ templates: [template], day: 3, now: 10, state, rng: () => 0 });
   const accepted = acceptHustleOffer(offer.id, { state });

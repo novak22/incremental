@@ -24,11 +24,11 @@ export function buildQuickActionsFromProvider(state, provider) {
   }
 
   const metrics = provider.metrics || {};
-  const entries = (provider.entries || []).map(entry => {
-    const source = entry.raw || {};
-    const title = source.title || entry.title;
-    const subtitle = source.subtitle || source.description || '';
-    const buttonLabel = source.buttonLabel || source.primaryLabel || metrics.defaultLabel || 'Queue';
+    const entries = (provider.entries || []).map(entry => {
+      const source = entry.raw || {};
+      const title = source.title || entry.title;
+      const subtitle = source.subtitle || source.description || '';
+      const buttonLabel = source.buttonLabel || source.primaryLabel || metrics.defaultLabel || 'Queue';
     const durationHours = Number.isFinite(entry.timeCost)
       ? entry.timeCost
       : Number.isFinite(source.timeCost)
@@ -39,21 +39,23 @@ export function buildQuickActionsFromProvider(state, provider) {
       : entry.payout;
     const payoutText = source.payoutText || entry.payoutText || entry.meta || '';
     const meta = source.meta || entry.meta || payoutText;
-    return {
-      id: entry.id,
-      title,
-      subtitle,
-      buttonLabel,
-      onClick: entry.onClick,
-      payout,
-      payoutText,
-      durationHours,
-      durationText: source.durationText || entry.durationText,
-      meta,
-      repeatable: source.repeatable ?? entry.repeatable,
-      remainingRuns: source.remainingRuns ?? entry.remainingRuns
-    };
-  });
+      return {
+        id: entry.id,
+        title,
+        subtitle,
+        buttonLabel,
+        onClick: entry.onClick,
+        payout,
+        payoutText,
+        durationHours,
+        durationText: source.durationText || entry.durationText,
+        meta,
+        repeatable: source.repeatable ?? entry.repeatable,
+        remainingRuns: source.remainingRuns ?? entry.remainingRuns,
+        disabled: source.disabled ?? entry.disabled,
+        disabledReason: source.disabledReason || entry.disabledReason
+      };
+    });
 
   const inProgress = Array.isArray(metrics.inProgressEntries)
     ? metrics.inProgressEntries.map(entry => ({

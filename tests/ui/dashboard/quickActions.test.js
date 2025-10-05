@@ -53,6 +53,27 @@ test('buildQuickActions returns active offers with meta details', () => {
   assert.ok(offerAction.meta.includes('1 day'));
 });
 
+test('buildQuickActions disables offers when requirements are unmet', () => {
+  resetRegistry();
+  const lockedStub = {
+    ...quickStub,
+    id: 'hustle:locked',
+    name: 'Locked Hustle',
+    requirements: [{ type: 'experience', assetId: 'blog', count: 1 }]
+  };
+  loadRegistry({ hustles: [lockedStub], assets: [], upgrades: [] });
+
+  const state = buildDefaultState();
+  rollDailyOffers({ templates: [lockedStub], day: state.day, state, rng: () => 0 });
+
+  const actions = buildQuickActions(state);
+  const lockedAction = actions.find(item => item.offer);
+  assert.ok(lockedAction, 'expected locked market offer to be present');
+  assert.equal(lockedAction.disabled, true, 'offer should report disabled status');
+  assert.ok(lockedAction.meta.includes('Unlock tip'), 'meta should hint at the missing requirement');
+  assert.ok(lockedAction.disabledReason.includes('Unlock') || lockedAction.disabledReason.includes('Daily'), 'disabled reason should surface guidance');
+});
+
 test('offer helper resolves fields with custom number resolver', () => {
   const offer = {
     metadata: {

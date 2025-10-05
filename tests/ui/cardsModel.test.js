@@ -70,6 +70,52 @@ test('buildHustleModels mirrors availability filters', () => {
   assert.equal(blocked.filters.available, false);
 });
 
+test('buildHustleModels disables accept action when requirements are unmet', () => {
+  const hustles = [
+    {
+      id: 'hustle-locked',
+      name: 'Locked Hustle',
+      description: 'Requires more prep.',
+      time: 2,
+      payout: { amount: 50 }
+    }
+  ];
+
+  const models = buildHustleModels(hustles, {
+    getState: () => ({ day: 1 }),
+    describeRequirements: () => [{ label: 'Camera Rig Upgrade', met: false, type: 'equipment' }],
+    getUsage: () => null,
+    formatHours: value => `${value}h`,
+    formatMoney: value => value.toFixed(0),
+    getOffers: () => [{
+      id: 'offer-locked',
+      templateId: 'hustle-locked',
+      definitionId: 'hustle-locked',
+      availableOnDay: 1,
+      expiresOnDay: 2,
+      metadata: {},
+      variant: { label: 'Locked Hustle' }
+    }],
+    getAcceptedOffers: () => [],
+    collectCommitments: () => [],
+    acceptOffer: () => {
+      throw new Error('acceptOffer should not be called when locked');
+    },
+    rollOffers: null
+  });
+
+  assert.equal(models.length, 1);
+  const [model] = models;
+  assert.equal(model.action.disabled, true);
+  assert.ok(model.action.guidance.includes('Unlock tip') || model.action.guidance.includes('Daily'), 'guidance should mention the missing requirement');
+  const [offer] = model.offers;
+  assert.equal(offer.ready, false);
+  assert.equal(offer.locked, true);
+  assert.equal(offer.onAccept, null);
+  assert.ok(offer.meta.includes('Unlock tip') || offer.meta.includes('Daily'), 'offer meta should surface lock guidance');
+  assert.equal(model.available, false);
+});
+
 test('buildHustleModels surfaces multi-day offers with daily requirements', () => {
   const hustles = [
     {

@@ -4,6 +4,7 @@ import { describeHustleRequirements, getHustleDailyUsage } from '../../../game/h
 import { getAvailableOffers, getClaimedOffers, acceptHustleOffer, rollDailyOffers } from '../../../game/hustles.js';
 import { collectOutstandingActionEntries } from '../../actions/registry.js';
 import { describeHustleOfferMeta } from '../../hustles/offerHelpers.js';
+import { describeRequirementGuidance } from '../../hustles/requirements.js';
 
 export default function buildHustleModels(definitions = [], helpers = {}) {
   const {
@@ -72,6 +73,9 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
     const search = searchPieces.toLowerCase();
 
     const requirements = (describeRequirements?.(definition, state) || []).map(req => ({ ...req }));
+    const unmetRequirements = requirements.filter(req => req && req.met === false);
+    const requirementsMet = unmetRequirements.length === 0;
+    const requirementGuidance = describeRequirementGuidance(unmetRequirements);
     const requirementSummary = requirements.length
       ? requirements.map(req => `${req.label} ${req.met ? '✓' : '•'}`).join('  ')
       : 'No requirements';
@@ -103,12 +107,14 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
         formatHoursFn,
         formatMoneyFn
       });
-      const ready = meta.availableIn <= 0;
+      const ready = meta.availableIn <= 0 && requirementsMet;
       return {
         id: offer.id,
         label: offer?.variant?.label || definition.name || offer.templateId,
         description: offer?.variant?.description || '',
-        meta: meta.summary,
+        meta: requirementsMet
+          ? meta.summary
+          : [requirementGuidance, meta.summary].filter(Boolean).join(' • '),
         hours: meta.hours,
         payout: meta.payout,
         schedule: meta.schedule,
@@ -119,7 +125,9 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
         availableIn: meta.availableIn,
         expiresIn: meta.expiresIn,
         ready,
-        onAccept: () => acceptOffer(offer.id, { state })
+        locked: !requirementsMet,
+        unlockHint: requirementGuidance,
+        onAccept: requirementsMet ? () => acceptOffer(offer.id, { state }) : null
       };
     });
 
@@ -187,14 +195,18 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
 
     if (primaryOffer) {
       const ready = primaryOffer.ready;
+      const locked = primaryOffer.locked;
       const label = ready
         ? `Accept ${primaryOffer.label}`
-        : `Opens in ${primaryOffer.availableIn} day${primaryOffer.availableIn === 1 ? '' : 's'}`;
+        : locked
+          ? `Locked — ${primaryOffer.label}`
+          : `Opens in ${primaryOffer.availableIn} day${primaryOffer.availableIn === 1 ? '' : 's'}`;
       actionConfig = {
         label,
         disabled: !ready,
         className: 'primary',
-        onClick: ready ? primaryOffer.onAccept : null
+        onClick: ready ? primaryOffer.onAccept : null,
+        guidance: locked ? requirementGuidance || primaryOffer.unlockHint : undefined
       };
     } else if (typeof rollOffers === 'function') {
       const rerollLabel = definition.market?.manualRerollLabel || 'Roll a fresh offer';
@@ -253,7 +265,9 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
             exhausted: usage.remaining <= 0
           }
         : null,
-      action: actionConfig,
+      action: requirementGuidance && actionConfig && !actionConfig.guidance
+        ? { ...actionConfig, guidance: requirementGuidance }
+        : actionConfig,
       available,
       offers: offerEntries,
       commitments,

@@ -139,6 +139,15 @@ function createTask(entry, model, onComplete) {
   button.className = 'todo-widget__task';
   button.setAttribute('aria-label', `${entry.title} ${entry.meta}`.trim());
 
+  const disabled = Boolean(entry?.disabled);
+  if (disabled) {
+    button.setAttribute('aria-disabled', 'true');
+    button.classList.add('is-disabled');
+    if (entry?.disabledReason) {
+      button.title = entry.disabledReason;
+    }
+  }
+
   const checkbox = document.createElement('span');
   checkbox.className = 'todo-widget__checkbox';
   checkbox.textContent = '✓';
@@ -169,6 +178,9 @@ function createTask(entry, model, onComplete) {
   }
 
   button.addEventListener('click', () => {
+    if (disabled) {
+      return;
+    }
     if (button.getAttribute('aria-disabled') === 'true') return;
     button.setAttribute('aria-disabled', 'true');
     button.classList.add('is-complete');
