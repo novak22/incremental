@@ -360,13 +360,15 @@ export function getAvailableOffers(state = getState(), {
 
 export function getClaimedOffers(state = getState(), {
   day,
-  includeExpired = false
+  includeExpired = false,
+  includeCompleted = false
 } = {}) {
   const workingState = state || getState();
   const targetDay = resolveDay(day, workingState?.day || 1);
   return getMarketClaimedOffers(workingState, {
     day: targetDay,
-    includeExpired
+    includeExpired,
+    includeCompleted
   });
 }
 

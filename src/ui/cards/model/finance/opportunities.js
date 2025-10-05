@@ -220,6 +220,9 @@ export function buildHustleOpportunities(hustleDefinitions = [], state, services
 
     const acceptedForDefinition = acceptedByDefinition.get(definition.id) || [];
     acceptedForDefinition.forEach(entry => {
+      if (entry?.status === 'complete') {
+        return;
+      }
       if (commitmentsByInstance.has(entry?.instanceId)) {
         return;
       }

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { getGameTestHarness } from './helpers/gameTestHarness.js';
 
 const harness = await getGameTestHarness();
+const { completeActionInstance } = await import('../src/game/actions/progress.js');
 const { hustlesModule, stateModule } = harness;
 const {
   rollDailyOffers,
@@ -136,4 +137,48 @@ test('expired offers and claims are pruned on reroll', () => {
 
   const claimedAfterExpiry = getClaimedOffers(state, { day: state.day });
   assert.equal(claimedAfterExpiry.length, 0, 'expired claims should be pruned from selectors');
+});
+
+test('completing a hustle hides the accepted entry from pending lists', () => {
+  const state = getState();
+  state.day = 5;
+
+  const template = HUSTLE_TEMPLATES[0];
+  assert.ok(template, 'expected at least one hustle template for completion test');
+
+  const [offer] = rollDailyOffers({ templates: [template], day: state.day, now: 100, state, rng: () => 0 });
+  assert.ok(offer, 'expected to roll an offer for completion test');
+
+  const accepted = acceptHustleOffer(offer.id, { state });
+  assert.ok(accepted, 'offer should be accepted before completion');
+
+  const claimedBefore = getClaimedOffers(state, { day: state.day });
+  assert.equal(claimedBefore.length, 1, 'accepted entry should appear in pending commitments before completion');
+
+  const actionState = getActionState(template.id, state);
+  const instance = actionState.instances.find(item => item.id === accepted.instanceId);
+  assert.ok(instance, 'completion should resolve the stored action instance');
+
+  const completionHours = Number.isFinite(accepted.hoursRequired)
+    ? accepted.hoursRequired
+    : Number(instance.hoursRequired) || 0;
+
+  completeActionInstance(template, instance, {
+    state,
+    completionDay: state.day,
+    effectiveTime: completionHours,
+    finalPayout: accepted.payout?.amount
+  });
+
+  const claimedAfter = getClaimedOffers(state, { day: state.day });
+  assert.equal(claimedAfter.length, 0, 'completed entries should no longer appear as pending commitments');
+
+  const completedHistory = getClaimedOffers(state, { day: state.day, includeCompleted: true });
+  assert.equal(completedHistory.length, 1, 'completed entry should be accessible when including completed results');
+  const [completedEntry] = completedHistory;
+  assert.equal(completedEntry.status, 'complete', 'completed entry should carry a complete status flag');
+  assert.equal(completedEntry.completedOnDay, state.day, 'completion day should be recorded on the accepted entry');
+  if (Number.isFinite(completionHours) && completionHours >= 0) {
+    assert.equal(completedEntry.hoursLogged, completionHours, 'hours logged should mirror the completion time');
+  }
 });
