@@ -121,6 +121,16 @@ export function normalizeActionEntries(source = []) {
         orderIndex
       };
 
+      if (typeof entry?.disabled === 'function') {
+        normalizedEntry.disabled = Boolean(entry.disabled());
+      } else if (entry && 'disabled' in entry) {
+        normalizedEntry.disabled = Boolean(entry.disabled);
+      }
+
+      if (entry?.disabledReason) {
+        normalizedEntry.disabledReason = entry.disabledReason;
+      }
+
       if (entry && typeof entry === 'object') {
         Object.keys(entry).forEach(key => {
           if (typeof key === 'string' && key.toLowerCase().includes('bucket')) {

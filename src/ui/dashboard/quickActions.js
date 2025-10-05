@@ -13,12 +13,14 @@ import { instanceLabel } from '../../game/assets/details.js';
 import { collectOutstandingActionEntries } from '../actions/registry.js';
 import { registerActionProvider } from '../actions/providers.js';
 import { getAvailableOffers, acceptHustleOffer } from '../../game/hustles.js';
+import { describeHustleRequirements } from '../../game/hustles/helpers.js';
 import {
   resolveOfferHours,
   resolveOfferPayout,
   resolveOfferSchedule,
   describeQuickActionOfferMeta
 } from '../hustles/offerHelpers.js';
+import { describeRequirementGuidance } from '../hustles/requirements.js';
 
 function getQualitySnapshot(instance = {}) {
   const level = Math.max(0, clampNumber(instance?.quality?.level));
@@ -84,6 +86,10 @@ export function buildQuickActions(state) {
 
   const items = offers.map(offer => {
     const definition = getActionDefinition(offer.definitionId || offer.templateId) || {};
+    const requirements = describeHustleRequirements(definition, workingState) || [];
+    const unmetRequirements = requirements.filter(entry => entry && entry.met === false);
+    const requirementsMet = unmetRequirements.length === 0;
+    const lockGuidance = describeRequirementGuidance(unmetRequirements);
     const hours = resolveOfferHours(offer, definition, { toNumber: clampNumber });
     const payout = resolveOfferPayout(offer, definition, { toNumber: clampNumber });
     const roi = hours > 0 ? payout / Math.max(hours, 0.0001) : payout;
@@ -108,11 +114,16 @@ export function buildQuickActions(state) {
       formatMoneyFn: formatMoney
     });
 
+    const enhancedMeta = requirementsMet
+      ? meta
+      : [lockGuidance, meta].filter(Boolean).join(' • ');
+    const descriptionText = description;
+
     return {
       id: offer.id,
       label,
       primaryLabel: 'Accept',
-      description,
+      description: descriptionText,
       onClick: () => acceptHustleOffer(offer.id, { state: workingState }),
       roi,
       timeCost: hours,
@@ -120,12 +131,14 @@ export function buildQuickActions(state) {
       payoutText: payout > 0 ? `$${formatMoney(payout)}` : '',
       durationHours: hours,
       durationText,
-      meta,
+      meta: enhancedMeta,
       repeatable: false,
       remainingRuns: 1,
       remainingDays,
       schedule,
-      offer
+      offer,
+      disabled: !requirementsMet,
+      disabledReason: lockGuidance || 'Meet the prerequisites before accepting this hustle.'
     };
   });
 
@@ -304,7 +317,9 @@ export function buildQuickActionModel(state = {}) {
     durationText: action.durationText,
     meta: action.meta,
     repeatable: action.repeatable,
-    remainingRuns: action.remainingRuns
+    remainingRuns: action.remainingRuns,
+    disabled: action.disabled,
+    disabledReason: action.disabledReason
   }));
   const baseHours = clampNumber(state.baseTime) + clampNumber(state.bonusTime) + clampNumber(state.dailyBonusTime);
   const hoursAvailable = Math.max(0, clampNumber(state.timeLeft));

@@ -8,6 +8,8 @@ import {
   getMarketOfferById,
   getMarketClaimedOffers
 } from '../core/state/slices/hustleMarket.js';
+import { definitionRequirementsMet } from './requirements/checks.js';
+import { describeHustleRequirements } from './hustles/helpers.js';
 
 export const HUSTLE_TEMPLATES = INSTANT_ACTIONS;
 export const HUSTLES = HUSTLE_TEMPLATES;
@@ -154,6 +156,16 @@ export function acceptHustleOffer(offerOrId, { state = getState() } = {}) {
   }
 
   if (!template) {
+    return null;
+  }
+
+  if (!definitionRequirementsMet(template, workingState)) {
+    return null;
+  }
+
+  const requirementDescriptors = describeHustleRequirements(template, workingState) || [];
+  const unmetDescriptor = requirementDescriptors.find(entry => entry && entry.met === false);
+  if (unmetDescriptor) {
     return null;
   }
 

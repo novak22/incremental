@@ -70,6 +70,55 @@ test('buildHustleModels mirrors availability filters', () => {
   assert.equal(blocked.filters.available, false);
 });
 
+test('buildHustleModels disables accept action when requirements are unmet', () => {
+  const hustles = [
+    {
+      id: 'hustle-locked',
+      name: 'Locked Hustle',
+      description: 'Requires more prep.',
+      time: 2,
+      payout: { amount: 50 }
+    }
+  ];
+
+  const models = buildHustleModels(hustles, {
+    getState: () => ({ day: 1 }),
+    describeRequirements: () => [{ label: 'Camera Rig Upgrade', met: false, type: 'equipment' }],
+    getUsage: () => null,
+    formatHours: value => `${value}h`,
+    formatMoney: value => value.toFixed(0),
+    getOffers: () => [{
+      id: 'offer-locked',
+      templateId: 'hustle-locked',
+      definitionId: 'hustle-locked',
+      availableOnDay: 1,
+      expiresOnDay: 2,
+      metadata: {},
+      variant: { label: 'Locked Hustle' }
+    }],
+    getAcceptedOffers: () => [],
+    collectCommitments: () => [],
+    acceptOffer: () => {
+      throw new Error('acceptOffer should not be called when locked');
+    },
+    rollOffers: null
+  });
+
+  assert.equal(models.length, 1);
+  const [model] = models;
+  assert.equal(model.action.label, 'Locked — Locked Hustle');
+  assert.equal(model.action.disabled, true);
+  assert.ok(/Unlock tip/i.test(model.action.guidance));
+  assert.equal(model.offers.length, 0);
+  const [offer] = model.upcoming;
+  assert.ok(offer, 'expected locked offer to appear in upcoming list');
+  assert.equal(offer.ready, false);
+  assert.equal(offer.locked, true);
+  assert.equal(offer.onAccept, null);
+  assert.ok(/Unlock tip/i.test(offer.meta));
+  assert.equal(model.available, false);
+});
+
 test('buildHustleModels prefers accepting ready offers and queues upcoming separately', () => {
   const hustles = [
     {
@@ -117,7 +166,7 @@ test('buildHustleModels prefers accepting ready offers and queues upcoming separ
   assert.equal(model.action.label, 'Accept Ready Offer');
   assert.equal(model.action.disabled, false);
   assert.equal(model.action.className, 'primary');
-  assert.ok(model.action.guidance.includes('Fresh hustles just landed'));
+  assert.match(model.action.guidance, /Fresh hustles just landed!/);
   assert.equal(model.offers.length, 1, 'ready offers should populate the primary list');
   assert.equal(model.upcoming.length, 1, 'upcoming offers should be tracked separately');
 });

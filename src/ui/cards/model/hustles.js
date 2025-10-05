@@ -4,6 +4,7 @@ import { describeHustleRequirements, getHustleDailyUsage } from '../../../game/h
 import { getAvailableOffers, getClaimedOffers, acceptHustleOffer, rollDailyOffers } from '../../../game/hustles.js';
 import { collectOutstandingActionEntries } from '../../actions/registry.js';
 import { describeHustleOfferMeta } from '../../hustles/offerHelpers.js';
+import { describeRequirementGuidance } from '../../hustles/requirements.js';
 
 export default function buildHustleModels(definitions = [], helpers = {}) {
   const {
@@ -72,6 +73,9 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
     const search = searchPieces.toLowerCase();
 
     const requirements = (describeRequirements?.(definition, state) || []).map(req => ({ ...req }));
+    const unmetRequirements = requirements.filter(req => req && req.met === false);
+    const requirementsMet = unmetRequirements.length === 0;
+    const requirementGuidance = describeRequirementGuidance(unmetRequirements);
     const requirementSummary = requirements.length
       ? requirements.map(req => `${req.label} ${req.met ? '✓' : '•'}`).join('  ')
       : 'No requirements';
@@ -103,12 +107,14 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
         formatHoursFn,
         formatMoneyFn
       });
-      const ready = meta.availableIn <= 0;
+      const ready = meta.availableIn <= 0 && requirementsMet;
       return {
         id: offer.id,
         label: offer?.variant?.label || definition.name || offer.templateId,
         description: offer?.variant?.description || '',
-        meta: meta.summary,
+        meta: requirementsMet
+          ? meta.summary
+          : [requirementGuidance, meta.summary].filter(Boolean).join(' • '),
         hours: meta.hours,
         payout: meta.payout,
         schedule: meta.schedule,
@@ -119,7 +125,9 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
         availableIn: meta.availableIn,
         expiresIn: meta.expiresIn,
         ready,
-        onAccept: () => acceptOffer(offer.id, { state })
+        locked: !requirementsMet,
+        unlockHint: requirementGuidance,
+        onAccept: requirementsMet ? () => acceptOffer(offer.id, { state }) : null
       };
     });
 
@@ -188,8 +196,20 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
     let actionConfig = null;
 
     if (primaryOffer) {
-      const ready = primaryOffer.ready;
-      if (ready) {
+      const locked = Boolean(primaryOffer.locked);
+      const ready = Boolean(primaryOffer.ready) && !locked;
+
+      if (locked) {
+        const lockedLabel = `Locked — ${primaryOffer.label}`;
+        const lockedGuidance = requirementGuidance || primaryOffer.unlockHint || '';
+        actionConfig = {
+          label: lockedLabel,
+          disabled: true,
+          className: 'primary',
+          onClick: null,
+          guidance: lockedGuidance || undefined
+        };
+      } else if (ready) {
         actionConfig = {
           label: `Accept ${primaryOffer.label}`,
           disabled: false,
@@ -198,9 +218,11 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
           guidance: 'Fresh hustles just landed! Claim your next gig and keep momentum rolling.'
         };
       } else {
-        const daysText = primaryOffer.availableIn === 1 ? '1 day' : `${primaryOffer.availableIn} days`;
+        const availableIn = Number.isFinite(primaryOffer.availableIn) ? primaryOffer.availableIn : null;
+        const daysText = availableIn === 1 ? '1 day' : `${availableIn} days`;
+        const label = availableIn && availableIn > 0 ? `Opens in ${daysText}` : 'Opens soon';
         actionConfig = {
-          label: `Opens in ${daysText}`,
+          label,
           disabled: true,
           className: 'primary',
           onClick: null,
@@ -267,7 +289,9 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
             exhausted: usage.remaining <= 0
           }
         : null,
-      action: actionConfig,
+      action: requirementGuidance && actionConfig && !actionConfig.guidance
+        ? { ...actionConfig, guidance: requirementGuidance }
+        : actionConfig,
       available,
       offers: readyOffers,
       upcoming: upcomingOffers,

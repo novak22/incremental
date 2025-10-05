@@ -89,7 +89,10 @@ function createOfferItem(offer, { upcoming = false } = {}) {
   actions.className = 'browser-card__actions';
   const button = document.createElement('button');
   button.type = 'button';
-  if (offer.ready && !upcoming) {
+  const locked = Boolean(offer.locked);
+  const ready = Boolean(offer.ready) && !locked && !upcoming;
+
+  if (ready) {
     button.className = 'browser-card__button browser-card__button--primary';
     button.textContent = 'Accept offer';
     button.disabled = false;
@@ -100,11 +103,28 @@ function createOfferItem(offer, { upcoming = false } = {}) {
     }
   } else {
     button.className = 'browser-card__button';
-    const days = offer.availableIn === 1 ? '1 day' : `${offer.availableIn} days`;
-    button.textContent = offer.availableIn > 0 ? `Unlocks in ${days}` : 'Upcoming';
-    button.disabled = true;
+    if (locked) {
+      button.textContent = 'Locked';
+      button.disabled = true;
+      if (offer.unlockHint) {
+        button.title = offer.unlockHint;
+      }
+    } else {
+      const availableIn = Number.isFinite(offer.availableIn) ? offer.availableIn : null;
+      const days = availableIn === 1 ? '1 day' : `${availableIn} days`;
+      button.textContent = availableIn && availableIn > 0 ? `Unlocks in ${days}` : 'Upcoming';
+      button.disabled = true;
+    }
   }
   actions.appendChild(button);
+
+  if (locked && offer.unlockHint) {
+    const note = document.createElement('p');
+    note.className = 'browser-card__note';
+    note.textContent = offer.unlockHint;
+    actions.appendChild(note);
+  }
+
   item.appendChild(actions);
 
   return item;
