@@ -26,6 +26,9 @@ export async function getGameTestHarness() {
   const registryService = await import('../../src/game/registryService.js');
   const { ensureRegistryReady } = await import('../../src/game/registryBootstrap.js');
   const eventsModule = await import('../../src/game/events/index.js');
+  const { syncNicheTrendSnapshots } = await import(
+    '../../src/game/events/syncNicheTrendSnapshots.js'
+  );
 
   registryService.resetRegistry();
   ensureRegistryReady();
@@ -33,6 +36,7 @@ export async function getGameTestHarness() {
   const resetState = () => {
     const nextState = stateModule.initializeState(stateModule.buildDefaultState());
     eventsModule.maybeSpawnNicheEvents({ state: nextState, day: nextState.day || 1 });
+    syncNicheTrendSnapshots(nextState);
     const logNodes = elementRegistryModule.getElement('browserNotifications');
     if (logNodes?.badge) {
       logNodes.badge.textContent = '';
