@@ -1,4 +1,5 @@
 import normalizedEconomy from '../../../docs/normalized_economy.json' with { type: 'json' };
+import { getHustleMarketConfig } from './hustleMarketConfig.js';
 
 const MINUTES_PER_HOUR = 60;
 
@@ -123,7 +124,7 @@ const createAssetConfig = key => {
 
 const createHustleConfig = key => {
   const hustle = normalizedEconomy.hustles[key];
-  return {
+  const config = {
     name: hustle.name,
     timeMinutes: hustle.setup_time,
     timeHours: toHours(hustle.setup_time),
@@ -139,6 +140,13 @@ const createHustleConfig = key => {
     skills: cloneArray(hustle.skills),
     tags: cloneArray(hustle.tags)
   };
+
+  const market = getHustleMarketConfig(key, config);
+  if (market) {
+    config.market = market;
+  }
+
+  return config;
 };
 
 const createUpgradeConfig = key => {
