@@ -4,7 +4,22 @@ import { getState } from './state.js';
 import { isAutoReadType } from './logAutoReadTypes.js';
 import { buildLogModel } from '../ui/log/model.js';
 import { getActiveView } from '../ui/viewManager.js';
-import { saveState } from './storage.js';
+let saveStatePromise = null;
+
+function requestSaveState() {
+  if (!saveStatePromise) {
+    saveStatePromise = import('./storage.js')
+      .then(module => module.saveState)
+      .catch(() => () => {});
+  }
+  saveStatePromise.then(saveState => {
+    try {
+      saveState?.();
+    } catch (error) {
+      console?.error?.('Failed to persist log state', error);
+    }
+  });
+}
 
 export function addLog(message, type = 'info') {
   const state = getState();
@@ -33,7 +48,7 @@ export function markLogEntryRead(entryId) {
     return false;
   }
   entry.read = true;
-  saveState();
+  requestSaveState();
   renderLog();
   return true;
 }
@@ -49,7 +64,7 @@ export function markAllLogEntriesRead() {
     }
   });
   if (updated > 0) {
-    saveState();
+    requestSaveState();
     renderLog();
   }
   return updated;

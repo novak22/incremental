@@ -156,13 +156,16 @@ test('ensureNicheStateShape repairs popularity map and fallback day', () => {
 
 test('resetState clears runtime progress and log history', () => {
   const state = getState();
+  const baselineLogCount = state.log.length;
   state.money = 999;
   state.log.push({ id: 'x', message: 'test', timestamp: Date.now(), type: 'info' });
 
   resetState();
   const fresh = getState();
   assert.equal(fresh.money, 45);
-  assert.equal(fresh.log.length, 0);
+  assert.equal(fresh.log.length, baselineLogCount);
+  const extraEntries = fresh.log.filter(entry => entry?.message === 'test');
+  assert.equal(extraEntries.length, 0, 'custom log entries should be removed');
 });
 
 test('createStateManager produces isolated runtime instances', () => {
