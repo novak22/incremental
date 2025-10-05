@@ -225,7 +225,7 @@ function normalizeActionState(definition, entry = {}, context) {
       ? defaults.instances
       : [];
 
-  const trimmedInstances = sourceInstances.slice(0, MAX_ACTION_INSTANCES);
+  const trimmedInstances = sourceInstances.slice(-MAX_ACTION_INSTANCES);
 
   normalized.instances = trimmedInstances.map(instance => normalizeActionInstance(definition, instance, context));
 
