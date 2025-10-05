@@ -64,9 +64,32 @@ const buildInstantBoost = boost => {
   return entry;
 };
 
+const MINUTES_PER_HOUR = 60;
+
+const resolveStudyHoursPerDay = schedule => {
+  if (!schedule || typeof schedule !== 'object') {
+    return 0;
+  }
+
+  const rawHours = Number(schedule.hoursPerDay ?? schedule.hours_per_day);
+  if (Number.isFinite(rawHours) && rawHours > 0) {
+    return rawHours;
+  }
+
+  const rawMinutes = Number(
+    schedule.minutesPerDay ?? schedule.minutes_per_day ?? schedule.minutes
+  );
+  if (Number.isFinite(rawMinutes) && rawMinutes > 0) {
+    return rawMinutes / MINUTES_PER_HOUR;
+  }
+
+  return 0;
+};
+
 const knowledgeTrackData = Object.fromEntries(
   Object.entries(trackConfig).map(([id, track]) => {
     const schedule = track?.schedule || {};
+    const hoursPerDay = resolveStudyHoursPerDay(schedule);
     const instantBoosts = Array.isArray(track?.instantBoosts)
       ? track.instantBoosts.map(buildInstantBoost).filter(Boolean)
       : [];
@@ -77,7 +100,7 @@ const knowledgeTrackData = Object.fromEntries(
         id,
         name: track?.name || id,
         description: TRACK_DESCRIPTIONS[id] || '',
-        hoursPerDay: Number(schedule.hoursPerDay) || 0,
+        hoursPerDay,
         days: Number(schedule.days) || 0,
         tuition: Number(track?.setupCost ?? 0) || 0,
         instantBoosts

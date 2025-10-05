@@ -2,15 +2,15 @@ import { appendContent } from '../../components/common/domHelpers.js';
 import { createStat } from '../../components/widgets.js';
 import { getWorkspacePath } from '../../layout/workspaces.js';
 import { formatCurrency } from './model.js';
+import { createCard } from './components/card.js';
+import {
+  createBreakdownList,
+  createSummaryList,
+  createTaskList
+} from './components/lists.js';
+import { createCompletedSection } from './sections/completedSection.js';
 
 const tabObserverMap = new WeakMap();
-
-const COMPLETED_GROUPS = [
-  { key: 'hustles', label: 'Hustles', empty: 'No hustles wrapped yet.' },
-  { key: 'education', label: 'Education', empty: 'No study blocks logged yet.' },
-  { key: 'upkeep', label: 'Upkeep', empty: 'No upkeep tackled yet.' },
-  { key: 'upgrades', label: 'Upgrades', empty: 'No upgrade pushes finished yet.' }
-];
 
 const TODO_GROUPS = [
   { key: 'hustle', label: 'Hustles queued', empty: 'Line up a gig to stack this lane.' },
@@ -18,75 +18,6 @@ const TODO_GROUPS = [
   { key: 'study', label: 'Study & training', empty: 'No study blocks queued yet.' },
   { key: 'other', label: 'Assist & extras', empty: 'No support tasks waiting on you.' }
 ];
-
-function createCard({ title, summary, headerClass, headerContent }) {
-  const card = document.createElement('article');
-  card.className = 'browser-card timodoro-card';
-
-  const header = document.createElement('header');
-  header.className = 'browser-card__header';
-  if (headerClass) {
-    header.classList.add(headerClass);
-  }
-
-  const heading = document.createElement('h2');
-  heading.className = 'browser-card__title';
-  appendContent(heading, title);
-  header.appendChild(heading);
-
-  if (summary) {
-    const description = document.createElement('p');
-    description.className = 'browser-card__summary';
-    appendContent(description, summary);
-    header.appendChild(description);
-  }
-
-  if (headerContent) {
-    appendContent(header, headerContent);
-  }
-
-  card.appendChild(header);
-  return card;
-}
-
-function createEmptyItem(className, message) {
-  const empty = document.createElement('li');
-  empty.className = className;
-  appendContent(empty, message);
-  return empty;
-}
-
-function createTaskList(entries = [], emptyText, datasetKey) {
-  const list = document.createElement('ul');
-  list.className = 'timodoro-list timodoro-list--tasks';
-  if (datasetKey) {
-    list.dataset.role = datasetKey;
-  }
-
-  if (!Array.isArray(entries) || entries.length === 0) {
-    list.appendChild(createEmptyItem('timodoro-list__empty', emptyText));
-    return list;
-  }
-
-  entries.forEach(entry => {
-    if (!entry) return;
-    const item = document.createElement('li');
-    item.className = 'timodoro-list__item';
-
-    const name = document.createElement('span');
-    name.className = 'timodoro-list__name';
-    appendContent(name, entry.name ?? '');
-
-    const meta = document.createElement('span');
-    meta.className = 'timodoro-list__meta';
-    appendContent(meta, entry.detail ?? '');
-
-    item.append(name, meta);
-    list.appendChild(item);
-  });
-
-  return list;
-}
 
 function buildTodoGroups(entries = []) {
   const groups = TODO_GROUPS.reduce((map, group) => {
@@ -190,38 +121,6 @@ function createTodoCard(model = {}, options = {}) {
   return card;
 }
 
-function createCompletedSection(completedGroups = {}) {
-  const section = document.createElement('section');
-  section.className = 'timodoro-section';
-
-  const heading = document.createElement('h3');
-  heading.className = 'timodoro-section__title';
-  appendContent(heading, 'Completed today');
-
-  const groupsWrapper = document.createElement('div');
-  groupsWrapper.className = 'timodoro-section__groups';
-
-  COMPLETED_GROUPS.forEach(groupConfig => {
-    const group = document.createElement('section');
-    group.className = 'timodoro-subsection';
-
-    const title = document.createElement('h4');
-    title.className = 'timodoro-subsection__title';
-    appendContent(title, groupConfig.label);
-
-    const entries = Array.isArray(completedGroups[groupConfig.key])
-      ? completedGroups[groupConfig.key]
-      : [];
-    const list = createTaskList(entries, groupConfig.empty, `timodoro-completed-${groupConfig.key}`);
-
-    group.append(title, list);
-    groupsWrapper.appendChild(group);
-  });
-
-  section.append(heading, groupsWrapper);
-  return section;
-}
-
 function createRecurringCard(model = {}) {
   const card = createCard({
     title: 'Recurring / Assistant Work',
@@ -236,73 +135,6 @@ function createRecurringCard(model = {}) {
 
   card.appendChild(list);
   return card;
-}
-
-function createBreakdownList(entries = []) {
-  const list = document.createElement('ul');
-  list.className = 'timodoro-list timodoro-list--breakdown';
-  list.dataset.role = 'timodoro-breakdown';
-
-  if (!Array.isArray(entries) || entries.length === 0) {
-    list.appendChild(createEmptyItem('timodoro-breakdown__empty', 'No hours tracked yet.'));
-    return list;
-  }
-
-  entries.forEach(entry => {
-    if (!entry) return;
-    const item = document.createElement('li');
-    item.className = 'timodoro-breakdown__item';
-
-    const label = document.createElement('span');
-    label.className = 'timodoro-breakdown__label';
-    appendContent(label, entry.label ?? '');
-
-    const value = document.createElement('span');
-    value.className = 'timodoro-breakdown__value';
-    appendContent(value, entry.value ?? '');
-
-    item.append(label, value);
-    list.appendChild(item);
-  });
-
-  return list;
-}
-
-function createSummaryList(entries = []) {
-  const list = document.createElement('ul');
-  list.className = 'timodoro-list timodoro-list--stats';
-  list.dataset.role = 'timodoro-stats';
-
-  if (!Array.isArray(entries) || entries.length === 0) {
-    return list;
-  }
-
-  entries.forEach(entry => {
-    if (!entry) return;
-    const item = document.createElement('li');
-    item.className = 'timodoro-stats__item';
-
-    const label = document.createElement('span');
-    label.className = 'timodoro-stats__label';
-    appendContent(label, entry.label ?? '');
-
-    const value = document.createElement('span');
-    value.className = 'timodoro-stats__value';
-    appendContent(value, entry.value ?? '');
-
-    item.append(label, value);
-
-    if (entry.note) {
-      const note = document.createElement('span');
-      note.className = 'timodoro-stats__note';
-      appendContent(note, entry.note);
-      item.appendChild(note);
-    }
-
-    list.appendChild(item);
-  });
-
-  return list;
 }
 
 function createSnapshotCard(model = {}) {

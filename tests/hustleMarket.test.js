@@ -4,6 +4,7 @@ import { getGameTestHarness } from './helpers/gameTestHarness.js';
 
 const harness = await getGameTestHarness();
 const { completeActionInstance } = await import('../src/game/actions/progress.js');
+const { ensureHustleMarketState } = await import('../src/core/state/slices/hustleMarket.js');
 const { hustlesModule, stateModule } = harness;
 const {
   rollDailyOffers,
@@ -71,6 +72,50 @@ test('rollDailyOffers builds variant metadata and allows multiple variants', () 
   assert.equal(weekendOffer.metadata.requirements.hours, 6);
   assert.equal(weekendOffer.metadata.payout.amount, 180);
   assert.equal(weekendOffer.metadata.payout.schedule, 'weekend');
+});
+
+test('rollDailyOffers respects slotsPerRoll, variant copies, and maxActive', () => {
+  const state = getState();
+  state.day = 12;
+
+  const template = {
+    id: 'multi-slot',
+    name: 'Multi Slot Hustle',
+    time: 6,
+    market: {
+      slotsPerRoll: 3,
+      maxActive: 5,
+      variants: [
+        {
+          id: 'batch',
+          durationDays: 2,
+          copies: 3,
+          maxActive: 5,
+          metadata: {
+            requirements: { hours: 6 },
+            payout: { amount: 240, schedule: 'onCompletion' }
+          }
+        }
+      ]
+    }
+  };
+
+  const firstRoll = rollDailyOffers({ templates: [template], day: 12, now: 400, state, rng: () => 0.1 });
+  assert.equal(firstRoll.length, 3, 'first roll should respect slotsPerRoll and variant copies');
+  assert.ok(firstRoll.every(offer => offer.variantId === 'batch'), 'all offers should share the configured variant');
+  const firstIds = new Set(firstRoll.map(offer => offer.id));
+  assert.equal(firstIds.size, 3, 'each rolled offer should receive a unique id');
+
+  state.day = 13;
+  const secondRoll = rollDailyOffers({ templates: [template], day: 13, now: 500, state, rng: () => 0.2 });
+  assert.equal(secondRoll.length, 5, 'second roll should fill remaining capacity up to maxActive');
+  const secondIds = new Set(secondRoll.map(offer => offer.id));
+  assert.equal(secondIds.size, 5, 'no duplicate ids should appear after rerolling');
+  const rolledOnSecondDay = secondRoll.filter(offer => offer.rolledOnDay === 13);
+  assert.equal(rolledOnSecondDay.length, 2, 'remaining capacity should be consumed by new offers');
+
+  const ensured = ensureHustleMarketState(state, { fallbackDay: state.day });
+  assert.equal(ensured.offers.length, 5, 'state normalization should keep all repeated variant offers');
 });
 
 test('acceptHustleOffer claims offers and records accepted state', () => {
@@ -198,6 +243,44 @@ test('expired offers and claims are pruned on reroll', () => {
 
   const claimedAfterExpiry = getClaimedOffers(state, { day: state.day });
   assert.equal(claimedAfterExpiry.length, 0, 'expired claims should be pruned from selectors');
+});
+
+test('multi-offer templates prune expired entries and refresh capacity', () => {
+  const state = getState();
+  state.day = 21;
+
+  const template = {
+    id: 'multi-expiring',
+    name: 'Batch Delivery',
+    time: 5,
+    market: {
+      slotsPerRoll: 2,
+      maxActive: 4,
+      variants: [
+        {
+          id: 'daily',
+          durationDays: 1,
+          copies: 2,
+          maxActive: 4,
+          metadata: {
+            requirements: { hours: 5 },
+            payout: { amount: 200, schedule: 'onCompletion' }
+          }
+        }
+      ]
+    }
+  };
+
+  const firstRoll = rollDailyOffers({ templates: [template], day: 21, now: 900, state, rng: () => 0 });
+  assert.equal(firstRoll.length, 2, 'initial roll should populate two offers');
+  const expiryDay = Math.max(...firstRoll.map(offer => offer.expiresOnDay));
+
+  state.day = expiryDay + 1;
+  const reroll = rollDailyOffers({ templates: [template], day: state.day, now: 950, state, rng: () => 0 });
+  assert.equal(reroll.length, 2, 'expired offers should be replaced after their window closes');
+  assert.ok(reroll.every(offer => offer.rolledOnDay === state.day), 'replacement offers should reflect the new roll day');
+  const rerollIds = new Set(reroll.map(offer => offer.id));
+  assert.equal(rerollIds.size, 2, 'replacement offers should maintain unique ids');
 });
 
 test('completing a hustle hides the accepted entry from pending lists', () => {

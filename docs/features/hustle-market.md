@@ -10,6 +10,8 @@
 - Templates may define a `market` block with:
   - `variants`: optional array of variant configs (id, label, weight, duration, availableAfterDays, metadata, definitionId).
   - `durationDays` and `availableAfterDays`: defaults applied when variants omit explicit values.
+  - `slotsPerRoll`: number of offers to attempt each time the market rerolls (defaults to `1`).
+  - `maxActive`: hard cap for simultaneous offers from the template (defaults to `max(slotsPerRoll, variantCount)`).
   - `metadata`: extra properties merged into each offer.
 - Variant metadata now supports structured progress hints:
   - `hoursPerDay` and `daysRequired` capture daily effort expectations for multi-day gigs.
@@ -18,13 +20,13 @@
 - If no variants are provided the `rollDailyOffers` helper fabricates a default variant that mirrors the template. When variants exist, multiple offers can coexist so long as each variant is represented at most once per active window.
 
 ## Rolling Logic
-- `rollDailyOffers({ templates, day, now, state, rng })` clones any existing offers whose `expiresOnDay` is still in the future, then backfills missing templates by selecting a weighted variant (defaulting to equal weights).
+- `rollDailyOffers({ templates, day, now, state, rng })` clones any existing offers whose `expiresOnDay` is still in the future, then fills the configured number of template slots by selecting weighted variants (defaulting to equal weights). Variant copy counts can consume multiple slots per roll while template and variant `maxActive` values prevent overfilling.
 - Each new offer captures:
   - `rolledOnDay`, `availableOnDay`, and `expiresOnDay` (duration is inclusive of the start day).
   - Variant metadata (id, label, description) plus merged template/variant metadata.
   - Resolved requirements (`metadata.requirements.hours` and `metadata.hoursRequired`) and payout details (`metadata.payout.amount`, `metadata.payout.schedule`).
   - A deterministic `daysActive` array so UI layers can render availability windows.
-- Offers are sorted by availability day then template id for consistent rendering.
+- Offers are sorted by availability day, template id, variant id, and finally offer id for consistent rendering even when multiple copies share the same variant.
 
 ## Persistence Helpers
 - `ensureHustleMarketState` guarantees the `state.hustleMarket` slice exists with `{ lastRolledAt, lastRolledOnDay, offers: [], accepted: [] }`.
