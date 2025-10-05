@@ -42,6 +42,26 @@ test('registerActionProvider supplies normalized entries to the queue', () => {
   }
 });
 
+test('buildActionQueue omits entries flagged to be excluded', () => {
+  const restore = clearActionProviders();
+  try {
+    registerActionProvider(() => ({
+      id: 'hidden-provider',
+      entries: [
+        { id: 'hidden-entry', title: 'Hidden Action', excludeFromQueue: true },
+        { id: 'visible-entry', title: 'Visible Action' }
+      ],
+      metrics: {}
+    }));
+
+    const queue = buildActionQueue({ state: {} });
+    assert.equal(queue.entries.length, 1);
+    assert.equal(queue.entries[0].id, 'visible-entry');
+  } finally {
+    restore();
+  }
+});
+
 test('registerActionProvider retains the original entry as raw payload', () => {
   const restore = clearActionProviders();
   try {

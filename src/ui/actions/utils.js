@@ -163,6 +163,9 @@ export function normalizeActionEntries(source = []) {
       if (entry?.durationText && entry.durationText !== normalizedEntry.durationText) {
         normalizedEntry.durationText = entry.durationText;
       }
+      if (entry?.excludeFromQueue === true) {
+        normalizedEntry.excludeFromQueue = true;
+      }
 
       const rawTime = coerceNumber(entry?.timeCost, null);
       if (Number.isFinite(rawTime)) {
