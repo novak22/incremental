@@ -5,30 +5,10 @@ import { getAssetDefinition } from '../../core/state/registry.js';
 import { getNicheDefinition, getNicheDefinitions } from './nicheData.js';
 import { NICHE_ANALYTICS_HISTORY_LIMIT } from '../../core/state/niches.js';
 import { markDirty } from '../../core/events/invalidationBus.js';
-
-const POPULARITY_MIN = 25;
-const POPULARITY_MAX = 95;
-const POPULARITY_BANDS = [
-  { min: 85, label: 'Blazing', tone: 'hot', summary: 'Audiences are ravenous — capitalize now.' },
-  { min: 70, label: 'Surging', tone: 'warm', summary: 'Momentum is building fast and payouts love it.' },
-  { min: 55, label: 'Trending', tone: 'warm', summary: 'Steady waves of interest keep income humming.' },
-  { min: 40, label: 'Steady', tone: 'steady', summary: 'Reliable attention with room for creative twists.' },
-  { min: 25, label: 'Cooling', tone: 'cool', summary: 'Interest is dipping — refresh your hooks soon.' },
-  { min: 0, label: 'Dormant', tone: 'cold', summary: 'Only superfans are tuning in today.' }
-];
-const MULTIPLIER_MIN = 0.75;
-const MULTIPLIER_MAX = 1.3;
-
-function clampScore(value) {
-  if (!Number.isFinite(value)) return null;
-  return Math.max(0, Math.min(100, Math.round(value)));
-}
-
-function rollPopularityScore() {
-  const spread = POPULARITY_MAX - POPULARITY_MIN;
-  const roll = Math.random();
-  return clampScore(POPULARITY_MIN + roll * spread);
-}
+import {
+  createNeutralPopularitySnapshot,
+  sanitizePopularitySnapshot
+} from '../niches/popularitySnapshot.js';
 
 export function ensureNicheState(target = getState()) {
   if (!target) return null;
@@ -62,20 +42,10 @@ export function ensureNicheState(target = getState()) {
   }
 
   definitions.forEach(definition => {
-    const entry = data.popularity[definition.id] || {};
-    const score = clampScore(entry.score);
-    const previous = clampScore(entry.previousScore);
-    if (score === null) {
-      data.popularity[definition.id] = {
-        score: rollPopularityScore(),
-        previousScore: previous
-      };
-    } else {
-      data.popularity[definition.id] = {
-        score,
-        previousScore: previous
-      };
-    }
+    const entry = data.popularity[definition.id];
+    data.popularity[definition.id] = entry
+      ? sanitizePopularitySnapshot(entry)
+      : createNeutralPopularitySnapshot();
   });
 
   const storedDay = Number(data.lastRollDay);
@@ -84,62 +54,17 @@ export function ensureNicheState(target = getState()) {
   return data;
 }
 
-function describePopularity(score) {
-  const band = POPULARITY_BANDS.find(entry => score >= entry.min) || POPULARITY_BANDS.at(-1);
-  return {
-    label: band?.label || 'Unknown',
-    tone: band?.tone || 'steady',
-    summary: band?.summary || ''
-  };
-}
-
-function calculateMultiplier(score) {
-  const normalized = Math.max(0, Math.min(1, score / 100));
-  const range = MULTIPLIER_MAX - MULTIPLIER_MIN;
-  const value = MULTIPLIER_MIN + normalized * range;
-  return Math.max(0, Math.round(value * 100) / 100);
-}
-
-export function rerollNichePopularity({ force = false } = {}) {
-  const state = getState();
-  if (!state) return null;
-  const data = ensureNicheState(state);
-  if (!data) return null;
-  const currentDay = state.day || 1;
-  if (!force && Number(data.lastRollDay) === currentDay) {
-    return data.popularity;
-  }
-
-  const definitions = getNicheDefinitions();
-  definitions.forEach(definition => {
-    const entry = data.popularity[definition.id] || {};
-    data.popularity[definition.id] = {
-      previousScore: clampScore(entry.score),
-      score: rollPopularityScore()
-    };
-  });
-  data.lastRollDay = currentDay;
-  return data.popularity;
-}
-
 function getNichePopularity(nicheId, state = getState()) {
   if (!nicheId) return null;
   const target = ensureNicheState(state);
   if (!target) return null;
   const entry = target.popularity?.[nicheId];
   if (!entry) return null;
-  const score = clampScore(entry.score) ?? rollPopularityScore();
-  const previousScore = clampScore(entry.previousScore);
-  const descriptor = describePopularity(score);
-  const multiplier = calculateMultiplier(score);
-  const delta = Number.isFinite(previousScore) ? score - previousScore : null;
+  const sanitized = sanitizePopularitySnapshot(entry);
+  target.popularity[nicheId] = sanitized;
   return {
     id: nicheId,
-    score,
-    previousScore,
-    delta,
-    multiplier,
-    ...descriptor
+    ...sanitized
   };
 }
 
@@ -167,18 +92,9 @@ export function getAssignableNicheSummaries(definition, state = getState()) {
   return getAssignableNiches(definition)
     .map(niche => ({
       definition: niche,
-      popularity: getNichePopularity(niche.id, state)
-    }))
-    .map(entry => ({
-      ...entry,
-      popularity: entry.popularity || {
-        id: entry.definition.id,
-        score: 0,
-        delta: null,
-        multiplier: 1,
-        label: 'Unknown',
-        tone: 'steady',
-        summary: 'Popularity data pending.'
+      popularity: getNichePopularity(niche.id, state) || {
+        id: niche.id,
+        ...createNeutralPopularitySnapshot()
       }
     }))
     .sort((a, b) => (b.popularity?.score || 0) - (a.popularity?.score || 0));

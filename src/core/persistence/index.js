@@ -3,6 +3,7 @@ import { createAssetInstance } from '../state/assets.js';
 import { SnapshotRepository } from './snapshotRepository.js';
 import { StateMigrationRunner } from './stateMigrationRunner.js';
 import { success, error, empty, tryCatch } from './result.js';
+import { syncNicheTrendSnapshots } from '../../game/events/syncNicheTrendSnapshots.js';
 
 function migrateLegacySnapshot(snapshot, context) {
   if (!snapshot || typeof snapshot !== 'object') {
@@ -158,6 +159,7 @@ export class StatePersistence {
     state.lastSaved = lastSaved;
     state.version = effectiveVersion;
     this.ensureStateShape(state);
+    syncNicheTrendSnapshots(state);
 
     if (typeof onReturning === 'function') {
       onReturning({ state, lastSaved });
@@ -205,6 +207,7 @@ export class StatePersistence {
     state.version = Math.max(this.version, initialVersion);
     state.lastSaved = lastSavedFallback;
     this.ensureStateShape(state);
+    syncNicheTrendSnapshots(state);
 
     if (typeof onFirstLoad === 'function') {
       onFirstLoad({ state, lastSaved: state.lastSaved });
@@ -217,6 +220,7 @@ export class StatePersistence {
     const state = this.getState();
     if (!state) return null;
     this.ensureStateShape(state);
+    syncNicheTrendSnapshots(state);
     const snapshot = this.clone(state);
     const lastSaved = this.now();
     const stateVersion = Number.isInteger(state.version) ? state.version : 0;
