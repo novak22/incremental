@@ -61,6 +61,51 @@ function describeOfferMeta({
   const hours = resolveOfferHours(offer, definition);
   const payout = resolveOfferPayout(offer, definition);
   const schedule = resolveOfferSchedule(offer);
+  const metadata = offer?.metadata || {};
+  const progressMetadata = typeof metadata.progress === 'object' && metadata.progress !== null
+    ? metadata.progress
+    : {};
+  const hoursPerDayCandidates = [
+    metadata.hoursPerDay,
+    progressMetadata.hoursPerDay
+  ];
+  let hoursPerDay = null;
+  for (const value of hoursPerDayCandidates) {
+    const numeric = Number(value);
+    if (Number.isFinite(numeric) && numeric > 0) {
+      hoursPerDay = numeric;
+      break;
+    }
+  }
+  const daysRequiredCandidates = [
+    metadata.daysRequired,
+    progressMetadata.daysRequired
+  ];
+  let daysRequired = null;
+  for (const value of daysRequiredCandidates) {
+    const numeric = Number(value);
+    if (Number.isFinite(numeric) && numeric > 0) {
+      daysRequired = Math.max(1, Math.floor(numeric));
+      break;
+    }
+  }
+  const completionCandidates = [
+    metadata.completionMode,
+    progressMetadata.completionMode,
+    progressMetadata.completion
+  ];
+  let completionMode = null;
+  for (const candidate of completionCandidates) {
+    if (typeof candidate === 'string' && candidate.trim()) {
+      completionMode = candidate.trim();
+      break;
+    }
+  }
+  const progressLabel = typeof metadata.progressLabel === 'string' && metadata.progressLabel.trim()
+    ? metadata.progressLabel.trim()
+    : typeof progressMetadata.label === 'string' && progressMetadata.label.trim()
+      ? progressMetadata.label.trim()
+      : null;
   const availableIn = Number.isFinite(offer.availableOnDay)
     ? Math.max(0, Math.floor(offer.availableOnDay) - currentDay)
     : 0;
@@ -79,6 +124,14 @@ function describeOfferMeta({
     parts.push(`${formatHoursFn(hours)} focus`);
   }
 
+  if (Number.isFinite(hoursPerDay) && hoursPerDay > 0) {
+    if (Number.isFinite(daysRequired) && daysRequired > 0) {
+      parts.push(`${formatHoursFn(hoursPerDay)}/day for ${daysRequired} day${daysRequired === 1 ? '' : 's'}`);
+    } else {
+      parts.push(`${formatHoursFn(hoursPerDay)}/day commitment`);
+    }
+  }
+
   if (payout > 0) {
     const payoutLabel = `$${formatMoneyFn(payout)}`;
     if (!schedule || schedule === 'onCompletion') {
@@ -90,6 +143,10 @@ function describeOfferMeta({
     }
   }
 
+  if (completionMode === 'manual') {
+    parts.push('Manual completion');
+  }
+
   if (expiresIn != null) {
     parts.push(`Expires in ${expiresIn} day${expiresIn === 1 ? '' : 's'}`);
   }
@@ -98,6 +155,10 @@ function describeOfferMeta({
     hours,
     payout,
     schedule,
+    hoursPerDay,
+    daysRequired,
+    completionMode,
+    progressLabel,
     availableIn,
     expiresIn,
     summary: parts.join(' • ')
@@ -210,6 +271,10 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
         hours: meta.hours,
         payout: meta.payout,
         schedule: meta.schedule,
+        hoursPerDay: meta.hoursPerDay,
+        daysRequired: meta.daysRequired,
+        completionMode: meta.completionMode,
+        progressLabel: meta.progressLabel,
         availableIn: meta.availableIn,
         expiresIn: meta.expiresIn,
         ready,

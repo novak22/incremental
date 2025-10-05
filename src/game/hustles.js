@@ -128,6 +128,56 @@ export function acceptHustleOffer(offerOrId, { state = getState() } = {}) {
     overrides.deadlineDay = deadlineDay;
   }
 
+  const progressMetadata = typeof metadata.progress === 'object' && metadata.progress !== null
+    ? metadata.progress
+    : {};
+  const progressOverrides = {};
+
+  const resolvedHoursPerDay = resolveFirstNumber(
+    metadata.hoursPerDay,
+    progressMetadata.hoursPerDay
+  );
+  if (resolvedHoursPerDay != null && resolvedHoursPerDay > 0) {
+    progressOverrides.hoursPerDay = resolvedHoursPerDay;
+  }
+
+  const resolvedDaysRequired = resolveFirstNumber(
+    metadata.daysRequired,
+    progressMetadata.daysRequired
+  );
+  if (resolvedDaysRequired != null && resolvedDaysRequired > 0) {
+    progressOverrides.daysRequired = Math.max(1, Math.floor(resolvedDaysRequired));
+  }
+
+  const resolvedCompletion = resolveFirstString(
+    metadata.completionMode,
+    progressMetadata.completionMode,
+    progressMetadata.completion
+  );
+  const completionMode = resolvedCompletion || resolveFirstString(
+    metadata.completionMode,
+    progressMetadata.completionMode,
+    progressMetadata.completion
+  );
+  if (completionMode) {
+    progressOverrides.completion = completionMode;
+  }
+
+  const resolvedProgressLabel = resolveFirstString(
+    metadata.progressLabel,
+    progressMetadata.label
+  );
+  if (resolvedProgressLabel) {
+    progressOverrides.label = resolvedProgressLabel;
+  }
+
+  if (Object.keys(progressOverrides).length) {
+    overrides.progress = {
+      ...overrides.progress,
+      ...progressOverrides
+    };
+  }
+
   const instance = acceptActionInstance(template, {
     state: workingState,
     metadata,
@@ -136,6 +186,22 @@ export function acceptHustleOffer(offerOrId, { state = getState() } = {}) {
 
   if (!instance) {
     return null;
+  }
+
+  if (instance.progress && typeof instance.progress === 'object') {
+    if (progressOverrides.hoursPerDay != null) {
+      instance.progress.hoursPerDay = progressOverrides.hoursPerDay;
+    }
+    if (progressOverrides.daysRequired != null) {
+      instance.progress.daysRequired = progressOverrides.daysRequired;
+    }
+    if (completionMode) {
+      instance.progress.completion = completionMode;
+      instance.progress.completionMode = completionMode;
+    }
+    if (progressOverrides.label && !instance.progress.label) {
+      instance.progress.label = progressOverrides.label;
+    }
   }
 
   const payoutAmount = resolveOfferPayoutAmount(offer, template);

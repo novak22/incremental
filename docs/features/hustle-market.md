@@ -11,6 +11,10 @@
   - `variants`: optional array of variant configs (id, label, weight, duration, availableAfterDays, metadata, definitionId).
   - `durationDays` and `availableAfterDays`: defaults applied when variants omit explicit values.
   - `metadata`: extra properties merged into each offer.
+- Variant metadata now supports structured progress hints:
+  - `hoursPerDay` and `daysRequired` capture daily effort expectations for multi-day gigs.
+  - `completionMode` toggles whether the resulting action auto-completes (`instant` / `deferred`) or requires manual wrap-up.
+  - `progressLabel` lets variants override the default log title so accepted instances read naturally in the todo list.
 - If no variants are provided the `rollDailyOffers` helper fabricates a default variant that mirrors the template. When variants exist, multiple offers can coexist so long as each variant is represented at most once per active window.
 
 ## Rolling Logic
@@ -29,6 +33,7 @@
 
 ## Acceptance Flow
 - `acceptHustleOffer(offerId, { state })` reads the offer metadata, accepts an action instance through `acceptActionInstance`, marks the offer as claimed, and records an accepted entry with `acceptedOnDay`, `deadlineDay`, required hours, and payout schedule.
+- Progress metadata is piped directly into `acceptActionInstance` so accepted entries inherit `hoursPerDay`, `daysRequired`, and manual completion flags. The todo queue uses these hints to compute step hours and keeps manual tasks visible even when hour goals are satisfied.
 - Claimed offers continue to persist until their deadlines elapse so completion logging and payout scheduling remain traceable.
 
 ## Availability Queries

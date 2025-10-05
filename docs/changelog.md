@@ -12,6 +12,7 @@
   keeping dashboards tidy without hiding fresh wins.
 - Hustle market rolls daily offers from immutable templates, tracks multi-day availability, and persists timestamps for clean day rollovers.
 - Hustle market offers now expose per-variant requirements and payout metadata, support simultaneous variants, and surface claimed-contract selectors via the new `acceptHustleOffer` helper.
+- Hustle market variants can define `hoursPerDay`, `daysRequired`, and manual completion flags; accepted offers flow those hints into action instances so the todo queue mirrors multi-day commitments accurately.
 - TODO/action queue now runs through the shared action-provider registry so dashboard widgets and TimoDoro stay aligned, and the landing page no longer swallows the default workspace when tasks populate mid-load.
 - Browser shell keeps the tabbed chrome, notification bell, and modular stylesheets; add new surfaces by pairing a presenter with a stylesheet.
 - Home dashboard stays focused on the three core widgets (ToDo, cash snapshot, app tiles) with drag-to-arrange and End Day gating.

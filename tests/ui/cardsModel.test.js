@@ -58,6 +58,67 @@ test('buildHustleModels mirrors availability filters', () => {
   assert.equal(blocked.filters.available, false);
 });
 
+test('buildHustleModels surfaces multi-day offers with daily requirements', () => {
+  const hustles = [
+    {
+      id: 'multi-day',
+      name: 'Multi-day Hustle',
+      description: 'Log steady progress across several days.',
+      time: 12,
+      payout: { amount: 300 }
+    }
+  ];
+
+  const offer = {
+    id: 'offer-multi',
+    templateId: 'multi-day',
+    definitionId: 'multi-day',
+    availableOnDay: 7,
+    expiresOnDay: 10,
+    metadata: {
+      hoursRequired: 12,
+      hoursPerDay: 3,
+      daysRequired: 4,
+      completionMode: 'manual',
+      progressLabel: 'Ship updates',
+      payout: { amount: 300, schedule: 'onCompletion' },
+      progress: {
+        hoursPerDay: 3,
+        daysRequired: 4,
+        completionMode: 'manual',
+        label: 'Ship updates'
+      }
+    },
+    variant: {
+      label: 'Daily Sprint',
+      description: 'Log effort every day to stay on track.'
+    }
+  };
+
+  const models = buildHustleModels(hustles, {
+    getState: () => ({ day: 7 }),
+    getOffers: () => [offer],
+    getAcceptedOffers: () => [],
+    describeRequirements: () => [],
+    getUsage: () => null,
+    collectCommitments: () => [],
+    formatHours: value => `${value}h`,
+    formatMoney: value => value.toFixed(0),
+    acceptOffer: () => {}
+  });
+
+  assert.equal(models.length, 1);
+  const [model] = models;
+  assert.equal(model.offers.length, 1, 'expected multi-day offer to appear');
+  const [entry] = model.offers;
+  assert.equal(entry.hoursPerDay, 3);
+  assert.equal(entry.daysRequired, 4);
+  assert.equal(entry.completionMode, 'manual');
+  assert.equal(entry.progressLabel, 'Ship updates');
+  assert.equal(entry.meta.includes('3h/day for 4 days'), true, 'summary should highlight daily load');
+  assert.equal(entry.meta.includes('Manual completion'), true, 'summary should reflect manual completion rule');
+});
+
 test('buildUpgradeModels groups families in sorted order', () => {
   const upgrades = [
     {
