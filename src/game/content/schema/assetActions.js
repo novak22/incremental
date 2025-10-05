@@ -122,6 +122,13 @@ export function createInstantHustle(config) {
     ...(config.progress || {})
   };
 
+  if (progressDefaults.hoursRequired == null) {
+    const baseHours = Number(metadata.time);
+    if (Number.isFinite(baseHours) && baseHours >= 0) {
+      progressDefaults.hoursRequired = baseHours;
+    }
+  }
+
   const baseDefinition = {
     ...config,
     type: 'hustle',
@@ -139,7 +146,8 @@ export function createInstantHustle(config) {
     })(),
     dailyLimit: metadata.dailyLimit,
     skills: metadata.skills,
-    progress: config.progress
+    progress: config.progress,
+    time: metadata.time
   };
 
   const acceptHooks = [];
@@ -155,6 +163,9 @@ export function createInstantHustle(config) {
   }
 
   const definition = createContractTemplate(baseDefinition, {
+    templateKind: 'manual',
+    category: config.category || 'hustle',
+    market: config.market,
     dailyLimit: metadata.dailyLimit,
     availability: config.availability,
     progress: progressDefaults,
