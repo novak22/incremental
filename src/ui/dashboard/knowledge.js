@@ -1,7 +1,119 @@
 import { formatHours } from '../../core/helpers.js';
+import { addLog } from '../../core/log.js';
+import { getState } from '../../core/state.js';
 import { clampNumber } from './formatters.js';
-import { KNOWLEDGE_TRACKS, getKnowledgeProgress } from '../../game/requirements.js';
+import {
+  KNOWLEDGE_TRACKS,
+  getKnowledgeProgress,
+  allocateDailyStudy
+} from '../../game/requirements.js';
+import { advanceActionInstance, completeActionInstance } from '../../game/actions/progress.js';
+import { getActionDefinition } from '../../game/registryService.js';
+import { spendTime } from '../../game/time.js';
+import { checkDayEnd } from '../../game/lifecycle.js';
 import { registerActionProvider, collectOutstandingActionEntries } from '../actions/registry.js';
+
+function resolveProgressStep(entry = {}) {
+  const progress = entry?.progress || {};
+  const rawStep = Number(progress.stepHours);
+  if (Number.isFinite(rawStep) && rawStep > 0) {
+    const remaining = Number(progress.hoursRemaining);
+    if (Number.isFinite(remaining) && remaining >= 0) {
+      return Math.max(0, Math.min(rawStep, remaining));
+    }
+    return rawStep;
+  }
+
+  const duration = Number(entry?.durationHours);
+  if (Number.isFinite(duration) && duration > 0) {
+    return duration;
+  }
+  return 0;
+}
+
+function stripStudyPrefix(value) {
+  return typeof value === 'string' && value.startsWith('study-')
+    ? value.slice('study-'.length)
+    : null;
+}
+
+function createStudyProgressHandler(entry = {}) {
+  const progress = entry?.progress || {};
+  const definitionId = entry?.definitionId || progress.definitionId;
+  const instanceId = entry?.instanceId || progress.instanceId;
+  if (!definitionId || !instanceId) {
+    return null;
+  }
+
+  return () => {
+    const definition = getActionDefinition(definitionId);
+    if (!definition) {
+      return { success: false };
+    }
+
+    const metadata = progress.metadata;
+    const remaining = Number(progress.hoursRemaining);
+    const step = resolveProgressStep(entry);
+
+    const requiresManualCompletion = progress.completion === 'manual';
+    const hasRemaining = Number.isFinite(remaining) ? remaining > 0 : true;
+    const amount = step > 0 ? step : Math.max(0, remaining);
+
+    if (requiresManualCompletion && (!hasRemaining || amount <= 0)) {
+      completeActionInstance(definition, { id: instanceId }, { metadata });
+      return { success: true, hours: 0, completed: true };
+    }
+
+    const hours = amount > 0 ? amount : step;
+    if (!Number.isFinite(hours) || hours <= 0) {
+      completeActionInstance(definition, { id: instanceId }, { metadata });
+      return { success: true, hours: 0, completed: true };
+    }
+
+    const state = getState();
+    const available = Number(state?.timeLeft);
+    if (Number.isFinite(available) && available < hours) {
+      if (typeof addLog === 'function') {
+        addLog(
+          `You need ${formatHours(hours)} focus free before logging that commitment. Wrap another task first or rest up.`,
+          'warning'
+        );
+      }
+      return { success: false };
+    }
+
+    spendTime(hours);
+    advanceActionInstance(definition, { id: instanceId }, { hours, metadata });
+
+    const isStudy = definition.studyTrackId
+      || definition?.progress?.type === 'study'
+      || progress?.type === 'study';
+    if (isStudy) {
+      const directIds = [
+        definition.studyTrackId,
+        progress?.studyTrackId,
+        progress?.trackId,
+        definition?.progress?.studyTrackId,
+        definition?.progress?.trackId
+      ].filter(id => typeof id === 'string' && id.trim().length > 0);
+      const resolvedTrackId = directIds.length > 0
+        ? directIds[0]
+        : stripStudyPrefix(definition?.id)
+          || stripStudyPrefix(progress?.definitionId)
+          || null;
+
+      if (resolvedTrackId) {
+        allocateDailyStudy({ trackIds: [resolvedTrackId] });
+      } else {
+        allocateDailyStudy();
+      }
+    }
+
+    checkDayEnd();
+
+    return { success: true, hours };
+  };
+}
 
 export function computeStudyProgress(state = {}) {
   const tracks = Object.values(KNOWLEDGE_TRACKS);
@@ -116,7 +228,7 @@ function buildActiveStudyEntries(state = {}) {
         : undefined
     );
 
-    entries.push({
+    const entry = {
       id: outstanding.id || `instance:${instanceProgress.instanceId || track.id}`,
       title: track.name,
       subtitle: track.description,
@@ -149,7 +261,14 @@ function buildActiveStudyEntries(state = {}) {
         studiedToday,
         trackId: track.id
       }
-    });
+    };
+
+    const handler = createStudyProgressHandler(entry);
+    if (handler) {
+      entry.onClick = handler;
+    }
+
+    entries.push(entry);
   });
 
   entries.sort((a, b) => {
