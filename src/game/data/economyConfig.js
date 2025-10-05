@@ -19,6 +19,80 @@ const mapQualityCurve = curve =>
     requirements: entry.requirements || {}
   }));
 
+const parseModifierTarget = target => {
+  if (!target || typeof target !== 'string') {
+    return { category: null, id: null, stat: null };
+  }
+
+  const [category = null, descriptor = ''] = target.split(':');
+  const [id = null, stat = null] = descriptor.split('.');
+
+  return { category, id, stat };
+};
+
+const parseModifierAmount = modifier => {
+  if (!modifier) return 0;
+  if (typeof modifier.amount === 'number') {
+    return modifier.amount;
+  }
+
+  const formula = modifier.formula || '';
+  if (modifier.type === 'multiplier') {
+    const multiplierMatch = formula.match(/\(1\s*\+\s*([0-9.]+)\)/);
+    if (multiplierMatch) {
+      const value = Number(multiplierMatch[1]);
+      return Number.isFinite(value) ? value : 0;
+    }
+    const directMatch = formula.match(/\*\s*([0-9.]+)/);
+    if (directMatch) {
+      const value = Number(directMatch[1]);
+      return Number.isFinite(value) ? value - 1 : 0;
+    }
+  }
+
+  if (modifier.type === 'flat') {
+    const flatMatch = formula.match(/\+\s*([0-9.]+)/);
+    if (flatMatch) {
+      const value = Number(flatMatch[1]);
+      return Number.isFinite(value) ? value : 0;
+    }
+  }
+
+  return 0;
+};
+
+const mapInstantBoost = modifier => {
+  const target = parseModifierTarget(modifier.target);
+  const amount = parseModifierAmount(modifier);
+  const base = {
+    type: modifier.type,
+    amount,
+    notes: modifier.notes || null,
+    target: modifier.target || null,
+    formula: modifier.formula || null
+  };
+
+  if (target.category === 'asset') {
+    const asset = normalizedEconomy.assets?.[target.id] || {};
+    return {
+      ...base,
+      assetId: target.id,
+      assetName: asset.name || target.id
+    };
+  }
+
+  if (target.category === 'hustle') {
+    const hustle = normalizedEconomy.hustles?.[target.id] || {};
+    return {
+      ...base,
+      hustleId: target.id,
+      hustleName: hustle.name || target.id
+    };
+  }
+
+  return base;
+};
+
 const createAssetConfig = key => {
   const asset = normalizedEconomy.assets[key];
   const schedule = asset.schedule || {};
@@ -90,12 +164,23 @@ export const assistantUpgrade = createAssistantUpgradeConfig();
 const createTrackConfig = key => {
   const track = normalizedEconomy.tracks[key];
   const schedule = track.schedule || {};
+  const days = schedule.setup_days ?? schedule.days ?? 0;
+  const minutesPerDay = schedule.setup_minutes_per_day ?? schedule.minutes_per_day ?? 0;
+  const instantBoosts = (normalizedEconomy.modifiers || [])
+    .filter(modifier => modifier.source === key)
+    .map(mapInstantBoost);
+
   return {
+    id: key,
+    name: track.name || key,
     schedule: {
-      days: schedule.setup_days ?? schedule.days,
-      minutesPerDay: schedule.setup_minutes_per_day ?? schedule.minutes_per_day
+      days,
+      minutesPerDay,
+      hoursPerDay: toHours(minutesPerDay)
     },
-    rewards: track.rewards || {}
+    setupCost: track.setup_cost ?? 0,
+    rewards: track.rewards || {},
+    instantBoosts
   };
 };
 
