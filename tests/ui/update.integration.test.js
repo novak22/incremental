@@ -768,6 +768,114 @@ test('renaming an asset refreshes dashboard quick actions and header suggestion 
   assert.ok(headerTitle.includes(renameTo), 'expected header suggestion to reflect the renamed asset');
 });
 
+test('accepting a hustle offer from dashboard quick actions refreshes the todo queue immediately', { concurrency: false }, async t => {
+  ensureTestDom();
+  const harness = await getGameTestHarness();
+  const state = harness.resetState();
+  state.money = 500;
+  state.timeLeft = 12;
+
+  const currentDay = Number(state.day) || 1;
+
+  const { normalizeHustleMarketOffer } = await import('../../src/core/state/slices/hustleMarket.js');
+
+  const offer = normalizeHustleMarketOffer({
+    id: 'offer-dashboard-test',
+    templateId: 'freelance',
+    definitionId: 'freelance',
+    rolledOnDay: currentDay,
+    availableOnDay: currentDay,
+    expiresOnDay: currentDay + 2,
+    metadata: {
+      hoursRequired: 4,
+      payoutAmount: 160,
+      completionMode: 'manual',
+      progressLabel: 'Draft client feature',
+      progress: {
+        completionMode: 'manual',
+        hoursRequired: 4
+      }
+    },
+    variant: {
+      id: 'rush-client',
+      label: 'Rush Freelance Article',
+      description: 'Tight turnaround gig with a tidy payout.'
+    }
+  }, { fallbackDay: currentDay });
+
+  state.hustleMarket.offers = [offer];
+  state.hustleMarket.accepted = [];
+  state.hustleMarket.lastRolledOnDay = currentDay;
+  state.hustleMarket.lastRolledAt = Date.now();
+
+  const viewManager = await import('../../src/ui/viewManager.js');
+  const browserViewModule = await import('../../src/ui/views/browser/index.js');
+  const updateModule = await import('../../src/ui/update.js');
+  updateModule.ensureUpdateSubscriptions();
+  t.after(() => {
+    updateModule.teardownUpdateSubscriptions();
+  });
+  const invalidation = await import('../../src/core/events/invalidationBus.js');
+  const todoStateModule = await import('../../src/ui/views/browser/widgets/todoState.js');
+  const quickActionsModule = await import('../../src/ui/dashboard/quickActions.js');
+
+  let lastDirty = null;
+  const unsubscribeDirty = invalidation.subscribeToInvalidation(dirty => {
+    lastDirty = dirty;
+  });
+  t.after(() => {
+    unsubscribeDirty();
+  });
+
+  const browserView = browserViewModule.default;
+  const originalView = viewManager.getActiveView();
+  viewManager.setActiveView(browserView, document);
+
+  t.after(() => {
+    invalidation.consumeDirty();
+    viewManager.setActiveView(originalView ?? browserView, document);
+  });
+
+  invalidation.consumeDirty();
+  updateModule.renderCards();
+  updateModule.updateUI();
+
+  const initialPending = todoStateModule.getPendingEntries();
+  const hasInitialCommitment = Array.isArray(initialPending)
+    && initialPending.some(entry => typeof entry?.id === 'string' && entry.id.startsWith('instance:'));
+  assert.equal(hasInitialCommitment, false, 'expected no accepted hustles queued before claiming the offer');
+
+  const quickActions = quickActionsModule.buildQuickActions(state);
+  const acceptAction = quickActions.find(action => action.id === offer.id);
+  assert.ok(acceptAction, 'expected dashboard quick action for the hustle offer');
+  assert.equal(typeof acceptAction.onClick, 'function', 'expected quick action to expose an onClick handler');
+
+  invalidation.markDirty(['dashboard', 'cards', 'headerAction']);
+  lastDirty = null;
+
+  const acceptedDetails = acceptAction.onClick();
+  assert.ok(acceptedDetails, 'expected offer acceptance to return claim details');
+  assert.ok(lastDirty && lastDirty.dashboard, 'expected dashboard invalidation to flush immediately');
+
+  const acceptedEntries = Array.isArray(state.hustleMarket.accepted) ? state.hustleMarket.accepted : [];
+  assert.equal(acceptedEntries.length, 1, 'expected hustle offer to move into accepted entries');
+  const instanceId = acceptedEntries[0]?.instanceId;
+  assert.ok(instanceId, 'expected claimed hustle entry to include an instance id');
+
+  const actionsRegistry = await import('../../src/ui/actions/registry.js');
+  const outstandingEntries = actionsRegistry.collectOutstandingActionEntries(state);
+  const hasOutstanding = outstandingEntries.some(entry => entry?.id === `instance:${instanceId}`);
+  assert.ok(hasOutstanding, 'expected outstanding entry for the accepted hustle');
+
+  await new Promise(resolve => setTimeout(resolve, 0));
+
+  const refreshedPending = todoStateModule.getPendingEntries();
+  const todoEntry = Array.isArray(refreshedPending)
+    ? refreshedPending.find(entry => entry?.id === `instance:${instanceId}`)
+    : null;
+  assert.ok(todoEntry, 'expected claimed hustle to appear in the todo grouping immediately after acceptance');
+});
+
 test('quality actions immediately refresh dashboard recommendations and header prompts', { concurrency: false }, async t => {
   ensureTestDom();
   const harness = await getGameTestHarness();

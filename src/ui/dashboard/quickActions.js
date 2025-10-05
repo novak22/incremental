@@ -13,6 +13,7 @@ import { instanceLabel } from '../../game/assets/details.js';
 import { collectOutstandingActionEntries } from '../actions/registry.js';
 import { registerActionProvider } from '../actions/providers.js';
 import { getAvailableOffers, acceptHustleOffer } from '../../game/hustles.js';
+import { executeAction } from '../../game/actions.js';
 import { describeHustleRequirements } from '../../game/hustles/helpers.js';
 import {
   resolveOfferHours,
@@ -124,7 +125,13 @@ export function buildQuickActions(state) {
       label,
       primaryLabel: 'Accept',
       description: descriptionText,
-      onClick: () => acceptHustleOffer(offer.id, { state: workingState }),
+      onClick: () => {
+        let result = null;
+        executeAction(() => {
+          result = acceptHustleOffer(offer.id, { state: workingState });
+        });
+        return result;
+      },
       roi,
       timeCost: hours,
       payout,
