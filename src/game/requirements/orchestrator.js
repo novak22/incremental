@@ -64,19 +64,22 @@ export function createRequirementsOrchestrator({
     const progress = getKnowledgeProgress(track.id, state);
     const { active, completed } = getStudyActionSnapshot(track.id, state);
     const source = active?.progress || completed?.progress || null;
+    const existingProgress = progress || {};
     const hoursPerDay = Number(track.hoursPerDay) || Number(source?.hoursPerDay) || 0;
     const daysRequired = Number(track.days) || Number(source?.daysRequired) || 0;
     const dayKey = Number(state?.day);
 
-    let studiedToday = false;
-    if (source?.dailyLog && Number.isFinite(dayKey)) {
-      const logged = Number(source.dailyLog[dayKey]) || 0;
+    let studiedToday = Boolean(existingProgress.studiedToday);
+    if (Number.isFinite(dayKey)) {
+      const logSource = source?.dailyLog || existingProgress.dailyLog || {};
+      const logged = Number(logSource[dayKey]) || 0;
       const threshold = hoursPerDay > 0 ? hoursPerDay - 0.0001 : 0.1;
       studiedToday = logged >= threshold;
     }
 
-    const daysCompleted = Math.min(daysRequired || Infinity, Number(source?.daysCompleted) || 0);
-    const completedFlag = Boolean(completed?.completed || source?.completed);
+    const resolvedDaysCompleted = source?.daysCompleted ?? existingProgress.daysCompleted;
+    const daysCompleted = Math.min(daysRequired || Infinity, Number(resolvedDaysCompleted) || 0);
+    const completedFlag = Boolean(completed?.completed || source?.completed || existingProgress.completed);
 
     return {
       progress,
