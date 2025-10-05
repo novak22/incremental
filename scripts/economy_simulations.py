@@ -1,8 +1,10 @@
+import ast
 import json
 import math
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
 import numpy as np
 import pandas as pd
@@ -33,6 +35,8 @@ class SimulationConfig:
     survey_income_multiplier: float = 1.0
     blog_setup_cost_multiplier: float = 1.0
     blog_maintenance_cost_multiplier: float = 1.0
+    asset_ids: Tuple[str, ...] = field(default_factory=tuple)
+    upgrade_ids: Tuple[str, ...] = field(default_factory=tuple)
 
 
 def load_data():
@@ -56,12 +60,260 @@ class SimulationMetrics:
         }
 
 
+@dataclass
+class EntityEffect:
+    income_mult: float = 1.0
+    income_flat: float = 0.0
+    setup_time_mult: float = 1.0
+    maintenance_time_mult: float = 1.0
+    sources: set[str] = field(default_factory=set)
+
+
+@dataclass
+class UpgradeEffects:
+    asset_effects: Dict[str, EntityEffect] = field(default_factory=dict)
+    hustle_effects: Dict[str, EntityEffect] = field(default_factory=dict)
+    time_bonus_minutes: float = 0.0
+    time_bonus_sources: set[str] = field(default_factory=set)
+
+
+_BIN_OPS = {
+    ast.Add: lambda a, b: a + b,
+    ast.Sub: lambda a, b: a - b,
+    ast.Mult: lambda a, b: a * b,
+    ast.Div: lambda a, b: a / b,
+}
+
+_UNARY_OPS = {ast.UAdd: lambda a: a, ast.USub: lambda a: -a}
+
+
+def _safe_eval(expr: str) -> float:
+    node = ast.parse(expr, mode='eval').body
+
+    def _eval(current: ast.AST) -> float:
+        if isinstance(current, ast.BinOp) and type(current.op) in _BIN_OPS:
+            return _BIN_OPS[type(current.op)](_eval(current.left), _eval(current.right))
+        if isinstance(current, ast.UnaryOp) and type(current.op) in _UNARY_OPS:
+            return _UNARY_OPS[type(current.op)](_eval(current.operand))
+        if isinstance(current, ast.Num):  # pragma: no cover - python <3.8
+            return current.n
+        if isinstance(current, ast.Constant) and isinstance(current.value, (int, float)):
+            return float(current.value)
+        raise ValueError(f"Unsupported expression: {expr}")
+
+    return float(_eval(node))
+
+
+def _evaluate_formula(formula: str, value: float) -> float:
+    expr = formula
+    for token in ("income", "minutes", "progress", "cash"):
+        expr = re.sub(rf"\\b{token}\\b", str(value), expr)
+    return _safe_eval(expr)
+
+
+def _average_income(definition: Dict) -> float:
+    curve = definition.get('quality_curve') or []
+    if curve:
+        level_zero = curve[0]
+        return (level_zero['income_min'] + level_zero['income_max']) / 2
+    return float(definition.get('base_income', 0.0))
+
+
+def _matches_tags(entity_tags: Sequence[str], item_tags: Sequence[str]) -> bool:
+    return any(tag in item_tags for tag in entity_tags)
+
+
+def _resolve_asset_targets(
+    key: str, asset_ids: Sequence[str], assets: Dict[str, Dict]
+) -> List[str]:
+    if key.startswith('asset:'):
+        target_id = key.split(':', 1)[1]
+        return [target_id] if target_id in asset_ids else []
+    if key.startswith('assets[') and key.endswith(']'):
+        inner = key[len('assets['):-1]
+        if '=' not in inner:
+            return []
+        field, raw = inner.split('=', 1)
+        values = raw.split('|')
+        if field == 'tag':
+            return [
+                asset_id
+                for asset_id in asset_ids
+                if _matches_tags(values, assets[asset_id].get('tags', []))
+            ]
+        if field == 'id':
+            return [asset_id for asset_id in asset_ids if asset_id in values]
+    return []
+
+
+def _resolve_hustle_targets(
+    key: str, hustle_ids: Sequence[str], hustles: Dict[str, Dict]
+) -> List[str]:
+    if key.startswith('hustle:'):
+        target_id = key.split(':', 1)[1]
+        return [target_id] if target_id in hustle_ids else []
+    if key.startswith('hustles[') and key.endswith(']'):
+        inner = key[len('hustles['):-1]
+        if '=' not in inner:
+            return []
+        field, raw = inner.split('=', 1)
+        values = raw.split('|')
+        if field == 'tag':
+            return [
+                hustle_id
+                for hustle_id in hustle_ids
+                if _matches_tags(values, hustles[hustle_id].get('tags', []))
+            ]
+        if field == 'id':
+            return [hustle_id for hustle_id in hustle_ids if hustle_id in values]
+    return []
+
+
+def compute_upgrade_effects(
+    data: Dict,
+    asset_ids: Sequence[str],
+    upgrade_ids: Sequence[str],
+    hustle_ids: Sequence[str],
+) -> UpgradeEffects:
+    effects = UpgradeEffects()
+    assets = data['assets']
+    hustles = data['hustles']
+
+    for asset_id in asset_ids:
+        effects.asset_effects.setdefault(asset_id, EntityEffect())
+    for hustle_id in hustle_ids:
+        effects.hustle_effects.setdefault(hustle_id, EntityEffect())
+
+    selected = set(upgrade_ids)
+    if not selected:
+        return effects
+
+    for modifier in data['modifiers']:
+        source = modifier['source']
+        if source not in selected:
+            continue
+        target = modifier['target']
+        if '.' not in target:
+            continue
+        entity_key, attribute = target.split('.', 1)
+        attribute = attribute.strip()
+        mod_type = modifier['type']
+        formula = modifier['formula']
+
+        if entity_key.startswith('asset'):
+            targets = _resolve_asset_targets(entity_key, asset_ids, assets)
+            if not targets or attribute not in {'income', 'setup_time', 'maintenance_time'}:
+                continue
+            for asset_id in targets:
+                effect = effects.asset_effects.setdefault(asset_id, EntityEffect())
+                if mod_type == 'multiplier':
+                    factor = _evaluate_formula(formula, 1.0)
+                    if attribute == 'income':
+                        effect.income_mult *= factor
+                    elif attribute == 'setup_time':
+                        effect.setup_time_mult *= factor
+                    elif attribute == 'maintenance_time':
+                        effect.maintenance_time_mult *= factor
+                elif mod_type in {'flat', 'add'}:
+                    delta = _evaluate_formula(formula, 0.0)
+                    if attribute == 'income':
+                        effect.income_flat += delta
+                    elif attribute == 'setup_time':
+                        effect.setup_time_mult *= 1.0  # placeholder to ensure source tracking
+                    elif attribute == 'maintenance_time':
+                        effect.maintenance_time_mult *= 1.0
+                effect.sources.add(source)
+            continue
+
+        if entity_key.startswith('hustle'):
+            targets = _resolve_hustle_targets(entity_key, hustle_ids, hustles)
+            if not targets or attribute not in {'income', 'setup_time'}:
+                continue
+            for hustle_id in targets:
+                effect = effects.hustle_effects.setdefault(hustle_id, EntityEffect())
+                if mod_type == 'multiplier':
+                    factor = _evaluate_formula(formula, 1.0)
+                    if attribute == 'income':
+                        effect.income_mult *= factor
+                    elif attribute == 'setup_time':
+                        effect.setup_time_mult *= factor
+                elif mod_type in {'flat', 'add'}:
+                    delta = _evaluate_formula(formula, 0.0)
+                    if attribute == 'income':
+                        effect.income_flat += delta
+                effect.sources.add(source)
+            continue
+
+        if entity_key.startswith('state:time') and attribute == 'bonus' and mod_type in {'flat', 'add'}:
+            delta = _evaluate_formula(formula, 0.0)
+            effects.time_bonus_minutes += delta
+            effects.time_bonus_sources.add(source)
+
+    return effects
+
+
+def summarize_asset_plan(
+    data: Dict,
+    asset_ids: Sequence[str],
+    upgrade_ids: Sequence[str],
+    config: Optional[SimulationConfig] = None,
+    hustle_ids: Optional[Sequence[str]] = None,
+) -> Tuple[pd.DataFrame, UpgradeEffects]:
+    if config is None:
+        config = SimulationConfig()
+
+    assets = data['assets']
+    upgrade_effects = compute_upgrade_effects(
+        data, asset_ids, upgrade_ids, hustle_ids=hustle_ids or []
+    )
+    rows = []
+
+    for asset_id in asset_ids:
+        if asset_id not in assets:
+            continue
+        definition = assets[asset_id]
+        effect = upgrade_effects.asset_effects.get(asset_id, EntityEffect())
+        setup_cost = definition['setup_cost']
+        maintenance_cost = definition['maintenance_cost']
+        base_income = _average_income(definition)
+
+        if asset_id == 'blog':
+            setup_cost *= config.blog_setup_cost_multiplier
+            maintenance_cost *= config.blog_maintenance_cost_multiplier
+            base_income *= config.blog_income_multiplier
+
+        adjusted_income = base_income * effect.income_mult + effect.income_flat
+        setup_minutes = definition['schedule']['setup_minutes_per_day'] * effect.setup_time_mult
+        maintenance_minutes = definition['maintenance_time'] * effect.maintenance_time_mult
+
+        rows.append(
+            {
+                'asset_id': asset_id,
+                'Asset': definition['name'],
+                'Setup Cost ($)': setup_cost,
+                'Setup Days': definition['schedule']['setup_days'],
+                'Setup Hours/Day': setup_minutes / 60,
+                'Maintenance Hours/Day': maintenance_minutes / 60,
+                'Maintenance Cost ($)': maintenance_cost,
+                'Daily Income ($)': adjusted_income,
+                'Upgrade Sources': sorted(effect.sources),
+            }
+        )
+
+    df = pd.DataFrame(rows)
+    if not df.empty:
+        df = df[['Asset', 'Setup Cost ($)', 'Setup Days', 'Setup Hours/Day', 'Maintenance Hours/Day', 'Maintenance Cost ($)', 'Daily Income ($)', 'Upgrade Sources', 'asset_id']]
+    return df, upgrade_effects
+
+
 def run_simulation(
     data,
     days: int = 30,
     assistants: int = 0,
     build_blog: bool = True,
     config: Optional[SimulationConfig] = None,
+    asset_ids: Optional[Sequence[str]] = None,
+    upgrade_ids: Optional[Sequence[str]] = None,
 ):
     if config is None:
         config = SimulationConfig()
@@ -69,35 +321,79 @@ def run_simulation(
     assets = data['assets']
     hustles = data['hustles']
 
+    selected_assets: List[str] = list(asset_ids) if asset_ids is not None else list(config.asset_ids)
+    if not selected_assets:
+        if build_blog:
+            selected_assets = ['blog']
+        else:
+            selected_assets = []
+
+    selected_upgrades: List[str] = list(upgrade_ids) if upgrade_ids is not None else list(config.upgrade_ids)
+
+    hustle_ids = ['freelance', 'surveySprint']
+    upgrade_effects = compute_upgrade_effects(data, selected_assets, selected_upgrades, hustle_ids=hustle_ids)
+
     cash = config.starting_cash - assistants * config.assistant_hire_cost
-    day_hours = config.base_day_hours + assistants * config.assistant_hours_per_day
+    day_hours = (
+        config.base_day_hours
+        + assistants * config.assistant_hours_per_day
+        + upgrade_effects.time_bonus_minutes / 60
+    )
     assistant_daily_cost = (
         assistants * config.assistant_hours_per_day * config.assistant_hourly_rate
     )
 
-    blog_def = assets['blog']
-    blog_setup_hours = blog_def['schedule']['setup_minutes_per_day'] / 60
-    blog_setup_days = blog_def['schedule']['setup_days']
-    blog_maintenance_hours = blog_def['maintenance_time'] / 60
-    blog_maintenance_cost = blog_def['maintenance_cost'] * config.blog_maintenance_cost_multiplier
-    blog_income_avg = (
-        (blog_def['quality_curve'][0]['income_min'] + blog_def['quality_curve'][0]['income_max'])
-        / 2
-        * config.blog_income_multiplier
-    )
+    asset_states: List[Dict] = []
+    for asset_id in selected_assets:
+        if asset_id not in assets:
+            continue
+        definition = assets[asset_id]
+        effect = upgrade_effects.asset_effects.get(asset_id, EntityEffect())
+        setup_cost = definition['setup_cost']
+        maintenance_cost = definition['maintenance_cost']
+        base_income = _average_income(definition)
+
+        if asset_id == 'blog':
+            setup_cost *= config.blog_setup_cost_multiplier
+            maintenance_cost *= config.blog_maintenance_cost_multiplier
+            base_income *= config.blog_income_multiplier
+
+        adjusted_income = base_income * effect.income_mult + effect.income_flat
+        setup_minutes_per_day = definition['schedule']['setup_minutes_per_day'] * effect.setup_time_mult
+        maintenance_minutes = definition['maintenance_time'] * effect.maintenance_time_mult
+
+        asset_states.append(
+            {
+                'id': asset_id,
+                'name': definition['name'],
+                'setup_cost': setup_cost,
+                'setup_days_required': definition['schedule']['setup_days'],
+                'setup_minutes_per_day': setup_minutes_per_day,
+                'maintenance_minutes': maintenance_minutes,
+                'maintenance_cost': maintenance_cost,
+                'daily_income': adjusted_income,
+                'started': False,
+                'progress_days': 0,
+                'active': False,
+            }
+        )
 
     freelance_def = hustles['freelance']
-    freelance_hours = freelance_def['setup_time'] / 60
-    freelance_income = freelance_def['base_income'] * config.freelance_income_multiplier
+    freelance_effect = upgrade_effects.hustle_effects.get('freelance', EntityEffect())
+    freelance_hours = (freelance_def['setup_time'] / 60) * freelance_effect.setup_time_mult
+    freelance_income = (
+        freelance_def['base_income'] * config.freelance_income_multiplier * freelance_effect.income_mult
+        + freelance_effect.income_flat
+    )
 
     survey_def = hustles['surveySprint']
-    survey_hours = survey_def['setup_time'] / 60
-    survey_income = survey_def['base_income'] * config.survey_income_multiplier
+    survey_effect = upgrade_effects.hustle_effects.get('surveySprint', EntityEffect())
+    survey_hours = (survey_def['setup_time'] / 60) * survey_effect.setup_time_mult
+    survey_income = (
+        survey_def['base_income'] * config.survey_income_multiplier * survey_effect.income_mult
+        + survey_effect.income_flat
+    )
     survey_limit = survey_def['daily_limit']
-
-    blog_started = False
-    blog_active = False
-    blog_progress = 0
 
     records: List[Dict] = []
     metrics = SimulationMetrics(total_days=days)
@@ -105,69 +401,79 @@ def run_simulation(
     for day in range(1, days + 1):
         cash_start = cash
         hours_left = day_hours
-        hustle_income_today = 0
-        asset_income_today = 0
-        maintenance_spend_today = 0
+        hustle_income_today = 0.0
+        asset_income_today = 0.0
+        maintenance_spend_today = 0.0
         wages_today = assistant_daily_cost
+        setup_hours_today = 0.0
+        maintenance_hours_today = 0.0
+        hours_spent_hustles = {'freelance': 0.0, 'surveySprint': 0.0}
+        hustle_runs_today = {'freelance': 0, 'surveySprint': 0}
 
-        hours_spent = {'freelance': 0.0, 'survey': 0.0, 'blog_setup': 0.0, 'blog_maintenance': 0.0}
-        hustle_runs_today = {'freelance': 0, 'survey': 0}
+        for asset in asset_states:
+            if not asset['started'] and cash >= asset['setup_cost']:
+                cash -= asset['setup_cost']
+                asset['started'] = True
+                asset['progress_days'] = 0
+                if asset['setup_days_required'] == 0:
+                    asset['active'] = True
 
-        # Attempt to start blog setup if desired
-        blog_setup_cost = blog_def['setup_cost'] * config.blog_setup_cost_multiplier
-        if build_blog and not blog_started and cash >= blog_setup_cost:
-            cash -= blog_setup_cost
-            blog_started = True
-            blog_progress = 0
+        for asset in asset_states:
+            if asset['started'] and not asset['active']:
+                if asset['setup_days_required'] == 0 or asset['setup_minutes_per_day'] == 0:
+                    asset['active'] = True
+                    continue
+                required_hours = asset['setup_minutes_per_day'] / 60
+                if hours_left >= required_hours:
+                    hours_left -= required_hours
+                    setup_hours_today += required_hours
+                    asset['progress_days'] += 1
+                    if asset['progress_days'] >= asset['setup_days_required']:
+                        asset['active'] = True
 
-        # Handle blog setup progression
-        if blog_started and not blog_active:
-            if hours_left >= blog_setup_hours:
-                hours_left -= blog_setup_hours
-                hours_spent['blog_setup'] += blog_setup_hours
-                blog_progress += 1
-                if blog_progress >= blog_setup_days:
-                    blog_active = True
-            else:
-                # cannot progress this day (should not happen with our schedules)
-                pass
+        active_asset_ids: List[str] = []
+        for asset in asset_states:
+            if not asset['active']:
+                continue
+            maintenance_hours = asset['maintenance_minutes'] / 60
+            if maintenance_hours > hours_left and maintenance_hours > 0:
+                continue
+            if maintenance_hours > 0:
+                hours_left -= maintenance_hours
+                maintenance_hours_today += maintenance_hours
+            cash -= asset['maintenance_cost']
+            maintenance_spend_today += asset['maintenance_cost']
+            cash += asset['daily_income']
+            asset_income_today += asset['daily_income']
+            metrics.asset_income[asset['id']] = metrics.asset_income.get(asset['id'], 0.0) + asset['daily_income']
+            active_asset_ids.append(asset['id'])
 
-        blog_maintained = False
-        if blog_active:
-            if hours_left >= blog_maintenance_hours:
-                hours_left -= blog_maintenance_hours
-                hours_spent['blog_maintenance'] += blog_maintenance_hours
-                cash -= blog_maintenance_cost
-                maintenance_spend_today += blog_maintenance_cost
-                blog_maintained = True
-
-        # Run freelance writing sessions
-        freelance_runs = int(hours_left // freelance_hours)
+        if freelance_hours > 0:
+            freelance_runs = int(hours_left // freelance_hours)
+        else:
+            freelance_runs = 0
         for _ in range(freelance_runs):
             hours_left -= freelance_hours
-            hours_spent['freelance'] += freelance_hours
+            hours_spent_hustles['freelance'] += freelance_hours
             cash += freelance_income
             hustle_income_today += freelance_income
             metrics.hustle_income['freelance'] = metrics.hustle_income.get('freelance', 0.0) + freelance_income
             metrics.hustle_runs['freelance'] = metrics.hustle_runs.get('freelance', 0) + 1
             hustle_runs_today['freelance'] += 1
 
-        # Use remaining time for surveys within limit
-        survey_runs_possible = int(hours_left // survey_hours)
+        if survey_hours > 0:
+            survey_runs_possible = int(hours_left // survey_hours)
+        else:
+            survey_runs_possible = 0
         survey_runs = min(survey_runs_possible, survey_limit)
         for _ in range(survey_runs):
             hours_left -= survey_hours
-            hours_spent['survey'] += survey_hours
+            hours_spent_hustles['surveySprint'] += survey_hours
             cash += survey_income
             hustle_income_today += survey_income
             metrics.hustle_income['surveySprint'] = metrics.hustle_income.get('surveySprint', 0.0) + survey_income
             metrics.hustle_runs['surveySprint'] = metrics.hustle_runs.get('surveySprint', 0) + 1
-            hustle_runs_today['survey'] += 1
-
-        if blog_active and blog_maintained:
-            cash += blog_income_avg
-            asset_income_today += blog_income_avg
-            metrics.asset_income['blog'] = metrics.asset_income.get('blog', 0.0) + blog_income_avg
+            hustle_runs_today['surveySprint'] += 1
 
         cash -= wages_today
 
@@ -179,13 +485,15 @@ def run_simulation(
             'asset_income': asset_income_today,
             'maintenance_spend': maintenance_spend_today,
             'assistant_wages': wages_today,
-            'hours_freelance': hours_spent['freelance'],
-            'hours_survey': hours_spent['survey'],
-            'hours_blog_setup': hours_spent['blog_setup'],
-            'hours_blog_maintenance': hours_spent['blog_maintenance'],
+            'hours_freelance': hours_spent_hustles['freelance'],
+            'hours_survey': hours_spent_hustles['surveySprint'],
+            'hours_asset_setup': setup_hours_today,
+            'hours_asset_maintenance': maintenance_hours_today,
             'freelance_runs': hustle_runs_today['freelance'],
-            'survey_runs': hustle_runs_today['survey'],
-            'blog_active': blog_active,
+            'survey_runs': hustle_runs_today['surveySprint'],
+            'active_assets': ', '.join(active_asset_ids),
+            'active_asset_count': len(active_asset_ids),
+            'time_bonus_minutes': upgrade_effects.time_bonus_minutes,
         }
         records.append(record)
 
