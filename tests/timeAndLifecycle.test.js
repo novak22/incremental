@@ -10,6 +10,9 @@ const {
   lifecycleModule,
   assistantModule
 } = harness;
+const { buildActionQueue } = await import('../src/ui/actions/registry.js');
+const todoWidgetModule = await import('../src/ui/views/browser/widgets/todoWidget.js');
+const todoWidget = todoWidgetModule.default;
 
 const { getState, getUpgradeState } = stateModule;
 const { getTimeCap, spendTime, gainTime } = timeModule;
@@ -89,6 +92,72 @@ test('checkDayEnd automatically triggers end-of-day sequence', async () => {
 
   assert.ok(state.day >= 2, 'day should increment after automatic end');
   assert.ok(state.log.length > before, 'logs should be written');
+});
+
+test('todo widget logging to zero hours ends the day automatically', async () => {
+  const state = getState();
+  state.day = 5;
+  state.baseTime = 0;
+  state.bonusTime = 0;
+  state.dailyBonusTime = 0;
+  state.timeLeft = 0;
+
+  const { hustlesModule } = harness;
+  const { HUSTLE_TEMPLATES, rollDailyOffers, acceptHustleOffer } = hustlesModule;
+
+  const template = HUSTLE_TEMPLATES.find(definition => definition?.id === 'freelance') || HUSTLE_TEMPLATES[0];
+  assert.ok(template, 'expected a hustle template to accept');
+
+  const [offer] = rollDailyOffers({ templates: [template], day: state.day, now: Date.now(), state, rng: () => 0 });
+  assert.ok(offer, 'expected rollDailyOffers to produce an offer');
+
+  const accepted = acceptHustleOffer(offer.id, { state });
+  assert.ok(accepted, 'expected the offer to be accepted');
+
+  const actionState = state.actions?.[template.id];
+  const instance = actionState?.instances?.find(entry => entry?.id === accepted.instanceId);
+  assert.ok(instance, 'expected the accepted instance to exist in state');
+
+  const requiredHours = Number(instance?.progress?.hoursRequired ?? accepted.hoursRequired ?? template.time ?? 1);
+  state.baseTime = requiredHours;
+  state.timeLeft = requiredHours;
+
+  const queue = buildActionQueue({ state, summary: {} });
+  const todoContainer = document.querySelector('[data-widget="todo"]');
+  assert.ok(todoContainer, 'todo widget container should exist in the DOM');
+
+  todoWidget.init({
+    container: todoContainer,
+    list: document.getElementById('browser-widget-todo-list'),
+    done: document.getElementById('browser-widget-todo-done'),
+    note: document.getElementById('browser-widget-todo-note'),
+    endDayButton: document.getElementById('browser-widget-todo-end'),
+    focusGroup: todoContainer.querySelector('[data-focus-group]'),
+    focusButtons: todoContainer.querySelectorAll('[data-focus]'),
+    listWrapper: todoContainer.querySelector('.todo-widget__list-wrapper'),
+    doneHeading: document.getElementById('browser-widget-todo-done-heading'),
+    availableValue: document.getElementById('browser-widget-todo-available'),
+    spentValue: document.getElementById('browser-widget-todo-spent')
+  });
+  todoWidget.render(queue);
+
+  const startingDay = state.day;
+  const startingLogLength = state.log.length;
+
+  const executed = todoWidget.runNextTask();
+  assert.equal(executed, true, 'todo widget should complete the queued task');
+  assert.equal(state.timeLeft <= 0, true, 'time should be depleted after running the task');
+
+  await new Promise(resolve => setTimeout(resolve, 550));
+
+  assert.equal(state.day, startingDay + 1, 'day should advance automatically once time runs out');
+
+  const newLogs = state.log.slice(startingLogLength);
+  assert.ok(
+    newLogs.some(entry => entry?.message?.includes('You ran out of time')),
+    'auto end-of-day flow should log the exhaustion message'
+  );
+  assert.equal(state.timeLeft, getTimeCap(), 'time should reset to the full cap after ending the day');
 });
 
 test('assistant payroll charges wages and firing removes bonus hours', () => {
