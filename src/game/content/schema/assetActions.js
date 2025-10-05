@@ -16,7 +16,7 @@ import { getHustleEffectMultiplier } from '../../upgrades/effects.js';
 import { applyMetric, normalizeHustleMetrics } from './metrics.js';
 import { logEducationPayoffSummary, logHustleBlocked } from './logMessaging.js';
 import { markDirty } from '../../../core/events/invalidationBus.js';
-import { acceptActionInstance, completeActionInstance } from '../../actions/progress.js';
+import { acceptActionInstance, advanceActionInstance, completeActionInstance } from '../../actions/progress.js';
 
 function formatHourDetail(hours, effective) {
   if (!hours) return '⏳ Time: <strong>Instant</strong>';
@@ -328,20 +328,36 @@ export function createInstantHustle(config) {
         };
         const effectiveTime = resolveEffectiveTime(state);
         const deadlineDay = metadata.dailyLimit ? Number(state?.day) || null : null;
+        const progressOverrides = definition.progress ? { ...definition.progress } : { ...config.progress };
+        if (deadlineDay != null) {
+          progressOverrides.deadlineDay = deadlineDay;
+        }
         const instance = acceptActionInstance(definition, {
           state,
           metadata,
           overrides: {
             hoursRequired: effectiveTime > 0 ? effectiveTime : 0,
-            deadlineDay
+            deadlineDay,
+            progress: progressOverrides
           }
         });
         if (instance) {
           context.instance = instance;
+          const logDay = Number(state?.day) || instance.acceptedOnDay;
+          advanceActionInstance(definition, instance, {
+            state,
+            day: logDay,
+            hours: effectiveTime,
+            autoComplete: false,
+            completionContext: context,
+            metadata
+          });
         }
         runHustle(context);
         context.completionDay = Number(state?.day) || instance?.acceptedOnDay || null;
-        if (instance) {
+        const completionMode = (definition.progress || config.progress || {}).completion;
+        const shouldDeferCompletion = completionMode === 'deferred' || completionMode === 'manual';
+        if (instance && !shouldDeferCompletion) {
           completeActionInstance(definition, instance, context);
         }
         config.onRun?.(context);

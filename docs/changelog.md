@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Action progress now records per-day hours, supports deferred completions, and exposes helpers for advancing or resetting in-flight hustles.
 - Unified instant hustles and study sessions under a shared action registry that tracks accepted instances, daily limits, and
   completion history without erasing legacy hustle progress.
 - Hustle market rolls daily offers from immutable templates, tracks multi-day availability, and persists timestamps for clean day rollovers.
