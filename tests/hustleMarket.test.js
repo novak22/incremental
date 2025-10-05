@@ -283,7 +283,8 @@ test('acceptHustleOffer claims offers and records accepted state', () => {
   assert.equal(claimedOffers[0].offerId, offer.id);
 
   const availableOffers = getAvailableOffers(state, { day: 4 });
-  assert.equal(availableOffers.length, 0, 'claimed offers should be excluded from availability by default');
+  const claimedVisible = availableOffers.some(entry => entry.id === offer.id);
+  assert.equal(claimedVisible, false, 'claimed offers should be excluded from availability by default');
 
   const actionState = getActionState(offer.definitionId, state);
   assert.ok(actionState.instances.length > 0, 'acceptance should create an action instance');
@@ -381,11 +382,18 @@ test('availability selectors can include claimed offers when requested', () => {
   acceptHustleOffer(offer.id, { state });
 
   const availableDefault = getAvailableOffers(state, { day: 6 });
-  assert.equal(availableDefault.length, 0, 'claimed offer should be hidden by default');
+  assert.equal(
+    availableDefault.some(entry => entry.id === offer.id),
+    false,
+    'claimed offer should be hidden by default'
+  );
 
   const availableWithClaimed = getAvailableOffers(state, { day: 6, includeClaimed: true });
-  assert.equal(availableWithClaimed.length, 1, 'claimed offer should appear when explicitly requested');
-  assert.equal(availableWithClaimed[0].id, offer.id);
+  assert.equal(
+    availableWithClaimed.some(entry => entry.id === offer.id),
+    true,
+    'claimed offer should appear when explicitly requested'
+  );
 });
 
 test('expired offers and claims are pruned on reroll', () => {
@@ -401,8 +409,17 @@ test('expired offers and claims are pruned on reroll', () => {
   state.day = accepted.deadlineDay + 2;
 
   const reroll = rollDailyOffers({ templates: [template], day: state.day, now: 20, state, rng: () => 0 });
-  assert.equal(reroll.length, 1, 'reroll should produce a fresh offer after expiry');
-  assert.equal(reroll[0].rolledOnDay, state.day);
+  assert.ok(reroll.length >= 1, 'reroll should produce fresh offers after expiry');
+  assert.equal(
+    reroll.some(entry => entry.id === offer.id),
+    false,
+    'expired offer should be removed from the market'
+  );
+  assert.equal(
+    reroll.every(entry => entry.rolledOnDay === state.day || entry.expiresOnDay >= state.day),
+    true,
+    'reroll should only include active offers after expiry'
+  );
 
   const claimedAfterExpiry = getClaimedOffers(state, { day: state.day });
   assert.equal(claimedAfterExpiry.length, 0, 'expired claims should be pruned from selectors');

@@ -9,7 +9,7 @@ Online Hustle Simulator is a browser-based incremental game about orchestrating 
 - **Autocompleted Daily Commitments** – As a fresh day begins, the dashboard’s ToDo widget drops those auto-funded upkeep sessions straight into the Done list so you instantly see how many free hours remain for new hustles. Study actions instead appear in the action queue and advance only after you record the day’s hours.
 - **Deferred Action Progress** – Hustles and study tracks now log per-day hours in shared progress records, letting deferred templates accumulate work across multiple days before completing.
 - **Action Registry Cleanup** – Completed hustles linger through the day they finish, retire the following sunrise, and the registry now keeps space for up to 100 recent instances per definition so dashboards stay focused on commitments that still need attention.
-- **Hustle Market Rotation** – Daily gigs now roll out from a persisted market that seeds offers on load, auto-rerolls with each sunrise, selects variants per template, tracks multi-day availability, and highlights ready vs. coming-soon slots with celebratory copy so mornings always feel busy.
+- **Hustle Market Rotation** – Daily gigs now roll out from a persisted contract market that seeds offers on load, auto-rerolls with each sunrise, selects weighted variants per template, tracks multi-day availability, and logs audit telemetry (`window.__HUSTLE_MARKET_DEBUG__`) so mornings always feel busy and tunable.
 - **Commitment Tracking** – Accepted hustles flow into the todo queue, hustle cards, and the finance dashboard with upbeat deadline meters and hour-logging progress bars so you can keep long-running gigs on schedule.
 - **Action Provider Registry** – Dashboard widgets and the TimoDoro planner both pull from `src/ui/actions/registry.js`; register new providers there to surface fresh task sources everywhere without custom wiring.
 - **Asset Quality Ladder** – Every passive asset launches at Quality 0 and can be upgraded by investing time (and sometimes cash) into bespoke quality actions. Quality milestones unlock higher payout ranges, steadier log messages, and whimsical celebrations when tiers are reached.
@@ -32,10 +32,17 @@ Online Hustle Simulator is a browser-based incremental game about orchestrating 
 - **Event Log Controls** – The log dock keeps its running commentary but now includes a summary/detailed toggle when you want a lighter feed during long sessions.
 
 ### Hustles & Study Tracks
-- **Freelance Writing** – Spend 2h to earn $18 instantly (Outline Mastery grads earn +25%).
-- **Audience Q&A Blast** – Spend 1h with at least one active blog to earn $12 from checklist upsells (+$4 after Brand Voice Lab). Limited to one spotlight stream per day, so pick your prime time.
-- **Bundle Promo Push** – Spend 2.5h once you have two active blogs plus an e-book to pocket $48 immediately (+$6 after E-Commerce Playbook).
-- **Micro Survey Dash** – Fire off 15-minute surveys for $1 a pop (up to four per day; Guerrilla Buzz Workshop adds +$1.50 each) to keep pockets of time profitable.
+- **Freelance Writing Contracts** – Choose between a 2h same-day draft ($18), a three-part mini series (3 days × 2h for $45), or a four-day retainer run (2h/day for $80) depending on your schedule.
+- **Audience Q&A Blast** – Rotate flash AMAs (1h, $12), mini workshop pairings (2 days × 1h, $24), or a coaching cohort (3 days × 1.5h, $40) once your blog audience is warmed up.
+- **Bundle Promo Push** – Launch a flash sale (2.5h, $48), host a cross-promo roadshow (3 days × 2h, $72), or revamp the evergreen funnel (5 days × 2.5h, $120) to keep offers fresh.
+- **Micro Survey Dash** – Chain together coffee break surveys (0.25h, $1, three copies), panel follow-ups (2 days × 0.5h, $3), or compile a full report sprint (3 days × 0.75h, $5).
+- **Event Photo Gig** – Shoot a pop-up showcase (3.5h, $72), book a weekend retainer (3 days × 3h, $120), or craft a tour documentary (5 days × 3h, $180) once your gallery is humming.
+- **Pop-Up Workshop** – Teach an evening intensive (2.5h, $38), mentor a weekend cohort (2 days × 2.5h, $60), or run a four-day mentor track (2h/day, $95) when demand spikes.
+- **Vlog Edit Rush** – Offer a rush cut (1.5h, $24), batch two episodes (2 days × 1.5h, $40), or lead a season launch sprint (4 days × 1.75h, $70) for partner channels.
+- **Dropship Pack Party** – Host a flash pack party (2h, $28), weather a weekend surge (2 days × 2.5h, $50), or assemble subscription boxes (4 days × 2.5h, $90) as orders scale.
+- **SaaS Bug Squash** – Jump on a hotfix (1h, $30), run a stability hardening pass (2 days × 1.25h, $55), or steer a reliability sprint (4 days × 1.5h, $90) for micro-app clients.
+- **Audiobook Narration** – Cut a feature sample (2.75h, $44), record a highlighted volume (2 days × 2.5h, $70), or deliver the series finale (5 days × 2.5h, $120) for audio superfans.
+- **Street Team Promo** – Hit the lunch rush (0.75h, $18, three copies), take over a night market (2 days × 1h, $32), or lead a festival team (4 days × 1.25h, $60) when promo fever hits.
 - **Storycraft Jumpstart** – Free; 1h/day for 3 days lets you outline pillar posts, grants +120 Writing XP (level 1), and unlocks BlogPress without spending tuition.
 - **Creator Studio Jumpstart** – Free; 1h/day for 3 days pairs you with a coach, awards +120 Visual Production XP (level 1), and unlocks VideoTube.
 - **Digital Shelf Primer** – Free; 1h/day for 3 days polishes metadata basics, grants +120 Editing XP (level 1), and unlocks DigiShelf alongside gallery boosts.

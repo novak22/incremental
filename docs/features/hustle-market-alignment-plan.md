@@ -5,41 +5,12 @@
 - Ensure the market feels active by default so players see offers without manual rerolls.
 - Celebrate progress with upbeat copy and clear calls to action across hustle cards.
 
-## Current Gaps
-1. **Empty Initial State** – The market state is not rolled at session start, so cards fall back to "No hustles ready yet" and only show the manual reroll CTA.
-2. **Lack of Daily Refresh** – There is no automated daily reroll to repopulate the market when the in-game day advances.
-3. **Offer Persistence Visibility** – Accepted offers and pending commitments are not surfaced prominently on load, so the marketplace feels static.
-4. **Playtest Coverage** – Manual QA expectations are unmet; there is no repeatable checklist to verify that the hustle loop runs end-to-end after each change.
-
-## Task Breakdown
-
-### 1. Seed Daily Offers on Load
-- Hook `loadDefaultRegistry` / game bootstrap to call `ensureHustleMarketState` and `rollDailyOffers` when the market is empty.
-- Guard against duplicate rolls by checking `state.hustleMarket.lastRolledOnDay` and the current in-game day before rolling.
-- Write unit coverage that fakes the bootstrap to prove the initial state populates at least one offer per template configured with `slotsPerRoll`.
-
-### 2. Schedule Automatic Daily Rerolls
-- Extend the day transition pipeline to reroll the market when the player advances to a new day.
-- Preserve active multi-day offers by cloning those that have not expired, matching the existing `rollDailyOffers` expectations.
-- Add regression tests to confirm that rerolls respect `availableAfterDays`, duration windows, and `maxActive` limits.
-
-### 3. Refresh UI Defaults
-- Update DownWork hustle cards to:
-  - Prefer rendering the first available offer with an "Accept" CTA instead of the fallback reroll button.
-  - Show upcoming offers (those with `availableOnDay > today`) in a "Coming Tomorrow" list to reinforce the rotating market.
-  - Surface accepted commitments in a dedicated section with progress meters and payout badges so the exchange feels alive on load.
-- Add celebratory copy for the primary card state (e.g., "Fresh hustles just landed!") that only falls back to reroll language when the market is truly empty.
-- Create snapshot/component tests to cover the accept CTA priority and the empty-state fallback.
-
-### 4. Author Tooling & Telemetry Hooks
-- Log market rolls (day, number of offers, templates skipped) so designers can audit daily variety.
-- Expose a debug panel entry that lists current offers and their expiry to simplify tuning during playtests.
-- Document how to trigger rerolls manually for QA in `docs/features/hustle-market.md` or a companion doc.
-
-### 5. QA & Documentation
-- Draft a manual playtest script covering: initial load, daily rollover, accepting an offer, completing it, and verifying the next day's refresh.
-- Update `docs/changelog.md` with the new hustle market behavior once implemented.
-- Refresh `README.md` instructions for accessing the Hustle Exchange and expectations for daily offers.
+## Status Update
+- [x] **Seed Daily Offers on Load** – `ensureRegistryReady` now guarantees `ensureDailyOffersForDay` runs during bootstrap, rolling offers whenever the slice is empty and preserving prior-day contracts when saves are reloaded.【F:src/game/registryBootstrap.js†L1-L44】【F:src/game/hustles.js†L19-L64】
+- [x] **Schedule Automatic Daily Rerolls** – The day-cycle (`endDay`) calls the same helper so each sunrise clones unexpired contracts, expires finished ones, and fills empty slots.【F:src/game/lifecycle.js†L1-L75】【F:src/game/hustles.js†L19-L64】
+- [x] **Offer Persistence Visibility** – Hustle definitions now publish variant metadata (hours per day, duration, payout schedule, copies) ensuring the exchange always has market-ready contracts instead of legacy instant runs.【F:src/game/hustles/definitions/instantHustles.js†L19-L855】
+- [x] **Telemetry & QA Tooling** – Market rolls feed `getMarketRollAuditLog()`, expose `window.__HUSTLE_MARKET_DEBUG__` helpers, and the playtest script in `docs/features/hustle-market-playtest.md` gives QA a repeatable checklist for bootstrap, rerolls, and contract completion.【F:src/game/hustles/market.js†L12-L210】【F:src/game/hustles/market.js†L662-L755】【F:docs/features/hustle-market-playtest.md†L1-L64】
+- [x] **Documentation Refresh** – Economy notes describe the contract market and variant catalog, while the main hustle feature doc now references telemetry hooks and debug helpers for designers.【F:docs/economy.md†L80-L121】【F:docs/features/hustle-market.md†L1-L126】
 
 ## Acceptance Criteria
 - Players see at least one active offer per eligible template without taking any manual action when they start a session.
