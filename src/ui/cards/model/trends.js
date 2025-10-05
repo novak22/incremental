@@ -5,7 +5,7 @@ import { registerModelBuilder } from '../modelBuilderRegistry.js';
 const DEFAULT_MODEL = {
   highlights: {
     hot: { title: 'No readings yet', note: 'Assign a niche to start tracking buzz.' },
-    swing: { title: 'Awaiting data', note: 'Fresh deltas will appear after the first reroll.' },
+    swing: { title: 'Awaiting data', note: 'Fresh deltas will appear once the first trend readings roll in.' },
     risk: { title: 'All calm', note: 'We’ll flag niches that are cooling off fast.' }
   },
   board: {
