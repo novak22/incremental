@@ -2,6 +2,7 @@ import { getState } from '../../../core/state.js';
 import { formatHours, formatMoney } from '../../../core/helpers.js';
 import { describeHustleRequirements, getHustleDailyUsage } from '../../../game/hustles/helpers.js';
 import { getAvailableOffers, getClaimedOffers, acceptHustleOffer, rollDailyOffers } from '../../../game/hustles.js';
+import { executeAction } from '../../../game/actions.js';
 import { collectOutstandingActionEntries } from '../../actions/registry.js';
 import { describeHustleOfferMeta } from '../../hustles/offerHelpers.js';
 import { describeRequirementGuidance } from '../../hustles/requirements.js';
@@ -16,6 +17,7 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
     getOffers = getAvailableOffers,
     getAcceptedOffers = getClaimedOffers,
     acceptOffer = acceptHustleOffer,
+    executeAction: executeActionFn = executeAction,
     collectCommitments = collectOutstandingActionEntries,
     rollOffers = rollDailyOffers
   } = helpers;
@@ -127,7 +129,15 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
         ready,
         locked: !requirementsMet,
         unlockHint: requirementGuidance,
-        onAccept: requirementsMet ? () => acceptOffer(offer.id, { state }) : null
+        onAccept: requirementsMet
+          ? () => {
+              let result = null;
+              executeActionFn(() => {
+                result = acceptOffer(offer.id, { state });
+              });
+              return result;
+            }
+          : null
       };
     });
 
