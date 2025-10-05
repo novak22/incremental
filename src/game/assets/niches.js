@@ -48,8 +48,9 @@ export function ensureNicheState(target = getState()) {
       : createNeutralPopularitySnapshot();
   });
 
-  const storedDay = Number(data.lastRollDay);
-  data.lastRollDay = Number.isFinite(storedDay) ? storedDay : target.day || 1;
+  if ('lastRollDay' in data) {
+    delete data.lastRollDay;
+  }
 
   return data;
 }
