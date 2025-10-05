@@ -39,6 +39,18 @@ function resolveWeight(value, fallback = 1) {
   return parsed;
 }
 
+function resolvePositiveInteger(value, fallback = 1) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    const fallbackParsed = Number(fallback);
+    if (!Number.isFinite(fallbackParsed) || fallbackParsed <= 0) {
+      return 1;
+    }
+    return Math.floor(fallbackParsed);
+  }
+  return Math.floor(parsed);
+}
+
 function buildVariantTemplate(template) {
   const marketConfig = template?.market || {};
   const baseDuration = resolveNonNegative(marketConfig.durationDays ?? 0, 0);
@@ -54,7 +66,9 @@ function buildVariantTemplate(template) {
     weight: 1,
     durationDays: Math.max(0, baseDuration),
     availableAfterDays: Math.max(0, baseOffset),
-    metadata: {}
+    metadata: {},
+    copies: 1,
+    maxActive: 1
   };
 }
 
@@ -92,6 +106,10 @@ function normalizeVariant(entry, index, template) {
   const metadata = typeof entry.metadata === 'object' && entry.metadata !== null
     ? structuredClone(entry.metadata)
     : {};
+  const copies = resolvePositiveInteger(entry.copies ?? fallback.copies ?? 1, fallback.copies ?? 1);
+  const maxActive = entry.maxActive != null
+    ? resolvePositiveInteger(entry.maxActive, copies)
+    : Math.max(1, copies);
 
   return {
     id: variantId,
@@ -103,7 +121,9 @@ function normalizeVariant(entry, index, template) {
     weight,
     durationDays: Math.max(0, duration),
     availableAfterDays: Math.max(0, offset),
-    metadata
+    metadata,
+    copies,
+    maxActive
   };
 }
 
@@ -289,9 +309,17 @@ export function rollDailyOffers({
   for (const offer of preservedOffers) {
     if (!offer || offer.claimed) continue;
     if (!activeVariantsByTemplate.has(offer.templateId)) {
-      activeVariantsByTemplate.set(offer.templateId, new Set());
+      activeVariantsByTemplate.set(offer.templateId, {
+        total: 0,
+        variants: new Map()
+      });
     }
-    activeVariantsByTemplate.get(offer.templateId).add(offer.variantId);
+    const activity = activeVariantsByTemplate.get(offer.templateId);
+    activity.total += 1;
+    activity.variants.set(
+      offer.variantId,
+      (activity.variants.get(offer.variantId) || 0) + 1
+    );
   }
 
   for (const template of templates) {
@@ -301,32 +329,107 @@ export function rollDailyOffers({
     const variants = buildVariantPool(template);
     if (!variants.length) continue;
 
-    const activeVariantSet = activeVariantsByTemplate.get(templateId) || new Set();
-    const unclaimedVariants = variants.filter(variant => !activeVariantSet.has(variant.id));
-    if (!unclaimedVariants.length) {
+    const marketConfig = template?.market || {};
+    const templateSlotsPerRoll = resolvePositiveInteger(marketConfig.slotsPerRoll ?? 1, 1);
+    const defaultTemplateMaxActive = Math.max(templateSlotsPerRoll, variants.length);
+    const templateMaxActive = resolvePositiveInteger(
+      marketConfig.maxActive != null ? marketConfig.maxActive : defaultTemplateMaxActive,
+      defaultTemplateMaxActive
+    );
+
+    if (!activeVariantsByTemplate.has(templateId)) {
+      activeVariantsByTemplate.set(templateId, {
+        total: 0,
+        variants: new Map()
+      });
+    }
+
+    const activity = activeVariantsByTemplate.get(templateId);
+    const currentActive = activity.total;
+    const templateCapacity = Math.max(0, templateMaxActive - currentActive);
+    let slotsRemaining = Math.min(templateSlotsPerRoll, templateCapacity);
+    if (slotsRemaining <= 0) {
       continue;
     }
 
-    const selectedVariant = selectVariantFromPool(unclaimedVariants, rng);
-    if (!selectedVariant) continue;
+    const pendingAdds = new Map();
 
-    const offer = createOfferFromVariant({
-      template,
-      variant: selectedVariant,
-      day: currentDay,
-      timestamp: resolvedTimestamp
-    });
+    while (slotsRemaining > 0) {
+      const availableVariants = variants.filter(variant => {
+        const activeCount = activity.variants.get(variant.id) || 0;
+        const pendingCount = pendingAdds.get(variant.id) || 0;
+        const variantMaxActive = resolvePositiveInteger(
+          variant.maxActive != null ? variant.maxActive : variant.copies ?? 1,
+          variant.copies ?? 1
+        );
+        const capacity = variantMaxActive - activeCount - pendingCount;
+        return capacity > 0;
+      });
 
-    preservedOffers.push(structuredClone(offer));
-    if (!activeVariantsByTemplate.has(templateId)) {
-      activeVariantsByTemplate.set(templateId, new Set());
+      if (!availableVariants.length) {
+        break;
+      }
+
+      const selectedVariant = selectVariantFromPool(availableVariants, rng);
+      if (!selectedVariant) {
+        break;
+      }
+
+      const activeCount = activity.variants.get(selectedVariant.id) || 0;
+      const pendingCount = pendingAdds.get(selectedVariant.id) || 0;
+      const variantMaxActive = resolvePositiveInteger(
+        selectedVariant.maxActive != null ? selectedVariant.maxActive : selectedVariant.copies ?? 1,
+        selectedVariant.copies ?? 1
+      );
+      const variantCapacity = Math.max(0, variantMaxActive - activeCount - pendingCount);
+      if (variantCapacity <= 0) {
+        pendingAdds.set(selectedVariant.id, pendingCount);
+        continue;
+      }
+
+      const variantCopies = resolvePositiveInteger(selectedVariant.copies ?? 1, 1);
+      const spawnCount = Math.min(variantCopies, variantCapacity, slotsRemaining);
+      if (spawnCount <= 0) {
+        pendingAdds.set(selectedVariant.id, pendingCount);
+        break;
+      }
+
+      for (let index = 0; index < spawnCount; index += 1) {
+        const offer = createOfferFromVariant({
+          template,
+          variant: selectedVariant,
+          day: currentDay,
+          timestamp: resolvedTimestamp
+        });
+        preservedOffers.push(structuredClone(offer));
+      }
+
+      pendingAdds.set(selectedVariant.id, pendingCount + spawnCount);
+      slotsRemaining -= spawnCount;
     }
-    activeVariantsByTemplate.get(templateId).add(selectedVariant.id);
+
+    if (pendingAdds.size > 0) {
+      let addedToTemplate = 0;
+      for (const [variantId, addedCount] of pendingAdds.entries()) {
+        if (addedCount <= 0) continue;
+        addedToTemplate += addedCount;
+        activity.variants.set(
+          variantId,
+          (activity.variants.get(variantId) || 0) + addedCount
+        );
+      }
+      if (addedToTemplate > 0) {
+        activity.total += addedToTemplate;
+      }
+    }
   }
 
   preservedOffers.sort((a, b) => {
     if (a.availableOnDay === b.availableOnDay) {
       if (a.templateId === b.templateId) {
+        if (a.variantId === b.variantId) {
+          return a.id.localeCompare(b.id);
+        }
         return a.variantId.localeCompare(b.variantId);
       }
       return a.templateId.localeCompare(b.templateId);

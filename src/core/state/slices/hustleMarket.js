@@ -260,8 +260,19 @@ export function ensureHustleMarketState(state, { fallbackDay = 1 } = {}) {
     }))
     .filter(offer => offer && offer.expiresOnDay >= normalizedFallbackDay);
 
-  const normalizedOffersById = new Map();
+  const normalizedOffersByKey = new Map();
+  const dedupedOffers = [];
   normalizedOffers.forEach(offer => {
+    const dedupeKey = `${offer.templateId}::${offer.variantId}::${offer.id}`;
+    if (normalizedOffersByKey.has(dedupeKey)) {
+      return;
+    }
+    normalizedOffersByKey.set(dedupeKey, offer);
+    dedupedOffers.push(offer);
+  });
+
+  const normalizedOffersById = new Map();
+  dedupedOffers.forEach(offer => {
     normalizedOffersById.set(offer.id, offer);
     const acceptedEntry = acceptedByOffer.get(offer.id);
     if (acceptedEntry) {
@@ -298,7 +309,7 @@ export function ensureHustleMarketState(state, { fallbackDay = 1 } = {}) {
 
   const filteredAccepted = normalizedAccepted.filter(entry => normalizedOffersById.has(entry.offerId));
 
-  marketState.offers = normalizedOffers;
+  marketState.offers = dedupedOffers;
   marketState.accepted = filteredAccepted;
 
   return marketState;
