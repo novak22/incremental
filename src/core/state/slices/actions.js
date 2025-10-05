@@ -6,6 +6,21 @@ import { createRegistrySliceManager } from './factory.js';
 const KNOWLEDGE_TRACKS = knowledgeTrackData;
 const MAX_ACTION_INSTANCES = 50;
 
+function isInstanceCompleted(instance) {
+  if (!instance || typeof instance !== 'object') {
+    return false;
+  }
+  if (instance.completed === true || instance.status === 'completed') {
+    return true;
+  }
+  if (instance.progress && typeof instance.progress === 'object') {
+    if (instance.progress.completed === true || instance.progress.status === 'completed') {
+      return true;
+    }
+  }
+  return false;
+}
+
 function resolveDefinition(id) {
   return getActionDefinition(id) || getHustleDefinition(id);
 }
@@ -225,7 +240,33 @@ function normalizeActionState(definition, entry = {}, context) {
       ? defaults.instances
       : [];
 
-  const trimmedInstances = sourceInstances.slice(-MAX_ACTION_INSTANCES);
+  const activeOrPendingIndices = [];
+  const completedIndices = [];
+
+  sourceInstances.forEach((instance, index) => {
+    if (isInstanceCompleted(instance)) {
+      completedIndices.push(index);
+    } else {
+      activeOrPendingIndices.push(index);
+    }
+  });
+
+  const keepIndices = new Set(activeOrPendingIndices);
+  const remainingSlots = Math.max(0, MAX_ACTION_INSTANCES - keepIndices.size);
+  const completedToKeep = remainingSlots > 0 ? completedIndices.slice(-remainingSlots) : [];
+  completedToKeep.forEach(index => keepIndices.add(index));
+
+  if (keepIndices.size > MAX_ACTION_INSTANCES) {
+    const overflow = keepIndices.size - MAX_ACTION_INSTANCES;
+    if (overflow > 0) {
+      const orderedActive = activeOrPendingIndices.filter(index => keepIndices.has(index));
+      for (let i = 0; i < overflow && i < orderedActive.length; i += 1) {
+        keepIndices.delete(orderedActive[i]);
+      }
+    }
+  }
+
+  const trimmedInstances = sourceInstances.filter((instance, index) => keepIndices.has(index));
 
   normalized.instances = trimmedInstances.map(instance => normalizeActionInstance(definition, instance, context));
 
