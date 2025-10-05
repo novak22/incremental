@@ -182,6 +182,14 @@ function normalizeAcceptedOffer(entry, { fallbackDay = 1 } = {}) {
     payout.schedule = 'onCompletion';
   }
 
+  const payoutAwarded = entry.payoutAwarded != null
+    ? clampNonNegativeNumber(entry.payoutAwarded, payout.amount ?? 0)
+    : null;
+  const payoutPaid = entry.payoutPaid === true;
+  const payoutPaidOnDay = entry.payoutPaidOnDay != null
+    ? clampDay(entry.payoutPaidOnDay, acceptedOnDay)
+    : null;
+
   const instanceId = typeof entry.instanceId === 'string' && entry.instanceId
     ? entry.instanceId
     : null;
@@ -214,6 +222,9 @@ function normalizeAcceptedOffer(entry, { fallbackDay = 1 } = {}) {
     hoursRequired,
     instanceId,
     payout,
+    payoutAwarded,
+    payoutPaid,
+    payoutPaidOnDay,
     status: entry.status === 'complete' ? 'complete' : 'active',
     metadata,
     completedOnDay,
@@ -448,7 +459,7 @@ export function completeHustleMarketInstance(state, instanceId, {
   hoursLogged
 } = {}) {
   if (!state || !instanceId) {
-    return false;
+    return null;
   }
 
   const fallbackDay = clampDay(completionDay ?? state.day ?? 1, 1);
@@ -456,7 +467,7 @@ export function completeHustleMarketInstance(state, instanceId, {
 
   const entry = marketState.accepted.find(item => item.instanceId === instanceId);
   if (!entry) {
-    return false;
+    return null;
   }
 
   const resolvedCompletionDay = clampDay(completionDay ?? fallbackDay, entry.acceptedOnDay);
@@ -491,7 +502,7 @@ export function completeHustleMarketInstance(state, instanceId, {
 
   ensureHustleMarketState(state, { fallbackDay });
 
-  return true;
+  return marketState.accepted.find(item => item.instanceId === instanceId) || null;
 }
 
 export { DEFAULT_STATE as DEFAULT_HUSTLE_MARKET_STATE };

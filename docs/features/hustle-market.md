@@ -37,6 +37,7 @@
 - `acceptHustleOffer(offerId, { state })` reads the offer metadata, accepts an action instance through `acceptActionInstance`, marks the offer as claimed, and records an accepted entry with `acceptedOnDay`, `deadlineDay`, required hours, and payout schedule.
 - Progress metadata is piped directly into `acceptActionInstance` so accepted entries inherit `hoursPerDay`, `daysRequired`, and manual completion flags. The todo queue uses these hints to compute step hours and keeps manual tasks visible even when hour goals are satisfied.
 - Claimed offers continue to persist until their deadlines elapse so completion logging and payout scheduling remain traceable.
+- When a claimed contract logs its final hours, `completeActionInstance` now resolves the linked hustle entry, pays any `onCompletion` payout immediately through `addMoney`, records the grant on the accepted entry, and forwards the amount into daily payout metrics.
 
 ## Availability Queries
 - `getAvailableOffers(state, { day, includeUpcoming, includeClaimed })` returns a cloned list of active offers for the requested day. Setting `includeUpcoming: true` keeps offers whose availability window starts in the future (useful for dashboards showing "coming soon"). Passing `includeClaimed: true` allows UI layers to render offers that have been claimed but not yet completed.
