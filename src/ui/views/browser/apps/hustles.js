@@ -48,10 +48,10 @@ function decorateUrgency(node, remainingDays) {
   node.classList.toggle('is-warning', Number.isFinite(numeric) && numeric > 1 && numeric <= 3);
 }
 
-function createOfferItem(offer) {
+function createOfferItem(offer, { upcoming = false } = {}) {
   const item = document.createElement('li');
   item.className = 'browser-card__list-item hustle-card__offer';
-  if (!offer.ready) {
+  if (!offer.ready || upcoming) {
     item.classList.add('is-upcoming');
   }
   decorateUrgency(item, offer.expiresIn);
@@ -89,15 +89,20 @@ function createOfferItem(offer) {
   actions.className = 'browser-card__actions';
   const button = document.createElement('button');
   button.type = 'button';
-  button.className = offer.ready
-    ? 'browser-card__button browser-card__button--primary'
-    : 'browser-card__button';
-  button.textContent = offer.ready ? 'Accept offer' : 'Upcoming';
-  button.disabled = !offer.ready;
-  if (offer.ready && typeof offer.onAccept === 'function') {
-    button.addEventListener('click', () => {
-      offer.onAccept();
-    });
+  if (offer.ready && !upcoming) {
+    button.className = 'browser-card__button browser-card__button--primary';
+    button.textContent = 'Accept offer';
+    button.disabled = false;
+    if (typeof offer.onAccept === 'function') {
+      button.addEventListener('click', () => {
+        offer.onAccept();
+      });
+    }
+  } else {
+    button.className = 'browser-card__button';
+    const days = offer.availableIn === 1 ? '1 day' : `${offer.availableIn} days`;
+    button.textContent = offer.availableIn > 0 ? `Unlocks in ${days}` : 'Upcoming';
+    button.disabled = true;
   }
   actions.appendChild(button);
   item.appendChild(actions);
@@ -266,8 +271,8 @@ function createHustleCard(definition, model) {
 
   if (Array.isArray(model.offers) && model.offers.length) {
     const offersSection = createCardSection(
-      'Market offers',
-      'Pick the variant that fits your vibe. Upcoming offers unlock soon.'
+      'Ready to accept',
+      'Fresh hustles just landed! Grab the one that sparks your curiosity.'
     );
     const list = document.createElement('ul');
     list.className = 'browser-card__list';
@@ -277,6 +282,21 @@ function createHustleCard(definition, model) {
     });
     offersSection.appendChild(list);
     card.appendChild(offersSection);
+  }
+
+  if (Array.isArray(model.upcoming) && model.upcoming.length) {
+    const upcomingSection = createCardSection(
+      'Coming tomorrow',
+      'These leads unlock with the next market refresh. Prep your pitch now!'
+    );
+    const list = document.createElement('ul');
+    list.className = 'browser-card__list';
+    model.upcoming.forEach(offer => {
+      const item = createOfferItem(offer, { upcoming: true });
+      list.appendChild(item);
+    });
+    upcomingSection.appendChild(list);
+    card.appendChild(upcomingSection);
   }
 
   return card;
@@ -303,6 +323,7 @@ export default function renderHustles(context = {}, definitions = [], models = [
   const modelMap = new Map(models.map(model => [model?.id, model]));
   let availableCount = 0;
   let commitmentCount = 0;
+  let upcomingCount = 0;
 
   definitions.forEach(definition => {
     const model = modelMap.get(definition.id);
@@ -314,6 +335,10 @@ export default function renderHustles(context = {}, definitions = [], models = [
 
     if (Array.isArray(model.commitments)) {
       commitmentCount += model.commitments.length;
+    }
+
+    if (Array.isArray(model.upcoming)) {
+      upcomingCount += model.upcoming.length;
     }
 
     const card = createHustleCard(definition, model);
@@ -331,12 +356,19 @@ export default function renderHustles(context = {}, definitions = [], models = [
   if (availableCount > 0) {
     metaParts.push(`${availableCount} offer${availableCount === 1 ? '' : 's'} ready`);
   }
+  if (upcomingCount > 0) {
+    metaParts.push(`${upcomingCount} coming soon`);
+  }
   if (commitmentCount > 0) {
     metaParts.push(`${commitmentCount} commitment${commitmentCount === 1 ? '' : 's'} active`);
   }
 
+  const meta = metaParts.length
+    ? `Fresh hustles just landed! ${metaParts.join(' • ')}`
+    : 'No hustles ready yet';
+
   return {
     id: page.id,
-    meta: metaParts.length ? metaParts.join(' • ') : 'No hustles ready yet'
+    meta
   };
 }

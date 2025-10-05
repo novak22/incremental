@@ -11,6 +11,8 @@ import { computeDailySummary } from './summary.js';
 import { advanceEventsAfterDay } from './events/index.js';
 import { archiveNicheAnalytics } from './analytics/niches.js';
 import { syncNicheTrendSnapshots } from './events/syncNicheTrendSnapshots.js';
+import { ensureDailyOffersForDay } from './hustles.js';
+import { getRegistrySnapshot } from '../core/state/registry.js';
 
 function flushUiWithFallback(fallbackToFull = false) {
   const flushed = flushDirty();
@@ -42,6 +44,12 @@ export function endDay(auto = false) {
     : 'You called it a day. Fresh hustle awaits tomorrow.';
   addLog(`${message} Day ${state.day + 1} begins with renewed energy.`, 'info');
   state.day += 1;
+  const registry = getRegistrySnapshot();
+  ensureDailyOffersForDay({
+    state,
+    templates: Array.isArray(registry?.hustles) ? registry.hustles : undefined,
+    day: state.day
+  });
   if (state.actions && typeof state.actions === 'object') {
     for (const actionState of Object.values(state.actions)) {
       if (!actionState || typeof actionState !== 'object') continue;

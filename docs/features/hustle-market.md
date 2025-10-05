@@ -28,6 +28,11 @@
   - A deterministic `daysActive` array so UI layers can render availability windows.
 - Offers are sorted by availability day, template id, variant id, and finally offer id for consistent rendering even when multiple copies share the same variant.
 
+## Daily Seeding & Rerolls
+- `ensureDailyOffersForDay({ state, templates, day, now, rng })` guards the bootstrap pipeline so the market only rolls when the slice is empty or stale. If the current day already holds a valid roll the helper simply clones the existing offers so duplicate entries never spawn.
+- Registry bootstrap triggers the helper right after definitions load, and the day transition (`endDay`) reruns it so mornings always begin with a populated exchange without requiring manual rerolls.
+- The helper honours template tuning—`availableAfterDays`, duration windows, and `maxActive` caps—so active multi-day contracts stay visible while new day-specific variants slide into open slots.
+
 ## Persistence Helpers
 - `ensureHustleMarketState` guarantees the `state.hustleMarket` slice exists with `{ lastRolledAt, lastRolledOnDay, offers: [], accepted: [] }`.
 - Invalid timestamps or negative days clamp to safe defaults while malformed offers are sanitized (ensuring template/variant ids and day windows are valid).
@@ -50,9 +55,10 @@
 
 ## UI Surface Updates
 - Hustle browser cards now list active commitments beneath each template, including payout callouts, logged-hours meters, and deadline countdown bars so you can triage multi-day gigs at a glance.
-- Market offers render in the same cards as variant rows: available offers get bright accept buttons while upcoming variants show unlock timers and remain disabled until their window opens.
+- Market offers render in the same cards as variant rows: ready offers headline a "Ready to accept" list with a matching accept CTA, while upcoming variants land in a dedicated "Coming tomorrow" queue with unlock timers.
 - The finance dashboard separates hustle commitments from fresh offers, highlighting urgent deadlines with warning tones and mirroring the same progress meters for consistency.
 - Hustle browser cards now offer a manual "Roll a fresh offer" button when a template has no active variants so players can nudge the market without relying on legacy instant runs.
-- When manual rerolls are disabled, hustle cards swap the queue button for a cheerful "Check back tomorrow" hint instead of falling back to hidden instant actions.
+- When manual rerolls are disabled (and no offers exist), hustle cards swap the queue button for a cheerful "Check back tomorrow" hint instead of falling back to hidden instant actions.
+- Celebratory copy now leads the experience—"Fresh hustles just landed!"—whenever offers, upcoming slots, or commitments exist, only falling back to the quiet reroll language when the market is truly empty.
 - Dashboard quick actions surface active offers only. When the market is empty they present a "Check back tomorrow" guidance tile instead of invoking hidden instant-action fallbacks.
 - `createInstantHustle` still exposes an `action.onClick` for tests and tooling, but it is flagged with `isLegacyInstant`/`hiddenFromMarket` and UI layers ignore it when building hustle cards or quick actions so production surfaces depend exclusively on offer acceptance.

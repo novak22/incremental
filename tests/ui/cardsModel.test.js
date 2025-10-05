@@ -70,6 +70,58 @@ test('buildHustleModels mirrors availability filters', () => {
   assert.equal(blocked.filters.available, false);
 });
 
+test('buildHustleModels prefers accepting ready offers and queues upcoming separately', () => {
+  const hustles = [
+    {
+      id: 'priority-hustle',
+      name: 'Priority Hustle',
+      description: 'Grab this gig right away.',
+      time: 2,
+      payout: { amount: 50 }
+    }
+  ];
+
+  const readyOffer = {
+    id: 'offer-ready',
+    templateId: 'priority-hustle',
+    definitionId: 'priority-hustle',
+    availableOnDay: 3,
+    expiresOnDay: 3,
+    metadata: {},
+    variant: { label: 'Ready Offer' }
+  };
+
+  const upcomingOffer = {
+    id: 'offer-upcoming',
+    templateId: 'priority-hustle',
+    definitionId: 'priority-hustle',
+    availableOnDay: 4,
+    expiresOnDay: 5,
+    metadata: {},
+    variant: { label: 'Coming Soon' }
+  };
+
+  const models = buildHustleModels(hustles, {
+    getState: () => ({ day: 3 }),
+    describeRequirements: () => [],
+    getUsage: () => null,
+    formatHours: value => `${value}h`,
+    formatMoney: value => value.toFixed(0),
+    getOffers: () => [readyOffer, upcomingOffer],
+    getAcceptedOffers: () => [],
+    collectCommitments: () => [],
+    acceptOffer: () => {}
+  });
+
+  const [model] = models;
+  assert.equal(model.action.label, 'Accept Ready Offer');
+  assert.equal(model.action.disabled, false);
+  assert.equal(model.action.className, 'primary');
+  assert.ok(model.action.guidance.includes('Fresh hustles just landed'));
+  assert.equal(model.offers.length, 1, 'ready offers should populate the primary list');
+  assert.equal(model.upcoming.length, 1, 'upcoming offers should be tracked separately');
+});
+
 test('buildHustleModels surfaces multi-day offers with daily requirements', () => {
   const hustles = [
     {
