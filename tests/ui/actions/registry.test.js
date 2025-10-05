@@ -42,6 +42,34 @@ test('registerActionProvider supplies normalized entries to the queue', () => {
   }
 });
 
+test('registerActionProvider retains the original entry as raw payload', () => {
+  const restore = clearActionProviders();
+  try {
+    const originalEntry = {
+      id: 'raw-entry',
+      title: 'Raw Reference',
+      timeCost: 1,
+      payout: 5,
+      metadata: 'custom-meta'
+    };
+
+    registerActionProvider(() => ({
+      id: 'raw-provider',
+      focusCategory: 'hustle',
+      entries: [originalEntry],
+      metrics: {}
+    }));
+
+    const queue = buildActionQueue({ state: {} });
+    assert.equal(queue.entries.length, 1);
+    assert.equal(queue.entries[0].id, 'raw-entry');
+    assert.strictEqual(queue.entries[0].raw, originalEntry);
+    assert.equal(queue.entries[0].raw.metadata, 'custom-meta');
+  } finally {
+    restore();
+  }
+});
+
 test('clearActionProviders restore removes temporary providers', () => {
   const restore = clearActionProviders();
   try {
