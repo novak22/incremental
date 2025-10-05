@@ -2,7 +2,9 @@ import { structuredClone, createId } from '../../core/helpers.js';
 import { getState } from '../../core/state.js';
 import {
   ensureHustleMarketState,
-  normalizeHustleMarketOffer
+  normalizeHustleMarketOffer,
+  getMarketAvailableOffers,
+  getMarketClaimedOffers
 } from '../../core/state/slices/hustleMarket.js';
 
 function resolveDay(value, fallback = 1) {
@@ -138,6 +140,25 @@ function selectVariantFromPool(variants, rng = Math.random) {
   return variants[variants.length - 1];
 }
 
+function resolveFirstNumber(...values) {
+  for (const value of values) {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed) && parsed >= 0) {
+      return parsed;
+    }
+  }
+  return null;
+}
+
+function resolveFirstString(...values) {
+  for (const value of values) {
+    if (typeof value === 'string' && value.trim().length) {
+      return value.trim();
+    }
+  }
+  return null;
+}
+
 function buildOfferMetadata(template, variant) {
   const baseMetadata = typeof template?.market?.metadata === 'object' && template.market.metadata !== null
     ? structuredClone(template.market.metadata)
@@ -145,12 +166,73 @@ function buildOfferMetadata(template, variant) {
   const variantMetadata = typeof variant?.metadata === 'object' && variant.metadata !== null
     ? structuredClone(variant.metadata)
     : {};
-  return {
+
+  const requirements = {
+    ...(typeof baseMetadata.requirements === 'object' && baseMetadata.requirements !== null
+      ? structuredClone(baseMetadata.requirements)
+      : {}),
+    ...(typeof variantMetadata.requirements === 'object' && variantMetadata.requirements !== null
+      ? structuredClone(variantMetadata.requirements)
+      : {})
+  };
+
+  const resolvedHours = resolveFirstNumber(
+    requirements.hours,
+    requirements.timeHours,
+    variantMetadata.timeHours,
+    variantMetadata.hours,
+    baseMetadata.timeHours,
+    template?.time,
+    template?.action?.timeCost
+  );
+  if (resolvedHours != null) {
+    requirements.hours = resolvedHours;
+  }
+
+  const payout = {
+    ...(typeof baseMetadata.payout === 'object' && baseMetadata.payout !== null
+      ? structuredClone(baseMetadata.payout)
+      : {}),
+    ...(typeof variantMetadata.payout === 'object' && variantMetadata.payout !== null
+      ? structuredClone(variantMetadata.payout)
+      : {})
+  };
+
+  const resolvedPayoutAmount = resolveFirstNumber(
+    payout.amount,
+    variantMetadata.payoutAmount,
+    baseMetadata.payoutAmount,
+    template?.payout?.amount
+  );
+  if (resolvedPayoutAmount != null) {
+    payout.amount = resolvedPayoutAmount;
+  }
+
+  const resolvedSchedule = resolveFirstString(
+    payout.schedule,
+    variantMetadata.payoutSchedule,
+    baseMetadata.payoutSchedule
+  ) || 'onCompletion';
+  payout.schedule = resolvedSchedule;
+
+  const metadata = {
     ...baseMetadata,
     ...variantMetadata,
+    requirements,
+    payout,
     availableAfterDays: variant.availableAfterDays,
     durationDays: variant.durationDays
   };
+
+  if (resolvedHours != null) {
+    metadata.hoursRequired = resolvedHours;
+  }
+  if (resolvedPayoutAmount != null) {
+    metadata.payoutAmount = resolvedPayoutAmount;
+  }
+  metadata.payoutSchedule = resolvedSchedule;
+
+  return metadata;
 }
 
 function createOfferFromVariant({ template, variant, day, timestamp }) {
@@ -203,24 +285,29 @@ export function rollDailyOffers({
     .filter(offer => isOfferActiveOnOrAfterDay(offer, currentDay))
     .map(offer => structuredClone(offer));
 
-  const offersByTemplate = new Map();
+  const activeVariantsByTemplate = new Map();
   for (const offer of preservedOffers) {
-    if (!offersByTemplate.has(offer.templateId)) {
-      offersByTemplate.set(offer.templateId, []);
+    if (!offer || offer.claimed) continue;
+    if (!activeVariantsByTemplate.has(offer.templateId)) {
+      activeVariantsByTemplate.set(offer.templateId, new Set());
     }
-    offersByTemplate.get(offer.templateId).push(offer);
+    activeVariantsByTemplate.get(offer.templateId).add(offer.variantId);
   }
 
   for (const template of templates) {
     if (!template || !template.id) continue;
     const templateId = template.id;
-    const existingOffers = offersByTemplate.get(templateId);
-    if (existingOffers && existingOffers.length) {
+
+    const variants = buildVariantPool(template);
+    if (!variants.length) continue;
+
+    const activeVariantSet = activeVariantsByTemplate.get(templateId) || new Set();
+    const unclaimedVariants = variants.filter(variant => !activeVariantSet.has(variant.id));
+    if (!unclaimedVariants.length) {
       continue;
     }
 
-    const variants = buildVariantPool(template);
-    const selectedVariant = selectVariantFromPool(variants, rng);
+    const selectedVariant = selectVariantFromPool(unclaimedVariants, rng);
     if (!selectedVariant) continue;
 
     const offer = createOfferFromVariant({
@@ -231,7 +318,10 @@ export function rollDailyOffers({
     });
 
     preservedOffers.push(structuredClone(offer));
-    offersByTemplate.set(templateId, [offer]);
+    if (!activeVariantsByTemplate.has(templateId)) {
+      activeVariantsByTemplate.set(templateId, new Set());
+    }
+    activeVariantsByTemplate.get(templateId).add(selectedVariant.id);
   }
 
   preservedOffers.sort((a, b) => {
@@ -256,20 +346,27 @@ export function rollDailyOffers({
 
 export function getAvailableOffers(state = getState(), {
   day,
-  includeUpcoming = false
+  includeUpcoming = false,
+  includeClaimed = false
 } = {}) {
   const workingState = state || getState();
   const targetDay = resolveDay(day, workingState?.day || 1);
-  const marketState = ensureHustleMarketState(workingState, { fallbackDay: targetDay });
-
-  const filtered = marketState.offers.filter(offer => {
-    if (!offer) return false;
-    if (includeUpcoming) {
-      return offer.expiresOnDay >= targetDay;
-    }
-    return offer.availableOnDay <= targetDay && offer.expiresOnDay >= targetDay;
+  return getMarketAvailableOffers(workingState, {
+    day: targetDay,
+    includeUpcoming,
+    includeClaimed
   });
+}
 
-  return filtered.map(offer => structuredClone(offer));
+export function getClaimedOffers(state = getState(), {
+  day,
+  includeExpired = false
+} = {}) {
+  const workingState = state || getState();
+  const targetDay = resolveDay(day, workingState?.day || 1);
+  return getMarketClaimedOffers(workingState, {
+    day: targetDay,
+    includeExpired
+  });
 }
 

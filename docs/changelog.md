@@ -5,6 +5,7 @@
 - Unified instant hustles and study sessions under a shared action registry that tracks accepted instances, daily limits, and
   completion history without erasing legacy hustle progress.
 - Hustle market rolls daily offers from immutable templates, tracks multi-day availability, and persists timestamps for clean day rollovers.
+- Hustle market offers now expose per-variant requirements and payout metadata, support simultaneous variants, and surface claimed-contract selectors via the new `acceptHustleOffer` helper.
 - TODO/action queue now runs through the shared action-provider registry so dashboard widgets and TimoDoro stay aligned, and the landing page no longer swallows the default workspace when tasks populate mid-load.
 - Browser shell keeps the tabbed chrome, notification bell, and modular stylesheets; add new surfaces by pairing a presenter with a stylesheet.
 - Home dashboard stays focused on the three core widgets (ToDo, cash snapshot, app tiles) with drag-to-arrange and End Day gating.
