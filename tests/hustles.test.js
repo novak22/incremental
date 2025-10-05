@@ -84,7 +84,7 @@ test('knowledge hustle view model summarizes study progress states', () => {
   });
 });
 
-test('study hustles charge tuition and auto-schedule class time', () => {
+test('study hustles charge tuition and queue manual study time', () => {
   const state = getState();
   const studyHustle = ACTIONS.find(hustle => hustle.id.startsWith('study-outlineMastery'));
   const track = getKnowledgeProgress('outlineMastery');
@@ -94,16 +94,25 @@ test('study hustles charge tuition and auto-schedule class time', () => {
   state.timeLeft = track.hoursPerDay + 8;
 
   const beforeMoney = state.money;
+  const beforeTime = state.timeLeft;
 
   studyHustle.action.onClick();
 
   const updated = getKnowledgeProgress('outlineMastery');
 
   assert.equal(updated.enrolled, true, 'enrollment should activate the course');
-  assert.ok(updated.studiedToday, 'study time should be booked immediately');
+  assert.equal(updated.studiedToday, false, 'study time should be logged manually');
   assert.equal(state.money, beforeMoney - tuition, 'tuition should be deducted upfront');
-  assert.equal(state.timeLeft, 8, 'daily study hours should be consumed automatically');
-  assert.match(state.log.at(-1).message, /Study sessions reserved|Class time booked/, 'log should mention scheduled study');
+  assert.equal(state.timeLeft, beforeTime, 'daily study hours should remain untouched until logged');
+
+  const studyActionState = getActionState('study-outlineMastery');
+  assert.ok(studyActionState.instances.length > 0, 'study track should create an action instance');
+  const instance = studyActionState.instances.at(-1);
+  assert.equal(instance.progress.type, 'study');
+  assert.equal(instance.progress.daysRequired, KNOWLEDGE_TRACKS.outlineMastery.days);
+  assert.equal(instance.progress.hoursPerDay, KNOWLEDGE_TRACKS.outlineMastery.hoursPerDay);
+
+  assert.match(state.log.at(-1).message, /Log .* each day/i, 'log should mention manual study logging');
 });
 
 test('education multipliers boost freelance writing payout once mastered', () => {

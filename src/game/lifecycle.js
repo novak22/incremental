@@ -5,7 +5,7 @@ import { allocateAssetMaintenance, closeOutDay } from './assets/index.js';
 import { processAssistantPayroll } from './assistant.js';
 import { getTimeCap } from './time.js';
 import { flushDirty, markAllDirty, markDirty } from '../core/events/invalidationBus.js';
-import { advanceKnowledgeTracks, allocateDailyStudy } from './requirements.js';
+import { advanceKnowledgeTracks } from './requirements.js';
 import { archiveDailyMetrics, resetDailyMetrics } from './metrics.js';
 import { rerollNichePopularity } from './assets/niches.js';
 import { computeDailySummary } from './summary.js';
@@ -65,7 +65,6 @@ export function endDay(auto = false) {
   state.timeLeft = getTimeCap();
   resetDailyMetrics(state);
   processAssistantPayroll();
-  allocateDailyStudy();
   allocateAssetMaintenance();
   markAllDirty();
   flushUiWithFallback(true);

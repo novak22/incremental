@@ -1,14 +1,14 @@
 import knowledgeTrackData from './requirements/data/knowledgeTracks.js';
-import { getState } from '../core/state.js';
+import { getState, getActionState } from '../core/state.js';
 import { addLog } from '../core/log.js';
 import { spendMoney } from './currency.js';
-import { spendTime } from './time.js';
-import { recordCostContribution, recordTimeContribution } from './metrics.js';
+import { recordCostContribution } from './metrics.js';
 import { awardSkillProgress } from './skills/index.js';
 import { KNOWLEDGE_REWARDS } from './requirements/knowledgeTracks.js';
 import { getKnowledgeProgress } from './requirements/knowledgeProgress.js';
-import { estimateManualMaintenanceReserve } from './requirements/maintenanceReserve.js';
 import { getDefinitionRequirements } from './requirements/definitionRequirements.js';
+import { getActionDefinition } from '../core/state/registry.js';
+import { acceptActionInstance, abandonActionInstance } from './actions/progress.js';
 import {
   buildAssetRequirementDescriptor,
   describeRequirement,
@@ -30,14 +30,15 @@ const knowledgeTracks = KNOWLEDGE_TRACKS;
 
 const orchestrator = createRequirementsOrchestrator({
   getState,
+  getActionState,
+  getActionDefinition,
+  acceptActionInstance,
+  abandonActionInstance,
   getKnowledgeProgress,
   knowledgeTracks,
   knowledgeRewards: KNOWLEDGE_REWARDS,
-  estimateMaintenanceReserve: estimateManualMaintenanceReserve,
   spendMoney,
-  spendTime,
   recordCostContribution,
-  recordTimeContribution,
   awardSkillProgress,
   addLog
 });
