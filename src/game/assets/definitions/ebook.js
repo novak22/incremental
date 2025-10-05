@@ -1,6 +1,20 @@
 import { formatMoney } from '../../../core/helpers.js';
 import { createAssetDefinition } from '../../content/schema.js';
 import { triggerQualityActionEvents } from '../../events/index.js';
+import { assets as assetConfigs } from '../../data/economyConfig.js';
+
+const ebookConfig = assetConfigs.ebook; // Spec: docs/normalized_economy.json → assets.ebook
+const ebookSetup = ebookConfig.setup; // Spec: docs/normalized_economy.json → assets.ebook.schedule
+const ebookMaintenance = ebookConfig.maintenance; // Spec: docs/normalized_economy.json → assets.ebook.maintenance_time
+const ebookIncome = ebookConfig.income; // Spec: docs/normalized_economy.json → assets.ebook.base_income
+const [
+  ebookQualityLevel0,
+  ebookQualityLevel1,
+  ebookQualityLevel2,
+  ebookQualityLevel3,
+  ebookQualityLevel4,
+  ebookQualityLevel5
+] = ebookConfig.qualityLevels; // Spec: docs/normalized_economy.json → assets.ebook.quality_curve
 
 const ebookDefinition = createAssetDefinition({
   id: 'ebook',
@@ -9,15 +23,15 @@ const ebookDefinition = createAssetDefinition({
   tag: { label: 'Creative', type: 'passive' },
   tags: ['writing', 'product', 'digital'],
   description: 'Package your expertise into downloadable page-turners that sell while you snooze.',
-  setup: { days: 4, hoursPerDay: 3, cost: 260 },
-  maintenance: { hours: 0.5, cost: 3 },
+  setup: { ...ebookSetup },
+  maintenance: { ...ebookMaintenance },
   skills: {
     setup: [
       'writing',
       { id: 'editing', weight: 0.75 }
     ]
   },
-  income: { base: 30, variance: 0.2, logType: 'passive' },
+  income: { ...ebookIncome, logType: 'passive' },
   requirements: {
     knowledge: ['outlineMastery']
   },
@@ -30,46 +44,46 @@ const ebookDefinition = createAssetDefinition({
     },
     levels: [
       {
-        level: 0,
+        level: ebookQualityLevel0.level,
         name: 'Rough Manuscript',
         description: 'A handful of notes generate only trickle royalties.',
-        income: { min: 3, max: 6 },
-        requirements: {}
+        income: { ...ebookQualityLevel0.income }, // Spec: docs/normalized_economy.json → assets.ebook.quality_curve[0]
+        requirements: { ...ebookQualityLevel0.requirements }
       },
       {
-        level: 1,
+        level: ebookQualityLevel1.level,
         name: 'Polished Draft',
         description: 'Six chapters stitched into a bingeable volume.',
-        income: { min: 12, max: 20 },
-        requirements: { chapters: 6 }
+        income: { ...ebookQualityLevel1.income }, // Spec: docs/normalized_economy.json → assets.ebook.quality_curve[1]
+        requirements: { ...ebookQualityLevel1.requirements }
       },
       {
-        level: 2,
+        level: ebookQualityLevel2.level,
         name: 'Collector Edition',
         description: 'A premium cover and full season keep fans engaged.',
-        income: { min: 20, max: 30 },
-        requirements: { chapters: 12, cover: 1 }
+        income: { ...ebookQualityLevel2.income }, // Spec: docs/normalized_economy.json → assets.ebook.quality_curve[2]
+        requirements: { ...ebookQualityLevel2.requirements }
       },
       {
-        level: 3,
+        level: ebookQualityLevel3.level,
         name: 'Fandom Favorite',
         description: 'Glowing reviews lock in bestseller status.',
-        income: { min: 30, max: 42 },
-        requirements: { chapters: 18, cover: 2, reviews: 6 }
+        income: { ...ebookQualityLevel3.income }, // Spec: docs/normalized_economy.json → assets.ebook.quality_curve[3]
+        requirements: { ...ebookQualityLevel3.requirements }
       },
       {
-        level: 4,
+        level: ebookQualityLevel4.level,
         name: 'Box Set Sensation',
         description: 'Expanded universes and deluxe art bundles keep royalties rolling.',
-        income: { min: 44, max: 58 },
-        requirements: { chapters: 24, cover: 3, reviews: 10 }
+        income: { ...ebookQualityLevel4.income }, // Spec: docs/normalized_economy.json → assets.ebook.quality_curve[4]
+        requirements: { ...ebookQualityLevel4.requirements }
       },
       {
-        level: 5,
+        level: ebookQualityLevel5.level,
         name: 'Fandom Universe',
         description: 'Merch tie-ins and superfans push the series into evergreen bestseller lists.',
-        income: { min: 60, max: 78 },
-        requirements: { chapters: 32, cover: 4, reviews: 16 }
+        income: { ...ebookQualityLevel5.income }, // Spec: docs/normalized_economy.json → assets.ebook.quality_curve[5]
+        requirements: { ...ebookQualityLevel5.requirements }
       }
     ],
     actions: [

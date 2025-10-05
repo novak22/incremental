@@ -1,6 +1,20 @@
 import { formatMoney } from '../../../core/helpers.js';
 import { createAssetDefinition } from '../../content/schema.js';
 import { triggerQualityActionEvents } from '../../events/index.js';
+import { assets as assetConfigs } from '../../data/economyConfig.js';
+
+const vlogConfig = assetConfigs.vlog; // Spec: docs/normalized_economy.json → assets.vlog
+const vlogSetup = vlogConfig.setup; // Spec: docs/normalized_economy.json → assets.vlog.schedule
+const vlogMaintenance = vlogConfig.maintenance; // Spec: docs/normalized_economy.json → assets.vlog.maintenance_time
+const vlogIncome = vlogConfig.income; // Spec: docs/normalized_economy.json → assets.vlog.base_income
+const [
+  vlogQualityLevel0,
+  vlogQualityLevel1,
+  vlogQualityLevel2,
+  vlogQualityLevel3,
+  vlogQualityLevel4,
+  vlogQualityLevel5
+] = vlogConfig.qualityLevels; // Spec: docs/normalized_economy.json → assets.vlog.quality_curve
 
 const vlogDefinition = createAssetDefinition({
   id: 'vlog',
@@ -9,8 +23,8 @@ const vlogDefinition = createAssetDefinition({
   tag: { label: 'Creative', type: 'passive' },
   tags: ['video', 'visual', 'content', 'studio'],
   description: 'Film upbeat vlogs, edit late-night montages, and ride the algorithmic rollercoaster.',
-  setup: { days: 4, hoursPerDay: 4, cost: 420 },
-  maintenance: { hours: 1.0, cost: 9 },
+  setup: { ...vlogSetup },
+  maintenance: { ...vlogMaintenance },
   skills: {
     setup: [
       'visual',
@@ -18,8 +32,7 @@ const vlogDefinition = createAssetDefinition({
     ]
   },
   income: {
-    base: 34,
-    variance: 0.2,
+    ...vlogIncome, // Spec: docs/normalized_economy.json → assets.vlog.base_income
     logType: 'passive'
   },
   requirements: {
@@ -34,46 +47,46 @@ const vlogDefinition = createAssetDefinition({
     },
     levels: [
       {
-        level: 0,
+        level: vlogQualityLevel0.level,
         name: 'Camera Shy',
         description: 'Footage trickles in with shaky vlogs and tiny ad pennies.',
-        income: { min: 2, max: 5 },
-        requirements: {}
+        income: { ...vlogQualityLevel0.income }, // Spec: docs/normalized_economy.json → assets.vlog.quality_curve[0]
+        requirements: { ...vlogQualityLevel0.requirements }
       },
       {
-        level: 1,
+        level: vlogQualityLevel1.level,
         name: 'Weekly Rhythm',
         description: 'A trio of uploads keeps subscribers checking in.',
-        income: { min: 12, max: 20 },
-        requirements: { videos: 4 }
+        income: { ...vlogQualityLevel1.income }, // Spec: docs/normalized_economy.json → assets.vlog.quality_curve[1]
+        requirements: { ...vlogQualityLevel1.requirements }
       },
       {
-        level: 2,
+        level: vlogQualityLevel2.level,
         name: 'Studio Shine',
         description: 'Crisp edits and pacing win over binge-watchers.',
-        income: { min: 20, max: 30 },
-        requirements: { videos: 10, edits: 4 }
+        income: { ...vlogQualityLevel2.income }, // Spec: docs/normalized_economy.json → assets.vlog.quality_curve[2]
+        requirements: { ...vlogQualityLevel2.requirements }
       },
       {
-        level: 3,
+        level: vlogQualityLevel3.level,
         name: 'Algorithm Darling',
         description: 'Hyped launches and collaborations unlock viral bursts.',
-        income: { min: 32, max: 40 },
-        requirements: { videos: 18, edits: 7, promotion: 5 }
+        income: { ...vlogQualityLevel3.income }, // Spec: docs/normalized_economy.json → assets.vlog.quality_curve[3]
+        requirements: { ...vlogQualityLevel3.requirements }
       },
       {
-        level: 4,
+        level: vlogQualityLevel4.level,
         name: 'Prime Time Partner',
         description: 'Sponsorship suites, editors, and co-hosts keep audiences glued.',
-        income: { min: 45, max: 58 },
-        requirements: { videos: 26, edits: 11, promotion: 9 }
+        income: { ...vlogQualityLevel4.income }, // Spec: docs/normalized_economy.json → assets.vlog.quality_curve[4]
+        requirements: { ...vlogQualityLevel4.requirements }
       },
       {
-        level: 5,
+        level: vlogQualityLevel5.level,
         name: 'Network Phenomenon',
         description: 'Streaming deals and global tours make every drop an event.',
-        income: { min: 62, max: 82 },
-        requirements: { videos: 38, edits: 16, promotion: 14 }
+        income: { ...vlogQualityLevel5.income }, // Spec: docs/normalized_economy.json → assets.vlog.quality_curve[5]
+        requirements: { ...vlogQualityLevel5.requirements }
       }
     ],
     actions: [

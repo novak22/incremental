@@ -1,3 +1,7 @@
+import { upgrades as upgradeConfigs } from '../../../data/economyConfig.js';
+
+const fiberInternetConfig = upgradeConfigs.fiberInternet; // Spec: docs/normalized_economy.json → upgrades.fiberInternet
+
 const network = [
   {
     id: 'fiberInternet',
@@ -6,7 +10,7 @@ const network = [
     description: 'Symmetrical gigabit connection with service-level guarantees for uploads.',
     category: 'tech',
     family: 'internet',
-    cost: 260,
+    cost: fiberInternetConfig.cost, // Spec: docs/normalized_economy.json → upgrades.fiberInternet.setup_cost
     effects: { maint_time_mult: 0.9 },
     affects: {
       assets: { tags: [ 'video', 'software' ] },

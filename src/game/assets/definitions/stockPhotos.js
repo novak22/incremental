@@ -1,6 +1,20 @@
 import { formatMoney } from '../../../core/helpers.js';
 import { createAssetDefinition } from '../../content/schema.js';
 import { triggerQualityActionEvents } from '../../events/index.js';
+import { assets as assetConfigs } from '../../data/economyConfig.js';
+
+const stockPhotosConfig = assetConfigs.stockPhotos; // Spec: docs/normalized_economy.json → assets.stockPhotos
+const stockPhotosSetup = stockPhotosConfig.setup; // Spec: docs/normalized_economy.json → assets.stockPhotos.schedule
+const stockPhotosMaintenance = stockPhotosConfig.maintenance; // Spec: docs/normalized_economy.json → assets.stockPhotos.maintenance_time
+const stockPhotosIncome = stockPhotosConfig.income; // Spec: docs/normalized_economy.json → assets.stockPhotos.base_income
+const [
+  stockPhotosQualityLevel0,
+  stockPhotosQualityLevel1,
+  stockPhotosQualityLevel2,
+  stockPhotosQualityLevel3,
+  stockPhotosQualityLevel4,
+  stockPhotosQualityLevel5
+] = stockPhotosConfig.qualityLevels; // Spec: docs/normalized_economy.json → assets.stockPhotos.quality_curve
 
 const stockPhotosDefinition = createAssetDefinition({
   id: 'stockPhotos',
@@ -9,8 +23,8 @@ const stockPhotosDefinition = createAssetDefinition({
   tag: { label: 'Creative', type: 'passive' },
   tags: ['photo', 'visual', 'content'],
   description: 'Stage props, shoot themed collections, and list them across marketplaces.',
-  setup: { days: 5, hoursPerDay: 4, cost: 560 },
-  maintenance: { hours: 0.8, cost: 10 },
+  setup: { ...stockPhotosSetup },
+  maintenance: { ...stockPhotosMaintenance },
   skills: {
     setup: [
       'visual',
@@ -18,7 +32,7 @@ const stockPhotosDefinition = createAssetDefinition({
       { id: 'promotion', weight: 0.4 }
     ]
   },
-  income: { base: 58, variance: 0.35, logType: 'passive' },
+  income: { ...stockPhotosIncome, logType: 'passive' },
   requirements: {
     equipment: ['camera', 'studio'],
     knowledge: ['photoLibrary']
@@ -32,46 +46,46 @@ const stockPhotosDefinition = createAssetDefinition({
     },
     levels: [
       {
-        level: 0,
+        level: stockPhotosQualityLevel0.level,
         name: 'Camera Roll Chaos',
         description: 'Unsorted shoots drip pennies.',
-        income: { min: 8, max: 14 },
-        requirements: {}
+        income: { ...stockPhotosQualityLevel0.income }, // Spec: docs/normalized_economy.json → assets.stockPhotos.quality_curve[0]
+        requirements: { ...stockPhotosQualityLevel0.requirements }
       },
       {
-        level: 1,
+        level: stockPhotosQualityLevel1.level,
         name: 'Curated Collections',
         description: 'Four themed shoots unlock daily bundles.',
-        income: { min: 18, max: 30 },
-        requirements: { shoots: 4 }
+        income: { ...stockPhotosQualityLevel1.income }, // Spec: docs/normalized_economy.json → assets.stockPhotos.quality_curve[1]
+        requirements: { ...stockPhotosQualityLevel1.requirements }
       },
       {
-        level: 2,
+        level: stockPhotosQualityLevel2.level,
         name: 'Marketplace Darling',
         description: 'Batch edits make downloads soar.',
-        income: { min: 34, max: 52 },
-        requirements: { shoots: 10, editing: 4 }
+        income: { ...stockPhotosQualityLevel2.income }, // Spec: docs/normalized_economy.json → assets.stockPhotos.quality_curve[2]
+        requirements: { ...stockPhotosQualityLevel2.requirements }
       },
       {
-        level: 3,
+        level: stockPhotosQualityLevel3.level,
         name: 'Brand Staple',
         description: 'Marketing funnels keep cash flowing.',
-        income: { min: 54, max: 78 },
-        requirements: { shoots: 16, editing: 7, marketing: 5 }
+        income: { ...stockPhotosQualityLevel3.income }, // Spec: docs/normalized_economy.json → assets.stockPhotos.quality_curve[3]
+        requirements: { ...stockPhotosQualityLevel3.requirements }
       },
       {
-        level: 4,
+        level: stockPhotosQualityLevel4.level,
         name: 'Agency Mainstay',
         description: 'Every campaign brief leans on your polished libraries.',
-        income: { min: 80, max: 108 },
-        requirements: { shoots: 24, editing: 11, marketing: 9 }
+        income: { ...stockPhotosQualityLevel4.income }, // Spec: docs/normalized_economy.json → assets.stockPhotos.quality_curve[4]
+        requirements: { ...stockPhotosQualityLevel4.requirements }
       },
       {
-        level: 5,
+        level: stockPhotosQualityLevel5.level,
         name: 'Global Brand Kit',
         description: 'Exclusive partnerships and licensing deals rain down premium royalties.',
-        income: { min: 112, max: 150 },
-        requirements: { shoots: 36, editing: 16, marketing: 14 }
+        income: { ...stockPhotosQualityLevel5.income }, // Spec: docs/normalized_economy.json → assets.stockPhotos.quality_curve[5]
+        requirements: { ...stockPhotosQualityLevel5.requirements }
       }
     ],
     actions: [

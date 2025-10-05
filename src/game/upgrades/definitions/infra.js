@@ -1,3 +1,12 @@
+import { upgrades as upgradeConfigs } from '../../data/economyConfig.js';
+
+const serverRackConfig = upgradeConfigs.serverRack; // Spec: docs/normalized_economy.json → upgrades.serverRack
+const fulfillmentAutomationConfig = upgradeConfigs.fulfillmentAutomation; // Spec: docs/normalized_economy.json → upgrades.fulfillmentAutomation
+const serverClusterConfig = upgradeConfigs.serverCluster; // Spec: docs/normalized_economy.json → upgrades.serverCluster
+const globalSupplyMeshConfig = upgradeConfigs.globalSupplyMesh; // Spec: docs/normalized_economy.json → upgrades.globalSupplyMesh
+const serverEdgeConfig = upgradeConfigs.serverEdge; // Spec: docs/normalized_economy.json → upgrades.serverEdge
+const whiteLabelAllianceConfig = upgradeConfigs.whiteLabelAlliance; // Spec: docs/normalized_economy.json → upgrades.whiteLabelAlliance
+
 const infra = [
   {
     id: 'assistant',
@@ -18,7 +27,7 @@ const infra = [
     description: 'Spin up a reliable rack with monitoring so prototypes stay online.',
     category: 'infra',
     family: 'cloud_compute',
-    cost: 650,
+    cost: serverRackConfig.cost, // Spec: docs/normalized_economy.json → upgrades.serverRack.setup_cost
     unlocks: 'Stable environments for advanced products',
     effects: { setup_time_mult: 0.95 },
     affects: {
@@ -46,7 +55,7 @@ const infra = [
     description: 'Tie together your winning storefronts with automated pick, pack, and ship magic.',
     category: 'infra',
     family: 'automation',
-    cost: 780,
+    cost: fulfillmentAutomationConfig.cost, // Spec: docs/normalized_economy.json → upgrades.fulfillmentAutomation.setup_cost
     requires: [
       { type: 'asset', id: 'dropshipping', count: 2, active: true },
       {
@@ -82,8 +91,8 @@ const infra = [
     description: 'Deploy auto-scaling containers and CI pipelines so your SaaS survives launch day.',
     category: 'infra',
     family: 'cloud_compute',
-    cost: 1150,
-    requires: [ 'serverRack' ],
+    cost: serverClusterConfig.cost, // Spec: docs/normalized_economy.json → upgrades.serverCluster.setup_cost
+    requires: serverClusterConfig.requires, // Spec: docs/normalized_economy.json → upgrades.serverCluster.requirements
     unlocks: 'SaaS deployments',
     effects: { payout_mult: 1.2, quality_progress_mult: 1.5 },
     affects: {
@@ -110,7 +119,7 @@ const infra = [
     description: 'Forge data-sharing deals with worldwide 3PL partners so inventory never sleeps.',
     category: 'infra',
     family: 'automation',
-    cost: 1150,
+    cost: globalSupplyMeshConfig.cost, // Spec: docs/normalized_economy.json → upgrades.globalSupplyMesh.setup_cost
     requires: [
       'fulfillmentAutomation',
       { type: 'asset', id: 'dropshipping', count: 3, active: true },
@@ -155,8 +164,8 @@ const infra = [
     description: 'Distribute workloads across edge nodes for instant response times and uptime bragging rights.',
     category: 'infra',
     family: 'edge_network',
-    cost: 1450,
-    requires: [ 'serverCluster' ],
+    cost: serverEdgeConfig.cost, // Spec: docs/normalized_economy.json → upgrades.serverEdge.setup_cost
+    requires: serverEdgeConfig.requires, // Spec: docs/normalized_economy.json → upgrades.serverEdge.requirements
     boosts: 'SaaS payouts + stability progress surges',
     effects: {
       payout_mult: 1.35,
@@ -188,7 +197,7 @@ const infra = [
     description: 'Partner with boutique studios to bundle your galleries with each storefront launch.',
     category: 'infra',
     family: 'commerce_network',
-    cost: 1500,
+    cost: whiteLabelAllianceConfig.cost, // Spec: docs/normalized_economy.json → upgrades.whiteLabelAlliance.setup_cost
     requires: [
       'globalSupplyMesh',
       { type: 'asset', id: 'dropshipping', count: 4, active: true },

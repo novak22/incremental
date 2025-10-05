@@ -1,6 +1,20 @@
 import { formatMoney } from '../../../core/helpers.js';
 import { createAssetDefinition } from '../../content/schema.js';
 import { triggerQualityActionEvents } from '../../events/index.js';
+import { assets as assetConfigs } from '../../data/economyConfig.js';
+
+const dropshippingConfig = assetConfigs.dropshipping; // Spec: docs/normalized_economy.json → assets.dropshipping
+const dropshippingSetup = dropshippingConfig.setup; // Spec: docs/normalized_economy.json → assets.dropshipping.schedule
+const dropshippingMaintenance = dropshippingConfig.maintenance; // Spec: docs/normalized_economy.json → assets.dropshipping.maintenance_time
+const dropshippingIncome = dropshippingConfig.income; // Spec: docs/normalized_economy.json → assets.dropshipping.base_income
+const [
+  dropshippingQualityLevel0,
+  dropshippingQualityLevel1,
+  dropshippingQualityLevel2,
+  dropshippingQualityLevel3,
+  dropshippingQualityLevel4,
+  dropshippingQualityLevel5
+] = dropshippingConfig.qualityLevels; // Spec: docs/normalized_economy.json → assets.dropshipping.quality_curve
 
 const dropshippingDefinition = createAssetDefinition({
   id: 'dropshipping',
@@ -9,8 +23,8 @@ const dropshippingDefinition = createAssetDefinition({
   tag: { label: 'Commerce', type: 'passive' },
   tags: ['commerce', 'ecommerce', 'fulfillment'],
   description: 'Prototype products, source suppliers, and automate fulfillment funnels.',
-  setup: { days: 6, hoursPerDay: 4, cost: 720 },
-  maintenance: { hours: 1.1, cost: 12 },
+  setup: { ...dropshippingSetup },
+  maintenance: { ...dropshippingMaintenance },
   skills: {
     setup: [
       'commerce',
@@ -18,11 +32,8 @@ const dropshippingDefinition = createAssetDefinition({
       { id: 'promotion', weight: 0.5 }
     ]
   },
-  income: { base: 84, variance: 0.35, logType: 'passive' },
-  requirements: {
-    knowledge: ['ecomPlaybook'],
-    experience: [{ assetId: 'blog', count: 2 }]
-  },
+  income: { ...dropshippingIncome, logType: 'passive' },
+  requirements: { ...dropshippingConfig.requirements },
   quality: {
     summary: 'Research products, optimize listings, and scale advertising to grow a dependable e-commerce machine.',
     tracks: {
@@ -32,46 +43,46 @@ const dropshippingDefinition = createAssetDefinition({
     },
     levels: [
       {
-        level: 0,
+        level: dropshippingQualityLevel0.level,
         name: 'Prototype Pile',
         description: 'Inconsistent suppliers mean sporadic payouts.',
-        income: { min: 12, max: 20 },
-        requirements: {}
+        income: { ...dropshippingQualityLevel0.income }, // Spec: docs/normalized_economy.json → assets.dropshipping.quality_curve[0]
+        requirements: { ...dropshippingQualityLevel0.requirements }
       },
       {
-        level: 1,
+        level: dropshippingQualityLevel1.level,
         name: 'Optimized Listings',
         description: 'Top products have polished listings and reviews.',
-        income: { min: 24, max: 38 },
-        requirements: { research: 4 }
+        income: { ...dropshippingQualityLevel1.income }, // Spec: docs/normalized_economy.json → assets.dropshipping.quality_curve[1]
+        requirements: { ...dropshippingQualityLevel1.requirements }
       },
       {
-        level: 2,
+        level: dropshippingQualityLevel2.level,
         name: 'Automation Groove',
         description: 'Fulfillment and ad funnels make sales steady.',
-        income: { min: 44, max: 62 },
-        requirements: { research: 11, listing: 5 }
+        income: { ...dropshippingQualityLevel2.income }, // Spec: docs/normalized_economy.json → assets.dropshipping.quality_curve[2]
+        requirements: { ...dropshippingQualityLevel2.requirements }
       },
       {
-        level: 3,
+        level: dropshippingQualityLevel3.level,
         name: 'Scaled Flywheel',
         description: 'Paid campaigns bring consistent high-ticket orders.',
-        income: { min: 68, max: 92 },
-        requirements: { research: 18, listing: 8, ads: 7 }
+        income: { ...dropshippingQualityLevel3.income }, // Spec: docs/normalized_economy.json → assets.dropshipping.quality_curve[3]
+        requirements: { ...dropshippingQualityLevel3.requirements }
       },
       {
-        level: 4,
+        level: dropshippingQualityLevel4.level,
         name: 'Omnichannel Engine',
         description: 'Automation spans every marketplace and upsell funnel you run.',
-        income: { min: 95, max: 128 },
-        requirements: { research: 26, listing: 12, ads: 10 }
+        income: { ...dropshippingQualityLevel4.income }, // Spec: docs/normalized_economy.json → assets.dropshipping.quality_curve[4]
+        requirements: { ...dropshippingQualityLevel4.requirements }
       },
       {
-        level: 5,
+        level: dropshippingQualityLevel5.level,
         name: 'Global Logistics Titan',
         description: 'Worldwide warehouses and brand loyalty make daily profits thunder.',
-        income: { min: 130, max: 176 },
-        requirements: { research: 38, listing: 18, ads: 16 }
+        income: { ...dropshippingQualityLevel5.income }, // Spec: docs/normalized_economy.json → assets.dropshipping.quality_curve[5]
+        requirements: { ...dropshippingQualityLevel5.requirements }
       }
     ],
     actions: [

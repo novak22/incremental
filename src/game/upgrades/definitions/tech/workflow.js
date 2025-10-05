@@ -1,3 +1,10 @@
+import { upgrades as upgradeConfigs } from '../../../data/economyConfig.js';
+
+const editorialPipelineConfig = upgradeConfigs.editorialPipeline; // Spec: docs/normalized_economy.json → upgrades.editorialPipeline
+const syndicationSuiteConfig = upgradeConfigs.syndicationSuite; // Spec: docs/normalized_economy.json → upgrades.syndicationSuite
+const immersiveStoryWorldsConfig = upgradeConfigs.immersiveStoryWorlds; // Spec: docs/normalized_economy.json → upgrades.immersiveStoryWorlds
+const courseConfig = upgradeConfigs.course; // Spec: docs/normalized_economy.json → upgrades.course
+
 const workflow = [
   {
     id: 'editorialPipeline',
@@ -6,7 +13,7 @@ const workflow = [
     description: 'Stand up pro-grade editorial calendars so every blog post ships polished and on schedule.',
     category: 'tech',
     family: 'workflow',
-    cost: 360,
+    cost: editorialPipelineConfig.cost, // Spec: docs/normalized_economy.json → upgrades.editorialPipeline.setup_cost
     requires: [
       'course',
       { type: 'asset', id: 'blog', active: true, count: 1 },
@@ -60,7 +67,7 @@ const workflow = [
     description: 'Spin up partner feeds, guest slots, and cross-promotions to syndicate your best work everywhere.',
     category: 'tech',
     family: 'workflow',
-    cost: 720,
+    cost: syndicationSuiteConfig.cost, // Spec: docs/normalized_economy.json → upgrades.syndicationSuite.setup_cost
     requires: [
       'editorialPipeline',
       { type: 'asset', id: 'blog', active: true, count: 1 },
@@ -125,7 +132,7 @@ const workflow = [
     description: 'Blend blogs, books, and vlogs into one living universe with AR teasers and fan quests.',
     category: 'tech',
     family: 'workflow',
-    cost: 1080,
+    cost: immersiveStoryWorldsConfig.cost, // Spec: docs/normalized_economy.json → upgrades.immersiveStoryWorlds.setup_cost
     requires: [
       'syndicationSuite',
       { type: 'asset', id: 'blog', active: true, count: 1 },
@@ -195,7 +202,7 @@ const workflow = [
     description: 'Unlocks smarter blogging tools, boosting blog income by +50%.',
     category: 'tech',
     family: 'workflow',
-    cost: 260,
+    cost: courseConfig.cost, // Spec: docs/normalized_economy.json → upgrades.course.setup_cost
     requires: [
       {
         type: 'asset',

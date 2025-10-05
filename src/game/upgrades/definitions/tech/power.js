@@ -1,3 +1,7 @@
+import { upgrades as upgradeConfigs } from '../../../data/economyConfig.js';
+
+const backupPowerArrayConfig = upgradeConfigs.backupPowerArray; // Spec: docs/normalized_economy.json → upgrades.backupPowerArray
+
 const power = [
   {
     id: 'backupPowerArray',
@@ -6,7 +10,7 @@ const power = [
     description: 'Battery backups and surge protection that keep the studio live during outages.',
     category: 'tech',
     family: 'power_backup',
-    cost: 260,
+    cost: backupPowerArrayConfig.cost, // Spec: docs/normalized_economy.json → upgrades.backupPowerArray.setup_cost
     effects: { maint_time_mult: 0.95 },
     affects: {
       assets: { tags: [ 'desktop_work', 'video' ] },
