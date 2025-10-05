@@ -40,8 +40,9 @@ test('renderTodo falls back to the current state when none is provided', async (
 
     assert.ok(capturedModel, 'todo widget should receive a model to render');
     assert.ok(Array.isArray(capturedModel.entries), 'model should include queue entries');
-    const includesFreelance = capturedModel.entries.some(entry => entry?.id === 'freelance');
-    assert.ok(includesFreelance, 'queue should include the freelance hustle when no state is supplied');
+    const guidanceEntry = capturedModel.entries.find(entry => entry?.id === 'hustles:no-offers');
+    assert.ok(guidanceEntry, 'queue should include the no-offers guidance when no state is supplied');
+    assert.equal(guidanceEntry.buttonLabel, 'Check back tomorrow');
   } finally {
     todoWidget.init = originalInit;
     todoWidget.render = originalRender;

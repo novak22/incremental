@@ -1,7 +1,7 @@
 import { formatHours, formatMoney } from '../../core/helpers.js';
 import { clampNumber } from './formatters.js';
 import { getAssetState } from '../../core/state.js';
-import { getAssets, getActionDefinition, getHustles } from '../../game/registryService.js';
+import { getAssets, getActionDefinition } from '../../game/registryService.js';
 import {
   canPerformQualityAction,
   getQualityActions,
@@ -190,52 +190,24 @@ export function buildQuickActions(state) {
   });
 
   if (!items.length) {
-    const definitions = getHustles() || [];
-    definitions.forEach(definition => {
-      const action = definition.action;
-      if (!action || typeof action.onClick !== 'function') {
-        return;
-      }
-      const disabled = typeof action.disabled === 'function'
-        ? action.disabled(workingState)
-        : Boolean(action.disabled);
-      if (disabled) {
-        return;
-      }
-      const hours = clampNumber(action.timeCost ?? definition.time ?? 0);
-      const payout = clampNumber(definition.payout?.amount ?? action.payout ?? 0);
-      const roi = hours > 0 ? payout / Math.max(hours, 0.0001) : payout;
-      const durationText = formatHours(hours);
-      const metaParts = [];
-      if (payout > 0) {
-        metaParts.push(`$${formatMoney(payout)}`);
-      }
-      if (hours > 0) {
-        metaParts.push(durationText);
-      }
-      const meta = metaParts.length ? metaParts.join(' • ') : durationText;
-      const buttonLabel = typeof action.label === 'function'
-        ? action.label({ state: workingState, definition })
-        : action.label || 'Queue';
-
-      items.push({
-        id: definition.id,
-        label: definition.name || definition.id,
-        primaryLabel: buttonLabel,
-        description: definition.description || '',
-        onClick: () => action.onClick(),
-        roi,
-        timeCost: hours,
-        payout,
-        payoutText: payout > 0 ? `$${formatMoney(payout)}` : '',
-        durationHours: hours,
-        durationText,
-        meta,
-        repeatable: true,
-        remainingRuns: null,
-        remainingDays: null,
-        schedule: definition.payout?.schedule || 'onCompletion'
-      });
+    const guidance = 'Fresh leads roll in with tomorrow\'s market refresh.';
+    items.push({
+      id: 'hustles:no-offers',
+      label: 'No hustle offers available',
+      primaryLabel: 'Check back tomorrow',
+      description: guidance,
+      onClick: null,
+      roi: 0,
+      timeCost: 0,
+      payout: 0,
+      payoutText: '',
+      durationHours: 0,
+      durationText: '',
+      meta: guidance,
+      repeatable: false,
+      remainingRuns: 0,
+      remainingDays: null,
+      schedule: 'onCompletion'
     });
   }
 

@@ -394,6 +394,8 @@ export function createInstantHustle(config) {
       checkDayEnd();
     }
   };
+  definition.action.isLegacyInstant = true;
+  definition.action.hiddenFromMarket = true;
 
   definition.metricIds = {
     time: metadata.metrics.time?.key || null,

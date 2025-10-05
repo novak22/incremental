@@ -43,7 +43,19 @@ test('buildHustleModels mirrors availability filters', () => {
     describeRequirements: () => [],
     getUsage: () => null,
     formatHours: value => `${value}h`,
-    formatMoney: value => value.toFixed(0)
+    formatMoney: value => value.toFixed(0),
+    getOffers: () => [{
+      id: 'offer-available',
+      templateId: 'hustle-available',
+      definitionId: 'hustle-available',
+      availableOnDay: 1,
+      expiresOnDay: 1,
+      metadata: {},
+      variant: { label: 'Available Hustle' }
+    }],
+    getAcceptedOffers: () => [],
+    collectCommitments: () => [],
+    acceptOffer: () => {}
   });
 
   const available = models.find(model => model.id === 'hustle-available');
