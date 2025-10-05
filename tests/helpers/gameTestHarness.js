@@ -25,12 +25,14 @@ export async function getGameTestHarness() {
   const elementRegistryModule = await import('../../src/ui/elements/registry.js');
   const registryService = await import('../../src/game/registryService.js');
   const { ensureRegistryReady } = await import('../../src/game/registryBootstrap.js');
+  const eventsModule = await import('../../src/game/events/index.js');
 
   registryService.resetRegistry();
   ensureRegistryReady();
 
   const resetState = () => {
     const nextState = stateModule.initializeState(stateModule.buildDefaultState());
+    eventsModule.maybeSpawnNicheEvents({ state: nextState, day: nextState.day || 1 });
     const logNodes = elementRegistryModule.getElement('browserNotifications');
     if (logNodes?.badge) {
       logNodes.badge.textContent = '';
@@ -54,6 +56,7 @@ export async function getGameTestHarness() {
     logModule,
     storageModule,
     offlineModule,
+    eventsModule,
     resetState
   };
 

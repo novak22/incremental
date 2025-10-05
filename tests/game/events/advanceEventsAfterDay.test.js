@@ -66,9 +66,10 @@ test('advanceEventsAfterDay logs and removes finished asset events', () => {
     );
     assert.equal(hasAssetEvent, false, 'event should be removed once finished');
     assert.equal(ended.length, 1, 'advanceEventsAfterDay should report ended events');
+    assert.ok(state.log.length > logCountBefore, 'a wrap-up log entry should increase log count');
+    const newMessages = state.log.slice(logCountBefore).map(entry => entry?.message || '');
     assert.ok(
-      state.log.length > logCountBefore &&
-        state.log[state.log.length - 1].message.includes('Payouts glide back toward normal.'),
+      newMessages.some(message => message.includes('Payouts glide back toward normal.')),
       'a wrap-up log entry should be recorded'
     );
   } finally {

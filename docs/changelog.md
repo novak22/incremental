@@ -19,6 +19,7 @@
 - Quality actions across passive assets can now spark upbeat celebration events that grant short-lived payout boosts.
 - Niche popularity now syncs with active trend events, keeping multipliers, history, and analytics aligned across saves.
 - Niche trend events now stretch across 5–10 days, building from gentle nudges to pronounced peaks (or dips) so players can react to the swelling momentum.
+- Niche trend rerolls now guarantee every niche is always riding exactly one weighted event, including immediately after loads and daily advances.
 
 ## Recent Highlights
 - Passive assets gained Quality 4–5 payout milestones with clearer upkeep cues.
