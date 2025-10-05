@@ -12,8 +12,17 @@ const hustlesModule = await import('../src/game/hustles.js');
 const upgradesModule = await import('../src/game/upgrades.js');
 const requirementsModule = await import('../src/game/requirements.js');
 const actionsProgressModule = await import('../src/game/actions/progress.js');
+const lifecycleModule = await import('../src/game/lifecycle.js');
+const hustleMarketSlice = await import('../src/core/state/slices/hustleMarket.js');
 
-const { buildDefaultState, initializeState, getState, getAssetState, getUpgradeState } = stateModule;
+const {
+  buildDefaultState,
+  initializeState,
+  getState,
+  getAssetState,
+  getUpgradeState,
+  getActionState
+} = stateModule;
 const { getAssetDefinition, getActionDefinition } = registryModule;
 const { createAssetInstance } = assetStateModule;
 const { allocateAssetMaintenance, closeOutDay, ASSETS, getIncomeRangeForDisplay } = assetsModule;
@@ -27,6 +36,8 @@ const {
   getKnowledgeProgress
 } = requirementsModule;
 const { advanceActionInstance } = actionsProgressModule;
+const { endDay } = lifecycleModule;
+const { ensureHustleMarketState } = hustleMarketSlice;
 const registryService = await import('../src/game/registryService.js');
 const { ensureRegistryReady } = await import('../src/game/registryBootstrap.js');
 
@@ -242,4 +253,84 @@ test('knowledge tracks advance after manual study logs', () => {
 
   advanceKnowledgeTracks();
   assert.equal(updated.daysCompleted, trackDef.days, 'extra cycles without studying should not change completion');
+});
+
+test('endDay resets action counters even when legacy hustle map is absent', () => {
+  const actionDefinition = ACTIONS.find(action => action.id === 'freelance');
+  assert.ok(actionDefinition, 'expected to find the freelance action definition');
+
+  const actionState = getActionState(actionDefinition.id);
+  actionState.runsToday = 3;
+  actionState.lastRunDay = state.day;
+
+  delete state.hustles;
+
+  const startingDay = state.day;
+  endDay(false);
+
+  const updated = getActionState(actionDefinition.id);
+  assert.equal(updated.runsToday, 0, 'action counters should reset after ending the day');
+  assert.equal(updated.lastRunDay, state.day, 'lastRunDay should advance to the new day');
+  assert.equal(state.day, startingDay + 1, 'day should increment when ending the day');
+});
+
+test('ensureHustleMarketState prunes expired offers and accepted entries', () => {
+  const now = Date.now();
+  state.day = 5;
+  const today = state.day;
+
+  state.hustleMarket.offers = [
+    {
+      id: 'expired-offer',
+      templateId: 'freelance',
+      definitionId: 'freelance',
+      rolledOnDay: today - 4,
+      availableOnDay: today - 4,
+      expiresOnDay: today - 2,
+      rolledAt: now
+    },
+    {
+      id: 'active-offer',
+      templateId: 'freelance',
+      definitionId: 'freelance',
+      rolledOnDay: today,
+      availableOnDay: today,
+      expiresOnDay: today + 1,
+      rolledAt: now
+    }
+  ];
+
+  state.hustleMarket.accepted = [
+    {
+      id: 'accepted-expired',
+      offerId: 'expired-offer',
+      templateId: 'freelance',
+      definitionId: 'freelance',
+      acceptedOnDay: today - 3,
+      deadlineDay: today - 2,
+      hoursRequired: 1,
+      metadata: {}
+    },
+    {
+      id: 'accepted-active',
+      offerId: 'active-offer',
+      templateId: 'freelance',
+      definitionId: 'freelance',
+      acceptedOnDay: today,
+      deadlineDay: today + 1,
+      hoursRequired: 1,
+      metadata: {}
+    }
+  ];
+
+  ensureHustleMarketState(state, { fallbackDay: today });
+
+  assert.equal(state.hustleMarket.offers.length, 1, 'expired offers should be removed from the market');
+  assert.equal(state.hustleMarket.offers[0].id, 'active-offer', 'active offers should remain available');
+  assert.equal(state.hustleMarket.accepted.length, 1, 'accepted entries past their deadline should be pruned');
+  assert.equal(
+    state.hustleMarket.accepted[0].offerId,
+    'active-offer',
+    'only active accepted entries should remain after pruning'
+  );
 });
