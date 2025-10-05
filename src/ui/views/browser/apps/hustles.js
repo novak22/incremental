@@ -227,10 +227,16 @@ function createHustleCard(definition, model) {
     queueButton.className = 'browser-card__button browser-card__button--primary';
     queueButton.textContent = model.action.label;
     queueButton.disabled = Boolean(model.action.disabled);
-    queueButton.addEventListener('click', () => {
-      if (queueButton.disabled) return;
-      definition.action.onClick?.();
-    });
+    const handleClick =
+      typeof model.action?.onClick === 'function'
+        ? model.action.onClick
+        : definition.action.onClick;
+    if (typeof handleClick === 'function') {
+      queueButton.addEventListener('click', () => {
+        if (queueButton.disabled) return;
+        handleClick();
+      });
+    }
     actions.appendChild(queueButton);
   }
   card.appendChild(actions);
