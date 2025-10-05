@@ -57,8 +57,8 @@ export default function renderIncomePanel({ instance, formatCurrency, formatNetC
   panel.appendChild(stats);
 
   const upkeepMessage = document.createElement('p');
-  const upkeepParts = instance.maintenance?.parts || [];
-  const upkeepSummary = upkeepParts.length ? upkeepParts.join(' • ') : 'No upkeep';
+  const maintenance = instance.maintenance || {};
+  const upkeepSummary = maintenance.hasUpkeep ? maintenance.text : 'No upkeep';
   if (instance.status?.id === 'active') {
     if (instance.maintenanceFunded) {
       upkeepMessage.className = 'blogpress-panel__hint';

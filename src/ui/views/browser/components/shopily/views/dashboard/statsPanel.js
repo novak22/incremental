@@ -1,5 +1,3 @@
-import { ensureArray } from '../../../../../../../core/helpers.js';
-
 export default function createStatsSection(instance, helpers = {}) {
   const {
     formatCurrency = value => String(value ?? ''),
@@ -35,10 +33,11 @@ export default function createStatsSection(instance, helpers = {}) {
     warning.textContent = 'Maintenance unfunded — cover daily upkeep to avoid shutdowns.';
     fragment.appendChild(warning);
   }
-  if (ensureArray(instance.maintenance?.parts).length) {
+  const maintenance = instance.maintenance || {};
+  if (maintenance.hasUpkeep && maintenance.text) {
     const upkeep = document.createElement('p');
     upkeep.className = 'shopily-panel__note';
-    upkeep.textContent = `Daily upkeep: ${instance.maintenance.parts.join(' • ')}`;
+    upkeep.textContent = `Daily upkeep: ${maintenance.text}`;
     fragment.appendChild(upkeep);
   }
   return fragment;

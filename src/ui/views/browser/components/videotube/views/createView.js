@@ -23,7 +23,8 @@ export function createCreateView(options = {}) {
 
     const upkeep = document.createElement('p');
     upkeep.className = 'videotube-panel__note';
-    upkeep.textContent = `Upkeep: ${formatHours(maintenance.hours || 0)} • ${formatCurrency(maintenance.cost || 0)} daily`;
+    const upkeepSummary = maintenance.hasUpkeep ? maintenance.text : 'No upkeep required';
+    upkeep.textContent = `Upkeep: ${upkeepSummary}`;
     card.appendChild(upkeep);
 
     const form = document.createElement('form');

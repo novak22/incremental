@@ -68,10 +68,13 @@ function mergeQuickActionIds(primary = [], fallback = []) {
 function renderUpkeepCell(instance) {
   const wrapper = document.createElement('div');
   wrapper.className = 'digishelf-upkeep';
-  const maintenance = instance.maintenance;
-  if (maintenance?.parts?.length) {
+  const maintenance = instance.maintenance || {};
+  const label = maintenance.detailText || maintenance.text || (
+    Array.isArray(maintenance.parts) ? maintenance.parts.join(' + ') : ''
+  );
+  if (label) {
     const value = document.createElement('strong');
-    value.textContent = maintenance.parts.join(' + ');
+    value.textContent = label;
     wrapper.appendChild(value);
   } else {
     const none = document.createElement('span');
