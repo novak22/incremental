@@ -1,3 +1,8 @@
+import { upgrades as upgradeConfigs } from '../../data/economyConfig.js';
+
+const studioConfig = upgradeConfigs.studio; // Spec: docs/normalized_economy.json → upgrades.studio
+const studioExpansionConfig = upgradeConfigs.studioExpansion; // Spec: docs/normalized_economy.json → upgrades.studioExpansion
+
 const house = [
   {
     id: 'studio',
@@ -7,7 +12,7 @@ const house = [
     category: 'house',
     family: 'lighting',
     exclusivityGroup: 'house:lighting',
-    cost: 220,
+    cost: studioConfig.cost, // Spec: docs/normalized_economy.json → upgrades.studio.setup_cost
     unlocks: 'Stock Photo Galleries',
     skills: [ 'visual' ],
     effects: { maint_time_mult: 0.9 },
@@ -30,8 +35,8 @@ const house = [
     category: 'house',
     family: 'studio',
     exclusivityGroup: 'house:studio',
-    cost: 540,
-    requires: [ 'studio' ],
+    cost: studioExpansionConfig.cost, // Spec: docs/normalized_economy.json → upgrades.studioExpansion.setup_cost
+    requires: studioExpansionConfig.requires, // Spec: docs/normalized_economy.json → upgrades.studioExpansion.requirements
     boosts: 'Stock photo payouts + faster shoot progress',
     effects: {
       setup_time_mult: 0.85,

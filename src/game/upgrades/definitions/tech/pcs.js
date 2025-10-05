@@ -1,3 +1,9 @@
+import { upgrades as upgradeConfigs } from '../../../data/economyConfig.js';
+
+const studioLaptopConfig = upgradeConfigs.studioLaptop; // Spec: docs/normalized_economy.json → upgrades.studioLaptop
+const editingWorkstationConfig = upgradeConfigs.editingWorkstation; // Spec: docs/normalized_economy.json → upgrades.editingWorkstation
+const quantumRigConfig = upgradeConfigs.quantumRig; // Spec: docs/normalized_economy.json → upgrades.quantumRig
+
 const pcs = [
   {
     id: 'studioLaptop',
@@ -7,7 +13,7 @@ const pcs = [
     category: 'tech',
     family: 'pc',
     exclusivityGroup: 'tech:pc',
-    cost: 280,
+    cost: studioLaptopConfig.cost, // Spec: docs/normalized_economy.json → upgrades.studioLaptop.setup_cost
     effects: { setup_time_mult: 0.92 },
     affects: {
       assets: { tags: [ 'desktop_work' ] },
@@ -26,8 +32,8 @@ const pcs = [
     category: 'tech',
     family: 'pc',
     exclusivityGroup: 'tech:pc',
-    cost: 640,
-    requires: [ 'studioLaptop' ],
+    cost: editingWorkstationConfig.cost, // Spec: docs/normalized_economy.json → upgrades.editingWorkstation.setup_cost
+    requires: editingWorkstationConfig.requires, // Spec: docs/normalized_economy.json → upgrades.editingWorkstation.requirements
     effects: { setup_time_mult: 0.85, maint_time_mult: 0.9 },
     affects: {
       assets: { tags: [ 'desktop_work', 'video' ] },
@@ -47,8 +53,8 @@ const pcs = [
     category: 'tech',
     family: 'pc',
     exclusivityGroup: 'tech:pc',
-    cost: 1280,
-    requires: [ 'editingWorkstation' ],
+    cost: quantumRigConfig.cost, // Spec: docs/normalized_economy.json → upgrades.quantumRig.setup_cost
+    requires: quantumRigConfig.requires, // Spec: docs/normalized_economy.json → upgrades.quantumRig.requirements
     effects: { payout_mult: 1.12, maint_time_mult: 0.85 },
     affects: {
       assets: { tags: [ 'desktop_work', 'software', 'video' ] },

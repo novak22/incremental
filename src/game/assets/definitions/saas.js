@@ -1,6 +1,20 @@
 import { formatMoney } from '../../../core/helpers.js';
 import { createAssetDefinition } from '../../content/schema.js';
 import { triggerQualityActionEvents } from '../../events/index.js';
+import { assets as assetConfigs } from '../../data/economyConfig.js';
+
+const saasConfig = assetConfigs.saas; // Spec: docs/normalized_economy.json → assets.saas
+const saasSetup = saasConfig.setup; // Spec: docs/normalized_economy.json → assets.saas.schedule
+const saasMaintenance = saasConfig.maintenance; // Spec: docs/normalized_economy.json → assets.saas.maintenance_time
+const saasIncome = saasConfig.income; // Spec: docs/normalized_economy.json → assets.saas.base_income
+const [
+  saasQualityLevel0,
+  saasQualityLevel1,
+  saasQualityLevel2,
+  saasQualityLevel3,
+  saasQualityLevel4,
+  saasQualityLevel5
+] = saasConfig.qualityLevels; // Spec: docs/normalized_economy.json → assets.saas.quality_curve
 
 const saasDefinition = createAssetDefinition({
   id: 'saas',
@@ -9,8 +23,8 @@ const saasDefinition = createAssetDefinition({
   tag: { label: 'Tech', type: 'passive' },
   tags: ['software', 'tech', 'product'],
   description: 'Design lean software services, onboard early users, and ship updates that keep churn low.',
-  setup: { days: 8, hoursPerDay: 4, cost: 960 },
-  maintenance: { hours: 2.2, cost: 24 },
+  setup: { ...saasSetup },
+  maintenance: { ...saasMaintenance },
   skills: {
     setup: [
       'software',
@@ -18,15 +32,8 @@ const saasDefinition = createAssetDefinition({
       { id: 'promotion', weight: 0.5 }
     ]
   },
-  income: { base: 108, variance: 0.4, logType: 'passive' },
-  requirements: {
-    knowledge: ['automationCourse'],
-    equipment: ['serverCluster'],
-    experience: [
-      { assetId: 'dropshipping', count: 1 },
-      { assetId: 'ebook', count: 1 }
-    ]
-  },
+  income: { ...saasIncome, logType: 'passive' },
+  requirements: { ...saasConfig.requirements },
   quality: {
     summary: 'Build features, squash bugs, and fan out edge nodes to transform prototypes into global revenue engines.',
     tracks: {
@@ -37,46 +44,46 @@ const saasDefinition = createAssetDefinition({
     },
     levels: [
       {
-        level: 0,
+        level: saasQualityLevel0.level,
         name: 'Beta Sandbox',
         description: 'Tiny user base and messy bugs limit revenue.',
-        income: { min: 20, max: 32 },
-        requirements: {}
+        income: { ...saasQualityLevel0.income }, // Spec: docs/normalized_economy.json → assets.saas.quality_curve[0]
+        requirements: { ...saasQualityLevel0.requirements }
       },
       {
-        level: 1,
+        level: saasQualityLevel1.level,
         name: 'Early Traction',
         description: 'Feature roadmap clicks with early adopters.',
-        income: { min: 32, max: 48 },
-        requirements: { features: 4 }
+        income: { ...saasQualityLevel1.income }, // Spec: docs/normalized_economy.json → assets.saas.quality_curve[1]
+        requirements: { ...saasQualityLevel1.requirements }
       },
       {
-        level: 2,
+        level: saasQualityLevel2.level,
         name: 'Reliable Service',
         description: 'Reliability boosts and updates reduce churn.',
-        income: { min: 54, max: 74 },
-        requirements: { features: 12, stability: 5 }
+        income: { ...saasQualityLevel2.income }, // Spec: docs/normalized_economy.json → assets.saas.quality_curve[2]
+        requirements: { ...saasQualityLevel2.requirements }
       },
       {
-        level: 3,
+        level: saasQualityLevel3.level,
         name: 'Scaling Flywheel',
         description: 'Marketing pushes and infrastructure unlock bigger accounts.',
-        income: { min: 84, max: 120 },
-        requirements: { features: 24, stability: 8, marketing: 6 }
+        income: { ...saasQualityLevel3.income }, // Spec: docs/normalized_economy.json → assets.saas.quality_curve[3]
+        requirements: { ...saasQualityLevel3.requirements }
       },
       {
-        level: 4,
+        level: saasQualityLevel4.level,
         name: 'Global Edge Authority',
         description: 'Edge coverage, uptime bragging rights, and enterprise case studies pour gasoline on growth.',
-        income: { min: 120, max: 168 },
-        requirements: { features: 34, stability: 12, marketing: 10, edge: 4 }
+        income: { ...saasQualityLevel4.income }, // Spec: docs/normalized_economy.json → assets.saas.quality_curve[4]
+        requirements: { ...saasQualityLevel4.requirements }
       },
       {
-        level: 5,
+        level: saasQualityLevel5.level,
         name: 'Ecosystem Powerhouse',
         description: 'A thriving partner marketplace and integrations make churn basically mythical.',
-        income: { min: 168, max: 220 },
-        requirements: { features: 48, stability: 18, marketing: 15, edge: 8 }
+        income: { ...saasQualityLevel5.income }, // Spec: docs/normalized_economy.json → assets.saas.quality_curve[5]
+        requirements: { ...saasQualityLevel5.requirements }
       }
     ],
     actions: [

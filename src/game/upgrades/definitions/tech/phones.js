@@ -1,3 +1,9 @@
+import { upgrades as upgradeConfigs } from '../../../data/economyConfig.js';
+
+const creatorPhoneConfig = upgradeConfigs.creatorPhone; // Spec: docs/normalized_economy.json → upgrades.creatorPhone
+const creatorPhoneProConfig = upgradeConfigs.creatorPhonePro; // Spec: docs/normalized_economy.json → upgrades.creatorPhonePro
+const creatorPhoneUltraConfig = upgradeConfigs.creatorPhoneUltra; // Spec: docs/normalized_economy.json → upgrades.creatorPhoneUltra
+
 const phones = [
   {
     id: 'creatorPhone',
@@ -7,7 +13,7 @@ const phones = [
     category: 'tech',
     family: 'phone',
     exclusivityGroup: 'tech:phone',
-    cost: 140,
+    cost: creatorPhoneConfig.cost, // Spec: docs/normalized_economy.json → upgrades.creatorPhone.setup_cost
     effects: { setup_time_mult: 0.95 },
     affects: {
       hustles: { tags: [ 'live', 'field' ] },
@@ -26,8 +32,8 @@ const phones = [
     category: 'tech',
     family: 'phone',
     exclusivityGroup: 'tech:phone',
-    cost: 360,
-    requires: [ 'creatorPhone' ],
+    cost: creatorPhoneProConfig.cost, // Spec: docs/normalized_economy.json → upgrades.creatorPhonePro.setup_cost
+    requires: creatorPhoneProConfig.requires, // Spec: docs/normalized_economy.json → upgrades.creatorPhonePro.requirements
     effects: { setup_time_mult: 0.85, payout_mult: 1.05 },
     affects: {
       hustles: { tags: [ 'live', 'field' ] },
@@ -48,8 +54,8 @@ const phones = [
     category: 'tech',
     family: 'phone',
     exclusivityGroup: 'tech:phone',
-    cost: 720,
-    requires: [ 'creatorPhonePro' ],
+    cost: creatorPhoneUltraConfig.cost, // Spec: docs/normalized_economy.json → upgrades.creatorPhoneUltra.setup_cost
+    requires: creatorPhoneUltraConfig.requires, // Spec: docs/normalized_economy.json → upgrades.creatorPhoneUltra.requirements
     effects: { setup_time_mult: 0.8, payout_mult: 1.08 },
     affects: {
       hustles: { tags: [ 'live', 'field' ] },

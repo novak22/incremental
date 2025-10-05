@@ -10,6 +10,19 @@ import {
   NARRATION_REQUIREMENTS,
   STREET_PROMO_REQUIREMENTS
 } from '../helpers.js';
+import { hustles as hustleConfigs } from '../../data/economyConfig.js';
+
+const freelanceConfig = hustleConfigs.freelance; // Spec: docs/normalized_economy.json → hustles.freelance
+const audienceCallConfig = hustleConfigs.audienceCall; // Spec: docs/normalized_economy.json → hustles.audienceCall
+const bundlePushConfig = hustleConfigs.bundlePush; // Spec: docs/normalized_economy.json → hustles.bundlePush
+const surveySprintConfig = hustleConfigs.surveySprint; // Spec: docs/normalized_economy.json → hustles.surveySprint
+const eventPhotoGigConfig = hustleConfigs.eventPhotoGig; // Spec: docs/normalized_economy.json → hustles.eventPhotoGig
+const popUpWorkshopConfig = hustleConfigs.popUpWorkshop; // Spec: docs/normalized_economy.json → hustles.popUpWorkshop
+const vlogEditRushConfig = hustleConfigs.vlogEditRush; // Spec: docs/normalized_economy.json → hustles.vlogEditRush
+const dropshipPackPartyConfig = hustleConfigs.dropshipPackParty; // Spec: docs/normalized_economy.json → hustles.dropshipPackParty
+const saasBugSquashConfig = hustleConfigs.saasBugSquash; // Spec: docs/normalized_economy.json → hustles.saasBugSquash
+const audiobookNarrationConfig = hustleConfigs.audiobookNarration; // Spec: docs/normalized_economy.json → hustles.audiobookNarration
+const streetPromoSprintConfig = hustleConfigs.streetPromoSprint; // Spec: docs/normalized_economy.json → hustles.streetPromoSprint
 
 const instantHustleDefinitions = [
   {
@@ -18,12 +31,12 @@ const instantHustleDefinitions = [
     tag: { label: 'Instant', type: 'instant' },
     description: 'Crank out a quick article for a client. Not Pulitzer material, but it pays.',
     tags: ['writing', 'desktop_work'],
-    time: 2,
+    time: freelanceConfig.timeHours, // Spec: docs/normalized_economy.json → hustles.freelance.setup_time
     payout: {
-      amount: 18,
+      amount: freelanceConfig.payout, // Spec: docs/normalized_economy.json → hustles.freelance.base_income
       logType: 'hustle',
       message: context => {
-        const payout = context?.finalPayout ?? context?.payoutGranted ?? 18;
+        const payout = context?.finalPayout ?? context?.payoutGranted ?? freelanceConfig.payout;
         const bonusNote = context?.appliedEducationBoosts?.length
           ? ' Your storytelling drills juiced the rate!'
           : '';
@@ -43,14 +56,14 @@ const instantHustleDefinitions = [
     tag: { label: 'Instant', type: 'instant' },
     description: 'Host a 60-minute livestream for your blog readers and pitch a premium checklist.',
     tags: ['community', 'live', 'video'],
-    time: 1,
+    time: audienceCallConfig.timeHours, // Spec: docs/normalized_economy.json → hustles.audienceCall.setup_time
     requirements: AUDIENCE_CALL_REQUIREMENTS,
-    dailyLimit: 1,
+    dailyLimit: audienceCallConfig.dailyLimit, // Spec: docs/normalized_economy.json → hustles.audienceCall.daily_limit
     payout: {
-      amount: 12,
+      amount: audienceCallConfig.payout, // Spec: docs/normalized_economy.json → hustles.audienceCall.base_income
       logType: 'hustle',
       message: context => {
-        const payout = context?.finalPayout ?? context?.payoutGranted ?? 12;
+        const payout = context?.finalPayout ?? context?.payoutGranted ?? audienceCallConfig.payout;
         const bonusNote = context?.appliedEducationBoosts?.length
           ? ' Spotlight-ready banter brought in extra tips.'
           : '';
@@ -70,13 +83,13 @@ const instantHustleDefinitions = [
     tag: { label: 'Instant', type: 'instant' },
     description: 'Pair your top blogs with an e-book bonus bundle for a limited-time flash sale.',
     tags: ['commerce', 'marketing'],
-    time: 2.5,
+    time: bundlePushConfig.timeHours, // Spec: docs/normalized_economy.json → hustles.bundlePush.setup_time
     requirements: BUNDLE_PUSH_REQUIREMENTS,
     payout: {
-      amount: 48,
+      amount: bundlePushConfig.payout, // Spec: docs/normalized_economy.json → hustles.bundlePush.base_income
       logType: 'hustle',
       message: context => {
-        const payout = context?.finalPayout ?? context?.payoutGranted ?? 48;
+        const payout = context?.finalPayout ?? context?.payoutGranted ?? bundlePushConfig.payout;
         const bonusNote = context?.appliedEducationBoosts?.length
           ? ' Funnel math mastery made every upsell sparkle.'
           : '';
@@ -96,13 +109,13 @@ const instantHustleDefinitions = [
     tag: { label: 'Instant', type: 'instant' },
     description: 'Knock out a 15-minute feedback survey while your coffee is still warm.',
     tags: ['ops', 'desktop_work'],
-    time: 0.25,
-    dailyLimit: 4,
+    time: surveySprintConfig.timeHours, // Spec: docs/normalized_economy.json → hustles.surveySprint.setup_time
+    dailyLimit: surveySprintConfig.dailyLimit, // Spec: docs/normalized_economy.json → hustles.surveySprint.daily_limit
     payout: {
-      amount: 1,
+      amount: surveySprintConfig.payout, // Spec: docs/normalized_economy.json → hustles.surveySprint.base_income
       logType: 'hustle',
       message: context => {
-        const payout = context?.finalPayout ?? context?.payoutGranted ?? 1;
+        const payout = context?.finalPayout ?? context?.payoutGranted ?? surveySprintConfig.payout;
         const bonusNote = context?.appliedEducationBoosts?.length
           ? ' Guerrilla research savvy bumped the stipend.'
           : '';
@@ -122,13 +135,13 @@ const instantHustleDefinitions = [
     tag: { label: 'Instant', type: 'instant' },
     description: 'Grab your gallery gear and capture candid magic at a pop-up showcase.',
     tags: ['photo', 'shoot', 'studio'],
-    time: 3.5,
+    time: eventPhotoGigConfig.timeHours, // Spec: docs/normalized_economy.json → hustles.eventPhotoGig.setup_time
     requirements: EVENT_PHOTO_REQUIREMENTS,
     payout: {
-      amount: 72,
+      amount: eventPhotoGigConfig.payout, // Spec: docs/normalized_economy.json → hustles.eventPhotoGig.base_income
       logType: 'hustle',
       message: context => {
-        const payout = context?.finalPayout ?? context?.payoutGranted ?? 72;
+        const payout = context?.finalPayout ?? context?.payoutGranted ?? eventPhotoGigConfig.payout;
         const bonusNote = context?.appliedEducationBoosts?.length
           ? ' Curated portfolios impressed every client.'
           : '';
@@ -148,13 +161,13 @@ const instantHustleDefinitions = [
     tag: { label: 'Instant', type: 'instant' },
     description: 'Host a cozy crash course that blends your blog insights with e-book handouts.',
     tags: ['education', 'in_person'],
-    time: 2.5,
+    time: popUpWorkshopConfig.timeHours, // Spec: docs/normalized_economy.json → hustles.popUpWorkshop.setup_time
     requirements: WORKSHOP_REQUIREMENTS,
     payout: {
-      amount: 38,
+      amount: popUpWorkshopConfig.payout, // Spec: docs/normalized_economy.json → hustles.popUpWorkshop.base_income
       logType: 'hustle',
       message: context => {
-        const payout = context?.finalPayout ?? context?.payoutGranted ?? 38;
+        const payout = context?.finalPayout ?? context?.payoutGranted ?? popUpWorkshopConfig.payout;
         const bonusNote = context?.appliedEducationBoosts?.length
           ? ' Teaching polish turned browsers into buyers.'
           : '';
@@ -174,13 +187,13 @@ const instantHustleDefinitions = [
     tag: { label: 'Instant', type: 'instant' },
     description: 'Slice, color, and caption a backlog vlog episode for a partner channel.',
     tags: ['video', 'editing', 'desktop_work'],
-    time: 1.5,
+    time: vlogEditRushConfig.timeHours, // Spec: docs/normalized_economy.json → hustles.vlogEditRush.setup_time
     requirements: EDIT_RUSH_REQUIREMENTS,
     payout: {
-      amount: 24,
+      amount: vlogEditRushConfig.payout, // Spec: docs/normalized_economy.json → hustles.vlogEditRush.base_income
       logType: 'hustle',
       message: context => {
-        const payout = context?.finalPayout ?? context?.payoutGranted ?? 24;
+        const payout = context?.finalPayout ?? context?.payoutGranted ?? vlogEditRushConfig.payout;
         const bonusNote = context?.appliedEducationBoosts?.length
           ? ' Post-production precision shaved hours off the deadline.'
           : '';
@@ -200,14 +213,14 @@ const instantHustleDefinitions = [
     tag: { label: 'Instant', type: 'instant' },
     description: 'Bundle hot orders with branded tissue paper and a confetti of thank-you notes.',
     tags: ['commerce', 'fulfillment'],
-    time: 2,
-    cost: 8,
+    time: dropshipPackPartyConfig.timeHours, // Spec: docs/normalized_economy.json → hustles.dropshipPackParty.setup_time
+    cost: dropshipPackPartyConfig.cost, // Spec: docs/normalized_economy.json → hustles.dropshipPackParty.setup_cost
     requirements: PACK_PARTY_REQUIREMENTS,
     payout: {
-      amount: 28,
+      amount: dropshipPackPartyConfig.payout, // Spec: docs/normalized_economy.json → hustles.dropshipPackParty.base_income
       logType: 'hustle',
       message: context => {
-        const payout = context?.finalPayout ?? context?.payoutGranted ?? 28;
+        const payout = context?.finalPayout ?? context?.payoutGranted ?? dropshipPackPartyConfig.payout;
         const bonusNote = context?.appliedEducationBoosts?.length
           ? ' Logistics drills kept the conveyor humming.'
           : '';
@@ -228,13 +241,13 @@ const instantHustleDefinitions = [
     tag: { label: 'Instant', type: 'instant' },
     description: 'Dig through error logs and deploy a patch before support tickets pile up.',
     tags: ['software', 'ops'],
-    time: 1,
+    time: saasBugSquashConfig.timeHours, // Spec: docs/normalized_economy.json → hustles.saasBugSquash.setup_time
     requirements: BUG_SQUASH_REQUIREMENTS,
     payout: {
-      amount: 30,
+      amount: saasBugSquashConfig.payout, // Spec: docs/normalized_economy.json → hustles.saasBugSquash.base_income
       logType: 'hustle',
       message: context => {
-        const payout = context?.finalPayout ?? context?.payoutGranted ?? 30;
+        const payout = context?.finalPayout ?? context?.payoutGranted ?? saasBugSquashConfig.payout;
         const bonusNote = context?.appliedEducationBoosts?.length
           ? ' Architectural insights made debugging a breeze.'
           : '';
@@ -254,13 +267,13 @@ const instantHustleDefinitions = [
     tag: { label: 'Instant', type: 'instant' },
     description: 'Record a silky-smooth sample chapter to hype your flagship e-book series.',
     tags: ['audio', 'studio'],
-    time: 2.75,
+    time: audiobookNarrationConfig.timeHours, // Spec: docs/normalized_economy.json → hustles.audiobookNarration.setup_time
     requirements: NARRATION_REQUIREMENTS,
     payout: {
-      amount: 44,
+      amount: audiobookNarrationConfig.payout, // Spec: docs/normalized_economy.json → hustles.audiobookNarration.base_income
       logType: 'hustle',
       message: context => {
-        const payout = context?.finalPayout ?? context?.payoutGranted ?? 44;
+        const payout = context?.finalPayout ?? context?.payoutGranted ?? audiobookNarrationConfig.payout;
         const bonusNote = context?.appliedEducationBoosts?.length
           ? ' Narrative confidence kept the script soaring.'
           : '';
@@ -280,14 +293,14 @@ const instantHustleDefinitions = [
     tag: { label: 'Instant', type: 'instant' },
     description: 'Hand out QR stickers at a pop-up market to funnel readers toward your latest drops.',
     tags: ['marketing', 'field'],
-    time: 0.75,
-    cost: 5,
+    time: streetPromoSprintConfig.timeHours, // Spec: docs/normalized_economy.json → hustles.streetPromoSprint.setup_time
+    cost: streetPromoSprintConfig.cost, // Spec: docs/normalized_economy.json → hustles.streetPromoSprint.setup_cost
     requirements: STREET_PROMO_REQUIREMENTS,
     payout: {
-      amount: 18,
+      amount: streetPromoSprintConfig.payout, // Spec: docs/normalized_economy.json → hustles.streetPromoSprint.base_income
       logType: 'hustle',
       message: context => {
-        const payout = context?.finalPayout ?? context?.payoutGranted ?? 18;
+        const payout = context?.finalPayout ?? context?.payoutGranted ?? streetPromoSprintConfig.payout;
         const bonusNote = context?.appliedEducationBoosts?.length
           ? ' Guerrilla tactics drew a bigger crowd.'
           : '';

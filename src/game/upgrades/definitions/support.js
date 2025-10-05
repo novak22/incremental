@@ -1,3 +1,7 @@
+import { upgrades as upgradeConfigs } from '../../data/economyConfig.js';
+
+const coffeeConfig = upgradeConfigs.coffee; // Spec: docs/normalized_economy.json → upgrades.coffee
+
 const support = [
   {
     id: 'coffee',
@@ -6,7 +10,7 @@ const support = [
     description: 'Instantly gain +1h of focus for today. Side effects include jittery success.',
     category: 'support',
     family: 'consumable',
-    cost: 40,
+    cost: coffeeConfig.cost, // Spec: docs/normalized_economy.json → upgrades.coffee.setup_cost
     repeatable: true,
     defaultState: { usedToday: 0 },
     actionClassName: 'secondary',

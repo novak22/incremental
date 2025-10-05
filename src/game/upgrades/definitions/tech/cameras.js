@@ -1,3 +1,8 @@
+import { upgrades as upgradeConfigs } from '../../../data/economyConfig.js';
+
+const cameraConfig = upgradeConfigs.camera; // Spec: docs/normalized_economy.json → upgrades.camera
+const cameraProConfig = upgradeConfigs.cameraPro; // Spec: docs/normalized_economy.json → upgrades.cameraPro
+
 const cameras = [
   {
     id: 'camera',
@@ -7,7 +12,7 @@ const cameras = [
     category: 'tech',
     family: 'camera',
     exclusivityGroup: 'tech:camera',
-    cost: 200,
+    cost: cameraConfig.cost, // Spec: docs/normalized_economy.json → upgrades.camera.setup_cost
     unlocks: 'Weekly Vlog Channel & Stock Photo Galleries',
     skills: [ 'visual' ],
     effects: { setup_time_mult: 0.9 },
@@ -31,8 +36,8 @@ const cameras = [
     category: 'tech',
     family: 'camera',
     exclusivityGroup: 'tech:camera',
-    cost: 480,
-    requires: [ 'camera' ],
+    cost: cameraProConfig.cost, // Spec: docs/normalized_economy.json → upgrades.cameraPro.setup_cost
+    requires: cameraProConfig.requires, // Spec: docs/normalized_economy.json → upgrades.cameraPro.requirements
     boosts: 'Boosts vlog payouts and doubles quality progress',
     effects: {
       setup_time_mult: 0.85,

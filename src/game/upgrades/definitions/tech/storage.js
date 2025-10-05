@@ -1,3 +1,7 @@
+import { upgrades as upgradeConfigs } from '../../../data/economyConfig.js';
+
+const scratchDriveArrayConfig = upgradeConfigs.scratchDriveArray; // Spec: docs/normalized_economy.json → upgrades.scratchDriveArray
+
 const storage = [
   {
     id: 'scratchDriveArray',
@@ -6,7 +10,7 @@ const storage = [
     description: 'High-speed NVMe array that turns renders and transfers into blink-and-done tasks.',
     category: 'tech',
     family: 'storage',
-    cost: 320,
+    cost: scratchDriveArrayConfig.cost, // Spec: docs/normalized_economy.json → upgrades.scratchDriveArray.setup_cost
     effects: { maint_time_mult: 0.9 },
     affects: {
       assets: { tags: [ 'video', 'photo', 'software' ] },

@@ -1,3 +1,7 @@
+import { upgrades as upgradeConfigs } from '../../../data/economyConfig.js';
+
+const ergonomicRefitConfig = upgradeConfigs.ergonomicRefit; // Spec: docs/normalized_economy.json → upgrades.ergonomicRefit
+
 const ergonomics = [
   {
     id: 'ergonomicRefit',
@@ -6,7 +10,7 @@ const ergonomics = [
     description: 'Sit-stand desk, supportive chair, and smart lighting for marathon editing sessions.',
     category: 'tech',
     family: 'ergonomics',
-    cost: 180,
+    cost: ergonomicRefitConfig.cost, // Spec: docs/normalized_economy.json → upgrades.ergonomicRefit.setup_cost
     effects: { maint_time_mult: 0.95 },
     affects: {
       assets: { tags: [ 'desktop_work' ] },
