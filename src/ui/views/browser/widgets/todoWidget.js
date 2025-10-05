@@ -1,5 +1,6 @@
 import { formatHours } from '../../../../core/helpers.js';
 import { endDay } from '../../../../game/lifecycle.js';
+import { normalizeActionEntries } from '../../../actions/registry.js';
 import todoDom from './todoDom.js';
 import todoState from './todoState.js';
 
@@ -57,51 +58,6 @@ function getAvailableMoney(model = {}) {
     return Infinity;
   }
   return Math.max(0, available);
-}
-
-function normalizeEntries(model = {}) {
-  const entries = Array.isArray(model.entries) ? model.entries : [];
-  return entries
-    .map((entry, index) => {
-      const id = entry?.id ?? `todo-${index}`;
-      const durationHours = Number(entry?.durationHours ?? entry?.timeCost);
-      const normalizedDuration = Number.isFinite(durationHours) ? Math.max(0, durationHours) : 0;
-      const durationText = entry?.durationText || formatDuration(normalizedDuration);
-      const payoutText = entry?.payoutText || entry?.payoutLabel || '';
-      const meta = entry?.meta || [payoutText, durationText].filter(Boolean).join(' • ');
-      const rawRemaining = Number(entry?.remainingRuns);
-      const hasRemaining = Number.isFinite(rawRemaining);
-      const remainingRuns = hasRemaining ? Math.max(0, rawRemaining) : null;
-      const repeatable = Boolean(entry?.repeatable) || (hasRemaining && remainingRuns > 1);
-      const moneyCost = Number(entry?.moneyCost);
-      const normalizedMoney = Number.isFinite(moneyCost) ? Math.max(0, moneyCost) : 0;
-      const rawPayout = Number(entry?.payout);
-      const normalizedPayout = Number.isFinite(rawPayout) ? Math.max(0, rawPayout) : 0;
-      const moneyPerHour = normalizedDuration > 0
-        ? normalizedPayout / normalizedDuration
-        : normalizedPayout;
-      const focusCategory = entry?.focusCategory || entry?.category || entry?.type || null;
-      const rawUpgradeRemaining = Number(entry?.upgradeRemaining ?? entry?.remaining ?? entry?.requirementsRemaining);
-      const upgradeRemaining = Number.isFinite(rawUpgradeRemaining) ? Math.max(0, rawUpgradeRemaining) : null;
-      const orderIndex = Number.isFinite(entry?.orderIndex) ? entry.orderIndex : index;
-      return {
-        id,
-        title: entry?.title || 'Action',
-        meta,
-        onClick: typeof entry?.onClick === 'function' ? entry.onClick : null,
-        durationHours: normalizedDuration,
-        durationText,
-        moneyCost: normalizedMoney,
-        repeatable,
-        remainingRuns,
-        payout: normalizedPayout,
-        moneyPerHour: Number.isFinite(moneyPerHour) ? moneyPerHour : 0,
-        focusCategory,
-        upgradeRemaining,
-        orderIndex
-      };
-    })
-    .filter(entry => Boolean(entry?.id));
 }
 
 function sortHustleEntries(entries = []) {
@@ -287,7 +243,7 @@ export function render(model = {}) {
   todoState.seedAutoCompletedEntries(viewModel.autoCompletedEntries, formatDuration);
   todoDom.applyScrollerLimit(elements?.listWrapper, viewModel);
 
-  const entries = normalizeEntries(viewModel);
+  const entries = normalizeActionEntries(viewModel);
   const availableHours = getAvailableHours(viewModel);
   const availableMoney = getAvailableMoney(viewModel);
   const pending = entries.filter(entry => {
