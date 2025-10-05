@@ -3,6 +3,10 @@ body.developer-view-active {
   color: var(--text-primary-on-dark, #f5f7fb);
 }
 
+body:not(.developer-view-active) #developer-root {
+  display: none;
+}
+
 .developer-view {
   font-family: 'Manrope', system-ui, sans-serif;
   display: flex;
