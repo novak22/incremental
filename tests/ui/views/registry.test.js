@@ -36,6 +36,15 @@ function withDom(html, options = {}) {
   };
 }
 
+function expectResolvedView(t, { html, url, expectedId }) {
+  const { dom, restore } = withDom(html, { url });
+
+  t.after(restore);
+
+  const resolved = resolveInitialView(dom.window.document);
+  assert.equal(resolved?.id, expectedId);
+}
+
 test('registry exposes built-in views with guards and presenters', () => {
   const entries = getRegisteredViews();
   const ids = entries.map(entry => entry.id);
@@ -85,13 +94,35 @@ test('newly registered views can be resolved without entry point changes', t => 
 });
 
 test('developer view resolves when requested via query flag', t => {
-  const { dom, restore } = withDom(
-    '<!DOCTYPE html><html><body><div id="browser-home"></div><div id="developer-root"></div></body></html>',
-    { url: 'https://example.com/?view=developer' }
-  );
+  const html =
+    '<!DOCTYPE html><html><body><div id="browser-home"></div><div id="developer-root"></div></body></html>';
 
-  t.after(restore);
+  expectResolvedView(t, {
+    html,
+    url: 'https://example.com/',
+    expectedId: 'browser'
+  });
 
-  const resolved = resolveInitialView(dom.window.document);
-  assert.equal(resolved?.id, 'developer');
+  expectResolvedView(t, {
+    html,
+    url: 'https://example.com/?view=browser',
+    expectedId: 'browser'
+  });
+
+  expectResolvedView(t, {
+    html,
+    url: 'https://example.com/?view=developer',
+    expectedId: 'developer'
+  });
+});
+
+test('developer view can be requested via body dataset', t => {
+  const html =
+    '<!DOCTYPE html><html><body data-ui-view="developer"><div id="browser-home"></div><div id="developer-root"></div></body></html>';
+
+  expectResolvedView(t, {
+    html,
+    url: 'https://example.com/',
+    expectedId: 'developer'
+  });
 });

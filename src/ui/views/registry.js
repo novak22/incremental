@@ -7,6 +7,30 @@ function normalizeId(id) {
   return typeof id === 'string' ? id.trim().toLowerCase() : null;
 }
 
+function isDeveloperOptInValue(value) {
+  return normalizeId(value) === 'developer';
+}
+
+function hasDeveloperOptIn(rootDocument) {
+  const datasetValue = rootDocument?.body?.dataset?.uiView;
+  if (isDeveloperOptInValue(datasetValue)) {
+    return true;
+  }
+
+  if (typeof window === 'undefined' || typeof URLSearchParams !== 'function') {
+    return false;
+  }
+
+  try {
+    const params = new URLSearchParams(window.location.search);
+    return ['ui', 'view', 'shell'].some(key =>
+      isDeveloperOptInValue(params.get(key))
+    );
+  } catch (error) {
+    return false;
+  }
+}
+
 function ensureGuardFn(guard) {
   if (typeof guard === 'function') {
     return guard;
@@ -125,7 +149,8 @@ registerView(browserView, {
 });
 
 registerView(developerView, {
-  guard: root => Boolean(root?.getElementById('developer-root'))
+  guard: root =>
+    Boolean(root?.getElementById('developer-root')) && hasDeveloperOptIn(root)
 });
 
 export default {
