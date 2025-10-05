@@ -1,4 +1,6 @@
 import { formatHours } from '../../../../core/helpers.js';
+import { addLog } from '../../../../core/log.js';
+import { getState } from '../../../../core/state.js';
 import { endDay } from '../../../../game/lifecycle.js';
 import { normalizeActionEntries } from '../../../actions/registry.js';
 import {
@@ -9,6 +11,7 @@ import {
 } from '../../../actions/focusBuckets.js';
 import { advanceActionInstance, completeActionInstance } from '../../../../game/actions/progress.js';
 import { getActionDefinition } from '../../../../game/registryService.js';
+import { spendTime } from '../../../../game/time.js';
 import todoDom from './todoDom.js';
 import todoState from './todoState.js';
 
@@ -208,6 +211,19 @@ function createProgressHandler(entry = {}) {
       return;
     }
 
+    const state = getState();
+    const available = Number(state?.timeLeft);
+    if (Number.isFinite(available) && available < hours) {
+      if (typeof addLog === 'function') {
+        addLog(
+          `You need ${formatHours(hours)} focus free before logging that commitment. Wrap another task first or rest up.`,
+          'warning'
+        );
+      }
+      return;
+    }
+
+    spendTime(hours);
     advanceActionInstance(definition, { id: instanceId }, { hours, metadata });
   };
 }
