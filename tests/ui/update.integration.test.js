@@ -391,8 +391,7 @@ test('state mutators mark dirty sections and drive partial UI refreshes', { conc
       [initialNicheId]: { score: 64, previousScore: 52 },
       [targetNicheId]: { score: 88, previousScore: 70 }
     },
-    watchlist: [],
-    lastRollDay: state.day || 1
+    watchlist: []
   };
 
   resetCounts();
