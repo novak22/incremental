@@ -96,8 +96,9 @@ test('timodoro component renders layout and populates lists', t => {
   assert.equal(summary.meta, viewModel.meta, 'render returns view model meta');
   assert.equal(mount.className, 'timodoro', 'mount receives root class');
 
-  const tabs = [...mount.querySelectorAll('.timodoro-tabs__button')];
-  assert.equal(tabs.length, 2, 'two navigation tabs rendered');
+  const activeTodoPanel = mount.querySelector('[data-tab="todo"]');
+  const tabs = [...(activeTodoPanel?.querySelectorAll('.timodoro-tabs__button') ?? [])];
+  assert.equal(tabs.length, 2, 'two navigation tabs rendered in active panel');
   assert.ok(tabs[0].classList.contains('is-active'), 'TODO tab active by default');
 
   const todoItems = [
