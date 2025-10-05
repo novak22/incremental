@@ -13,6 +13,7 @@ import {
   formatEducationBonusSummary
 } from '../../educationEffects.js';
 import { getHustleEffectMultiplier } from '../../upgrades/effects.js';
+import { applyModifiers } from '../../data/economyMath.js';
 import { applyMetric, normalizeHustleMetrics } from './metrics.js';
 import { logEducationPayoffSummary, logHustleBlocked } from './logMessaging.js';
 import { markDirty } from '../../../core/events/invalidationBus.js';
@@ -152,14 +153,32 @@ export function createInstantHustle(config) {
     if (!amount) {
       return { amount: 0, multiplier: 1, sources: [] };
     }
-    const { multiplier, sources } = getHustleEffectMultiplier(definition, 'payout_mult', {
+    const effect = getHustleEffectMultiplier(definition, 'payout_mult', {
       state: context.state,
       actionType: 'payout'
     });
-    if (!Number.isFinite(multiplier) || multiplier === 1) {
+    if (!effect) {
       return { amount, multiplier: 1, sources: [] };
     }
-    return { amount: amount * multiplier, multiplier, sources };
+
+    const baseMultiplier = Number.isFinite(effect.multiplier) ? effect.multiplier : 1;
+    if (Array.isArray(effect.modifiers) && effect.modifiers.length) {
+      const result = applyModifiers(amount, effect.modifiers, { clamp: effect.clamp });
+      const finalAmount = Number.isFinite(result?.value) ? result.value : amount;
+      const appliedSources = result.applied
+        .filter(entry => entry.type === 'multiplier')
+        .map(entry => ({ id: entry.id, label: entry.label, multiplier: entry.value }));
+      return {
+        amount: finalAmount,
+        multiplier: Number.isFinite(result?.multiplier) ? result.multiplier : baseMultiplier,
+        sources: appliedSources
+      };
+    }
+
+    if (!Number.isFinite(baseMultiplier) || baseMultiplier === 1) {
+      return { amount, multiplier: 1, sources: [] };
+    }
+    return { amount: amount * baseMultiplier, multiplier: baseMultiplier, sources: effect.sources || [] };
   }
 
   definition.dailyLimit = metadata.dailyLimit;

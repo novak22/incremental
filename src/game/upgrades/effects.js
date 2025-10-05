@@ -5,6 +5,8 @@ import {
   getHustleDefinition,
   getUpgradeDefinition
 } from '../../core/state/registry.js';
+import normalizedEconomy from '../../../docs/normalized_economy.json' with { type: 'json' };
+import { applyModifiers } from '../data/economyMath.js';
 
 const MULTIPLIER_LIMITS = {
   payout_mult: { min: 0.1, max: 10 },
@@ -13,12 +15,14 @@ const MULTIPLIER_LIMITS = {
   quality_progress_mult: { min: 0.25, max: 5 }
 };
 
-function clampMultiplier(effect, value) {
-  const limits = MULTIPLIER_LIMITS[effect] || { min: 0.1, max: 10 };
-  const numeric = Number(value);
-  if (!Number.isFinite(numeric)) return 1;
-  return Math.min(limits.max, Math.max(limits.min, numeric));
-}
+const SPEC_MODIFIERS = Array.isArray(normalizedEconomy.modifiers) ? normalizedEconomy.modifiers : [];
+
+const EFFECT_PROPERTY_MAP = {
+  payout_mult: 'income',
+  setup_time_mult: 'setup_time',
+  maint_time_mult: 'maintenance_time',
+  quality_progress_mult: 'quality_progress'
+};
 
 function getUpgradeQuantity(definition, upgradeState = {}) {
   if (!definition) return 0;
@@ -85,6 +89,124 @@ function actionMatches(affectsActions, actionType) {
   return normalized.ids.includes(actionType);
 }
 
+function parseFilterExpression(expression) {
+  const scope = {
+    ids: [],
+    tags: [],
+    families: [],
+    categories: []
+  };
+  if (typeof expression !== 'string' || !expression.trim()) {
+    return scope;
+  }
+  const segments = expression.split(/[;,]/);
+  segments.forEach(segment => {
+    const trimmed = segment.trim();
+    if (!trimmed) return;
+    const [rawKey, rawValue] = trimmed.split('=');
+    if (!rawValue) return;
+    const key = rawKey.trim().toLowerCase();
+    const values = rawValue
+      .split('|')
+      .map(value => value.trim())
+      .filter(Boolean);
+    if (!values.length) return;
+    switch (key) {
+      case 'id':
+      case 'ids':
+        scope.ids.push(...values);
+        break;
+      case 'tag':
+      case 'tags':
+        scope.tags.push(...values);
+        break;
+      case 'family':
+      case 'families':
+        scope.families.push(...values);
+        break;
+      case 'category':
+      case 'categories':
+        scope.categories.push(...values);
+        break;
+      default:
+        break;
+    }
+  });
+  return scope;
+}
+
+function parseModifierTarget(target) {
+  if (typeof target !== 'string') return null;
+  const trimmed = target.trim();
+  if (!trimmed) return null;
+  const [subjectPart, property] = trimmed.split('.');
+  if (!property) return null;
+
+  if (subjectPart.startsWith('asset:')) {
+    const id = subjectPart.slice('asset:'.length).trim();
+    return {
+      subjectType: 'asset',
+      property,
+      scope: {
+        ids: id ? [id] : [],
+        tags: [],
+        families: [],
+        categories: []
+      }
+    };
+  }
+
+  if (subjectPart.startsWith('hustle:')) {
+    const id = subjectPart.slice('hustle:'.length).trim();
+    return {
+      subjectType: 'hustle',
+      property,
+      scope: {
+        ids: id ? [id] : [],
+        tags: [],
+        families: [],
+        categories: []
+      }
+    };
+  }
+
+  if (subjectPart.startsWith('assets[') && subjectPart.endsWith(']')) {
+    const expression = subjectPart.slice('assets['.length, -1);
+    return {
+      subjectType: 'asset',
+      property,
+      scope: parseFilterExpression(expression)
+    };
+  }
+
+  if (subjectPart.startsWith('hustles[') && subjectPart.endsWith(']')) {
+    const expression = subjectPart.slice('hustles['.length, -1);
+    return {
+      subjectType: 'hustle',
+      property,
+      scope: parseFilterExpression(expression)
+    };
+  }
+
+  return null;
+}
+
+function findSpecModifiersForUpgrade({ definition, subjectType, property, resolvedSubject }) {
+  if (!property) return [];
+  const entries = SPEC_MODIFIERS.filter(entry => entry.source === definition.id);
+  if (!entries.length) return [];
+  const matches = [];
+  for (const entry of entries) {
+    const parsed = parseModifierTarget(entry.target);
+    if (!parsed) continue;
+    if (parsed.subjectType !== subjectType) continue;
+    if (parsed.property !== property) continue;
+    if (!subjectMatches(parsed.scope, resolvedSubject)) continue;
+    matches.push(entry);
+  }
+  return matches;
+}
+
 function prepareSubject(subjectType, subjectId) {
   if (subjectType === 'asset') {
     const definition = typeof subjectId === 'string' ? getAssetDefinition(subjectId) : subjectId;
@@ -111,43 +233,95 @@ function prepareSubject(subjectType, subjectId) {
 
 function collectEffectSources({ subjectType, subject, effect, actionType, state }) {
   const resolvedSubject = prepareSubject(subjectType, subject);
+  const clamp = MULTIPLIER_LIMITS[effect];
   if (!resolvedSubject) {
-    return { multiplier: 1, sources: [] };
+    return { multiplier: 1, sources: [], modifiers: [], clamp };
   }
 
   const upgrades = collectActiveUpgrades(state);
   if (!upgrades.length) {
-    return { multiplier: 1, sources: [] };
+    return { multiplier: 1, sources: [], modifiers: [], clamp };
   }
 
-  const sources = [];
-  let multiplier = 1;
+  const descriptors = [];
+  const property = EFFECT_PROPERTY_MAP[effect];
 
   for (const { definition, quantity } of upgrades) {
-    const effects = definition.effects || {};
-    if (!effects || typeof effects !== 'object') continue;
-    let value = effects[effect];
-    if (!Number.isFinite(Number(value))) continue;
-
     const affects = definition.affects || {};
     const scope = subjectType === 'asset' ? affects.assets : affects.hustles;
     if (!subjectMatches(scope, resolvedSubject)) continue;
     if (!actionMatches(affects.actions, actionType)) continue;
 
-    const clamped = clampMultiplier(effect, value);
+    const specMatches = findSpecModifiersForUpgrade({
+      definition,
+      subjectType,
+      property,
+      resolvedSubject
+    });
+
+    if (specMatches.length) {
+      specMatches.forEach(specEntry => {
+        for (let index = 0; index < quantity; index += 1) {
+          descriptors.push({
+            id: definition.id,
+            source: specEntry.source,
+            target: specEntry.target,
+            type: specEntry.type,
+            formula: specEntry.formula,
+            notes: specEntry.notes,
+            label: definition.name || definition.id,
+            stack: quantity > 1 ? index + 1 : null,
+            original: specEntry
+          });
+        }
+      });
+      continue;
+    }
+
+    const rawValue = definition.effects?.[effect];
+    const numericValue = Number(rawValue);
+    if (!Number.isFinite(numericValue)) continue;
 
     for (let index = 0; index < quantity; index += 1) {
-      multiplier *= clamped;
-      sources.push({
+      descriptors.push({
         id: definition.id,
+        source: definition.id,
+        target: property ? `${subjectType}:${resolvedSubject.id || '*'}:${property}` : null,
+        type: 'multiplier',
+        amount: numericValue,
         label: definition.name || definition.id,
-        multiplier: clamped
+        stack: quantity > 1 ? index + 1 : null,
+        notes: null,
+        original: {
+          source: definition.id,
+          target: null,
+          type: 'multiplier',
+          amount: numericValue
+        }
       });
     }
   }
 
-  const clampedTotal = clampMultiplier(effect, multiplier);
-  return { multiplier: clampedTotal, sources };
+  if (!descriptors.length) {
+    return { multiplier: 1, sources: [], modifiers: [], clamp };
+  }
+
+  const result = applyModifiers(1, descriptors, { clamp });
+  const modifiers = result.applied.map(entry => entry.descriptor);
+  const sources = result.applied
+    .filter(entry => entry.type === 'multiplier')
+    .map(entry => ({
+      id: entry.id,
+      label: entry.label,
+      multiplier: entry.value
+    }));
+
+  return {
+    multiplier: result.multiplier,
+    sources,
+    modifiers,
+    clamp
+  };
 }
 
 export function getAssetEffectMultiplier(definition, effect, { actionType = null, state = getState() } = {}) {
