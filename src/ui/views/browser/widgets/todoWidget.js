@@ -1,6 +1,12 @@
 import { formatHours } from '../../../../core/helpers.js';
 import { endDay } from '../../../../game/lifecycle.js';
 import { normalizeActionEntries } from '../../../actions/registry.js';
+import {
+  DEFAULT_FOCUS_BUCKET,
+  getFocusBucketComparator,
+  getFocusModeConfig,
+  registerFocusBucket
+} from '../../../actions/focusBuckets.js';
 import todoDom from './todoDom.js';
 import todoState from './todoState.js';
 
@@ -101,28 +107,8 @@ function sortUpgradeEntries(entries = []) {
   });
 }
 
-const DEFAULT_FOCUS_BUCKET = 'other';
-
-const defaultBucketComparator = entries => entries.filter(Boolean);
-
-export const focusBucketComparators = {
-  hustle: sortHustleEntries,
-  upgrade: sortUpgradeEntries,
-  [DEFAULT_FOCUS_BUCKET]: defaultBucketComparator
-};
-
-export const focusOrdering = {
-  money: {
-    order: ['hustle', 'upgrade']
-  },
-  upgrades: {
-    order: ['upgrade', 'hustle']
-  },
-  balanced: {
-    order: ['upgrade', 'hustle'],
-    interleave: ['upgrade', 'hustle']
-  }
-};
+registerFocusBucket({ name: 'hustle', comparator: sortHustleEntries });
+registerFocusBucket({ name: 'upgrade', comparator: sortUpgradeEntries });
 
 function interleaveEntries(first = [], second = []) {
   const results = [];
@@ -153,14 +139,6 @@ function getBucketName(entry) {
   return DEFAULT_FOCUS_BUCKET;
 }
 
-function getBucketComparator(bucketName) {
-  const comparator = focusBucketComparators[bucketName];
-  if (typeof comparator === 'function') {
-    return comparator;
-  }
-  return focusBucketComparators[DEFAULT_FOCUS_BUCKET] || defaultBucketComparator;
-}
-
 function collectBuckets(entries = []) {
   const buckets = new Map();
   entries.filter(Boolean).forEach(entry => {
@@ -176,7 +154,7 @@ function collectBuckets(entries = []) {
 function sortBuckets(bucketMap = new Map()) {
   const sorted = new Map();
   bucketMap.forEach((bucketEntries, bucketName) => {
-    const comparator = getBucketComparator(bucketName);
+    const comparator = getFocusBucketComparator(bucketName);
     sorted.set(bucketName, comparator(bucketEntries));
   });
   return sorted;
@@ -193,9 +171,23 @@ export function applyFocusOrdering(entries = [], mode = 'balanced') {
   }
 
   const sortedBuckets = sortBuckets(buckets);
-  const modeConfig = focusOrdering[mode] || focusOrdering.balanced || {};
-  const order = Array.isArray(modeConfig?.order) ? modeConfig.order : [];
-  const interleaveBuckets = Array.isArray(modeConfig?.interleave) ? modeConfig.interleave : [];
+  const resolvedModeConfig = (() => {
+    const direct = getFocusModeConfig(mode);
+    if (direct) {
+      return direct;
+    }
+    if (mode !== 'balanced') {
+      const fallback = getFocusModeConfig('balanced');
+      if (fallback) {
+        return fallback;
+      }
+    }
+    return { order: [], interleave: [] };
+  })();
+  const order = Array.isArray(resolvedModeConfig?.order) ? resolvedModeConfig.order : [];
+  const interleaveBuckets = Array.isArray(resolvedModeConfig?.interleave)
+    ? resolvedModeConfig.interleave
+    : [];
 
   const results = [];
   const usedEntries = new Set();
