@@ -147,6 +147,67 @@ test('acceptHustleOffer claims offers and records accepted state', () => {
   assert.equal(actionState.instances[0].id, accepted.instanceId);
 });
 
+test('acceptHustleOffer seeds progress overrides from metadata', () => {
+  const state = getState();
+  state.day = 10;
+
+  const baseTemplate = HUSTLE_TEMPLATES[0];
+  assert.ok(baseTemplate, 'expected a base hustle template for progress overrides');
+  const template = {
+    ...baseTemplate,
+    market: {
+      metadata: {
+        requirements: { hours: 12 },
+        payout: { amount: 240 }
+      },
+      variants: [
+        {
+          id: 'manual-progress',
+          durationDays: 5,
+          metadata: {
+            requirements: { hours: 12 },
+            hoursPerDay: 3,
+            daysRequired: 4,
+            completionMode: 'manual',
+            progressLabel: 'Publish daily updates',
+            payout: { amount: 240, schedule: 'onCompletion' }
+          }
+        }
+      ]
+    }
+  };
+
+  const [offer] = rollDailyOffers({ templates: [template], day: state.day, now: 5000, state, rng: () => 0 });
+  assert.ok(offer, 'expected an offer for progress override test');
+  const storedOffer = state.hustleMarket.offers.find(entry => entry.id === offer.id);
+  assert.ok(storedOffer, 'rolled offer should persist in hustle market state');
+
+  const accepted = acceptHustleOffer(storedOffer, { state });
+  assert.ok(accepted, 'expected accepted entry for progress override test');
+
+  assert.equal(accepted.metadata.hoursPerDay, 3);
+  assert.equal(accepted.metadata.daysRequired, 4);
+  assert.equal(accepted.metadata.completionMode, 'manual');
+  assert.equal(accepted.metadata.progressLabel, 'Publish daily updates');
+  assert.ok(accepted.metadata.progress, 'progress metadata should exist');
+  assert.equal(accepted.metadata.progress.hoursPerDay, 3);
+  assert.equal(accepted.metadata.progress.daysRequired, 4);
+  assert.equal(accepted.metadata.progress.completionMode, 'manual');
+  assert.equal(accepted.metadata.progress.label, 'Publish daily updates');
+
+  const actionState = getActionState(template.id, state);
+  assert.ok(actionState.instances.length > 0, 'acceptance should create an instance for multi-day offer');
+  const instance = actionState.instances[0];
+  assert.equal(instance.progress.hoursPerDay, 3);
+  assert.equal(instance.progress.daysRequired, 4);
+  assert.equal(instance.progress.completion, 'manual');
+  assert.equal(instance.progress.completionMode ?? instance.progress.completion, 'manual');
+  const progressLabel = instance.progress.label
+    ?? accepted.metadata.progress?.label
+    ?? accepted.metadata.progressLabel;
+  assert.equal(progressLabel, 'Publish daily updates');
+});
+
 test('availability selectors can include claimed offers when requested', () => {
   const state = getState();
   state.day = 6;

@@ -27,6 +27,15 @@ function resolveProgressField(value, fallback) {
   return fallback;
 }
 
+function resolveProgressString(...values) {
+  for (const value of values) {
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim();
+    }
+  }
+  return null;
+}
+
 function normalizeProgressLog(log = {}) {
   const normalized = {};
   for (const [dayKey, hoursValue] of Object.entries(log)) {
@@ -92,6 +101,39 @@ function createInstanceProgress(definition, { state, overrides = {}, metadata = 
   progress.hoursLogged = 0;
   progress.lastWorkedDay = null;
   progress.completed = false;
+
+  const metadataProgress = typeof metadata?.progress === 'object' && metadata.progress !== null
+    ? metadata.progress
+    : {};
+  const label = resolveProgressString(
+    supplied.label,
+    metadata?.progressLabel,
+    metadataProgress.label
+  );
+  if (label) {
+    progress.label = label;
+  }
+  const completionModeValue = resolveProgressString(
+    supplied.completionMode,
+    metadataProgress.completionMode,
+    metadataProgress.completion,
+    overrides?.completionMode,
+    template.completionMode,
+    progress.completion
+  );
+  if (completionModeValue) {
+    Object.defineProperty(progress, 'completionMode', {
+      value: completionModeValue,
+      enumerable: true,
+      configurable: true,
+      writable: true
+    });
+    if (!progress.completion) {
+      progress.completion = completionModeValue;
+    }
+  } else if (progress.completion && !progress.completionMode) {
+    progress.completionMode = progress.completion;
+  }
 
   return progress;
 }

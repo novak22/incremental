@@ -244,6 +244,91 @@ function buildOfferMetadata(template, variant) {
     durationDays: variant.durationDays
   };
 
+  const baseProgress = typeof baseMetadata.progress === 'object' && baseMetadata.progress !== null
+    ? structuredClone(baseMetadata.progress)
+    : {};
+  const variantProgress = typeof variantMetadata.progress === 'object' && variantMetadata.progress !== null
+    ? structuredClone(variantMetadata.progress)
+    : {};
+
+  const progress = {
+    ...baseProgress,
+    ...variantProgress
+  };
+
+  const resolvedHoursPerDay = resolveFirstNumber(
+    variantMetadata.hoursPerDay,
+    variantProgress.hoursPerDay,
+    baseMetadata.hoursPerDay,
+    baseProgress.hoursPerDay,
+    template?.progress?.hoursPerDay
+  );
+  if (resolvedHoursPerDay != null && resolvedHoursPerDay > 0) {
+    const normalized = Math.max(0, Number(resolvedHoursPerDay));
+    progress.hoursPerDay = normalized;
+    metadata.hoursPerDay = normalized;
+  } else {
+    delete progress.hoursPerDay;
+    delete metadata.hoursPerDay;
+  }
+
+  const resolvedDaysRequired = resolveFirstNumber(
+    variantMetadata.daysRequired,
+    variantProgress.daysRequired,
+    baseMetadata.daysRequired,
+    baseProgress.daysRequired,
+    template?.progress?.daysRequired
+  );
+  if (resolvedDaysRequired != null && resolvedDaysRequired > 0) {
+    const normalized = Math.max(1, Math.floor(resolvedDaysRequired));
+    progress.daysRequired = normalized;
+    metadata.daysRequired = normalized;
+  } else {
+    delete progress.daysRequired;
+    delete metadata.daysRequired;
+  }
+
+  const resolvedCompletion = resolveFirstString(
+    variantMetadata.completionMode,
+    variantMetadata.completion,
+    variantProgress.completionMode,
+    variantProgress.completion,
+    baseMetadata.completionMode,
+    baseProgress.completionMode,
+    baseProgress.completion,
+    template?.progress?.completionMode,
+    template?.progress?.completion
+  );
+  if (resolvedCompletion) {
+    progress.completion = resolvedCompletion;
+    progress.completionMode = resolvedCompletion;
+    metadata.completionMode = resolvedCompletion;
+  } else {
+    delete progress.completionMode;
+    delete progress.completion;
+    delete metadata.completionMode;
+  }
+
+  const resolvedProgressLabel = resolveFirstString(
+    variantMetadata.progressLabel,
+    variantProgress.label,
+    variantProgress.progressLabel,
+    baseMetadata.progressLabel,
+    baseProgress.label,
+    template?.progress?.label
+  );
+  if (resolvedProgressLabel) {
+    progress.label = resolvedProgressLabel;
+    metadata.progressLabel = resolvedProgressLabel;
+  } else {
+    delete progress.label;
+    delete metadata.progressLabel;
+  }
+
+  if (Object.keys(progress).length) {
+    metadata.progress = progress;
+  }
+
   if (resolvedHours != null) {
     metadata.hoursRequired = resolvedHours;
   }

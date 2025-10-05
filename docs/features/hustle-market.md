@@ -13,10 +13,11 @@
   - `slotsPerRoll`: number of offers to attempt each time the market rerolls (defaults to `1`).
   - `maxActive`: hard cap for simultaneous offers from the template (defaults to `max(slotsPerRoll, variantCount)`).
   - `metadata`: extra properties merged into each offer.
-- Variants may specify:
-  - `copies`: how many identical offers to spawn when the variant is selected (defaults to `1`).
-  - `maxActive`: ceiling for concurrent offers using that variant (defaults to `copies`).
-- If no variants are provided the `rollDailyOffers` helper fabricates a default variant that mirrors the template. When variants exist, multiple offers can coexist based on the configured slots and copy counts.
+- Variant metadata now supports structured progress hints:
+  - `hoursPerDay` and `daysRequired` capture daily effort expectations for multi-day gigs.
+  - `completionMode` toggles whether the resulting action auto-completes (`instant` / `deferred`) or requires manual wrap-up.
+  - `progressLabel` lets variants override the default log title so accepted instances read naturally in the todo list.
+- If no variants are provided the `rollDailyOffers` helper fabricates a default variant that mirrors the template. When variants exist, multiple offers can coexist so long as each variant is represented at most once per active window.
 
 ## Rolling Logic
 - `rollDailyOffers({ templates, day, now, state, rng })` clones any existing offers whose `expiresOnDay` is still in the future, then fills the configured number of template slots by selecting weighted variants (defaulting to equal weights). Variant copy counts can consume multiple slots per roll while template and variant `maxActive` values prevent overfilling.
@@ -34,6 +35,7 @@
 
 ## Acceptance Flow
 - `acceptHustleOffer(offerId, { state })` reads the offer metadata, accepts an action instance through `acceptActionInstance`, marks the offer as claimed, and records an accepted entry with `acceptedOnDay`, `deadlineDay`, required hours, and payout schedule.
+- Progress metadata is piped directly into `acceptActionInstance` so accepted entries inherit `hoursPerDay`, `daysRequired`, and manual completion flags. The todo queue uses these hints to compute step hours and keeps manual tasks visible even when hour goals are satisfied.
 - Claimed offers continue to persist until their deadlines elapse so completion logging and payout scheduling remain traceable.
 
 ## Availability Queries
