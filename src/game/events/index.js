@@ -1,44 +1,19 @@
-import { addLog } from '../../core/log.js';
-import { getAssetState, getState } from '../../core/state.js';
-import {
-  addEvent,
-  ensureEventState,
-  findEvents,
-  removeEvent,
-  updateEvent
-} from '../../core/state/events.js';
+import { getState, getAssetState } from '../../core/state.js';
+import { addEvent, ensureEventState, removeEvent, updateEvent } from '../../core/state/events.js';
 import { getAssetDefinition } from '../../core/state/registry.js';
-import { ASSET_EVENT_BLUEPRINTS, NICHE_EVENT_BLUEPRINTS } from './config.js';
-import { getNicheDefinition, getNicheDefinitions } from '../assets/nicheData.js';
+import { getNicheDefinition } from '../assets/nicheData.js';
+import { createAssetEvents } from './assetEvents.js';
+import { createNicheEvents } from './nicheEvents.js';
+import { logAssetEventEnd, logNicheEventEnd } from './logging.js';
 
-function clampChance(value) {
+export function clampChance(value) {
   const numeric = Number(value);
   if (!Number.isFinite(numeric) || numeric <= 0) return 0;
   if (numeric >= 1) return 1;
   return numeric;
 }
 
-function formatPercentDisplay(value) {
-  const numeric = Number(value) || 0;
-  const rounded = Math.round(Math.abs(numeric * 100));
-  return `${rounded}%`;
-}
-
-function formatInstanceLabel(definition, instanceIndex) {
-  const base = definition?.singular || definition?.name || 'Asset';
-  if (instanceIndex == null || instanceIndex < 0) {
-    return base;
-  }
-  return `${base} #${instanceIndex + 1}`;
-}
-
-function getInstanceIndex(definition, instanceId) {
-  const assetState = getAssetState(definition.id);
-  if (!assetState) return -1;
-  return assetState.instances.findIndex(entry => entry?.id === instanceId);
-}
-
-function buildEventFromBlueprint({ state, blueprint, target, context, day }) {
+export function buildEventFromBlueprint({ state, blueprint, target, context, day }) {
   const labelFactory = blueprint.label;
   const label = typeof labelFactory === 'function' ? labelFactory(context) : labelFactory || 'Event';
   const durationRaw = typeof blueprint.duration === 'function' ? blueprint.duration(context) : blueprint.duration;
@@ -67,162 +42,18 @@ function buildEventFromBlueprint({ state, blueprint, target, context, day }) {
   return event;
 }
 
-function logAssetEventStart({ event, blueprint, definition, instanceIndex }) {
-  if (!event) return;
-  const label = formatInstanceLabel(definition, instanceIndex);
-  const percent = formatPercentDisplay(event.currentPercent);
-  const days = event.totalDays === 1 ? 'today' : `for about ${event.totalDays} days`;
-  const tone = event.tone === 'negative' ? 'warning' : 'info';
-  const emoji = event.tone === 'negative' ? '⚠️' : '🚀';
-  const descriptor = blueprint?.id === 'asset:viralTrend' && definition.id === 'vlog' ? 'viral burst' : event.label;
-  const message =
-    event.tone === 'negative'
-      ? `${emoji} ${label} hit a ${descriptor}. Expect roughly −${percent} earnings ${days}.`
-      : `${emoji} ${label} caught a ${descriptor}! Earnings jump around +${percent} ${days}.`;
-  addLog(message, tone);
-}
+const {
+  getAssetEvents,
+  hasEventWithTone,
+  maybeTriggerAssetEvents,
+  triggerQualityActionEvents
+} = createAssetEvents({ clampChance, buildEventFromBlueprint });
 
-function logAssetEventEnd({ event, definition }) {
-  const label = formatInstanceLabel(definition, getInstanceIndex(definition, event.target.instanceId));
-  const tone = event.tone === 'negative' ? 'info' : 'info';
-  const emoji = event.tone === 'negative' ? '💪' : '✨';
-  const message =
-    event.tone === 'negative'
-      ? `${emoji} ${label} worked through the ${event.label.toLowerCase()}. Earnings are steady again.`
-      : `${emoji} ${label}'s ${event.label.toLowerCase()} fades. Payouts glide back toward normal.`;
-  addLog(message, tone);
-}
-
-function logNicheEventStart({ event, definition }) {
-  if (!event || !definition) return;
-  const tone = event.tone === 'negative' ? 'warning' : 'info';
-  const emoji = event.tone === 'negative' ? '📉' : '📈';
-  const percent = formatPercentDisplay(event.currentPercent);
-  const days = event.totalDays === 1 ? 'today' : `for about ${event.totalDays} days`;
-  const direction = event.tone === 'negative' ? 'dips by roughly' : 'soars about';
-  const message = `${emoji} ${definition.name} ${event.label.toLowerCase()}! Payouts for aligned assets ${direction} ${percent} ${days}.`;
-  addLog(message, tone);
-}
-
-function logNicheEventEnd({ event, definition }) {
-  if (!event || !definition) return;
-  const emoji = event.tone === 'negative' ? '🌤️' : '🌬️';
-  const message =
-    event.tone === 'negative'
-      ? `${emoji} ${definition.name} shakes off the ${event.label.toLowerCase()}. Trendlines brighten.`
-      : `${emoji} ${event.label} settles down for ${definition.name}. Multipliers return to baseline.`;
-  addLog(message, 'info');
-}
-
-function getAssetEvents(state, assetId, instanceId) {
-  if (!assetId || !instanceId) return [];
-  return findEvents(state, event => {
-    return (
-      event.target?.type === 'assetInstance' &&
-      event.target.assetId === assetId &&
-      event.target.instanceId === instanceId
-    );
-  });
-}
-
-function getNicheEvents(state, nicheId) {
-  if (!nicheId) return [];
-  return findEvents(state, event => event.target?.type === 'niche' && event.target.nicheId === nicheId);
-}
-
-function hasEventWithTone(events, tone, templateId) {
-  if (!events.length) return false;
-  return events.some(event => event.tone === tone || (templateId && event.templateId === templateId));
-}
-
-export function maybeTriggerAssetEvents({
-  definition,
-  assetState,
-  instance,
-  instanceIndex,
-  trigger = 'payout',
-  context: additionalContext = {}
-}) {
-  const state = getState();
-  if (!state || !instance?.id) return [];
-  ensureEventState(state, { fallbackDay: state.day || 1 });
-  const created = [];
-
-  const target = {
-    type: 'assetInstance',
-    assetId: definition.id,
-    instanceId: instance.id
-  };
-
-  const existing = getAssetEvents(state, definition.id, instance.id);
-  if (existing.length > 0) {
-    return [];
-  }
-
-  const context = {
-    state,
-    definition,
-    assetState,
-    instance,
-    instanceIndex,
-    target,
-    existing,
-    trigger,
-    ...additionalContext
-  };
-
-  for (const blueprint of ASSET_EVENT_BLUEPRINTS) {
-    const blueprintTrigger = blueprint.trigger || 'payout';
-    if (blueprintTrigger !== trigger) continue;
-    if (typeof blueprint.appliesTo === 'function' && !blueprint.appliesTo(context)) continue;
-    if (typeof blueprint.canTrigger === 'function' && !blueprint.canTrigger(context)) continue;
-    if (hasEventWithTone(existing, blueprint.tone, blueprint.id)) continue;
-    const chance = clampChance(typeof blueprint.chance === 'function' ? blueprint.chance(context) : blueprint.chance);
-    if (chance <= 0) continue;
-    const roll = Math.random();
-    if (roll <= 0) continue;
-    if (roll >= chance) continue;
-    const event = buildEventFromBlueprint({
-      state,
-      blueprint,
-      target,
-      context,
-      day: state.day || 1
-    });
-    if (event) {
-      created.push(event);
-      existing.push(event);
-      logAssetEventStart({ event, blueprint, definition, instanceIndex });
-      break;
-    }
-  }
-
-  return created;
-}
-
-export function triggerQualityActionEvents({
-  definition,
-  assetState,
-  instance,
-  instanceIndex,
-  action,
-  context: additionalContext = {}
-}) {
-  if (!definition || !instance || !action) return [];
-  const resolvedAssetState = assetState || getAssetState(definition.id);
-  const resolvedInstanceIndex =
-    typeof instanceIndex === 'number' && instanceIndex >= 0
-      ? instanceIndex
-      : resolvedAssetState?.instances?.indexOf(instance) ?? -1;
-  return maybeTriggerAssetEvents({
-    definition,
-    assetState: resolvedAssetState,
-    instance,
-    instanceIndex: resolvedInstanceIndex,
-    trigger: 'qualityAction',
-    context: { ...additionalContext, action }
-  });
-}
+const { getNicheEvents, maybeSpawnNicheEvents } = createNicheEvents({
+  clampChance,
+  buildEventFromBlueprint,
+  hasEventWithTone
+});
 
 function applyEventListToAmount({ amount, events }) {
   let updated = amount;
@@ -289,35 +120,6 @@ function cleanupMissingTargets(state) {
   return removed;
 }
 
-function maybeSpawnNicheEvents({ state, day }) {
-  const definitions = getNicheDefinitions();
-  const created = [];
-  for (const definition of definitions) {
-    for (const blueprint of NICHE_EVENT_BLUEPRINTS) {
-      if (typeof blueprint.appliesTo === 'function' && !blueprint.appliesTo({ definition, state })) continue;
-      const existing = getNicheEvents(state, definition.id);
-      if (hasEventWithTone(existing, blueprint.tone, blueprint.id)) continue;
-      const chance = clampChance(typeof blueprint.chance === 'function' ? blueprint.chance({ definition, state }) : blueprint.chance);
-      if (chance <= 0) continue;
-      const roll = Math.random();
-      if (roll <= 0) continue;
-      if (roll >= chance) continue;
-      const event = buildEventFromBlueprint({
-        state,
-        blueprint,
-        target: { type: 'niche', nicheId: definition.id },
-        context: { definition, state },
-        day
-      });
-      if (event) {
-        created.push({ event, definition });
-        logNicheEventStart({ event, definition });
-      }
-    }
-  }
-  return created;
-}
-
 export function advanceEventsAfterDay(day) {
   const state = getState();
   if (!state) return;
@@ -357,3 +159,12 @@ export function advanceEventsAfterDay(day) {
   maybeSpawnNicheEvents({ state, day });
   return ended;
 }
+
+export {
+  getAssetEvents,
+  getNicheEvents,
+  hasEventWithTone,
+  maybeSpawnNicheEvents,
+  maybeTriggerAssetEvents,
+  triggerQualityActionEvents
+};
