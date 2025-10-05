@@ -12,6 +12,7 @@ import {
 import { advanceActionInstance, completeActionInstance } from '../../../../game/actions/progress.js';
 import { getActionDefinition } from '../../../../game/registryService.js';
 import { spendTime } from '../../../../game/time.js';
+import { allocateDailyStudy } from '../../../../game/requirements.js';
 import todoDom from './todoDom.js';
 import todoState from './todoState.js';
 
@@ -225,7 +226,40 @@ function createProgressHandler(entry = {}) {
 
     spendTime(hours);
     advanceActionInstance(definition, { id: instanceId }, { hours, metadata });
+
+    const isStudy =
+      definition.studyTrackId ||
+      definition?.progress?.type === 'study' ||
+      progress?.type === 'study';
+    if (isStudy) {
+      const resolvedTrackId = (() => {
+        const directIdCandidates = [
+          definition.studyTrackId,
+          progress?.studyTrackId,
+          progress?.trackId,
+          definition?.progress?.studyTrackId,
+          definition?.progress?.trackId
+        ].filter(id => typeof id === 'string' && id.trim().length > 0);
+        if (directIdCandidates.length > 0) {
+          return directIdCandidates[0];
+        }
+        const stripStudyPrefix = value =>
+          typeof value === 'string' && value.startsWith('study-') ? value.slice('study-'.length) : null;
+        return (
+          stripStudyPrefix(definition?.id) ||
+          stripStudyPrefix(progress?.definitionId) ||
+          null
+        );
+      })();
+
+      if (resolvedTrackId) {
+        allocateDailyStudy({ trackIds: [resolvedTrackId] });
+      } else {
+        allocateDailyStudy();
+      }
+    }
     checkDayEnd();
+
     return { success: true, hours };
   };
 }
@@ -540,4 +574,8 @@ export default {
   hasPendingTasks,
   peekNextTask,
   runNextTask
+};
+
+export const __testables = {
+  createProgressHandler
 };

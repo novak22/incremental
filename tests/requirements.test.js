@@ -8,6 +8,8 @@ const maintenanceModule = await import('../src/game/requirements/maintenanceRese
 const descriptorsModule = await import('../src/game/requirements/descriptors.js');
 const orchestratorModule = await import('../src/game/requirements/orchestrator.js');
 const invalidationModule = await import('../src/core/events/invalidationBus.js');
+const actionsRegistryModule = await import('../src/ui/actions/registry.js');
+const todoWidgetModule = await import('../src/ui/views/browser/widgets/todoWidget.js');
 
 const { default: tracksDefaultExport, KNOWLEDGE_TRACKS: tracksCatalog, KNOWLEDGE_REWARDS: rewardCatalog } = knowledgeTracksModule;
 const knowledgeTrackData = knowledgeTrackDataModule.default;
@@ -15,6 +17,8 @@ const { estimateManualMaintenanceReserve } = maintenanceModule;
 const { buildAssetRequirementDescriptor } = descriptorsModule;
 const { createRequirementsOrchestrator, STUDY_DIRTY_SECTIONS } = orchestratorModule;
 const { consumeDirty } = invalidationModule;
+const { normalizeActionEntries } = actionsRegistryModule;
+const { __testables: todoWidgetTestables } = todoWidgetModule;
 
 const actionsProgressModule = await import('../src/game/actions/progress.js');
 const { advanceActionInstance } = actionsProgressModule;
@@ -223,6 +227,71 @@ test('advancing knowledge logs completions and clears daily flags', () => {
   STUDY_DIRTY_SECTIONS.forEach(section => {
     assert.ok(dirty[section]);
   });
+});
+
+test('logging study hours updates daily study flags immediately', () => {
+  resetState();
+  consumeDirty();
+
+  const state = getState();
+  const track = KNOWLEDGE_TRACKS.photoLibrary;
+  state.money = track.tuition + 200;
+  state.timeLeft = track.hoursPerDay + 6;
+
+  enrollInKnowledgeTrack(track.id);
+  consumeDirty();
+
+  const progress = getKnowledgeProgress(track.id);
+  assert.equal(progress.studiedToday, false);
+
+  const actionDefinition = registryModule.getActionDefinition(`study-${track.id}`);
+  const actionState = stateModule.getActionState(`study-${track.id}`);
+  const instance = actionState.instances.at(-1);
+
+  assert.ok(actionDefinition, 'study action definition should exist');
+  assert.ok(instance, 'study action instance should be active');
+  assert.ok(todoWidgetTestables?.createProgressHandler, 'todo widget test hook should exist');
+
+  const [entry] = normalizeActionEntries({
+    entries: [
+      {
+        id: 'test-study-entry',
+        title: actionDefinition.name || 'Study Session',
+        durationHours: track.hoursPerDay,
+        progress: {
+          type: 'study',
+          definitionId: actionDefinition.id,
+          instanceId: instance.id,
+          hoursRemaining: track.hoursPerDay,
+          stepHours: track.hoursPerDay,
+          completion: 'manual',
+          metadata: { day: state.day }
+        }
+      }
+    ]
+  });
+
+  assert.ok(entry, 'normalized entry should be created');
+  entry.progress.metadata = { day: state.day };
+
+  const handler = todoWidgetTestables.createProgressHandler(entry);
+  assert.equal(typeof handler, 'function', 'study entry should provide a progress handler');
+
+  const baselineLogIndex = state.log.length;
+  const outcome = handler();
+  assert.ok(outcome?.success, 'handler should advance the study progress');
+
+  const dirty = consumeDirty();
+
+  assert.equal(progress.studiedToday, true, 'studiedToday should flip immediately after logging hours');
+  assert.ok(dirty.dashboard, 'dashboard should be marked dirty');
+  assert.ok(dirty.player, 'player panel should be marked dirty');
+
+  const newLogs = state.log.slice(baselineLogIndex);
+  assert.ok(
+    newLogs.some(entryLog => /Study time logged/i.test(entryLog?.message || '')),
+    'study allocation should celebrate logged hours right away'
+  );
 });
 
 test('legacy study progress seeds action instances during state ensure', () => {
