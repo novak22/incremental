@@ -6,7 +6,7 @@
 - Persist market state so day transitions can detect whether a reroll is required or if existing contracts still apply.
 
 ## Template & Variant Structure
-- All instant hustles continue to live in `HUSTLE_TEMPLATES` (alias `HUSTLES`) so the registry keeps a stable snapshot of every market-ready gig. Study tracks flow through the broader `ACTIONS` export but never appear in the daily market roll.
+- All instant hustles continue to live in `HUSTLE_TEMPLATES`, a filtered view of the canonical `ACTIONS` registry, so the market keeps a stable snapshot of every gig-ready template. Study tracks flow through the broader `ACTIONS` export but never appear in the daily market roll.
 - Templates may define a `market` block with:
   - `variants`: optional array of variant configs (id, label, weight, duration, availableAfterDays, metadata, definitionId).
   - `durationDays` and `availableAfterDays`: defaults applied when variants omit explicit values.
@@ -55,7 +55,7 @@
 - Manual QA steps for the exchange now live in `docs/features/hustle-market-playtest.md`, covering bootstrap validation, daily rerolls, and acceptance/completion flows so every release can run through a repeatable script.
 
 ## Registry Loading
-- `loadDefaultRegistry` now registers the immutable template list (`HUSTLE_TEMPLATES`) so day-to-day market rolls no longer mutate the definitions.
+- `loadDefaultRegistry` now registers the canonical `ACTIONS` list (with `HUSTLE_TEMPLATES` derived automatically) so day-to-day market rolls no longer mutate the definitions.
 - Tests cover: slice normalization, seeding, expiry rerolls, and delayed availability to protect future tuning changes.
 
 ## UI Surface Updates

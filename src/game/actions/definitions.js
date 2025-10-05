@@ -1,18 +1,12 @@
 import { createInstantHustle } from '../content/schema.js';
 import { getInstantHustleDefinitions } from '../hustles/definitions/instantHustles.js';
 import { createKnowledgeHustles } from '../hustles/knowledgeHustles.js';
-import { createContractTemplate, createStudyTemplate } from './templates/contract.js';
+import { createStudyTemplate } from './templates/contract.js';
 
 function prepareInstantActions() {
   return getInstantHustleDefinitions().map(config => {
-    const definition = createContractTemplate(createInstantHustle(config), {
-      progress: {
-        type: 'instant',
-        completion: 'instant',
-        hoursRequired: Number(config.time || config.action?.timeCost || 0)
-      }
-    });
-    definition.kind = 'action';
+    const definition = createInstantHustle(config);
+    definition.kind = definition.kind || 'action';
     return definition;
   });
 }
@@ -20,12 +14,14 @@ function prepareInstantActions() {
 function prepareStudyActions() {
   return createKnowledgeHustles().map(definition => {
     const template = createStudyTemplate(definition, {
+      templateKind: 'manual',
+      category: definition.category || 'study',
       progress: {
         hoursPerDay: definition.studyHoursPerDay || definition.hoursPerDay || null,
         daysRequired: definition.studyDays || definition.days || null
       }
     });
-    template.kind = 'action';
+    template.kind = template.kind || 'action';
     return template;
   });
 }
