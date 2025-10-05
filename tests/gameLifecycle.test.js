@@ -11,9 +11,10 @@ const assetsModule = await import('../src/game/assets/index.js');
 const hustlesModule = await import('../src/game/hustles.js');
 const upgradesModule = await import('../src/game/upgrades.js');
 const requirementsModule = await import('../src/game/requirements.js');
+const actionsProgressModule = await import('../src/game/actions/progress.js');
 
 const { buildDefaultState, initializeState, getState, getAssetState, getUpgradeState } = stateModule;
-const { getAssetDefinition } = registryModule;
+const { getAssetDefinition, getActionDefinition } = registryModule;
 const { createAssetInstance } = assetStateModule;
 const { allocateAssetMaintenance, closeOutDay, ASSETS, getIncomeRangeForDisplay } = assetsModule;
 const { ACTIONS } = hustlesModule;
@@ -25,6 +26,7 @@ const {
   enrollInKnowledgeTrack,
   getKnowledgeProgress
 } = requirementsModule;
+const { advanceActionInstance } = actionsProgressModule;
 const registryService = await import('../src/game/registryService.js');
 const { ensureRegistryReady } = await import('../src/game/registryBootstrap.js');
 
@@ -202,7 +204,7 @@ test('pending income stays queued when upkeep resources fall short', () => {
   assert.equal(updatedInstance.maintenanceFundedToday, false, 'maintenance should remain unfunded');
 });
 
-test('knowledge tracks auto-advance after enrollment when time is available', () => {
+test('knowledge tracks advance after manual study logs', () => {
   const trackDef = KNOWLEDGE_TRACKS.outlineMastery;
   const progress = getKnowledgeProgress('outlineMastery');
   assert.equal(progress.daysCompleted, 0, 'progress should start at zero');
@@ -213,11 +215,25 @@ test('knowledge tracks auto-advance after enrollment when time is available', ()
 
   enrollInKnowledgeTrack('outlineMastery');
 
-  for (let day = 0; day < trackDef.days; day += 1) {
-    advanceKnowledgeTracks();
-    state.timeLeft = trackDef.hoursPerDay + 4;
+  const studyDefinition = getActionDefinition('study-outlineMastery');
+  let studyInstance = stateModule.getActionState('study-outlineMastery').instances.at(-1);
+
+  for (let dayOffset = 0; dayOffset < trackDef.days; dayOffset += 1) {
+    const actionDay = state.day + dayOffset;
+    advanceActionInstance(studyDefinition, studyInstance, {
+      state,
+      day: actionDay,
+      hours: trackDef.hoursPerDay
+    });
+    state.day = actionDay;
     allocateDailyStudy();
+    advanceKnowledgeTracks();
+    studyInstance = stateModule.getActionState('study-outlineMastery').instances.at(-1);
   }
+
+  state.day += 1;
+  allocateDailyStudy();
+  advanceKnowledgeTracks();
 
   const updated = getKnowledgeProgress('outlineMastery');
   assert.equal(updated.daysCompleted, trackDef.days, 'studied days should accumulate');

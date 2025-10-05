@@ -13,12 +13,11 @@ const { default: tracksDefaultExport, KNOWLEDGE_TRACKS: tracksCatalog, KNOWLEDGE
 const knowledgeTrackData = knowledgeTrackDataModule.default;
 const { estimateManualMaintenanceReserve } = maintenanceModule;
 const { buildAssetRequirementDescriptor } = descriptorsModule;
-const {
-  createRequirementsOrchestrator,
-  MIN_MANUAL_BUFFER_HOURS,
-  STUDY_DIRTY_SECTIONS
-} = orchestratorModule;
+const { createRequirementsOrchestrator, STUDY_DIRTY_SECTIONS } = orchestratorModule;
 const { consumeDirty } = invalidationModule;
+
+const actionsProgressModule = await import('../src/game/actions/progress.js');
+const { advanceActionInstance } = actionsProgressModule;
 
 const harness = await getGameTestHarness();
 const {
@@ -134,10 +133,20 @@ test('requirement detail renders dynamic knowledge progress', () => {
   state.timeLeft = trackDef.hoursPerDay + 8;
   enrollInKnowledgeTrack('outlineMastery');
 
-  for (let day = 0; day < trackDef.days; day += 1) {
-    advanceKnowledgeTracks();
-    state.timeLeft = trackDef.hoursPerDay + 6;
+  const studyDefinition = registryModule.getActionDefinition('study-outlineMastery');
+  let studyInstance = stateModule.getActionState('study-outlineMastery').instances.at(-1);
+
+  for (let dayOffset = 0; dayOffset < trackDef.days; dayOffset += 1) {
+    const actionDay = state.day + dayOffset;
+    advanceActionInstance(studyDefinition, studyInstance, {
+      state,
+      day: actionDay,
+      hours: trackDef.hoursPerDay
+    });
+    state.day = actionDay;
     allocateDailyStudy();
+    advanceKnowledgeTracks();
+    studyInstance = stateModule.getActionState('study-outlineMastery').instances.at(-1);
   }
 
   const detailAfter = renderAssetRequirementDetail('ebook');
@@ -173,17 +182,38 @@ test('advancing knowledge logs completions and clears daily flags', () => {
   enrollInKnowledgeTrack('photoLibrary');
   const logBaseline = state.log.length;
 
+  const studyDefinition = registryModule.getActionDefinition('study-photoLibrary');
+  let studyInstance = stateModule.getActionState('study-photoLibrary').instances.at(-1);
+
   consumeDirty();
+
+  const firstDay = state.day;
+  advanceActionInstance(studyDefinition, studyInstance, {
+    state,
+    day: firstDay,
+    hours: trackDef.hoursPerDay
+  });
+  allocateDailyStudy();
   advanceKnowledgeTracks();
   assert.equal(progress.daysCompleted, 1);
   assert.equal(progress.studiedToday, false);
-  assert.equal(state.log.length, logBaseline, 'no completion yet');
 
   for (let day = 1; day < trackDef.days; day += 1) {
-    state.timeLeft = trackDef.hoursPerDay + 6;
+    const actionDay = firstDay + day;
+    advanceActionInstance(studyDefinition, studyInstance, {
+      state,
+      day: actionDay,
+      hours: trackDef.hoursPerDay
+    });
+    state.day = actionDay;
     allocateDailyStudy();
     advanceKnowledgeTracks();
+    studyInstance = stateModule.getActionState('study-photoLibrary').instances.at(-1);
   }
+
+  state.day += 1;
+  allocateDailyStudy();
+  advanceKnowledgeTracks();
 
   assert.ok(progress.completed);
   assert.match(state.log.at(-1).message, /Finished .*Photo Catalog Curation/i);
@@ -193,73 +223,44 @@ test('advancing knowledge logs completions and clears daily flags', () => {
   });
 });
 
-test('requirements orchestrator honors reserves and rewards completions', () => {
-  const track = tracksCatalog.outlineMastery;
-  const logs = [];
-  const contributions = [];
-  let awardPayload = null;
+test('manual study reminders and completions trigger logs and rewards', () => {
+  resetState();
+  const state = getState();
+  const track = tracksCatalog.photoLibrary;
+  const reward = rewardCatalog[track.id];
 
-  const state = {
-    day: 1,
-    money: 1000,
-    timeLeft: 0,
-    progress: { knowledge: {} },
-    log: []
-  };
+  state.money = track.tuition + 200;
+  enrollInKnowledgeTrack(track.id);
 
-  const ensureProgress = id => {
-    if (!state.progress.knowledge[id]) {
-      state.progress.knowledge[id] = {
-        daysCompleted: 0,
-        studiedToday: false,
-        completed: false,
-        enrolled: true,
-        totalDays: track.days,
-        hoursPerDay: track.hoursPerDay,
-        tuitionCost: track.tuition,
-        enrolledOnDay: state.day,
-        skillRewarded: false
-      };
-    }
-    return state.progress.knowledge[id];
-  };
+  consumeDirty();
+  allocateDailyStudy({ trackIds: [track.id] });
+  assert.match(state.log.at(-1).message, /need study hours logged today/i);
 
-  const reserveHours = 3;
-  const orchestrator = createRequirementsOrchestrator({
-    getState: () => state,
-    getKnowledgeProgress: ensureProgress,
-    knowledgeTracks: { [track.id]: track },
-    knowledgeRewards: { [track.id]: rewardCatalog[track.id] },
-    estimateMaintenanceReserve: () => reserveHours,
-    spendMoney: () => {},
-    spendTime: hours => { state.timeLeft -= hours; },
-    recordCostContribution: () => {},
-    recordTimeContribution: entry => contributions.push(entry),
-    awardSkillProgress: payload => { awardPayload = payload; },
-    addLog: (message, level) => logs.push({ message, level })
-  });
+  const definition = registryModule.getActionDefinition(`study-${track.id}`);
+  let instance = stateModule.getActionState(`study-${track.id}`).instances.at(-1);
 
-  const progress = ensureProgress(track.id);
-  progress.daysCompleted = track.days - 1;
+  for (let dayOffset = 0; dayOffset < track.days; dayOffset += 1) {
+    const actionDay = state.day + dayOffset;
+    advanceActionInstance(definition, instance, {
+      state,
+      day: actionDay,
+      hours: track.hoursPerDay
+    });
+    state.day = actionDay;
+    allocateDailyStudy({ trackIds: [track.id] });
+    advanceKnowledgeTracks();
+    instance = stateModule.getActionState(`study-${track.id}`).instances.at(-1);
+  }
 
-  state.timeLeft = reserveHours + MIN_MANUAL_BUFFER_HOURS + track.hoursPerDay - 0.1;
-  orchestrator.allocateDailyStudy();
-  assert.equal(contributions.length, 0);
-  assert.ok(logs.some(log => log.level === 'warning' && log.message.includes('deferred')));
-  assert.equal(progress.studiedToday, false);
-  logs.length = 0;
+  state.day += 1;
+  allocateDailyStudy({ trackIds: [track.id] });
+  advanceKnowledgeTracks();
 
-  state.timeLeft = reserveHours + MIN_MANUAL_BUFFER_HOURS + track.hoursPerDay + 1;
-  orchestrator.allocateDailyStudy();
-  assert.equal(contributions.length, 1);
-  assert.ok(progress.studiedToday);
-
-  orchestrator.advanceKnowledgeTracks();
-  assert.ok(progress.completed);
-  assert.equal(progress.studiedToday, false);
-  assert.ok(awardPayload);
-  assert.equal(awardPayload.label, track.name);
-  assert.ok(logs.some(log => log.message.includes('Finished')));
+  const progress = getKnowledgeProgress(track.id);
+  assert.ok(progress.completed, 'progress should complete after required days');
+  assert.ok(progress.skillRewarded, 'skill reward should trigger once');
+  assert.match(state.log.at(-1).message, /Finished/);
+  assert.equal(reward.baseXp > 0, true, 'reward metadata should exist');
 });
 
 test('study enrollment updates player and dashboard sections alongside cards', () => {
@@ -293,20 +294,50 @@ test('study enrollment updates player and dashboard sections alongside cards', (
     return state.progress.knowledge[id];
   };
 
+  const actionState = { instances: [] };
+  const actionDefinition = {
+    id: `study-${track.id}`,
+    progress: {
+      type: 'study',
+      completion: 'manual',
+      hoursPerDay: track.hoursPerDay,
+      daysRequired: track.days
+    }
+  };
+
   const orchestrator = createRequirementsOrchestrator({
     getState: () => state,
+    getActionState: () => actionState,
+    getActionDefinition: id => (id === actionDefinition.id ? actionDefinition : null),
+    acceptActionInstance: () => {
+      const instance = {
+        id: 'instance-1',
+        definitionId: actionDefinition.id,
+        accepted: true,
+        progress: {
+          type: 'study',
+          completion: 'manual',
+          hoursPerDay: track.hoursPerDay,
+          daysRequired: track.days,
+          dailyLog: {},
+          daysCompleted: 0,
+          completed: false
+        }
+      };
+      actionState.instances.push(instance);
+      return instance;
+    },
+    abandonActionInstance: () => {
+      actionState.instances = [];
+      return true;
+    },
     getKnowledgeProgress: ensureProgress,
     knowledgeTracks: { [track.id]: track },
     knowledgeRewards: {},
-    estimateMaintenanceReserve: () => 0,
     spendMoney: amount => {
       state.money -= amount;
     },
-    spendTime: hours => {
-      state.timeLeft -= hours;
-    },
     recordCostContribution: () => {},
-    recordTimeContribution: () => {},
     awardSkillProgress: () => {},
     addLog: () => {}
   });
@@ -317,61 +348,6 @@ test('study enrollment updates player and dashboard sections alongside cards', (
 
   const dropResult = orchestrator.dropKnowledgeTrack(track.id);
   assert.ok(dropResult.success);
-  assert.deepEqual(consumeDirty(), { cards: true, dashboard: true, player: true });
-});
-
-test('zero-hour study allocations still refresh dashboard and player views', () => {
-  consumeDirty();
-  const state = {
-    day: 4,
-    money: 200,
-    timeLeft: 6,
-    progress: { knowledge: {} },
-    log: []
-  };
-
-  const track = {
-    id: 'freeTrack',
-    name: 'Flash Study Jam',
-    days: 1,
-    hoursPerDay: 0,
-    tuition: 0
-  };
-
-  const ensureProgress = id => {
-    if (!state.progress.knowledge[id]) {
-      state.progress.knowledge[id] = {
-        daysCompleted: 0,
-        studiedToday: false,
-        completed: false,
-        enrolled: false,
-        enrolledOnDay: null
-      };
-    }
-    return state.progress.knowledge[id];
-  };
-
-  const orchestrator = createRequirementsOrchestrator({
-    getState: () => state,
-    getKnowledgeProgress: ensureProgress,
-    knowledgeTracks: { [track.id]: track },
-    knowledgeRewards: {},
-    estimateMaintenanceReserve: () => 0,
-    spendMoney: () => {},
-    spendTime: () => {},
-    recordCostContribution: () => {},
-    recordTimeContribution: () => {},
-    awardSkillProgress: () => {},
-    addLog: () => {}
-  });
-
-  orchestrator.enrollInKnowledgeTrack(track.id);
-  consumeDirty();
-  const progress = ensureProgress(track.id);
-  progress.studiedToday = false;
-
-  orchestrator.allocateDailyStudy({ trackIds: [track.id] });
-  assert.equal(progress.studiedToday, true);
   assert.deepEqual(consumeDirty(), { cards: true, dashboard: true, player: true });
 });
 
@@ -422,16 +398,80 @@ test('knowledge track rollover invalidates study panels for completions and stal
     }
   };
 
+  const actionStates = {
+    paidTrack: {
+      instances: [
+        {
+          id: 'paid-instance',
+          accepted: true,
+          completed: true,
+          progress: {
+            type: 'study',
+            completion: 'manual',
+            hoursPerDay: tracks.paidTrack.hoursPerDay,
+            daysRequired: tracks.paidTrack.days,
+            daysCompleted: tracks.paidTrack.days,
+            dailyLog: { [state.day]: tracks.paidTrack.hoursPerDay },
+            completed: true
+          }
+        }
+      ]
+    },
+    freeTrack: {
+      instances: [
+        {
+          id: 'free-instance',
+          accepted: true,
+          completed: false,
+          progress: {
+            type: 'study',
+            completion: 'manual',
+            hoursPerDay: tracks.freeTrack.hoursPerDay,
+            daysRequired: tracks.freeTrack.days,
+            daysCompleted: 1,
+            dailyLog: {},
+            completed: false
+          }
+        }
+      ]
+    }
+  };
+
+  const actionDefinitions = {
+    [`study-${tracks.paidTrack.id}`]: {
+      id: `study-${tracks.paidTrack.id}`,
+      progress: {
+        type: 'study',
+        completion: 'manual',
+        hoursPerDay: tracks.paidTrack.hoursPerDay,
+        daysRequired: tracks.paidTrack.days
+      }
+    },
+    [`study-${tracks.freeTrack.id}`]: {
+      id: `study-${tracks.freeTrack.id}`,
+      progress: {
+        type: 'study',
+        completion: 'manual',
+        hoursPerDay: tracks.freeTrack.hoursPerDay,
+        daysRequired: tracks.freeTrack.days
+      }
+    }
+  };
+
   const orchestrator = createRequirementsOrchestrator({
     getState: () => state,
+    getActionState: id => {
+      const key = id.replace('study-', '');
+      return actionStates[key] || { instances: [] };
+    },
+    getActionDefinition: id => actionDefinitions[id] || null,
+    acceptActionInstance: () => null,
+    abandonActionInstance: () => true,
     getKnowledgeProgress: id => state.progress.knowledge[id],
     knowledgeTracks: tracks,
     knowledgeRewards: {},
-    estimateMaintenanceReserve: () => 0,
     spendMoney: () => {},
-    spendTime: () => {},
     recordCostContribution: () => {},
-    recordTimeContribution: () => {},
     awardSkillProgress: () => {},
     addLog: (message, level) => logs.push({ message, level })
   });
@@ -451,7 +491,7 @@ test('knowledge track rollover invalidates study panels for completions and stal
     logs.some(log => log.level === 'info' && /Finished .*Tuition Strategy Sprint/.test(log.message))
   );
   assert.ok(
-    logs.some(log => log.level === 'warning' && /did not get study time today/.test(log.message))
+    logs.some(log => log.level === 'warning' && /did not get study hours logged today/.test(log.message))
   );
   STUDY_DIRTY_SECTIONS.forEach(section => {
     assert.ok(dirty[section]);

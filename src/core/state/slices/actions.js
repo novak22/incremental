@@ -1,6 +1,9 @@
 import { structuredClone, createId, toNumber } from '../../helpers.js';
 import { getActionDefinition, getHustleDefinition } from '../registry.js';
+import knowledgeTrackData from '../../../game/requirements/data/knowledgeTracks.js';
 import { createRegistrySliceManager } from './factory.js';
+
+const KNOWLEDGE_TRACKS = knowledgeTrackData;
 
 function resolveDefinition(id) {
   return getActionDefinition(id) || getHustleDefinition(id);
@@ -226,6 +229,96 @@ function normalizeActionState(definition, entry = {}, context) {
   return normalized;
 }
 
+function buildLegacyStudyInstance(definition, track, progress, state) {
+  if (!definition || !track || !progress) {
+    return null;
+  }
+
+  const acceptedOn = Number(progress.enrolledOnDay);
+  const fallbackDay = Math.max(1, Math.floor(Number(state?.day) || 1));
+  const acceptedOnDay = Number.isFinite(acceptedOn) && acceptedOn > 0 ? Math.floor(acceptedOn) : fallbackDay;
+  const hoursPerDay = Number(track.hoursPerDay) || Number(definition?.progress?.hoursPerDay) || 0;
+  const daysRequired = Number(track.days) || Number(definition?.progress?.daysRequired) || 0;
+  const recordedDays = Math.max(0, Math.floor(Number(progress.daysCompleted) || 0));
+  const cappedDays = daysRequired > 0 ? Math.min(recordedDays, daysRequired) : recordedDays;
+  const hoursLogged = hoursPerDay > 0 ? hoursPerDay * cappedDays : cappedDays;
+  const status = progress.completed ? 'completed' : progress.enrolled ? 'active' : 'pending';
+
+  const overrides = {
+    accepted: Boolean(progress.enrolled || progress.completed),
+    acceptedOnDay,
+    status,
+    hoursRequired: definition?.progress?.hoursRequired ?? null,
+    hoursLogged,
+    completed: Boolean(progress.completed)
+  };
+
+  if (progress.completed) {
+    const completedOn = Number(progress.completedOnDay);
+    overrides.completedOnDay = Number.isFinite(completedOn) && completedOn > 0
+      ? Math.floor(completedOn)
+      : Math.max(acceptedOnDay + cappedDays - 1, acceptedOnDay);
+  }
+
+  const requiredHours = hoursPerDay > 0 ? hoursPerDay : 1;
+  const dailyLog = {};
+  for (let dayOffset = 0; dayOffset < cappedDays; dayOffset += 1) {
+    dailyLog[acceptedOnDay + dayOffset] = requiredHours;
+  }
+
+  const stateDay = Math.max(1, Math.floor(Number(state?.day) || acceptedOnDay));
+  if (!progress.completed && progress.studiedToday) {
+    dailyLog[stateDay] = requiredHours;
+  }
+
+  overrides.progress = {
+    type: definition?.progress?.type || 'study',
+    completion: definition?.progress?.completion || 'manual',
+    hoursPerDay: hoursPerDay > 0 ? hoursPerDay : null,
+    daysRequired: daysRequired > 0 ? daysRequired : null,
+    daysCompleted: cappedDays,
+    dailyLog,
+    hoursLogged,
+    lastWorkedDay: progress.studiedToday
+      ? stateDay
+      : cappedDays > 0
+        ? acceptedOnDay + cappedDays - 1
+        : null,
+    completed: Boolean(progress.completed)
+  };
+
+  if (progress.completed) {
+    overrides.progress.completedOnDay = overrides.completedOnDay;
+  }
+
+  return normalizeActionInstance(definition, overrides, { state });
+}
+
+function seedKnowledgeStudyInstances({ state, sliceState }) {
+  const knowledge = state?.progress?.knowledge;
+  if (!knowledge || typeof knowledge !== 'object') {
+    return;
+  }
+
+  for (const [trackId, progress] of Object.entries(knowledge)) {
+    if (!progress) continue;
+    const definitionId = `study-${trackId}`;
+    const definition = resolveDefinition(definitionId);
+    if (!definition) continue;
+    const entry = sliceState[definitionId];
+    if (!entry) continue;
+    const hasActiveInstance = Array.isArray(entry.instances)
+      && entry.instances.some(instance => instance?.accepted || instance?.completed);
+    if (hasActiveInstance) continue;
+
+    const track = KNOWLEDGE_TRACKS[trackId];
+    const instance = buildLegacyStudyInstance(definition, track, progress, state);
+    if (instance) {
+      entry.instances.push(instance);
+    }
+  }
+}
+
 function migrateLegacyHustleProgress({ state, sliceState }) {
   const legacy = state?.hustles;
   if (!legacy || typeof legacy !== 'object') {
@@ -266,6 +359,8 @@ function migrateLegacyHustleProgress({ state, sliceState }) {
       }
     }
   }
+
+  seedKnowledgeStudyInstances({ state, sliceState });
 }
 
 const { ensureSlice, getSliceState } = createRegistrySliceManager({
