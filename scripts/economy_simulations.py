@@ -321,12 +321,12 @@ def run_simulation(
     assets = data['assets']
     hustles = data['hustles']
 
-    selected_assets: List[str] = list(asset_ids) if asset_ids is not None else list(config.asset_ids)
-    if not selected_assets:
-        if build_blog:
+    if asset_ids is None:
+        selected_assets: List[str] = list(config.asset_ids)
+        if not selected_assets and build_blog:
             selected_assets = ['blog']
-        else:
-            selected_assets = []
+    else:
+        selected_assets = list(asset_ids)
 
     selected_upgrades: List[str] = list(upgrade_ids) if upgrade_ids is not None else list(config.upgrade_ids)
 
