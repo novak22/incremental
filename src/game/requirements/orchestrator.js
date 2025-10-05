@@ -1,23 +1,93 @@
-import { DEFAULT_DAY_HOURS } from '../../core/constants.js';
-import { formatList, formatMoney } from '../../core/helpers.js';
+import { formatHours, formatList, formatMoney } from '../../core/helpers.js';
 import { markDirty } from '../../core/events/invalidationBus.js';
-
-export const MIN_MANUAL_BUFFER_HOURS = Math.max(2, Math.round(DEFAULT_DAY_HOURS * 0.25));
 export const STUDY_DIRTY_SECTIONS = Object.freeze(['cards', 'dashboard', 'player']);
 
 export function createRequirementsOrchestrator({
   getState,
+  getActionState,
+  getActionDefinition,
+  acceptActionInstance,
+  abandonActionInstance,
   getKnowledgeProgress,
   knowledgeTracks,
   knowledgeRewards,
-  estimateMaintenanceReserve,
   spendMoney,
-  spendTime,
   recordCostContribution,
-  recordTimeContribution,
   awardSkillProgress,
   addLog
 }) {
+  function getStudyActionId(trackId) {
+    return `study-${trackId}`;
+  }
+
+  function getStudyActionSnapshot(trackId, state = getState()) {
+    if (!state) {
+      return { entry: null, instances: [], active: null, completed: null };
+    }
+
+    const entry = getActionState(getStudyActionId(trackId), state);
+    const instances = Array.isArray(entry?.instances) ? entry.instances : [];
+    const active = instances.find(instance => instance?.accepted && !instance?.completed) || null;
+    const completed = instances.find(instance => instance?.completed) || null;
+
+    return { entry, instances, active, completed };
+  }
+
+  function ensureStudyActionQueued(track, state = getState()) {
+    if (!track) return null;
+    const workingState = state || getState();
+    if (!workingState) return null;
+    const definition = getActionDefinition(getStudyActionId(track.id));
+    if (!definition) return null;
+
+    const { active } = getStudyActionSnapshot(track.id, workingState);
+    if (active) {
+      return active;
+    }
+
+    return acceptActionInstance(definition, { state: workingState });
+  }
+
+  function removeActiveStudyInstance(trackId, state = getState()) {
+    const workingState = state || getState();
+    if (!workingState) return false;
+    const definition = getActionDefinition(getStudyActionId(trackId));
+    if (!definition) return false;
+
+    const { active } = getStudyActionSnapshot(trackId, workingState);
+    if (!active) return false;
+
+    return abandonActionInstance(definition, active.id, { state: workingState });
+  }
+
+  function evaluateStudyProgress(track, state = getState()) {
+    const progress = getKnowledgeProgress(track.id, state);
+    const { active, completed } = getStudyActionSnapshot(track.id, state);
+    const source = active?.progress || completed?.progress || null;
+    const hoursPerDay = Number(track.hoursPerDay) || Number(source?.hoursPerDay) || 0;
+    const daysRequired = Number(track.days) || Number(source?.daysRequired) || 0;
+    const dayKey = Number(state?.day);
+
+    let studiedToday = false;
+    if (source?.dailyLog && Number.isFinite(dayKey)) {
+      const logged = Number(source.dailyLog[dayKey]) || 0;
+      const threshold = hoursPerDay > 0 ? hoursPerDay - 0.0001 : 0.1;
+      studiedToday = logged >= threshold;
+    }
+
+    const daysCompleted = Math.min(daysRequired || Infinity, Number(source?.daysCompleted) || 0);
+    const completedFlag = Boolean(completed?.completed || source?.completed);
+
+    return {
+      progress,
+      studiedToday,
+      daysCompleted,
+      completedFlag,
+      activeInstance: active,
+      completedInstance: completed
+    };
+  }
+
   function enrollInKnowledgeTrack(id) {
     const state = getState();
     const track = knowledgeTracks[id];
@@ -53,7 +123,13 @@ export function createRequirementsOrchestrator({
     progress.enrolledOnDay = state.day;
     progress.studiedToday = false;
 
-    addLog(`You enrolled in ${track.name}! Tuition paid${tuition > 0 ? ` for $${formatMoney(tuition)}` : ''}.`, 'info');
+    ensureStudyActionQueued(track, state);
+
+    addLog(
+      `You enrolled in ${track.name}! Tuition paid${tuition > 0 ? ` for $${formatMoney(tuition)}` : ''}. ` +
+        `Log ${formatHours(track.hoursPerDay)} each day from the action queue to progress.`,
+      'info'
+    );
 
     allocateDailyStudy({ trackIds: [id], triggeredByEnrollment: true });
 
@@ -79,6 +155,8 @@ export function createRequirementsOrchestrator({
     progress.studiedToday = false;
     progress.enrolledOnDay = null;
 
+    removeActiveStudyInstance(id, state);
+
     addLog(`You dropped ${track.name}. Tuition stays paid, but your schedule opens back up.`, 'warning');
 
     markDirty(STUDY_DIRTY_SECTIONS);
@@ -90,75 +168,47 @@ export function createRequirementsOrchestrator({
     const state = getState();
     if (!state) return;
 
-    const studied = [];
-    const reserveSkipped = [];
-    const timeSkipped = [];
-
     const tracks = trackIds
       ? trackIds.map(id => knowledgeTracks[id]).filter(Boolean)
       : Object.values(knowledgeTracks);
 
-    const maintenanceReserve = estimateMaintenanceReserve(state);
-    let availableStudyTime = Math.max(0, state.timeLeft - maintenanceReserve - MIN_MANUAL_BUFFER_HOURS);
+    if (!tracks.length) return;
+
+    const celebrated = [];
+    const awaiting = [];
     let dirty = false;
 
     for (const track of tracks) {
-      const progress = getKnowledgeProgress(track.id);
-      if (!progress.enrolled || progress.completed) continue;
-      if (progress.studiedToday) continue;
+      const { progress, studiedToday } = evaluateStudyProgress(track, state);
+      if (!progress) continue;
 
-      const hours = Number(track.hoursPerDay) || 0;
-      if (hours <= 0) {
-        progress.studiedToday = true;
+      const isActive = Boolean(progress.enrolled && !progress.completed);
+      const nextStudied = Boolean(studiedToday && isActive);
+
+      if (progress.studiedToday !== nextStudied) {
+        progress.studiedToday = nextStudied;
         dirty = true;
-        continue;
       }
 
-      if (availableStudyTime < hours) {
-        reserveSkipped.push(track.name);
-        continue;
-      }
+      if (!isActive) continue;
 
-      if (state.timeLeft < hours) {
-        timeSkipped.push(track.name);
-        continue;
+      if (nextStudied) {
+        celebrated.push(track.name);
+      } else if (!triggeredByEnrollment) {
+        awaiting.push(track.name);
       }
-
-      spendTime(hours);
-      availableStudyTime = Math.max(0, availableStudyTime - hours);
-      recordTimeContribution({
-        key: `study:${track.id}:time`,
-        label: `📘 ${track.name} study`,
-        hours,
-        category: 'study'
-      });
-      progress.studiedToday = true;
-      dirty = true;
-      studied.push(track.name);
     }
 
-    if (studied.length) {
-      const prefix = triggeredByEnrollment ? 'Class time booked today for' : 'Study sessions reserved for';
-      addLog(`${prefix} ${formatList(studied)}.`, 'info');
+    if (!triggeredByEnrollment && celebrated.length) {
+      addLog(`Study time logged for ${formatList(celebrated)}. Keep that momentum going!`, 'info');
     }
 
-    if (reserveSkipped.length || timeSkipped.length) {
-      dirty = true;
+    if (!triggeredByEnrollment && awaiting.length) {
+      addLog(`${formatList(awaiting)} still need study hours logged today.`, 'warning');
     }
 
     if (dirty) {
       markDirty(STUDY_DIRTY_SECTIONS);
-    }
-
-    if (reserveSkipped.length) {
-      addLog(
-        `${formatList(reserveSkipped)} were deferred to leave breathing room for upkeep commitments.`,
-        'warning'
-      );
-    }
-
-    if (timeSkipped.length) {
-      addLog(`${formatList(timeSkipped)} could not fit into today's schedule.`, 'warning');
     }
   }
 
@@ -167,57 +217,81 @@ export function createRequirementsOrchestrator({
     if (!state) return;
 
     const completedToday = [];
-    const stalled = [];
+    const awaiting = [];
+    let dirty = false;
 
     Object.entries(state.progress.knowledge || {}).forEach(([id, progress]) => {
       const track = knowledgeTracks[id];
       if (!track) {
-        progress.studiedToday = false;
-        return;
-      }
-      if (progress.completed) {
-        progress.studiedToday = false;
-        return;
-      }
-
-      if (!progress.enrolled) {
-        progress.studiedToday = false;
+        if (progress) {
+          progress.studiedToday = false;
+        }
         return;
       }
 
-      if (progress.studiedToday) {
-        const before = progress.daysCompleted;
-        progress.daysCompleted = Math.min(track.days, before + 1);
-        progress.studiedToday = false;
-        if (progress.daysCompleted >= track.days) {
+      const { studiedToday, daysCompleted, completedFlag } = evaluateStudyProgress(track, state);
+      const isActive = Boolean(progress.enrolled && !progress.completed);
+
+      if (progress.daysCompleted !== Math.min(track.days, daysCompleted)) {
+        progress.daysCompleted = Math.min(track.days, daysCompleted);
+        dirty = true;
+      }
+
+      if (progress.totalDays !== track.days) {
+        progress.totalDays = track.days;
+        dirty = true;
+      }
+
+      if (progress.hoursPerDay !== track.hoursPerDay) {
+        progress.hoursPerDay = track.hoursPerDay;
+        dirty = true;
+      }
+
+      const participated = Boolean(studiedToday && isActive);
+      if (progress.studiedToday !== participated) {
+        progress.studiedToday = participated;
+        dirty = true;
+      }
+
+      if (completedFlag) {
+        if (!progress.completed) {
           progress.completed = true;
           progress.enrolled = false;
-          if (!progress.skillRewarded) {
-            const reward = knowledgeRewards[id];
-            if (reward) {
-              awardSkillProgress({
-                skills: reward.skills,
-                baseXp: reward.baseXp,
-                label: track.name
-              });
-            }
-            progress.skillRewarded = true;
-          }
+          progress.studiedToday = false;
+          dirty = true;
           completedToday.push(track.name);
         }
-      } else if (progress.daysCompleted > 0 || progress.enrolled) {
-        stalled.push(track.name);
+
+        if (!progress.skillRewarded) {
+          const reward = knowledgeRewards[id];
+          if (reward) {
+            awardSkillProgress({
+              skills: reward.skills,
+              baseXp: reward.baseXp,
+              label: track.name
+            });
+          }
+          progress.skillRewarded = true;
+          dirty = true;
+        }
+      } else if (isActive && !participated) {
+        awaiting.push(track.name);
+      }
+
+      if (!isActive && !completedFlag) {
+        progress.studiedToday = false;
       }
     });
 
     if (completedToday.length) {
-      addLog(`Finished ${formatList(completedToday)}! New opportunities unlocked.`, 'info');
-    }
-    if (stalled.length) {
-      addLog(`${formatList(stalled)} did not get study time today. Progress paused.`, 'warning');
+      addLog(`Finished ${formatList(completedToday)} after logging every session. Stellar dedication!`, 'info');
     }
 
-    if (completedToday.length || stalled.length) {
+    if (awaiting.length) {
+      addLog(`${formatList(awaiting)} did not get study hours logged today. Progress pauses until you dive back in.`, 'warning');
+    }
+
+    if (dirty || completedToday.length || awaiting.length) {
       markDirty(STUDY_DIRTY_SECTIONS);
     }
   }

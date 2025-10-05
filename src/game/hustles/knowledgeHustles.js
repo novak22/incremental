@@ -130,6 +130,7 @@ export function createKnowledgeHustles() {
       expiry: { type: 'permanent' },
       progress: {
         type: 'study',
+        completion: 'manual',
         hoursPerDay: track.hoursPerDay,
         daysRequired: track.days
       },

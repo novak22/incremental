@@ -4,9 +4,9 @@
 Online Hustle Simulator is a browser-based incremental game about orchestrating your side-hustle empire one in-world day at a time. Each morning you receive a fresh stack of hours, decide how to divide them between quick gigs, study tracks, and asset upkeep, then close the day to trigger payouts. The loop rewards planning, lighthearted experimentation, and a healthy obsession with passive income spreadsheets.
 
 ## Gameplay Loop & Systems
-- **Daily Time Budget** – Every in-game day begins with 14 base hours (plus permanent bonuses). Hustles, asset setup, upkeep, and any enrolled study tracks automatically reserve time from this pool. Assistants can be hired (up to four) for +2 hours each, but payroll hits every morning; you can always fire them if cash or time dips too low. Turbo coffee grants up to three one-hour boosts per day.
+- **Daily Time Budget** – Every in-game day begins with 14 base hours (plus permanent bonuses). Hustles, asset setup, and upkeep can still reserve time automatically, while study tracks now queue manual focus blocks that you log when you actually sit down to learn. Assistants can be hired (up to four) for +2 hours each, but payroll hits every morning; you can always fire them if cash or time dips too low. Turbo coffee grants up to three one-hour boosts per day.
 - **Setup & Maintenance Allocation** – When a day ends, each asset checks whether you funded the required setup/maintenance hours **and** any daily cash cost. Funded instances progress (or earn income); unfunded ones pause. The next morning, the scheduler automatically earmarks required hours until you run out.
-- **Autocompleted Daily Commitments** – As a fresh day begins, the dashboard’s ToDo widget drops those auto-funded upkeep and study sessions straight into the Done list so you instantly see how many free hours remain for new hustles.
+- **Autocompleted Daily Commitments** – As a fresh day begins, the dashboard’s ToDo widget drops those auto-funded upkeep sessions straight into the Done list so you instantly see how many free hours remain for new hustles. Study actions instead appear in the action queue and advance only after you record the day’s hours.
 - **Deferred Action Progress** – Hustles and study tracks now log per-day hours in shared progress records, letting deferred templates accumulate work across multiple days before completing.
 - **Hustle Market Rotation** – Daily gigs now roll out from a persisted market that selects variants per template, tracks multi-day availability, and keeps timestamps so mornings can decide whether to refresh or continue existing offers.
 - **Action Provider Registry** – Dashboard widgets and the TimoDoro planner both pull from `src/ui/actions/registry.js`; register new providers there to surface fresh task sources everywhere without custom wiring.
@@ -14,7 +14,7 @@ Online Hustle Simulator is a browser-based incremental game about orchestrating 
 - **Audience Niches & Trends** – Each passive asset can target a whimsical niche that re-rolls in popularity every day. Assign builds to hot audiences for up to +30% payouts (or unassign to ride out a slump), monitor the daily popularity board, and review a seven-day highlight recap right from the dashboard.
 - **Dynamic Random Events** – Assets, quality actions, and niches can now spark multi-day streaks. Viral tailwinds start strong and taper each sunrise, setbacks recover step-by-step until they expire, and freshly completed quality actions may trigger celebratory boosts that glide back to baseline over a few days.
 - **Skills & Experience** – Hustles, asset launches, quality pushes, upgrades, and study milestones award skill XP across ten creative disciplines. Skill tiers (Novice → Master) grant celebratory log entries, while total skill XP feeds an overall creator level that tracks your long-term momentum.
-- **Knowledge Tracks** – Paying tuition enrolls you in longer-form courses that auto-schedule their daily study load until graduation. Completed courses unlock advanced assets, inject gig-specific payout boosts, and now apply passive-income modifiers to matching assets; if the scheduler runs out of hours, you’ll receive gentle warnings and the course simply waits for tomorrow. A new Free Courses tab spotlights jumpstart programs that award enough XP to hit level 1 in their focus skill so BlogPress, VideoTube, DigiShelf, Shopily, and ServerHub unlock the moment you graduate.
+- **Knowledge Tracks** – Paying tuition enrolls you in longer-form courses that queue a reusable study action with the required hours-per-day and day count. Completed courses unlock advanced assets, inject gig-specific payout boosts, and apply passive-income modifiers to matching assets. When you forget to log a session, the action patiently waits and the dashboard nudges you with a friendly reminder. A new Free Courses tab spotlights jumpstart programs that award enough XP to hit level 1 in their focus skill so BlogPress, VideoTube, DigiShelf, Shopily, and ServerHub unlock the moment you graduate.
 - **Daily Recap Log** – Every launch, maintenance result, payout, and study milestone is written to the log so you can reconstruct exactly what happened during busy streaks.
 
 ### Interface Overview
@@ -39,19 +39,19 @@ Online Hustle Simulator is a browser-based incremental game about orchestrating 
 - **Digital Shelf Primer** – Free; 1h/day for 3 days polishes metadata basics, grants +120 Editing XP (level 1), and unlocks DigiShelf alongside gallery boosts.
 - **Commerce Launch Primer** – Free; 1h/day for 3 days shadows fulfillment leads, awards +120 Commerce Operations XP (level 1), and unlocks Shopily.
 - **Micro SaaS Jumpstart** – Free; 1h/day for 3 days mentors you through deploy scripts, grants +120 Software Development XP (level 1), and unlocks ServerHub.
-- **Outline Mastery Workshop** – Pay $140 upfront; 2h/day for 5 days auto-reserve to unlock e-book production chops and boost writing/narration gigs.
-- **Photo Catalog Curation** – Pay $95 upfront; 1.5h/day for 4 days auto-reserve to polish your stock gallery workflow and increase Event Photo Gig payouts by 20%.
-- **E-Commerce Playbook** – Pay $260 upfront; 2h/day for 7 days auto-reserve to prep dropshipping ventures (+$6 Bundle Promo Push, +20% Dropship Pack Party).
-- **Automation Architecture Course** – Pay $540 upfront; ~2¼h/day for 10 days auto-reserve to earn SaaS-ready engineering chops (+$12 SaaS Bug Squash).
-- **Brand Voice Lab** – Pay $120 upfront; 1h/day for 4 days to sharpen livestream charisma and unlock +$4 tips on Audience Q&A gigs.
-- **Guerrilla Buzz Workshop** – Pay $180 upfront; 1.5h/day for 6 days to field-test street marketing hooks (+25% Street Team Promo, +$1.50 Micro Survey Dash).
-- **Curriculum Design Studio** – Pay $280 upfront; 2.5h/day for 6 days to co-design breakout lessons (+30% Pop-Up Workshop payouts, +15% Bundle Promo Push upsells).
-- **Post-Production Pipeline Lab** – Pay $360 upfront; 3h/day for 8 days to refine finishing workflows (+35% Vlog Edit Rush payouts and +18% Weekly Vlog Channel passive income).
-- **Fulfillment Ops Masterclass** – Pay $320 upfront; 2h/day for 7 days shadowing logistics leads (+25% Dropship Pack Party earnings and +35% Dropshipping Product Lab daily revenue).
-- **Customer Retention Clinic** – Pay $210 upfront; 2h/day for 5 days to coach support teams (+$8 SaaS Bug Squash retainers and +25% SaaS Micro-App subscriptions).
-- **Narration Performance Workshop** – Pay $190 upfront; 1.75h/day for 4 days with vocal coaches (+30% Audiobook Narration payouts and +15% e-book royalties).
-- **Gallery Licensing Summit** – Pay $240 upfront; 2.25h/day for 5 days to pitch curators (+30% Event Photo Gig bookings and +22% Stock Photo Gallery passive income).
-- **Syndication Residency** – Pay $300 upfront; 2h/day for 6 days cultivating partnerships (+20% Freelance Writing payouts, +$2 Street Promo Sprint stipends, and +18% Personal Blog Network income).
+- **Outline Mastery Workshop** – Pay $140 upfront; 2h/day for 5 days (log manually) to unlock e-book production chops and boost writing/narration gigs.
+- **Photo Catalog Curation** – Pay $95 upfront; 1.5h/day for 4 days (log manually) to polish your stock gallery workflow and increase Event Photo Gig payouts by 20%.
+- **E-Commerce Playbook** – Pay $260 upfront; 2h/day for 7 days (log manually) to prep dropshipping ventures (+$6 Bundle Promo Push, +20% Dropship Pack Party).
+- **Automation Architecture Course** – Pay $540 upfront; ~2¼h/day for 10 days (log manually) to earn SaaS-ready engineering chops (+$12 SaaS Bug Squash).
+- **Brand Voice Lab** – Pay $120 upfront; 1h/day for 4 days (log manually) to sharpen livestream charisma and unlock +$4 tips on Audience Q&A gigs.
+- **Guerrilla Buzz Workshop** – Pay $180 upfront; 1.5h/day for 6 days (log manually) to field-test street marketing hooks (+25% Street Team Promo, +$1.50 Micro Survey Dash).
+- **Curriculum Design Studio** – Pay $280 upfront; 2.5h/day for 6 days (log manually) to co-design breakout lessons (+30% Pop-Up Workshop payouts, +15% Bundle Promo Push upsells).
+- **Post-Production Pipeline Lab** – Pay $360 upfront; 3h/day for 8 days (log manually) to refine finishing workflows (+35% Vlog Edit Rush payouts and +18% Weekly Vlog Channel passive income).
+- **Fulfillment Ops Masterclass** – Pay $320 upfront; 2h/day for 7 days (log manually) shadowing logistics leads (+25% Dropship Pack Party earnings and +35% Dropshipping Product Lab daily revenue).
+- **Customer Retention Clinic** – Pay $210 upfront; 2h/day for 5 days (log manually) to coach support teams (+$8 SaaS Bug Squash retainers and +25% SaaS Micro-App subscriptions).
+- **Narration Performance Workshop** – Pay $190 upfront; 1.75h/day for 4 days (log manually) with vocal coaches (+30% Audiobook Narration payouts and +15% e-book royalties).
+- **Gallery Licensing Summit** – Pay $240 upfront; 2.25h/day for 5 days (log manually) to pitch curators (+30% Event Photo Gig bookings and +22% Stock Photo Gallery passive income).
+- **Syndication Residency** – Pay $300 upfront; 2h/day for 6 days (log manually) cultivating partnerships (+20% Freelance Writing payouts, +$2 Street Promo Sprint stipends, and +18% Personal Blog Network income).
 
 ### Passive Ventures (Daily Payouts)
 Each asset supports multiple instances, tracks setup progress, and rolls a daily income range once active. Quality actions unique to each asset increase payouts and stability, and you can liquidate any instance directly from the card—or from the category roster—for yesterday’s payout ×3 × (Quality level + 1). Celebratory events can trigger immediately after quality work, granting a small, tapering income bump that keeps momentum flowing between day-end payouts. The asset briefing modal doubles as an instance inspector, outlining status, upkeep, yesterday’s earnings, and which upgrades are owned or still locked.
@@ -91,7 +91,7 @@ Each asset supports multiple instances, tracks setup progress, and rolls a daily
 - Six passive asset types with multi-instance tracking, setup states, maintenance funding, and dynamic daily income rolls.
 - In-card asset management with instance-level breakdowns and a one-click sale option that converts yesterday’s earnings into cash at a 3× (Quality level + 1) multiple.
 - Daily metrics ledger that captures hours, earnings, and spending, powering the refreshed snapshot breakdowns.
-- Knowledge study tracks with upfront tuition, automatic daily scheduling, and celebratory completion logs that gate advanced assets.
+- Knowledge study tracks with upfront tuition, manual daily logging, and celebratory completion logs that gate advanced assets.
 - Equipment and experience requirements surfaced directly on asset cards with live progress indicators.
 - Responsive card grids with upbeat copy, tabbed navigation, filters, and search so players can focus on the work-in-progress that matters most.
 - Persistent save/load and flavourful log output to keep players oriented.
