@@ -70,7 +70,7 @@ export function renderNichePanel(instance, helpers) {
   if (instance.nicheLocked) {
     const locked = document.createElement('p');
     locked.className = 'serverhub-panel__hint';
-    locked.textContent = 'Niche locked in — reroll popularity tomorrow for fresh multipliers.';
+    locked.textContent = 'Niche locked in — ride out the current streak and savor the ongoing event boosts.';
     section.appendChild(locked);
     return section;
   }
