@@ -17,6 +17,7 @@ import {
   ensureSlice as ensureProgressSlice,
   getSliceState as getProgressSliceState
 } from '../src/core/state/slices/progress.js';
+import { ensureHustleMarketState } from '../src/core/state/slices/hustleMarket.js';
 
 const harness = await getGameTestHarness();
 const { hustlesModule, assetsModule, upgradesModule } = harness;
@@ -129,4 +130,41 @@ test('progress slice guarantees knowledge tracking structures', () => {
 
   const entire = getProgressSliceState(state);
   assert.strictEqual(entire, state.progress, 'omitting id should return the progress root');
+});
+
+test('hustle market slice normalizes timestamps and offers', () => {
+  const state = {
+    hustleMarket: {
+      lastRolledAt: 'invalid',
+      lastRolledOnDay: -3,
+      offers: [
+        {
+          templateId: 'freelance',
+          variantId: '',
+          definitionId: '',
+          rolledOnDay: -2,
+          rolledAt: 'nope',
+          availableOnDay: -5,
+          expiresOnDay: -4,
+          metadata: 'bad'
+        }
+      ]
+    }
+  };
+
+  const marketState = ensureHustleMarketState(state, { fallbackDay: 6 });
+
+  assert.equal(marketState.lastRolledAt, 0, 'invalid timestamps should reset to zero');
+  assert.equal(marketState.lastRolledOnDay, 0, 'negative roll days clamp to zero');
+  assert.equal(marketState.offers.length, 1, 'single malformed offer should be preserved after normalization');
+
+  const [offer] = marketState.offers;
+  assert.equal(offer.templateId, 'freelance');
+  assert.equal(offer.variantId, 'default', 'missing variant ids should default');
+  assert.equal(offer.definitionId, 'freelance', 'definition id should fall back to template id');
+  assert.equal(offer.rolledOnDay, 6, 'rolled day should clamp to fallback day');
+  assert.equal(offer.availableOnDay, 6, 'available day should align with fallback when invalid');
+  assert.equal(offer.expiresOnDay, 6, 'expiry should never precede availability');
+  assert.deepEqual(offer.metadata, {}, 'non-object metadata should be replaced with an empty object');
+  assert.ok(Array.isArray(offer.daysActive) && offer.daysActive.includes(6), 'daysActive should list normalized day span');
 });
