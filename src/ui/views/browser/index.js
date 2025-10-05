@@ -17,6 +17,25 @@ const browserView = {
     headerAction: headerActionPresenter,
     log: logPresenter
   },
+  onActivate({ root } = {}) {
+    const doc =
+      root || (typeof document !== 'undefined' ? document : null);
+    const developerRoot = doc?.getElementById('developer-root');
+    if (developerRoot) {
+      developerRoot.setAttribute('hidden', 'true');
+      developerRoot.setAttribute('aria-hidden', 'true');
+    }
+
+    if (doc?.body) {
+      doc.body.classList.remove('developer-view-active');
+    }
+
+    const shell = doc?.querySelector('.browser-shell');
+    if (shell) {
+      shell.removeAttribute('hidden');
+      shell.removeAttribute('aria-hidden');
+    }
+  },
   renderDashboard(state, summary) {
     baseRenderDashboard(state, summary, dashboardPresenter);
   }
