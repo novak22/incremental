@@ -1,7 +1,7 @@
 import { formatHours } from '../../../../core/helpers.js';
 import { addLog } from '../../../../core/log.js';
 import { getState } from '../../../../core/state.js';
-import { endDay } from '../../../../game/lifecycle.js';
+import { endDay, checkDayEnd } from '../../../../game/lifecycle.js';
 import { normalizeActionEntries } from '../../../actions/registry.js';
 import {
   DEFAULT_FOCUS_BUCKET,
@@ -225,6 +225,7 @@ function createProgressHandler(entry = {}) {
 
     spendTime(hours);
     advanceActionInstance(definition, { id: instanceId }, { hours, metadata });
+    checkDayEnd();
     return { success: true, hours };
   };
 }
