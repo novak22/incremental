@@ -235,8 +235,11 @@ export function createRequirementsOrchestrator({
       const { studiedToday, daysCompleted, completedFlag } = evaluateStudyProgress(track, state);
       const isActive = Boolean(progress.enrolled && !progress.completed);
 
-      if (progress.daysCompleted !== Math.min(track.days, daysCompleted)) {
-        progress.daysCompleted = Math.min(track.days, daysCompleted);
+      const previousDaysCompleted = Number(progress.daysCompleted) || 0;
+      const nextDaysCompleted = Math.min(track.days, daysCompleted);
+
+      if (progress.daysCompleted !== nextDaysCompleted) {
+        progress.daysCompleted = nextDaysCompleted;
         dirty = true;
       }
 
@@ -251,8 +254,11 @@ export function createRequirementsOrchestrator({
       }
 
       const participated = Boolean(studiedToday && isActive);
-      if (progress.studiedToday !== participated) {
-        progress.studiedToday = participated;
+      const advancedToday = nextDaysCompleted > previousDaysCompleted;
+      const nextStudiedToday = advancedToday ? false : participated;
+
+      if (progress.studiedToday !== nextStudiedToday) {
+        progress.studiedToday = nextStudiedToday;
         dirty = true;
       }
 

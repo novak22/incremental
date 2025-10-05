@@ -141,25 +141,33 @@ function recomputeProgressSnapshot(progress) {
 function isCompletionSatisfied(definition, stored) {
   if (!stored) return false;
   const progress = stored.progress;
+  let hasAnyRequirement = false;
+
   if (progress) {
     if (Number.isFinite(progress.daysRequired) && progress.daysRequired > 0) {
-      if (Number(progress.daysCompleted) >= progress.daysRequired) {
-        return true;
+      hasAnyRequirement = true;
+      if (Number(progress.daysCompleted) < progress.daysRequired) {
+        return false;
       }
     }
     const progressRequired = resolveProgressField(progress.hoursRequired, null);
     if (progressRequired != null && progressRequired >= 0) {
-      if (Number(stored.hoursLogged) >= progressRequired - 0.0001) {
-        return true;
+      hasAnyRequirement = true;
+      if (Number(stored.hoursLogged) < progressRequired - 0.0001) {
+        return false;
       }
     }
   }
 
   const required = resolveProgressField(stored.hoursRequired, null);
   if (required != null && required >= 0) {
-    return Number(stored.hoursLogged) >= required - 0.0001;
+    hasAnyRequirement = true;
+    if (Number(stored.hoursLogged) < required - 0.0001) {
+      return false;
+    }
   }
-  return false;
+
+  return hasAnyRequirement;
 }
 
 function resolveInstance(entry, instanceOrId) {
