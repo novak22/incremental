@@ -4,6 +4,11 @@ const MINUTES_PER_HOUR = 60;
 
 const toHours = minutes => minutes / MINUTES_PER_HOUR;
 
+const toNumber = value => {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : undefined;
+};
+
 const mapQualityCurve = curve =>
   curve.map(entry => ({
     level: entry.level,
@@ -54,6 +59,33 @@ const createUpgradeConfig = key => {
     requires: upgrade.requirements || []
   };
 };
+
+const createAssistantUpgradeConfig = () => {
+  const assistant = normalizedEconomy.upgrades.assistant || {};
+  const base = createUpgradeConfig('assistant');
+  const bonusMinutes = Math.max(0, toNumber(assistant.bonus_minutes_per_day) ?? 0);
+  const hoursPerAssistant = bonusMinutes > 0 ? toHours(bonusMinutes) : 0;
+  const dailyWage = toNumber(assistant.daily_wage);
+  const hourlyWage = toNumber(assistant.hourly_wage);
+  const resolvedHourlyRate =
+    hourlyWage ?? (hoursPerAssistant > 0 && dailyWage !== undefined ? dailyWage / hoursPerAssistant : 0);
+  const resolvedDailyWage =
+    dailyWage ?? (resolvedHourlyRate !== undefined ? resolvedHourlyRate * hoursPerAssistant : 0);
+  const hiringCost = Math.max(0, toNumber(assistant.hiring_cost) ?? base.cost ?? 0);
+  const maxAssistants = Math.max(0, toNumber(assistant.max_count ?? assistant.max_assistants) ?? 0);
+
+  return {
+    ...base,
+    hiringCost,
+    bonusMinutesPerAssistant: bonusMinutes,
+    hoursPerAssistant,
+    hourlyRate: resolvedHourlyRate ?? 0,
+    dailyWage: resolvedDailyWage ?? 0,
+    maxAssistants
+  };
+};
+
+export const assistantUpgrade = createAssistantUpgradeConfig();
 
 const createTrackConfig = key => {
   const track = normalizedEconomy.tracks[key];
@@ -115,7 +147,7 @@ export const upgrades = {
   // Spec: docs/normalized_economy.json → upgrades.studioExpansion
   studioExpansion: createUpgradeConfig('studioExpansion'),
   // Spec: docs/normalized_economy.json → upgrades.assistant
-  assistant: createUpgradeConfig('assistant'),
+  assistant: assistantUpgrade,
   // Spec: docs/normalized_economy.json → upgrades.serverRack
   serverRack: createUpgradeConfig('serverRack'),
   // Spec: docs/normalized_economy.json → upgrades.fulfillmentAutomation

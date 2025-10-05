@@ -6,15 +6,32 @@ import { gainTime } from './time.js';
 import { recordCostContribution } from './metrics.js';
 import { awardSkillProgress } from './skills/index.js';
 import { markDirty } from '../core/events/invalidationBus.js';
+import { assistantUpgrade } from './data/economyConfig.js';
 
 const CORE_UI_SECTIONS = ['dashboard', 'player', 'skillsWidget', 'headerAction'];
 
-export const ASSISTANT_CONFIG = {
-  hiringCost: 180,
-  hourlyRate: 8,
-  hoursPerAssistant: 3,
-  maxAssistants: 4
+const DEFAULT_ASSISTANT_VALUES = {
+  hiringCost: 0,
+  hourlyRate: 0,
+  hoursPerAssistant: 0,
+  bonusMinutesPerAssistant: 0,
+  dailyWage: 0,
+  maxAssistants: 0
 };
+
+export const ASSISTANT_CONFIG = Object.freeze({
+  ...DEFAULT_ASSISTANT_VALUES,
+  ...assistantUpgrade,
+  hoursPerAssistant:
+    assistantUpgrade.hoursPerAssistant ??
+    (assistantUpgrade.bonusMinutesPerAssistant
+      ? assistantUpgrade.bonusMinutesPerAssistant / 60
+      : DEFAULT_ASSISTANT_VALUES.hoursPerAssistant),
+  dailyWage:
+    assistantUpgrade.dailyWage ??
+    (assistantUpgrade.hourlyRate ?? DEFAULT_ASSISTANT_VALUES.hourlyRate) *
+      (assistantUpgrade.hoursPerAssistant ?? DEFAULT_ASSISTANT_VALUES.hoursPerAssistant)
+});
 
 function getAssistantState(target = getState()) {
   return getUpgradeState('assistant', target);
