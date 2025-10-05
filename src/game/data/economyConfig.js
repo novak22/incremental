@@ -19,6 +19,11 @@ const mapQualityCurve = curve =>
     requirements: entry.requirements || {}
   }));
 
+const cloneArray = entries => {
+  if (!Array.isArray(entries)) return [];
+  return entries.map(entry => (entry && typeof entry === 'object' ? { ...entry } : entry));
+};
+
 const parseModifierTarget = target => {
   if (!target || typeof target !== 'string') {
     return { category: null, id: null, stat: null };
@@ -119,10 +124,20 @@ const createAssetConfig = key => {
 const createHustleConfig = key => {
   const hustle = normalizedEconomy.hustles[key];
   return {
+    name: hustle.name,
+    timeMinutes: hustle.setup_time,
     timeHours: toHours(hustle.setup_time),
     payout: hustle.base_income,
+    variance: hustle.variance,
     cost: hustle.setup_cost,
-    dailyLimit: hustle.daily_limit
+    maintenance: {
+      timeMinutes: hustle.maintenance_time,
+      cost: hustle.maintenance_cost
+    },
+    dailyLimit: hustle.daily_limit,
+    requirements: cloneArray(hustle.requirements),
+    skills: cloneArray(hustle.skills),
+    tags: cloneArray(hustle.tags)
   };
 };
 

@@ -1,21 +1,22 @@
 import { getState } from '../../core/state.js';
+import { hustles as hustleConfigs } from '../data/economyConfig.js';
 import { buildAssetRequirementDescriptor } from '../requirements.js';
 
-export const AUDIENCE_CALL_REQUIREMENTS = [{ assetId: 'blog', count: 1 }];
-export const BUNDLE_PUSH_REQUIREMENTS = [
-  { assetId: 'blog', count: 2 },
-  { assetId: 'ebook', count: 1 }
-];
-export const EVENT_PHOTO_REQUIREMENTS = [{ assetId: 'stockPhotos', count: 1 }];
-export const WORKSHOP_REQUIREMENTS = [
-  { assetId: 'blog', count: 1 },
-  { assetId: 'ebook', count: 1 }
-];
-export const EDIT_RUSH_REQUIREMENTS = [{ assetId: 'vlog', count: 1 }];
-export const PACK_PARTY_REQUIREMENTS = [{ assetId: 'dropshipping', count: 1 }];
-export const BUG_SQUASH_REQUIREMENTS = [{ assetId: 'saas', count: 1 }];
-export const NARRATION_REQUIREMENTS = [{ assetId: 'ebook', count: 1 }];
-export const STREET_PROMO_REQUIREMENTS = [{ assetId: 'blog', count: 2 }];
+const getConfigRequirements = id => {
+  const requirements = hustleConfigs?.[id]?.requirements;
+  if (!Array.isArray(requirements)) return [];
+  return requirements.map(requirement => ({ ...requirement }));
+};
+
+export const AUDIENCE_CALL_REQUIREMENTS = getConfigRequirements('audienceCall');
+export const BUNDLE_PUSH_REQUIREMENTS = getConfigRequirements('bundlePush');
+export const EVENT_PHOTO_REQUIREMENTS = getConfigRequirements('eventPhotoGig');
+export const WORKSHOP_REQUIREMENTS = getConfigRequirements('popUpWorkshop');
+export const EDIT_RUSH_REQUIREMENTS = getConfigRequirements('vlogEditRush');
+export const PACK_PARTY_REQUIREMENTS = getConfigRequirements('dropshipPackParty');
+export const BUG_SQUASH_REQUIREMENTS = getConfigRequirements('saasBugSquash');
+export const NARRATION_REQUIREMENTS = getConfigRequirements('audiobookNarration');
+export const STREET_PROMO_REQUIREMENTS = getConfigRequirements('streetPromoSprint');
 
 function getHustleRequirements(definition) {
   if (!definition) return [];

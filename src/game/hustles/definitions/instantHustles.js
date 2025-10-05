@@ -1,15 +1,4 @@
 import { formatMoney } from '../../../core/helpers.js';
-import {
-  AUDIENCE_CALL_REQUIREMENTS,
-  BUNDLE_PUSH_REQUIREMENTS,
-  EVENT_PHOTO_REQUIREMENTS,
-  WORKSHOP_REQUIREMENTS,
-  EDIT_RUSH_REQUIREMENTS,
-  PACK_PARTY_REQUIREMENTS,
-  BUG_SQUASH_REQUIREMENTS,
-  NARRATION_REQUIREMENTS,
-  STREET_PROMO_REQUIREMENTS
-} from '../helpers.js';
 import { hustles as hustleConfigs } from '../../data/economyConfig.js';
 
 const freelanceConfig = hustleConfigs.freelance; // Spec: docs/normalized_economy.json → hustles.freelance
@@ -30,7 +19,7 @@ const instantHustleDefinitions = [
     name: 'Freelance Writing',
     tag: { label: 'Instant', type: 'instant' },
     description: 'Crank out a quick article for a client. Not Pulitzer material, but it pays.',
-    tags: ['writing', 'desktop_work'],
+    tags: freelanceConfig.tags,
     time: freelanceConfig.timeHours, // Spec: docs/normalized_economy.json → hustles.freelance.setup_time
     payout: {
       amount: freelanceConfig.payout, // Spec: docs/normalized_economy.json → hustles.freelance.base_income
@@ -47,7 +36,7 @@ const instantHustleDefinitions = [
       time: { label: '⚡ Freelance writing time', category: 'hustle' },
       payout: { label: '💼 Freelance writing payout', category: 'hustle' }
     },
-    skills: ['writing'],
+    skills: freelanceConfig.skills,
     actionLabel: 'Write Now'
   },
   {
@@ -55,9 +44,9 @@ const instantHustleDefinitions = [
     name: 'Audience Q&A Blast',
     tag: { label: 'Instant', type: 'instant' },
     description: 'Host a 60-minute livestream for your blog readers and pitch a premium checklist.',
-    tags: ['community', 'live', 'video'],
+    tags: audienceCallConfig.tags,
     time: audienceCallConfig.timeHours, // Spec: docs/normalized_economy.json → hustles.audienceCall.setup_time
-    requirements: AUDIENCE_CALL_REQUIREMENTS,
+    requirements: audienceCallConfig.requirements,
     dailyLimit: audienceCallConfig.dailyLimit, // Spec: docs/normalized_economy.json → hustles.audienceCall.daily_limit
     payout: {
       amount: audienceCallConfig.payout, // Spec: docs/normalized_economy.json → hustles.audienceCall.base_income
@@ -74,7 +63,7 @@ const instantHustleDefinitions = [
       time: { label: '🎤 Audience Q&A prep', category: 'hustle' },
       payout: { label: '🎤 Audience Q&A payout', category: 'hustle' }
     },
-    skills: ['audience'],
+    skills: audienceCallConfig.skills,
     actionLabel: 'Go Live'
   },
   {
@@ -82,9 +71,9 @@ const instantHustleDefinitions = [
     name: 'Bundle Promo Push',
     tag: { label: 'Instant', type: 'instant' },
     description: 'Pair your top blogs with an e-book bonus bundle for a limited-time flash sale.',
-    tags: ['commerce', 'marketing'],
+    tags: bundlePushConfig.tags,
     time: bundlePushConfig.timeHours, // Spec: docs/normalized_economy.json → hustles.bundlePush.setup_time
-    requirements: BUNDLE_PUSH_REQUIREMENTS,
+    requirements: bundlePushConfig.requirements,
     payout: {
       amount: bundlePushConfig.payout, // Spec: docs/normalized_economy.json → hustles.bundlePush.base_income
       logType: 'hustle',
@@ -100,7 +89,7 @@ const instantHustleDefinitions = [
       time: { label: '🧺 Bundle promo planning', category: 'hustle' },
       payout: { label: '🧺 Bundle promo payout', category: 'hustle' }
     },
-    skills: ['promotion'],
+    skills: bundlePushConfig.skills,
     actionLabel: 'Launch Bundle'
   },
   {
@@ -108,7 +97,7 @@ const instantHustleDefinitions = [
     name: 'Micro Survey Dash',
     tag: { label: 'Instant', type: 'instant' },
     description: 'Knock out a 15-minute feedback survey while your coffee is still warm.',
-    tags: ['ops', 'desktop_work'],
+    tags: surveySprintConfig.tags,
     time: surveySprintConfig.timeHours, // Spec: docs/normalized_economy.json → hustles.surveySprint.setup_time
     dailyLimit: surveySprintConfig.dailyLimit, // Spec: docs/normalized_economy.json → hustles.surveySprint.daily_limit
     payout: {
@@ -126,7 +115,7 @@ const instantHustleDefinitions = [
       time: { label: '📝 Survey dash time', category: 'hustle' },
       payout: { label: '🪙 Survey dash payout', category: 'hustle' }
     },
-    skills: ['research'],
+    skills: surveySprintConfig.skills,
     actionLabel: 'Start Survey'
   },
   {
@@ -134,9 +123,9 @@ const instantHustleDefinitions = [
     name: 'Event Photo Gig',
     tag: { label: 'Instant', type: 'instant' },
     description: 'Grab your gallery gear and capture candid magic at a pop-up showcase.',
-    tags: ['photo', 'shoot', 'studio'],
+    tags: eventPhotoGigConfig.tags,
     time: eventPhotoGigConfig.timeHours, // Spec: docs/normalized_economy.json → hustles.eventPhotoGig.setup_time
-    requirements: EVENT_PHOTO_REQUIREMENTS,
+    requirements: eventPhotoGigConfig.requirements,
     payout: {
       amount: eventPhotoGigConfig.payout, // Spec: docs/normalized_economy.json → hustles.eventPhotoGig.base_income
       logType: 'hustle',
@@ -152,7 +141,7 @@ const instantHustleDefinitions = [
       time: { label: '📸 Event shoot time', category: 'hustle' },
       payout: { label: '📸 Event shoot payout', category: 'hustle' }
     },
-    skills: ['visual'],
+    skills: eventPhotoGigConfig.skills,
     actionLabel: 'Pack the Camera Bag'
   },
   {
@@ -160,9 +149,9 @@ const instantHustleDefinitions = [
     name: 'Pop-Up Workshop',
     tag: { label: 'Instant', type: 'instant' },
     description: 'Host a cozy crash course that blends your blog insights with e-book handouts.',
-    tags: ['education', 'in_person'],
+    tags: popUpWorkshopConfig.tags,
     time: popUpWorkshopConfig.timeHours, // Spec: docs/normalized_economy.json → hustles.popUpWorkshop.setup_time
-    requirements: WORKSHOP_REQUIREMENTS,
+    requirements: popUpWorkshopConfig.requirements,
     payout: {
       amount: popUpWorkshopConfig.payout, // Spec: docs/normalized_economy.json → hustles.popUpWorkshop.base_income
       logType: 'hustle',
@@ -178,7 +167,7 @@ const instantHustleDefinitions = [
       time: { label: '🎓 Workshop facilitation', category: 'hustle' },
       payout: { label: '🎓 Workshop payout', category: 'hustle' }
     },
-    skills: ['audience', { id: 'writing', weight: 0.5 }],
+    skills: popUpWorkshopConfig.skills,
     actionLabel: 'Set the Agenda'
   },
   {
@@ -186,9 +175,9 @@ const instantHustleDefinitions = [
     name: 'Vlog Edit Rush',
     tag: { label: 'Instant', type: 'instant' },
     description: 'Slice, color, and caption a backlog vlog episode for a partner channel.',
-    tags: ['video', 'editing', 'desktop_work'],
+    tags: vlogEditRushConfig.tags,
     time: vlogEditRushConfig.timeHours, // Spec: docs/normalized_economy.json → hustles.vlogEditRush.setup_time
-    requirements: EDIT_RUSH_REQUIREMENTS,
+    requirements: vlogEditRushConfig.requirements,
     payout: {
       amount: vlogEditRushConfig.payout, // Spec: docs/normalized_economy.json → hustles.vlogEditRush.base_income
       logType: 'hustle',
@@ -204,7 +193,7 @@ const instantHustleDefinitions = [
       time: { label: '🎬 Vlog edit time', category: 'hustle' },
       payout: { label: '🎬 Vlog edit payout', category: 'hustle' }
     },
-    skills: ['editing'],
+    skills: vlogEditRushConfig.skills,
     actionLabel: 'Launch Edit Sprint'
   },
   {
@@ -212,10 +201,10 @@ const instantHustleDefinitions = [
     name: 'Dropship Pack Party',
     tag: { label: 'Instant', type: 'instant' },
     description: 'Bundle hot orders with branded tissue paper and a confetti of thank-you notes.',
-    tags: ['commerce', 'fulfillment'],
+    tags: dropshipPackPartyConfig.tags,
     time: dropshipPackPartyConfig.timeHours, // Spec: docs/normalized_economy.json → hustles.dropshipPackParty.setup_time
     cost: dropshipPackPartyConfig.cost, // Spec: docs/normalized_economy.json → hustles.dropshipPackParty.setup_cost
-    requirements: PACK_PARTY_REQUIREMENTS,
+    requirements: dropshipPackPartyConfig.requirements,
     payout: {
       amount: dropshipPackPartyConfig.payout, // Spec: docs/normalized_economy.json → hustles.dropshipPackParty.base_income
       logType: 'hustle',
@@ -232,7 +221,7 @@ const instantHustleDefinitions = [
       cost: { label: '📦 Packing party supplies', category: 'investment' },
       payout: { label: '📦 Packing party payout', category: 'hustle' }
     },
-    skills: ['commerce'],
+    skills: dropshipPackPartyConfig.skills,
     actionLabel: 'Queue Shipments'
   },
   {
@@ -240,9 +229,9 @@ const instantHustleDefinitions = [
     name: 'SaaS Bug Squash',
     tag: { label: 'Instant', type: 'instant' },
     description: 'Dig through error logs and deploy a patch before support tickets pile up.',
-    tags: ['software', 'ops'],
+    tags: saasBugSquashConfig.tags,
     time: saasBugSquashConfig.timeHours, // Spec: docs/normalized_economy.json → hustles.saasBugSquash.setup_time
-    requirements: BUG_SQUASH_REQUIREMENTS,
+    requirements: saasBugSquashConfig.requirements,
     payout: {
       amount: saasBugSquashConfig.payout, // Spec: docs/normalized_economy.json → hustles.saasBugSquash.base_income
       logType: 'hustle',
@@ -258,7 +247,7 @@ const instantHustleDefinitions = [
       time: { label: '🧰 Bug fix time', category: 'hustle' },
       payout: { label: '🧰 Bug fix payout', category: 'hustle' }
     },
-    skills: ['software', { id: 'infrastructure', weight: 0.5 }],
+    skills: saasBugSquashConfig.skills,
     actionLabel: 'Patch the Glitch'
   },
   {
@@ -266,9 +255,9 @@ const instantHustleDefinitions = [
     name: 'Audiobook Narration',
     tag: { label: 'Instant', type: 'instant' },
     description: 'Record a silky-smooth sample chapter to hype your flagship e-book series.',
-    tags: ['audio', 'studio'],
+    tags: audiobookNarrationConfig.tags,
     time: audiobookNarrationConfig.timeHours, // Spec: docs/normalized_economy.json → hustles.audiobookNarration.setup_time
-    requirements: NARRATION_REQUIREMENTS,
+    requirements: audiobookNarrationConfig.requirements,
     payout: {
       amount: audiobookNarrationConfig.payout, // Spec: docs/normalized_economy.json → hustles.audiobookNarration.base_income
       logType: 'hustle',
@@ -284,7 +273,7 @@ const instantHustleDefinitions = [
       time: { label: '🎙️ Narration booth time', category: 'hustle' },
       payout: { label: '🎙️ Narration payout', category: 'hustle' }
     },
-    skills: ['audio'],
+    skills: audiobookNarrationConfig.skills,
     actionLabel: 'Warm Up Vocals'
   },
   {
@@ -292,10 +281,10 @@ const instantHustleDefinitions = [
     name: 'Street Team Promo',
     tag: { label: 'Instant', type: 'instant' },
     description: 'Hand out QR stickers at a pop-up market to funnel readers toward your latest drops.',
-    tags: ['marketing', 'field'],
+    tags: streetPromoSprintConfig.tags,
     time: streetPromoSprintConfig.timeHours, // Spec: docs/normalized_economy.json → hustles.streetPromoSprint.setup_time
     cost: streetPromoSprintConfig.cost, // Spec: docs/normalized_economy.json → hustles.streetPromoSprint.setup_cost
-    requirements: STREET_PROMO_REQUIREMENTS,
+    requirements: streetPromoSprintConfig.requirements,
     payout: {
       amount: streetPromoSprintConfig.payout, // Spec: docs/normalized_economy.json → hustles.streetPromoSprint.base_income
       logType: 'hustle',
@@ -312,7 +301,7 @@ const instantHustleDefinitions = [
       cost: { label: '🚀 Street promo stickers', category: 'investment' },
       payout: { label: '🚀 Street promo payout', category: 'hustle' }
     },
-    skills: ['promotion'],
+    skills: streetPromoSprintConfig.skills,
     actionLabel: 'Deploy Street Team'
   }
 ];
