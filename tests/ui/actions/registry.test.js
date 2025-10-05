@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { formatHours } from '../../../src/core/helpers.js';
+import { buildActionQueue } from '../../../src/ui/actions/registry.js';
 import {
-  buildActionQueue,
   registerActionProvider,
-  clearActionProviders,
-  normalizeActionEntries
-} from '../../../src/ui/actions/registry.js';
+  clearActionProviders
+} from '../../../src/ui/actions/providers.js';
+import { normalizeActionEntries } from '../../../src/ui/actions/utils.js';
 
 test('registerActionProvider supplies normalized entries to the queue', () => {
   const restore = clearActionProviders();

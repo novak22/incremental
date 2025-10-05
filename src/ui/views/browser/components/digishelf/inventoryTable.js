@@ -1,5 +1,5 @@
 import createStatusBadge from './statusBadge.js';
-import { collectActionProviders } from '../../../../actions/registry.js';
+import { collectActionProviders } from '../../../../actions/providers.js';
 
 const QUICK_ACTION_LABELS = {
   ebook: {

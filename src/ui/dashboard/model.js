@@ -13,7 +13,7 @@ import {
   buildNotificationModel,
   buildEventLogModel
 } from './notificationsModel.js';
-import { collectActionProviders } from '../actions/registry.js';
+import { collectActionProviders } from '../actions/providers.js';
 
 export function buildDashboardViewModel(state, summary = {}) {
   if (!state) return null;

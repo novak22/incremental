@@ -10,7 +10,8 @@ import {
 } from '../../game/assets/quality/actions.js';
 import { getNextQualityLevel } from '../../game/assets/quality/levels.js';
 import { instanceLabel } from '../../game/assets/details.js';
-import { registerActionProvider, collectOutstandingActionEntries } from '../actions/registry.js';
+import { collectOutstandingActionEntries } from '../actions/registry.js';
+import { registerActionProvider } from '../actions/providers.js';
 import { getAvailableOffers, acceptHustleOffer } from '../../game/hustles.js';
 
 function getQualitySnapshot(instance = {}) {
