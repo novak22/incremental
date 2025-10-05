@@ -177,3 +177,27 @@ test('normalizeActionEntries preserves explicit focus buckets', () => {
     restore();
   }
 });
+
+test('normalizeActionEntries keeps unlimited run counts as null', () => {
+  const entries = normalizeActionEntries([
+    { id: 'null-remaining', remainingRuns: null, repeatable: true },
+    { id: 'undefined-remaining', repeatable: true },
+    { id: 'infinite-remaining', remainingRuns: Infinity, repeatable: true },
+    { id: 'finite-remaining', remainingRuns: 2 }
+  ]);
+
+  const nullRemaining = entries.find(entry => entry.id === 'null-remaining');
+  assert.equal(nullRemaining.remainingRuns, null);
+  assert.equal(nullRemaining.repeatable, true);
+
+  const undefinedRemaining = entries.find(entry => entry.id === 'undefined-remaining');
+  assert.equal(undefinedRemaining.remainingRuns, null);
+  assert.equal(undefinedRemaining.repeatable, true);
+
+  const infiniteRemaining = entries.find(entry => entry.id === 'infinite-remaining');
+  assert.equal(infiniteRemaining.remainingRuns, null);
+  assert.equal(infiniteRemaining.repeatable, true);
+
+  const finiteRemaining = entries.find(entry => entry.id === 'finite-remaining');
+  assert.equal(finiteRemaining.remainingRuns, 2);
+});

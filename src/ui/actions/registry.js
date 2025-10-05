@@ -42,7 +42,9 @@ export function normalizeActionEntries(source = []) {
       const payoutText = entry?.payoutText || entry?.payoutLabel || '';
       const meta = entry?.meta || [payoutText, durationText].filter(Boolean).join(' • ');
 
-      const rawRemaining = coerceNumber(entry?.remainingRuns, null);
+      const rawRemaining = entry?.remainingRuns == null
+        ? null
+        : coerceNumber(entry.remainingRuns, null);
       const hasRemaining = Number.isFinite(rawRemaining);
       const remainingRuns = hasRemaining ? Math.max(0, rawRemaining) : null;
       const repeatable = Boolean(entry?.repeatable) || (hasRemaining && remainingRuns > 1);
