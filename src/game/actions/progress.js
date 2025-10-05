@@ -2,6 +2,9 @@ import { createId, toNumber } from '../../core/helpers.js';
 import { getActionState, getState } from '../../core/state.js';
 import { markDirty } from '../../core/events/invalidationBus.js';
 import { completeHustleMarketInstance } from '../../core/state/slices/hustleMarket.js';
+import { addMoney } from '../currency.js';
+import { applyMetric } from '../content/schema/metrics.js';
+import { recordPayoutContribution } from '../metrics.js';
 
 const FLOAT_PRECISION = 4;
 
@@ -334,7 +337,59 @@ export function completeActionInstance(definition, instance, context = {}) {
   if (Number.isFinite(completionHours) && completionHours >= 0) {
     completionPayload.hoursLogged = completionHours;
   }
-  completeHustleMarketInstance(state, stored.id, completionPayload);
+  const hustleEntry = completeHustleMarketInstance(state, stored.id, completionPayload);
+
+  if (hustleEntry) {
+    const payoutSchedule = hustleEntry.payout?.schedule || 'onCompletion';
+    const alreadyPaid = hustleEntry.payoutPaid === true;
+    if (payoutSchedule === 'onCompletion' && !alreadyPaid) {
+      const payoutCandidates = [
+        context.finalPayout,
+        context.payoutGranted,
+        stored.payoutAwarded,
+        hustleEntry.payoutAwarded,
+        hustleEntry.payout?.amount
+      ];
+      let payoutAmount = null;
+      for (const candidate of payoutCandidates) {
+        const value = toNumber(candidate, null);
+        if (Number.isFinite(value) && value > 0) {
+          payoutAmount = value;
+          break;
+        }
+      }
+      if (Number.isFinite(payoutAmount) && payoutAmount > 0) {
+        const payoutDefinition = definition?.payout || {};
+        const logType = payoutDefinition.logType || 'hustle';
+        const payoutContext = {
+          ...context,
+          definition,
+          instance: stored,
+          finalPayout: payoutAmount,
+          payoutGranted: payoutAmount
+        };
+        let message = null;
+        const template = payoutDefinition.message;
+        if (typeof template === 'function') {
+          try {
+            message = template(payoutContext);
+          } catch (error) {
+            message = null;
+          }
+        } else if (typeof template === 'string' && template.trim()) {
+          message = template;
+        }
+
+        addMoney(payoutAmount, message, logType);
+        applyMetric(recordPayoutContribution, definition?.metrics?.payout, { amount: payoutAmount });
+
+        stored.payoutAwarded = payoutAmount;
+        hustleEntry.payoutAwarded = payoutAmount;
+        hustleEntry.payoutPaid = true;
+        hustleEntry.payoutPaidOnDay = completionDay;
+      }
+    }
+  }
 
   markDirty('actions');
   return stored;

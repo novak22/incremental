@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { getGameTestHarness } from './helpers/gameTestHarness.js';
 
 const harness = await getGameTestHarness();
-const { completeActionInstance } = await import('../src/game/actions/progress.js');
+const { completeActionInstance, advanceActionInstance } = await import('../src/game/actions/progress.js');
 const { ensureHustleMarketState } = await import('../src/core/state/slices/hustleMarket.js');
 const { hustlesModule, stateModule } = harness;
 const {
@@ -30,6 +30,141 @@ function findEligibleTemplate(state) {
 test('HUSTLE_TEMPLATES includes only market-ready hustles', () => {
   const hasStudyEntries = HUSTLE_TEMPLATES.some(template => template?.tag?.type === 'study');
   assert.equal(hasStudyEntries, false, 'market templates should exclude study actions');
+});
+
+test('ensureDailyOffersForDay seeds bootstrap offers per template and avoids duplicate rolls', () => {
+  const state = harness.resetState();
+  state.day = 5;
+  state.hustleMarket.offers = [];
+  state.hustleMarket.lastRolledOnDay = 0;
+
+  const templates = [
+    {
+      id: 'double-slot',
+      name: 'Double Slot Gig',
+      time: 2,
+      payout: { amount: 40 },
+      market: {
+        slotsPerRoll: 2,
+        maxActive: 3,
+        variants: [
+          { id: 'alpha', copies: 1, maxActive: 2 },
+          { id: 'beta', copies: 1, maxActive: 2 }
+        ]
+      }
+    },
+    {
+      id: 'single-slot',
+      name: 'Single Slot Gig',
+      time: 3,
+      payout: { amount: 60 },
+      market: {
+        slotsPerRoll: 1,
+        maxActive: 1,
+        variants: [{ id: 'solo', copies: 1 }]
+      }
+    }
+  ];
+
+  const offers = hustlesModule.ensureDailyOffersForDay({
+    state,
+    templates,
+    day: state.day,
+    now: 1000,
+    rng: () => 0
+  });
+
+  const countByTemplate = offers.reduce((acc, offer) => {
+    acc.set(offer.templateId, (acc.get(offer.templateId) || 0) + 1);
+    return acc;
+  }, new Map());
+
+  assert.ok(countByTemplate.get('double-slot') >= 1, 'expected at least one offer for the double-slot template');
+  assert.ok(countByTemplate.get('single-slot') >= 1, 'expected at least one offer for the single-slot template');
+  assert.equal(state.hustleMarket.lastRolledOnDay, 5, 'bootstrap roll should track the current day');
+
+  const secondPass = hustlesModule.ensureDailyOffersForDay({
+    state,
+    templates,
+    day: state.day,
+    now: 2000,
+    rng: () => 0
+  });
+
+  assert.equal(secondPass.length, offers.length, 'repeat bootstrap on the same day should not add new offers');
+  assert.equal(state.hustleMarket.lastRolledOnDay, 5, 'duplicate rolls should not advance the recorded day');
+});
+
+test('ensureDailyOffersForDay rerolls preserve windows, durations, and capacity limits', () => {
+  const state = harness.resetState();
+  state.day = 1;
+  state.hustleMarket.offers = [];
+  state.hustleMarket.lastRolledOnDay = 0;
+
+  const templates = [
+    {
+      id: 'windowed',
+      name: 'Windowed Contract',
+      time: 4,
+      payout: { amount: 120 },
+      market: {
+        slotsPerRoll: 2,
+        maxActive: 2,
+        variants: [
+          {
+            id: 'today',
+            durationDays: 2,
+            maxActive: 1,
+            metadata: { payout: { amount: 120, schedule: 'onCompletion' } }
+          },
+          {
+            id: 'tomorrow',
+            availableAfterDays: 1,
+            durationDays: 2,
+            maxActive: 1,
+            metadata: { payout: { amount: 120, schedule: 'onCompletion' } }
+          }
+        ]
+      }
+    }
+  ];
+
+  const firstRoll = hustlesModule.ensureDailyOffersForDay({
+    state,
+    templates,
+    day: state.day,
+    now: 500,
+    rng: () => 0
+  });
+
+  assert.equal(firstRoll.length, 2, 'initial roll should fill both slots');
+  const todayOffer = firstRoll.find(offer => offer.variantId === 'today');
+  const tomorrowOffer = firstRoll.find(offer => offer.variantId === 'tomorrow');
+  assert.ok(todayOffer, 'expected today variant to spawn');
+  assert.ok(tomorrowOffer, 'expected tomorrow variant to spawn');
+  assert.equal(todayOffer.availableOnDay, 1);
+  assert.equal(
+    todayOffer.expiresOnDay - todayOffer.availableOnDay,
+    2,
+    'duration should match the variant window span'
+  );
+  assert.equal(tomorrowOffer.availableOnDay, 2, 'tomorrow variant should unlock the next day');
+  assert.equal(state.hustleMarket.offers.length, 2);
+
+  state.day = 2;
+  const secondRoll = hustlesModule.ensureDailyOffersForDay({
+    state,
+    templates,
+    day: state.day,
+    now: 1500,
+    rng: () => 0
+  });
+
+  assert.equal(state.hustleMarket.lastRolledOnDay, 2, 'daily reroll should update the recorded day');
+  assert.equal(secondRoll.length, 2, 'reroll should respect maxActive cap');
+  const preservedToday = secondRoll.filter(offer => offer.variantId === 'today');
+  assert.equal(preservedToday.length, 1, 'active variant should persist across the reroll');
+  assert.ok(secondRoll.some(offer => offer.variantId === 'tomorrow' && offer.availableOnDay === 2));
 });
 
 test('rollDailyOffers builds variant metadata and allows multiple variants', () => {
@@ -353,4 +488,43 @@ test('completing a hustle hides the accepted entry from pending lists', () => {
   if (Number.isFinite(completionHours) && completionHours >= 0) {
     assert.equal(completedEntry.hoursLogged, completionHours, 'hours logged should mirror the completion time');
   }
+});
+
+test('on-completion hustle payouts award money after logging required hours', () => {
+  const state = getState();
+  state.day = 7;
+
+  const template = HUSTLE_TEMPLATES[0];
+  assert.ok(template, 'expected a hustle template to validate completion payouts');
+
+  const [offer] = rollDailyOffers({ templates: [template], day: state.day, now: 700, state, rng: () => 0 });
+  assert.ok(offer, 'expected market roll to yield an offer');
+
+  const accepted = acceptHustleOffer(offer.id, { state });
+  assert.ok(accepted, 'expected the market offer to be accepted');
+  assert.ok(accepted.instanceId, 'accepted entry should link to an action instance');
+  assert.equal(accepted.payout?.schedule, 'onCompletion', 'test expects an onCompletion payout schedule');
+  const contractAmount = Math.round(Number(accepted.payout?.amount) || 0);
+  assert.ok(contractAmount > 0, 'test requires a positive contract payout');
+
+  const startingMoney = Number(state.money) || 0;
+
+  const requiredHours = Number.isFinite(accepted.hoursRequired)
+    ? accepted.hoursRequired
+    : Number(template.time) || 0;
+  assert.ok(requiredHours > 0, 'expected the contract to require logged hours');
+
+  const result = advanceActionInstance(template, accepted.instanceId, {
+    state,
+    day: state.day,
+    hours: requiredHours
+  });
+  assert.ok(result?.completed, 'logging required hours should complete the action instance');
+
+  const updatedMoney = Number(state.money) || 0;
+  assert.equal(updatedMoney, startingMoney + contractAmount, 'player money should increase by the contract payout');
+
+  const hustleEntry = state.hustleMarket.accepted.find(entry => entry.instanceId === accepted.instanceId);
+  assert.ok(hustleEntry?.payoutPaid, 'accepted hustle entry should mark the payout as granted');
+  assert.equal(Math.round(Number(hustleEntry.payoutAwarded) || 0), contractAmount, 'stored payout award should match the contract amount');
 });

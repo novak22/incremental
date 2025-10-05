@@ -131,6 +131,9 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
       };
     });
 
+    const readyOffers = offerEntries.filter(entry => entry.ready);
+    const upcomingOffers = offerEntries.filter(entry => !entry.ready);
+
     const outstandingForDefinition = commitmentsByDefinition.get(definition.id) || [];
     const commitments = outstandingForDefinition.map(entry => ({
       id: entry.id,
@@ -188,26 +191,44 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
       });
     });
 
-    const readyOffers = offerEntries.filter(entry => entry.ready);
-    const primaryOffer = readyOffers[0] || offerEntries[0] || null;
+    const primaryOffer = readyOffers[0] || upcomingOffers[0] || null;
 
     let actionConfig = null;
 
     if (primaryOffer) {
-      const ready = primaryOffer.ready;
-      const locked = primaryOffer.locked;
-      const label = ready
-        ? `Accept ${primaryOffer.label}`
-        : locked
-          ? `Locked — ${primaryOffer.label}`
-          : `Opens in ${primaryOffer.availableIn} day${primaryOffer.availableIn === 1 ? '' : 's'}`;
-      actionConfig = {
-        label,
-        disabled: !ready,
-        className: 'primary',
-        onClick: ready ? primaryOffer.onAccept : null,
-        guidance: locked ? requirementGuidance || primaryOffer.unlockHint : undefined
-      };
+      const locked = Boolean(primaryOffer.locked);
+      const ready = Boolean(primaryOffer.ready) && !locked;
+
+      if (locked) {
+        const lockedLabel = `Locked — ${primaryOffer.label}`;
+        const lockedGuidance = requirementGuidance || primaryOffer.unlockHint || '';
+        actionConfig = {
+          label: lockedLabel,
+          disabled: true,
+          className: 'primary',
+          onClick: null,
+          guidance: lockedGuidance || undefined
+        };
+      } else if (ready) {
+        actionConfig = {
+          label: `Accept ${primaryOffer.label}`,
+          disabled: false,
+          className: 'primary',
+          onClick: primaryOffer.onAccept,
+          guidance: 'Fresh hustles just landed! Claim your next gig and keep momentum rolling.'
+        };
+      } else {
+        const availableIn = Number.isFinite(primaryOffer.availableIn) ? primaryOffer.availableIn : null;
+        const daysText = availableIn === 1 ? '1 day' : `${availableIn} days`;
+        const label = availableIn && availableIn > 0 ? `Opens in ${daysText}` : 'Opens soon';
+        actionConfig = {
+          label,
+          disabled: true,
+          className: 'primary',
+          onClick: null,
+          guidance: 'Next wave of offers unlocks tomorrow. Line up your prep and check back after the reset.'
+        };
+      }
     } else if (typeof rollOffers === 'function') {
       const rerollLabel = definition.market?.manualRerollLabel || 'Roll a fresh offer';
       const rerollGuidance = definition.market?.manualRerollHelp || 'Spin up a new lead if you can\'t wait for tomorrow.';
@@ -240,6 +261,9 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
     if (commitments.length) {
       badges.push(`${commitments.length} active`);
     }
+    if (upcomingOffers.length) {
+      badges.push(`${upcomingOffers.length} queued`);
+    }
 
     const available = Boolean(readyOffers.length);
 
@@ -269,7 +293,8 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
         ? { ...actionConfig, guidance: requirementGuidance }
         : actionConfig,
       available,
-      offers: offerEntries,
+      offers: readyOffers,
+      upcoming: upcomingOffers,
       commitments,
       filters: {
         search,
