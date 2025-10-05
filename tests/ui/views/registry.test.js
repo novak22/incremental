@@ -40,7 +40,7 @@ test('registry exposes built-in views with guards and presenters', () => {
   const entries = getRegisteredViews();
   const ids = entries.map(entry => entry.id);
 
-  assert.deepEqual(ids, ['browser']);
+  assert.deepEqual(ids, ['browser', 'developer']);
 
   for (const entry of entries) {
     assert.equal(typeof entry.guard, 'function');
@@ -82,4 +82,16 @@ test('newly registered views can be resolved without entry point changes', t => 
 
   const resolved = resolveInitialView(dom.window.document);
   assert.equal(resolved, futureView);
+});
+
+test('developer view resolves when requested via query flag', t => {
+  const { dom, restore } = withDom(
+    '<!DOCTYPE html><html><body><div id="browser-home"></div><div id="developer-root"></div></body></html>',
+    { url: 'https://example.com/?view=developer' }
+  );
+
+  t.after(restore);
+
+  const resolved = resolveInitialView(dom.window.document);
+  assert.equal(resolved?.id, 'developer');
 });

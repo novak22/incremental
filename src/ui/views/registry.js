@@ -1,4 +1,5 @@
 import browserView from './browser/index.js';
+import developerView from './developer/index.js';
 
 const registeredViews = [];
 
@@ -121,6 +122,10 @@ export function resolveInitialView(
 
 registerView(browserView, {
   guard: root => Boolean(root?.getElementById('browser-home'))
+});
+
+registerView(developerView, {
+  guard: root => Boolean(root?.getElementById('developer-root'))
 });
 
 export default {

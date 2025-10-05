@@ -107,6 +107,15 @@ Each asset supports multiple instances, tracks setup progress, and rolls a daily
 - Adjust sliders to test new multipliers; export refreshed plots into `docs/economy_sim_report_assets` using the built-in
   snapshot button before updating `docs/normalized_economy.json`.
 
+## Developer State Explorer
+- Append `?view=developer` (or `?ui=developer`) to the game URL to load a dedicated developer dashboard.
+- The explorer hides the standard browser shell and surfaces:
+  - a quick overview (day, money, remaining time, active assets, event count),
+  - a live table of all active random events with their payout impact and remaining days,
+  - grouped long-term buffs (education completions, upgrade boosts, time bonuses), and
+  - a formatted JSON dump of the full in-memory state for copying into tests or fixtures.
+- Use the **Refresh snapshot** button or let it auto-refresh via the invalidation bus when the simulation updates.
+
 ## Styling Workflow
 - The browser shell now links each modular stylesheet directly. Edit the files under `styles/base/`, `styles/components/`, `styles/widgets/`, `styles/workspaces/`, and `styles/overlays/` and the changes will load without a build step.
 - Maintain the documented load order (base → components → widgets → workspaces → overlays) when adding new modules. Update the `<head>` of `index.html` with any additional `<link rel="stylesheet">` entries so the cascade remains intact.

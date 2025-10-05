@@ -28,6 +28,8 @@
   <!-- Overlays -->
   <link rel="stylesheet" href="styles/overlays/launch-dialog.css" />
   <link rel="stylesheet" href="styles/overlays/loading-screen.css" />
+  <!-- Developer tools -->
+  <link rel="stylesheet" href="styles/developer.css" />
   <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -257,6 +259,126 @@
       </section>
 
       <div id="browser-workspaces" class="browser-stage__pane browser-stage__pane--workspace" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <div id="developer-root" class="developer-view" hidden aria-hidden="true">
+    <header class="developer-view__header">
+      <div class="developer-view__title-group">
+        <p class="developer-view__eyebrow">Developer utilities</p>
+        <h1 class="developer-view__title">State Explorer</h1>
+        <p class="developer-view__subtitle">
+          Review the live memory snapshot, active events, and every buff shaping the economy.
+        </p>
+      </div>
+      <div class="developer-view__actions">
+        <a class="developer-view__action" href="?view=browser">Return to browser shell</a>
+        <button id="developer-refresh-button" class="developer-view__action developer-view__action--button" type="button">
+          Refresh snapshot
+        </button>
+      </div>
+    </header>
+
+    <div class="developer-view__content">
+      <section class="developer-card" aria-labelledby="developer-overview-heading">
+        <header class="developer-card__header">
+          <h2 id="developer-overview-heading" class="developer-card__title">Overview</h2>
+          <p class="developer-card__subtitle">Quick pulse on the current save data.</p>
+        </header>
+        <dl class="developer-overview__grid">
+          <div class="developer-overview__item">
+            <dt>Day</dt>
+            <dd data-dev-field="day">—</dd>
+          </div>
+          <div class="developer-overview__item">
+            <dt>Cash on hand</dt>
+            <dd data-dev-field="money">—</dd>
+          </div>
+          <div class="developer-overview__item">
+            <dt>Time remaining</dt>
+            <dd data-dev-field="time">—</dd>
+          </div>
+          <div class="developer-overview__item">
+            <dt>Active assets</dt>
+            <dd data-dev-field="assets">—</dd>
+          </div>
+          <div class="developer-overview__item">
+            <dt>Active events</dt>
+            <dd data-dev-field="events">—</dd>
+          </div>
+        </dl>
+        <p class="developer-card__footer-note">Last updated <span data-dev-field="updated">—</span></p>
+      </section>
+
+      <section class="developer-card" aria-labelledby="developer-events-heading">
+        <header class="developer-card__header">
+          <h2 id="developer-events-heading" class="developer-card__title">Random event buffs</h2>
+          <p class="developer-card__subtitle">Percent swings currently modifying payouts or niches.</p>
+        </header>
+        <div class="developer-card__body">
+          <p id="developer-events-empty" class="developer-empty" hidden>No random events are active.</p>
+          <div class="developer-table" role="region" aria-live="polite">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">Event</th>
+                  <th scope="col">Impact</th>
+                  <th scope="col">Target</th>
+                  <th scope="col">Days left</th>
+                  <th scope="col">Tone</th>
+                </tr>
+              </thead>
+              <tbody id="developer-events-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="developer-card" aria-labelledby="developer-buffs-heading">
+        <header class="developer-card__header">
+          <h2 id="developer-buffs-heading" class="developer-card__title">Long-term buffs</h2>
+          <p class="developer-card__subtitle">Education, upgrades, and time effects currently boosting progress.</p>
+        </header>
+        <div class="developer-card__body developer-buffs">
+          <div class="developer-buffs__group">
+            <h3 class="developer-buffs__title">Education</h3>
+            <p id="developer-education-empty" class="developer-empty" hidden>No education boosts unlocked yet.</p>
+            <ul id="developer-education-list" class="developer-buffs__list"></ul>
+          </div>
+          <div class="developer-buffs__group">
+            <h3 class="developer-buffs__title">Upgrades</h3>
+            <p id="developer-upgrades-empty" class="developer-empty" hidden>No upgrade boosts purchased.</p>
+            <ul id="developer-upgrade-list" class="developer-buffs__list"></ul>
+          </div>
+          <div class="developer-buffs__group">
+            <h3 class="developer-buffs__title">Time bonuses</h3>
+            <dl class="developer-buffs__stats">
+              <div>
+                <dt>Base time</dt>
+                <dd data-dev-field="baseTime">—</dd>
+              </div>
+              <div>
+                <dt>Bonus time</dt>
+                <dd data-dev-field="bonusTime">—</dd>
+              </div>
+              <div>
+                <dt>Daily bonus</dt>
+                <dd data-dev-field="dailyBonus">—</dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+      </section>
+
+      <section class="developer-card" aria-labelledby="developer-state-heading">
+        <header class="developer-card__header">
+          <h2 id="developer-state-heading" class="developer-card__title">Raw state snapshot</h2>
+          <p class="developer-card__subtitle">Direct dump of the in-memory save data.</p>
+        </header>
+        <div class="developer-card__body">
+          <pre id="developer-state-json" class="developer-json" aria-live="polite"></pre>
+        </div>
+      </section>
     </div>
   </div>
 
