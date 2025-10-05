@@ -1,0 +1,1438 @@
+parameter,value,units,category,impact,source
+- **Initial resources:** New games start with `$45` cash and `14` hours of available time (also the base daily time cap).,45,usd,time,linear,docs/economy.md:L7
+- **Initial resources:** New games start with `$45` cash and `14` hours of available time (also the base daily time cap).,14,hours,time,linear,docs/economy.md:L7
+- **Money mutations:** All cash additions clamp to ≥0 and emit `moneyChanged` events. Spending also clamps the balance to ≥0.,0,,limit,cap,docs/economy.md:L10
+- **Money mutations:** All cash additions clamp to ≥0 and emit `moneyChanged` events. Spending also clamps the balance to ≥0.,0,,other,cap,docs/economy.md:L10
+"- **Daily maintenance buffer:** Study scheduling keeps at least `max(2, round(DEFAULT_DAY_HOURS * 0.25))` hours free for manual tasks; with the default 14-hour day this buffer is `4` hours.",2,,time,cap,docs/economy.md:L11
+"- **Daily maintenance buffer:** Study scheduling keeps at least `max(2, round(DEFAULT_DAY_HOURS * 0.25))` hours free for manual tasks; with the default 14-hour day this buffer is `4` hours.",0.25,,time,cap,docs/economy.md:L11
+"- **Daily maintenance buffer:** Study scheduling keeps at least `max(2, round(DEFAULT_DAY_HOURS * 0.25))` hours free for manual tasks; with the default 14-hour day this buffer is `4` hours.",14,,time,linear,docs/economy.md:L11
+"- **Daily maintenance buffer:** Study scheduling keeps at least `max(2, round(DEFAULT_DAY_HOURS * 0.25))` hours free for manual tasks; with the default 14-hour day this buffer is `4` hours.",4,hours,time,linear,docs/economy.md:L11
+"- Manual maintenance reserve deducts available assistant hours (each adds `ASSISTANT_CONFIG.hoursPerAssistant = 3h`) before predicting remaining human time needed, ensuring study doesn’t steal hours required for upkeep.",3,,other,linear,docs/economy.md:L20
+"- **Skill levels:** XP thresholds per level: 0 (Novice), 100 (Apprentice), 300 (Specialist), 700 (Expert), 1200 (Master).",0,xp,xp,linear,docs/economy.md:L25
+"- **Skill levels:** XP thresholds per level: 0 (Novice), 100 (Apprentice), 300 (Specialist), 700 (Expert), 1200 (Master).",100,xp,xp,linear,docs/economy.md:L25
+"- **Skill levels:** XP thresholds per level: 0 (Novice), 100 (Apprentice), 300 (Specialist), 700 (Expert), 1200 (Master).",300,,progression,linear,docs/economy.md:L25
+"- **Skill levels:** XP thresholds per level: 0 (Novice), 100 (Apprentice), 300 (Specialist), 700 (Expert), 1200 (Master).",700,,other,linear,docs/economy.md:L25
+"- **Skill levels:** XP thresholds per level: 0 (Novice), 100 (Apprentice), 300 (Specialist), 700 (Expert), 1200 (Master).",1200,xp,xp,linear,docs/economy.md:L25
+"- **Character levels:** Overall XP thresholds: 0, 300, 750, 1400, 2200 for levels 1–5.",0,xp,xp,linear,docs/economy.md:L26
+"- **Character levels:** Overall XP thresholds: 0, 300, 750, 1400, 2200 for levels 1–5.",300,xp,xp,linear,docs/economy.md:L26
+"- **Character levels:** Overall XP thresholds: 0, 300, 750, 1400, 2200 for levels 1–5.",750,xp,xp,linear,docs/economy.md:L26
+"- **Character levels:** Overall XP thresholds: 0, 300, 750, 1400, 2200 for levels 1–5.",1400,xp,xp,linear,docs/economy.md:L26
+"- **Character levels:** Overall XP thresholds: 0, 300, 750, 1400, 2200 for levels 1–5.",2200,xp,xp,linear,docs/economy.md:L26
+"- **Character levels:** Overall XP thresholds: 0, 300, 750, 1400, 2200 for levels 1–5.",1,,progression,linear,docs/economy.md:L26
+"- **Character levels:** Overall XP thresholds: 0, 300, 750, 1400, 2200 for levels 1–5.",5,,progression,linear,docs/economy.md:L26
+- **XP generation:** `TIME_XP_RATE = 5` XP/hour and `MONEY_XP_INTERVAL = 25` dollars per 1 XP. Base XP is `timeXp + floor(moneySpent / 25)` unless an explicit `baseXp` override is provided; nonzero effort always yields at least 1 XP.,5,xp,xp,linear,docs/economy.md:L27
+- **XP generation:** `TIME_XP_RATE = 5` XP/hour and `MONEY_XP_INTERVAL = 25` dollars per 1 XP. Base XP is `timeXp + floor(moneySpent / 25)` unless an explicit `baseXp` override is provided; nonzero effort always yields at least 1 XP.,25,xp,xp,linear,docs/economy.md:L27
+- **XP generation:** `TIME_XP_RATE = 5` XP/hour and `MONEY_XP_INTERVAL = 25` dollars per 1 XP. Base XP is `timeXp + floor(moneySpent / 25)` unless an explicit `baseXp` override is provided; nonzero effort always yields at least 1 XP.,1,xp,xp,linear,docs/economy.md:L27
+"- **Awarding XP:** Activities normalize their skill list weights, apply at least 1 XP per skill (`max(1, round(base * weight))`), level up skills and character, and refresh UI upon gains.",1,xp,xp,cap,docs/economy.md:L28
+"- **Config:** Hiring costs `$180`, daily wage equals `hoursPerAssistant (3) * hourlyRate ($8) = $24`, and teams max at 4 assistants.",180,usd,cost,linear,docs/economy.md:L32
+"- **Config:** Hiring costs `$180`, daily wage equals `hoursPerAssistant (3) * hourlyRate ($8) = $24`, and teams max at 4 assistants.",3,,cost,linear,docs/economy.md:L32
+"- **Config:** Hiring costs `$180`, daily wage equals `hoursPerAssistant (3) * hourlyRate ($8) = $24`, and teams max at 4 assistants.",8,usd,limit,cap,docs/economy.md:L32
+"- **Config:** Hiring costs `$180`, daily wage equals `hoursPerAssistant (3) * hourlyRate ($8) = $24`, and teams max at 4 assistants.",24,usd,limit,cap,docs/economy.md:L32
+"- **Config:** Hiring costs `$180`, daily wage equals `hoursPerAssistant (3) * hourlyRate ($8) = $24`, and teams max at 4 assistants.",4,,limit,cap,docs/economy.md:L32
+"- **Hiring:** Requires available cash and unused headcount. On hire, cash decreases by `$180`, +3 bonus hours are added (and immediately granted), costs are logged, and commerce skill XP is awarded based on money spent.",180,usd,time,linear,docs/economy.md:L33
+"- **Hiring:** Requires available cash and unused headcount. On hire, cash decreases by `$180`, +3 bonus hours are added (and immediately granted), costs are logged, and commerce skill XP is awarded based on money spent.",3,usd,time,linear,docs/economy.md:L33
+"- **Firing:** Reduces assistant count, removes 3 bonus hours from daily support, and deducts 3 hours from current time left (cannot go below zero in code).",3,,time,linear,docs/economy.md:L34
+"- **Firing:** Reduces assistant count, removes 3 bonus hours from daily support, and deducts 3 hours from current time left (cannot go below zero in code).",3,hours,time,linear,docs/economy.md:L34
+- **Payroll:** Every day deducts `assistantCount * 3h * $8` whether or not funds cover it; logs a warning if the balance dips below zero during payment.,3,,time,linear,docs/economy.md:L35
+- **Payroll:** Every day deducts `assistantCount * 3h * $8` whether or not funds cover it; logs a warning if the balance dips below zero during payment.,8,usd,time,linear,docs/economy.md:L35
+"- **Instant hustle boosts:** Completing tracks unlocks flat or multiplier bonuses enumerated per hustle; multipliers add to 1 (i.e., `1 + amount`), flats add additive dollars before upgrade multipliers.",1,,other,linear,docs/economy.md:L48
+- **Asset income boosts:** Completed tracks also grant asset multipliers or flats using the same formula (`total = base * (1 + sumMultipliers) + sumFlats`).,1,,other,linear,docs/economy.md:L49
+| storycraftJumpstart | 4 | 3 | $0 | Blog income +5% (multiplier). |,4,,income,linear,docs/economy.md:L57
+| storycraftJumpstart | 4 | 3 | $0 | Blog income +5% (multiplier). |,3,,income,linear,docs/economy.md:L57
+| storycraftJumpstart | 4 | 3 | $0 | Blog income +5% (multiplier). |,0,usd,cost,linear,docs/economy.md:L57
+| storycraftJumpstart | 4 | 3 | $0 | Blog income +5% (multiplier). |,5,percent,income,linear,docs/economy.md:L57
+| vlogStudioJumpstart | 4 | 3 | $0 | Vlog income +5%. |,4,,income,linear,docs/economy.md:L58
+| vlogStudioJumpstart | 4 | 3 | $0 | Vlog income +5%. |,3,,income,linear,docs/economy.md:L58
+| vlogStudioJumpstart | 4 | 3 | $0 | Vlog income +5%. |,0,usd,cost,linear,docs/economy.md:L58
+| vlogStudioJumpstart | 4 | 3 | $0 | Vlog income +5%. |,5,percent,income,linear,docs/economy.md:L58
+"| digitalShelfPrimer | 4 | 3 | $0 | E-book +5%, Stock Photos +5%. |",4,,other,linear,docs/economy.md:L59
+"| digitalShelfPrimer | 4 | 3 | $0 | E-book +5%, Stock Photos +5%. |",3,,other,linear,docs/economy.md:L59
+"| digitalShelfPrimer | 4 | 3 | $0 | E-book +5%, Stock Photos +5%. |",0,usd,cost,linear,docs/economy.md:L59
+"| digitalShelfPrimer | 4 | 3 | $0 | E-book +5%, Stock Photos +5%. |",5,percent,income,linear,docs/economy.md:L59
+| commerceLaunchPrimer | 4 | 3 | $0 | Dropshipping +5%. |,4,,other,linear,docs/economy.md:L60
+| commerceLaunchPrimer | 4 | 3 | $0 | Dropshipping +5%. |,3,,other,linear,docs/economy.md:L60
+| commerceLaunchPrimer | 4 | 3 | $0 | Dropshipping +5%. |,0,usd,cost,linear,docs/economy.md:L60
+| commerceLaunchPrimer | 4 | 3 | $0 | Dropshipping +5%. |,5,percent,income,linear,docs/economy.md:L60
+| microSaasJumpstart | 4 | 3 | $0 | SaaS +5%. |,4,,other,linear,docs/economy.md:L61
+| microSaasJumpstart | 4 | 3 | $0 | SaaS +5%. |,3,,other,linear,docs/economy.md:L61
+| microSaasJumpstart | 4 | 3 | $0 | SaaS +5%. |,0,usd,cost,linear,docs/economy.md:L61
+| microSaasJumpstart | 4 | 3 | $0 | SaaS +5%. |,5,usd,cost,linear,docs/economy.md:L61
+| outlineMastery | 2 | 5 | $140 | Freelance payout +25%; Audiobook payout +15%. |,2,,income,linear,docs/economy.md:L62
+| outlineMastery | 2 | 5 | $140 | Freelance payout +25%; Audiobook payout +15%. |,5,,income,linear,docs/economy.md:L62
+| outlineMastery | 2 | 5 | $140 | Freelance payout +25%; Audiobook payout +15%. |,140,usd,cost,linear,docs/economy.md:L62
+| outlineMastery | 2 | 5 | $140 | Freelance payout +25%; Audiobook payout +15%. |,25,percent,income,linear,docs/economy.md:L62
+| outlineMastery | 2 | 5 | $140 | Freelance payout +25%; Audiobook payout +15%. |,15,percent,income,linear,docs/economy.md:L62
+| photoLibrary | 1.5 | 4 | $95 | Event Photo Gig payout +20%. |,1.5,,income,linear,docs/economy.md:L63
+| photoLibrary | 1.5 | 4 | $95 | Event Photo Gig payout +20%. |,4,,income,linear,docs/economy.md:L63
+| photoLibrary | 1.5 | 4 | $95 | Event Photo Gig payout +20%. |,95,usd,cost,linear,docs/economy.md:L63
+| photoLibrary | 1.5 | 4 | $95 | Event Photo Gig payout +20%. |,20,percent,income,linear,docs/economy.md:L63
+| ecomPlaybook | 3 | 9 | $900 | Bundle Promo Push +$5 flat; Dropshipping +15%. |,3,,other,linear,docs/economy.md:L64
+| ecomPlaybook | 3 | 9 | $900 | Bundle Promo Push +$5 flat; Dropshipping +15%. |,9,,other,linear,docs/economy.md:L64
+| ecomPlaybook | 3 | 9 | $900 | Bundle Promo Push +$5 flat; Dropshipping +15%. |,900,usd,cost,linear,docs/economy.md:L64
+| ecomPlaybook | 3 | 9 | $900 | Bundle Promo Push +$5 flat; Dropshipping +15%. |,5,usd,cost,linear,docs/economy.md:L64
+| ecomPlaybook | 3 | 9 | $900 | Bundle Promo Push +$5 flat; Dropshipping +15%. |,15,percent,income,linear,docs/economy.md:L64
+| automationCourse | 6 | 15 | $3000 | SaaS Bug Squash +$6 flat; SaaS +15%. |,6,,other,linear,docs/economy.md:L65
+| automationCourse | 6 | 15 | $3000 | SaaS Bug Squash +$6 flat; SaaS +15%. |,15,,other,linear,docs/economy.md:L65
+| automationCourse | 6 | 15 | $3000 | SaaS Bug Squash +$6 flat; SaaS +15%. |,3000,usd,cost,linear,docs/economy.md:L65
+| automationCourse | 6 | 15 | $3000 | SaaS Bug Squash +$6 flat; SaaS +15%. |,6,usd,cost,linear,docs/economy.md:L65
+| automationCourse | 6 | 15 | $3000 | SaaS Bug Squash +$6 flat; SaaS +15%. |,15,percent,income,linear,docs/economy.md:L65
+| brandVoiceLab | 1 | 4 | $120 | Audience Call +$4 flat. |,1,,other,linear,docs/economy.md:L66
+| brandVoiceLab | 1 | 4 | $120 | Audience Call +$4 flat. |,4,,other,linear,docs/economy.md:L66
+| brandVoiceLab | 1 | 4 | $120 | Audience Call +$4 flat. |,120,usd,cost,linear,docs/economy.md:L66
+| brandVoiceLab | 1 | 4 | $120 | Audience Call +$4 flat. |,4,usd,cost,linear,docs/economy.md:L66
+| guerillaBuzzWorkshop | 1.5 | 6 | $180 | Street Promo Sprint +25%; Survey Sprint +$1.5 flat. |,1.5,,other,linear,docs/economy.md:L67
+| guerillaBuzzWorkshop | 1.5 | 6 | $180 | Street Promo Sprint +25%; Survey Sprint +$1.5 flat. |,6,,other,linear,docs/economy.md:L67
+| guerillaBuzzWorkshop | 1.5 | 6 | $180 | Street Promo Sprint +25%; Survey Sprint +$1.5 flat. |,180,usd,cost,linear,docs/economy.md:L67
+| guerillaBuzzWorkshop | 1.5 | 6 | $180 | Street Promo Sprint +25%; Survey Sprint +$1.5 flat. |,25,percent,income,linear,docs/economy.md:L67
+| guerillaBuzzWorkshop | 1.5 | 6 | $180 | Street Promo Sprint +25%; Survey Sprint +$1.5 flat. |,1.5,usd,cost,linear,docs/economy.md:L67
+| curriculumDesignStudio | 2.5 | 6 | $280 | Pop-Up Workshop +30%; Bundle Push +15%. |,2.5,,other,linear,docs/economy.md:L68
+| curriculumDesignStudio | 2.5 | 6 | $280 | Pop-Up Workshop +30%; Bundle Push +15%. |,6,,other,linear,docs/economy.md:L68
+| curriculumDesignStudio | 2.5 | 6 | $280 | Pop-Up Workshop +30%; Bundle Push +15%. |,280,usd,cost,linear,docs/economy.md:L68
+| curriculumDesignStudio | 2.5 | 6 | $280 | Pop-Up Workshop +30%; Bundle Push +15%. |,30,percent,income,linear,docs/economy.md:L68
+| curriculumDesignStudio | 2.5 | 6 | $280 | Pop-Up Workshop +30%; Bundle Push +15%. |,15,percent,income,linear,docs/economy.md:L68
+| postProductionPipelineLab | 4 | 10 | $900 | Vlog Edit Rush +25%; Vlog income +15%. |,4,,other,linear,docs/economy.md:L69
+| postProductionPipelineLab | 4 | 10 | $900 | Vlog Edit Rush +25%; Vlog income +15%. |,10,,other,linear,docs/economy.md:L69
+| postProductionPipelineLab | 4 | 10 | $900 | Vlog Edit Rush +25%; Vlog income +15%. |,900,usd,cost,linear,docs/economy.md:L69
+| postProductionPipelineLab | 4 | 10 | $900 | Vlog Edit Rush +25%; Vlog income +15%. |,25,percent,income,linear,docs/economy.md:L69
+| postProductionPipelineLab | 4 | 10 | $900 | Vlog Edit Rush +25%; Vlog income +15%. |,15,percent,income,linear,docs/economy.md:L69
+| fulfillmentOpsMasterclass | 4 | 10 | $1200 | Dropship Pack Party +20%; Dropshipping +25%. |,4,,other,linear,docs/economy.md:L70
+| fulfillmentOpsMasterclass | 4 | 10 | $1200 | Dropship Pack Party +20%; Dropshipping +25%. |,10,,other,linear,docs/economy.md:L70
+| fulfillmentOpsMasterclass | 4 | 10 | $1200 | Dropship Pack Party +20%; Dropshipping +25%. |,1200,usd,cost,linear,docs/economy.md:L70
+| fulfillmentOpsMasterclass | 4 | 10 | $1200 | Dropship Pack Party +20%; Dropshipping +25%. |,20,percent,income,linear,docs/economy.md:L70
+| fulfillmentOpsMasterclass | 4 | 10 | $1200 | Dropship Pack Party +20%; Dropshipping +25%. |,25,percent,income,linear,docs/economy.md:L70
+| customerRetentionClinic | 3 | 7 | $1000 | SaaS Bug Squash +$5 flat; SaaS +20%. |,3,,other,linear,docs/economy.md:L71
+| customerRetentionClinic | 3 | 7 | $1000 | SaaS Bug Squash +$5 flat; SaaS +20%. |,7,,other,linear,docs/economy.md:L71
+| customerRetentionClinic | 3 | 7 | $1000 | SaaS Bug Squash +$5 flat; SaaS +20%. |,1000,usd,cost,linear,docs/economy.md:L71
+| customerRetentionClinic | 3 | 7 | $1000 | SaaS Bug Squash +$5 flat; SaaS +20%. |,5,usd,cost,linear,docs/economy.md:L71
+| customerRetentionClinic | 3 | 7 | $1000 | SaaS Bug Squash +$5 flat; SaaS +20%. |,20,percent,income,linear,docs/economy.md:L71
+| narrationPerformanceWorkshop | 3 | 7 | $900 | Audiobook Narration +25%; E-book +10%. |,3,,other,linear,docs/economy.md:L72
+| narrationPerformanceWorkshop | 3 | 7 | $900 | Audiobook Narration +25%; E-book +10%. |,7,,other,linear,docs/economy.md:L72
+| narrationPerformanceWorkshop | 3 | 7 | $900 | Audiobook Narration +25%; E-book +10%. |,900,usd,cost,linear,docs/economy.md:L72
+| narrationPerformanceWorkshop | 3 | 7 | $900 | Audiobook Narration +25%; E-book +10%. |,25,percent,income,linear,docs/economy.md:L72
+| narrationPerformanceWorkshop | 3 | 7 | $900 | Audiobook Narration +25%; E-book +10%. |,10,percent,income,linear,docs/economy.md:L72
+| galleryLicensingSummit | 4 | 8 | $1100 | Event Photo Gig +20%; Stock Photos +15%. |,4,,other,linear,docs/economy.md:L73
+| galleryLicensingSummit | 4 | 8 | $1100 | Event Photo Gig +20%; Stock Photos +15%. |,8,,other,linear,docs/economy.md:L73
+| galleryLicensingSummit | 4 | 8 | $1100 | Event Photo Gig +20%; Stock Photos +15%. |,1100,usd,cost,linear,docs/economy.md:L73
+| galleryLicensingSummit | 4 | 8 | $1100 | Event Photo Gig +20%; Stock Photos +15%. |,20,percent,income,linear,docs/economy.md:L73
+| galleryLicensingSummit | 4 | 8 | $1100 | Event Photo Gig +20%; Stock Photos +15%. |,15,percent,income,linear,docs/economy.md:L73
+| syndicationResidency | 4 | 9 | $1000 | Freelance +15%; Street Promo Sprint +$2 flat; Blog +12%. |,4,,other,linear,docs/economy.md:L74
+| syndicationResidency | 4 | 9 | $1000 | Freelance +15%; Street Promo Sprint +$2 flat; Blog +12%. |,9,,other,linear,docs/economy.md:L74
+| syndicationResidency | 4 | 9 | $1000 | Freelance +15%; Street Promo Sprint +$2 flat; Blog +12%. |,1000,usd,cost,linear,docs/economy.md:L74
+| syndicationResidency | 4 | 9 | $1000 | Freelance +15%; Street Promo Sprint +$2 flat; Blog +12%. |,15,percent,income,linear,docs/economy.md:L74
+| syndicationResidency | 4 | 9 | $1000 | Freelance +15%; Street Promo Sprint +$2 flat; Blog +12%. |,2,usd,cost,linear,docs/economy.md:L74
+| syndicationResidency | 4 | 9 | $1000 | Freelance +15%; Street Promo Sprint +$2 flat; Blog +12%. |,12,percent,income,linear,docs/economy.md:L74
+| storycraftJumpstart | 120 | Writing 100%. |,120,,other,linear,docs/economy.md:L82
+| storycraftJumpstart | 120 | Writing 100%. |,100,percent,income,linear,docs/economy.md:L82
+| vlogStudioJumpstart | 120 | Visual 100%. |,120,,other,linear,docs/economy.md:L83
+| vlogStudioJumpstart | 120 | Visual 100%. |,100,percent,income,linear,docs/economy.md:L83
+| digitalShelfPrimer | 120 | Editing 100%. |,120,,other,linear,docs/economy.md:L84
+| digitalShelfPrimer | 120 | Editing 100%. |,100,percent,income,linear,docs/economy.md:L84
+| commerceLaunchPrimer | 120 | Commerce 100%. |,120,,other,linear,docs/economy.md:L85
+| commerceLaunchPrimer | 120 | Commerce 100%. |,100,percent,income,linear,docs/economy.md:L85
+| microSaasJumpstart | 120 | Software 100%. |,120,,other,linear,docs/economy.md:L86
+| microSaasJumpstart | 120 | Software 100%. |,100,percent,income,linear,docs/economy.md:L86
+| outlineMastery | 120 | Writing 100%. |,120,,other,linear,docs/economy.md:L87
+| outlineMastery | 120 | Writing 100%. |,100,percent,income,linear,docs/economy.md:L87
+"| photoLibrary | 120 | Visual 50%, Editing 50%. |",120,,other,linear,docs/economy.md:L88
+"| photoLibrary | 120 | Visual 50%, Editing 50%. |",50,percent,income,linear,docs/economy.md:L88
+"| ecomPlaybook | 120 | Research 50%, Commerce 50%. |",120,,other,linear,docs/economy.md:L89
+"| ecomPlaybook | 120 | Research 50%, Commerce 50%. |",50,percent,income,linear,docs/economy.md:L89
+"| automationCourse | 120 | Software 60%, Infrastructure 40%. |",120,,other,linear,docs/economy.md:L90
+"| automationCourse | 120 | Software 60%, Infrastructure 40%. |",60,percent,income,linear,docs/economy.md:L90
+"| automationCourse | 120 | Software 60%, Infrastructure 40%. |",40,percent,income,linear,docs/economy.md:L90
+"| brandVoiceLab | 100 | Audience 60%, Promotion 40%. |",100,,other,linear,docs/economy.md:L91
+"| brandVoiceLab | 100 | Audience 60%, Promotion 40%. |",60,percent,income,linear,docs/economy.md:L91
+"| brandVoiceLab | 100 | Audience 60%, Promotion 40%. |",40,percent,income,linear,docs/economy.md:L91
+"| guerillaBuzzWorkshop | 110 | Promotion 60%, Audience 40%. |",110,,other,linear,docs/economy.md:L92
+"| guerillaBuzzWorkshop | 110 | Promotion 60%, Audience 40%. |",60,percent,income,linear,docs/economy.md:L92
+"| guerillaBuzzWorkshop | 110 | Promotion 60%, Audience 40%. |",40,percent,income,linear,docs/economy.md:L92
+"| curriculumDesignStudio | 150 | Audience 60%, Writing 40%. |",150,,other,linear,docs/economy.md:L93
+"| curriculumDesignStudio | 150 | Audience 60%, Writing 40%. |",60,percent,income,linear,docs/economy.md:L93
+"| curriculumDesignStudio | 150 | Audience 60%, Writing 40%. |",40,percent,income,linear,docs/economy.md:L93
+"| postProductionPipelineLab | 150 | Editing 70%, Visual 30%. |",150,,other,linear,docs/economy.md:L94
+"| postProductionPipelineLab | 150 | Editing 70%, Visual 30%. |",70,percent,income,linear,docs/economy.md:L94
+"| postProductionPipelineLab | 150 | Editing 70%, Visual 30%. |",30,percent,income,linear,docs/economy.md:L94
+"| fulfillmentOpsMasterclass | 140 | Commerce 70%, Promotion 30%. |",140,,other,linear,docs/economy.md:L95
+"| fulfillmentOpsMasterclass | 140 | Commerce 70%, Promotion 30%. |",70,percent,income,linear,docs/economy.md:L95
+"| fulfillmentOpsMasterclass | 140 | Commerce 70%, Promotion 30%. |",30,percent,income,linear,docs/economy.md:L95
+"| customerRetentionClinic | 140 | Audience 40%, Promotion 30%, Software 30%. |",140,,other,linear,docs/economy.md:L96
+"| customerRetentionClinic | 140 | Audience 40%, Promotion 30%, Software 30%. |",40,percent,income,linear,docs/economy.md:L96
+"| customerRetentionClinic | 140 | Audience 40%, Promotion 30%, Software 30%. |",30,percent,income,linear,docs/economy.md:L96
+"| narrationPerformanceWorkshop | 130 | Audio 60%, Writing 40%. |",130,,other,linear,docs/economy.md:L97
+"| narrationPerformanceWorkshop | 130 | Audio 60%, Writing 40%. |",60,percent,income,linear,docs/economy.md:L97
+"| narrationPerformanceWorkshop | 130 | Audio 60%, Writing 40%. |",40,percent,income,linear,docs/economy.md:L97
+"| galleryLicensingSummit | 140 | Visual 60%, Commerce 40%. |",140,,other,linear,docs/economy.md:L98
+"| galleryLicensingSummit | 140 | Visual 60%, Commerce 40%. |",60,percent,income,linear,docs/economy.md:L98
+"| galleryLicensingSummit | 140 | Visual 60%, Commerce 40%. |",40,percent,income,linear,docs/economy.md:L98
+"| syndicationResidency | 150 | Promotion 50%, Audience 30%, Writing 20%. |",150,,other,linear,docs/economy.md:L99
+"| syndicationResidency | 150 | Promotion 50%, Audience 30%, Writing 20%. |",50,percent,income,linear,docs/economy.md:L99
+"| syndicationResidency | 150 | Promotion 50%, Audience 30%, Writing 20%. |",30,percent,income,linear,docs/economy.md:L99
+"| syndicationResidency | 150 | Promotion 50%, Audience 30%, Writing 20%. |",20,percent,income,linear,docs/economy.md:L99
+| Freelance Writing | 2 | $0 | ∞ | $18 | None | Writing. |,2,,other,linear,docs/economy.md:L115
+| Freelance Writing | 2 | $0 | ∞ | $18 | None | Writing. |,0,usd,cost,linear,docs/economy.md:L115
+| Freelance Writing | 2 | $0 | ∞ | $18 | None | Writing. |,18,usd,cost,linear,docs/economy.md:L115
+| Audience Q&A Blast | 1 | $0 | 1 | $12 | Blog asset ≥1. | Audience. |,1,,other,linear,docs/economy.md:L116
+| Audience Q&A Blast | 1 | $0 | 1 | $12 | Blog asset ≥1. | Audience. |,0,usd,cost,linear,docs/economy.md:L116
+| Audience Q&A Blast | 1 | $0 | 1 | $12 | Blog asset ≥1. | Audience. |,1,usd,cost,linear,docs/economy.md:L116
+| Audience Q&A Blast | 1 | $0 | 1 | $12 | Blog asset ≥1. | Audience. |,12,usd,cost,linear,docs/economy.md:L116
+| Bundle Promo Push | 2.5 | $0 | ∞ | $48 | Blog ≥2 and E-book ≥1. | Promotion. |,2.5,,other,linear,docs/economy.md:L117
+| Bundle Promo Push | 2.5 | $0 | ∞ | $48 | Blog ≥2 and E-book ≥1. | Promotion. |,0,usd,cost,linear,docs/economy.md:L117
+| Bundle Promo Push | 2.5 | $0 | ∞ | $48 | Blog ≥2 and E-book ≥1. | Promotion. |,48,usd,cost,linear,docs/economy.md:L117
+| Bundle Promo Push | 2.5 | $0 | ∞ | $48 | Blog ≥2 and E-book ≥1. | Promotion. |,2,usd,cost,linear,docs/economy.md:L117
+| Bundle Promo Push | 2.5 | $0 | ∞ | $48 | Blog ≥2 and E-book ≥1. | Promotion. |,1,,other,linear,docs/economy.md:L117
+| Micro Survey Dash | 0.25 | $0 | 4 | $1 | None | Research. |,0.25,,other,linear,docs/economy.md:L118
+| Micro Survey Dash | 0.25 | $0 | 4 | $1 | None | Research. |,0,usd,cost,linear,docs/economy.md:L118
+| Micro Survey Dash | 0.25 | $0 | 4 | $1 | None | Research. |,4,usd,cost,linear,docs/economy.md:L118
+| Micro Survey Dash | 0.25 | $0 | 4 | $1 | None | Research. |,1,usd,cost,linear,docs/economy.md:L118
+| Event Photo Gig | 3.5 | $0 | ∞ | $72 | Stock Photos ≥1. | Visual. |,3.5,,other,linear,docs/economy.md:L119
+| Event Photo Gig | 3.5 | $0 | ∞ | $72 | Stock Photos ≥1. | Visual. |,0,usd,cost,linear,docs/economy.md:L119
+| Event Photo Gig | 3.5 | $0 | ∞ | $72 | Stock Photos ≥1. | Visual. |,72,usd,cost,linear,docs/economy.md:L119
+| Event Photo Gig | 3.5 | $0 | ∞ | $72 | Stock Photos ≥1. | Visual. |,1,,other,linear,docs/economy.md:L119
+"| Pop-Up Workshop | 2.5 | $0 | ∞ | $38 | Blog ≥1, E-book ≥1. | Audience (Writing weight 0.5). |",2.5,,other,linear,docs/economy.md:L120
+"| Pop-Up Workshop | 2.5 | $0 | ∞ | $38 | Blog ≥1, E-book ≥1. | Audience (Writing weight 0.5). |",0,usd,cost,linear,docs/economy.md:L120
+"| Pop-Up Workshop | 2.5 | $0 | ∞ | $38 | Blog ≥1, E-book ≥1. | Audience (Writing weight 0.5). |",38,usd,cost,linear,docs/economy.md:L120
+"| Pop-Up Workshop | 2.5 | $0 | ∞ | $38 | Blog ≥1, E-book ≥1. | Audience (Writing weight 0.5). |",1,usd,cost,linear,docs/economy.md:L120
+"| Pop-Up Workshop | 2.5 | $0 | ∞ | $38 | Blog ≥1, E-book ≥1. | Audience (Writing weight 0.5). |",1,,other,linear,docs/economy.md:L120
+"| Pop-Up Workshop | 2.5 | $0 | ∞ | $38 | Blog ≥1, E-book ≥1. | Audience (Writing weight 0.5). |",0.5,,other,linear,docs/economy.md:L120
+| Vlog Edit Rush | 1.5 | $0 | ∞ | $24 | Vlog ≥1. | Editing. |,1.5,,other,linear,docs/economy.md:L121
+| Vlog Edit Rush | 1.5 | $0 | ∞ | $24 | Vlog ≥1. | Editing. |,0,usd,cost,linear,docs/economy.md:L121
+| Vlog Edit Rush | 1.5 | $0 | ∞ | $24 | Vlog ≥1. | Editing. |,24,usd,cost,linear,docs/economy.md:L121
+| Vlog Edit Rush | 1.5 | $0 | ∞ | $24 | Vlog ≥1. | Editing. |,1,usd,cost,linear,docs/economy.md:L121
+| Dropship Pack Party | 2 | $8 | ∞ | $28 | Dropshipping ≥1. | Commerce. |,2,,other,linear,docs/economy.md:L122
+| Dropship Pack Party | 2 | $8 | ∞ | $28 | Dropshipping ≥1. | Commerce. |,8,usd,cost,linear,docs/economy.md:L122
+| Dropship Pack Party | 2 | $8 | ∞ | $28 | Dropshipping ≥1. | Commerce. |,28,usd,cost,linear,docs/economy.md:L122
+| Dropship Pack Party | 2 | $8 | ∞ | $28 | Dropshipping ≥1. | Commerce. |,1,,other,linear,docs/economy.md:L122
+| SaaS Bug Squash | 1 | $0 | ∞ | $30 | SaaS ≥1. | Software (Infrastructure weight 0.5). |,1,,other,linear,docs/economy.md:L123
+| SaaS Bug Squash | 1 | $0 | ∞ | $30 | SaaS ≥1. | Software (Infrastructure weight 0.5). |,0,usd,cost,linear,docs/economy.md:L123
+| SaaS Bug Squash | 1 | $0 | ∞ | $30 | SaaS ≥1. | Software (Infrastructure weight 0.5). |,30,usd,cost,linear,docs/economy.md:L123
+| SaaS Bug Squash | 1 | $0 | ∞ | $30 | SaaS ≥1. | Software (Infrastructure weight 0.5). |,1,usd,cost,linear,docs/economy.md:L123
+| SaaS Bug Squash | 1 | $0 | ∞ | $30 | SaaS ≥1. | Software (Infrastructure weight 0.5). |,0.5,,other,linear,docs/economy.md:L123
+| Audiobook Narration | 2.75 | $0 | ∞ | $44 | E-book ≥1. | Audio. |,2.75,,other,linear,docs/economy.md:L124
+| Audiobook Narration | 2.75 | $0 | ∞ | $44 | E-book ≥1. | Audio. |,0,usd,cost,linear,docs/economy.md:L124
+| Audiobook Narration | 2.75 | $0 | ∞ | $44 | E-book ≥1. | Audio. |,44,usd,cost,linear,docs/economy.md:L124
+| Audiobook Narration | 2.75 | $0 | ∞ | $44 | E-book ≥1. | Audio. |,1,,other,linear,docs/economy.md:L124
+| Street Team Promo | 0.75 | $5 | ∞ | $18 | Blog ≥2. | Promotion. |,0.75,,other,linear,docs/economy.md:L125
+| Street Team Promo | 0.75 | $5 | ∞ | $18 | Blog ≥2. | Promotion. |,5,usd,cost,linear,docs/economy.md:L125
+| Street Team Promo | 0.75 | $5 | ∞ | $18 | Blog ≥2. | Promotion. |,18,usd,cost,linear,docs/economy.md:L125
+| Street Team Promo | 0.75 | $5 | ∞ | $18 | Blog ≥2. | Promotion. |,2,usd,cost,linear,docs/economy.md:L125
+"Each knowledge track also exposes a “Study” card whose action enrolls the course (time cost 0, money cost equals tuition) and defers to the orchestrator for ongoing study time. Card text reflects enrollment status and bonuses.",0,,time,linear,docs/economy.md:L129
+"1. **Quality range:** Each asset instance references its current quality level to derive `[min,max]` income bounds.",1,,other,linear,docs/economy.md:L135
+2. **Random roll:** Daily income equals `round(min + rand() * (max - min))` before modifiers.,2,,income,linear,docs/economy.md:L136
+3. **Definition modifiers:** Optional custom modifiers can override the amount and contribute labeled breakdown entries.,3,,other,linear,docs/economy.md:L137
+"4. **Events & niches:** Active niche multipliers, scripted events, and education bonuses apply sequentially, all tracked for UI breakdowns.",4,,income,linear,docs/economy.md:L138
+5. **Upgrade multipliers:** Asset upgrades with `payout_mult` multiply the final amount via chained factors; deltas are stored per source.,5,,other,linear,docs/economy.md:L139
+6. **Rounding & storage:** Amounts round to whole dollars; breakdown entries track adjustments and are cached on the instance.,6,,other,linear,docs/economy.md:L140
+"- **Setup:** 3 days × 3h, $180 cost. Maintenance: 0.6h/day, $3/day.",3,days,time,linear,docs/economy.md:L150
+"- **Setup:** 3 days × 3h, $180 cost. Maintenance: 0.6h/day, $3/day.",3,,time,linear,docs/economy.md:L150
+"- **Setup:** 3 days × 3h, $180 cost. Maintenance: 0.6h/day, $3/day.",180,usd,time,linear,docs/economy.md:L150
+"- **Setup:** 3 days × 3h, $180 cost. Maintenance: 0.6h/day, $3/day.",0.6,,time,linear,docs/economy.md:L150
+"- **Setup:** 3 days × 3h, $180 cost. Maintenance: 0.6h/day, $3/day.",3,usd,time,linear,docs/economy.md:L150
+"- **Income:** Base 30, variance 0.2 (quality table defines min/max payouts).",30,,income,linear,docs/economy.md:L151
+"- **Income:** Base 30, variance 0.2 (quality table defines min/max payouts).",0.2,,limit,cap,docs/economy.md:L151
+"- 0: $3–6, no requirements.",0,,other,linear,docs/economy.md:L153
+"- 0: $3–6, no requirements.",3,usd,cost,linear,docs/economy.md:L153
+"- 0: $3–6, no requirements.",6,usd,cost,linear,docs/economy.md:L153
+"- 1: $9–15, requires 3 posts.",1,,requirement,linear,docs/economy.md:L154
+"- 1: $9–15, requires 3 posts.",9,usd,cost,linear,docs/economy.md:L154
+"- 1: $9–15, requires 3 posts.",15,usd,cost,linear,docs/economy.md:L154
+"- 1: $9–15, requires 3 posts.",3,count,requirement,linear,docs/economy.md:L154
+"- 2: $16–24, requires 9 posts & 2 SEO sprints.",2,,requirement,linear,docs/economy.md:L155
+"- 2: $16–24, requires 9 posts & 2 SEO sprints.",16,usd,cost,linear,docs/economy.md:L155
+"- 2: $16–24, requires 9 posts & 2 SEO sprints.",24,usd,cost,linear,docs/economy.md:L155
+"- 2: $16–24, requires 9 posts & 2 SEO sprints.",9,count,requirement,linear,docs/economy.md:L155
+"- 2: $16–24, requires 9 posts & 2 SEO sprints.",2,count,requirement,linear,docs/economy.md:L155
+"- 3: $30–42, requires 18 posts, 5 SEO, 3 outreach.",3,,requirement,linear,docs/economy.md:L156
+"- 3: $30–42, requires 18 posts, 5 SEO, 3 outreach.",30,usd,cost,linear,docs/economy.md:L156
+"- 3: $30–42, requires 18 posts, 5 SEO, 3 outreach.",42,usd,cost,linear,docs/economy.md:L156
+"- 3: $30–42, requires 18 posts, 5 SEO, 3 outreach.",18,count,requirement,linear,docs/economy.md:L156
+"- 3: $30–42, requires 18 posts, 5 SEO, 3 outreach.",5,count,requirement,linear,docs/economy.md:L156
+"- 3: $30–42, requires 18 posts, 5 SEO, 3 outreach.",3,count,requirement,linear,docs/economy.md:L156
+"- 4: $46–62, requires 28 posts, 9 SEO, 6 outreach.",4,,requirement,linear,docs/economy.md:L157
+"- 4: $46–62, requires 28 posts, 9 SEO, 6 outreach.",46,usd,cost,linear,docs/economy.md:L157
+"- 4: $46–62, requires 28 posts, 9 SEO, 6 outreach.",62,usd,cost,linear,docs/economy.md:L157
+"- 4: $46–62, requires 28 posts, 9 SEO, 6 outreach.",28,count,requirement,linear,docs/economy.md:L157
+"- 4: $46–62, requires 28 posts, 9 SEO, 6 outreach.",9,count,requirement,linear,docs/economy.md:L157
+"- 4: $46–62, requires 28 posts, 9 SEO, 6 outreach.",6,count,requirement,linear,docs/economy.md:L157
+"- 5: $64–84, requires 40 posts, 14 SEO, 10 outreach.",5,,requirement,linear,docs/economy.md:L158
+"- 5: $64–84, requires 40 posts, 14 SEO, 10 outreach.",64,usd,cost,linear,docs/economy.md:L158
+"- 5: $64–84, requires 40 posts, 14 SEO, 10 outreach.",84,usd,cost,linear,docs/economy.md:L158
+"- 5: $64–84, requires 40 posts, 14 SEO, 10 outreach.",40,count,requirement,linear,docs/economy.md:L158
+"- 5: $64–84, requires 40 posts, 14 SEO, 10 outreach.",14,count,requirement,linear,docs/economy.md:L158
+"- 5: $64–84, requires 40 posts, 14 SEO, 10 outreach.",10,count,requirement,linear,docs/economy.md:L158
+"- **Quality Actions:** Write Post (3h, 1/day), SEO Sprint (2h + $16), Backlink Outreach (1.5h + $16).",3,,time,linear,docs/economy.md:L159
+"- **Quality Actions:** Write Post (3h, 1/day), SEO Sprint (2h + $16), Backlink Outreach (1.5h + $16).",1,,time,linear,docs/economy.md:L159
+"- **Quality Actions:** Write Post (3h, 1/day), SEO Sprint (2h + $16), Backlink Outreach (1.5h + $16).",2,,time,linear,docs/economy.md:L159
+"- **Quality Actions:** Write Post (3h, 1/day), SEO Sprint (2h + $16), Backlink Outreach (1.5h + $16).",16,usd,time,linear,docs/economy.md:L159
+"- **Quality Actions:** Write Post (3h, 1/day), SEO Sprint (2h + $16), Backlink Outreach (1.5h + $16).",1.5,,other,linear,docs/economy.md:L159
+"- **Quality Actions:** Write Post (3h, 1/day), SEO Sprint (2h + $16), Backlink Outreach (1.5h + $16).",16,usd,cost,linear,docs/economy.md:L159
+"- **Setup:** 4 days × 3h, $260. Maintenance: 0.5h, $3.",4,days,time,linear,docs/economy.md:L163
+"- **Setup:** 4 days × 3h, $260. Maintenance: 0.5h, $3.",3,,time,linear,docs/economy.md:L163
+"- **Setup:** 4 days × 3h, $260. Maintenance: 0.5h, $3.",260,usd,time,linear,docs/economy.md:L163
+"- **Setup:** 4 days × 3h, $260. Maintenance: 0.5h, $3.",0.5,,time,linear,docs/economy.md:L163
+"- **Setup:** 4 days × 3h, $260. Maintenance: 0.5h, $3.",3,usd,time,linear,docs/economy.md:L163
+- 0: $3–6.,0,,other,linear,docs/economy.md:L166
+- 0: $3–6.,3,usd,cost,linear,docs/economy.md:L166
+- 0: $3–6.,6,usd,cost,linear,docs/economy.md:L166
+- 1: $12–20 (6 chapters).,1,,requirement,linear,docs/economy.md:L167
+- 1: $12–20 (6 chapters).,12,usd,cost,linear,docs/economy.md:L167
+- 1: $12–20 (6 chapters).,20,usd,cost,linear,docs/economy.md:L167
+- 1: $12–20 (6 chapters).,6,usd,cost,linear,docs/economy.md:L167
+"- 2: $20–30 (12 chapters, 1 cover).",2,,requirement,linear,docs/economy.md:L168
+"- 2: $20–30 (12 chapters, 1 cover).",20,usd,cost,linear,docs/economy.md:L168
+"- 2: $20–30 (12 chapters, 1 cover).",30,usd,cost,linear,docs/economy.md:L168
+"- 2: $20–30 (12 chapters, 1 cover).",12,usd,cost,linear,docs/economy.md:L168
+"- 2: $20–30 (12 chapters, 1 cover).",1,,requirement,linear,docs/economy.md:L168
+"- 3: $30–42 (18 chapters, 2 covers, 6 reviews).",3,,requirement,linear,docs/economy.md:L169
+"- 3: $30–42 (18 chapters, 2 covers, 6 reviews).",30,usd,cost,linear,docs/economy.md:L169
+"- 3: $30–42 (18 chapters, 2 covers, 6 reviews).",42,usd,cost,linear,docs/economy.md:L169
+"- 3: $30–42 (18 chapters, 2 covers, 6 reviews).",18,usd,cost,linear,docs/economy.md:L169
+"- 3: $30–42 (18 chapters, 2 covers, 6 reviews).",2,count,requirement,linear,docs/economy.md:L169
+"- 3: $30–42 (18 chapters, 2 covers, 6 reviews).",6,count,requirement,linear,docs/economy.md:L169
+"- 4: $44–58 (24 chapters, 3 covers, 10 reviews).",4,,requirement,linear,docs/economy.md:L170
+"- 4: $44–58 (24 chapters, 3 covers, 10 reviews).",44,usd,cost,linear,docs/economy.md:L170
+"- 4: $44–58 (24 chapters, 3 covers, 10 reviews).",58,usd,cost,linear,docs/economy.md:L170
+"- 4: $44–58 (24 chapters, 3 covers, 10 reviews).",24,usd,cost,linear,docs/economy.md:L170
+"- 4: $44–58 (24 chapters, 3 covers, 10 reviews).",3,count,requirement,linear,docs/economy.md:L170
+"- 4: $44–58 (24 chapters, 3 covers, 10 reviews).",10,count,requirement,linear,docs/economy.md:L170
+"- 5: $60–78 (32 chapters, 4 covers, 16 reviews).",5,,requirement,linear,docs/economy.md:L171
+"- 5: $60–78 (32 chapters, 4 covers, 16 reviews).",60,usd,cost,linear,docs/economy.md:L171
+"- 5: $60–78 (32 chapters, 4 covers, 16 reviews).",78,usd,cost,linear,docs/economy.md:L171
+"- 5: $60–78 (32 chapters, 4 covers, 16 reviews).",32,usd,cost,linear,docs/economy.md:L171
+"- 5: $60–78 (32 chapters, 4 covers, 16 reviews).",4,count,requirement,linear,docs/economy.md:L171
+"- 5: $60–78 (32 chapters, 4 covers, 16 reviews).",16,count,requirement,linear,docs/economy.md:L171
+"- **Actions:** Write Chapter (2.5h), Commission Cover (1.5h + $60), Rally Reviews (1.25h + $10).",2.5,,other,linear,docs/economy.md:L172
+"- **Actions:** Write Chapter (2.5h), Commission Cover (1.5h + $60), Rally Reviews (1.25h + $10).",1.5,,requirement,linear,docs/economy.md:L172
+"- **Actions:** Write Chapter (2.5h), Commission Cover (1.5h + $60), Rally Reviews (1.25h + $10).",60,usd,cost,linear,docs/economy.md:L172
+"- **Actions:** Write Chapter (2.5h), Commission Cover (1.5h + $60), Rally Reviews (1.25h + $10).",1.25,,requirement,linear,docs/economy.md:L172
+"- **Actions:** Write Chapter (2.5h), Commission Cover (1.5h + $60), Rally Reviews (1.25h + $10).",10,usd,cost,linear,docs/economy.md:L172
+"- **Setup:** 4 days × 4h, $420. Maintenance: 1h, $9.",4,days,time,linear,docs/economy.md:L176
+"- **Setup:** 4 days × 4h, $420. Maintenance: 1h, $9.",4,,time,linear,docs/economy.md:L176
+"- **Setup:** 4 days × 4h, $420. Maintenance: 1h, $9.",420,usd,time,linear,docs/economy.md:L176
+"- **Setup:** 4 days × 4h, $420. Maintenance: 1h, $9.",1,,time,linear,docs/economy.md:L176
+"- **Setup:** 4 days × 4h, $420. Maintenance: 1h, $9.",9,usd,time,linear,docs/economy.md:L176
+- 0: $2–5.,0,,other,linear,docs/economy.md:L179
+- 0: $2–5.,2,usd,cost,linear,docs/economy.md:L179
+- 0: $2–5.,5,usd,cost,linear,docs/economy.md:L179
+- 1: $12–20 (4 episodes).,1,,other,linear,docs/economy.md:L180
+- 1: $12–20 (4 episodes).,12,usd,cost,linear,docs/economy.md:L180
+- 1: $12–20 (4 episodes).,20,usd,cost,linear,docs/economy.md:L180
+- 1: $12–20 (4 episodes).,4,usd,cost,linear,docs/economy.md:L180
+"- 2: $20–30 (10 episodes, 4 edits).",2,,other,linear,docs/economy.md:L181
+"- 2: $20–30 (10 episodes, 4 edits).",20,usd,cost,linear,docs/economy.md:L181
+"- 2: $20–30 (10 episodes, 4 edits).",30,usd,cost,linear,docs/economy.md:L181
+"- 2: $20–30 (10 episodes, 4 edits).",10,usd,cost,linear,docs/economy.md:L181
+"- 2: $20–30 (10 episodes, 4 edits).",4,,other,linear,docs/economy.md:L181
+"- 3: $32–40 (18 episodes, 7 edits, 5 promos).",3,,other,linear,docs/economy.md:L182
+"- 3: $32–40 (18 episodes, 7 edits, 5 promos).",32,usd,cost,linear,docs/economy.md:L182
+"- 3: $32–40 (18 episodes, 7 edits, 5 promos).",40,usd,cost,linear,docs/economy.md:L182
+"- 3: $32–40 (18 episodes, 7 edits, 5 promos).",18,usd,cost,linear,docs/economy.md:L182
+"- 3: $32–40 (18 episodes, 7 edits, 5 promos).",7,,other,linear,docs/economy.md:L182
+"- 3: $32–40 (18 episodes, 7 edits, 5 promos).",5,count,other,linear,docs/economy.md:L182
+"- 4: $45–58 (26 episodes, 11 edits, 9 promos).",4,,other,linear,docs/economy.md:L183
+"- 4: $45–58 (26 episodes, 11 edits, 9 promos).",45,usd,cost,linear,docs/economy.md:L183
+"- 4: $45–58 (26 episodes, 11 edits, 9 promos).",58,usd,cost,linear,docs/economy.md:L183
+"- 4: $45–58 (26 episodes, 11 edits, 9 promos).",26,usd,cost,linear,docs/economy.md:L183
+"- 4: $45–58 (26 episodes, 11 edits, 9 promos).",11,,other,linear,docs/economy.md:L183
+"- 4: $45–58 (26 episodes, 11 edits, 9 promos).",9,count,other,linear,docs/economy.md:L183
+"- 5: $62–82 (38 episodes, 16 edits, 14 promos).",5,,other,linear,docs/economy.md:L184
+"- 5: $62–82 (38 episodes, 16 edits, 14 promos).",62,usd,cost,linear,docs/economy.md:L184
+"- 5: $62–82 (38 episodes, 16 edits, 14 promos).",82,usd,cost,linear,docs/economy.md:L184
+"- 5: $62–82 (38 episodes, 16 edits, 14 promos).",38,usd,cost,linear,docs/economy.md:L184
+"- 5: $62–82 (38 episodes, 16 edits, 14 promos).",16,,other,linear,docs/economy.md:L184
+"- 5: $62–82 (38 episodes, 16 edits, 14 promos).",14,count,other,linear,docs/economy.md:L184
+"- **Actions:** Film Episode (5h), Polish Edit (2.5h + $16), Promo Blast (2h + $24).",5,,other,linear,docs/economy.md:L185
+"- **Actions:** Film Episode (5h), Polish Edit (2.5h + $16), Promo Blast (2h + $24).",2.5,,other,linear,docs/economy.md:L185
+"- **Actions:** Film Episode (5h), Polish Edit (2.5h + $16), Promo Blast (2h + $24).",16,usd,cost,linear,docs/economy.md:L185
+"- **Actions:** Film Episode (5h), Polish Edit (2.5h + $16), Promo Blast (2h + $24).",2,,other,linear,docs/economy.md:L185
+"- **Actions:** Film Episode (5h), Polish Edit (2.5h + $16), Promo Blast (2h + $24).",24,usd,cost,linear,docs/economy.md:L185
+"- **Setup:** 5 days × 4h, $560. Maintenance: 0.8h, $10.",5,days,time,linear,docs/economy.md:L189
+"- **Setup:** 5 days × 4h, $560. Maintenance: 0.8h, $10.",4,,time,linear,docs/economy.md:L189
+"- **Setup:** 5 days × 4h, $560. Maintenance: 0.8h, $10.",560,usd,time,linear,docs/economy.md:L189
+"- **Setup:** 5 days × 4h, $560. Maintenance: 0.8h, $10.",0.8,,time,linear,docs/economy.md:L189
+"- **Setup:** 5 days × 4h, $560. Maintenance: 0.8h, $10.",10,usd,time,linear,docs/economy.md:L189
+- 0: $8–14.,0,,other,linear,docs/economy.md:L192
+- 0: $8–14.,8,usd,cost,linear,docs/economy.md:L192
+- 0: $8–14.,14,usd,cost,linear,docs/economy.md:L192
+- 1: $18–30 (4 shoots).,1,,requirement,linear,docs/economy.md:L193
+- 1: $18–30 (4 shoots).,18,usd,cost,linear,docs/economy.md:L193
+- 1: $18–30 (4 shoots).,30,usd,cost,linear,docs/economy.md:L193
+- 1: $18–30 (4 shoots).,4,usd,cost,linear,docs/economy.md:L193
+"- 2: $34–52 (10 shoots, 4 edits).",2,,requirement,linear,docs/economy.md:L194
+"- 2: $34–52 (10 shoots, 4 edits).",34,usd,cost,linear,docs/economy.md:L194
+"- 2: $34–52 (10 shoots, 4 edits).",52,usd,cost,linear,docs/economy.md:L194
+"- 2: $34–52 (10 shoots, 4 edits).",10,usd,cost,linear,docs/economy.md:L194
+"- 2: $34–52 (10 shoots, 4 edits).",4,,requirement,linear,docs/economy.md:L194
+"- 3: $54–78 (16 shoots, 7 edits, 5 marketing pushes).",3,,requirement,linear,docs/economy.md:L195
+"- 3: $54–78 (16 shoots, 7 edits, 5 marketing pushes).",54,usd,cost,linear,docs/economy.md:L195
+"- 3: $54–78 (16 shoots, 7 edits, 5 marketing pushes).",78,usd,cost,linear,docs/economy.md:L195
+"- 3: $54–78 (16 shoots, 7 edits, 5 marketing pushes).",16,usd,cost,linear,docs/economy.md:L195
+"- 3: $54–78 (16 shoots, 7 edits, 5 marketing pushes).",7,,requirement,linear,docs/economy.md:L195
+"- 3: $54–78 (16 shoots, 7 edits, 5 marketing pushes).",5,count,requirement,linear,docs/economy.md:L195
+"- 4: $80–108 (24 shoots, 11 edits, 9 marketing).",4,,requirement,linear,docs/economy.md:L196
+"- 4: $80–108 (24 shoots, 11 edits, 9 marketing).",80,usd,cost,linear,docs/economy.md:L196
+"- 4: $80–108 (24 shoots, 11 edits, 9 marketing).",108,usd,cost,linear,docs/economy.md:L196
+"- 4: $80–108 (24 shoots, 11 edits, 9 marketing).",24,usd,cost,linear,docs/economy.md:L196
+"- 4: $80–108 (24 shoots, 11 edits, 9 marketing).",11,,requirement,linear,docs/economy.md:L196
+"- 4: $80–108 (24 shoots, 11 edits, 9 marketing).",9,count,requirement,linear,docs/economy.md:L196
+"- 5: $112–150 (36 shoots, 16 edits, 14 marketing).",5,,requirement,linear,docs/economy.md:L197
+"- 5: $112–150 (36 shoots, 16 edits, 14 marketing).",112,usd,cost,linear,docs/economy.md:L197
+"- 5: $112–150 (36 shoots, 16 edits, 14 marketing).",150,usd,cost,linear,docs/economy.md:L197
+"- 5: $112–150 (36 shoots, 16 edits, 14 marketing).",36,usd,cost,linear,docs/economy.md:L197
+"- 5: $112–150 (36 shoots, 16 edits, 14 marketing).",16,,requirement,linear,docs/economy.md:L197
+"- 5: $112–150 (36 shoots, 16 edits, 14 marketing).",14,count,requirement,linear,docs/economy.md:L197
+"- **Actions:** Plan Shoot (3.5h + $22), Batch Edit (2h + $14), Run Promo (2h + $16).",3.5,,other,linear,docs/economy.md:L198
+"- **Actions:** Plan Shoot (3.5h + $22), Batch Edit (2h + $14), Run Promo (2h + $16).",22,usd,cost,linear,docs/economy.md:L198
+"- **Actions:** Plan Shoot (3.5h + $22), Batch Edit (2h + $14), Run Promo (2h + $16).",2,,other,linear,docs/economy.md:L198
+"- **Actions:** Plan Shoot (3.5h + $22), Batch Edit (2h + $14), Run Promo (2h + $16).",14,usd,cost,linear,docs/economy.md:L198
+"- **Actions:** Plan Shoot (3.5h + $22), Batch Edit (2h + $14), Run Promo (2h + $16).",16,usd,cost,linear,docs/economy.md:L198
+"- **Setup:** 6 days × 4h, $720. Maintenance: 1.1h, $12.",6,days,time,linear,docs/economy.md:L202
+"- **Setup:** 6 days × 4h, $720. Maintenance: 1.1h, $12.",4,,time,linear,docs/economy.md:L202
+"- **Setup:** 6 days × 4h, $720. Maintenance: 1.1h, $12.",720,usd,time,linear,docs/economy.md:L202
+"- **Setup:** 6 days × 4h, $720. Maintenance: 1.1h, $12.",1.1,,time,linear,docs/economy.md:L202
+"- **Setup:** 6 days × 4h, $720. Maintenance: 1.1h, $12.",12,usd,time,linear,docs/economy.md:L202
+- **Requirements:** Complete `ecomPlaybook` track; own ≥2 blogs and ≥1 e-book (experience).,2,,other,linear,docs/economy.md:L203
+- **Requirements:** Complete `ecomPlaybook` track; own ≥2 blogs and ≥1 e-book (experience).,1,,other,linear,docs/economy.md:L203
+- 0: $12–20.,0,,other,linear,docs/economy.md:L205
+- 0: $12–20.,12,usd,cost,linear,docs/economy.md:L205
+- 0: $12–20.,20,usd,cost,linear,docs/economy.md:L205
+- 1: $24–38 (4 research runs).,1,,other,linear,docs/economy.md:L206
+- 1: $24–38 (4 research runs).,24,usd,cost,linear,docs/economy.md:L206
+- 1: $24–38 (4 research runs).,38,usd,cost,linear,docs/economy.md:L206
+- 1: $24–38 (4 research runs).,4,usd,cost,linear,docs/economy.md:L206
+"- 2: $44–62 (11 research, 5 listings).",2,,requirement,linear,docs/economy.md:L207
+"- 2: $44–62 (11 research, 5 listings).",44,usd,cost,linear,docs/economy.md:L207
+"- 2: $44–62 (11 research, 5 listings).",62,usd,cost,linear,docs/economy.md:L207
+"- 2: $44–62 (11 research, 5 listings).",11,usd,cost,linear,docs/economy.md:L207
+"- 2: $44–62 (11 research, 5 listings).",5,count,requirement,linear,docs/economy.md:L207
+"- 3: $68–92 (18 research, 8 listings, 7 ads).",3,,requirement,linear,docs/economy.md:L208
+"- 3: $68–92 (18 research, 8 listings, 7 ads).",68,usd,cost,linear,docs/economy.md:L208
+"- 3: $68–92 (18 research, 8 listings, 7 ads).",92,usd,cost,linear,docs/economy.md:L208
+"- 3: $68–92 (18 research, 8 listings, 7 ads).",18,usd,cost,linear,docs/economy.md:L208
+"- 3: $68–92 (18 research, 8 listings, 7 ads).",8,count,requirement,linear,docs/economy.md:L208
+"- 3: $68–92 (18 research, 8 listings, 7 ads).",7,count,requirement,linear,docs/economy.md:L208
+"- 4: $95–128 (26 research, 12 listings, 10 ads).",4,,requirement,linear,docs/economy.md:L209
+"- 4: $95–128 (26 research, 12 listings, 10 ads).",95,usd,cost,linear,docs/economy.md:L209
+"- 4: $95–128 (26 research, 12 listings, 10 ads).",128,usd,cost,linear,docs/economy.md:L209
+"- 4: $95–128 (26 research, 12 listings, 10 ads).",26,usd,cost,linear,docs/economy.md:L209
+"- 4: $95–128 (26 research, 12 listings, 10 ads).",12,count,requirement,linear,docs/economy.md:L209
+"- 4: $95–128 (26 research, 12 listings, 10 ads).",10,count,requirement,linear,docs/economy.md:L209
+"- 5: $130–176 (38 research, 18 listings, 16 ads).",5,,requirement,linear,docs/economy.md:L210
+"- 5: $130–176 (38 research, 18 listings, 16 ads).",130,usd,cost,linear,docs/economy.md:L210
+"- 5: $130–176 (38 research, 18 listings, 16 ads).",176,usd,cost,linear,docs/economy.md:L210
+"- 5: $130–176 (38 research, 18 listings, 16 ads).",38,usd,cost,linear,docs/economy.md:L210
+"- 5: $130–176 (38 research, 18 listings, 16 ads).",18,count,requirement,linear,docs/economy.md:L210
+"- 5: $130–176 (38 research, 18 listings, 16 ads).",16,count,requirement,linear,docs/economy.md:L210
+"- **Actions:** Research Product (3h), Optimize Listing (1.8h + $28), Experiment With Ads (2.2h + $34).",3,,requirement,linear,docs/economy.md:L211
+"- **Actions:** Research Product (3h), Optimize Listing (1.8h + $28), Experiment With Ads (2.2h + $34).",1.8,,requirement,linear,docs/economy.md:L211
+"- **Actions:** Research Product (3h), Optimize Listing (1.8h + $28), Experiment With Ads (2.2h + $34).",28,usd,cost,linear,docs/economy.md:L211
+"- **Actions:** Research Product (3h), Optimize Listing (1.8h + $28), Experiment With Ads (2.2h + $34).",2.2,xp,xp,linear,docs/economy.md:L211
+"- **Actions:** Research Product (3h), Optimize Listing (1.8h + $28), Experiment With Ads (2.2h + $34).",34,usd,cost,linear,docs/economy.md:L211
+"- **Setup:** 8 days × 4h, $960. Maintenance: 2.2h, $24.",8,days,time,linear,docs/economy.md:L215
+"- **Setup:** 8 days × 4h, $960. Maintenance: 2.2h, $24.",4,,time,linear,docs/economy.md:L215
+"- **Setup:** 8 days × 4h, $960. Maintenance: 2.2h, $24.",960,usd,time,linear,docs/economy.md:L215
+"- **Setup:** 8 days × 4h, $960. Maintenance: 2.2h, $24.",2.2,,time,linear,docs/economy.md:L215
+"- **Setup:** 8 days × 4h, $960. Maintenance: 2.2h, $24.",24,usd,time,linear,docs/economy.md:L215
+"- **Requirements:** Complete `automationCourse`, own `serverCluster` equipment, and have ≥1 Dropshipping & ≥1 E-book active instances.",1,,other,linear,docs/economy.md:L216
+- 0: $20–32.,0,,other,linear,docs/economy.md:L218
+- 0: $20–32.,20,usd,cost,linear,docs/economy.md:L218
+- 0: $20–32.,32,usd,cost,linear,docs/economy.md:L218
+- 1: $32–48 (4 features).,1,,requirement,linear,docs/economy.md:L219
+- 1: $32–48 (4 features).,32,usd,cost,linear,docs/economy.md:L219
+- 1: $32–48 (4 features).,48,usd,cost,linear,docs/economy.md:L219
+- 1: $32–48 (4 features).,4,usd,cost,linear,docs/economy.md:L219
+"- 2: $54–74 (12 features, 5 stability).",2,,requirement,linear,docs/economy.md:L220
+"- 2: $54–74 (12 features, 5 stability).",54,usd,cost,linear,docs/economy.md:L220
+"- 2: $54–74 (12 features, 5 stability).",74,usd,cost,linear,docs/economy.md:L220
+"- 2: $54–74 (12 features, 5 stability).",12,usd,cost,linear,docs/economy.md:L220
+"- 2: $54–74 (12 features, 5 stability).",5,count,requirement,linear,docs/economy.md:L220
+"- 3: $84–120 (24 features, 8 stability, 6 marketing).",3,,requirement,linear,docs/economy.md:L221
+"- 3: $84–120 (24 features, 8 stability, 6 marketing).",84,usd,cost,linear,docs/economy.md:L221
+"- 3: $84–120 (24 features, 8 stability, 6 marketing).",120,usd,cost,linear,docs/economy.md:L221
+"- 3: $84–120 (24 features, 8 stability, 6 marketing).",24,usd,cost,linear,docs/economy.md:L221
+"- 3: $84–120 (24 features, 8 stability, 6 marketing).",8,count,requirement,linear,docs/economy.md:L221
+"- 3: $84–120 (24 features, 8 stability, 6 marketing).",6,count,requirement,linear,docs/economy.md:L221
+"- 4: $120–168 (34 features, 12 stability, 10 marketing, 4 edge).",4,,requirement,linear,docs/economy.md:L222
+"- 4: $120–168 (34 features, 12 stability, 10 marketing, 4 edge).",120,usd,cost,linear,docs/economy.md:L222
+"- 4: $120–168 (34 features, 12 stability, 10 marketing, 4 edge).",168,usd,cost,linear,docs/economy.md:L222
+"- 4: $120–168 (34 features, 12 stability, 10 marketing, 4 edge).",34,usd,cost,linear,docs/economy.md:L222
+"- 4: $120–168 (34 features, 12 stability, 10 marketing, 4 edge).",12,count,requirement,linear,docs/economy.md:L222
+"- 4: $120–168 (34 features, 12 stability, 10 marketing, 4 edge).",10,count,requirement,linear,docs/economy.md:L222
+"- 4: $120–168 (34 features, 12 stability, 10 marketing, 4 edge).",4,count,requirement,linear,docs/economy.md:L222
+"- 5: $168–220 (48 features, 18 stability, 15 marketing, 8 edge).",5,,requirement,linear,docs/economy.md:L223
+"- 5: $168–220 (48 features, 18 stability, 15 marketing, 8 edge).",168,usd,cost,linear,docs/economy.md:L223
+"- 5: $168–220 (48 features, 18 stability, 15 marketing, 8 edge).",220,usd,cost,linear,docs/economy.md:L223
+"- 5: $168–220 (48 features, 18 stability, 15 marketing, 8 edge).",48,usd,cost,linear,docs/economy.md:L223
+"- 5: $168–220 (48 features, 18 stability, 15 marketing, 8 edge).",18,count,requirement,linear,docs/economy.md:L223
+"- 5: $168–220 (48 features, 18 stability, 15 marketing, 8 edge).",15,count,requirement,linear,docs/economy.md:L223
+"- 5: $168–220 (48 features, 18 stability, 15 marketing, 8 edge).",8,count,requirement,linear,docs/economy.md:L223
+"- **Actions:** Ship Feature (3.2h + $28), Improve Stability (2.5h + $36), Launch Campaign (2.5h + $44), Deploy Edge Nodes (3h + $64, requires `serverEdge`).",3.2,,requirement,linear,docs/economy.md:L224
+"- **Actions:** Ship Feature (3.2h + $28), Improve Stability (2.5h + $36), Launch Campaign (2.5h + $44), Deploy Edge Nodes (3h + $64, requires `serverEdge`).",28,usd,cost,linear,docs/economy.md:L224
+"- **Actions:** Ship Feature (3.2h + $28), Improve Stability (2.5h + $36), Launch Campaign (2.5h + $44), Deploy Edge Nodes (3h + $64, requires `serverEdge`).",2.5,,requirement,linear,docs/economy.md:L224
+"- **Actions:** Ship Feature (3.2h + $28), Improve Stability (2.5h + $36), Launch Campaign (2.5h + $44), Deploy Edge Nodes (3h + $64, requires `serverEdge`).",36,usd,cost,linear,docs/economy.md:L224
+"- **Actions:** Ship Feature (3.2h + $28), Improve Stability (2.5h + $36), Launch Campaign (2.5h + $44), Deploy Edge Nodes (3h + $64, requires `serverEdge`).",44,usd,cost,linear,docs/economy.md:L224
+"- **Actions:** Ship Feature (3.2h + $28), Improve Stability (2.5h + $36), Launch Campaign (2.5h + $44), Deploy Edge Nodes (3h + $64, requires `serverEdge`).",3,,requirement,linear,docs/economy.md:L224
+"- **Actions:** Ship Feature (3.2h + $28), Improve Stability (2.5h + $36), Launch Campaign (2.5h + $44), Deploy Edge Nodes (3h + $64, requires `serverEdge`).",64,usd,cost,linear,docs/economy.md:L224
+- **Turbo Coffee (`coffee`):** Repeatable boost costing $40 that grants +1 hour for the current day; usage per day capped at `COFFEE_LIMIT = 3`. UI disables when limit hit or no time remains.,40,usd,time,linear,docs/economy.md:L236
+- **Turbo Coffee (`coffee`):** Repeatable boost costing $40 that grants +1 hour for the current day; usage per day capped at `COFFEE_LIMIT = 3`. UI disables when limit hit or no time remains.,1,hours,time,linear,docs/economy.md:L236
+- **Turbo Coffee (`coffee`):** Repeatable boost costing $40 that grants +1 hour for the current day; usage per day capped at `COFFEE_LIMIT = 3`. UI disables when limit hit or no time remains.,3,,time,cap,docs/economy.md:L236
+| studio | $220 | Exclusive `house:lighting` slot | `maint_time_mult: 0.9` for photo/video asset maintenance actions (unlock Stock Photo).,220,usd,cost,linear,docs/economy.md:L242
+| studio | $220 | Exclusive `house:lighting` slot | `maint_time_mult: 0.9` for photo/video asset maintenance actions (unlock Stock Photo).,0.9,,time,linear,docs/economy.md:L242
+"| studioExpansion | $540 | Requires `studio`; exclusive `house:studio` | `setup_time_mult: 0.85`, `payout_mult: 1.15`, `quality_progress_mult: 2` for photo/video assets and photo hustles.",540,usd,cost,linear,docs/economy.md:L243
+"| studioExpansion | $540 | Requires `studio`; exclusive `house:studio` | `setup_time_mult: 0.85`, `payout_mult: 1.15`, `quality_progress_mult: 2` for photo/video assets and photo hustles.",0.85,,time,linear,docs/economy.md:L243
+"| studioExpansion | $540 | Requires `studio`; exclusive `house:studio` | `setup_time_mult: 0.85`, `payout_mult: 1.15`, `quality_progress_mult: 2` for photo/video assets and photo hustles.",1.15,,time,linear,docs/economy.md:L243
+"| studioExpansion | $540 | Requires `studio`; exclusive `house:studio` | `setup_time_mult: 0.85`, `payout_mult: 1.15`, `quality_progress_mult: 2` for photo/video assets and photo hustles.",2,,income,linear,docs/economy.md:L243
+| assistant | $0 | Repeatable | Managed via `assistantHooks`; adds hire/fire controls (see Assistants). |,0,usd,cost,linear,docs/economy.md:L251
+| serverRack | $650 | None | `setup_time_mult: 0.95` for software/tech assets & hustles (setup actions). |,650,usd,time,linear,docs/economy.md:L252
+| serverRack | $650 | None | `setup_time_mult: 0.95` for software/tech assets & hustles (setup actions). |,0.95,,time,linear,docs/economy.md:L252
+"| fulfillmentAutomation | $780 | Active dropshipping ≥2, completed `ecomPlaybook` | Dropshipping `payout_mult: 1.25`, `quality_progress_mult: 2`. |",780,usd,cost,linear,docs/economy.md:L253
+"| fulfillmentAutomation | $780 | Active dropshipping ≥2, completed `ecomPlaybook` | Dropshipping `payout_mult: 1.25`, `quality_progress_mult: 2`. |",2,,other,linear,docs/economy.md:L253
+"| fulfillmentAutomation | $780 | Active dropshipping ≥2, completed `ecomPlaybook` | Dropshipping `payout_mult: 1.25`, `quality_progress_mult: 2`. |",1.25,,income,linear,docs/economy.md:L253
+"| fulfillmentAutomation | $780 | Active dropshipping ≥2, completed `ecomPlaybook` | Dropshipping `payout_mult: 1.25`, `quality_progress_mult: 2`. |",2,,income,linear,docs/economy.md:L253
+"| serverCluster | $1150 | Requires `serverRack` | SaaS `payout_mult: 1.2`, `quality_progress_mult: 1.5`. |",1150,usd,cost,linear,docs/economy.md:L254
+"| serverCluster | $1150 | Requires `serverRack` | SaaS `payout_mult: 1.2`, `quality_progress_mult: 1.5`. |",1.2,,income,linear,docs/economy.md:L254
+"| serverCluster | $1150 | Requires `serverRack` | SaaS `payout_mult: 1.2`, `quality_progress_mult: 1.5`. |",1.5,,income,linear,docs/economy.md:L254
+"| globalSupplyMesh | $1150 | `fulfillmentAutomation`, active dropshipping ≥3, completed `photoLibrary` | Dropshipping `payout_mult: 1.3`, `quality_progress_mult: 1.5`, `setup_time_mult: 0.92`; applies to commerce/photo hustles. |",1150,usd,cost,linear,docs/economy.md:L255
+"| globalSupplyMesh | $1150 | `fulfillmentAutomation`, active dropshipping ≥3, completed `photoLibrary` | Dropshipping `payout_mult: 1.3`, `quality_progress_mult: 1.5`, `setup_time_mult: 0.92`; applies to commerce/photo hustles. |",3,,other,linear,docs/economy.md:L255
+"| globalSupplyMesh | $1150 | `fulfillmentAutomation`, active dropshipping ≥3, completed `photoLibrary` | Dropshipping `payout_mult: 1.3`, `quality_progress_mult: 1.5`, `setup_time_mult: 0.92`; applies to commerce/photo hustles. |",1.3,,income,linear,docs/economy.md:L255
+"| globalSupplyMesh | $1150 | `fulfillmentAutomation`, active dropshipping ≥3, completed `photoLibrary` | Dropshipping `payout_mult: 1.3`, `quality_progress_mult: 1.5`, `setup_time_mult: 0.92`; applies to commerce/photo hustles. |",1.5,,time,linear,docs/economy.md:L255
+"| globalSupplyMesh | $1150 | `fulfillmentAutomation`, active dropshipping ≥3, completed `photoLibrary` | Dropshipping `payout_mult: 1.3`, `quality_progress_mult: 1.5`, `setup_time_mult: 0.92`; applies to commerce/photo hustles. |",0.92,,time,linear,docs/economy.md:L255
+"| serverEdge | $1450 | Requires `serverCluster` | SaaS `payout_mult: 1.35`, `quality_progress_mult: 2`, `maint_time_mult: 0.85`. |",1450,usd,cost,linear,docs/economy.md:L256
+"| serverEdge | $1450 | Requires `serverCluster` | SaaS `payout_mult: 1.35`, `quality_progress_mult: 2`, `maint_time_mult: 0.85`. |",1.35,,income,linear,docs/economy.md:L256
+"| serverEdge | $1450 | Requires `serverCluster` | SaaS `payout_mult: 1.35`, `quality_progress_mult: 2`, `maint_time_mult: 0.85`. |",2,,time,linear,docs/economy.md:L256
+"| serverEdge | $1450 | Requires `serverCluster` | SaaS `payout_mult: 1.35`, `quality_progress_mult: 2`, `maint_time_mult: 0.85`. |",0.85,,time,linear,docs/economy.md:L256
+"| whiteLabelAlliance | $1500 | `globalSupplyMesh`, active dropshipping ≥4, completed `ecomPlaybook` & `photoLibrary` | Dropshipping & Stock Photos `payout_mult: 1.35`, `quality_progress_mult: 4/3`. |",1.333333333,,income,linear,docs/economy.md:L257
+"| whiteLabelAlliance | $1500 | `globalSupplyMesh`, active dropshipping ≥4, completed `ecomPlaybook` & `photoLibrary` | Dropshipping & Stock Photos `payout_mult: 1.35`, `quality_progress_mult: 4/3`. |",1500,usd,cost,linear,docs/economy.md:L257
+"| whiteLabelAlliance | $1500 | `globalSupplyMesh`, active dropshipping ≥4, completed `ecomPlaybook` & `photoLibrary` | Dropshipping & Stock Photos `payout_mult: 1.35`, `quality_progress_mult: 4/3`. |",4,,other,linear,docs/economy.md:L257
+"| whiteLabelAlliance | $1500 | `globalSupplyMesh`, active dropshipping ≥4, completed `ecomPlaybook` & `photoLibrary` | Dropshipping & Stock Photos `payout_mult: 1.35`, `quality_progress_mult: 4/3`. |",1.35,,income,linear,docs/economy.md:L257
+| creatorPhone | $140 | None | `setup_time_mult: 0.95` for live/field hustles and video assets. |,140,usd,time,linear,docs/economy.md:L267
+| creatorPhone | $140 | None | `setup_time_mult: 0.95` for live/field hustles and video assets. |,0.95,,time,linear,docs/economy.md:L267
+"| creatorPhonePro | $360 | creatorPhone | `setup_time_mult: 0.85`, `payout_mult: 1.05` for same targets. |",360,usd,time,linear,docs/economy.md:L268
+"| creatorPhonePro | $360 | creatorPhone | `setup_time_mult: 0.85`, `payout_mult: 1.05` for same targets. |",0.85,,time,linear,docs/economy.md:L268
+"| creatorPhonePro | $360 | creatorPhone | `setup_time_mult: 0.85`, `payout_mult: 1.05` for same targets. |",1.05,,time,linear,docs/economy.md:L268
+"| creatorPhoneUltra | $720 | creatorPhonePro | `setup_time_mult: 0.8`, `payout_mult: 1.08`. |",720,usd,time,linear,docs/economy.md:L269
+"| creatorPhoneUltra | $720 | creatorPhonePro | `setup_time_mult: 0.8`, `payout_mult: 1.08`. |",0.8,,time,linear,docs/economy.md:L269
+"| creatorPhoneUltra | $720 | creatorPhonePro | `setup_time_mult: 0.8`, `payout_mult: 1.08`. |",1.08,,time,linear,docs/economy.md:L269
+| studioLaptop | $280 | None | `setup_time_mult: 0.92` for desktop_work assets/hustles. |,280,usd,time,linear,docs/economy.md:L275
+| studioLaptop | $280 | None | `setup_time_mult: 0.92` for desktop_work assets/hustles. |,0.92,,time,linear,docs/economy.md:L275
+"| editingWorkstation | $640 | studioLaptop | `setup_time_mult: 0.85`, `maint_time_mult: 0.9` for desktop_work/video assets. |",640,usd,time,linear,docs/economy.md:L276
+"| editingWorkstation | $640 | studioLaptop | `setup_time_mult: 0.85`, `maint_time_mult: 0.9` for desktop_work/video assets. |",0.85,,time,linear,docs/economy.md:L276
+"| editingWorkstation | $640 | studioLaptop | `setup_time_mult: 0.85`, `maint_time_mult: 0.9` for desktop_work/video assets. |",0.9,,time,linear,docs/economy.md:L276
+"| quantumRig | $1280 | editingWorkstation | `payout_mult: 1.12`, `maint_time_mult: 0.85` for desktop_work/software/video assets. |",1280,usd,cost,linear,docs/economy.md:L277
+"| quantumRig | $1280 | editingWorkstation | `payout_mult: 1.12`, `maint_time_mult: 0.85` for desktop_work/software/video assets. |",1.12,,time,linear,docs/economy.md:L277
+"| quantumRig | $1280 | editingWorkstation | `payout_mult: 1.12`, `maint_time_mult: 0.85` for desktop_work/software/video assets. |",0.85,,time,linear,docs/economy.md:L277
+| monitorHub | $180 | None | Provides 2 monitor slots; `setup_time_mult: 0.95` desktop_work setup. |,180,usd,cost,linear,docs/economy.md:L283
+| monitorHub | $180 | None | Provides 2 monitor slots; `setup_time_mult: 0.95` desktop_work setup. |,2,,time,linear,docs/economy.md:L283
+| monitorHub | $180 | None | Provides 2 monitor slots; `setup_time_mult: 0.95` desktop_work setup. |,0.95,,time,linear,docs/economy.md:L283
+"| dualMonitorArray | $240 | monitorHub, consumes 1 slot | `quality_progress_mult: 1.2` for desktop_work/video assets. |",240,usd,cost,linear,docs/economy.md:L284
+"| dualMonitorArray | $240 | monitorHub, consumes 1 slot | `quality_progress_mult: 1.2` for desktop_work/video assets. |",1,,income,linear,docs/economy.md:L284
+"| dualMonitorArray | $240 | monitorHub, consumes 1 slot | `quality_progress_mult: 1.2` for desktop_work/video assets. |",1.2,,income,linear,docs/economy.md:L284
+"| colorGradingDisplay | $380 | dualMonitorArray, consumes 1 slot | `quality_progress_mult: 1.3` for video/photo assets. |",380,usd,cost,linear,docs/economy.md:L285
+"| colorGradingDisplay | $380 | dualMonitorArray, consumes 1 slot | `quality_progress_mult: 1.3` for video/photo assets. |",1,,income,linear,docs/economy.md:L285
+"| colorGradingDisplay | $380 | dualMonitorArray, consumes 1 slot | `quality_progress_mult: 1.3` for video/photo assets. |",1.3,,income,linear,docs/economy.md:L285
+| camera | $200 | None | Unlocks vlog/stock photo assets; `setup_time_mult: 0.9` for photo/video setups. |,200,usd,cost,linear,docs/economy.md:L291
+| camera | $200 | None | Unlocks vlog/stock photo assets; `setup_time_mult: 0.9` for photo/video setups. |,0.9,,time,linear,docs/economy.md:L291
+"| cameraPro | $480 | camera | `setup_time_mult: 0.85`, `maint_time_mult: 0.85`, `payout_mult: 1.25`, `quality_progress_mult: 2` for photo/video assets and actions. |",480,usd,time,linear,docs/economy.md:L292
+"| cameraPro | $480 | camera | `setup_time_mult: 0.85`, `maint_time_mult: 0.85`, `payout_mult: 1.25`, `quality_progress_mult: 2` for photo/video assets and actions. |",0.85,,time,linear,docs/economy.md:L292
+"| cameraPro | $480 | camera | `setup_time_mult: 0.85`, `maint_time_mult: 0.85`, `payout_mult: 1.25`, `quality_progress_mult: 2` for photo/video assets and actions. |",1.25,,time,linear,docs/economy.md:L292
+"| cameraPro | $480 | camera | `setup_time_mult: 0.85`, `maint_time_mult: 0.85`, `payout_mult: 1.25`, `quality_progress_mult: 2` for photo/video assets and actions. |",2,,income,linear,docs/economy.md:L292
+Single upgrade: `audioSuite` costs $420 and multiplies quality progress by 1.4 for audio/video assets.,420,usd,cost,linear,docs/economy.md:L296
+Single upgrade: `audioSuite` costs $420 and multiplies quality progress by 1.4 for audio/video assets.,1.4,,other,linear,docs/economy.md:L296
+- `ergonomicRefit` costs $180 and multiplies desktop_work maintenance time by 0.95.,180,usd,cost,linear,docs/economy.md:L300
+- `ergonomicRefit` costs $180 and multiplies desktop_work maintenance time by 0.95.,0.95,,time,linear,docs/economy.md:L300
+- `fiberInternet` costs $260 and multiplies maintenance time by 0.9 for video/software assets and live/software hustles.,260,usd,time,linear,docs/economy.md:L301
+- `fiberInternet` costs $260 and multiplies maintenance time by 0.9 for video/software assets and live/software hustles.,0.9,,time,linear,docs/economy.md:L301
+- `backupPowerArray` costs $260 and multiplies maintenance time by 0.95 for desktop_work/video assets.,260,usd,time,linear,docs/economy.md:L302
+- `backupPowerArray` costs $260 and multiplies maintenance time by 0.95 for desktop_work/video assets.,0.95,,time,linear,docs/economy.md:L302
+- `scratchDriveArray` costs $320 and multiplies maintenance time by 0.9 for video/photo/software assets.,320,usd,time,linear,docs/economy.md:L303
+- `scratchDriveArray` costs $320 and multiplies maintenance time by 0.9 for video/photo/software assets.,0.9,,time,linear,docs/economy.md:L303
+"| editorialPipeline | $360 | Course upgrade, active blog, completed Outline Mastery | `setup_time_mult: 0.88`, `payout_mult: 1.2`, `quality_progress_mult: 1.5` for writing/content assets and writing hustles. |",360,usd,cost,linear,docs/economy.md:L309
+"| editorialPipeline | $360 | Course upgrade, active blog, completed Outline Mastery | `setup_time_mult: 0.88`, `payout_mult: 1.2`, `quality_progress_mult: 1.5` for writing/content assets and writing hustles. |",0.88,,time,linear,docs/economy.md:L309
+"| editorialPipeline | $360 | Course upgrade, active blog, completed Outline Mastery | `setup_time_mult: 0.88`, `payout_mult: 1.2`, `quality_progress_mult: 1.5` for writing/content assets and writing hustles. |",1.2,,time,linear,docs/economy.md:L309
+"| editorialPipeline | $360 | Course upgrade, active blog, completed Outline Mastery | `setup_time_mult: 0.88`, `payout_mult: 1.2`, `quality_progress_mult: 1.5` for writing/content assets and writing hustles. |",1.5,,income,linear,docs/economy.md:L309
+"| syndicationSuite | $720 | editorialPipeline, active blog & e-book, completed Brand Voice Lab | `maint_time_mult: 0.9`, `payout_mult: 1.25`, `quality_progress_mult: 4/3` for writing/content/video assets and writing/marketing hustles. |",1.333333333,,income,linear,docs/economy.md:L310
+"| syndicationSuite | $720 | editorialPipeline, active blog & e-book, completed Brand Voice Lab | `maint_time_mult: 0.9`, `payout_mult: 1.25`, `quality_progress_mult: 4/3` for writing/content/video assets and writing/marketing hustles. |",720,usd,cost,linear,docs/economy.md:L310
+"| syndicationSuite | $720 | editorialPipeline, active blog & e-book, completed Brand Voice Lab | `maint_time_mult: 0.9`, `payout_mult: 1.25`, `quality_progress_mult: 4/3` for writing/content/video assets and writing/marketing hustles. |",0.9,,time,linear,docs/economy.md:L310
+"| syndicationSuite | $720 | editorialPipeline, active blog & e-book, completed Brand Voice Lab | `maint_time_mult: 0.9`, `payout_mult: 1.25`, `quality_progress_mult: 4/3` for writing/content/video assets and writing/marketing hustles. |",1.25,,time,linear,docs/economy.md:L310
+"| immersiveStoryWorlds | $1080 | syndicationSuite, active blog/e-book/vlog, completed Outline Mastery & Brand Voice Lab | `payout_mult: 1.12`, `setup_time_mult: 0.85`, `quality_progress_mult: 2` for writing/video/photo assets. |",1080,usd,cost,linear,docs/economy.md:L311
+"| immersiveStoryWorlds | $1080 | syndicationSuite, active blog/e-book/vlog, completed Outline Mastery & Brand Voice Lab | `payout_mult: 1.12`, `setup_time_mult: 0.85`, `quality_progress_mult: 2` for writing/video/photo assets. |",1.12,,time,linear,docs/economy.md:L311
+"| immersiveStoryWorlds | $1080 | syndicationSuite, active blog/e-book/vlog, completed Outline Mastery & Brand Voice Lab | `payout_mult: 1.12`, `setup_time_mult: 0.85`, `quality_progress_mult: 2` for writing/video/photo assets. |",0.85,,time,linear,docs/economy.md:L311
+"| immersiveStoryWorlds | $1080 | syndicationSuite, active blog/e-book/vlog, completed Outline Mastery & Brand Voice Lab | `payout_mult: 1.12`, `setup_time_mult: 0.85`, `quality_progress_mult: 2` for writing/video/photo assets. |",2,,income,linear,docs/economy.md:L311
+"| course | $260 | Active blog | `payout_mult: 1.5`, `quality_progress_mult: 2` for blog assets. |",260,usd,cost,linear,docs/economy.md:L312
+"| course | $260 | Active blog | `payout_mult: 1.5`, `quality_progress_mult: 2` for blog assets. |",1.5,,income,linear,docs/economy.md:L312
+"| course | $260 | Active blog | `payout_mult: 1.5`, `quality_progress_mult: 2` for blog assets. |",2,,income,linear,docs/economy.md:L312
+"- Hustle education bonuses stack additively (multipliers add to 1, flats add outright) before upgrade multipliers; card details include unlocked bonus descriptions drawn from the same data set.",1,,other,linear,docs/economy.md:L320
+"""phase"": ""Phase 1"",",1,,other,linear,docs/normalized_economy.json:L3
+"""base_income"": 30,",30,,income,linear,docs/normalized_economy.json:L13
+"""variance"": 0.2,",0.2,,income,linear,docs/normalized_economy.json:L14
+"""setup_time"": 540,",540,,time,linear,docs/normalized_economy.json:L15
+"""setup_cost"": 180,",180,,cost,linear,docs/normalized_economy.json:L16
+"""maintenance_time"": 36,",36,,time,linear,docs/normalized_economy.json:L17
+"""maintenance_cost"": 3,",3,,cost,linear,docs/normalized_economy.json:L18
+"""level"": 0,",0,,progression,linear,docs/normalized_economy.json:L21
+"""income_min"": 3,",3,,income,linear,docs/normalized_economy.json:L22
+"""income_max"": 6,",6,,limit,cap,docs/normalized_economy.json:L23
+"""level"": 1,",1,,progression,linear,docs/normalized_economy.json:L27
+"""income_min"": 9,",9,,income,linear,docs/normalized_economy.json:L28
+"""income_max"": 15,",15,,limit,cap,docs/normalized_economy.json:L29
+"""posts"": 3",3,,requirement,linear,docs/normalized_economy.json:L31
+"""level"": 2,",2,,progression,linear,docs/normalized_economy.json:L35
+"""income_min"": 16,",16,,income,linear,docs/normalized_economy.json:L36
+"""income_max"": 24,",24,,limit,cap,docs/normalized_economy.json:L37
+"""posts"": 9,",9,,requirement,linear,docs/normalized_economy.json:L39
+"""seo"": 2",2,,requirement,linear,docs/normalized_economy.json:L40
+"""level"": 3,",3,,progression,linear,docs/normalized_economy.json:L44
+"""income_min"": 30,",30,,income,linear,docs/normalized_economy.json:L45
+"""income_max"": 42,",42,,limit,cap,docs/normalized_economy.json:L46
+"""posts"": 18,",18,,requirement,linear,docs/normalized_economy.json:L48
+"""seo"": 5,",5,,requirement,linear,docs/normalized_economy.json:L49
+"""outreach"": 3",3,,other,linear,docs/normalized_economy.json:L50
+"""level"": 4,",4,,progression,linear,docs/normalized_economy.json:L54
+"""income_min"": 46,",46,,income,linear,docs/normalized_economy.json:L55
+"""income_max"": 62,",62,,limit,cap,docs/normalized_economy.json:L56
+"""posts"": 28,",28,,requirement,linear,docs/normalized_economy.json:L58
+"""seo"": 9,",9,,requirement,linear,docs/normalized_economy.json:L59
+"""outreach"": 6",6,,other,linear,docs/normalized_economy.json:L60
+"""level"": 5,",5,,progression,linear,docs/normalized_economy.json:L64
+"""income_min"": 64,",64,,income,linear,docs/normalized_economy.json:L65
+"""income_max"": 84,",84,,limit,cap,docs/normalized_economy.json:L66
+"""posts"": 40,",40,,requirement,linear,docs/normalized_economy.json:L68
+"""seo"": 14,",14,,requirement,linear,docs/normalized_economy.json:L69
+"""outreach"": 10",10,,other,linear,docs/normalized_economy.json:L70
+"""setup_days"": 3,",3,,time,linear,docs/normalized_economy.json:L81
+"""setup_minutes_per_day"": 180",180,,time,linear,docs/normalized_economy.json:L82
+"""base_income"": 30,",30,,income,linear,docs/normalized_economy.json:L87
+"""variance"": 0.2,",0.2,,income,linear,docs/normalized_economy.json:L88
+"""setup_time"": 720,",720,,time,linear,docs/normalized_economy.json:L89
+"""setup_cost"": 260,",260,,cost,linear,docs/normalized_economy.json:L90
+"""maintenance_time"": 30,",30,,time,linear,docs/normalized_economy.json:L91
+"""maintenance_cost"": 3,",3,,cost,linear,docs/normalized_economy.json:L92
+"""level"": 0,",0,,progression,linear,docs/normalized_economy.json:L95
+"""income_min"": 3,",3,,income,linear,docs/normalized_economy.json:L96
+"""income_max"": 6,",6,,limit,cap,docs/normalized_economy.json:L97
+"""level"": 1,",1,,progression,linear,docs/normalized_economy.json:L101
+"""income_min"": 12,",12,,income,linear,docs/normalized_economy.json:L102
+"""income_max"": 20,",20,,limit,cap,docs/normalized_economy.json:L103
+"""chapters"": 6",6,,requirement,linear,docs/normalized_economy.json:L105
+"""level"": 2,",2,,progression,linear,docs/normalized_economy.json:L109
+"""income_min"": 20,",20,,income,linear,docs/normalized_economy.json:L110
+"""income_max"": 30,",30,,limit,cap,docs/normalized_economy.json:L111
+"""chapters"": 12,",12,,requirement,linear,docs/normalized_economy.json:L113
+"""cover"": 1",1,,other,linear,docs/normalized_economy.json:L114
+"""level"": 3,",3,,progression,linear,docs/normalized_economy.json:L118
+"""income_min"": 30,",30,,income,linear,docs/normalized_economy.json:L119
+"""income_max"": 42,",42,,limit,cap,docs/normalized_economy.json:L120
+"""chapters"": 18,",18,,requirement,linear,docs/normalized_economy.json:L122
+"""cover"": 2,",2,,other,linear,docs/normalized_economy.json:L123
+"""reviews"": 6",6,,requirement,linear,docs/normalized_economy.json:L124
+"""level"": 4,",4,,progression,linear,docs/normalized_economy.json:L128
+"""income_min"": 44,",44,,income,linear,docs/normalized_economy.json:L129
+"""income_max"": 58,",58,,limit,cap,docs/normalized_economy.json:L130
+"""chapters"": 24,",24,,requirement,linear,docs/normalized_economy.json:L132
+"""cover"": 3,",3,,other,linear,docs/normalized_economy.json:L133
+"""reviews"": 10",10,,requirement,linear,docs/normalized_economy.json:L134
+"""level"": 5,",5,,progression,linear,docs/normalized_economy.json:L138
+"""income_min"": 60,",60,,income,linear,docs/normalized_economy.json:L139
+"""income_max"": 78,",78,,limit,cap,docs/normalized_economy.json:L140
+"""chapters"": 32,",32,,requirement,linear,docs/normalized_economy.json:L142
+"""cover"": 4,",4,,other,linear,docs/normalized_economy.json:L143
+"""reviews"": 16",16,,requirement,linear,docs/normalized_economy.json:L144
+"""setup_days"": 4,",4,,time,linear,docs/normalized_economy.json:L159
+"""setup_minutes_per_day"": 180",180,,time,linear,docs/normalized_economy.json:L160
+"""base_income"": 34,",34,,income,linear,docs/normalized_economy.json:L165
+"""variance"": 0.2,",0.2,,income,linear,docs/normalized_economy.json:L166
+"""setup_time"": 960,",960,,time,linear,docs/normalized_economy.json:L167
+"""setup_cost"": 420,",420,,cost,linear,docs/normalized_economy.json:L168
+"""maintenance_time"": 60,",60,,time,linear,docs/normalized_economy.json:L169
+"""maintenance_cost"": 9,",9,,cost,linear,docs/normalized_economy.json:L170
+"""level"": 0,",0,,progression,linear,docs/normalized_economy.json:L173
+"""income_min"": 2,",2,,income,linear,docs/normalized_economy.json:L174
+"""income_max"": 5,",5,,limit,cap,docs/normalized_economy.json:L175
+"""level"": 1,",1,,progression,linear,docs/normalized_economy.json:L179
+"""income_min"": 12,",12,,income,linear,docs/normalized_economy.json:L180
+"""income_max"": 20,",20,,limit,cap,docs/normalized_economy.json:L181
+"""videos"": 4",4,,requirement,linear,docs/normalized_economy.json:L183
+"""level"": 2,",2,,progression,linear,docs/normalized_economy.json:L187
+"""income_min"": 20,",20,,income,linear,docs/normalized_economy.json:L188
+"""income_max"": 30,",30,,limit,cap,docs/normalized_economy.json:L189
+"""videos"": 10,",10,,requirement,linear,docs/normalized_economy.json:L191
+"""edits"": 4",4,,other,linear,docs/normalized_economy.json:L192
+"""level"": 3,",3,,progression,linear,docs/normalized_economy.json:L196
+"""income_min"": 32,",32,,income,linear,docs/normalized_economy.json:L197
+"""income_max"": 40,",40,,limit,cap,docs/normalized_economy.json:L198
+"""videos"": 18,",18,,requirement,linear,docs/normalized_economy.json:L200
+"""edits"": 7,",7,,other,linear,docs/normalized_economy.json:L201
+"""promotion"": 5",5,,other,linear,docs/normalized_economy.json:L202
+"""level"": 4,",4,,progression,linear,docs/normalized_economy.json:L206
+"""income_min"": 45,",45,,income,linear,docs/normalized_economy.json:L207
+"""income_max"": 58,",58,,limit,cap,docs/normalized_economy.json:L208
+"""videos"": 26,",26,,requirement,linear,docs/normalized_economy.json:L210
+"""edits"": 11,",11,,other,linear,docs/normalized_economy.json:L211
+"""promotion"": 9",9,,other,linear,docs/normalized_economy.json:L212
+"""level"": 5,",5,,progression,linear,docs/normalized_economy.json:L216
+"""income_min"": 62,",62,,income,linear,docs/normalized_economy.json:L217
+"""income_max"": 82,",82,,limit,cap,docs/normalized_economy.json:L218
+"""videos"": 38,",38,,requirement,linear,docs/normalized_economy.json:L220
+"""edits"": 16,",16,,other,linear,docs/normalized_economy.json:L221
+"""promotion"": 14",14,,other,linear,docs/normalized_economy.json:L222
+"""setup_days"": 4,",4,,time,linear,docs/normalized_economy.json:L238
+"""setup_minutes_per_day"": 240",240,,time,linear,docs/normalized_economy.json:L239
+"""base_income"": 58,",58,,income,linear,docs/normalized_economy.json:L244
+"""variance"": 0.35,",0.35,,income,linear,docs/normalized_economy.json:L245
+"""setup_time"": 1200,",1200,,time,linear,docs/normalized_economy.json:L246
+"""setup_cost"": 560,",560,,cost,linear,docs/normalized_economy.json:L247
+"""maintenance_time"": 48,",48,,time,linear,docs/normalized_economy.json:L248
+"""maintenance_cost"": 10,",10,,cost,linear,docs/normalized_economy.json:L249
+"""level"": 0,",0,,progression,linear,docs/normalized_economy.json:L252
+"""income_min"": 8,",8,,income,linear,docs/normalized_economy.json:L253
+"""income_max"": 14,",14,,limit,cap,docs/normalized_economy.json:L254
+"""level"": 1,",1,,progression,linear,docs/normalized_economy.json:L258
+"""income_min"": 18,",18,,income,linear,docs/normalized_economy.json:L259
+"""income_max"": 30,",30,,limit,cap,docs/normalized_economy.json:L260
+"""shoots"": 4",4,,requirement,linear,docs/normalized_economy.json:L262
+"""level"": 2,",2,,progression,linear,docs/normalized_economy.json:L266
+"""income_min"": 34,",34,,income,linear,docs/normalized_economy.json:L267
+"""income_max"": 52,",52,,limit,cap,docs/normalized_economy.json:L268
+"""shoots"": 10,",10,,requirement,linear,docs/normalized_economy.json:L270
+"""editing"": 4",4,,other,linear,docs/normalized_economy.json:L271
+"""level"": 3,",3,,progression,linear,docs/normalized_economy.json:L275
+"""income_min"": 54,",54,,income,linear,docs/normalized_economy.json:L276
+"""income_max"": 78,",78,,limit,cap,docs/normalized_economy.json:L277
+"""shoots"": 16,",16,,requirement,linear,docs/normalized_economy.json:L279
+"""editing"": 7,",7,,other,linear,docs/normalized_economy.json:L280
+"""marketing"": 5",5,,requirement,linear,docs/normalized_economy.json:L281
+"""level"": 4,",4,,progression,linear,docs/normalized_economy.json:L285
+"""income_min"": 80,",80,,income,linear,docs/normalized_economy.json:L286
+"""income_max"": 108,",108,,limit,cap,docs/normalized_economy.json:L287
+"""shoots"": 24,",24,,requirement,linear,docs/normalized_economy.json:L289
+"""editing"": 11,",11,,other,linear,docs/normalized_economy.json:L290
+"""marketing"": 9",9,,requirement,linear,docs/normalized_economy.json:L291
+"""level"": 5,",5,,progression,linear,docs/normalized_economy.json:L295
+"""income_min"": 112,",112,,income,linear,docs/normalized_economy.json:L296
+"""income_max"": 150,",150,,limit,cap,docs/normalized_economy.json:L297
+"""shoots"": 36,",36,,requirement,linear,docs/normalized_economy.json:L299
+"""editing"": 16,",16,,other,linear,docs/normalized_economy.json:L300
+"""marketing"": 14",14,,requirement,linear,docs/normalized_economy.json:L301
+"""setup_days"": 5,",5,,time,linear,docs/normalized_economy.json:L320
+"""setup_minutes_per_day"": 240",240,,time,linear,docs/normalized_economy.json:L321
+"""base_income"": 84,",84,,income,linear,docs/normalized_economy.json:L326
+"""variance"": 0.35,",0.35,,income,linear,docs/normalized_economy.json:L327
+"""setup_time"": 1440,",1440,,time,linear,docs/normalized_economy.json:L328
+"""setup_cost"": 720,",720,,cost,linear,docs/normalized_economy.json:L329
+"""maintenance_time"": 66,",66,,time,linear,docs/normalized_economy.json:L330
+"""maintenance_cost"": 12,",12,,cost,linear,docs/normalized_economy.json:L331
+"""level"": 0,",0,,progression,linear,docs/normalized_economy.json:L334
+"""income_min"": 12,",12,,income,linear,docs/normalized_economy.json:L335
+"""income_max"": 20,",20,,limit,cap,docs/normalized_economy.json:L336
+"""level"": 1,",1,,progression,linear,docs/normalized_economy.json:L340
+"""income_min"": 24,",24,,income,linear,docs/normalized_economy.json:L341
+"""income_max"": 38,",38,,limit,cap,docs/normalized_economy.json:L342
+"""research"": 4",4,,other,linear,docs/normalized_economy.json:L344
+"""level"": 2,",2,,progression,linear,docs/normalized_economy.json:L348
+"""income_min"": 44,",44,,income,linear,docs/normalized_economy.json:L349
+"""income_max"": 62,",62,,limit,cap,docs/normalized_economy.json:L350
+"""research"": 11,",11,,other,linear,docs/normalized_economy.json:L352
+"""listing"": 5",5,,requirement,linear,docs/normalized_economy.json:L353
+"""level"": 3,",3,,progression,linear,docs/normalized_economy.json:L357
+"""income_min"": 68,",68,,income,linear,docs/normalized_economy.json:L358
+"""income_max"": 92,",92,,limit,cap,docs/normalized_economy.json:L359
+"""research"": 18,",18,,other,linear,docs/normalized_economy.json:L361
+"""listing"": 8,",8,,requirement,linear,docs/normalized_economy.json:L362
+"""ads"": 7",7,,requirement,linear,docs/normalized_economy.json:L363
+"""level"": 4,",4,,progression,linear,docs/normalized_economy.json:L367
+"""income_min"": 95,",95,,income,linear,docs/normalized_economy.json:L368
+"""income_max"": 128,",128,,limit,cap,docs/normalized_economy.json:L369
+"""research"": 26,",26,,other,linear,docs/normalized_economy.json:L371
+"""listing"": 12,",12,,requirement,linear,docs/normalized_economy.json:L372
+"""ads"": 10",10,,requirement,linear,docs/normalized_economy.json:L373
+"""level"": 5,",5,,progression,linear,docs/normalized_economy.json:L377
+"""income_min"": 130,",130,,income,linear,docs/normalized_economy.json:L378
+"""income_max"": 176,",176,,limit,cap,docs/normalized_economy.json:L379
+"""research"": 38,",38,,other,linear,docs/normalized_economy.json:L381
+"""listing"": 18,",18,,requirement,linear,docs/normalized_economy.json:L382
+"""ads"": 16",16,,requirement,linear,docs/normalized_economy.json:L383
+"""count"": 2",2,,requirement,linear,docs/normalized_economy.json:L394
+"""setup_days"": 6,",6,,time,linear,docs/normalized_economy.json:L404
+"""setup_minutes_per_day"": 240",240,,time,linear,docs/normalized_economy.json:L405
+"""base_income"": 108,",108,,income,linear,docs/normalized_economy.json:L410
+"""variance"": 0.4,",0.4,,income,linear,docs/normalized_economy.json:L411
+"""setup_time"": 1920,",1920,,time,linear,docs/normalized_economy.json:L412
+"""setup_cost"": 960,",960,,cost,linear,docs/normalized_economy.json:L413
+"""maintenance_time"": 132,",132,,time,linear,docs/normalized_economy.json:L414
+"""maintenance_cost"": 24,",24,,cost,linear,docs/normalized_economy.json:L415
+"""level"": 0,",0,,progression,linear,docs/normalized_economy.json:L418
+"""income_min"": 20,",20,,income,linear,docs/normalized_economy.json:L419
+"""income_max"": 32,",32,,limit,cap,docs/normalized_economy.json:L420
+"""level"": 1,",1,,progression,linear,docs/normalized_economy.json:L424
+"""income_min"": 32,",32,,income,linear,docs/normalized_economy.json:L425
+"""income_max"": 48,",48,,limit,cap,docs/normalized_economy.json:L426
+"""features"": 4",4,,requirement,linear,docs/normalized_economy.json:L428
+"""level"": 2,",2,,progression,linear,docs/normalized_economy.json:L432
+"""income_min"": 54,",54,,income,linear,docs/normalized_economy.json:L433
+"""income_max"": 74,",74,,limit,cap,docs/normalized_economy.json:L434
+"""features"": 12,",12,,requirement,linear,docs/normalized_economy.json:L436
+"""stability"": 5",5,,requirement,linear,docs/normalized_economy.json:L437
+"""level"": 3,",3,,progression,linear,docs/normalized_economy.json:L441
+"""income_min"": 84,",84,,income,linear,docs/normalized_economy.json:L442
+"""income_max"": 120,",120,,limit,cap,docs/normalized_economy.json:L443
+"""features"": 24,",24,,requirement,linear,docs/normalized_economy.json:L445
+"""stability"": 8,",8,,requirement,linear,docs/normalized_economy.json:L446
+"""marketing"": 6",6,,requirement,linear,docs/normalized_economy.json:L447
+"""level"": 4,",4,,progression,linear,docs/normalized_economy.json:L451
+"""income_min"": 120,",120,,income,linear,docs/normalized_economy.json:L452
+"""income_max"": 168,",168,,limit,cap,docs/normalized_economy.json:L453
+"""features"": 34,",34,,requirement,linear,docs/normalized_economy.json:L455
+"""stability"": 12,",12,,requirement,linear,docs/normalized_economy.json:L456
+"""marketing"": 10,",10,,requirement,linear,docs/normalized_economy.json:L457
+"""edge"": 4",4,,requirement,linear,docs/normalized_economy.json:L458
+"""level"": 5,",5,,progression,linear,docs/normalized_economy.json:L462
+"""income_min"": 168,",168,,income,linear,docs/normalized_economy.json:L463
+"""income_max"": 220,",220,,limit,cap,docs/normalized_economy.json:L464
+"""features"": 48,",48,,requirement,linear,docs/normalized_economy.json:L466
+"""stability"": 18,",18,,requirement,linear,docs/normalized_economy.json:L467
+"""marketing"": 15,",15,,requirement,linear,docs/normalized_economy.json:L468
+"""edge"": 8",8,,requirement,linear,docs/normalized_economy.json:L469
+"""count"": 1",1,,requirement,linear,docs/normalized_economy.json:L483
+"""count"": 1",1,,requirement,linear,docs/normalized_economy.json:L487
+"""setup_days"": 8,",8,,time,linear,docs/normalized_economy.json:L497
+"""setup_minutes_per_day"": 240",240,,time,linear,docs/normalized_economy.json:L498
+"""base_income"": 18,",18,,income,linear,docs/normalized_economy.json:L505
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L506
+"""setup_time"": 120,",120,,time,linear,docs/normalized_economy.json:L507
+"""setup_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L508
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L509
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L510
+"""base_income"": 12,",12,,income,linear,docs/normalized_economy.json:L524
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L525
+"""setup_time"": 60,",60,,time,linear,docs/normalized_economy.json:L526
+"""setup_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L527
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L528
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L529
+"""daily_limit"": 1,",1,,limit,cap,docs/normalized_economy.json:L531
+"""count"": 1",1,,requirement,linear,docs/normalized_economy.json:L535
+"""base_income"": 48,",48,,income,linear,docs/normalized_economy.json:L549
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L550
+"""setup_time"": 150,",150,,time,linear,docs/normalized_economy.json:L551
+"""setup_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L552
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L553
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L554
+"""count"": 2",2,,requirement,linear,docs/normalized_economy.json:L560
+"""count"": 1",1,,requirement,linear,docs/normalized_economy.json:L564
+"""base_income"": 1,",1,,income,linear,docs/normalized_economy.json:L577
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L578
+"""setup_time"": 15,",15,,time,linear,docs/normalized_economy.json:L579
+"""setup_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L580
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L581
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L582
+"""daily_limit"": 4,",4,,limit,cap,docs/normalized_economy.json:L584
+"""base_income"": 72,",72,,income,linear,docs/normalized_economy.json:L596
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L597
+"""setup_time"": 210,",210,,time,linear,docs/normalized_economy.json:L598
+"""setup_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L599
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L600
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L601
+"""count"": 1",1,,requirement,linear,docs/normalized_economy.json:L607
+"""base_income"": 38,",38,,income,linear,docs/normalized_economy.json:L621
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L622
+"""setup_time"": 150,",150,,time,linear,docs/normalized_economy.json:L623
+"""setup_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L624
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L625
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L626
+"""count"": 1",1,,requirement,linear,docs/normalized_economy.json:L632
+"""count"": 1",1,,requirement,linear,docs/normalized_economy.json:L636
+"""weight"": 0.5",0.5,,other,linear,docs/normalized_economy.json:L643
+"""base_income"": 24,",24,,income,linear,docs/normalized_economy.json:L653
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L654
+"""setup_time"": 90,",90,,time,linear,docs/normalized_economy.json:L655
+"""setup_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L656
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L657
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L658
+"""count"": 1",1,,requirement,linear,docs/normalized_economy.json:L664
+"""base_income"": 28,",28,,income,linear,docs/normalized_economy.json:L678
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L679
+"""setup_time"": 120,",120,,time,linear,docs/normalized_economy.json:L680
+"""setup_cost"": 8,",8,,cost,linear,docs/normalized_economy.json:L681
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L682
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L683
+"""count"": 1",1,,requirement,linear,docs/normalized_economy.json:L689
+"""base_income"": 30,",30,,income,linear,docs/normalized_economy.json:L702
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L703
+"""setup_time"": 60,",60,,time,linear,docs/normalized_economy.json:L704
+"""setup_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L705
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L706
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L707
+"""count"": 1",1,,requirement,linear,docs/normalized_economy.json:L713
+"""weight"": 0.5",0.5,,other,linear,docs/normalized_economy.json:L720
+"""base_income"": 44,",44,,income,linear,docs/normalized_economy.json:L730
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L731
+"""setup_time"": 165,",165,,time,linear,docs/normalized_economy.json:L732
+"""setup_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L733
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L734
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L735
+"""count"": 1",1,,requirement,linear,docs/normalized_economy.json:L741
+"""base_income"": 18,",18,,income,linear,docs/normalized_economy.json:L754
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L755
+"""setup_time"": 45,",45,,time,linear,docs/normalized_economy.json:L756
+"""setup_cost"": 5,",5,,cost,linear,docs/normalized_economy.json:L757
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L758
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L759
+"""count"": 2",2,,requirement,linear,docs/normalized_economy.json:L765
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L780
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L781
+"""setup_time"": 720,",720,,time,linear,docs/normalized_economy.json:L782
+"""setup_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L783
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L784
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L785
+"""days"": 3,",3,,time,linear,docs/normalized_economy.json:L788
+"""minutes_per_day"": 240",240,,time,linear,docs/normalized_economy.json:L789
+"""base_xp"": 120,",120,xp,xp,linear,docs/normalized_economy.json:L792
+"""weight"": 1",1,,other,linear,docs/normalized_economy.json:L796
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L803
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L804
+"""setup_time"": 720,",720,,time,linear,docs/normalized_economy.json:L805
+"""setup_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L806
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L807
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L808
+"""days"": 3,",3,,time,linear,docs/normalized_economy.json:L811
+"""minutes_per_day"": 240",240,,time,linear,docs/normalized_economy.json:L812
+"""base_xp"": 120,",120,xp,xp,linear,docs/normalized_economy.json:L815
+"""weight"": 1",1,,other,linear,docs/normalized_economy.json:L819
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L826
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L827
+"""setup_time"": 720,",720,,time,linear,docs/normalized_economy.json:L828
+"""setup_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L829
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L830
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L831
+"""days"": 3,",3,,time,linear,docs/normalized_economy.json:L834
+"""minutes_per_day"": 240",240,,time,linear,docs/normalized_economy.json:L835
+"""base_xp"": 120,",120,xp,xp,linear,docs/normalized_economy.json:L838
+"""weight"": 1",1,,other,linear,docs/normalized_economy.json:L842
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L849
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L850
+"""setup_time"": 720,",720,,time,linear,docs/normalized_economy.json:L851
+"""setup_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L852
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L853
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L854
+"""days"": 3,",3,,time,linear,docs/normalized_economy.json:L857
+"""minutes_per_day"": 240",240,,time,linear,docs/normalized_economy.json:L858
+"""base_xp"": 120,",120,xp,xp,linear,docs/normalized_economy.json:L861
+"""weight"": 1",1,,other,linear,docs/normalized_economy.json:L865
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L872
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L873
+"""setup_time"": 720,",720,,time,linear,docs/normalized_economy.json:L874
+"""setup_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L875
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L876
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L877
+"""days"": 3,",3,,time,linear,docs/normalized_economy.json:L880
+"""minutes_per_day"": 240",240,,time,linear,docs/normalized_economy.json:L881
+"""base_xp"": 120,",120,xp,xp,linear,docs/normalized_economy.json:L884
+"""weight"": 1",1,,other,linear,docs/normalized_economy.json:L888
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L895
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L896
+"""setup_time"": 600,",600,,time,linear,docs/normalized_economy.json:L897
+"""setup_cost"": 140,",140,,cost,linear,docs/normalized_economy.json:L898
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L899
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L900
+"""days"": 5,",5,,time,linear,docs/normalized_economy.json:L903
+"""minutes_per_day"": 120",120,,time,linear,docs/normalized_economy.json:L904
+"""base_xp"": 120,",120,xp,xp,linear,docs/normalized_economy.json:L907
+"""weight"": 1",1,,other,linear,docs/normalized_economy.json:L911
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L918
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L919
+"""setup_time"": 360.0,",360.0,,time,linear,docs/normalized_economy.json:L920
+"""setup_cost"": 95,",95,,cost,linear,docs/normalized_economy.json:L921
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L922
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L923
+"""days"": 4,",4,,time,linear,docs/normalized_economy.json:L926
+"""minutes_per_day"": 90",90,,time,linear,docs/normalized_economy.json:L927
+"""base_xp"": 120,",120,xp,xp,linear,docs/normalized_economy.json:L930
+"""weight"": 0.5",0.5,,other,linear,docs/normalized_economy.json:L934
+"""weight"": 0.5",0.5,,other,linear,docs/normalized_economy.json:L938
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L945
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L946
+"""setup_time"": 1620,",1620,,time,linear,docs/normalized_economy.json:L947
+"""setup_cost"": 900,",900,,cost,linear,docs/normalized_economy.json:L948
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L949
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L950
+"""days"": 9,",9,,time,linear,docs/normalized_economy.json:L953
+"""minutes_per_day"": 180",180,,time,linear,docs/normalized_economy.json:L954
+"""base_xp"": 120,",120,xp,xp,linear,docs/normalized_economy.json:L957
+"""weight"": 0.5",0.5,,other,linear,docs/normalized_economy.json:L961
+"""weight"": 0.5",0.5,,other,linear,docs/normalized_economy.json:L965
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L972
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L973
+"""setup_time"": 5400,",5400,,time,linear,docs/normalized_economy.json:L974
+"""setup_cost"": 3000,",3000,,cost,linear,docs/normalized_economy.json:L975
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L976
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L977
+"""days"": 15,",15,,time,linear,docs/normalized_economy.json:L980
+"""minutes_per_day"": 360",360,,time,linear,docs/normalized_economy.json:L981
+"""base_xp"": 120,",120,xp,xp,linear,docs/normalized_economy.json:L984
+"""weight"": 0.6",0.6,,other,linear,docs/normalized_economy.json:L988
+"""weight"": 0.4",0.4,,other,linear,docs/normalized_economy.json:L992
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L999
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L1000
+"""setup_time"": 240,",240,,time,linear,docs/normalized_economy.json:L1001
+"""setup_cost"": 120,",120,,cost,linear,docs/normalized_economy.json:L1002
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1003
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L1004
+"""days"": 4,",4,,time,linear,docs/normalized_economy.json:L1007
+"""minutes_per_day"": 60",60,,time,linear,docs/normalized_economy.json:L1008
+"""base_xp"": 100,",100,xp,xp,linear,docs/normalized_economy.json:L1011
+"""weight"": 0.6",0.6,,other,linear,docs/normalized_economy.json:L1015
+"""weight"": 0.4",0.4,,other,linear,docs/normalized_economy.json:L1019
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L1026
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L1027
+"""setup_time"": 540.0,",540.0,,time,linear,docs/normalized_economy.json:L1028
+"""setup_cost"": 180,",180,,cost,linear,docs/normalized_economy.json:L1029
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1030
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L1031
+"""days"": 6,",6,,time,linear,docs/normalized_economy.json:L1034
+"""minutes_per_day"": 90",90,,time,linear,docs/normalized_economy.json:L1035
+"""base_xp"": 110,",110,xp,xp,linear,docs/normalized_economy.json:L1038
+"""weight"": 0.6",0.6,,other,linear,docs/normalized_economy.json:L1042
+"""weight"": 0.4",0.4,,other,linear,docs/normalized_economy.json:L1046
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L1053
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L1054
+"""setup_time"": 900.0,",900.0,,time,linear,docs/normalized_economy.json:L1055
+"""setup_cost"": 280,",280,,cost,linear,docs/normalized_economy.json:L1056
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1057
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L1058
+"""days"": 6,",6,,time,linear,docs/normalized_economy.json:L1061
+"""minutes_per_day"": 150",150,,time,linear,docs/normalized_economy.json:L1062
+"""base_xp"": 150,",150,xp,xp,linear,docs/normalized_economy.json:L1065
+"""weight"": 0.6",0.6,,other,linear,docs/normalized_economy.json:L1069
+"""weight"": 0.4",0.4,,other,linear,docs/normalized_economy.json:L1073
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L1080
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L1081
+"""setup_time"": 2400,",2400,,time,linear,docs/normalized_economy.json:L1082
+"""setup_cost"": 900,",900,,cost,linear,docs/normalized_economy.json:L1083
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1084
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L1085
+"""days"": 10,",10,,time,linear,docs/normalized_economy.json:L1088
+"""minutes_per_day"": 240",240,,time,linear,docs/normalized_economy.json:L1089
+"""base_xp"": 150,",150,xp,xp,linear,docs/normalized_economy.json:L1092
+"""weight"": 0.7",0.7,,other,linear,docs/normalized_economy.json:L1096
+"""weight"": 0.3",0.3,,other,linear,docs/normalized_economy.json:L1100
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L1107
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L1108
+"""setup_time"": 2400,",2400,,time,linear,docs/normalized_economy.json:L1109
+"""setup_cost"": 1200,",1200,,cost,linear,docs/normalized_economy.json:L1110
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1111
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L1112
+"""days"": 10,",10,,time,linear,docs/normalized_economy.json:L1115
+"""minutes_per_day"": 240",240,,time,linear,docs/normalized_economy.json:L1116
+"""base_xp"": 140,",140,xp,xp,linear,docs/normalized_economy.json:L1119
+"""weight"": 0.7",0.7,,other,linear,docs/normalized_economy.json:L1123
+"""weight"": 0.3",0.3,,other,linear,docs/normalized_economy.json:L1127
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L1134
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L1135
+"""setup_time"": 1260,",1260,,time,linear,docs/normalized_economy.json:L1136
+"""setup_cost"": 1000,",1000,,cost,linear,docs/normalized_economy.json:L1137
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1138
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L1139
+"""days"": 7,",7,,time,linear,docs/normalized_economy.json:L1142
+"""minutes_per_day"": 180",180,,time,linear,docs/normalized_economy.json:L1143
+"""base_xp"": 140,",140,xp,xp,linear,docs/normalized_economy.json:L1146
+"""weight"": 0.4",0.4,,other,linear,docs/normalized_economy.json:L1150
+"""weight"": 0.3",0.3,,other,linear,docs/normalized_economy.json:L1154
+"""weight"": 0.3",0.3,,other,linear,docs/normalized_economy.json:L1158
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L1165
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L1166
+"""setup_time"": 1260,",1260,,time,linear,docs/normalized_economy.json:L1167
+"""setup_cost"": 900,",900,,cost,linear,docs/normalized_economy.json:L1168
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1169
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L1170
+"""days"": 7,",7,,time,linear,docs/normalized_economy.json:L1173
+"""minutes_per_day"": 180",180,,time,linear,docs/normalized_economy.json:L1174
+"""base_xp"": 130,",130,xp,xp,linear,docs/normalized_economy.json:L1177
+"""weight"": 0.6",0.6,,other,linear,docs/normalized_economy.json:L1181
+"""weight"": 0.4",0.4,,other,linear,docs/normalized_economy.json:L1185
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L1192
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L1193
+"""setup_time"": 1920,",1920,,time,linear,docs/normalized_economy.json:L1194
+"""setup_cost"": 1100,",1100,,cost,linear,docs/normalized_economy.json:L1195
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1196
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L1197
+"""days"": 8,",8,,time,linear,docs/normalized_economy.json:L1200
+"""minutes_per_day"": 240",240,,time,linear,docs/normalized_economy.json:L1201
+"""base_xp"": 140,",140,xp,xp,linear,docs/normalized_economy.json:L1204
+"""weight"": 0.6",0.6,,other,linear,docs/normalized_economy.json:L1208
+"""weight"": 0.4",0.4,,other,linear,docs/normalized_economy.json:L1212
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L1219
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L1220
+"""setup_time"": 2160,",2160,,time,linear,docs/normalized_economy.json:L1221
+"""setup_cost"": 1000,",1000,,cost,linear,docs/normalized_economy.json:L1222
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1223
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L1224
+"""days"": 9,",9,,time,linear,docs/normalized_economy.json:L1227
+"""minutes_per_day"": 240",240,,time,linear,docs/normalized_economy.json:L1228
+"""base_xp"": 150,",150,xp,xp,linear,docs/normalized_economy.json:L1231
+"""weight"": 0.5",0.5,,other,linear,docs/normalized_economy.json:L1235
+"""weight"": 0.3",0.3,,other,linear,docs/normalized_economy.json:L1239
+"""weight"": 0.2",0.2,,other,linear,docs/normalized_economy.json:L1243
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L1252
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L1253
+"""setup_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1254
+"""setup_cost"": 40,",40,,cost,linear,docs/normalized_economy.json:L1255
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1256
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L1257
+"""notes"": ""+60 minutes bonus time for the current day, max 3 uses/day.""",60,minutes,time,linear,docs/normalized_economy.json:L1261
+"""notes"": ""+60 minutes bonus time for the current day, max 3 uses/day.""",3,,time,cap,docs/normalized_economy.json:L1261
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L1265
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L1266
+"""setup_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1267
+"""setup_cost"": 220,",220,,cost,linear,docs/normalized_economy.json:L1268
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1269
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L1270
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L1280
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L1281
+"""setup_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1282
+"""setup_cost"": 540,",540,,cost,linear,docs/normalized_economy.json:L1283
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1284
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L1285
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L1294
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L1295
+"""setup_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1296
+"""setup_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L1297
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1298
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L1299
+"""notes"": ""Hire cost $180, adds 180 bonus minutes/day, $24 daily wage.""",180,usd,time,linear,docs/normalized_economy.json:L1302
+"""notes"": ""Hire cost $180, adds 180 bonus minutes/day, $24 daily wage.""",24,usd,time,linear,docs/normalized_economy.json:L1302
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L1306
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L1307
+"""setup_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1308
+"""setup_cost"": 650,",650,,cost,linear,docs/normalized_economy.json:L1309
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1310
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L1311
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L1317
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L1318
+"""setup_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1319
+"""setup_cost"": 780,",780,,cost,linear,docs/normalized_economy.json:L1320
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1321
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L1322
+"""count"": 2,",2,,requirement,linear,docs/normalized_economy.json:L1329
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L1340
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L1341
+"""setup_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1342
+"""setup_cost"": 1150,",1150,,cost,linear,docs/normalized_economy.json:L1343
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1344
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L1345
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L1354
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L1355
+"""setup_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1356
+"""setup_cost"": 1150,",1150,,cost,linear,docs/normalized_economy.json:L1357
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1358
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L1359
+"""count"": 3,",3,,requirement,linear,docs/normalized_economy.json:L1367
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L1378
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L1379
+"""setup_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1380
+"""setup_cost"": 1450,",1450,,cost,linear,docs/normalized_economy.json:L1381
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1382
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L1383
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L1392
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L1393
+"""setup_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1394
+"""setup_cost"": 1500,",1500,,cost,linear,docs/normalized_economy.json:L1395
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1396
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L1397
+"""count"": 4,",4,,requirement,linear,docs/normalized_economy.json:L1405
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L1419
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L1420
+"""setup_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1421
+"""setup_cost"": 140,",140,,cost,linear,docs/normalized_economy.json:L1422
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1423
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L1424
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L1430
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L1431
+"""setup_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1432
+"""setup_cost"": 360,",360,,cost,linear,docs/normalized_economy.json:L1433
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1434
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L1435
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L1444
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L1445
+"""setup_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1446
+"""setup_cost"": 720,",720,,cost,linear,docs/normalized_economy.json:L1447
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1448
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L1449
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L1458
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L1459
+"""setup_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1460
+"""setup_cost"": 280,",280,,cost,linear,docs/normalized_economy.json:L1461
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1462
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L1463
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L1469
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L1470
+"""setup_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1471
+"""setup_cost"": 640,",640,,cost,linear,docs/normalized_economy.json:L1472
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1473
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L1474
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L1483
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L1484
+"""setup_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1485
+"""setup_cost"": 1280,",1280,,cost,linear,docs/normalized_economy.json:L1486
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1487
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L1488
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L1497
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L1498
+"""setup_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1499
+"""setup_cost"": 180,",180,,cost,linear,docs/normalized_economy.json:L1500
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1501
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L1502
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L1508
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L1509
+"""setup_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1510
+"""setup_cost"": 240,",240,,cost,linear,docs/normalized_economy.json:L1511
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1512
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L1513
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L1522
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L1523
+"""setup_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1524
+"""setup_cost"": 380,",380,,cost,linear,docs/normalized_economy.json:L1525
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1526
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L1527
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L1536
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L1537
+"""setup_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1538
+"""setup_cost"": 200,",200,,cost,linear,docs/normalized_economy.json:L1539
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1540
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L1541
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L1547
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L1548
+"""setup_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1549
+"""setup_cost"": 480,",480,,cost,linear,docs/normalized_economy.json:L1550
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1551
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L1552
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L1561
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L1562
+"""setup_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1563
+"""setup_cost"": 420,",420,,cost,linear,docs/normalized_economy.json:L1564
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1565
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L1566
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L1572
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L1573
+"""setup_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1574
+"""setup_cost"": 180,",180,,cost,linear,docs/normalized_economy.json:L1575
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1576
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L1577
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L1583
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L1584
+"""setup_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1585
+"""setup_cost"": 260,",260,,cost,linear,docs/normalized_economy.json:L1586
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1587
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L1588
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L1594
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L1595
+"""setup_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1596
+"""setup_cost"": 260,",260,,cost,linear,docs/normalized_economy.json:L1597
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1598
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L1599
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L1605
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L1606
+"""setup_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1607
+"""setup_cost"": 320,",320,,cost,linear,docs/normalized_economy.json:L1608
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1609
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L1610
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L1616
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L1617
+"""setup_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1618
+"""setup_cost"": 360,",360,,cost,linear,docs/normalized_economy.json:L1619
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1620
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L1621
+"""count"": 1",1,,requirement,linear,docs/normalized_economy.json:L1630
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L1640
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L1641
+"""setup_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1642
+"""setup_cost"": 720,",720,,cost,linear,docs/normalized_economy.json:L1643
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1644
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L1645
+"""count"": 1",1,,requirement,linear,docs/normalized_economy.json:L1654
+"""count"": 1",1,,requirement,linear,docs/normalized_economy.json:L1660
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L1670
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L1671
+"""setup_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1672
+"""setup_cost"": 1080,",1080,,cost,linear,docs/normalized_economy.json:L1673
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1674
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L1675
+"""count"": 1",1,,requirement,linear,docs/normalized_economy.json:L1684
+"""count"": 1",1,,requirement,linear,docs/normalized_economy.json:L1690
+"""count"": 1",1,,requirement,linear,docs/normalized_economy.json:L1696
+"""base_income"": 0,",0,,income,linear,docs/normalized_economy.json:L1709
+"""variance"": 0,",0,,income,linear,docs/normalized_economy.json:L1710
+"""setup_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1711
+"""setup_cost"": 260,",260,,cost,linear,docs/normalized_economy.json:L1712
+"""maintenance_time"": 0,",0,,time,linear,docs/normalized_economy.json:L1713
+"""maintenance_cost"": 0,",0,,cost,linear,docs/normalized_economy.json:L1714
+"""count"": 1",1,,requirement,linear,docs/normalized_economy.json:L1722
+"""formula"": ""income * (1 + 0.05)"",",1,,income,linear,docs/normalized_economy.json:L1732
+"""formula"": ""income * (1 + 0.05)"",",0.05,,income,linear,docs/normalized_economy.json:L1732
+"""notes"": ""Adds 5% to blog income.""",5,percent,income,linear,docs/normalized_economy.json:L1733
+"""formula"": ""income * (1 + 0.05)"",",1,,income,linear,docs/normalized_economy.json:L1739
+"""formula"": ""income * (1 + 0.05)"",",0.05,,income,linear,docs/normalized_economy.json:L1739
+"""notes"": ""Adds 5% to vlog income.""",5,percent,income,linear,docs/normalized_economy.json:L1740
+"""formula"": ""income * (1 + 0.05)"",",1,,income,linear,docs/normalized_economy.json:L1746
+"""formula"": ""income * (1 + 0.05)"",",0.05,,income,linear,docs/normalized_economy.json:L1746
+"""notes"": ""Adds 5% to e-book income.""",5,percent,income,linear,docs/normalized_economy.json:L1747
+"""formula"": ""income * (1 + 0.05)"",",1,,income,linear,docs/normalized_economy.json:L1753
+"""formula"": ""income * (1 + 0.05)"",",0.05,,income,linear,docs/normalized_economy.json:L1753
+"""notes"": ""Adds 5% to stock photo income.""",5,percent,income,linear,docs/normalized_economy.json:L1754
+"""formula"": ""income * (1 + 0.05)"",",1,,income,linear,docs/normalized_economy.json:L1760
+"""formula"": ""income * (1 + 0.05)"",",0.05,,income,linear,docs/normalized_economy.json:L1760
+"""notes"": ""Adds 5% to dropshipping income.""",5,percent,income,linear,docs/normalized_economy.json:L1761
+"""formula"": ""income * (1 + 0.05)"",",1,,income,linear,docs/normalized_economy.json:L1767
+"""formula"": ""income * (1 + 0.05)"",",0.05,,income,linear,docs/normalized_economy.json:L1767
+"""notes"": ""Adds 5% to SaaS income.""",5,percent,income,linear,docs/normalized_economy.json:L1768
+"""formula"": ""income * (1 + 0.25)"",",1,,income,linear,docs/normalized_economy.json:L1774
+"""formula"": ""income * (1 + 0.25)"",",0.25,,income,linear,docs/normalized_economy.json:L1774
+"""notes"": ""Freelance writing earns 25% more.""",25,percent,income,linear,docs/normalized_economy.json:L1775
+"""formula"": ""income * (1 + 0.15)"",",1,,income,linear,docs/normalized_economy.json:L1781
+"""formula"": ""income * (1 + 0.15)"",",0.15,,income,linear,docs/normalized_economy.json:L1781
+"""notes"": ""Audiobook narration earns 15% more.""",15,percent,income,linear,docs/normalized_economy.json:L1782
+"""formula"": ""income * (1 + 0.2)"",",1,,income,linear,docs/normalized_economy.json:L1788
+"""formula"": ""income * (1 + 0.2)"",",0.2,,income,linear,docs/normalized_economy.json:L1788
+"""notes"": ""Event photo gig earns 20% more.""",20,percent,income,linear,docs/normalized_economy.json:L1789
+"""formula"": ""income + 5"",",5,,income,linear,docs/normalized_economy.json:L1795
+"""notes"": ""Bundle promo push gains $5 flat.""",5,usd,cost,linear,docs/normalized_economy.json:L1796
+"""formula"": ""income * (1 + 0.15)"",",1,,income,linear,docs/normalized_economy.json:L1802
+"""formula"": ""income * (1 + 0.15)"",",0.15,,income,linear,docs/normalized_economy.json:L1802
+"""notes"": ""Dropshipping income +15%.""",15,percent,income,linear,docs/normalized_economy.json:L1803
+"""formula"": ""income + 6"",",6,,income,linear,docs/normalized_economy.json:L1809
+"""notes"": ""SaaS bug squash gains $6 flat.""",6,usd,cost,linear,docs/normalized_economy.json:L1810
+"""formula"": ""income * (1 + 0.15)"",",1,,income,linear,docs/normalized_economy.json:L1816
+"""formula"": ""income * (1 + 0.15)"",",0.15,,income,linear,docs/normalized_economy.json:L1816
+"""notes"": ""SaaS income +15%.""",15,percent,income,linear,docs/normalized_economy.json:L1817
+"""formula"": ""income + 4"",",4,,income,linear,docs/normalized_economy.json:L1823
+"""notes"": ""Audience Q&A blast gains $4.""",4,usd,cost,linear,docs/normalized_economy.json:L1824
+"""formula"": ""income * (1 + 0.25)"",",1,,income,linear,docs/normalized_economy.json:L1830
+"""formula"": ""income * (1 + 0.25)"",",0.25,,income,linear,docs/normalized_economy.json:L1830
+"""notes"": ""Street promo sprint +25%.""",25,percent,income,linear,docs/normalized_economy.json:L1831
+"""formula"": ""income + 1.5"",",1.5,,income,linear,docs/normalized_economy.json:L1837
+"""notes"": ""Micro survey dash gains $1.5.""",1.5,usd,cost,linear,docs/normalized_economy.json:L1838
+"""formula"": ""income * (1 + 0.3)"",",1,,income,linear,docs/normalized_economy.json:L1844
+"""formula"": ""income * (1 + 0.3)"",",0.3,,income,linear,docs/normalized_economy.json:L1844
+"""notes"": ""Pop-up workshop +30%.""",30,percent,income,linear,docs/normalized_economy.json:L1845
+"""formula"": ""income * (1 + 0.15)"",",1,,income,linear,docs/normalized_economy.json:L1851
+"""formula"": ""income * (1 + 0.15)"",",0.15,,income,linear,docs/normalized_economy.json:L1851
+"""notes"": ""Bundle promo push +15%.""",15,percent,income,linear,docs/normalized_economy.json:L1852
+"""formula"": ""income * (1 + 0.25)"",",1,,income,linear,docs/normalized_economy.json:L1858
+"""formula"": ""income * (1 + 0.25)"",",0.25,,income,linear,docs/normalized_economy.json:L1858
+"""notes"": ""Vlog edit rush +25%.""",25,percent,income,linear,docs/normalized_economy.json:L1859
+"""formula"": ""income * (1 + 0.15)"",",1,,income,linear,docs/normalized_economy.json:L1865
+"""formula"": ""income * (1 + 0.15)"",",0.15,,income,linear,docs/normalized_economy.json:L1865
+"""notes"": ""Vlog income +15%.""",15,percent,income,linear,docs/normalized_economy.json:L1866
+"""formula"": ""income * (1 + 0.2)"",",1,,income,linear,docs/normalized_economy.json:L1872
+"""formula"": ""income * (1 + 0.2)"",",0.2,,income,linear,docs/normalized_economy.json:L1872
+"""notes"": ""Dropship pack party +20%.""",20,percent,income,linear,docs/normalized_economy.json:L1873
+"""formula"": ""income * (1 + 0.25)"",",1,,income,linear,docs/normalized_economy.json:L1879
+"""formula"": ""income * (1 + 0.25)"",",0.25,,income,linear,docs/normalized_economy.json:L1879
+"""notes"": ""Dropshipping income +25%.""",25,percent,income,linear,docs/normalized_economy.json:L1880
+"""formula"": ""income + 5"",",5,,income,linear,docs/normalized_economy.json:L1886
+"""notes"": ""SaaS bug squash gains $5.""",5,usd,cost,linear,docs/normalized_economy.json:L1887
+"""formula"": ""income * (1 + 0.2)"",",1,,income,linear,docs/normalized_economy.json:L1893
+"""formula"": ""income * (1 + 0.2)"",",0.2,,income,linear,docs/normalized_economy.json:L1893
+"""notes"": ""SaaS income +20%.""",20,percent,income,linear,docs/normalized_economy.json:L1894
+"""formula"": ""income * (1 + 0.25)"",",1,,income,linear,docs/normalized_economy.json:L1900
+"""formula"": ""income * (1 + 0.25)"",",0.25,,income,linear,docs/normalized_economy.json:L1900
+"""notes"": ""Audiobook narration +25%.""",25,percent,income,linear,docs/normalized_economy.json:L1901
+"""formula"": ""income * (1 + 0.1)"",",1,,income,linear,docs/normalized_economy.json:L1907
+"""formula"": ""income * (1 + 0.1)"",",0.1,,income,linear,docs/normalized_economy.json:L1907
+"""notes"": ""E-book income +10%.""",10,percent,income,linear,docs/normalized_economy.json:L1908
+"""formula"": ""income * (1 + 0.2)"",",1,,income,linear,docs/normalized_economy.json:L1914
+"""formula"": ""income * (1 + 0.2)"",",0.2,,income,linear,docs/normalized_economy.json:L1914
+"""notes"": ""Event photo gig +20%.""",20,percent,income,linear,docs/normalized_economy.json:L1915
+"""formula"": ""income * (1 + 0.15)"",",1,,income,linear,docs/normalized_economy.json:L1921
+"""formula"": ""income * (1 + 0.15)"",",0.15,,income,linear,docs/normalized_economy.json:L1921
+"""notes"": ""Stock photo income +15%.""",15,percent,income,linear,docs/normalized_economy.json:L1922
+"""formula"": ""income * (1 + 0.15)"",",1,,income,linear,docs/normalized_economy.json:L1928
+"""formula"": ""income * (1 + 0.15)"",",0.15,,income,linear,docs/normalized_economy.json:L1928
+"""notes"": ""Freelance writing +15%.""",15,percent,income,linear,docs/normalized_economy.json:L1929
+"""formula"": ""income + 2"",",2,,income,linear,docs/normalized_economy.json:L1935
+"""notes"": ""Street promo sprint gains $2.""",2,usd,cost,linear,docs/normalized_economy.json:L1936
+"""formula"": ""income * (1 + 0.12)"",",1,,income,linear,docs/normalized_economy.json:L1942
+"""formula"": ""income * (1 + 0.12)"",",0.12,,income,linear,docs/normalized_economy.json:L1942
+"""notes"": ""Blog income +12%.""",12,percent,income,linear,docs/normalized_economy.json:L1943
+"""formula"": ""minutes + 60"",",60,,time,linear,docs/normalized_economy.json:L1949
+"""notes"": ""Adds 60 bonus minutes (max 3 per day).""",60,,time,cap,docs/normalized_economy.json:L1950
+"""notes"": ""Adds 60 bonus minutes (max 3 per day).""",3,,time,cap,docs/normalized_economy.json:L1950
+"""formula"": ""minutes * 0.9"",",0.9,,time,linear,docs/normalized_economy.json:L1956
+"""formula"": ""minutes * 0.85"",",0.85,,time,linear,docs/normalized_economy.json:L1963
+"""formula"": ""income * 1.15"",",1.15,,income,linear,docs/normalized_economy.json:L1970
+"""formula"": ""progress * 2"",",2,,other,linear,docs/normalized_economy.json:L1977
+"""formula"": ""progress * 2"",",2,,other,linear,docs/normalized_economy.json:L1984
+"""formula"": ""minutes * 0.95"",",0.95,,time,linear,docs/normalized_economy.json:L1991
+"""formula"": ""minutes * 0.95"",",0.95,,time,linear,docs/normalized_economy.json:L1998
+"""formula"": ""income * 1.25"",",1.25,,income,linear,docs/normalized_economy.json:L2005
+"""formula"": ""progress * 2"",",2,,other,linear,docs/normalized_economy.json:L2012
+"""formula"": ""income * 1.2"",",1.2,,income,linear,docs/normalized_economy.json:L2019
+"""formula"": ""progress * 1.5"",",1.5,,other,linear,docs/normalized_economy.json:L2026
+"""formula"": ""income * 1.3"",",1.3,,income,linear,docs/normalized_economy.json:L2033
+"""formula"": ""progress * 1.5"",",1.5,,other,linear,docs/normalized_economy.json:L2040
+"""formula"": ""minutes * 0.92"",",0.92,,time,linear,docs/normalized_economy.json:L2047
+"""formula"": ""minutes * 0.92"",",0.92,,time,linear,docs/normalized_economy.json:L2054
+"""formula"": ""income * 1.3"",",1.3,,income,linear,docs/normalized_economy.json:L2061
+"""notes"": ""Commerce/e-commerce hustles earn 30% more.""",30,percent,income,linear,docs/normalized_economy.json:L2062
+"""formula"": ""income * 1.35"",",1.35,,income,linear,docs/normalized_economy.json:L2068
+"""notes"": ""Edge delivery boosts SaaS payouts 35%.""",35,percent,income,linear,docs/normalized_economy.json:L2069
+"""formula"": ""progress * 2"",",2,,other,linear,docs/normalized_economy.json:L2075
+"""formula"": ""minutes * 0.85"",",0.85,,time,linear,docs/normalized_economy.json:L2082
+"""formula"": ""income * 1.35"",",1.35,,income,linear,docs/normalized_economy.json:L2089
+"""formula"": ""progress * 1.3333333333"",",1.3333333333,,other,linear,docs/normalized_economy.json:L2096
+"""notes"": ""White-label alliance increases quality progress by 4/3.""",1.333333333,,other,linear,docs/normalized_economy.json:L2097
+"""formula"": ""income * 1.35"",",1.35,,income,linear,docs/normalized_economy.json:L2103
+"""notes"": ""Commerce/photo hustles earn 35% more.""",35,percent,income,linear,docs/normalized_economy.json:L2104
+"""formula"": ""progress * 1.3333333333"",",1.3333333333,,other,linear,docs/normalized_economy.json:L2110
+"""notes"": ""Commerce/photo hustles gain 4/3 quality progress.""",1.333333333,,other,linear,docs/normalized_economy.json:L2111
+"""formula"": ""minutes * 0.95"",",0.95,,time,linear,docs/normalized_economy.json:L2117
+"""formula"": ""minutes * 0.95"",",0.95,,time,linear,docs/normalized_economy.json:L2124
+"""formula"": ""minutes * 0.85"",",0.85,,time,linear,docs/normalized_economy.json:L2131
+"""formula"": ""minutes * 0.85"",",0.85,,time,linear,docs/normalized_economy.json:L2138
+"""formula"": ""income * 1.05"",",1.05,,income,linear,docs/normalized_economy.json:L2145
+"""notes"": ""Creator phone pro boosts live/field payouts 5%.""",5,percent,income,linear,docs/normalized_economy.json:L2146
+"""formula"": ""income * 1.05"",",1.05,,income,linear,docs/normalized_economy.json:L2152
+"""notes"": ""Creator phone pro boosts video income 5%.""",5,percent,income,linear,docs/normalized_economy.json:L2153
+"""formula"": ""minutes * 0.8"",",0.8,,time,linear,docs/normalized_economy.json:L2159
+"""formula"": ""minutes * 0.8"",",0.8,,time,linear,docs/normalized_economy.json:L2166
+"""formula"": ""income * 1.08"",",1.08,,income,linear,docs/normalized_economy.json:L2173
+"""notes"": ""Creator phone ultra boosts live/field payouts 8%.""",8,percent,income,linear,docs/normalized_economy.json:L2174
+"""formula"": ""income * 1.08"",",1.08,,income,linear,docs/normalized_economy.json:L2180
+"""notes"": ""Creator phone ultra boosts video income 8%.""",8,percent,income,linear,docs/normalized_economy.json:L2181
+"""formula"": ""minutes * 0.92"",",0.92,,time,linear,docs/normalized_economy.json:L2187
+"""formula"": ""minutes * 0.92"",",0.92,,time,linear,docs/normalized_economy.json:L2194
+"""formula"": ""minutes * 0.85"",",0.85,,time,linear,docs/normalized_economy.json:L2201
+"""formula"": ""minutes * 0.9"",",0.9,,time,linear,docs/normalized_economy.json:L2208
+"""formula"": ""minutes * 0.85"",",0.85,,time,linear,docs/normalized_economy.json:L2215
+"""formula"": ""income * 1.12"",",1.12,,income,linear,docs/normalized_economy.json:L2222
+"""formula"": ""minutes * 0.95"",",0.95,,time,linear,docs/normalized_economy.json:L2229
+"""formula"": ""progress * 1.2"",",1.2,,other,linear,docs/normalized_economy.json:L2236
+"""formula"": ""progress * 1.3"",",1.3,,other,linear,docs/normalized_economy.json:L2243
+"""formula"": ""minutes * 0.9"",",0.9,,time,linear,docs/normalized_economy.json:L2250
+"""formula"": ""minutes * 0.9"",",0.9,,time,linear,docs/normalized_economy.json:L2257
+"""formula"": ""minutes * 0.85"",",0.85,,time,linear,docs/normalized_economy.json:L2264
+"""formula"": ""minutes * 0.85"",",0.85,,time,linear,docs/normalized_economy.json:L2271
+"""formula"": ""income * 1.25"",",1.25,,income,linear,docs/normalized_economy.json:L2278
+"""formula"": ""progress * 2"",",2,,other,linear,docs/normalized_economy.json:L2285
+"""formula"": ""progress * 1.4"",",1.4,,other,linear,docs/normalized_economy.json:L2292
+"""formula"": ""minutes * 0.95"",",0.95,,time,linear,docs/normalized_economy.json:L2299
+"""formula"": ""minutes * 0.9"",",0.9,,time,linear,docs/normalized_economy.json:L2306
+"""formula"": ""minutes * 0.9"",",0.9,,time,linear,docs/normalized_economy.json:L2313
+"""formula"": ""minutes * 0.95"",",0.95,,time,linear,docs/normalized_economy.json:L2320
+"""formula"": ""minutes * 0.9"",",0.9,,time,linear,docs/normalized_economy.json:L2327
+"""formula"": ""minutes * 0.88"",",0.88,,time,linear,docs/normalized_economy.json:L2334
+"""formula"": ""income * 1.2"",",1.2,,income,linear,docs/normalized_economy.json:L2341
+"""formula"": ""progress * 1.5"",",1.5,,other,linear,docs/normalized_economy.json:L2348
+"""formula"": ""minutes * 0.88"",",0.88,,time,linear,docs/normalized_economy.json:L2355
+"""formula"": ""income * 1.2"",",1.2,,income,linear,docs/normalized_economy.json:L2362
+"""formula"": ""progress * 1.5"",",1.5,,other,linear,docs/normalized_economy.json:L2369
+"""formula"": ""minutes * 0.9"",",0.9,,time,linear,docs/normalized_economy.json:L2376
+"""formula"": ""income * 1.25"",",1.25,,income,linear,docs/normalized_economy.json:L2383
+"""formula"": ""progress * 1.3333333333"",",1.3333333333,,other,linear,docs/normalized_economy.json:L2390
+"""notes"": ""Syndication suite increases quality progress by 4/3.""",1.333333333,,other,linear,docs/normalized_economy.json:L2391
+"""formula"": ""minutes * 0.9"",",0.9,,time,linear,docs/normalized_economy.json:L2397
+"""formula"": ""income * 1.25"",",1.25,,income,linear,docs/normalized_economy.json:L2404
+"""formula"": ""progress * 1.3333333333"",",1.3333333333,,other,linear,docs/normalized_economy.json:L2411
+"""formula"": ""income * 1.12"",",1.12,,income,linear,docs/normalized_economy.json:L2418
+"""formula"": ""minutes * 0.85"",",0.85,,time,linear,docs/normalized_economy.json:L2425
+"""formula"": ""progress * 2"",",2,,other,linear,docs/normalized_economy.json:L2432
+"""formula"": ""income * 1.5"",",1.5,,income,linear,docs/normalized_economy.json:L2439
+"""notes"": ""Automation course boosts blog payouts 50%.""",50,percent,income,linear,docs/normalized_economy.json:L2440
+"""formula"": ""progress * 2"",",2,,other,linear,docs/normalized_economy.json:L2446
