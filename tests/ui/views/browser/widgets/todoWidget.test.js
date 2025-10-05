@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, it } from 'node:test';
 
 import {
   applyFocusOrdering,
+  buildTodoGrouping,
   groupEntriesByTaskGroup,
   TASK_GROUP_CONFIGS
 } from '../../../../../src/ui/actions/taskGrouping.js';
@@ -145,6 +146,38 @@ describe('todoWidget focus ordering', () => {
         ['support-a'],
         'assist entries fall back to the catch-all group'
       );
+    });
+
+    it('filters entries using shared availability and completion rules', () => {
+      const entries = [
+        { id: 'hustle-ready', focusCategory: 'hustle', durationHours: 2, remainingRuns: 1 },
+        { id: 'hustle-too-long', focusCategory: 'hustle', durationHours: 5 },
+        { id: 'upgrade-complete', focusCategory: 'upgrade', durationHours: 1, remainingRuns: 1 }
+      ];
+
+      const completions = new Map([
+        ['upgrade-complete', { count: 1 }]
+      ]);
+
+      const grouping = buildTodoGrouping(entries, {
+        availableHours: 3,
+        getCompletion: entry => completions.get(entry.id) || null,
+        getRemainingRuns: (entry, completion) => {
+          if (entry.remainingRuns == null) {
+            return null;
+          }
+          const total = Number(entry.remainingRuns);
+          const used = Number(completion?.count);
+          const consumed = Number.isFinite(used) ? Math.max(0, used) : 0;
+          return Math.max(0, total - consumed);
+        },
+        emptyMessage: 'No hustle queued.'
+      });
+
+      assert.equal(grouping.totalPending, 1, 'only affordable, unfinished entries remain');
+      assert.equal(grouping.entries[0].id, 'hustle-ready', 'retains valid hustle entry');
+      assert.equal(grouping.groups.hustle.length, 1, 'groups pending hustle entries');
+      assert.equal(grouping.emptyMessage, 'No hustle queued.', 'honours provided empty message');
     });
   });
 });

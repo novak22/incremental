@@ -2,8 +2,7 @@ import { formatHours } from '../../../../core/helpers.js';
 import { endDay } from '../../../../game/lifecycle.js';
 import { normalizeActionEntries } from '../../../actions/registry.js';
 import {
-  applyFocusOrdering,
-  attachProgressHandlers,
+  buildTodoGrouping,
   createProgressHandler,
   DEFAULT_TODO_EMPTY_MESSAGE
 } from '../../../actions/taskGrouping.js';
@@ -194,40 +193,26 @@ export function render(model = {}) {
   todoState.seedAutoCompletedEntries(viewModel.autoCompletedEntries, formatDuration);
   todoDom.applyScrollerLimit(elements?.listWrapper, viewModel);
 
-  const entries = attachProgressHandlers(normalizeActionEntries(viewModel));
-  const availableHours = getAvailableHours(viewModel);
-  const availableMoney = getAvailableMoney(viewModel);
-  const pending = entries.filter(entry => {
-    const completion = todoState.getCompletion(entry.id);
-    const remainingRuns = todoState.getEffectiveRemainingRuns(entry, completion);
-    const hasRunsLeft = remainingRuns === null || remainingRuns > 0;
-    if (!hasRunsLeft) return false;
-
-    const canAfford = Number.isFinite(availableHours)
-      ? entry.durationHours <= availableHours
-      : true;
-    if (!canAfford) return false;
-
-    const moneyAffordable = Number.isFinite(availableMoney)
-      ? entry.moneyCost <= availableMoney
-      : true;
-    if (!moneyAffordable) return false;
-
-    if (!completion) return true;
-    return entry.repeatable;
+  const normalizedEntries = normalizeActionEntries(viewModel);
+  const grouping = buildTodoGrouping(normalizedEntries, {
+    focusMode: todoState.getFocusMode(),
+    availableHours: getAvailableHours(viewModel),
+    availableMoney: getAvailableMoney(viewModel),
+    getCompletion: entry => todoState.getCompletion(entry.id),
+    getRemainingRuns: (entry, completion) => todoState.getEffectiveRemainingRuns(entry, completion),
+    emptyMessage: viewModel.emptyMessage
   });
 
-  const orderedPending = applyFocusOrdering(pending, todoState.getFocusMode());
-  todoState.setPendingEntries(orderedPending);
+  todoState.setPendingEntries(grouping.entries);
 
   todoDom.renderHours(elements, viewModel, formatHours);
-  const emptyMessage = viewModel.emptyMessage || DEFAULT_TODO_EMPTY_MESSAGE;
-  todoDom.updateNote(elements?.note, { ...viewModel, emptyMessage }, orderedPending.length);
+  const emptyMessage = grouping.emptyMessage || DEFAULT_TODO_EMPTY_MESSAGE;
+  todoDom.updateNote(elements?.note, { ...viewModel, emptyMessage }, grouping.totalPending);
 
-  if (!orderedPending.length) {
+  if (!grouping.totalPending) {
     todoDom.renderEmptyState(elements?.list, emptyMessage, callEndDay);
   } else {
-    todoDom.renderPending(elements?.list, orderedPending, viewModel, handleCompletion);
+    todoDom.renderPending(elements?.list, grouping.entries, viewModel, handleCompletion);
   }
 
   const completedEntries = todoState.getCompletedEntries();

@@ -1,7 +1,11 @@
 import { appendContent } from '../../components/common/domHelpers.js';
 import { createStat } from '../../components/widgets.js';
 import { getWorkspacePath } from '../../layout/workspaces.js';
-import { groupEntriesByTaskGroup, TASK_GROUP_CONFIGS, DEFAULT_TODO_EMPTY_MESSAGE } from '../../../../actions/taskGrouping.js';
+import {
+  buildTodoGrouping,
+  TASK_GROUP_CONFIGS,
+  DEFAULT_TODO_EMPTY_MESSAGE
+} from '../../../../actions/taskGrouping.js';
 import { formatCurrency } from './model.js';
 import { createCard } from './components/card.js';
 import {
@@ -13,9 +17,10 @@ import { createCompletedSection } from './sections/completedSection.js';
 
 const tabObserverMap = new WeakMap();
 
-function buildTodoGroups(entries = []) {
-  const groupedEntries = groupEntriesByTaskGroup(entries);
-  return TASK_GROUP_CONFIGS.reduce((map, config) => {
+function buildTodoGroups(entries = [], options = {}) {
+  const grouping = buildTodoGrouping(entries, options);
+  const groupedEntries = grouping.groups || {};
+  const itemsByKey = TASK_GROUP_CONFIGS.reduce((map, config) => {
     const bucketEntries = (groupedEntries[config.key] || []).filter(Boolean);
     map[config.key] = bucketEntries.map((entry, index) => {
       const detailParts = [];
@@ -46,6 +51,11 @@ function buildTodoGroups(entries = []) {
     });
     return map;
   }, {});
+
+  return {
+    items: itemsByKey,
+    grouping
+  };
 }
 
 function createTodoCard(model = {}, options = {}) {
@@ -57,11 +67,14 @@ function createTodoCard(model = {}, options = {}) {
   });
 
   const entries = Array.isArray(model.todoEntries) ? model.todoEntries : [];
-  const groups = buildTodoGroups(entries);
-  const totalTasks = TASK_GROUP_CONFIGS.reduce((total, config) => total + (groups[config.key]?.length || 0), 0);
+  const { items: groupedItems, grouping } = buildTodoGroups(entries, {
+    availableHours: model.todoHoursAvailable ?? model.hoursAvailable,
+    availableMoney: model.todoMoneyAvailable ?? model.moneyAvailable,
+    emptyMessage: model.todoEmptyMessage
+  });
 
-  if (totalTasks === 0) {
-    const emptyText = model.todoEmptyMessage || DEFAULT_TODO_EMPTY_MESSAGE;
+  if (grouping.totalPending === 0) {
+    const emptyText = grouping.emptyMessage || DEFAULT_TODO_EMPTY_MESSAGE;
     card.appendChild(createTaskList([], emptyText, 'timodoro-todo'));
     return card;
   }
@@ -85,9 +98,9 @@ function createTodoCard(model = {}, options = {}) {
     title.className = 'timodoro-subsection__title';
     appendContent(title, config.label);
 
-    const items = groups[config.key] || [];
+    const items = groupedItems[config.key] || [];
     const emptyMessage = config.key === 'hustle'
-      ? (model.todoEmptyMessage || DEFAULT_TODO_EMPTY_MESSAGE)
+      ? (grouping.emptyMessage || DEFAULT_TODO_EMPTY_MESSAGE)
       : config.empty;
     const list = createTaskList(items, emptyMessage, `timodoro-todo-${config.key}`);
 

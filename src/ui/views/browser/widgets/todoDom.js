@@ -1,3 +1,5 @@
+import { DEFAULT_TODO_EMPTY_MESSAGE } from '../../../actions/taskGrouping.js';
+
 function toArray(value) {
   if (Array.isArray(value)) {
     return value;
@@ -125,7 +127,7 @@ function updateNote(note, model = {}, pendingCount = 0) {
     return;
   }
 
-  note.textContent = model.emptyMessage || 'Queue a hustle or upgrade to add new tasks.';
+  note.textContent = model.emptyMessage || DEFAULT_TODO_EMPTY_MESSAGE;
 }
 
 function createTask(entry, model, onComplete) {

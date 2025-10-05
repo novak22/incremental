@@ -293,6 +293,94 @@ export function groupEntriesByTaskGroup(entries = [], options = {}) {
   return grouped;
 }
 
+function normalizeAvailability(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) {
+    return Infinity;
+  }
+  return Math.max(0, numeric);
+}
+
+export function buildTodoGrouping(entries = [], options = {}) {
+  const focusMode = typeof options?.focusMode === 'string' && options.focusMode.trim()
+    ? options.focusMode
+    : 'balanced';
+
+  const availableHours = normalizeAvailability(options?.availableHours);
+  const availableMoney = normalizeAvailability(options?.availableMoney);
+
+  const resolveCompletion = typeof options?.getCompletion === 'function'
+    ? options.getCompletion
+    : () => null;
+
+  const resolveRemainingRuns = typeof options?.getRemainingRuns === 'function'
+    ? options.getRemainingRuns
+    : (entry, completion) => {
+      if (entry?.remainingRuns == null) {
+        return null;
+      }
+      const total = Number(entry.remainingRuns);
+      if (!Number.isFinite(total)) {
+        return null;
+      }
+      const used = Number(completion?.count);
+      const consumed = Number.isFinite(used) ? Math.max(0, used) : 0;
+      return Math.max(0, total - consumed);
+    };
+
+  const preparedEntries = attachProgressHandlers(
+    Array.isArray(entries)
+      ? entries
+          .filter(Boolean)
+          .map(entry => ({ ...entry }))
+      : []
+  );
+
+  const pending = preparedEntries.filter(entry => {
+    if (!entry) {
+      return false;
+    }
+
+    const completion = resolveCompletion(entry) || null;
+    const remainingRuns = resolveRemainingRuns(entry, completion);
+    const hasRunsLeft = remainingRuns == null || remainingRuns > 0;
+    if (!hasRunsLeft) {
+      return false;
+    }
+
+    const requiredHours = Number(entry.durationHours);
+    if (Number.isFinite(availableHours) && availableHours !== Infinity && Number.isFinite(requiredHours)) {
+      if (requiredHours > availableHours) {
+        return false;
+      }
+    }
+
+    const cost = Number(entry.moneyCost);
+    if (Number.isFinite(availableMoney) && availableMoney !== Infinity && Number.isFinite(cost)) {
+      if (cost > availableMoney) {
+        return false;
+      }
+    }
+
+    if (!completion) {
+      return true;
+    }
+
+    return Boolean(entry.repeatable);
+  });
+
+  const ordered = applyFocusOrdering(pending, focusMode);
+  const groups = groupEntriesByTaskGroup(ordered, options);
+  const emptyMessage = options?.emptyMessage || DEFAULT_TODO_EMPTY_MESSAGE;
+
+  return {
+    entries: ordered,
+    groups,
+    totalPending: ordered.length,
+    emptyMessage
+  };
+}
+
 function resolveProgressStep(entry = {}) {
   const progress = entry?.progress || {};
   const rawStep = Number(progress.stepHours);
@@ -412,6 +500,7 @@ export function attachProgressHandlers(entries = []) {
 export default {
   applyFocusOrdering,
   attachProgressHandlers,
+  buildTodoGrouping,
   collectBuckets,
   createProgressHandler,
   groupEntriesByTaskGroup,
