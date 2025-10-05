@@ -236,6 +236,9 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
 
     const acceptedForDefinition = acceptedByDefinition.get(definition.id) || [];
     acceptedForDefinition.forEach(entry => {
+      if (entry?.status === 'complete') {
+        return;
+      }
       const instanceId = entry?.instanceId;
       const exists = commitments.some(commitment => commitment?.progress?.instanceId === instanceId);
       if (exists) {

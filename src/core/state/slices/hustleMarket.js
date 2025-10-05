@@ -186,6 +186,24 @@ function normalizeAcceptedOffer(entry, { fallbackDay = 1 } = {}) {
     ? entry.instanceId
     : null;
 
+  const completedOnDay = entry.completedOnDay != null
+    ? clampDay(entry.completedOnDay, acceptedOnDay)
+    : null;
+  const hoursLogged = entry.hoursLogged != null
+    ? clampNonNegativeNumber(entry.hoursLogged, hoursRequired)
+    : null;
+  const completion = typeof entry.completion === 'object' && entry.completion !== null
+    ? structuredClone(entry.completion)
+    : null;
+  if (completion) {
+    if (completion.day == null && completedOnDay != null) {
+      completion.day = completedOnDay;
+    }
+    if (completion.hoursLogged == null && hoursLogged != null) {
+      completion.hoursLogged = hoursLogged;
+    }
+  }
+
   return {
     id: typeof entry.id === 'string' && entry.id ? entry.id : `accepted-${offerId}-${createId()}`,
     offerId,
@@ -197,7 +215,10 @@ function normalizeAcceptedOffer(entry, { fallbackDay = 1 } = {}) {
     instanceId,
     payout,
     status: entry.status === 'complete' ? 'complete' : 'active',
-    metadata
+    metadata,
+    completedOnDay,
+    hoursLogged,
+    completion: completion || null
   };
 }
 
@@ -225,7 +246,7 @@ export function ensureHustleMarketState(state, { fallbackDay = 1 } = {}) {
 
   const normalizedAccepted = accepted
     .map(entry => normalizeAcceptedOffer(entry, { fallbackDay: normalizedFallbackDay }))
-    .filter(entry => entry && entry.deadlineDay >= normalizedFallbackDay);
+    .filter(entry => entry && (entry.status === 'complete' || entry.deadlineDay >= normalizedFallbackDay));
 
   const acceptedByOffer = new Map();
   normalizedAccepted.forEach(entry => {
@@ -244,12 +265,24 @@ export function ensureHustleMarketState(state, { fallbackDay = 1 } = {}) {
     normalizedOffersById.set(offer.id, offer);
     const acceptedEntry = acceptedByOffer.get(offer.id);
     if (acceptedEntry) {
-      offer.claimed = true;
-      offer.status = 'claimed';
-      offer.claimedOnDay = acceptedEntry.acceptedOnDay;
       offer.instanceId = acceptedEntry.instanceId;
-      offer.claimMetadata = structuredClone(acceptedEntry.metadata || {});
+      offer.claimedOnDay = acceptedEntry.acceptedOnDay;
       offer.claimDeadlineDay = acceptedEntry.deadlineDay;
+      if (acceptedEntry.status === 'complete') {
+        offer.claimed = false;
+        offer.status = 'complete';
+        offer.completedOnDay = acceptedEntry.completedOnDay ?? acceptedEntry.acceptedOnDay;
+        offer.completedInstanceId = acceptedEntry.instanceId;
+        offer.completionHoursLogged = acceptedEntry.hoursLogged ?? null;
+        offer.claimMetadata = structuredClone(acceptedEntry.metadata || {});
+      } else {
+        offer.claimed = true;
+        offer.status = 'claimed';
+        offer.claimMetadata = structuredClone(acceptedEntry.metadata || {});
+        delete offer.completedOnDay;
+        delete offer.completedInstanceId;
+        delete offer.completionHoursLogged;
+      }
     } else {
       offer.claimed = false;
       offer.status = 'available';
@@ -257,6 +290,9 @@ export function ensureHustleMarketState(state, { fallbackDay = 1 } = {}) {
       offer.instanceId = null;
       delete offer.claimMetadata;
       delete offer.claimDeadlineDay;
+      delete offer.completedOnDay;
+      delete offer.completedInstanceId;
+      delete offer.completionHoursLogged;
     }
   });
 
@@ -361,6 +397,9 @@ export function getMarketAvailableOffers(state, {
   const marketState = ensureHustleMarketState(state, { fallbackDay });
   return marketState.offers
     .filter(offer => {
+      if (offer.status === 'complete') {
+        return false;
+      }
       if (!includeClaimed && offer.claimed) {
         return false;
       }
@@ -374,7 +413,8 @@ export function getMarketAvailableOffers(state, {
 
 export function getMarketClaimedOffers(state, {
   day,
-  includeExpired = false
+  includeExpired = false,
+  includeCompleted = false
 } = {}) {
   if (!state) {
     return [];
@@ -382,8 +422,65 @@ export function getMarketClaimedOffers(state, {
   const fallbackDay = clampDay(day ?? state.day ?? 1, 1);
   const marketState = ensureHustleMarketState(state, { fallbackDay });
   return marketState.accepted
-    .filter(entry => includeExpired || entry.deadlineDay >= fallbackDay)
+    .filter(entry => includeCompleted || entry.status !== 'complete')
+    .filter(entry => {
+      if (entry.status === 'complete') {
+        return includeCompleted;
+      }
+      return includeExpired || entry.deadlineDay >= fallbackDay;
+    })
     .map(entry => structuredClone(entry));
+}
+
+export function completeHustleMarketInstance(state, instanceId, {
+  completionDay,
+  hoursLogged
+} = {}) {
+  if (!state || !instanceId) {
+    return false;
+  }
+
+  const fallbackDay = clampDay(completionDay ?? state.day ?? 1, 1);
+  const marketState = ensureHustleMarketState(state, { fallbackDay });
+
+  const entry = marketState.accepted.find(item => item.instanceId === instanceId);
+  if (!entry) {
+    return false;
+  }
+
+  const resolvedCompletionDay = clampDay(completionDay ?? fallbackDay, entry.acceptedOnDay);
+  const resolvedHours = hoursLogged != null
+    ? clampNonNegativeNumber(hoursLogged, entry.hoursRequired ?? hoursLogged)
+    : entry.hoursLogged ?? null;
+
+  entry.status = 'complete';
+  entry.completedOnDay = resolvedCompletionDay;
+  if (resolvedHours != null) {
+    entry.hoursLogged = resolvedHours;
+  }
+  entry.completed = true;
+  entry.completion = {
+    ...(typeof entry.completion === 'object' && entry.completion !== null ? structuredClone(entry.completion) : {}),
+    day: resolvedCompletionDay,
+    hoursLogged: resolvedHours
+  };
+
+  const offer = marketState.offers.find(item => item.id === entry.offerId);
+  if (offer) {
+    offer.status = 'complete';
+    offer.claimed = false;
+    offer.completedOnDay = resolvedCompletionDay;
+    offer.completedInstanceId = entry.instanceId;
+    offer.completionHoursLogged = resolvedHours ?? null;
+    offer.instanceId = entry.instanceId;
+    offer.claimedOnDay = entry.acceptedOnDay;
+    offer.claimDeadlineDay = entry.deadlineDay;
+    offer.claimMetadata = structuredClone(entry.metadata || {});
+  }
+
+  ensureHustleMarketState(state, { fallbackDay });
+
+  return true;
 }
 
 export { DEFAULT_STATE as DEFAULT_HUSTLE_MARKET_STATE };

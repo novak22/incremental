@@ -1,6 +1,7 @@
 import { createId, toNumber } from '../../core/helpers.js';
 import { getActionState, getState } from '../../core/state.js';
 import { markDirty } from '../../core/events/invalidationBus.js';
+import { completeHustleMarketInstance } from '../../core/state/slices/hustleMarket.js';
 
 const FLOAT_PRECISION = 4;
 
@@ -277,6 +278,14 @@ export function completeActionInstance(definition, instance, context = {}) {
       stored.progress.hoursLogged = roundHours(stored.hoursLogged);
     }
   }
+
+  const completionHours = Number(stored.hoursLogged);
+  const completionPayload = { completionDay };
+  if (Number.isFinite(completionHours) && completionHours >= 0) {
+    completionPayload.hoursLogged = completionHours;
+  }
+  completeHustleMarketInstance(state, stored.id, completionPayload);
+
   markDirty('actions');
   return stored;
 }
