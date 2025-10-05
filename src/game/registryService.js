@@ -24,13 +24,19 @@ export function loadRegistry(definitions = {}) {
 
   const actions = Array.isArray(prepared.actions) && prepared.actions.length
     ? prepared.actions
-    : prepared.hustles || [];
+    : Array.isArray(prepared.hustles)
+      ? prepared.hustles
+      : [];
+
+  const hustles = Array.isArray(prepared.hustles) && prepared.hustles.length
+    ? prepared.hustles
+    : actions;
 
   registrySnapshot = {
     actions,
     assets: prepared.assets,
     upgrades: prepared.upgrades,
-    hustles: prepared.hustles && !prepared.actions?.length ? prepared.hustles : actions
+    hustles
   };
   buildMaps(registrySnapshot);
   return registrySnapshot;
@@ -56,7 +62,7 @@ export function getRegistry() {
 }
 
 export function getHustles() {
-  return getRegistry().actions;
+  return getRegistry().hustles;
 }
 
 export function getActions() {
@@ -94,4 +100,3 @@ export function getMetricDefinition(metricId) {
   ensureLoaded();
   return metricIndex.get(metricId) || null;
 }
-

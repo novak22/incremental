@@ -1,6 +1,6 @@
 import { formatHours, formatMoney } from '../../core/helpers.js';
 import { clampNumber } from './formatters.js';
-import { getHustles } from '../../game/registryService.js';
+import { getActions } from '../../game/registryService.js';
 import { KNOWLEDGE_TRACKS, getKnowledgeProgress } from '../../game/requirements.js';
 import { registerActionProvider } from '../actions/registry.js';
 
@@ -38,9 +38,9 @@ function buildStudyEnrollmentSuggestions(state = {}) {
     return suggestions;
   }
 
-  for (const hustle of getHustles()) {
-    if (hustle?.tag?.type !== 'study') continue;
-    const action = hustle?.action;
+  for (const actionDefinition of getActions()) {
+    if (actionDefinition?.tag?.type !== 'study') continue;
+    const action = actionDefinition?.action;
     if (!action?.onClick) continue;
 
     let disabled = false;
@@ -55,7 +55,7 @@ function buildStudyEnrollmentSuggestions(state = {}) {
     }
     if (disabled) continue;
 
-    const timeCost = Math.max(0, clampNumber(action.timeCost ?? hustle.time));
+    const timeCost = Math.max(0, clampNumber(action.timeCost ?? actionDefinition.time));
     const tuition = Math.max(0, clampNumber(action.moneyCost));
     const metaParts = [];
     if (tuition > 0) {
@@ -70,9 +70,9 @@ function buildStudyEnrollmentSuggestions(state = {}) {
       : action.label || 'Enroll';
 
     suggestions.push({
-      id: hustle.id,
-      title: hustle.name,
-      subtitle: hustle.description,
+      id: actionDefinition.id,
+      title: actionDefinition.name,
+      subtitle: actionDefinition.description,
       meta: metaParts.join(' • '),
       buttonLabel,
       onClick: action.onClick,
@@ -145,4 +145,3 @@ registerActionProvider(({ state }) => {
     }
   };
 }, 10);
-

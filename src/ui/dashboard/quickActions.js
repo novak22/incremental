@@ -1,7 +1,7 @@
 import { formatHours, formatMoney } from '../../core/helpers.js';
 import { clampNumber } from './formatters.js';
 import { getAssetState } from '../../core/state.js';
-import { getAssets, getHustles } from '../../game/registryService.js';
+import { getAssets, getActions } from '../../game/registryService.js';
 import {
   canPerformQualityAction,
   getQualityActions,
@@ -71,32 +71,32 @@ function estimateRemainingRuns(asset, instance, action, remaining, state) {
 
 export function buildQuickActions(state) {
   const items = [];
-  for (const hustle of getHustles()) {
-    if (hustle?.tag?.type === 'study') continue;
-    if (!hustle?.action?.onClick) continue;
-    const usage = typeof hustle.getDailyUsage === 'function' ? hustle.getDailyUsage(state) : null;
+  for (const action of getActions()) {
+    if (action?.tag?.type === 'study') continue;
+    if (!action?.action?.onClick) continue;
+    const usage = typeof action.getDailyUsage === 'function' ? action.getDailyUsage(state) : null;
     const remainingRuns = Number.isFinite(usage?.remaining)
       ? Math.max(0, usage.remaining)
       : Infinity;
     const usageLimit = usage?.limit;
     const repeatable = remainingRuns > 0 && (!Number.isFinite(usageLimit) || usageLimit !== 1);
-    const disabled = typeof hustle.action.disabled === 'function'
-      ? hustle.action.disabled(state)
-      : Boolean(hustle.action.disabled);
+    const disabled = typeof action.action.disabled === 'function'
+      ? action.action.disabled(state)
+      : Boolean(action.action.disabled);
     if (disabled) continue;
-    const payout = clampNumber(hustle.payout?.amount);
-    const time = clampNumber(hustle.time || hustle.action?.timeCost) || 1;
+    const payout = clampNumber(action.payout?.amount);
+    const time = clampNumber(action.time || action.action?.timeCost) || 1;
     const roi = time > 0 ? payout / time : payout;
     const payoutText = `$${formatMoney(payout)}`;
     const timeText = formatHours(time);
     items.push({
-      id: hustle.id,
-      label: hustle.name,
-      primaryLabel: typeof hustle.action.label === 'function'
-        ? hustle.action.label(state)
-        : hustle.action.label || 'Queue',
+      id: action.id,
+      label: action.name,
+      primaryLabel: typeof action.action.label === 'function'
+        ? action.action.label(state)
+        : action.action.label || 'Queue',
       description: `${formatMoney(payout)} payout • ${formatHours(time)}`,
-      onClick: hustle.action.onClick,
+      onClick: action.action.onClick,
       roi,
       timeCost: time,
       payout,
@@ -329,4 +329,3 @@ registerActionProvider(({ state }) => {
     }
   };
 }, 20);
-

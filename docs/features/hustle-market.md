@@ -6,7 +6,7 @@
 - Persist market state so day transitions can detect whether a reroll is required or if existing contracts still apply.
 
 ## Template & Variant Structure
-- All base hustles continue to live in `HUSTLE_TEMPLATES` (alias `HUSTLES`) so the registry keeps a stable snapshot of every available gig.
+- All instant hustles continue to live in `HUSTLE_TEMPLATES` (alias `HUSTLES`) so the registry keeps a stable snapshot of every market-ready gig. Study tracks flow through the broader `ACTIONS` export but never appear in the daily market roll.
 - Templates may define a `market` block with:
   - `variants`: optional array of variant configs (id, label, weight, duration, availableAfterDays, metadata, definitionId).
   - `durationDays` and `availableAfterDays`: defaults applied when variants omit explicit values.
