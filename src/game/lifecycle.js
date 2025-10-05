@@ -7,10 +7,10 @@ import { getTimeCap } from './time.js';
 import { flushDirty, markAllDirty, markDirty } from '../core/events/invalidationBus.js';
 import { advanceKnowledgeTracks, allocateDailyStudy } from './requirements.js';
 import { archiveDailyMetrics, resetDailyMetrics } from './metrics.js';
-import { rerollNichePopularity } from './assets/niches.js';
 import { computeDailySummary } from './summary.js';
 import { advanceEventsAfterDay } from './events/index.js';
 import { archiveNicheAnalytics } from './analytics/niches.js';
+import { syncNicheTrendSnapshots } from './events/syncNicheTrendSnapshots.js';
 
 function flushUiWithFallback(fallbackToFull = false) {
   const flushed = flushDirty();
@@ -30,6 +30,7 @@ export function endDay(auto = false) {
 
   closeOutDay();
   advanceEventsAfterDay(state.day);
+  syncNicheTrendSnapshots(state);
   advanceKnowledgeTracks();
   markAllDirty();
   flushUiWithFallback(true);
@@ -59,7 +60,6 @@ export function endDay(auto = false) {
       hustleState.lastRunDay = state.day;
     }
   }
-  rerollNichePopularity();
   state.dailyBonusTime = 0;
   getUpgradeState('coffee').usedToday = 0;
   state.timeLeft = getTimeCap();

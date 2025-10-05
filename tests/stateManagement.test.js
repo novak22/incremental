@@ -149,10 +149,9 @@ test('ensureNicheStateShape repairs popularity map and fallback day', () => {
   assert.ok(state.niches.popularity.techInnovators, 'known niches should be kept');
   assert.equal(state.niches.popularity.fake, undefined, 'unknown niches should be removed');
   assert.equal(state.niches.popularity.techInnovators.previousScore, 15);
-  assert.ok(
-    state.niches.popularity.techInnovators.score >= 0 &&
-      state.niches.popularity.techInnovators.score <= 100
-  );
+  assert.equal(state.niches.popularity.techInnovators.score, 100);
+  assert.equal(state.niches.popularity.techInnovators.delta, 85);
+  assert.equal(state.niches.popularity.techInnovators.label, 'Blazing');
 });
 
 test('resetState clears runtime progress and log history', () => {

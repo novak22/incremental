@@ -1,4 +1,8 @@
 import nicheDefinitions from '../../game/assets/nicheData.js';
+import {
+  createNeutralPopularitySnapshot,
+  sanitizePopularitySnapshot
+} from '../../game/niches/popularitySnapshot.js';
 
 export const NICHE_ANALYTICS_HISTORY_LIMIT = 7;
 
@@ -41,6 +45,7 @@ function sanitizeAnalyticsEntry(entry) {
         .filter(value => value !== null)
         .slice(-NICHE_ANALYTICS_HISTORY_LIMIT)
     : [];
+  const snapshot = sanitizePopularitySnapshot(popularity);
   const sanitized = {
     id,
     definition: { id, name: definitionName },
@@ -50,12 +55,13 @@ function sanitizeAnalyticsEntry(entry) {
     trendImpact: Math.round(sanitizeNumber(entry.trendImpact, 0) * 100) / 100,
     baselineEarnings: Math.round(sanitizeNumber(entry.baselineEarnings, 0) * 100) / 100,
     popularity: {
-      score: sanitizeScore(popularity.score),
-      previousScore: sanitizeScore(popularity.previousScore),
-      delta: sanitizeOptionalNumber(popularity.delta),
-      multiplier: Number.isFinite(Number(popularity.multiplier))
-        ? Number(popularity.multiplier)
-        : 1,
+      score: snapshot.score,
+      previousScore: snapshot.previousScore,
+      delta: snapshot.delta,
+      multiplier: snapshot.multiplier,
+      label: snapshot.label,
+      summary: snapshot.summary,
+      tone: snapshot.tone,
       history
     },
     assetBreakdown: Array.isArray(entry.assetBreakdown)
@@ -124,13 +130,6 @@ export function isValidNicheId(id) {
   return getNicheIdSet().has(id);
 }
 
-function rollInitialNicheScore() {
-  const min = 25;
-  const max = 95;
-  const spread = max - min;
-  return Math.max(0, Math.min(100, Math.round(min + Math.random() * spread)));
-}
-
 export function ensureNicheStateShape(target, { fallbackDay = 1 } = {}) {
   if (!target) return;
 
@@ -146,17 +145,10 @@ export function ensureNicheStateShape(target, { fallbackDay = 1 } = {}) {
   }
 
   for (const definition of nicheDefinitions) {
-    const entry = nicheState.popularity[definition.id] || {};
-    const score = Number(entry.score);
-    const previousScore = Number(entry.previousScore);
-    nicheState.popularity[definition.id] = {
-      score: Number.isFinite(score)
-        ? Math.max(0, Math.min(100, Math.round(score)))
-        : rollInitialNicheScore(),
-      previousScore: Number.isFinite(previousScore)
-        ? Math.max(0, Math.min(100, Math.round(previousScore)))
-        : null
-    };
+    const entry = nicheState.popularity[definition.id];
+    nicheState.popularity[definition.id] = entry
+      ? sanitizePopularitySnapshot(entry)
+      : createNeutralPopularitySnapshot();
   }
 
   const storedDay = Number(nicheState.lastRollDay);

@@ -1,12 +1,7 @@
-import { findEvents } from '../../core/state/events.js';
 import { getNicheDefinitions } from '../assets/nicheData.js';
 import { NICHE_EVENT_BLUEPRINTS } from './config.js';
 import { logNicheEventStart } from './logging.js';
-
-function getNicheEvents(state, nicheId) {
-  if (!nicheId) return [];
-  return findEvents(state, event => event.target?.type === 'niche' && event.target.nicheId === nicheId);
-}
+import { getNicheEvents } from './getNicheEvents.js';
 
 export function createNicheEvents({ clampChance, buildEventFromBlueprint, hasEventWithTone }) {
   function maybeSpawnNicheEvents({ state, day }) {
@@ -49,3 +44,5 @@ export function createNicheEvents({ clampChance, buildEventFromBlueprint, hasEve
 export function getNicheEventsForState(state, nicheId) {
   return getNicheEvents(state, nicheId);
 }
+
+export { getNicheEvents };
