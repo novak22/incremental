@@ -2,8 +2,8 @@ import { formatMoney } from '../../core/helpers.js';
 import { getState } from '../../core/state.js';
 import { executeAction } from '../actions.js';
 import { checkDayEnd } from '../lifecycle.js';
+import { assistantUpgrade as assistantConfig } from '../data/economyConfig.js';
 import {
-  ASSISTANT_CONFIG,
   canFireAssistant,
   canHireAssistant,
   fireAssistant,
@@ -14,12 +14,12 @@ import {
 
 function buildAssistantDetails() {
   return [
-    () => `💵 Hiring Cost: <strong>$${formatMoney(ASSISTANT_CONFIG.hiringCost)}</strong>`,
-    () => `👥 Team Size: <strong>${getAssistantCount()} / ${ASSISTANT_CONFIG.maxAssistants}</strong>`,
-    () => `⏳ Support: <strong>+${ASSISTANT_CONFIG.hoursPerAssistant}h per assistant</strong>`,
+    () => `💵 Hiring Cost: <strong>$${formatMoney(assistantConfig.hiringCost)}</strong>`,
+    () => `👥 Team Size: <strong>${getAssistantCount()} / ${assistantConfig.maxAssistants}</strong>`,
+    () => `⏳ Support: <strong>+${assistantConfig.hoursPerAssistant}h per assistant</strong>`,
     () =>
       `💰 Payroll: <strong>$${formatMoney(
-        ASSISTANT_CONFIG.hourlyRate * ASSISTANT_CONFIG.hoursPerAssistant
+        assistantConfig.hourlyRate * assistantConfig.hoursPerAssistant
       )}</strong> each day per assistant`,
     () => `📅 Current Payroll: <strong>$${formatMoney(getAssistantDailyCost())} / day</strong>`
   ];
@@ -49,7 +49,7 @@ function createFireButton(card) {
 export const assistantHooks = {
   details: buildAssistantDetails(),
   actionLabel: () =>
-    getAssistantCount() >= ASSISTANT_CONFIG.maxAssistants ? 'Assistant Team Full' : 'Hire Assistant',
+    getAssistantCount() >= assistantConfig.maxAssistants ? 'Assistant Team Full' : 'Hire Assistant',
   disabled: () => !canHireAssistant(),
   onPurchase: () => {
     hireAssistant();

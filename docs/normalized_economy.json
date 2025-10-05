@@ -1299,6 +1299,11 @@
       "maintenance_cost": 0,
       "quality_curve": [],
       "category": "infra",
+      "hiring_cost": 180,
+      "bonus_minutes_per_day": 180,
+      "daily_wage": 24,
+      "hourly_wage": 8,
+      "max_count": 4,
       "notes": "Hire cost $180, adds 180 bonus minutes/day, $24 daily wage."
     },
     "serverRack": {

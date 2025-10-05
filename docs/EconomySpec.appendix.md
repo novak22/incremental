@@ -1,6 +1,6 @@
 # Economy Specification Appendix (Auto-generated)
 
-Last generated: 2025-10-05T15:45:29.537Z
+Last generated: 2025-10-05T17:07:42.069Z
 
 ## Asset Summary
 | Asset | Setup Schedule | Setup Cost | Maintenance Time | Maintenance Cost | Base Income | Variance |
