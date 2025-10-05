@@ -1,7 +1,7 @@
 import { getElement } from '../../elements/registry.js';
 import { getState } from '../../../core/state.js';
 import { markAllLogEntriesRead, markLogEntryRead } from '../../../core/log.js';
-import { buildEventLogModel } from '../../dashboard/model.js';
+import { buildEventLogModel } from '../../dashboard/notificationsModel.js';
 
 const TYPE_LABELS = {
   success: 'Success',

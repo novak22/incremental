@@ -97,7 +97,7 @@ test('notifications badge ignores auto-read log types', async () => {
 
   const stateModule = await import('../../src/core/state.js');
   const logModule = await import('../../src/core/log.js');
-  const { buildEventLogModel } = await import('../../src/ui/dashboard/model.js');
+  const { buildEventLogModel } = await import('../../src/ui/dashboard/notificationsModel.js');
   const presenterModule = await import('../../src/ui/views/browser/notificationsPresenter.js');
   const presenter = presenterModule.default;
 
