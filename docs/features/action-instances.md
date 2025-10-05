@@ -18,3 +18,7 @@ availability limits, progress metadata, and an `instances` ledger so the game ca
 - `createInstantHustle` now creates an accepted instance via `acceptActionInstance` before executing, and `completeActionInstance`
   stores the final payout, hours logged, and applied bonuses.
 - End-of-day processing clears daily limits on the `actions` slice while leaving historical instances intact for summaries.
+- Completed instances linger through the day they finish and then quietly retire the following morning so the registry keeps
+  focus on actionable commitments while still surfacing fresh completions in recaps.
+- The slice now preserves up to 100 in-flight or recently-finished instances per action so long-lived streaks stay visible
+  without crowding out new work.

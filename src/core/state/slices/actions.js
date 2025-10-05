@@ -4,7 +4,8 @@ import knowledgeTrackData from '../../../game/requirements/data/knowledgeTracks.
 import { createRegistrySliceManager } from './factory.js';
 
 const KNOWLEDGE_TRACKS = knowledgeTrackData;
-const MAX_ACTION_INSTANCES = 50;
+const MAX_ACTION_INSTANCES = 100;
+const COMPLETED_RETENTION_DAYS = 1;
 
 function isInstanceCompleted(instance) {
   if (!instance || typeof instance !== 'object') {
@@ -19,6 +20,33 @@ function isInstanceCompleted(instance) {
     }
   }
   return false;
+}
+
+function resolveCompletionDay(instance) {
+  if (!instance || typeof instance !== 'object') {
+    return null;
+  }
+  const candidates = [
+    instance.completedOnDay,
+    instance.progress?.completedOnDay,
+    instance.progress?.lastWorkedDay,
+    instance.acceptedOnDay
+  ];
+  for (const value of candidates) {
+    const parsed = Math.floor(Number(value));
+    if (Number.isFinite(parsed) && parsed > 0) {
+      return parsed;
+    }
+  }
+  return null;
+}
+
+function shouldRetireInstance(instance, currentDay) {
+  const completionDay = resolveCompletionDay(instance);
+  if (!Number.isFinite(currentDay) || completionDay == null) {
+    return false;
+  }
+  return currentDay - completionDay >= COMPLETED_RETENTION_DAYS;
 }
 
 function resolveDefinition(id) {
@@ -214,6 +242,7 @@ function normalizeActionState(definition, entry = {}, context) {
   const defaults = createDefaultActionState(definition);
   const normalized = { ...defaults };
   const existing = typeof entry === 'object' && entry !== null ? entry : {};
+  const currentDay = Math.max(1, Math.floor(Number(context?.state?.day) || 1));
 
   for (const [key, value] of Object.entries(existing)) {
     if (key === 'instances') continue;
@@ -245,7 +274,9 @@ function normalizeActionState(definition, entry = {}, context) {
 
   sourceInstances.forEach((instance, index) => {
     if (isInstanceCompleted(instance)) {
-      completedIndices.push(index);
+      if (!shouldRetireInstance(instance, currentDay)) {
+        completedIndices.push(index);
+      }
     } else {
       activeOrPendingIndices.push(index);
     }
