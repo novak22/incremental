@@ -473,7 +473,13 @@ export function buildActionQueue({ state, summary = {} } = {}) {
   }
 
   snapshots.forEach(snapshot => {
-    queue.entries.push(...snapshot.entries);
+    const snapshotEntries = Array.isArray(snapshot?.entries) ? snapshot.entries : [];
+    snapshotEntries.forEach(entry => {
+      if (entry?.excludeFromQueue || entry?.raw?.excludeFromQueue) {
+        return;
+      }
+      queue.entries.push(entry);
+    });
     applyMetrics(queue, snapshot.metrics);
   });
 

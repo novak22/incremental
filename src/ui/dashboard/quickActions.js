@@ -144,6 +144,7 @@ export function buildQuickActions(state) {
       remainingDays,
       schedule,
       offer,
+      excludeFromQueue: true,
       disabled: !requirementsMet,
       disabledReason: lockGuidance || 'Meet the prerequisites before accepting this hustle.'
     };
@@ -167,7 +168,8 @@ export function buildQuickActions(state) {
       repeatable: false,
       remainingRuns: 0,
       remainingDays: null,
-      schedule: 'onCompletion'
+      schedule: 'onCompletion',
+      excludeFromQueue: true
     });
   }
 
@@ -326,7 +328,8 @@ export function buildQuickActionModel(state = {}) {
     repeatable: action.repeatable,
     remainingRuns: action.remainingRuns,
     disabled: action.disabled,
-    disabledReason: action.disabledReason
+    disabledReason: action.disabledReason,
+    excludeFromQueue: action.excludeFromQueue === true
   }));
   const baseHours = clampNumber(state.baseTime) + clampNumber(state.bonusTime) + clampNumber(state.dailyBonusTime);
   const hoursAvailable = Math.max(0, clampNumber(state.timeLeft));

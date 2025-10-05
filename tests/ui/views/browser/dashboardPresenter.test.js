@@ -40,9 +40,14 @@ test('renderTodo falls back to the current state when none is provided', async (
 
     assert.ok(capturedModel, 'todo widget should receive a model to render');
     assert.ok(Array.isArray(capturedModel.entries), 'model should include queue entries');
+    assert.equal(capturedModel.entries.length, 0, 'queue should be empty when no tasks are accepted');
     const guidanceEntry = capturedModel.entries.find(entry => entry?.id === 'hustles:no-offers');
-    assert.ok(guidanceEntry, 'queue should include the no-offers guidance when no state is supplied');
-    assert.equal(guidanceEntry.buttonLabel, 'Check back tomorrow');
+    assert.ok(!guidanceEntry, 'queue should hide hustle offer guidance from the todo list');
+    assert.equal(
+      capturedModel.emptyMessage,
+      'No ready actions. Check upgrades or ventures.',
+      'empty message should guide the player toward other actions'
+    );
   } finally {
     todoWidget.init = originalInit;
     todoWidget.render = originalRender;
