@@ -66,6 +66,47 @@ test('action slice hydrates defaults without clobbering overrides', () => {
   );
 });
 
+test('knowledge study instances wait for enrollment before seeding', () => {
+  const state = createBaseState();
+  const trackId = 'outlineMastery';
+  const actionId = `study-${trackId}`;
+  state.progress.knowledge[trackId] = {
+    daysCompleted: 0,
+    studiedToday: false,
+    completed: false,
+    enrolled: false,
+    enrolledOnDay: null
+  };
+
+  ensureActionSlice(state);
+  ensureActionSlice(state);
+
+  let studyState = getActionSliceState(state, actionId);
+  assert.ok(Array.isArray(studyState.instances), 'study slice should initialize an instances array');
+  assert.equal(
+    studyState.instances.length,
+    0,
+    'inactive knowledge tracks should not seed study instances before enrollment'
+  );
+
+  const progress = state.progress.knowledge[trackId];
+  progress.enrolled = true;
+  progress.enrolledOnDay = state.day;
+
+  ensureActionSlice(state);
+  ensureActionSlice(state);
+
+  studyState = getActionSliceState(state, actionId);
+  assert.equal(studyState.instances.length, 1, 'activating enrollment should seed a single study instance');
+  const [seededInstance] = studyState.instances;
+  assert.equal(seededInstance.accepted, true, 'seeded instance should be accepted when enrollment is active');
+  assert.equal(seededInstance.status, 'active', 'seeded instance should start in an active state');
+
+  ensureActionSlice(state);
+  const repeatState = getActionSliceState(state, actionId);
+  assert.equal(repeatState.instances.length, 1, 'subsequent ensures should not duplicate study instances');
+});
+
 test('asset slice normalizes instances and respects active shortcut', () => {
   const state = createBaseState();
   state.assets.blog = {

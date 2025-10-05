@@ -302,6 +302,11 @@ function seedKnowledgeStudyInstances({ state, sliceState }) {
 
   for (const [trackId, progress] of Object.entries(knowledge)) {
     if (!progress) continue;
+    const isEnrolled = progress.enrolled === true;
+    const isCompleted = progress.completed === true;
+    if (!isEnrolled && !isCompleted) {
+      continue;
+    }
     const definitionId = `study-${trackId}`;
     const definition = resolveDefinition(definitionId);
     if (!definition) continue;
