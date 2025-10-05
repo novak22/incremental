@@ -1,11 +1,158 @@
 import { ACTIONS, INSTANT_ACTIONS, STUDY_ACTIONS } from './actions/definitions.js';
-import { rollDailyOffers, getAvailableOffers } from './hustles/market.js';
+import { rollDailyOffers, getAvailableOffers, getClaimedOffers } from './hustles/market.js';
+import { getState } from '../core/state.js';
+import { acceptActionInstance } from './actions/progress.js';
+import {
+  ensureHustleMarketState,
+  claimHustleMarketOffer,
+  getMarketOfferById,
+  getMarketClaimedOffers
+} from '../core/state/slices/hustleMarket.js';
 
 export const HUSTLE_TEMPLATES = INSTANT_ACTIONS;
 export const HUSTLES = HUSTLE_TEMPLATES;
 export const KNOWLEDGE_HUSTLES = STUDY_ACTIONS;
 
 export { ACTIONS, INSTANT_ACTIONS, STUDY_ACTIONS };
-export { rollDailyOffers, getAvailableOffers };
+export { rollDailyOffers, getAvailableOffers, getClaimedOffers };
 
 export * from './hustles/helpers.js';
+
+const TEMPLATE_BY_ID = new Map(HUSTLE_TEMPLATES.map(template => [template.id, template]));
+
+function resolveFirstNumber(...values) {
+  for (const value of values) {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed) && parsed >= 0) {
+      return parsed;
+    }
+  }
+  return null;
+}
+
+function resolveFirstString(...values) {
+  for (const value of values) {
+    if (typeof value === 'string' && value.trim().length) {
+      return value.trim();
+    }
+  }
+  return null;
+}
+
+function resolveOfferHours(offer, template) {
+  const metadata = offer?.metadata || {};
+  const requirements = typeof metadata.requirements === 'object' && metadata.requirements !== null
+    ? metadata.requirements
+    : {};
+  return resolveFirstNumber(
+    metadata.hoursRequired,
+    requirements.hours,
+    requirements.timeHours,
+    metadata.timeHours,
+    template?.time,
+    template?.action?.timeCost
+  );
+}
+
+function resolveOfferPayoutAmount(offer, template) {
+  const metadata = offer?.metadata || {};
+  const payout = typeof metadata.payout === 'object' && metadata.payout !== null
+    ? metadata.payout
+    : {};
+  return resolveFirstNumber(
+    metadata.payoutAmount,
+    payout.amount,
+    template?.payout?.amount
+  );
+}
+
+function resolveOfferPayoutSchedule(offer) {
+  const metadata = offer?.metadata || {};
+  const payout = typeof metadata.payout === 'object' && metadata.payout !== null
+    ? metadata.payout
+    : {};
+  return resolveFirstString(
+    metadata.payoutSchedule,
+    payout.schedule
+  ) || 'onCompletion';
+}
+
+export function acceptHustleOffer(offerOrId, { state = getState() } = {}) {
+  const workingState = state || getState();
+  if (!workingState) {
+    return null;
+  }
+
+  const fallbackDay = Math.max(1, Math.floor(Number(workingState.day) || 1));
+  ensureHustleMarketState(workingState, { fallbackDay });
+
+  let offer = null;
+  if (offerOrId && typeof offerOrId === 'object') {
+    offer = offerOrId;
+  } else if (typeof offerOrId === 'string') {
+    offer = getMarketOfferById(workingState, offerOrId, { day: fallbackDay });
+  }
+
+  if (!offer || !offer.id) {
+    return null;
+  }
+
+  if (offer.claimed) {
+    const claimed = getMarketClaimedOffers(workingState, { day: fallbackDay, includeExpired: true })
+      .find(entry => entry.offerId === offer.id);
+    return claimed || null;
+  }
+
+  let template = TEMPLATE_BY_ID.get(offer.templateId) || TEMPLATE_BY_ID.get(offer.definitionId);
+  if (!template) {
+    template = ACTIONS.find(definition => definition.id === offer.definitionId || definition.id === offer.templateId) || null;
+    if (template) {
+      TEMPLATE_BY_ID.set(template.id, template);
+    }
+  }
+
+  if (!template) {
+    return null;
+  }
+
+  const metadata = offer.metadata || {};
+  const hoursRequired = resolveOfferHours(offer, template);
+  const deadlineDay = Number.isFinite(Number(offer.expiresOnDay))
+    ? Math.max(fallbackDay, Math.floor(Number(offer.expiresOnDay)))
+    : null;
+  const overrides = {};
+  if (hoursRequired != null) {
+    overrides.hoursRequired = hoursRequired;
+  }
+  if (deadlineDay != null) {
+    overrides.deadlineDay = deadlineDay;
+  }
+
+  const instance = acceptActionInstance(template, {
+    state: workingState,
+    metadata,
+    overrides
+  });
+
+  if (!instance) {
+    return null;
+  }
+
+  const payoutAmount = resolveOfferPayoutAmount(offer, template);
+  const payoutSchedule = resolveOfferPayoutSchedule(offer);
+  const acceptedOnDay = Math.max(1, Math.floor(Number(workingState.day) || offer.availableOnDay || 1));
+
+  const payoutDetails = { schedule: payoutSchedule };
+  if (payoutAmount != null) {
+    payoutDetails.amount = payoutAmount;
+  }
+
+  return claimHustleMarketOffer(workingState, offer.id, {
+    acceptedOnDay,
+    deadlineDay: deadlineDay ?? offer.availableOnDay,
+    hoursRequired: hoursRequired != null ? hoursRequired : instance.hoursRequired,
+    instanceId: instance.id,
+    payout: payoutDetails,
+    metadata
+  });
+}

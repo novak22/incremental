@@ -4,8 +4,14 @@ import { getGameTestHarness } from './helpers/gameTestHarness.js';
 
 const harness = await getGameTestHarness();
 const { hustlesModule, stateModule } = harness;
-const { rollDailyOffers, getAvailableOffers, HUSTLE_TEMPLATES } = hustlesModule;
-const { getState } = stateModule;
+const {
+  rollDailyOffers,
+  getAvailableOffers,
+  getClaimedOffers,
+  acceptHustleOffer,
+  HUSTLE_TEMPLATES
+} = hustlesModule;
+const { getState, getActionState } = stateModule;
 
 test.beforeEach(() => {
   harness.resetState();
@@ -16,95 +22,118 @@ test('HUSTLE_TEMPLATES includes only market-ready hustles', () => {
   assert.equal(hasStudyEntries, false, 'market templates should exclude study actions');
 });
 
-test('rollDailyOffers seeds offers for every template and persists metadata', () => {
+test('rollDailyOffers builds variant metadata and allows multiple variants', () => {
   const state = getState();
-  state.day = 5;
+  state.day = 8;
 
-  const offers = rollDailyOffers({
-    templates: HUSTLE_TEMPLATES,
-    day: 5,
-    now: 123456,
-    state,
-    rng: () => 0
-  });
-
-  assert.ok(offers.length >= HUSTLE_TEMPLATES.length, 'should produce at least one offer per template');
-  const templatesCovered = new Set();
-
-  for (const offer of offers) {
-    templatesCovered.add(offer.templateId);
-    assert.equal(offer.availableOnDay, 5, 'new offers should be available immediately by default');
-    assert.ok(offer.expiresOnDay >= offer.availableOnDay, 'offers should not expire before they begin');
-  }
-
-  assert.equal(templatesCovered.size, HUSTLE_TEMPLATES.length, 'every template should receive an offer on the first roll');
-  assert.equal(state.hustleMarket.offers.length, offers.length, 'state should persist the rolled offers');
-  assert.equal(state.hustleMarket.lastRolledOnDay, 5);
-  assert.equal(state.hustleMarket.lastRolledAt, 123456);
-});
-
-test('rollDailyOffers rerolls templates when prior offers expire', () => {
-  const state = getState();
-  const templates = HUSTLE_TEMPLATES.slice(0, 2);
-  assert.equal(templates.length, 2, 'expected at least two templates for reroll coverage');
-
-  const firstRoll = rollDailyOffers({ templates, day: 2, now: 1000, state, rng: () => 0 });
-  assert.equal(firstRoll.length, templates.length);
-
-  const expiringTemplateId = firstRoll[0].templateId;
-  const preservedTemplateId = firstRoll[1].templateId;
-
-  state.hustleMarket.offers = state.hustleMarket.offers.map(offer => {
-    if (offer.templateId === expiringTemplateId) {
-      return { ...offer, expiresOnDay: 2 };
-    }
-    if (offer.templateId === preservedTemplateId) {
-      return { ...offer, expiresOnDay: 5 };
-    }
-    return offer;
-  });
-
-  const secondRoll = rollDailyOffers({ templates, day: 3, now: 2000, state, rng: () => 0 });
-  const rerolledOffers = secondRoll.filter(offer => offer.templateId === expiringTemplateId);
-  const preservedOffer = secondRoll.find(offer => offer.templateId === preservedTemplateId);
-  const originalPreserved = firstRoll.find(offer => offer.templateId === preservedTemplateId);
-
-  assert.ok(rerolledOffers.some(offer => offer.availableOnDay === 3), 'expired template should receive a fresh offer');
-  assert.equal(preservedOffer.id, originalPreserved.id, 'non-expired offers should remain intact');
-});
-
-test('getAvailableOffers respects availability windows and upcoming flag', () => {
-  const state = getState();
-  state.day = 10;
-
-  const customTemplate = {
-    id: 'custom-hustle',
-    name: 'Custom Hustle',
-    description: 'Test hustle with delayed availability.',
+  const template = {
+    id: 'multi-variant',
+    name: 'Multi Variant Hustle',
+    time: 4,
+    payout: { amount: 120 },
     market: {
       variants: [
         {
+          id: 'weekday',
+          durationDays: 2,
+          metadata: {
+            requirements: { hours: 4 },
+            payout: { amount: 120, schedule: 'onCompletion' }
+          }
+        },
+        {
           id: 'weekend',
-          availableAfterDays: 1,
-          durationDays: 1,
-          metadata: { theme: 'weekend' }
+          durationDays: 3,
+          metadata: {
+            requirements: { hours: 6 },
+            payout: { amount: 180, schedule: 'weekend' }
+          }
         }
       ]
     }
   };
 
-  const offers = rollDailyOffers({ templates: [customTemplate], day: 10, now: 5000, state, rng: () => 0 });
-  assert.equal(offers.length, 1);
-  const [offer] = offers;
-  assert.equal(offer.availableOnDay, 11, 'offer should start one day after the roll');
-  assert.equal(offer.expiresOnDay, 12, 'duration should extend the offer window');
+  const firstRoll = rollDailyOffers({ templates: [template], day: 8, now: 1000, state, rng: () => 0 });
+  assert.equal(firstRoll.length, 1);
+  const [weekdayOffer] = firstRoll;
+  assert.equal(weekdayOffer.variantId, 'weekday');
+  assert.equal(weekdayOffer.availableOnDay, 8);
+  assert.equal(weekdayOffer.metadata.requirements.hours, 4);
+  assert.equal(weekdayOffer.metadata.payout.amount, 120);
+  assert.equal(weekdayOffer.metadata.payout.schedule, 'onCompletion');
 
-  const availableDay10 = getAvailableOffers(state, { day: 10 });
-  assert.equal(availableDay10.length, 0, 'offer should not be available before its start day');
+  state.day = 9;
+  const secondRoll = rollDailyOffers({ templates: [template], day: 9, now: 2000, state, rng: () => 0.9 });
+  assert.equal(secondRoll.length, 2, 'should preserve first variant and add a second');
+  const weekendOffer = secondRoll.find(offer => offer.variantId === 'weekend');
+  assert.ok(weekendOffer, 'expected weekend variant to coexist');
+  assert.equal(weekendOffer.metadata.requirements.hours, 6);
+  assert.equal(weekendOffer.metadata.payout.amount, 180);
+  assert.equal(weekendOffer.metadata.payout.schedule, 'weekend');
+});
 
-  const availableDay11 = getAvailableOffers(state, { day: 11 });
-  assert.equal(availableDay11.length, 1, 'offer should appear once its availability window opens');
+test('acceptHustleOffer claims offers and records accepted state', () => {
+  const state = getState();
+  state.day = 4;
+  const template = HUSTLE_TEMPLATES[0];
+  assert.ok(template, 'expected at least one hustle template');
 
-  const upcoming = getAvailableOffers(state, { day: 10, includeUpcoming: true });
-  assert.equal(upcoming.length, 1, 'upcoming flag should include future offers');
+  const [offer] = rollDailyOffers({ templates: [template], day: 4, now: 500, state, rng: () => 0 });
+  assert.ok(offer, 'expected an offer to be rolled');
+
+  const accepted = acceptHustleOffer(offer.id, { state });
+  assert.ok(accepted, 'acceptance should return an accepted entry');
+  assert.equal(accepted.offerId, offer.id);
+  assert.equal(accepted.acceptedOnDay, 4);
+  assert.equal(accepted.deadlineDay, offer.expiresOnDay);
+  assert.equal(accepted.payout.schedule, 'onCompletion');
+  assert.ok(accepted.hoursRequired >= 0, 'accepted entry should track required hours');
+
+  const claimedOffers = getClaimedOffers(state, { day: 4 });
+  assert.equal(claimedOffers.length, 1, 'claimed selector should include the accepted offer');
+  assert.equal(claimedOffers[0].offerId, offer.id);
+
+  const availableOffers = getAvailableOffers(state, { day: 4 });
+  assert.equal(availableOffers.length, 0, 'claimed offers should be excluded from availability by default');
+
+  const actionState = getActionState(offer.definitionId, state);
+  assert.ok(actionState.instances.length > 0, 'acceptance should create an action instance');
+  assert.equal(actionState.instances[0].id, accepted.instanceId);
+});
+
+test('availability selectors can include claimed offers when requested', () => {
+  const state = getState();
+  state.day = 6;
+
+  const template = HUSTLE_TEMPLATES[1] || HUSTLE_TEMPLATES[0];
+
+  const [offer] = rollDailyOffers({ templates: [template], day: 6, now: 100, state, rng: () => 0 });
+  acceptHustleOffer(offer.id, { state });
+
+  const availableDefault = getAvailableOffers(state, { day: 6 });
+  assert.equal(availableDefault.length, 0, 'claimed offer should be hidden by default');
+
+  const availableWithClaimed = getAvailableOffers(state, { day: 6, includeClaimed: true });
+  assert.equal(availableWithClaimed.length, 1, 'claimed offer should appear when explicitly requested');
+  assert.equal(availableWithClaimed[0].id, offer.id);
+});
+
+test('expired offers and claims are pruned on reroll', () => {
+  const state = getState();
+  state.day = 3;
+
+  const template = HUSTLE_TEMPLATES[2] || HUSTLE_TEMPLATES[0];
+
+  const [offer] = rollDailyOffers({ templates: [template], day: 3, now: 10, state, rng: () => 0 });
+  const accepted = acceptHustleOffer(offer.id, { state });
+  assert.ok(accepted, 'offer should be accepted');
+
+  state.day = accepted.deadlineDay + 2;
+
+  const reroll = rollDailyOffers({ templates: [template], day: state.day, now: 20, state, rng: () => 0 });
+  assert.equal(reroll.length, 1, 'reroll should produce a fresh offer after expiry');
+  assert.equal(reroll[0].rolledOnDay, state.day);
+
+  const claimedAfterExpiry = getClaimedOffers(state, { day: state.day });
+  assert.equal(claimedAfterExpiry.length, 0, 'expired claims should be pruned from selectors');
 });

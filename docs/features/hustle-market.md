@@ -2,7 +2,7 @@
 
 ## Goals
 - Rotate daily hustle offerings without mutating the base registry so the UI can announce fresh opportunities each morning.
-- Support limited-time or delayed offers that span multiple days, including variant-specific metadata.
+- Support limited-time or delayed offers that span multiple days, including variant-specific metadata and simultaneous variants when templates define multiple options.
 - Persist market state so day transitions can detect whether a reroll is required or if existing contracts still apply.
 
 ## Template & Variant Structure
@@ -11,23 +11,29 @@
   - `variants`: optional array of variant configs (id, label, weight, duration, availableAfterDays, metadata, definitionId).
   - `durationDays` and `availableAfterDays`: defaults applied when variants omit explicit values.
   - `metadata`: extra properties merged into each offer.
-- If no variants are provided the `rollDailyOffers` helper fabricates a default variant that mirrors the template.
+- If no variants are provided the `rollDailyOffers` helper fabricates a default variant that mirrors the template. When variants exist, multiple offers can coexist so long as each variant is represented at most once per active window.
 
 ## Rolling Logic
 - `rollDailyOffers({ templates, day, now, state, rng })` clones any existing offers whose `expiresOnDay` is still in the future, then backfills missing templates by selecting a weighted variant (defaulting to equal weights).
 - Each new offer captures:
   - `rolledOnDay`, `availableOnDay`, and `expiresOnDay` (duration is inclusive of the start day).
   - Variant metadata (id, label, description) plus merged template/variant metadata.
+  - Resolved requirements (`metadata.requirements.hours` and `metadata.hoursRequired`) and payout details (`metadata.payout.amount`, `metadata.payout.schedule`).
   - A deterministic `daysActive` array so UI layers can render availability windows.
 - Offers are sorted by availability day then template id for consistent rendering.
 
 ## Persistence Helpers
-- `ensureHustleMarketState` guarantees the `state.hustleMarket` slice exists with `{ lastRolledAt, lastRolledOnDay, offers: [] }`.
+- `ensureHustleMarketState` guarantees the `state.hustleMarket` slice exists with `{ lastRolledAt, lastRolledOnDay, offers: [], accepted: [] }`.
 - Invalid timestamps or negative days clamp to safe defaults while malformed offers are sanitized (ensuring template/variant ids and day windows are valid).
-- `createDefaultHustleMarketState`, `normalizeHustleMarketOffer`, `cloneHustleMarketState`, and `clearHustleMarketState` live alongside the ensure helper for future orchestration tools.
+- `createDefaultHustleMarketState`, `normalizeHustleMarketOffer`, `cloneHustleMarketState`, and `clearHustleMarketState` live alongside the ensure helper for future orchestration tools. Accepted offers are normalized into `accepted` entries so expired claims are pruned automatically and the corresponding offers are marked as `claimed`.
+
+## Acceptance Flow
+- `acceptHustleOffer(offerId, { state })` reads the offer metadata, accepts an action instance through `acceptActionInstance`, marks the offer as claimed, and records an accepted entry with `acceptedOnDay`, `deadlineDay`, required hours, and payout schedule.
+- Claimed offers continue to persist until their deadlines elapse so completion logging and payout scheduling remain traceable.
 
 ## Availability Queries
-- `getAvailableOffers(state, { day, includeUpcoming })` returns a cloned list of active offers for the requested day. Setting `includeUpcoming: true` keeps offers whose availability window starts in the future (useful for dashboards showing "coming soon").
+- `getAvailableOffers(state, { day, includeUpcoming, includeClaimed })` returns a cloned list of active offers for the requested day. Setting `includeUpcoming: true` keeps offers whose availability window starts in the future (useful for dashboards showing "coming soon"). Passing `includeClaimed: true` allows UI layers to render offers that have been claimed but not yet completed.
+- `getClaimedOffers(state, { day, includeExpired })` surfaces accepted entries so panels can highlight in-progress contracts separate from fresh opportunities.
 - Both helpers rely on the ensure function so consumers can call them without first seeding the slice manually.
 
 ## Registry Loading
