@@ -154,7 +154,7 @@ test('education flat bonuses add to audience call payouts', () => {
   baseState.timeLeft = 10;
   getAssetState('blog', baseState).instances = [{ status: 'active' }];
   ACTIONS.find(hustle => hustle.id === 'audienceCall').action.onClick();
-  assert.equal(baseState.money, 12, 'baseline Q&A payout should be $12 without training');
+  assert.equal(baseState.money, 9, 'baseline Q&A payout should be $9 without training');
 
   resetState();
 
@@ -166,7 +166,7 @@ test('education flat bonuses add to audience call payouts', () => {
   brandVoice.completed = true;
   ACTIONS.find(hustle => hustle.id === 'audienceCall').action.onClick();
 
-  assert.equal(boostedState.money, 16, 'brand voice lab should add a $4 tip boost');
+  assert.equal(boostedState.money, 13, 'brand voice lab should add a $4 tip boost');
   assert.match(
     boostedState.log.at(-1).message,
     /Brand Voice Lab/,
@@ -183,7 +183,7 @@ test('curriculum design studio multiplies workshop payouts', () => {
   getAssetState('blog', baseState).instances = [{ status: 'active' }];
   getAssetState('ebook', baseState).instances = [{ status: 'active' }];
   ACTIONS.find(hustle => hustle.id === 'popUpWorkshop').action.onClick();
-  assert.equal(baseState.money, 38, 'baseline workshop payout should be $38 without study');
+  assert.equal(baseState.money, 23, 'baseline workshop payout should be $23 without study');
 
   resetState();
 
@@ -196,7 +196,7 @@ test('curriculum design studio multiplies workshop payouts', () => {
   curriculum.completed = true;
   ACTIONS.find(hustle => hustle.id === 'popUpWorkshop').action.onClick();
 
-  assert.equal(boostedState.money, 49, 'curriculum design studio should add a 30% multiplier (rounded)');
+  assert.equal(boostedState.money, 29, 'curriculum design studio should add a 30% multiplier (rounded)');
   assert.match(
     boostedState.log.at(-1).message,
     /Curriculum Design Studio/,
@@ -265,13 +265,13 @@ test('audience call can only run once per day', () => {
   const audience = ACTIONS.find(hustle => hustle.id === 'audienceCall');
   audience.action.onClick();
 
-  assert.equal(state.money, 12, 'first run should pay out');
+  assert.equal(state.money, 9, 'first run should pay out');
   assert.equal(getActionState('audienceCall').runsToday, 1, 'daily counter should increment after the first run');
 
   const beforeLogLength = state.log.length;
   audience.action.onClick();
 
-  assert.equal(state.money, 12, 'second run should be blocked by the daily limit');
+  assert.equal(state.money, 9, 'second run should be blocked by the daily limit');
   assert.equal(getActionState('audienceCall').runsToday, 1, 'daily counter should not increase after hitting the cap');
   assert.equal(state.log.length, beforeLogLength + 1, 'player should receive a log warning when capped');
   assert.match(state.log.at(-1).message, /Daily limit/, 'log should mention the daily limit reason');
@@ -283,7 +283,7 @@ test('audience call can only run once per day', () => {
 
   const beforeMoney = state.money;
   audience.action.onClick();
-  assert.equal(state.money, beforeMoney + 12, 'limit should reset the following day');
+  assert.equal(state.money, beforeMoney + 9, 'limit should reset the following day');
   assert.equal(getActionState('audienceCall').runsToday, 1, 'counter should start over on the new day');
 });
 
@@ -300,7 +300,7 @@ test('survey sprint caps at four runs per day', () => {
     survey.action.onClick();
   }
 
-  assert.equal(state.money, 4, 'four successful runs should pay out $4 total');
+  assert.equal(state.money, 8, 'four successful runs should pay out $8 total');
   assert.equal(getActionState('surveySprint').runsToday, 4, 'counter should reflect four completed runs');
 
   const beforeMoney = state.money;
@@ -319,6 +319,6 @@ test('survey sprint caps at four runs per day', () => {
 
   const afterResetMoney = state.money;
   survey.action.onClick();
-  assert.equal(state.money, afterResetMoney + 1, 'new day should allow survey sprint again');
+  assert.equal(state.money, afterResetMoney + 2, 'new day should allow survey sprint again');
   assert.equal(getActionState('surveySprint').runsToday, 1, 'counter should restart after reset');
 });

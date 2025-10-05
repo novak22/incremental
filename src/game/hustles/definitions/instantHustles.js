@@ -13,6 +13,33 @@ const saasBugSquashConfig = hustleConfigs.saasBugSquash; // Spec: docs/normalize
 const audiobookNarrationConfig = hustleConfigs.audiobookNarration; // Spec: docs/normalized_economy.json → hustles.audiobookNarration
 const streetPromoSprintConfig = hustleConfigs.streetPromoSprint; // Spec: docs/normalized_economy.json → hustles.streetPromoSprint
 
+const HOURLY_RATE = 9;
+
+const computeHourlyPayout = hours => {
+  const safeHours = Number.isFinite(Number(hours)) ? Number(hours) : 0;
+  return Math.round(safeHours * HOURLY_RATE * 100) / 100;
+};
+
+const createBaseHustleSnapshot = config => {
+  const hours = Number.isFinite(Number(config?.timeHours)) ? Number(config.timeHours) : 0;
+  return {
+    hours,
+    payout: computeHourlyPayout(hours)
+  };
+};
+
+const freelanceBase = createBaseHustleSnapshot(freelanceConfig);
+const audienceCallBase = createBaseHustleSnapshot(audienceCallConfig);
+const bundlePushBase = createBaseHustleSnapshot(bundlePushConfig);
+const surveySprintBase = createBaseHustleSnapshot(surveySprintConfig);
+const eventPhotoGigBase = createBaseHustleSnapshot(eventPhotoGigConfig);
+const popUpWorkshopBase = createBaseHustleSnapshot(popUpWorkshopConfig);
+const vlogEditRushBase = createBaseHustleSnapshot(vlogEditRushConfig);
+const dropshipPackPartyBase = createBaseHustleSnapshot(dropshipPackPartyConfig);
+const saasBugSquashBase = createBaseHustleSnapshot(saasBugSquashConfig);
+const audiobookNarrationBase = createBaseHustleSnapshot(audiobookNarrationConfig);
+const streetPromoSprintBase = createBaseHustleSnapshot(streetPromoSprintConfig);
+
 const instantHustleDefinitions = [
   {
     id: 'freelance',
@@ -22,10 +49,10 @@ const instantHustleDefinitions = [
     tags: freelanceConfig.tags,
     time: freelanceConfig.timeHours, // Spec: docs/normalized_economy.json → hustles.freelance.setup_time
     payout: {
-      amount: freelanceConfig.payout, // Spec: docs/normalized_economy.json → hustles.freelance.base_income
+      amount: freelanceBase.payout, // Spec: docs/normalized_economy.json → hustles.freelance.base_income
       logType: 'hustle',
       message: context => {
-        const payout = context?.finalPayout ?? context?.payoutGranted ?? freelanceConfig.payout;
+        const payout = context?.finalPayout ?? context?.payoutGranted ?? freelanceBase.payout;
         const bonusNote = context?.appliedEducationBoosts?.length
           ? ' Your storytelling drills juiced the rate!'
           : '';
@@ -36,9 +63,9 @@ const instantHustleDefinitions = [
       slotsPerRoll: 2,
       maxActive: 4,
       metadata: {
-        requirements: { hours: freelanceConfig.timeHours },
-        payout: { amount: freelanceConfig.payout, schedule: 'onCompletion' },
-        hoursPerDay: freelanceConfig.timeHours,
+        requirements: { hours: freelanceBase.hours },
+        payout: { amount: freelanceBase.payout, schedule: 'onCompletion' },
+        hoursPerDay: freelanceBase.hours,
         daysRequired: 1,
         progressLabel: 'Write the commissioned piece'
       },
@@ -50,10 +77,10 @@ const instantHustleDefinitions = [
           copies: 2,
           durationDays: 0,
           metadata: {
-            payoutAmount: freelanceConfig.payout,
+            payoutAmount: freelanceBase.payout,
             payoutSchedule: 'onCompletion',
-            requirements: { hours: freelanceConfig.timeHours },
-            hoursPerDay: freelanceConfig.timeHours,
+            requirements: { hours: freelanceBase.hours },
+            hoursPerDay: freelanceBase.hours,
             daysRequired: 1,
             progressLabel: 'Draft the rush article'
           }
@@ -64,10 +91,10 @@ const instantHustleDefinitions = [
           description: 'Outline, draft, and polish a three-installment story arc for a premium client.',
           durationDays: 2,
           metadata: {
-            payoutAmount: Math.round(freelanceConfig.payout * 2.5),
+            payoutAmount: computeHourlyPayout(freelanceBase.hours * 3),
             payoutSchedule: 'onCompletion',
-            requirements: { hours: freelanceConfig.timeHours * 3 },
-            hoursPerDay: freelanceConfig.timeHours,
+            requirements: { hours: freelanceBase.hours * 3 },
+            hoursPerDay: freelanceBase.hours,
             daysRequired: 3,
             progressLabel: 'Outline and polish the mini-series'
           }
@@ -79,10 +106,10 @@ const instantHustleDefinitions = [
           availableAfterDays: 1,
           durationDays: 3,
           metadata: {
-            payoutAmount: 80,
+            payoutAmount: computeHourlyPayout(freelanceBase.hours * 4),
             payoutSchedule: 'onCompletion',
-            requirements: { hours: freelanceConfig.timeHours * 4 },
-            hoursPerDay: freelanceConfig.timeHours,
+            requirements: { hours: freelanceBase.hours * 4 },
+            hoursPerDay: freelanceBase.hours,
             daysRequired: 4,
             progressLabel: 'Deliver the retainer lineup'
           }
@@ -106,10 +133,10 @@ const instantHustleDefinitions = [
     requirements: audienceCallConfig.requirements,
     dailyLimit: audienceCallConfig.dailyLimit, // Spec: docs/normalized_economy.json → hustles.audienceCall.daily_limit
     payout: {
-      amount: audienceCallConfig.payout, // Spec: docs/normalized_economy.json → hustles.audienceCall.base_income
+      amount: audienceCallBase.payout, // Spec: docs/normalized_economy.json → hustles.audienceCall.base_income
       logType: 'hustle',
       message: context => {
-        const payout = context?.finalPayout ?? context?.payoutGranted ?? audienceCallConfig.payout;
+        const payout = context?.finalPayout ?? context?.payoutGranted ?? audienceCallBase.payout;
         const bonusNote = context?.appliedEducationBoosts?.length
           ? ' Spotlight-ready banter brought in extra tips.'
           : '';
@@ -120,9 +147,9 @@ const instantHustleDefinitions = [
       slotsPerRoll: 2,
       maxActive: 3,
       metadata: {
-        requirements: { hours: audienceCallConfig.timeHours },
-        payout: { amount: audienceCallConfig.payout, schedule: 'onCompletion' },
-        hoursPerDay: audienceCallConfig.timeHours,
+        requirements: { hours: audienceCallBase.hours },
+        payout: { amount: audienceCallBase.payout, schedule: 'onCompletion' },
+        hoursPerDay: audienceCallBase.hours,
         daysRequired: 1,
         progressLabel: 'Host the Q&A stream'
       },
@@ -134,10 +161,10 @@ const instantHustleDefinitions = [
           copies: 2,
           durationDays: 0,
           metadata: {
-            payoutAmount: audienceCallConfig.payout,
+            payoutAmount: audienceCallBase.payout,
             payoutSchedule: 'onCompletion',
-            requirements: { hours: audienceCallConfig.timeHours },
-            hoursPerDay: audienceCallConfig.timeHours,
+            requirements: { hours: audienceCallBase.hours },
+            hoursPerDay: audienceCallBase.hours,
             daysRequired: 1,
             progressLabel: 'Host the flash AMA'
           }
@@ -148,10 +175,10 @@ const instantHustleDefinitions = [
           description: 'Break a dense topic into two cozy livestreams with downloadable extras.',
           durationDays: 1,
           metadata: {
-            payoutAmount: 24,
+            payoutAmount: computeHourlyPayout(audienceCallBase.hours * 2),
             payoutSchedule: 'onCompletion',
-            requirements: { hours: audienceCallConfig.timeHours * 2 },
-            hoursPerDay: audienceCallConfig.timeHours,
+            requirements: { hours: audienceCallBase.hours * 2 },
+            hoursPerDay: audienceCallBase.hours,
             daysRequired: 2,
             progressLabel: 'Run the mini workshop series'
           }
@@ -163,10 +190,10 @@ const instantHustleDefinitions = [
           availableAfterDays: 1,
           durationDays: 3,
           metadata: {
-            payoutAmount: 40,
+            payoutAmount: computeHourlyPayout(audienceCallBase.hours * 4.5),
             payoutSchedule: 'onCompletion',
-            requirements: { hours: audienceCallConfig.timeHours * 4 },
-            hoursPerDay: audienceCallConfig.timeHours * 1.5,
+            requirements: { hours: audienceCallBase.hours * 4.5 },
+            hoursPerDay: audienceCallBase.hours * 1.5,
             daysRequired: 3,
             progressLabel: 'Coach the cohort Q&A'
           }
@@ -189,10 +216,10 @@ const instantHustleDefinitions = [
     time: bundlePushConfig.timeHours, // Spec: docs/normalized_economy.json → hustles.bundlePush.setup_time
     requirements: bundlePushConfig.requirements,
     payout: {
-      amount: bundlePushConfig.payout, // Spec: docs/normalized_economy.json → hustles.bundlePush.base_income
+      amount: bundlePushBase.payout, // Spec: docs/normalized_economy.json → hustles.bundlePush.base_income
       logType: 'hustle',
       message: context => {
-        const payout = context?.finalPayout ?? context?.payoutGranted ?? bundlePushConfig.payout;
+        const payout = context?.finalPayout ?? context?.payoutGranted ?? bundlePushBase.payout;
         const bonusNote = context?.appliedEducationBoosts?.length
           ? ' Funnel math mastery made every upsell sparkle.'
           : '';
@@ -203,9 +230,9 @@ const instantHustleDefinitions = [
       slotsPerRoll: 2,
       maxActive: 3,
       metadata: {
-        requirements: { hours: bundlePushConfig.timeHours },
-        payout: { amount: bundlePushConfig.payout, schedule: 'onCompletion' },
-        hoursPerDay: bundlePushConfig.timeHours,
+        requirements: { hours: bundlePushBase.hours },
+        payout: { amount: bundlePushBase.payout, schedule: 'onCompletion' },
+        hoursPerDay: bundlePushBase.hours,
         daysRequired: 1,
         progressLabel: 'Bundle the featured offer'
       },
@@ -216,10 +243,10 @@ const instantHustleDefinitions = [
           description: 'Pair blog hits with a one-day bonus bundle and shout it across every channel.',
           durationDays: 0,
           metadata: {
-            payoutAmount: bundlePushConfig.payout,
+            payoutAmount: bundlePushBase.payout,
             payoutSchedule: 'onCompletion',
-            requirements: { hours: bundlePushConfig.timeHours },
-            hoursPerDay: bundlePushConfig.timeHours,
+            requirements: { hours: bundlePushBase.hours },
+            hoursPerDay: bundlePushBase.hours,
             daysRequired: 1,
             progressLabel: 'Run the flash sale blast'
           }
@@ -230,9 +257,9 @@ const instantHustleDefinitions = [
           description: 'Spin up a three-day partner push with curated bundles for every audience segment.',
           durationDays: 2,
           metadata: {
-            payoutAmount: 72,
+            payoutAmount: computeHourlyPayout(bundlePushBase.hours * 2.4),
             payoutSchedule: 'onCompletion',
-            requirements: { hours: bundlePushConfig.timeHours * 2.4 },
+            requirements: { hours: bundlePushBase.hours * 2.4 },
             hoursPerDay: 2,
             daysRequired: 3,
             progressLabel: 'Host the cross-promo roadshow'
@@ -245,10 +272,10 @@ const instantHustleDefinitions = [
           availableAfterDays: 1,
           durationDays: 4,
           metadata: {
-            payoutAmount: 120,
+            payoutAmount: computeHourlyPayout(bundlePushBase.hours * 5),
             payoutSchedule: 'onCompletion',
-            requirements: { hours: bundlePushConfig.timeHours * 5 },
-            hoursPerDay: bundlePushConfig.timeHours,
+            requirements: { hours: bundlePushBase.hours * 5 },
+            hoursPerDay: bundlePushBase.hours,
             daysRequired: 5,
             progressLabel: 'Optimize the evergreen funnel'
           }
@@ -271,10 +298,10 @@ const instantHustleDefinitions = [
     time: surveySprintConfig.timeHours, // Spec: docs/normalized_economy.json → hustles.surveySprint.setup_time
     dailyLimit: surveySprintConfig.dailyLimit, // Spec: docs/normalized_economy.json → hustles.surveySprint.daily_limit
     payout: {
-      amount: surveySprintConfig.payout, // Spec: docs/normalized_economy.json → hustles.surveySprint.base_income
+      amount: surveySprintBase.payout, // Spec: docs/normalized_economy.json → hustles.surveySprint.base_income
       logType: 'hustle',
       message: context => {
-        const payout = context?.finalPayout ?? context?.payoutGranted ?? surveySprintConfig.payout;
+        const payout = context?.finalPayout ?? context?.payoutGranted ?? surveySprintBase.payout;
         const bonusNote = context?.appliedEducationBoosts?.length
           ? ' Guerrilla research savvy bumped the stipend.'
           : '';
@@ -285,9 +312,9 @@ const instantHustleDefinitions = [
       slotsPerRoll: 3,
       maxActive: 5,
       metadata: {
-        requirements: { hours: surveySprintConfig.timeHours },
-        payout: { amount: surveySprintConfig.payout, schedule: 'onCompletion' },
-        hoursPerDay: surveySprintConfig.timeHours,
+        requirements: { hours: surveySprintBase.hours },
+        payout: { amount: surveySprintBase.payout, schedule: 'onCompletion' },
+        hoursPerDay: surveySprintBase.hours,
         daysRequired: 1,
         progressLabel: 'Complete the survey dash'
       },
@@ -299,10 +326,10 @@ const instantHustleDefinitions = [
           copies: 3,
           durationDays: 0,
           metadata: {
-            payoutAmount: surveySprintConfig.payout,
+            payoutAmount: surveySprintBase.payout,
             payoutSchedule: 'onCompletion',
-            requirements: { hours: surveySprintConfig.timeHours },
-            hoursPerDay: surveySprintConfig.timeHours,
+            requirements: { hours: surveySprintBase.hours },
+            hoursPerDay: surveySprintBase.hours,
             daysRequired: 1,
             progressLabel: 'Complete the coffee break survey'
           }
@@ -314,7 +341,7 @@ const instantHustleDefinitions = [
           copies: 2,
           durationDays: 1,
           metadata: {
-            payoutAmount: 3,
+            payoutAmount: computeHourlyPayout(1),
             payoutSchedule: 'onCompletion',
             requirements: { hours: 1 },
             hoursPerDay: 0.5,
@@ -329,7 +356,7 @@ const instantHustleDefinitions = [
           availableAfterDays: 1,
           durationDays: 2,
           metadata: {
-            payoutAmount: 5,
+            payoutAmount: computeHourlyPayout(2.25),
             payoutSchedule: 'onCompletion',
             requirements: { hours: 2.25 },
             hoursPerDay: 0.75,
@@ -355,10 +382,10 @@ const instantHustleDefinitions = [
     time: eventPhotoGigConfig.timeHours, // Spec: docs/normalized_economy.json → hustles.eventPhotoGig.setup_time
     requirements: eventPhotoGigConfig.requirements,
     payout: {
-      amount: eventPhotoGigConfig.payout, // Spec: docs/normalized_economy.json → hustles.eventPhotoGig.base_income
+      amount: eventPhotoGigBase.payout, // Spec: docs/normalized_economy.json → hustles.eventPhotoGig.base_income
       logType: 'hustle',
       message: context => {
-        const payout = context?.finalPayout ?? context?.payoutGranted ?? eventPhotoGigConfig.payout;
+        const payout = context?.finalPayout ?? context?.payoutGranted ?? eventPhotoGigBase.payout;
         const bonusNote = context?.appliedEducationBoosts?.length
           ? ' Curated portfolios impressed every client.'
           : '';
@@ -369,9 +396,9 @@ const instantHustleDefinitions = [
       slotsPerRoll: 1,
       maxActive: 2,
       metadata: {
-        requirements: { hours: eventPhotoGigConfig.timeHours },
-        payout: { amount: eventPhotoGigConfig.payout, schedule: 'onCompletion' },
-        hoursPerDay: eventPhotoGigConfig.timeHours,
+        requirements: { hours: eventPhotoGigBase.hours },
+        payout: { amount: eventPhotoGigBase.payout, schedule: 'onCompletion' },
+        hoursPerDay: eventPhotoGigBase.hours,
         daysRequired: 1,
         progressLabel: 'Shoot the event gallery'
       },
@@ -382,10 +409,10 @@ const instantHustleDefinitions = [
           description: 'Capture a lively pop-up showcase with a single-day gallery sprint.',
           durationDays: 0,
           metadata: {
-            payoutAmount: eventPhotoGigConfig.payout,
+            payoutAmount: eventPhotoGigBase.payout,
             payoutSchedule: 'onCompletion',
-            requirements: { hours: eventPhotoGigConfig.timeHours },
-            hoursPerDay: eventPhotoGigConfig.timeHours,
+            requirements: { hours: eventPhotoGigBase.hours },
+            hoursPerDay: eventPhotoGigBase.hours,
             daysRequired: 1,
             progressLabel: 'Deliver the pop-up gallery'
           }
@@ -396,7 +423,7 @@ const instantHustleDefinitions = [
           description: 'Cover a two-day festival run with daily highlight reels and VIP portraits.',
           durationDays: 2,
           metadata: {
-            payoutAmount: 120,
+            payoutAmount: computeHourlyPayout(9),
             payoutSchedule: 'onCompletion',
             requirements: { hours: 9 },
             hoursPerDay: 3,
@@ -411,7 +438,7 @@ const instantHustleDefinitions = [
           availableAfterDays: 1,
           durationDays: 4,
           metadata: {
-            payoutAmount: 180,
+            payoutAmount: computeHourlyPayout(15),
             payoutSchedule: 'onCompletion',
             requirements: { hours: 15 },
             hoursPerDay: 3,
@@ -437,10 +464,10 @@ const instantHustleDefinitions = [
     time: popUpWorkshopConfig.timeHours, // Spec: docs/normalized_economy.json → hustles.popUpWorkshop.setup_time
     requirements: popUpWorkshopConfig.requirements,
     payout: {
-      amount: popUpWorkshopConfig.payout, // Spec: docs/normalized_economy.json → hustles.popUpWorkshop.base_income
+      amount: popUpWorkshopBase.payout, // Spec: docs/normalized_economy.json → hustles.popUpWorkshop.base_income
       logType: 'hustle',
       message: context => {
-        const payout = context?.finalPayout ?? context?.payoutGranted ?? popUpWorkshopConfig.payout;
+        const payout = context?.finalPayout ?? context?.payoutGranted ?? popUpWorkshopBase.payout;
         const bonusNote = context?.appliedEducationBoosts?.length
           ? ' Teaching polish turned browsers into buyers.'
           : '';
@@ -451,9 +478,9 @@ const instantHustleDefinitions = [
       slotsPerRoll: 2,
       maxActive: 4,
       metadata: {
-        requirements: { hours: popUpWorkshopConfig.timeHours },
-        payout: { amount: popUpWorkshopConfig.payout, schedule: 'onCompletion' },
-        hoursPerDay: popUpWorkshopConfig.timeHours,
+        requirements: { hours: popUpWorkshopBase.hours },
+        payout: { amount: popUpWorkshopBase.payout, schedule: 'onCompletion' },
+        hoursPerDay: popUpWorkshopBase.hours,
         daysRequired: 1,
         progressLabel: 'Teach the workshop curriculum'
       },
@@ -465,10 +492,10 @@ const instantHustleDefinitions = [
           copies: 2,
           durationDays: 0,
           metadata: {
-            payoutAmount: popUpWorkshopConfig.payout,
+            payoutAmount: popUpWorkshopBase.payout,
             payoutSchedule: 'onCompletion',
-            requirements: { hours: popUpWorkshopConfig.timeHours },
-            hoursPerDay: popUpWorkshopConfig.timeHours,
+            requirements: { hours: popUpWorkshopBase.hours },
+            hoursPerDay: popUpWorkshopBase.hours,
             daysRequired: 1,
             progressLabel: 'Run the evening intensive'
           }
@@ -479,10 +506,10 @@ const instantHustleDefinitions = [
           description: 'Stretch the curriculum into a cozy two-day cohort with templates and recaps.',
           durationDays: 1,
           metadata: {
-            payoutAmount: 60,
+            payoutAmount: computeHourlyPayout(5),
             payoutSchedule: 'onCompletion',
             requirements: { hours: 5 },
-            hoursPerDay: popUpWorkshopConfig.timeHours,
+            hoursPerDay: popUpWorkshopBase.hours,
             daysRequired: 2,
             progressLabel: 'Guide the weekend workshop'
           }
@@ -494,7 +521,7 @@ const instantHustleDefinitions = [
           availableAfterDays: 1,
           durationDays: 3,
           metadata: {
-            payoutAmount: 95,
+            payoutAmount: computeHourlyPayout(8),
             payoutSchedule: 'onCompletion',
             requirements: { hours: 8 },
             hoursPerDay: 2,
@@ -520,10 +547,10 @@ const instantHustleDefinitions = [
     time: vlogEditRushConfig.timeHours, // Spec: docs/normalized_economy.json → hustles.vlogEditRush.setup_time
     requirements: vlogEditRushConfig.requirements,
     payout: {
-      amount: vlogEditRushConfig.payout, // Spec: docs/normalized_economy.json → hustles.vlogEditRush.base_income
+      amount: vlogEditRushBase.payout, // Spec: docs/normalized_economy.json → hustles.vlogEditRush.base_income
       logType: 'hustle',
       message: context => {
-        const payout = context?.finalPayout ?? context?.payoutGranted ?? vlogEditRushConfig.payout;
+        const payout = context?.finalPayout ?? context?.payoutGranted ?? vlogEditRushBase.payout;
         const bonusNote = context?.appliedEducationBoosts?.length
           ? ' Post-production precision shaved hours off the deadline.'
           : '';
@@ -534,9 +561,9 @@ const instantHustleDefinitions = [
       slotsPerRoll: 2,
       maxActive: 4,
       metadata: {
-        requirements: { hours: vlogEditRushConfig.timeHours },
-        payout: { amount: vlogEditRushConfig.payout, schedule: 'onCompletion' },
-        hoursPerDay: vlogEditRushConfig.timeHours,
+        requirements: { hours: vlogEditRushBase.hours },
+        payout: { amount: vlogEditRushBase.payout, schedule: 'onCompletion' },
+        hoursPerDay: vlogEditRushBase.hours,
         daysRequired: 1,
         progressLabel: 'Edit the partner episode'
       },
@@ -548,10 +575,10 @@ const instantHustleDefinitions = [
           copies: 2,
           durationDays: 0,
           metadata: {
-            payoutAmount: vlogEditRushConfig.payout,
+            payoutAmount: vlogEditRushBase.payout,
             payoutSchedule: 'onCompletion',
-            requirements: { hours: vlogEditRushConfig.timeHours },
-            hoursPerDay: vlogEditRushConfig.timeHours,
+            requirements: { hours: vlogEditRushBase.hours },
+            hoursPerDay: vlogEditRushBase.hours,
             daysRequired: 1,
             progressLabel: 'Deliver the rush cut'
           }
@@ -562,10 +589,10 @@ const instantHustleDefinitions = [
           description: 'Turn around two episodes with shared motion graphics and reusable transitions.',
           durationDays: 1,
           metadata: {
-            payoutAmount: 40,
+            payoutAmount: computeHourlyPayout(3),
             payoutSchedule: 'onCompletion',
             requirements: { hours: 3 },
-            hoursPerDay: vlogEditRushConfig.timeHours,
+            hoursPerDay: vlogEditRushBase.hours,
             daysRequired: 2,
             progressLabel: 'Deliver the batch edit package'
           }
@@ -577,7 +604,7 @@ const instantHustleDefinitions = [
           availableAfterDays: 1,
           durationDays: 3,
           metadata: {
-            payoutAmount: 70,
+            payoutAmount: computeHourlyPayout(7),
             payoutSchedule: 'onCompletion',
             requirements: { hours: 7 },
             hoursPerDay: 1.75,
@@ -604,10 +631,10 @@ const instantHustleDefinitions = [
     cost: dropshipPackPartyConfig.cost, // Spec: docs/normalized_economy.json → hustles.dropshipPackParty.setup_cost
     requirements: dropshipPackPartyConfig.requirements,
     payout: {
-      amount: dropshipPackPartyConfig.payout, // Spec: docs/normalized_economy.json → hustles.dropshipPackParty.base_income
+      amount: dropshipPackPartyBase.payout, // Spec: docs/normalized_economy.json → hustles.dropshipPackParty.base_income
       logType: 'hustle',
       message: context => {
-        const payout = context?.finalPayout ?? context?.payoutGranted ?? dropshipPackPartyConfig.payout;
+        const payout = context?.finalPayout ?? context?.payoutGranted ?? dropshipPackPartyBase.payout;
         const bonusNote = context?.appliedEducationBoosts?.length
           ? ' Logistics drills kept the conveyor humming.'
           : '';
@@ -618,9 +645,9 @@ const instantHustleDefinitions = [
       slotsPerRoll: 2,
       maxActive: 4,
       metadata: {
-        requirements: { hours: dropshipPackPartyConfig.timeHours },
-        payout: { amount: dropshipPackPartyConfig.payout, schedule: 'onCompletion' },
-        hoursPerDay: dropshipPackPartyConfig.timeHours,
+        requirements: { hours: dropshipPackPartyBase.hours },
+        payout: { amount: dropshipPackPartyBase.payout, schedule: 'onCompletion' },
+        hoursPerDay: dropshipPackPartyBase.hours,
         daysRequired: 1,
         progressLabel: 'Pack the surprise boxes'
       },
@@ -632,10 +659,10 @@ const instantHustleDefinitions = [
           copies: 2,
           durationDays: 0,
           metadata: {
-            payoutAmount: dropshipPackPartyConfig.payout,
+            payoutAmount: dropshipPackPartyBase.payout,
             payoutSchedule: 'onCompletion',
-            requirements: { hours: dropshipPackPartyConfig.timeHours },
-            hoursPerDay: dropshipPackPartyConfig.timeHours,
+            requirements: { hours: dropshipPackPartyBase.hours },
+            hoursPerDay: dropshipPackPartyBase.hours,
             daysRequired: 1,
             progressLabel: 'Handle the flash pack party'
           }
@@ -646,7 +673,7 @@ const instantHustleDefinitions = [
           description: 'Keep the warehouse humming through a two-day influencer spotlight.',
           durationDays: 1,
           metadata: {
-            payoutAmount: 50,
+            payoutAmount: computeHourlyPayout(5),
             payoutSchedule: 'onCompletion',
             requirements: { hours: 5 },
             hoursPerDay: 2.5,
@@ -661,7 +688,7 @@ const instantHustleDefinitions = [
           availableAfterDays: 1,
           durationDays: 3,
           metadata: {
-            payoutAmount: 90,
+            payoutAmount: computeHourlyPayout(10),
             payoutSchedule: 'onCompletion',
             requirements: { hours: 10 },
             hoursPerDay: 2.5,
@@ -688,10 +715,10 @@ const instantHustleDefinitions = [
     time: saasBugSquashConfig.timeHours, // Spec: docs/normalized_economy.json → hustles.saasBugSquash.setup_time
     requirements: saasBugSquashConfig.requirements,
     payout: {
-      amount: saasBugSquashConfig.payout, // Spec: docs/normalized_economy.json → hustles.saasBugSquash.base_income
+      amount: saasBugSquashBase.payout, // Spec: docs/normalized_economy.json → hustles.saasBugSquash.base_income
       logType: 'hustle',
       message: context => {
-        const payout = context?.finalPayout ?? context?.payoutGranted ?? saasBugSquashConfig.payout;
+        const payout = context?.finalPayout ?? context?.payoutGranted ?? saasBugSquashBase.payout;
         const bonusNote = context?.appliedEducationBoosts?.length
           ? ' Architectural insights made debugging a breeze.'
           : '';
@@ -702,9 +729,9 @@ const instantHustleDefinitions = [
       slotsPerRoll: 2,
       maxActive: 3,
       metadata: {
-        requirements: { hours: saasBugSquashConfig.timeHours },
-        payout: { amount: saasBugSquashConfig.payout, schedule: 'onCompletion' },
-        hoursPerDay: saasBugSquashConfig.timeHours,
+        requirements: { hours: saasBugSquashBase.hours },
+        payout: { amount: saasBugSquashBase.payout, schedule: 'onCompletion' },
+        hoursPerDay: saasBugSquashBase.hours,
         daysRequired: 1,
         progressLabel: 'Deploy the emergency fix'
       },
@@ -716,10 +743,10 @@ const instantHustleDefinitions = [
           copies: 2,
           durationDays: 0,
           metadata: {
-            payoutAmount: saasBugSquashConfig.payout,
+            payoutAmount: saasBugSquashBase.payout,
             payoutSchedule: 'onCompletion',
-            requirements: { hours: saasBugSquashConfig.timeHours },
-            hoursPerDay: saasBugSquashConfig.timeHours,
+            requirements: { hours: saasBugSquashBase.hours },
+            hoursPerDay: saasBugSquashBase.hours,
             daysRequired: 1,
             progressLabel: 'Ship the emergency hotfix'
           }
@@ -730,7 +757,7 @@ const instantHustleDefinitions = [
           description: 'Audit the service, expand tests, and close regression gaps over two days.',
           durationDays: 1,
           metadata: {
-            payoutAmount: 55,
+            payoutAmount: computeHourlyPayout(2.5),
             payoutSchedule: 'onCompletion',
             requirements: { hours: 2.5 },
             hoursPerDay: 1.25,
@@ -745,7 +772,7 @@ const instantHustleDefinitions = [
           availableAfterDays: 1,
           durationDays: 3,
           metadata: {
-            payoutAmount: 90,
+            payoutAmount: computeHourlyPayout(6),
             payoutSchedule: 'onCompletion',
             requirements: { hours: 6 },
             hoursPerDay: 1.5,
@@ -771,10 +798,10 @@ const instantHustleDefinitions = [
     time: audiobookNarrationConfig.timeHours, // Spec: docs/normalized_economy.json → hustles.audiobookNarration.setup_time
     requirements: audiobookNarrationConfig.requirements,
     payout: {
-      amount: audiobookNarrationConfig.payout, // Spec: docs/normalized_economy.json → hustles.audiobookNarration.base_income
+      amount: audiobookNarrationBase.payout, // Spec: docs/normalized_economy.json → hustles.audiobookNarration.base_income
       logType: 'hustle',
       message: context => {
-        const payout = context?.finalPayout ?? context?.payoutGranted ?? audiobookNarrationConfig.payout;
+        const payout = context?.finalPayout ?? context?.payoutGranted ?? audiobookNarrationBase.payout;
         const bonusNote = context?.appliedEducationBoosts?.length
           ? ' Narrative confidence kept the script soaring.'
           : '';
@@ -785,9 +812,9 @@ const instantHustleDefinitions = [
       slotsPerRoll: 1,
       maxActive: 2,
       metadata: {
-        requirements: { hours: audiobookNarrationConfig.timeHours },
-        payout: { amount: audiobookNarrationConfig.payout, schedule: 'onCompletion' },
-        hoursPerDay: audiobookNarrationConfig.timeHours,
+        requirements: { hours: audiobookNarrationBase.hours },
+        payout: { amount: audiobookNarrationBase.payout, schedule: 'onCompletion' },
+        hoursPerDay: audiobookNarrationBase.hours,
         daysRequired: 1,
         progressLabel: 'Narrate the featured chapter'
       },
@@ -798,10 +825,10 @@ const instantHustleDefinitions = [
           description: 'Record a standout sample chapter with layered ambience and polish.',
           durationDays: 0,
           metadata: {
-            payoutAmount: audiobookNarrationConfig.payout,
+            payoutAmount: audiobookNarrationBase.payout,
             payoutSchedule: 'onCompletion',
-            requirements: { hours: audiobookNarrationConfig.timeHours },
-            hoursPerDay: audiobookNarrationConfig.timeHours,
+            requirements: { hours: audiobookNarrationBase.hours },
+            hoursPerDay: audiobookNarrationBase.hours,
             daysRequired: 1,
             progressLabel: 'Cut the sample session'
           }
@@ -812,7 +839,7 @@ const instantHustleDefinitions = [
           description: 'Deliver two feature chapters with bonus pickups and breath edits.',
           durationDays: 1,
           metadata: {
-            payoutAmount: 70,
+            payoutAmount: computeHourlyPayout(5),
             payoutSchedule: 'onCompletion',
             requirements: { hours: 5 },
             hoursPerDay: 2.5,
@@ -827,7 +854,7 @@ const instantHustleDefinitions = [
           availableAfterDays: 1,
           durationDays: 4,
           metadata: {
-            payoutAmount: 120,
+            payoutAmount: computeHourlyPayout(12.5),
             payoutSchedule: 'onCompletion',
             requirements: { hours: 12.5 },
             hoursPerDay: 2.5,
@@ -854,10 +881,10 @@ const instantHustleDefinitions = [
     cost: streetPromoSprintConfig.cost, // Spec: docs/normalized_economy.json → hustles.streetPromoSprint.setup_cost
     requirements: streetPromoSprintConfig.requirements,
     payout: {
-      amount: streetPromoSprintConfig.payout, // Spec: docs/normalized_economy.json → hustles.streetPromoSprint.base_income
+      amount: streetPromoSprintBase.payout, // Spec: docs/normalized_economy.json → hustles.streetPromoSprint.base_income
       logType: 'hustle',
       message: context => {
-        const payout = context?.finalPayout ?? context?.payoutGranted ?? streetPromoSprintConfig.payout;
+        const payout = context?.finalPayout ?? context?.payoutGranted ?? streetPromoSprintBase.payout;
         const bonusNote = context?.appliedEducationBoosts?.length
           ? ' Guerrilla tactics drew a bigger crowd.'
           : '';
@@ -868,9 +895,9 @@ const instantHustleDefinitions = [
       slotsPerRoll: 3,
       maxActive: 5,
       metadata: {
-        requirements: { hours: streetPromoSprintConfig.timeHours },
-        payout: { amount: streetPromoSprintConfig.payout, schedule: 'onCompletion' },
-        hoursPerDay: streetPromoSprintConfig.timeHours,
+        requirements: { hours: streetPromoSprintBase.hours },
+        payout: { amount: streetPromoSprintBase.payout, schedule: 'onCompletion' },
+        hoursPerDay: streetPromoSprintBase.hours,
         daysRequired: 1,
         progressLabel: 'Hit the street team route'
       },
@@ -882,10 +909,10 @@ const instantHustleDefinitions = [
           copies: 3,
           durationDays: 0,
           metadata: {
-            payoutAmount: streetPromoSprintConfig.payout,
+            payoutAmount: streetPromoSprintBase.payout,
             payoutSchedule: 'onCompletion',
-            requirements: { hours: streetPromoSprintConfig.timeHours },
-            hoursPerDay: streetPromoSprintConfig.timeHours,
+            requirements: { hours: streetPromoSprintBase.hours },
+            hoursPerDay: streetPromoSprintBase.hours,
             daysRequired: 1,
             progressLabel: 'Cover the lunch rush route'
           }
@@ -897,7 +924,7 @@ const instantHustleDefinitions = [
           copies: 2,
           durationDays: 1,
           metadata: {
-            payoutAmount: 32,
+            payoutAmount: computeHourlyPayout(2),
             payoutSchedule: 'onCompletion',
             requirements: { hours: 2 },
             hoursPerDay: 1,
@@ -912,7 +939,7 @@ const instantHustleDefinitions = [
           availableAfterDays: 1,
           durationDays: 3,
           metadata: {
-            payoutAmount: 60,
+            payoutAmount: computeHourlyPayout(5),
             payoutSchedule: 'onCompletion',
             requirements: { hours: 5 },
             hoursPerDay: 1.25,

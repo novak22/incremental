@@ -62,6 +62,11 @@ Online Hustle Simulator is a browser-based incremental game about orchestrating 
 - **Gallery Licensing Summit** – Pay $240 upfront; 2.25h/day for 5 days (log manually) to pitch curators (+30% Event Photo Gig bookings and +22% Stock Photo Gallery passive income).
 - **Syndication Residency** – Pay $300 upfront; 2h/day for 6 days (log manually) cultivating partnerships (+20% Freelance Writing payouts, +$2 Street Promo Sprint stipends, and +18% Personal Blog Network income).
 
+### Hustle Market Pay Scale
+- Instant hustles now use a baseline $9/hour rate so short gigs and multi-day contracts deliver consistent value for the time you log.
+- Offer payouts are calculated from the posted schedule: `hoursPerDay × daysRequired × $9`, rounded to the nearest cent when needed.
+- Visit any hustle card in the browser workspace to review the adjusted payouts before accepting an offer, then track the $9/hour rewards in the Finance dashboard after completion.
+
 ### Passive Ventures (Daily Payouts)
 Each asset supports multiple instances, tracks setup progress, and rolls a daily income range once active. Quality actions unique to each asset increase payouts and stability, and you can liquidate any instance directly from the card—or from the category roster—for yesterday’s payout ×3 × (Quality level + 1). Celebratory events can trigger immediately after quality work, granting a small, tapering income bump that keeps momentum flowing between day-end payouts. The asset briefing modal doubles as an instance inspector, outlining status, upkeep, yesterday’s earnings, and which upgrades are owned or still locked.
 - Select quality actions now include a visible cooldown so big-impact moves (SEO sprints, ad bursts, and marketplace pitches) can only be run every few in-game days, nudging players to rotate through their portfolio.

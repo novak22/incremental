@@ -19,6 +19,11 @@
   - `progressLabel` lets variants override the default log title so accepted instances read naturally in the todo list.
 - If no variants are provided the `rollDailyOffers` helper fabricates a default variant that mirrors the template. When variants exist, multiple offers can coexist so long as each variant is represented at most once per active window.
 
+## Payout Balancing
+- Hustle market payouts are standardized at $9/hour based on the total time commitment a variant advertises.
+- Each offer now derives its reward directly from the schedule: `hoursPerDay × daysRequired × $9`, falling back to total-hour metadata when variants specify explicit requirements instead of per-day cadence.
+- This shift keeps retainers, weekend gigs, and same-day sprints aligned so designers can tweak hours without recalculating economy targets by hand.
+
 ## Rolling Logic
 - `rollDailyOffers({ templates, day, now, state, rng })` clones any existing offers whose `expiresOnDay` is still in the future, then fills the configured number of template slots by selecting weighted variants (defaulting to equal weights). Variant copy counts can consume multiple slots per roll while template and variant `maxActive` values prevent overfilling.
 - Each new offer captures:

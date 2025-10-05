@@ -521,7 +521,7 @@
     },
     "audienceCall": {
       "name": "Audience Q&A Blast",
-      "base_income": 12,
+      "base_income": 9,
       "variance": 0,
       "setup_time": 60,
       "setup_cost": 0,
@@ -546,7 +546,7 @@
     },
     "bundlePush": {
       "name": "Bundle Promo Push",
-      "base_income": 48,
+      "base_income": 22.5,
       "variance": 0,
       "setup_time": 150,
       "setup_cost": 0,
@@ -574,7 +574,7 @@
     },
     "surveySprint": {
       "name": "Micro Survey Dash",
-      "base_income": 1,
+      "base_income": 2.25,
       "variance": 0,
       "setup_time": 15,
       "setup_cost": 0,
@@ -593,7 +593,7 @@
     },
     "eventPhotoGig": {
       "name": "Event Photo Gig",
-      "base_income": 72,
+      "base_income": 31.5,
       "variance": 0,
       "setup_time": 210,
       "setup_cost": 0,
@@ -618,7 +618,7 @@
     },
     "popUpWorkshop": {
       "name": "Pop-Up Workshop",
-      "base_income": 38,
+      "base_income": 22.5,
       "variance": 0,
       "setup_time": 150,
       "setup_cost": 0,
@@ -650,7 +650,7 @@
     },
     "vlogEditRush": {
       "name": "Vlog Edit Rush",
-      "base_income": 24,
+      "base_income": 13.5,
       "variance": 0,
       "setup_time": 90,
       "setup_cost": 0,
@@ -675,7 +675,7 @@
     },
     "dropshipPackParty": {
       "name": "Dropship Pack Party",
-      "base_income": 28,
+      "base_income": 18,
       "variance": 0,
       "setup_time": 120,
       "setup_cost": 8,
@@ -699,7 +699,7 @@
     },
     "saasBugSquash": {
       "name": "SaaS Bug Squash",
-      "base_income": 30,
+      "base_income": 9,
       "variance": 0,
       "setup_time": 60,
       "setup_cost": 0,
@@ -727,7 +727,7 @@
     },
     "audiobookNarration": {
       "name": "Audiobook Narration",
-      "base_income": 44,
+      "base_income": 24.75,
       "variance": 0,
       "setup_time": 165,
       "setup_cost": 0,
@@ -751,7 +751,7 @@
     },
     "streetPromoSprint": {
       "name": "Street Team Promo",
-      "base_income": 18,
+      "base_income": 6.75,
       "variance": 0,
       "setup_time": 45,
       "setup_cost": 5,

@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Economy: Hustle market offers now calculate payouts at $9/hour, aligning base incomes and variant rewards with the time each contract demands.【F:src/game/hustles/definitions/instantHustles.js†L1-L918】【F:docs/normalized_economy.json†L508-L744】
 - Hustles: Contract templates now publish multi-variant market metadata (hours-per-day, duration windows, payout schedules, copies) so daily rolls surface retainers alongside quick gigs.【F:src/game/hustles/definitions/instantHustles.js†L19-L855】
 - Tooling: `rollDailyOffers` records per-template audit summaries, exposes `getMarketRollAuditLog()`, and attaches `window.__HUSTLE_MARKET_DEBUG__` helpers for playtests.【F:src/game/hustles/market.js†L12-L755】
 - Docs: Refreshed the economy guide, hustle market notes, and added a dedicated playtest script covering bootstrap, rerolls, and contract completion loops.【F:docs/economy.md†L80-L121】【F:docs/features/hustle-market.md†L94-L126】【F:docs/features/hustle-market-playtest.md†L1-L64】
