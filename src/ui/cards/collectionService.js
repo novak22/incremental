@@ -23,8 +23,18 @@ function ensureRegistrySnapshot() {
 
 function buildRegistries() {
   const registry = ensureRegistrySnapshot();
-  const hustles = registry.hustles.filter(hustle => hustle.tag?.type !== 'study');
-  const education = registry.hustles.filter(hustle => hustle.tag?.type === 'study');
+  const actionDefinitions = Array.isArray(registry.actions) && registry.actions.length
+    ? registry.actions
+    : Array.isArray(registry.hustles)
+      ? registry.hustles
+      : [];
+
+  const hustleTemplates = Array.isArray(registry.hustles) && registry.hustles.length
+    ? registry.hustles
+    : actionDefinitions;
+
+  const hustles = hustleTemplates.filter(hustle => hustle.tag?.type !== 'study');
+  const education = actionDefinitions.filter(definition => definition.tag?.type === 'study');
   const assets = registry.assets;
   const upgrades = registry.upgrades;
 
