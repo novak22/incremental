@@ -101,6 +101,29 @@ function sortUpgradeEntries(entries = []) {
   });
 }
 
+const DEFAULT_FOCUS_BUCKET = 'other';
+
+const defaultBucketComparator = entries => entries.filter(Boolean);
+
+export const focusBucketComparators = {
+  hustle: sortHustleEntries,
+  upgrade: sortUpgradeEntries,
+  [DEFAULT_FOCUS_BUCKET]: defaultBucketComparator
+};
+
+export const focusOrdering = {
+  money: {
+    order: ['hustle', 'upgrade']
+  },
+  upgrades: {
+    order: ['upgrade', 'hustle']
+  },
+  balanced: {
+    order: ['upgrade', 'hustle'],
+    interleave: ['upgrade', 'hustle']
+  }
+};
+
 function interleaveEntries(first = [], second = []) {
   const results = [];
   const max = Math.max(first.length, second.length);
@@ -115,33 +138,106 @@ function interleaveEntries(first = [], second = []) {
   return results;
 }
 
-function applyFocusOrdering(entries = [], mode = 'balanced') {
+function getBucketName(entry) {
+  if (!entry || typeof entry !== 'object') {
+    return DEFAULT_FOCUS_BUCKET;
+  }
+  const explicitBucket = typeof entry.focusBucket === 'string' ? entry.focusBucket : null;
+  if (explicitBucket) {
+    return explicitBucket;
+  }
+  const categoryBucket = typeof entry.focusCategory === 'string' ? entry.focusCategory : null;
+  if (categoryBucket) {
+    return categoryBucket;
+  }
+  return DEFAULT_FOCUS_BUCKET;
+}
+
+function getBucketComparator(bucketName) {
+  const comparator = focusBucketComparators[bucketName];
+  if (typeof comparator === 'function') {
+    return comparator;
+  }
+  return focusBucketComparators[DEFAULT_FOCUS_BUCKET] || defaultBucketComparator;
+}
+
+function collectBuckets(entries = []) {
+  const buckets = new Map();
+  entries.filter(Boolean).forEach(entry => {
+    const bucketName = getBucketName(entry);
+    if (!buckets.has(bucketName)) {
+      buckets.set(bucketName, []);
+    }
+    buckets.get(bucketName).push(entry);
+  });
+  return buckets;
+}
+
+function sortBuckets(bucketMap = new Map()) {
+  const sorted = new Map();
+  bucketMap.forEach((bucketEntries, bucketName) => {
+    const comparator = getBucketComparator(bucketName);
+    sorted.set(bucketName, comparator(bucketEntries));
+  });
+  return sorted;
+}
+
+export function applyFocusOrdering(entries = [], mode = 'balanced') {
   if (!Array.isArray(entries) || entries.length === 0) {
     return entries;
   }
 
-  const hustles = entries.filter(entry => entry?.focusCategory === 'hustle');
-  const upgrades = entries.filter(entry => entry?.focusCategory === 'upgrade');
-  const others = entries.filter(entry => entry?.focusCategory !== 'hustle' && entry?.focusCategory !== 'upgrade');
-  const sortedHustles = sortHustleEntries(hustles);
-  const sortedUpgrades = sortUpgradeEntries(upgrades);
-
-  switch (mode) {
-    case 'money': {
-      return [...sortedHustles, ...sortedUpgrades, ...others.filter(Boolean)];
-    }
-    case 'upgrades': {
-      return [...sortedUpgrades, ...sortedHustles, ...others.filter(Boolean)];
-    }
-    case 'balanced':
-    default: {
-      const interleaved = interleaveEntries(sortedUpgrades, sortedHustles);
-      const usedIds = new Set(interleaved.map(entry => entry.id));
-      const leftovers = [...sortedUpgrades, ...sortedHustles, ...others.filter(Boolean)]
-        .filter(entry => !usedIds.has(entry.id));
-      return [...interleaved, ...leftovers];
-    }
+  const buckets = collectBuckets(entries);
+  if (buckets.size === 0) {
+    return entries;
   }
+
+  const sortedBuckets = sortBuckets(buckets);
+  const modeConfig = focusOrdering[mode] || focusOrdering.balanced || {};
+  const order = Array.isArray(modeConfig?.order) ? modeConfig.order : [];
+  const interleaveBuckets = Array.isArray(modeConfig?.interleave) ? modeConfig.interleave : [];
+
+  const results = [];
+  const usedEntries = new Set();
+
+  const addEntry = entry => {
+    if (!entry || usedEntries.has(entry)) {
+      return;
+    }
+    usedEntries.add(entry);
+    results.push(entry);
+  };
+
+  const processedBuckets = new Set();
+
+  if (interleaveBuckets.length > 0) {
+    let interleaved = [];
+    interleaveBuckets.forEach((bucketName, index) => {
+      const bucketEntries = sortedBuckets.get(bucketName) || [];
+      processedBuckets.add(bucketName);
+      if (index === 0) {
+        interleaved = [...bucketEntries];
+      } else {
+        interleaved = interleaveEntries(interleaved, bucketEntries);
+      }
+    });
+    interleaved.forEach(addEntry);
+  }
+
+  order.forEach(bucketName => {
+    processedBuckets.add(bucketName);
+    const bucketEntries = sortedBuckets.get(bucketName) || [];
+    bucketEntries.forEach(addEntry);
+  });
+
+  sortedBuckets.forEach((bucketEntries, bucketName) => {
+    if (processedBuckets.has(bucketName)) {
+      return;
+    }
+    bucketEntries.forEach(addEntry);
+  });
+
+  return results;
 }
 
 function applyImmediateTimeDelta(model, hours) {
