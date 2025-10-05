@@ -13,7 +13,7 @@ test('registerActionProvider supplies normalized entries to the queue', () => {
   try {
     registerActionProvider(() => ({
       id: 'test-provider',
-      focusCategory: 'hustle',
+      focusCategory: 'commitment',
       entries: [
         {
           id: 'custom-entry',
@@ -33,7 +33,7 @@ test('registerActionProvider supplies normalized entries to the queue', () => {
     const entry = queue.entries[0];
     assert.equal(entry.durationHours, 2);
     assert.equal(entry.durationText, formatHours(2));
-    assert.equal(entry.focusCategory, 'hustle');
+    assert.equal(entry.focusCategory, 'commitment');
     assert.equal(queue.emptyMessage, 'custom empty');
     assert.equal(queue.hoursAvailable, 2);
     assert.equal(queue.hoursAvailableLabel, formatHours(2));
@@ -55,7 +55,7 @@ test('registerActionProvider retains the original entry as raw payload', () => {
 
     registerActionProvider(() => ({
       id: 'raw-provider',
-      focusCategory: 'hustle',
+      focusCategory: 'commitment',
       entries: [originalEntry],
       metrics: {}
     }));
@@ -75,6 +75,7 @@ test('clearActionProviders restore removes temporary providers', () => {
   try {
     registerActionProvider(() => ({
       id: 'temporary-provider',
+      focusCategory: 'commitment',
       entries: [
         {
           id: 'temp-entry',
@@ -100,6 +101,7 @@ test('providers with higher priority contribute entries first', () => {
   try {
     registerActionProvider(() => ({
       id: 'low-priority',
+      focusCategory: 'commitment',
       entries: [
         { id: 'low', title: 'Low priority' }
       ],
@@ -108,6 +110,7 @@ test('providers with higher priority contribute entries first', () => {
 
     registerActionProvider(() => ({
       id: 'high-priority-a',
+      focusCategory: 'commitment',
       entries: [
         { id: 'high-a', title: 'High priority A' }
       ],
@@ -116,6 +119,7 @@ test('providers with higher priority contribute entries first', () => {
 
     registerActionProvider(() => ({
       id: 'high-priority-b',
+      focusCategory: 'commitment',
       entries: [
         { id: 'high-b', title: 'High priority B' }
       ],
@@ -127,6 +131,31 @@ test('providers with higher priority contribute entries first', () => {
       queue.entries.map(entry => entry.id),
       ['high-a', 'high-b', 'low']
     );
+  } finally {
+    restore();
+  }
+});
+
+test('buildActionQueue omits non-commitment provider entries', () => {
+  const restore = clearActionProviders();
+  try {
+    registerActionProvider(() => ({
+      id: 'non-commitment-provider',
+      focusCategory: 'hustle',
+      entries: [
+        { id: 'offer-action', title: 'Accept hustle', timeCost: 1 }
+      ],
+      metrics: {
+        emptyMessage: 'custom empty',
+        hoursAvailable: 4
+      }
+    }));
+
+    const queue = buildActionQueue({ state: {} });
+    assert.equal(queue.entries.length, 0);
+    assert.equal(queue.emptyMessage, 'custom empty');
+    assert.equal(queue.hoursAvailable, 4);
+    assert.equal(queue.hoursAvailableLabel, formatHours(4));
   } finally {
     restore();
   }
@@ -192,8 +221,9 @@ test('normalizeActionEntries preserves explicit focus buckets', () => {
   try {
     registerActionProvider(() => ({
       id: 'bucket-provider',
+      focusCategory: 'commitment',
       entries: [
-        { id: 'queue-bucketed', focusBucket: 'study', focusCategory: 'hustle' }
+        { id: 'queue-bucketed', focusBucket: 'study', focusCategory: 'commitment' }
       ],
       metrics: {}
     }));

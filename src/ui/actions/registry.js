@@ -477,6 +477,18 @@ export function buildActionQueue({ state, summary = {} } = {}) {
     applyMetrics(queue, snapshot.metrics);
   });
 
+  const filteredEntries = queue.entries.filter(entry => {
+    const focusBucket = typeof entry?.focusBucket === 'string' ? entry.focusBucket.toLowerCase() : '';
+    const focusCategory = typeof entry?.focusCategory === 'string' ? entry.focusCategory.toLowerCase() : '';
+    if (focusBucket === 'commitment' || focusCategory === 'commitment') {
+      return true;
+    }
+    const id = typeof entry?.id === 'string' ? entry.id : '';
+    return id.startsWith('instance:');
+  });
+
+  queue.entries = filteredEntries;
+
   if (!queue.entries.length && !queue.emptyMessage) {
     queue.emptyMessage = DEFAULT_EMPTY_MESSAGE;
   }
