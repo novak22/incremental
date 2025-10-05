@@ -1,5 +1,5 @@
 import { getState } from '../../../core/state.js';
-import { buildNicheViewModel } from '../../dashboard/model.js';
+import buildNicheViewModel from '../../dashboard/nicheModel.js';
 import { registerModelBuilder } from '../modelBuilderRegistry.js';
 
 const DEFAULT_MODEL = {

@@ -120,12 +120,8 @@ export default function renderHomeView(options = {}) {
     row.appendChild(createTableCell(payoutCell));
 
     const upkeep = document.createElement('span');
-    const parts = [];
-    const maintenanceHours = instance.maintenance?.parts?.find(part => part.includes('h'));
-    if (maintenanceHours) parts.push(maintenanceHours);
-    const maintenanceCost = instance.maintenance?.parts?.find(part => part.includes('$'));
-    if (maintenanceCost) parts.push(maintenanceCost);
-    upkeep.textContent = parts.length ? parts.join(' • ') : 'None';
+    const maintenance = instance.maintenance || {};
+    upkeep.textContent = maintenance.hasUpkeep ? maintenance.text : 'None';
     row.appendChild(createTableCell(upkeep));
 
     const qualityCell = document.createElement('div');

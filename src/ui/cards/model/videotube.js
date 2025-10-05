@@ -249,6 +249,7 @@ function buildVideoTubeModel(assetDefinitions = [], state = getState()) {
   const launchAction = definition.action || null;
   const defaultName = `Video #${instances.length + 1}`;
   const nicheOptions = mapNicheOptions(definition, state, { includeDelta: true });
+  const maintenance = formatMaintenanceSummary(definition);
 
   const launch = launchAction
     ? {
@@ -258,7 +259,7 @@ function buildVideoTubeModel(assetDefinitions = [], state = getState()) {
           : Boolean(launchAction.disabled),
         availability,
         setup: definition.setup || {},
-        maintenance: definition.maintenance || {},
+        maintenance,
         defaultName,
         nicheOptions,
         create: options => startVideoInstance(definition, options, state)
@@ -268,7 +269,7 @@ function buildVideoTubeModel(assetDefinitions = [], state = getState()) {
         disabled: availability.disabled,
         availability,
         setup: definition.setup || {},
-        maintenance: definition.maintenance || {},
+        maintenance,
         defaultName,
         nicheOptions,
         create: () => null

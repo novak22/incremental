@@ -1,9 +1,32 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildDashboardViewModel } from '../../src/ui/dashboard/model.js';
+import buildDashboardViewModel, {
+  buildQuickActionModel,
+  buildAssetActionModel,
+  buildStudyEnrollmentActionModel
+} from '../../src/ui/dashboard/model.js';
 import { buildDefaultState } from '../../src/core/state.js';
-import { getAssets, resetRegistry } from '../../src/game/registryService.js';
+import { getAssets, getUpgrades, resetRegistry } from '../../src/game/registryService.js';
 import { ensureRegistryReady } from '../../src/game/registryBootstrap.js';
+import buildNicheViewModel, {
+  createHighlightDefaults,
+  composeHighlightMessages,
+  buildNicheHighlights,
+  buildNicheHistoryModel,
+  formatHistoryTimestamp
+} from '../../src/ui/dashboard/nicheModel.js';
+import {
+  buildNotifications,
+  buildNotificationModel,
+  buildEventLog,
+  buildEventLogModel
+} from '../../src/ui/dashboard/notificationsModel.js';
+import buildDashboardActionModels, {
+  selectProvider,
+  buildQuickActionsFromProvider,
+  buildAssetActionsFromProvider,
+  buildStudyActionsFromProvider
+} from '../../src/ui/dashboard/actionProviders.js';
 
 test.before(() => {
   resetRegistry();
@@ -290,4 +313,156 @@ test('buildNicheViewModel formats stored history snapshots', t => {
   assert.ok(entry.highlights.hot.title.includes('Tech Innovators'));
   assert.ok(entry.highlights.swing.note.includes('payouts'));
   assert.ok(entry.highlights.risk.note && entry.highlights.risk.note.length > 0);
+});
+
+test('nicheModel composes highlights and history utilities', () => {
+  const defaults = createHighlightDefaults();
+  assert.equal(typeof defaults.hot.title, 'string');
+
+  const summary = {
+    hot: { name: 'Tech', trendImpact: 12, multiplier: 1.2, assetCount: 2, netEarnings: 150 },
+    swing: { name: 'Travel', delta: -3, multiplier: 0.9, score: 62 },
+    risk: { name: 'DIY', trendImpact: -8, assetCount: 1, multiplier: 0.8 }
+  };
+  const messages = composeHighlightMessages(summary);
+  assert.ok(messages.hot.title.includes('Tech'));
+  assert.ok(messages.swing.note.includes('payouts'));
+  assert.ok(messages.risk.note.includes('venture'));
+
+  const analytics = [
+    { id: 'tech', watchlisted: true },
+    { id: 'travel', watchlisted: false }
+  ];
+  const highlights = buildNicheHighlights(analytics);
+  assert.ok(highlights.hot.title);
+
+  const state = { niches: { analyticsHistory: [{ day: 2, recordedAt: Date.UTC(2024, 0, 3, 12), analytics }] } };
+  const history = buildNicheHistoryModel(state);
+  assert.equal(history.entries.length, 1);
+  assert.ok(history.entries[0].recordedAtISO.includes('2024-01-03'));
+
+  const timestamp = formatHistoryTimestamp(Date.UTC(2024, 0, 1, 8));
+  assert.ok(timestamp.label.includes('Jan'));
+
+  const nicheViewModel = buildNicheViewModel({ niches: { analyticsHistory: [] } });
+  assert.ok(nicheViewModel.board.entries);
+});
+
+test('notificationsModel builds notifications and event logs', t => {
+  const state = buildDefaultState();
+  state.money = 1000;
+  state.upgrades = { sampleUpgrade: { purchased: false } };
+  state.log = [
+    { id: 'log-old', timestamp: Date.now() - 1000, message: 'Older event', type: 'info' },
+    { id: 'log-new', timestamp: Date.now(), message: 'New event', type: 'alert' }
+  ];
+
+  const stubAsset = { id: 'notify-asset', name: 'Notifier', maintenance: { cost: 10 } };
+  const stubUpgrade = { id: 'sampleUpgrade', name: 'Sample Upgrade', cost: 100, repeatable: false };
+  const assets = getAssets();
+  assets.push(stubAsset);
+  const upgrades = getUpgrades();
+  upgrades.push(stubUpgrade);
+  state.assets[stubAsset.id] = {
+    instances: [
+      { id: 'inst-1', status: 'active', maintenanceFundedToday: false }
+    ]
+  };
+
+  const notifications = buildNotifications(state);
+  assert.ok(notifications.some(entry => entry.id.includes('maintenance')));
+
+  const notificationModel = buildNotificationModel(state);
+  assert.ok(notificationModel.entries.length >= notifications.length);
+
+  const eventLog = buildEventLog(state);
+  assert.equal(eventLog[0].id, 'log-new');
+
+  const eventLogModel = buildEventLogModel(state);
+  assert.ok(eventLogModel.entries.length > 0);
+
+  t.after(() => {
+    assets.pop();
+    upgrades.pop();
+  });
+});
+
+test('actionProviders compose models from providers', () => {
+  const state = {
+    day: 2,
+    timeLeft: 4,
+    baseTime: 6,
+    bonusTime: 1,
+    dailyBonusTime: 1,
+    money: 500
+  };
+
+  const providerSnapshots = [
+    {
+      id: 'quick-actions',
+      focusCategory: 'hustle',
+      metrics: { hoursAvailable: 3, hoursSpent: 5 },
+      entries: [
+        {
+          id: 'quick-1',
+          title: 'Quick Shot',
+          durationHours: 1,
+          payout: 120,
+          payoutText: '$120',
+          onClick: () => {}
+        }
+      ]
+    },
+    {
+      id: 'asset-upgrades',
+      focusCategory: 'upgrade',
+      metrics: { defaultLabel: 'Boost', moneyAvailable: 400 },
+      entries: [
+        {
+          id: 'asset-1',
+          title: 'Upgrade Venture',
+          durationHours: 2,
+          moneyCost: 200,
+          onClick: () => {}
+        }
+      ]
+    },
+    {
+      id: 'study-enrollment',
+      focusCategory: 'study',
+      metrics: { hoursAvailable: 2, hoursSpent: 2 },
+      entries: [
+        {
+          id: 'study-1',
+          title: 'Enroll Course',
+          durationHours: 1,
+          moneyCost: 50,
+          onClick: () => {}
+        }
+      ]
+    }
+  ];
+
+  const quickProvider = selectProvider(providerSnapshots, 'quick-actions', 'hustle');
+  assert.equal(quickProvider.id, 'quick-actions');
+
+  const quickModel = buildQuickActionsFromProvider(state, quickProvider);
+  assert.equal(quickModel.entries.length, 1);
+
+  const assetModel = buildAssetActionsFromProvider(state, providerSnapshots[1]);
+  assert.equal(assetModel.entries[0].buttonLabel, 'Boost');
+
+  const studyModel = buildStudyActionsFromProvider(state, providerSnapshots[2]);
+  assert.ok(studyModel.hoursAvailableLabel.includes('h'));
+
+  const composite = buildDashboardActionModels(state, providerSnapshots);
+  assert.equal(composite.quickActions.entries.length, 1);
+  assert.equal(composite.assetActions.entries.length, 1);
+  assert.equal(composite.studyActions.entries.length, 1);
+});
+
+test('model re-exports base action builders', () => {
+  assert.equal(typeof buildQuickActionModel, 'function');
+  assert.equal(typeof buildAssetActionModel, 'function');
+  assert.equal(typeof buildStudyEnrollmentActionModel, 'function');
 });

@@ -44,10 +44,12 @@ test('maintenance helpers summarize daily upkeep nicely', () => {
   };
 
   const summary = formatMaintenanceSummary(definition);
-  assert.deepEqual(summary, {
-    parts: ['1.5h/day', '$42/day'],
-    hasUpkeep: true
-  });
+  assert.equal(summary.hours, 1.5);
+  assert.equal(summary.cost, 42);
+  assert.deepEqual(summary.parts, ['1.5h/day', '$42/day']);
+  assert.equal(summary.text, '1.5h/day • $42/day');
+  assert.equal(summary.detailText, '1.5h/day + $42/day');
+  assert.equal(summary.hasUpkeep, true);
   assert.match(maintenanceDetail(definition), /1.5h\/day \+ \$42\/day/);
 });
 

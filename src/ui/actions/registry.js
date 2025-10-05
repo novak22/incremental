@@ -271,6 +271,9 @@ export function buildActionQueue({ state = {}, summary = {} } = {}) {
     autoCompletedEntries: createAutoCompletedEntries(summary)
   };
 
+  const activeDay = coerceNumber(state?.day, null);
+  queue.day = Number.isFinite(activeDay) ? activeDay : null;
+
   const snapshots = collectActionProviders({ state, summary });
 
   snapshots.forEach(snapshot => {
