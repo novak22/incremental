@@ -1,6 +1,7 @@
 import { getState } from '../../core/state.js';
 import { getAssetDefinition } from '../../core/state/registry.js';
 import { getAssetEffectMultiplier } from '../upgrades/effects.js';
+import { applyModifiers } from '../data/economyMath.js';
 import { getInstanceNicheEffect } from './niches.js';
 import { applyAssetIncomeEducationBonus } from '../educationEffects.js';
 import { applyIncomeEvents, maybeTriggerAssetEvents } from '../events/index.js';
@@ -171,7 +172,23 @@ export function rollDailyIncome(definition, assetState, instance) {
     actionType: 'payout'
   });
   const upgradeEntries = [];
-  if (payoutTotal > 0 && Number.isFinite(upgradeEffect.multiplier) && upgradeEffect.multiplier !== 1) {
+  if (payoutTotal > 0 && Array.isArray(upgradeEffect?.modifiers) && upgradeEffect.modifiers.length) {
+    const result = applyModifiers(payoutTotal, upgradeEffect.modifiers, { clamp: upgradeEffect.clamp });
+    const adjusted = Number.isFinite(result?.value) ? result.value : payoutTotal;
+    result.applied.forEach(entry => {
+      if (!entry) return;
+      const delta = entry.delta;
+      if (!Number.isFinite(delta) || Math.abs(delta) <= 0.01) return;
+      upgradeEntries.push({
+        id: entry.id,
+        label: `${entry.label} boost`,
+        amount: delta,
+        type: 'upgrade',
+        percent: entry.type === 'multiplier' ? entry.value - 1 : null
+      });
+    });
+    payoutTotal = Math.max(0, adjusted);
+  } else if (payoutTotal > 0 && Number.isFinite(upgradeEffect?.multiplier) && upgradeEffect.multiplier !== 1) {
     const targetTotal = payoutTotal * upgradeEffect.multiplier;
     let running = payoutTotal;
     upgradeEffect.sources.forEach((source, index) => {

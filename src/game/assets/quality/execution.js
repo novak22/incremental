@@ -2,6 +2,7 @@ import { formatHours, formatMoney } from '../../../core/helpers.js';
 import { addLog } from '../../../core/log.js';
 import { getAssetState, getState } from '../../../core/state.js';
 import { getAssetEffectMultiplier } from '../../upgrades/effects.js';
+import { applyModifiers } from '../../data/economyMath.js';
 import { spendMoney } from '../../currency.js';
 import { spendTime } from '../../time.js';
 import { recordCostContribution, recordTimeContribution } from '../../metrics.js';
@@ -230,8 +231,17 @@ export function updateProgressAndLevel({
       const effect = getAssetEffectMultiplier(definition, 'quality_progress_mult', {
         actionType: 'quality'
       });
-      const multiplier = Number.isFinite(effect.multiplier) ? effect.multiplier : 1;
-      const adjusted = amount * multiplier;
+      let adjusted = amount;
+      if (Array.isArray(effect?.modifiers) && effect.modifiers.length) {
+        const result = applyModifiers(amount, effect.modifiers, { clamp: effect.clamp });
+        if (Number.isFinite(result?.value)) {
+          adjusted = result.value;
+        } else if (Number.isFinite(effect?.multiplier)) {
+          adjusted = amount * effect.multiplier;
+        }
+      } else if (Number.isFinite(effect?.multiplier)) {
+        adjusted = amount * effect.multiplier;
+      }
       const current = Number(quality.progress[action.progressKey]) || 0;
       quality.progress[action.progressKey] = Math.max(0, current + adjusted);
     }
