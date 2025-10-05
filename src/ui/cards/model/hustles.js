@@ -1,7 +1,7 @@
 import { getState } from '../../../core/state.js';
 import { formatHours, formatMoney } from '../../../core/helpers.js';
 import { describeHustleRequirements, getHustleDailyUsage } from '../../../game/hustles/helpers.js';
-import { getAvailableOffers, getClaimedOffers, acceptHustleOffer } from '../../../game/hustles.js';
+import { getAvailableOffers, getClaimedOffers, acceptHustleOffer, rollDailyOffers } from '../../../game/hustles.js';
 import { collectOutstandingActionEntries } from '../../actions/registry.js';
 
 function resolveOfferHours(offer, definition) {
@@ -175,7 +175,8 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
     getOffers = getAvailableOffers,
     getAcceptedOffers = getClaimedOffers,
     acceptOffer = acceptHustleOffer,
-    collectCommitments = collectOutstandingActionEntries
+    collectCommitments = collectOutstandingActionEntries,
+    rollOffers = rollDailyOffers
   } = helpers;
 
   const state = getStateFn();
@@ -343,12 +344,6 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
     const primaryOffer = readyOffers[0] || offerEntries[0] || null;
 
     let actionConfig = null;
-    let fallbackActionDisabled = false;
-    if (definition.action) {
-      fallbackActionDisabled = typeof definition.action.disabled === 'function'
-        ? definition.action.disabled(state)
-        : Boolean(definition.action.disabled);
-    }
 
     if (primaryOffer) {
       const ready = primaryOffer.ready;
@@ -361,15 +356,16 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
         className: 'primary',
         onClick: ready ? primaryOffer.onAccept : null
       };
-    } else if (definition.action) {
-      const actionLabel = typeof definition.action.label === 'function'
-        ? definition.action.label(state)
-        : definition.action.label || 'Queue';
+    } else {
+      const rerollLabel = definition.market?.manualRerollLabel || 'Roll a fresh offer';
+      const canReroll = typeof rollOffers === 'function';
       actionConfig = {
-        label: actionLabel,
-        disabled: fallbackActionDisabled,
-        className: definition.action.className || 'primary',
-        onClick: definition.action.onClick
+        label: rerollLabel,
+        disabled: !canReroll,
+        className: 'secondary',
+        onClick: canReroll
+          ? () => rollOffers({ templates: [definition], day: currentDay, state })
+          : null
       };
     }
 
@@ -384,10 +380,7 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
       badges.push(`${commitments.length} active`);
     }
 
-    let available = Boolean(readyOffers.length);
-    if (!offerEntries.length && definition.action && !fallbackActionDisabled) {
-      available = true;
-    }
+    const available = Boolean(readyOffers.length);
 
     return {
       id: definition.id,
