@@ -1,6 +1,7 @@
 import { appendContent } from '../../components/common/domHelpers.js';
 import { createStat } from '../../components/widgets.js';
 import { getWorkspacePath } from '../../layout/workspaces.js';
+import { groupEntriesByTaskGroup, TASK_GROUP_CONFIGS, DEFAULT_TODO_EMPTY_MESSAGE } from '../../../../actions/taskGrouping.js';
 import { formatCurrency } from './model.js';
 import { createCard } from './components/card.js';
 import {
@@ -12,28 +13,16 @@ import { createCompletedSection } from './sections/completedSection.js';
 
 const tabObserverMap = new WeakMap();
 
-const TODO_GROUPS = [
-  { key: 'hustle', label: 'Hustles queued', empty: 'Line up a gig to stack this lane.' },
-  { key: 'upgrade', label: 'Upgrades to trigger', empty: 'Queue an upgrade to keep momentum.' },
-  { key: 'study', label: 'Study & training', empty: 'No study blocks queued yet.' },
-  { key: 'other', label: 'Assist & extras', empty: 'No support tasks waiting on you.' }
-];
-
 function buildTodoGroups(entries = []) {
-  const groups = TODO_GROUPS.reduce((map, group) => {
-    map[group.key] = [];
-    return map;
-  }, {});
-
-  entries
-    .filter(Boolean)
-    .forEach((entry, index) => {
+  const groupedEntries = groupEntriesByTaskGroup(entries);
+  return TASK_GROUP_CONFIGS.reduce((map, config) => {
+    const bucketEntries = (groupedEntries[config.key] || []).filter(Boolean);
+    map[config.key] = bucketEntries.map((entry, index) => {
       const detailParts = [];
       if (entry.durationText) {
         detailParts.push(entry.durationText);
       }
-      const focus = typeof entry.focusCategory === 'string' ? entry.focusCategory.toLowerCase() : '';
-      if (entry.meta && focus !== 'upgrade') {
+      if (entry.meta && config.key !== 'upgrade') {
         detailParts.push(entry.meta);
       }
       const moneyCost = Number(entry.moneyCost);
@@ -45,29 +34,18 @@ function buildTodoGroups(entries = []) {
         detailParts.push(`Runs left ×${runsRemaining}`);
       }
 
-      let groupKey = focus;
-      if (groupKey === 'education') {
-        groupKey = 'study';
-      }
-      if (!groupKey) {
-        groupKey = 'hustle';
-      }
-      if (!groups[groupKey]) {
-        groupKey = 'other';
-      }
-
       const item = {
         name: entry.title || entry.name || `Task ${index + 1}`
       };
 
-      if (groupKey !== 'study' && detailParts.length > 0) {
+      if (config.key !== 'study' && detailParts.length > 0) {
         item.detail = detailParts.join(' • ');
       }
 
-      groups[groupKey].push(item);
+      return item;
     });
-
-  return groups;
+    return map;
+  }, {});
 }
 
 function createTodoCard(model = {}, options = {}) {
@@ -80,10 +58,10 @@ function createTodoCard(model = {}, options = {}) {
 
   const entries = Array.isArray(model.todoEntries) ? model.todoEntries : [];
   const groups = buildTodoGroups(entries);
-  const totalTasks = TODO_GROUPS.reduce((total, config) => total + (groups[config.key]?.length || 0), 0);
+  const totalTasks = TASK_GROUP_CONFIGS.reduce((total, config) => total + (groups[config.key]?.length || 0), 0);
 
   if (totalTasks === 0) {
-    const emptyText = model.todoEmptyMessage || 'Queue a hustle or upgrade to add new tasks.';
+    const emptyText = model.todoEmptyMessage || DEFAULT_TODO_EMPTY_MESSAGE;
     card.appendChild(createTaskList([], emptyText, 'timodoro-todo'));
     return card;
   }
@@ -99,7 +77,7 @@ function createTodoCard(model = {}, options = {}) {
   const groupsWrapper = document.createElement('div');
   groupsWrapper.className = 'timodoro-section__groups';
 
-  TODO_GROUPS.forEach(config => {
+  TASK_GROUP_CONFIGS.forEach(config => {
     const group = document.createElement('section');
     group.className = 'timodoro-subsection';
 
@@ -108,7 +86,9 @@ function createTodoCard(model = {}, options = {}) {
     appendContent(title, config.label);
 
     const items = groups[config.key] || [];
-    const emptyMessage = config.key === 'hustle' ? (model.todoEmptyMessage || config.empty) : config.empty;
+    const emptyMessage = config.key === 'hustle'
+      ? (model.todoEmptyMessage || DEFAULT_TODO_EMPTY_MESSAGE)
+      : config.empty;
     const list = createTaskList(items, emptyMessage, `timodoro-todo-${config.key}`);
 
     group.append(title, list);

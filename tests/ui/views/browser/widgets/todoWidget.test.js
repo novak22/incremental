@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict';
 import { afterEach, beforeEach, describe, it } from 'node:test';
 
-import { applyFocusOrdering } from '../../../../../src/ui/views/browser/widgets/todoWidget.js';
+import {
+  applyFocusOrdering,
+  groupEntriesByTaskGroup,
+  TASK_GROUP_CONFIGS
+} from '../../../../../src/ui/actions/taskGrouping.js';
 import {
   getFocusModeConfig,
   getFocusBucketComparator,
@@ -104,6 +108,42 @@ describe('todoWidget focus ordering', () => {
       assert.deepEqual(
         ordered.map(entry => entry.id),
         ['upgrade-item', 'bucketed-hustle', 'general-task']
+      );
+    });
+  });
+
+  describe('shared task grouping', () => {
+    it('organizes entries into configured buckets for downstream views', () => {
+      const entries = [
+        { id: 'hustle-a', focusCategory: 'hustle' },
+        { id: 'upgrade-a', focusCategory: 'upgrade' },
+        { id: 'education-a', focusCategory: 'education' },
+        { id: 'support-a', focusCategory: 'assist' }
+      ];
+
+      const groups = groupEntriesByTaskGroup(entries);
+
+      const configKeys = TASK_GROUP_CONFIGS.map(config => config.key);
+      assert.deepEqual(Object.keys(groups), configKeys, 'all configured groups should be present');
+      assert.deepEqual(
+        groups.hustle.map(entry => entry.id),
+        ['hustle-a'],
+        'hustle entries remain grouped together'
+      );
+      assert.deepEqual(
+        groups.upgrade.map(entry => entry.id),
+        ['upgrade-a'],
+        'upgrade entries remain grouped together'
+      );
+      assert.deepEqual(
+        groups.study.map(entry => entry.id),
+        ['education-a'],
+        'education aliases map into the study bucket'
+      );
+      assert.deepEqual(
+        groups.other.map(entry => entry.id),
+        ['support-a'],
+        'assist entries fall back to the catch-all group'
       );
     });
   });
