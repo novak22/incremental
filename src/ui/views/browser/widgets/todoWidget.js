@@ -189,7 +189,7 @@ function createProgressHandler(entry = {}) {
   return () => {
     const definition = getActionDefinition(definitionId);
     if (!definition) {
-      return;
+      return { success: false };
     }
 
     const metadata = progress.metadata;
@@ -202,13 +202,13 @@ function createProgressHandler(entry = {}) {
 
     if (requiresManualCompletion && (!hasRemaining || amount <= 0)) {
       completeActionInstance(definition, { id: instanceId }, { metadata });
-      return;
+      return { success: true, hours: 0, completed: true };
     }
 
     const hours = amount > 0 ? amount : step;
     if (!Number.isFinite(hours) || hours <= 0) {
       completeActionInstance(definition, { id: instanceId }, { metadata });
-      return;
+      return { success: true, hours: 0, completed: true };
     }
 
     const state = getState();
@@ -220,11 +220,12 @@ function createProgressHandler(entry = {}) {
           'warning'
         );
       }
-      return;
+      return { success: false };
     }
 
     spendTime(hours);
     advanceActionInstance(definition, { id: instanceId }, { hours, metadata });
+    return { success: true, hours };
   };
 }
 
@@ -373,8 +374,9 @@ function handleCompletion(entry, model) {
 
   const previousModelRef = todoState.getLastModel();
   let triggeredUpdate = false;
+  let runOutcome;
   if (typeof entry.onClick === 'function') {
-    entry.onClick();
+    runOutcome = entry.onClick();
     triggeredUpdate = todoState.getLastModel() !== previousModelRef;
   }
 
@@ -412,11 +414,38 @@ function handleCompletion(entry, model) {
     }
   }
 
+  if (runOutcome && typeof runOutcome === 'object') {
+    if (runOutcome.success === false) {
+      return false;
+    }
+    if (runOutcome.success === true) {
+      actionRan = true;
+      if (Number.isFinite(runOutcome.hours)) {
+        if (Number.isFinite(effectiveDuration)) {
+          effectiveDuration = Math.max(effectiveDuration, runOutcome.hours);
+        } else {
+          effectiveDuration = runOutcome.hours;
+        }
+      }
+    }
+  } else if (runOutcome === false) {
+    return false;
+  } else if (runOutcome === true) {
+    actionRan = true;
+  }
+
   if (!actionRan) {
     return false;
   }
 
-  const recordedDuration = Number.isFinite(effectiveDuration) ? effectiveDuration : duration;
+  const outcomeHours = runOutcome && typeof runOutcome === 'object' ? Number(runOutcome.hours) : NaN;
+  const recordedDuration = Number.isFinite(effectiveDuration)
+    ? effectiveDuration
+    : Number.isFinite(outcomeHours)
+      ? outcomeHours
+      : Number.isFinite(duration)
+        ? duration
+        : 0;
 
   todoState.recordCompletion(entry, {
     durationHours: recordedDuration,
