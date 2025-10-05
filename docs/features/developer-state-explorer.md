@@ -17,12 +17,14 @@ Append `?view=developer` (or `?ui=developer`) to the game URL to boot directly i
 - **Overview card** – current day, cash, time remaining, active asset count, and total active events plus a timestamp for the snapshot.
 - **Random event buffs** – sortable table (by modifier magnitude) showing label, percent impact, target resolution, remaining days, and tone for each active event.
 - **Long-term buffs** – grouped by education completions, purchased upgrades with boost text, and current time bonuses (base, bonus, and daily additions).
+- **Action memory** – rich cards for every action definition showing availability, base costs, run counters, and per-instance progress logs pulled from live state.
 - **Raw state snapshot** – pretty-printed JSON dump of the full state object for quick copying into tests.
 
 ## Implementation Notes
 - Registered as a UI view with guard `#developer-root`; does not interfere with normal shell boot.
 - Uses `subscribeToInvalidation` to stay in sync with the simulation tick.
 - Relies on registry definitions to label assets/upgrades and on `educationEffects` helpers to translate track bonuses into readable strings.
+- Action explorer cards merge registry metadata with `state.actions` so devs can audit instance progress (daily logs, hours remaining, payouts) without digging through JSON.
 - Styling lives in `styles/developer.css` and reuses existing font tokens while embracing a darker, data-dashboard motif.
 
 ## Follow-ups / Ideas
