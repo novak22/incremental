@@ -412,6 +412,21 @@ body:not(.developer-view-active) #developer-root {
   margin: 0;
 }
 
+.developer-actions__summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+.developer-actions__summary-title {
+  margin: 0;
+  font-size: 0.9rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary-on-dark, rgba(245, 247, 251, 0.65));
+}
+
 .developer-actions__stat {
   background: rgba(255, 255, 255, 0.04);
   border-radius: 0.9rem;

@@ -17,7 +17,7 @@ Append `?view=developer` (or `?ui=developer`) to the game URL to boot directly i
 - **Overview card** – current day, cash, time remaining, active asset count, and total active events plus a timestamp for the snapshot.
 - **Random event buffs** – sortable table (by modifier magnitude) showing label, percent impact, target resolution, remaining days, and tone for each active event.
 - **Long-term buffs** – grouped by education completions, purchased upgrades with boost text, and current time bonuses (base, bonus, and daily additions).
-- **Action memory** – rich cards for every action definition showing availability, base costs, run counters, and per-instance progress logs pulled from live state.
+- **Action memory** – rich cards for every action definition showing availability, base costs, run counters, per-instance progress logs pulled from live state, and a top-line instance tally grouped by status for fast auditing.
 - **Raw state snapshot** – pretty-printed JSON dump of the full state object for quick copying into tests.
 
 ## Implementation Notes

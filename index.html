@@ -376,6 +376,10 @@
           <p class="developer-card__subtitle">Every action definition currently tracked in save data.</p>
         </header>
         <div class="developer-card__body developer-actions">
+          <section id="developer-actions-stats" class="developer-actions__summary" hidden aria-live="polite">
+            <h3 class="developer-actions__summary-title">Instance stats</h3>
+            <dl class="developer-actions__stats" data-dev-actions-stats></dl>
+          </section>
           <p id="developer-actions-empty" class="developer-empty" hidden>No action runs logged yet.</p>
           <ul id="developer-actions-list" class="developer-actions__list" aria-live="polite"></ul>
         </div>
