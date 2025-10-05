@@ -131,7 +131,7 @@ test('ensureStateShape populates default action, asset, and upgrade state', () =
   }
 });
 
-test('ensureNicheStateShape repairs popularity map and fallback day', () => {
+test('ensureNicheStateShape repairs popularity map and removes legacy fields', () => {
   const state = {
     day: 4,
     niches: {
@@ -145,7 +145,7 @@ test('ensureNicheStateShape repairs popularity map and fallback day', () => {
 
   ensureNicheStateShape(state, { fallbackDay: state.day });
 
-  assert.equal(state.niches.lastRollDay, 4);
+  assert.equal('lastRollDay' in state.niches, false);
   assert.ok(state.niches.popularity.techInnovators, 'known niches should be kept');
   assert.equal(state.niches.popularity.fake, undefined, 'unknown niches should be removed');
   assert.equal(state.niches.popularity.techInnovators.previousScore, 15);

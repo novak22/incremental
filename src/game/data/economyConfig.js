@@ -4,6 +4,11 @@ const MINUTES_PER_HOUR = 60;
 
 const toHours = minutes => minutes / MINUTES_PER_HOUR;
 
+const toNumber = value => {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : undefined;
+};
+
 const mapQualityCurve = curve =>
   curve.map(entry => ({
     level: entry.level,
@@ -13,6 +18,85 @@ const mapQualityCurve = curve =>
     },
     requirements: entry.requirements || {}
   }));
+
+const cloneArray = entries => {
+  if (!Array.isArray(entries)) return [];
+  return entries.map(entry => (entry && typeof entry === 'object' ? { ...entry } : entry));
+};
+
+const parseModifierTarget = target => {
+  if (!target || typeof target !== 'string') {
+    return { category: null, id: null, stat: null };
+  }
+
+  const [category = null, descriptor = ''] = target.split(':');
+  const [id = null, stat = null] = descriptor.split('.');
+
+  return { category, id, stat };
+};
+
+const parseModifierAmount = modifier => {
+  if (!modifier) return 0;
+  if (typeof modifier.amount === 'number') {
+    return modifier.amount;
+  }
+
+  const formula = modifier.formula || '';
+  if (modifier.type === 'multiplier') {
+    const multiplierMatch = formula.match(/\(1\s*\+\s*([0-9.]+)\)/);
+    if (multiplierMatch) {
+      const value = Number(multiplierMatch[1]);
+      return Number.isFinite(value) ? value : 0;
+    }
+    const directMatch = formula.match(/\*\s*([0-9.]+)/);
+    if (directMatch) {
+      const value = Number(directMatch[1]);
+      return Number.isFinite(value) ? value - 1 : 0;
+    }
+  }
+
+  if (modifier.type === 'flat') {
+    const flatMatch = formula.match(/\+\s*([0-9.]+)/);
+    if (flatMatch) {
+      const value = Number(flatMatch[1]);
+      return Number.isFinite(value) ? value : 0;
+    }
+  }
+
+  return 0;
+};
+
+const mapInstantBoost = modifier => {
+  const target = parseModifierTarget(modifier.target);
+  const amount = parseModifierAmount(modifier);
+  const base = {
+    type: modifier.type,
+    amount,
+    notes: modifier.notes || null,
+    target: modifier.target || null,
+    formula: modifier.formula || null
+  };
+
+  if (target.category === 'asset') {
+    const asset = normalizedEconomy.assets?.[target.id] || {};
+    return {
+      ...base,
+      assetId: target.id,
+      assetName: asset.name || target.id
+    };
+  }
+
+  if (target.category === 'hustle') {
+    const hustle = normalizedEconomy.hustles?.[target.id] || {};
+    return {
+      ...base,
+      hustleId: target.id,
+      hustleName: hustle.name || target.id
+    };
+  }
+
+  return base;
+};
 
 const createAssetConfig = key => {
   const asset = normalizedEconomy.assets[key];
@@ -40,10 +124,20 @@ const createAssetConfig = key => {
 const createHustleConfig = key => {
   const hustle = normalizedEconomy.hustles[key];
   return {
+    name: hustle.name,
+    timeMinutes: hustle.setup_time,
     timeHours: toHours(hustle.setup_time),
     payout: hustle.base_income,
+    variance: hustle.variance,
     cost: hustle.setup_cost,
-    dailyLimit: hustle.daily_limit
+    maintenance: {
+      timeMinutes: hustle.maintenance_time,
+      cost: hustle.maintenance_cost
+    },
+    dailyLimit: hustle.daily_limit,
+    requirements: cloneArray(hustle.requirements),
+    skills: cloneArray(hustle.skills),
+    tags: cloneArray(hustle.tags)
   };
 };
 
@@ -55,15 +149,53 @@ const createUpgradeConfig = key => {
   };
 };
 
+const createAssistantUpgradeConfig = () => {
+  const assistant = normalizedEconomy.upgrades.assistant || {};
+  const base = createUpgradeConfig('assistant');
+  const bonusMinutes = Math.max(0, toNumber(assistant.bonus_minutes_per_day) ?? 0);
+  const hoursPerAssistant = bonusMinutes > 0 ? toHours(bonusMinutes) : 0;
+  const dailyWage = toNumber(assistant.daily_wage);
+  const hourlyWage = toNumber(assistant.hourly_wage);
+  const resolvedHourlyRate =
+    hourlyWage ?? (hoursPerAssistant > 0 && dailyWage !== undefined ? dailyWage / hoursPerAssistant : 0);
+  const resolvedDailyWage =
+    dailyWage ?? (resolvedHourlyRate !== undefined ? resolvedHourlyRate * hoursPerAssistant : 0);
+  const hiringCost = Math.max(0, toNumber(assistant.hiring_cost) ?? base.cost ?? 0);
+  const maxAssistants = Math.max(0, toNumber(assistant.max_count ?? assistant.max_assistants) ?? 0);
+
+  return {
+    ...base,
+    hiringCost,
+    bonusMinutesPerAssistant: bonusMinutes,
+    hoursPerAssistant,
+    hourlyRate: resolvedHourlyRate ?? 0,
+    dailyWage: resolvedDailyWage ?? 0,
+    maxAssistants
+  };
+};
+
+export const assistantUpgrade = createAssistantUpgradeConfig();
+
 const createTrackConfig = key => {
   const track = normalizedEconomy.tracks[key];
   const schedule = track.schedule || {};
+  const days = schedule.setup_days ?? schedule.days ?? 0;
+  const minutesPerDay = schedule.setup_minutes_per_day ?? schedule.minutes_per_day ?? 0;
+  const instantBoosts = (normalizedEconomy.modifiers || [])
+    .filter(modifier => modifier.source === key)
+    .map(mapInstantBoost);
+
   return {
+    id: key,
+    name: track.name || key,
     schedule: {
-      days: schedule.setup_days ?? schedule.days,
-      minutesPerDay: schedule.setup_minutes_per_day ?? schedule.minutes_per_day
+      days,
+      minutesPerDay,
+      hoursPerDay: toHours(minutesPerDay)
     },
-    rewards: track.rewards || {}
+    setupCost: track.setup_cost ?? 0,
+    rewards: track.rewards || {},
+    instantBoosts
   };
 };
 
@@ -115,7 +247,7 @@ export const upgrades = {
   // Spec: docs/normalized_economy.json → upgrades.studioExpansion
   studioExpansion: createUpgradeConfig('studioExpansion'),
   // Spec: docs/normalized_economy.json → upgrades.assistant
-  assistant: createUpgradeConfig('assistant'),
+  assistant: assistantUpgrade,
   // Spec: docs/normalized_economy.json → upgrades.serverRack
   serverRack: createUpgradeConfig('serverRack'),
   // Spec: docs/normalized_economy.json → upgrades.fulfillmentAutomation

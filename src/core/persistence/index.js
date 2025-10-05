@@ -166,7 +166,34 @@ function migrateLegacyHustlesToActions(snapshot, context) {
   return migrated;
 }
 
-const DEFAULT_MIGRATIONS = [migrateLegacySnapshot, migrateLegacyHustlesToActions];
+function removeLegacyNicheRollDay(snapshot) {
+  if (!snapshot || typeof snapshot !== 'object') {
+    return snapshot;
+  }
+
+  const niches = snapshot.niches;
+  const migrated = { ...snapshot };
+
+  if (!niches || typeof niches !== 'object') {
+    if (niches !== undefined) {
+      migrated.niches = niches;
+    }
+    return migrated;
+  }
+
+  const sanitizedNiches = { ...niches };
+  if ('lastRollDay' in sanitizedNiches) {
+    delete sanitizedNiches.lastRollDay;
+  }
+  migrated.niches = sanitizedNiches;
+  return migrated;
+}
+
+const DEFAULT_MIGRATIONS = [
+  migrateLegacySnapshot,
+  migrateLegacyHustlesToActions,
+  removeLegacyNicheRollDay
+];
 
 export { SnapshotRepository, StateMigrationRunner };
 
@@ -377,4 +404,3 @@ export class StatePersistence {
     };
   }
 }
-
