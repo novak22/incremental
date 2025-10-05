@@ -17,7 +17,8 @@ import { applyModifiers } from '../../data/economyMath.js';
 import { applyMetric, normalizeHustleMetrics } from './metrics.js';
 import { logEducationPayoffSummary, logHustleBlocked } from './logMessaging.js';
 import { markDirty } from '../../../core/events/invalidationBus.js';
-import { acceptActionInstance, advanceActionInstance, completeActionInstance } from '../../actions/progress.js';
+import { advanceActionInstance, completeActionInstance } from '../../actions/progress.js';
+import { createContractTemplate } from '../../actions/templates/contract.js';
 
 function formatHourDetail(hours, effective) {
   if (!hours) return '⏳ Time: <strong>Instant</strong>';
@@ -115,7 +116,7 @@ export function createInstantHustle(config) {
     };
   }
 
-  const definition = {
+  const baseDefinition = {
     ...config,
     type: 'hustle',
     tag: config.tag || { label: 'Instant', type: 'instant' },
@@ -130,8 +131,17 @@ export function createInstantHustle(config) {
       }
       return base;
     })(),
-    skills: metadata.skills
+    dailyLimit: metadata.dailyLimit,
+    skills: metadata.skills,
+    progress: config.progress
   };
+
+  const definition = createContractTemplate(baseDefinition, {
+    progress: {
+      type: 'instant',
+      completion: 'instant'
+    }
+  });
 
   definition.tags = Array.isArray(config.tags) ? config.tags.slice() : [];
 
@@ -351,7 +361,7 @@ export function createInstantHustle(config) {
         if (deadlineDay != null) {
           progressOverrides.deadlineDay = deadlineDay;
         }
-        const instance = acceptActionInstance(definition, {
+        const instance = definition.acceptInstance({
           state,
           metadata,
           overrides: {

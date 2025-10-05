@@ -1,7 +1,6 @@
 import { ACTIONS, INSTANT_ACTIONS, STUDY_ACTIONS } from './actions/definitions.js';
 import { rollDailyOffers, getAvailableOffers, getClaimedOffers } from './hustles/market.js';
 import { getState } from '../core/state.js';
-import { acceptActionInstance } from './actions/progress.js';
 import {
   ensureHustleMarketState,
   claimHustleMarketOffer,
@@ -178,7 +177,11 @@ export function acceptHustleOffer(offerOrId, { state = getState() } = {}) {
     };
   }
 
-  const instance = acceptActionInstance(template, {
+  if (typeof template.acceptInstance !== 'function') {
+    return null;
+  }
+
+  const instance = template.acceptInstance({
     state: workingState,
     metadata,
     overrides
