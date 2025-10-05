@@ -67,6 +67,43 @@ test('clearActionProviders restore removes temporary providers', () => {
   assert.ok(!queueAfterRestore.entries.some(entry => entry.id === 'temp-entry'));
 });
 
+test('providers with higher priority contribute entries first', () => {
+  const restore = clearActionProviders();
+  try {
+    registerActionProvider(() => ({
+      id: 'low-priority',
+      entries: [
+        { id: 'low', title: 'Low priority' }
+      ],
+      metrics: {}
+    }), 0);
+
+    registerActionProvider(() => ({
+      id: 'high-priority-a',
+      entries: [
+        { id: 'high-a', title: 'High priority A' }
+      ],
+      metrics: {}
+    }), 10);
+
+    registerActionProvider(() => ({
+      id: 'high-priority-b',
+      entries: [
+        { id: 'high-b', title: 'High priority B' }
+      ],
+      metrics: {}
+    }), 10);
+
+    const queue = buildActionQueue({ state: {} });
+    assert.deepEqual(
+      queue.entries.map(entry => entry.id),
+      ['high-a', 'high-b', 'low']
+    );
+  } finally {
+    restore();
+  }
+});
+
 test('buildActionQueue merges auto-completed entries from the summary', () => {
   const restore = clearActionProviders();
   try {
