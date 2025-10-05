@@ -52,8 +52,7 @@ function createState() {
         travelAdventures: { score: 55, previousScore: 50 }
       },
       watchlist: [],
-      analyticsHistory: [],
-      lastRollDay: 5
+      analyticsHistory: []
     }
   };
 }

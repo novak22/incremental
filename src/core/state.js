@@ -137,7 +137,8 @@ class StateManager {
       },
       niches: {
         popularity: {},
-        lastRollDay: 0
+        watchlist: [],
+        analyticsHistory: []
       },
       events: {
         active: []

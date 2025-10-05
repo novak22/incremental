@@ -151,8 +151,9 @@ export function ensureNicheStateShape(target, { fallbackDay = 1 } = {}) {
       : createNeutralPopularitySnapshot();
   }
 
-  const storedDay = Number(nicheState.lastRollDay);
-  nicheState.lastRollDay = Number.isFinite(storedDay) ? storedDay : fallbackDay;
+  if ('lastRollDay' in nicheState) {
+    delete nicheState.lastRollDay;
+  }
 
   if (!Array.isArray(nicheState.analyticsHistory)) {
     nicheState.analyticsHistory = [];

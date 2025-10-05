@@ -189,8 +189,7 @@ test('buildDashboardViewModel includes niche analytics data', t => {
       techInnovators: { score: 82, previousScore: 70 },
       healthWellness: { score: 38, previousScore: 44 }
     },
-    watchlist: ['healthWellness'],
-    lastRollDay: state.day
+    watchlist: ['healthWellness']
   };
 
   const stubAsset = {
