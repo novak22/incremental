@@ -96,6 +96,16 @@ test('buildActionQueue merges auto-completed entries from the summary', () => {
   }
 });
 
+test('buildActionQueue includes the active day when provided', () => {
+  const restore = clearActionProviders();
+  try {
+    const queue = buildActionQueue({ state: { day: 7 } });
+    assert.equal(queue.day, 7);
+  } finally {
+    restore();
+  }
+});
+
 test('normalizeActionEntries mirrors todo normalization rules', () => {
   const entries = normalizeActionEntries([
     { id: 'direct', timeCost: 3, payout: 90 }
