@@ -67,11 +67,15 @@ function normalizeEventEntry(entry, { fallbackDay = 1 } = {}) {
     min: MIN_DURATION_DAYS,
     max: MAX_DURATION_DAYS
   });
-  const remainingDaysRaw = sanitizePositiveInteger(entry.remainingDays, {
-    min: 0,
-    max: MAX_DURATION_DAYS
-  });
-  const remainingDays = Math.min(totalDays, remainingDaysRaw || totalDays);
+  const hasExplicitRemaining = entry.remainingDays !== undefined && entry.remainingDays !== null;
+  const remainingDaysRaw = sanitizePositiveInteger(
+    hasExplicitRemaining ? entry.remainingDays : totalDays,
+    {
+      min: 0,
+      max: MAX_DURATION_DAYS
+    }
+  );
+  const remainingDays = Math.min(totalDays, remainingDaysRaw);
 
   const currentPercent = clampPercent(entry.currentPercent || entry.percent || 0);
   const dailyPercentChange = clampPercent(entry.dailyPercentChange || 0);

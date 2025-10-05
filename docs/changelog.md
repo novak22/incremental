@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+- Tooling: Added a Streamlit balancing workbench (`tools/balancingWorkbench/`) with live sliders, ROI charts, and PNG exports to accelerate economy tuning sessions.
+- Governance: Gameplay PRs that adjust economy constants must update `docs/EconomySpec.md`, rerun `npm run rebuild-economy-docs`, and attach the refreshed appendix before review.
 - Knowledge study tracks now spawn manual study actions; log hours yourself to advance days and earn completion rewards, with migrated saves seeding pending sessions for existing enrollments.
 - Action progress now records per-day hours, supports deferred completions, and exposes helpers for advancing or resetting in-flight hustles.
 - Unified instant hustles and study sessions under a shared action registry that tracks accepted instances, daily limits, and
@@ -17,6 +19,8 @@
 - ShopStack workspace trims unused detail builders—`buildDetailView` and the old `detailBuilders.js` helper are gone, with `detail/index.js` re-exporting the focused helpers directly.
 - Quality actions across passive assets can now spark upbeat celebration events that grant short-lived payout boosts.
 - Hustle-facing UIs surface accepted commitments with progress meters, highlight variant expiries, and keep quick actions populated even when the market has no fresh offers.
+- Niche popularity now syncs with active trend events, keeping multipliers, history, and analytics aligned across saves.
+- Niche trend events now stretch across 5–10 days, building from gentle nudges to pronounced peaks (or dips) so players can react to the swelling momentum.
 
 ## Recent Highlights
 - Passive assets gained Quality 4–5 payout milestones with clearer upkeep cues.

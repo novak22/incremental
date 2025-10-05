@@ -4,7 +4,8 @@
   "type": "module",
   "description": "Charming incremental game with modular browser CSS loaded directly",
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "rebuild-economy-docs": "node scripts/rebuildEconomyDocs.mjs"
   },
   "devDependencies": {
     "jsdom": "^23.0.0"
