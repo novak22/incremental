@@ -11,7 +11,8 @@ import { advanceActionInstance, completeActionInstance } from '../../game/action
 import { getActionDefinition } from '../../game/registryService.js';
 import { spendTime } from '../../game/time.js';
 import { checkDayEnd } from '../../game/lifecycle.js';
-import { registerActionProvider, collectOutstandingActionEntries } from '../actions/registry.js';
+import { collectOutstandingActionEntries } from '../actions/registry.js';
+import { registerActionProvider } from '../actions/providers.js';
 
 function resolveProgressStep(entry = {}) {
   const progress = entry?.progress || {};

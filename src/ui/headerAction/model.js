@@ -1,6 +1,6 @@
 import { buildAssetUpgradeRecommendations, buildQuickActions } from '../dashboard/quickActions.js';
 import { formatHours } from '../../core/helpers.js';
-import { collectActionProviders } from '../actions/registry.js';
+import { collectActionProviders } from '../actions/providers.js';
 
 function formatActionLabel(base, timeCost) {
   if (!base) return '';

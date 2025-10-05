@@ -1,6 +1,6 @@
 import { formatHours } from '../../../../core/helpers.js';
 import { endDay } from '../../../../game/lifecycle.js';
-import { normalizeActionEntries } from '../../../actions/registry.js';
+import { normalizeActionEntries } from '../../../actions/utils.js';
 import {
   applyFocusOrdering,
   attachProgressHandlers,

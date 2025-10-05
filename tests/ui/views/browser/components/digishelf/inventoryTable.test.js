@@ -5,7 +5,7 @@ import renderInventoryTable from '../../../../../../src/ui/views/browser/compone
 import {
   registerActionProvider,
   clearActionProviders
-} from '../../../../../../src/ui/actions/registry.js';
+} from '../../../../../../src/ui/actions/providers.js';
 
 function setupDom() {
   const dom = new JSDOM('<!doctype html><html><body></body></html>');

@@ -4,7 +4,7 @@ import { buildHeaderActionModel } from '../../../src/ui/headerAction/model.js';
 import {
   registerActionProvider,
   clearActionProviders
-} from '../../../src/ui/actions/registry.js';
+} from '../../../src/ui/actions/providers.js';
 
 function createNoop() {
   return () => {};
