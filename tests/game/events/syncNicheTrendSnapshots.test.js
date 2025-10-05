@@ -8,6 +8,9 @@ const gameEventsModule = await import('../../../src/game/events/index.js');
 const { addEvent } = eventsModule;
 const { advanceEventsAfterDay } = gameEventsModule;
 const { syncNicheTrendSnapshots } = await import('../../../src/game/events/syncNicheTrendSnapshots.js');
+const { createNeutralPopularitySnapshot } = await import(
+  '../../../src/game/niches/popularitySnapshot.js'
+);
 
 const { stateModule } = harness;
 const { getState } = stateModule;
@@ -30,6 +33,7 @@ test('syncNicheTrendSnapshots caches event-driven popularity and preserves histo
     state.day = 1;
 
     state.events.active = state.events.active.filter(event => event?.target?.type !== 'niche');
+    state.niches.popularity[NICHE_ID] = createNeutralPopularitySnapshot();
 
     addEvent(state, {
       templateId: 'test-niche-trend',
