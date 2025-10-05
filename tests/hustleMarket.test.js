@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { getGameTestHarness } from './helpers/gameTestHarness.js';
 
 const harness = await getGameTestHarness();
-const { completeActionInstance } = await import('../src/game/actions/progress.js');
+const { completeActionInstance, advanceActionInstance } = await import('../src/game/actions/progress.js');
 const { ensureHustleMarketState } = await import('../src/core/state/slices/hustleMarket.js');
 const { hustlesModule, stateModule } = harness;
 const {
@@ -325,4 +325,43 @@ test('completing a hustle hides the accepted entry from pending lists', () => {
   if (Number.isFinite(completionHours) && completionHours >= 0) {
     assert.equal(completedEntry.hoursLogged, completionHours, 'hours logged should mirror the completion time');
   }
+});
+
+test('on-completion hustle payouts award money after logging required hours', () => {
+  const state = getState();
+  state.day = 7;
+
+  const template = HUSTLE_TEMPLATES[0];
+  assert.ok(template, 'expected a hustle template to validate completion payouts');
+
+  const [offer] = rollDailyOffers({ templates: [template], day: state.day, now: 700, state, rng: () => 0 });
+  assert.ok(offer, 'expected market roll to yield an offer');
+
+  const accepted = acceptHustleOffer(offer.id, { state });
+  assert.ok(accepted, 'expected the market offer to be accepted');
+  assert.ok(accepted.instanceId, 'accepted entry should link to an action instance');
+  assert.equal(accepted.payout?.schedule, 'onCompletion', 'test expects an onCompletion payout schedule');
+  const contractAmount = Math.round(Number(accepted.payout?.amount) || 0);
+  assert.ok(contractAmount > 0, 'test requires a positive contract payout');
+
+  const startingMoney = Number(state.money) || 0;
+
+  const requiredHours = Number.isFinite(accepted.hoursRequired)
+    ? accepted.hoursRequired
+    : Number(template.time) || 0;
+  assert.ok(requiredHours > 0, 'expected the contract to require logged hours');
+
+  const result = advanceActionInstance(template, accepted.instanceId, {
+    state,
+    day: state.day,
+    hours: requiredHours
+  });
+  assert.ok(result?.completed, 'logging required hours should complete the action instance');
+
+  const updatedMoney = Number(state.money) || 0;
+  assert.equal(updatedMoney, startingMoney + contractAmount, 'player money should increase by the contract payout');
+
+  const hustleEntry = state.hustleMarket.accepted.find(entry => entry.instanceId === accepted.instanceId);
+  assert.ok(hustleEntry?.payoutPaid, 'accepted hustle entry should mark the payout as granted');
+  assert.equal(Math.round(Number(hustleEntry.payoutAwarded) || 0), contractAmount, 'stored payout award should match the contract amount');
 });

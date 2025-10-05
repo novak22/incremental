@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Economy: Completing hustle market contracts now grants their promised payouts immediately when logged hours are finished, updating money totals and payout metrics.
 - Fix: Learnly study tasks now respect their configured daily hours so courses can't be cleared by completing a 0h log.
 - Tooling: Added a Streamlit balancing workbench (`tools/balancingWorkbench/`) with live sliders, ROI charts, and PNG exports to accelerate economy tuning sessions.
 - Tooling: Balancing workbench can now simulate multi-asset lineups and upgrade combos, with a handy summary of setup hours, upkeep, and bonus time.
