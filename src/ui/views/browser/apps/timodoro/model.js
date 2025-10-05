@@ -155,6 +155,12 @@ export function buildTimodoroViewModel(state = {}, summary = {}, todoModel = {})
   const breakdownEntries = buildBreakdown(summary, todoModel, state);
   const todoEntries = Array.isArray(todoModel?.entries) ? todoModel.entries : [];
   const todoEmptyMessage = todoModel?.emptyMessage;
+  const todoHoursAvailable = Number.isFinite(todoModel?.hoursAvailable)
+    ? Math.max(0, todoModel.hoursAvailable)
+    : null;
+  const todoMoneyAvailable = Number.isFinite(todoModel?.moneyAvailable)
+    ? Math.max(0, todoModel.moneyAvailable)
+    : null;
 
   const availableLabel = todoModel?.hoursAvailableLabel
     || formatHours(Number(todoModel?.hoursAvailable) || Number(state?.timeLeft) || 0);
@@ -173,6 +179,8 @@ export function buildTimodoroViewModel(state = {}, summary = {}, todoModel = {})
     breakdownEntries,
     todoEntries,
     todoEmptyMessage,
+    todoHoursAvailable,
+    todoMoneyAvailable,
     hoursAvailableLabel: availableLabel,
     hoursSpentLabel: spentLabel,
     meta

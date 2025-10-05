@@ -67,6 +67,7 @@ test('timodoro component renders layout and populates lists', t => {
       {
         title: 'Draft pitch deck',
         durationText: '2h focus',
+        durationHours: 2,
         meta: 'Client work',
         moneyCost: 120,
         focusCategory: 'hustle'
@@ -76,9 +77,16 @@ test('timodoro component renders layout and populates lists', t => {
         durationText: '1h study',
         meta: 'Curriculum update',
         focusCategory: 'education'
+      },
+      {
+        title: 'Overbooked sprint',
+        durationText: '5h focus',
+        durationHours: 5,
+        focusCategory: 'hustle'
       }
     ],
     todoEmptyMessage: 'Queue a hustle or upgrade to add new tasks.',
+    todoHoursAvailable: 2,
     completedGroups: {
       hustles: [{ name: 'Logo sprint', detail: '2h logged' }],
       education: [],
@@ -113,6 +121,11 @@ test('timodoro component renders layout and populates lists', t => {
   ];
   assert.equal(todoItems.length, 1, 'todo tab renders active backlog');
   assert.equal(todoItems[0].querySelector('.timodoro-list__name')?.textContent, 'Draft pitch deck');
+  assert.equal(
+    todoItems.find(item => item.querySelector('.timodoro-list__name')?.textContent === 'Overbooked sprint'),
+    undefined,
+    'filters out tasks exceeding available focus hours'
+  );
   assert.ok(
     todoItems[0].querySelector('.timodoro-list__meta')?.textContent.includes('Cost $120'),
     'todo item includes cost detail'
@@ -293,6 +306,8 @@ test('buildTimodoroViewModel composes summary, recurring, and meta data', () => 
     'Queue something inspiring.',
     'passes through todo empty state message'
   );
+  assert.equal(viewModel.todoHoursAvailable, 3, 'includes raw todo hours available');
+  assert.equal(viewModel.todoMoneyAvailable, null, 'omits money when unavailable');
 
   assert.equal(viewModel.summaryEntries.length, 3, 'summary entries include hours, earnings, time used');
   assert.equal(viewModel.breakdownEntries.length, 3, 'breakdown includes active, upkeep, remaining');
