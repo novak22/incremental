@@ -149,5 +149,5 @@ registerActionProvider(({ state }) => {
       hoursSpentLabel: model?.hoursSpentLabel
     }
   };
-});
+}, 10);
 

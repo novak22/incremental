@@ -3,6 +3,7 @@ import { formatHours } from '../../core/helpers.js';
 const DEFAULT_EMPTY_MESSAGE = 'Queue a hustle or upgrade to add new tasks.';
 
 let providers = [];
+let providerSequence = 0;
 
 function coerceNumber(value, fallback = 0) {
   const numeric = Number(value);
@@ -160,16 +161,21 @@ function createAutoCompletedEntries(summary = {}) {
     .filter(Boolean);
 }
 
-export function registerActionProvider(provider) {
+export function registerActionProvider(provider, priority = 0) {
   if (typeof provider !== 'function') {
     return () => {};
   }
-  providers.push(provider);
+  const record = {
+    handler: provider,
+    priority: coerceNumber(priority),
+    order: providerSequence++
+  };
+  providers.push(record);
   let active = true;
   return () => {
     if (!active) return;
     active = false;
-    providers = providers.filter(item => item !== provider);
+    providers = providers.filter(item => item !== record);
   };
 }
 
@@ -184,12 +190,22 @@ export function clearActionProviders() {
 export function collectActionProviders({ state = {}, summary = {} } = {}) {
   const snapshots = [];
 
-  providers.forEach(provider => {
-    if (typeof provider !== 'function') return;
+  const activeProviders = providers
+    .slice()
+    .sort((a, b) => {
+      if (b.priority !== a.priority) {
+        return b.priority - a.priority;
+      }
+      return a.order - b.order;
+    });
+
+  activeProviders.forEach(provider => {
+    const handler = provider?.handler;
+    if (typeof handler !== 'function') return;
 
     let result;
     try {
-      result = provider({ state, summary });
+      result = handler({ state, summary });
     } catch (error) {
       result = null;
     }

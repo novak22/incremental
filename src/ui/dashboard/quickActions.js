@@ -310,7 +310,7 @@ registerActionProvider(({ state }) => {
       scroller: model?.scroller
     }
   };
-});
+}, 30);
 
 registerActionProvider(({ state }) => {
   const model = buildAssetActionModel(state);
@@ -335,5 +335,5 @@ registerActionProvider(({ state }) => {
       scroller: model?.scroller
     }
   };
-});
+}, 20);
 
