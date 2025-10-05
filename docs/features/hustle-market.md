@@ -49,6 +49,11 @@
 - `getClaimedOffers(state, { day, includeExpired })` surfaces accepted entries so panels can highlight in-progress contracts separate from fresh opportunities.
 - Both helpers rely on the ensure function so consumers can call them without first seeding the slice manually.
 
+## Diagnostics & QA
+- `getMarketRollAuditLog()` exposes a rolling log of the last 30 market rolls (also mirrored on `window.__HUSTLE_MARKET_AUDIT__`), capturing the day, preserved vs. created offers, and per-template reasons whenever a slot stays empty. The helper powers lightweight telemetry without wiring a server backend.【F:src/game/hustles/market.js†L12-L83】【F:src/game/hustles/market.js†L662-L713】
+- The browser attaches `window.__HUSTLE_MARKET_DEBUG__` with `printOffers()`, `printAuditLog()`, and `getAuditLog()` so designers can inspect active offers and expiry windows during playtests. The helpers rely on the same getters documented above, so they work against live or test states.【F:src/game/hustles/market.js†L715-L755】
+- Manual QA steps for the exchange now live in `docs/features/hustle-market-playtest.md`, covering bootstrap validation, daily rerolls, and acceptance/completion flows so every release can run through a repeatable script.
+
 ## Registry Loading
 - `loadDefaultRegistry` now registers the immutable template list (`HUSTLE_TEMPLATES`) so day-to-day market rolls no longer mutate the definitions.
 - Tests cover: slice normalization, seeding, expiry rerolls, and delayed availability to protect future tuning changes.

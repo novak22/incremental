@@ -7,6 +7,72 @@ import {
   getMarketClaimedOffers
 } from '../../core/state/slices/hustleMarket.js';
 
+const MAX_AUDIT_ENTRIES = 30;
+const MARKET_ROLL_AUDIT = [];
+
+function cloneTemplateAuditEntries(entries = []) {
+  return entries.map(entry => ({
+    templateId: entry.templateId,
+    slotsRequested: entry.slotsRequested,
+    existingActive: entry.existingActive,
+    added: entry.added,
+    skipped: entry.skipped,
+    reason: entry.reason
+  }));
+}
+
+function recordMarketRollAudit({ day, timestamp, preserved, created, templates }) {
+  const templateSummaries = cloneTemplateAuditEntries(templates);
+  const entry = {
+    day,
+    timestamp,
+    preservedOffers: preserved,
+    createdOffers: created,
+    totalOffers: preserved + created,
+    templates: templateSummaries,
+    skippedTemplates: templateSummaries.filter(item => item.skipped).map(item => item.templateId)
+  };
+
+  MARKET_ROLL_AUDIT.push(entry);
+  if (MARKET_ROLL_AUDIT.length > MAX_AUDIT_ENTRIES) {
+    MARKET_ROLL_AUDIT.shift();
+  }
+
+  if (typeof globalThis !== 'undefined') {
+    const globalLog = globalThis.__HUSTLE_MARKET_AUDIT__ = globalThis.__HUSTLE_MARKET_AUDIT__ || [];
+    globalLog.push(entry);
+    if (globalLog.length > MAX_AUDIT_ENTRIES) {
+      globalLog.shift();
+    }
+  }
+
+  if (typeof process === 'undefined' && typeof window !== 'undefined' && typeof console !== 'undefined') {
+    const label = `[HustleMarket] Day ${day} roll → ${created} new / ${preserved} preserved`;
+    if (typeof console.groupCollapsed === 'function' && typeof console.table === 'function') {
+      console.groupCollapsed(label);
+      console.table(templateSummaries.map(summary => ({
+        template: summary.templateId,
+        requested: summary.slotsRequested,
+        existing: summary.existingActive,
+        added: summary.added,
+        skipped: summary.skipped,
+        reason: summary.reason || ''
+      })));
+      console.groupEnd();
+    } else if (typeof console.info === 'function') {
+      console.info(label);
+    }
+  }
+}
+
+export function getMarketRollAuditLog() {
+  return MARKET_ROLL_AUDIT.map(entry => ({
+    ...entry,
+    templates: cloneTemplateAuditEntries(entry.templates),
+    skippedTemplates: [...entry.skippedTemplates]
+  }));
+}
+
 function resolveDay(value, fallback = 1) {
   const parsed = Number(value);
   if (!Number.isFinite(parsed) || parsed <= 0) {
@@ -391,6 +457,7 @@ export function rollDailyOffers({
     .map(offer => structuredClone(offer));
 
   const activeVariantsByTemplate = new Map();
+  const templateAudits = [];
   for (const offer of preservedOffers) {
     if (!offer || offer.claimed) continue;
     if (!activeVariantsByTemplate.has(offer.templateId)) {
@@ -411,17 +478,6 @@ export function rollDailyOffers({
     if (!template || !template.id) continue;
     const templateId = template.id;
 
-    const variants = buildVariantPool(template);
-    if (!variants.length) continue;
-
-    const marketConfig = template?.market || {};
-    const templateSlotsPerRoll = resolvePositiveInteger(marketConfig.slotsPerRoll ?? 1, 1);
-    const defaultTemplateMaxActive = Math.max(templateSlotsPerRoll, variants.length);
-    const templateMaxActive = resolvePositiveInteger(
-      marketConfig.maxActive != null ? marketConfig.maxActive : defaultTemplateMaxActive,
-      defaultTemplateMaxActive
-    );
-
     if (!activeVariantsByTemplate.has(templateId)) {
       activeVariantsByTemplate.set(templateId, {
         total: 0,
@@ -430,10 +486,38 @@ export function rollDailyOffers({
     }
 
     const activity = activeVariantsByTemplate.get(templateId);
+    const existingActive = activity.total;
+    const variants = buildVariantPool(template);
+    const marketConfig = template?.market || {};
+    const templateSlotsPerRoll = resolvePositiveInteger(marketConfig.slotsPerRoll ?? 1, 1);
+    const defaultTemplateMaxActive = Math.max(templateSlotsPerRoll, variants.length);
+    const templateMaxActive = resolvePositiveInteger(
+      marketConfig.maxActive != null ? marketConfig.maxActive : defaultTemplateMaxActive,
+      defaultTemplateMaxActive
+    );
+
+    const templateAudit = {
+      templateId,
+      slotsRequested: templateSlotsPerRoll,
+      existingActive,
+      added: 0,
+      skipped: false,
+      reason: null
+    };
+    templateAudits.push(templateAudit);
+
+    if (!variants.length) {
+      templateAudit.skipped = true;
+      templateAudit.reason = 'noVariants';
+      continue;
+    }
+
     const currentActive = activity.total;
     const templateCapacity = Math.max(0, templateMaxActive - currentActive);
     let slotsRemaining = Math.min(templateSlotsPerRoll, templateCapacity);
     if (slotsRemaining <= 0) {
+      templateAudit.skipped = true;
+      templateAudit.reason = 'maxActiveReached';
       continue;
     }
 
@@ -452,11 +536,13 @@ export function rollDailyOffers({
       });
 
       if (!availableVariants.length) {
+        templateAudit.reason = templateAudit.reason || 'variantCapacityReached';
         break;
       }
 
       const selectedVariant = selectVariantFromPool(availableVariants, rng);
       if (!selectedVariant) {
+        templateAudit.reason = templateAudit.reason || 'selectionFailed';
         break;
       }
 
@@ -469,6 +555,7 @@ export function rollDailyOffers({
       const variantCapacity = Math.max(0, variantMaxActive - activeCount - pendingCount);
       if (variantCapacity <= 0) {
         pendingAdds.set(selectedVariant.id, pendingCount);
+        templateAudit.reason = templateAudit.reason || 'variantCapacityReached';
         continue;
       }
 
@@ -476,6 +563,7 @@ export function rollDailyOffers({
       const spawnCount = Math.min(variantCopies, variantCapacity, slotsRemaining);
       if (spawnCount <= 0) {
         pendingAdds.set(selectedVariant.id, pendingCount);
+        templateAudit.reason = templateAudit.reason || 'noCapacity';
         break;
       }
 
@@ -487,6 +575,7 @@ export function rollDailyOffers({
           timestamp: resolvedTimestamp
         });
         preservedOffers.push(structuredClone(offer));
+        templateAudit.added += 1;
       }
 
       pendingAdds.set(selectedVariant.id, pendingCount + spawnCount);
@@ -505,6 +594,13 @@ export function rollDailyOffers({
       }
       if (addedToTemplate > 0) {
         activity.total += addedToTemplate;
+      }
+    }
+
+    if (templateAudit.added === 0) {
+      templateAudit.skipped = true;
+      if (!templateAudit.reason) {
+        templateAudit.reason = 'noOffersSpawned';
       }
     }
   }
@@ -528,6 +624,16 @@ export function rollDailyOffers({
   }));
   marketState.lastRolledAt = resolvedTimestamp;
   marketState.lastRolledOnDay = currentDay;
+
+  const newOffersCount = marketState.offers.filter(offer => offer.rolledOnDay === currentDay).length;
+  const preservedCount = marketState.offers.length - newOffersCount;
+  recordMarketRollAudit({
+    day: currentDay,
+    timestamp: resolvedTimestamp,
+    preserved: preservedCount,
+    created: newOffersCount,
+    templates: templateAudits
+  });
 
   return marketState.offers.map(offer => structuredClone(offer));
 }
@@ -559,4 +665,55 @@ export function getClaimedOffers(state = getState(), {
     includeCompleted
   });
 }
+
+function attachHustleMarketDebugTools() {
+  if (typeof globalThis === 'undefined') {
+    return;
+  }
+
+  const namespace = globalThis.__HUSTLE_MARKET_DEBUG__ = globalThis.__HUSTLE_MARKET_DEBUG__ || {};
+  namespace.getAuditLog = () => getMarketRollAuditLog();
+  namespace.printAuditLog = () => {
+    const audit = getMarketRollAuditLog();
+    if (typeof console !== 'undefined') {
+      if (typeof console.table === 'function') {
+        console.table(audit.map(entry => ({
+          day: entry.day,
+          created: entry.createdOffers,
+          preserved: entry.preservedOffers,
+          skipped: entry.skippedTemplates.join(', ')
+        })));
+      } else if (typeof console.log === 'function') {
+        console.log(audit);
+      }
+    }
+    return audit;
+  };
+  namespace.printOffers = () => {
+    const state = getState();
+    const day = state?.day || 1;
+    const offers = getMarketAvailableOffers(state, {
+      day,
+      includeUpcoming: true,
+      includeClaimed: true
+    });
+    if (typeof console !== 'undefined') {
+      if (typeof console.table === 'function') {
+        console.table(offers.map(offer => ({
+          template: offer.templateId,
+          variant: offer.variant?.label || offer.variantId,
+          available: offer.availableOnDay,
+          expires: offer.expiresOnDay,
+          claimed: offer.claimed ? 'yes' : 'no',
+          payout: offer.metadata?.payout?.amount ?? offer.metadata?.payoutAmount ?? null
+        })));
+      } else if (typeof console.log === 'function') {
+        console.log(offers);
+      }
+    }
+    return offers;
+  };
+}
+
+attachHustleMarketDebugTools();
 

@@ -100,29 +100,28 @@ Completing tracks grants base XP and skill splits as defined below. Weighted ski
 
 ## 5. Hustles
 
-### Instant Hustle Execution
+### Hustle Contract Market
 
-- **Action wrapper:** `createInstantHustle` enforces time, cost, asset requirements, and optional daily limits. Time costs respect upgrade multipliers (`setup_time_mult`), while payouts pass through education bonuses and upgrade payout multipliers before rounding.【F:src/game/content/schema/assetActions.js†L1-L206】【F:src/game/educationEffects.js†L1-L174】
-- **Skill XP:** Running a hustle awards XP to the listed skills using both time spent and money costs as inputs.【F:src/game/content/schema/assetActions.js†L186-L204】【F:src/game/skills/index.js†L78-L125】
-- **Daily usage tracking:** Daily limits count runs per in-game day with automatic reset when the day number changes.【F:src/game/content/schema/assetActions.js†L58-L126】
+- **Action wrapper:** `createInstantHustle` still governs run-time costs, requirements, and XP awards, but the definitions now expose a `market` block that seeds the contract exchange with slots, max-active caps, default progress hints, and payout metadata.【F:src/game/content/schema/assetActions.js†L1-L206】【F:src/game/hustles/definitions/instantHustles.js†L19-L407】
+- **Variant metadata:** Each hustle template publishes multiple variants with explicit `hoursPerDay`, `daysRequired`, `copies`, and `payoutSchedule` values so the market can roll simultaneous copies and longer-running contracts without mutating the base definition.【F:src/game/hustles/definitions/instantHustles.js†L28-L407】
+- **Rolling logic:** `rollDailyOffers` preserves unexpired offers, respects variant capacity, records audit summaries, and attaches browser debug helpers (`window.__HUSTLE_MARKET_DEBUG__`) so designers can inspect active windows during playtests.【F:src/game/hustles/market.js†L29-L210】【F:src/game/hustles/market.js†L375-L713】
+- **Audit telemetry:** Every roll appends an entry to `getMarketRollAuditLog()` and `window.__HUSTLE_MARKET_AUDIT__`, capturing day, preserved vs. new offers, and per-template reasons whenever slots stay empty.【F:src/game/hustles/market.js†L12-L83】【F:src/game/hustles/market.js†L662-L713】
 
-### Instant Hustle Catalog
+### Contract Catalog
 
-All hustle payouts are deterministic before modifiers, with optional costs and requirements noted below.【F:src/game/hustles/definitions/instantHustles.js†L14-L304】【F:src/game/hustles/helpers.js†L4-L59】
+Contract variants replace the old single-run catalog. Each entry below lists the available offerings with duration windows (duration days + 1 equals the full availability window), expected daily effort, payout schedule, and how many copies can appear per roll.
 
-| Hustle | Time (h) | Cost | Daily Limit | Base Payout | Requirements | Skills |
-| --- | --- | --- | --- | --- | --- | --- |
-| Freelance Writing | 2 | $0 | ∞ | $18 | None | Writing. |
-| Audience Q&A Blast | 1 | $0 | 1 | $12 | Blog asset ≥1.【F:src/game/hustles/helpers.js†L5-L19】 | Audience. |
-| Bundle Promo Push | 2.5 | $0 | ∞ | $48 | Blog ≥2 and E-book ≥1.【F:src/game/hustles/helpers.js†L5-L19】 | Promotion. |
-| Micro Survey Dash | 0.25 | $0 | 4 | $1 | None | Research. |
-| Event Photo Gig | 3.5 | $0 | ∞ | $72 | Stock Photos ≥1.【F:src/game/hustles/helpers.js†L5-L19】 | Visual. |
-| Pop-Up Workshop | 2.5 | $0 | ∞ | $38 | Blog ≥1, E-book ≥1.【F:src/game/hustles/helpers.js†L5-L19】 | Audience (Writing weight 0.5). |
-| Vlog Edit Rush | 1.5 | $0 | ∞ | $24 | Vlog ≥1.【F:src/game/hustles/helpers.js†L5-L19】 | Editing. |
-| Dropship Pack Party | 2 | $8 | ∞ | $28 | Dropshipping ≥1.【F:src/game/hustles/helpers.js†L5-L19】 | Commerce. |
-| SaaS Bug Squash | 1 | $0 | ∞ | $30 | SaaS ≥1.【F:src/game/hustles/helpers.js†L5-L19】 | Software (Infrastructure weight 0.5). |
-| Audiobook Narration | 2.75 | $0 | ∞ | $44 | E-book ≥1.【F:src/game/hustles/helpers.js†L5-L19】 | Audio. |
-| Street Team Promo | 0.75 | $5 | ∞ | $18 | Blog ≥2.【F:src/game/hustles/helpers.js†L5-L19】 | Promotion. |
+- **Freelance Writing** – Same-day rush (2h, on-completion, 2 copies), three-part mini series (3 days × 2h, $45 on completion), and a retainer column block (4 days × 2h, $80 on completion, unlocks after one day).【F:src/game/hustles/definitions/instantHustles.js†L19-L89】
+- **Audience Q&A Blast** – Flash AMA (1h, on-completion, 2 copies), two-part mini workshop (2 days × 1h, $24), and a coaching cohort (3 days × 1.5h, $40 after one-day delay).【F:src/game/hustles/definitions/instantHustles.js†L91-L164】
+- **Bundle Promo Push** – Flash sale blast (1 day, 2.5h), cross-promo roadshow (3 days × 2h, $72), and an evergreen funnel revamp (5 days × 2.5h, $120, delayed start).【F:src/game/hustles/definitions/instantHustles.js†L166-L239】
+- **Micro Survey Dash** – Coffee break surveys (0.25h, three copies), panel follow-ups (2 days × 0.5h, $3, two copies), and a report sprint (3 days × 0.75h, $5, unlocks after a day).【F:src/game/hustles/definitions/instantHustles.js†L241-L317】
+- **Event Photo Gig** – Pop-up shoot (single day, 3.5h), weekend retainer (3 days × 3h, $120), and tour documentary (5 days × 3h, $180 after a one-day delay).【F:src/game/hustles/definitions/instantHustles.js†L319-L393】
+- **Pop-Up Workshop** – Evening intensive (2.5h, 2 copies), weekend cohort (2 days × 2.5h, $60), and mentor track (4 days × 2h, $95, delayed start).【F:src/game/hustles/definitions/instantHustles.js†L395-L469】
+- **Vlog Edit Rush** – Rush cut (1.5h, 2 copies), batch edit package (2 days × 1.5h, $40), and season launch sprint (4 days × 1.75h, $70 after one-day delay).【F:src/game/hustles/definitions/instantHustles.js†L471-L545】
+- **Dropship Pack Party** – Flash pack party (2h, 2 copies), weekend surge (2 days × 2.5h, $50), and subscription assembly (4 days × 2.5h, $90 after one-day delay).【F:src/game/hustles/definitions/instantHustles.js†L547-L624】
+- **SaaS Bug Squash** – Hotfix call (1h, 2 copies), stability hardening (2 days × 1.25h, $55), and reliability sprint (4 days × 1.5h, $90 with a day of lead time).【F:src/game/hustles/definitions/instantHustles.js†L626-L701】
+- **Audiobook Narration** – Sample session (2.75h), featured volume marathon (2 days × 2.5h, $70), and series finale production (5 days × 2.5h, $120 after a day).【F:src/game/hustles/definitions/instantHustles.js†L703-L778】
+- **Street Team Promo** – Lunch rush pop-up (0.75h, 3 copies), night market takeover (2 days × 1h, $32), and festival street team (4 days × 1.25h, $60 after a day).【F:src/game/hustles/definitions/instantHustles.js†L780-L855】
 
 ### Knowledge Hustles (Study Cards)
 
