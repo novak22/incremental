@@ -1,7 +1,7 @@
 import { formatHours, formatMoney } from '../../core/helpers.js';
 import { clampNumber } from './formatters.js';
 import { getAssetState } from '../../core/state.js';
-import { getAssets, getActions } from '../../game/registryService.js';
+import { getAssets, getActionDefinition, getHustles } from '../../game/registryService.js';
 import {
   canPerformQualityAction,
   getQualityActions,
@@ -10,7 +10,8 @@ import {
 } from '../../game/assets/quality/actions.js';
 import { getNextQualityLevel } from '../../game/assets/quality/levels.js';
 import { instanceLabel } from '../../game/assets/details.js';
-import { registerActionProvider } from '../actions/registry.js';
+import { registerActionProvider, collectOutstandingActionEntries } from '../actions/registry.js';
+import { getAvailableOffers, acceptHustleOffer } from '../../game/hustles.js';
 
 function getQualitySnapshot(instance = {}) {
   const level = Math.max(0, clampNumber(instance?.quality?.level));
@@ -69,48 +70,206 @@ function estimateRemainingRuns(asset, instance, action, remaining, state) {
   return Math.max(1, Math.ceil(remaining / progressPerRun));
 }
 
-export function buildQuickActions(state) {
-  const items = [];
-  for (const action of getActions()) {
-    if (action?.tag?.type === 'study') continue;
-    if (!action?.action?.onClick) continue;
-    const usage = typeof action.getDailyUsage === 'function' ? action.getDailyUsage(state) : null;
-    const remainingRuns = Number.isFinite(usage?.remaining)
-      ? Math.max(0, usage.remaining)
-      : Infinity;
-    const usageLimit = usage?.limit;
-    const repeatable = remainingRuns > 0 && (!Number.isFinite(usageLimit) || usageLimit !== 1);
-    const disabled = typeof action.action.disabled === 'function'
-      ? action.action.disabled(state)
-      : Boolean(action.action.disabled);
-    if (disabled) continue;
-    const payout = clampNumber(action.payout?.amount);
-    const time = clampNumber(action.time || action.action?.timeCost) || 1;
-    const roi = time > 0 ? payout / time : payout;
+function resolveOfferHours(offer, template) {
+  if (!offer) return 0;
+  const metadata = offer.metadata || {};
+  const requirements = typeof metadata.requirements === 'object' && metadata.requirements !== null
+    ? metadata.requirements
+    : {};
+  const candidates = [
+    metadata.hoursRequired,
+    requirements.hours,
+    requirements.timeHours,
+    template?.time,
+    template?.action?.timeCost
+  ];
+  for (const value of candidates) {
+    const numeric = clampNumber(value);
+    if (Number.isFinite(numeric) && numeric >= 0) {
+      return numeric;
+    }
+  }
+  return 0;
+}
+
+function resolveOfferPayout(offer, template) {
+  if (!offer) return 0;
+  const metadata = offer.metadata || {};
+  const payout = typeof metadata.payout === 'object' && metadata.payout !== null
+    ? metadata.payout
+    : {};
+  const candidates = [metadata.payoutAmount, payout.amount, template?.payout?.amount];
+  for (const value of candidates) {
+    const numeric = clampNumber(value);
+    if (Number.isFinite(numeric) && numeric >= 0) {
+      return numeric;
+    }
+  }
+  return 0;
+}
+
+function resolveOfferSchedule(offer) {
+  if (!offer) return 'onCompletion';
+  const metadata = offer.metadata || {};
+  const payout = typeof metadata.payout === 'object' && metadata.payout !== null
+    ? metadata.payout
+    : {};
+  return metadata.payoutSchedule || payout.schedule || 'onCompletion';
+}
+
+function describeOfferMeta({ payout, schedule, durationText, remainingDays }) {
+  const parts = [];
+  if (payout > 0) {
     const payoutText = `$${formatMoney(payout)}`;
-    const timeText = formatHours(time);
-    items.push({
-      id: action.id,
-      label: action.name,
-      primaryLabel: typeof action.action.label === 'function'
-        ? action.action.label(state)
-        : action.action.label || 'Queue',
-      description: `${formatMoney(payout)} payout • ${formatHours(time)}`,
-      onClick: action.action.onClick,
-      roi,
-      timeCost: time,
+    if (!schedule || schedule === 'onCompletion') {
+      parts.push(`${payoutText} on completion`);
+    } else if (schedule === 'daily') {
+      parts.push(`${payoutText} / day`);
+    } else {
+      parts.push(`${payoutText} • ${schedule}`);
+    }
+  }
+  if (durationText) {
+    parts.push(durationText);
+  }
+  if (Number.isFinite(remainingDays)) {
+    parts.push(`${remainingDays} day${remainingDays === 1 ? '' : 's'} left`);
+  }
+  return parts.join(' • ');
+}
+
+export function buildQuickActions(state) {
+  const workingState = state || {};
+  const offers = getAvailableOffers(workingState, { includeUpcoming: false, includeClaimed: false }) || [];
+  const currentDay = Math.max(1, clampNumber(workingState.day) || 1);
+
+  const items = offers.map(offer => {
+    const definition = getActionDefinition(offer.definitionId || offer.templateId) || {};
+    const hours = resolveOfferHours(offer, definition);
+    const payout = resolveOfferPayout(offer, definition);
+    const roi = hours > 0 ? payout / Math.max(hours, 0.0001) : payout;
+    const durationText = formatHours(hours);
+    const schedule = resolveOfferSchedule(offer);
+    const remainingDays = Number.isFinite(offer.expiresOnDay)
+      ? Math.max(0, Math.floor(offer.expiresOnDay) - currentDay + 1)
+      : null;
+
+    const label = offer?.variant?.label
+      || definition?.name
+      || offer?.templateId
+      || 'Hustle offer';
+
+    const description = offer?.variant?.description || definition?.description || '';
+
+    const meta = describeOfferMeta({
       payout,
-      payoutText,
-      durationHours: time,
-      durationText: timeText,
-      meta: `${payoutText} • ${timeText}`,
-      repeatable,
-      remainingRuns
+      schedule,
+      durationText,
+      remainingDays
+    });
+
+    return {
+      id: offer.id,
+      label,
+      primaryLabel: 'Accept',
+      description,
+      onClick: () => acceptHustleOffer(offer.id, { state: workingState }),
+      roi,
+      timeCost: hours,
+      payout,
+      payoutText: payout > 0 ? `$${formatMoney(payout)}` : '',
+      durationHours: hours,
+      durationText,
+      meta,
+      repeatable: false,
+      remainingRuns: 1,
+      remainingDays,
+      schedule,
+      offer
+    };
+  });
+
+  if (!items.length) {
+    const definitions = getHustles() || [];
+    definitions.forEach(definition => {
+      const action = definition.action;
+      if (!action || typeof action.onClick !== 'function') {
+        return;
+      }
+      const disabled = typeof action.disabled === 'function'
+        ? action.disabled(workingState)
+        : Boolean(action.disabled);
+      if (disabled) {
+        return;
+      }
+      const hours = clampNumber(action.timeCost ?? definition.time ?? 0);
+      const payout = clampNumber(definition.payout?.amount ?? action.payout ?? 0);
+      const roi = hours > 0 ? payout / Math.max(hours, 0.0001) : payout;
+      const durationText = formatHours(hours);
+      const metaParts = [];
+      if (payout > 0) {
+        metaParts.push(`$${formatMoney(payout)}`);
+      }
+      if (hours > 0) {
+        metaParts.push(durationText);
+      }
+      const meta = metaParts.length ? metaParts.join(' • ') : durationText;
+      const buttonLabel = typeof action.label === 'function'
+        ? action.label({ state: workingState, definition })
+        : action.label || 'Queue';
+
+      items.push({
+        id: definition.id,
+        label: definition.name || definition.id,
+        primaryLabel: buttonLabel,
+        description: definition.description || '',
+        onClick: () => action.onClick(),
+        roi,
+        timeCost: hours,
+        payout,
+        payoutText: payout > 0 ? `$${formatMoney(payout)}` : '',
+        durationHours: hours,
+        durationText,
+        meta,
+        repeatable: true,
+        remainingRuns: null,
+        remainingDays: null,
+        schedule: definition.payout?.schedule || 'onCompletion'
+      });
     });
   }
 
-  items.sort((a, b) => b.roi - a.roi);
+  items.sort((a, b) => {
+    const daysA = Number.isFinite(a.remainingDays) ? a.remainingDays : Infinity;
+    const daysB = Number.isFinite(b.remainingDays) ? b.remainingDays : Infinity;
+    if (daysA !== daysB) {
+      return daysA - daysB;
+    }
+    if (b.roi !== a.roi) {
+      return b.roi - a.roi;
+    }
+    return a.label.localeCompare(b.label);
+  });
+
   return items;
+}
+
+export function buildInProgressActions(state = {}) {
+  const outstanding = collectOutstandingActionEntries(state) || [];
+  return outstanding.map(entry => ({
+    id: entry.id,
+    title: entry.title,
+    subtitle: entry.subtitle || '',
+    meta: entry.meta || '',
+    payoutText: entry.payoutText || '',
+    payout: entry.payout,
+    remainingDays: entry.progress?.remainingDays ?? null,
+    deadlineDay: entry.progress?.deadlineDay ?? null,
+    hoursRemaining: entry.progress?.hoursRemaining ?? null,
+    hoursLogged: entry.progress?.hoursLogged ?? null,
+    hoursRequired: entry.progress?.hoursRequired ?? null,
+    progress: entry.progress || null
+  }));
 }
 
 export function buildAssetUpgradeRecommendations(state) {
@@ -220,6 +379,7 @@ export function buildAssetUpgradeRecommendations(state) {
 
 export function buildQuickActionModel(state = {}) {
   const suggestions = buildQuickActions(state);
+  const inProgress = buildInProgressActions(state);
   const entries = suggestions.map(action => ({
     id: action.id,
     title: action.label,
@@ -247,7 +407,8 @@ export function buildQuickActionModel(state = {}) {
     hoursSpent,
     hoursSpentLabel: formatHours(hoursSpent),
     day: clampNumber(state.day),
-    moneyAvailable: clampNumber(state.money)
+    moneyAvailable: clampNumber(state.money),
+    inProgress
   };
 }
 
@@ -302,7 +463,8 @@ registerActionProvider(({ state }) => {
       hoursSpent: model?.hoursSpent,
       hoursSpentLabel: model?.hoursSpentLabel,
       moneyAvailable: model?.moneyAvailable,
-      scroller: model?.scroller
+      scroller: model?.scroller,
+      inProgressEntries: model?.inProgress
     }
   };
 }, 30);

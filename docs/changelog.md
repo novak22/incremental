@@ -19,6 +19,7 @@
 - Routine hustle payouts and quality work logs now auto-dismiss so the notification bell spotlights urgent alerts.
 - ShopStack workspace trims unused detail builders—`buildDetailView` and the old `detailBuilders.js` helper are gone, with `detail/index.js` re-exporting the focused helpers directly.
 - Quality actions across passive assets can now spark upbeat celebration events that grant short-lived payout boosts.
+- Hustle-facing UIs surface accepted commitments with progress meters, highlight variant expiries, and keep quick actions populated even when the market has no fresh offers.
 - Niche popularity now syncs with active trend events, keeping multipliers, history, and analytics aligned across saves.
 - Niche trend events now stretch across 5–10 days, building from gentle nudges to pronounced peaks (or dips) so players can react to the swelling momentum.
 - Tooling: Added a `?view=developer` state explorer that surfaces the live memory snapshot, active random events, and long-term buff sources for faster balancing passes.

@@ -7,6 +7,11 @@ import renderFinanceEducation from './finance/education.js';
 import renderFinanceHistory from './finance/history.js';
 import renderFinanceObligations from './finance/obligations.js';
 import { formatCurrency } from '../utils/financeFormatting.js';
+import {
+  createCommitmentTimeline,
+  applyDeadlineTone,
+  describeDeadlineLabel
+} from '../components/commitmentMeters.js';
 
 function renderFinancePendingIncome(entries = []) {
   const { section, body } = createBankSection('In-Flight Earnings', 'Assets with payouts pending the next day rollover.');
@@ -190,20 +195,84 @@ function renderFinanceOpportunities(model = {}) {
       node.append(name, cost, status);
     }),
     createOpportunityBlock('Hustles', hustleEntries, (entry, node) => {
+      node.classList.add('bankapp-opportunity', `bankapp-opportunity--${entry.type || 'offer'}`);
+      node.dataset.hustleStatus = entry.status || '';
+
+      const header = document.createElement('div');
+      header.className = 'bankapp-opportunity__header';
+
       const name = document.createElement('span');
       name.className = 'bankapp-opportunities__name';
       name.textContent = entry.name || 'Hustle';
-      const roi = document.createElement('span');
-      roi.className = 'bankapp-opportunities__value';
+      header.appendChild(name);
+
+      const status = document.createElement('span');
+      status.className = 'bankapp-opportunity__status';
+      if (entry.type === 'commitment') {
+        status.textContent = entry.status === 'pending' ? 'Starts soon' : 'Active commitment';
+      } else if (entry.status === 'available') {
+        status.textContent = 'Available now';
+      } else if (entry.status === 'upcoming') {
+        status.textContent = entry.availableInDays === 0
+          ? 'Unlocking today'
+          : `Opens in ${entry.availableInDays} day${entry.availableInDays === 1 ? '' : 's'}`;
+      } else {
+        status.textContent = entry.status || 'Market offer';
+      }
+      header.appendChild(status);
+      node.appendChild(header);
+
+      const metrics = document.createElement('p');
+      metrics.className = 'bankapp-opportunities__value';
       const payout = Number(entry.payout) || 0;
       const time = Number(entry.time) || 0;
-      const roiValue = time > 0 ? payout / time : payout;
-      roi.textContent = `${formatCurrency(payout)} • ${formatHours(time)} • ${formatMoney(Math.round(roiValue * 100) / 100)} $/h`;
-      const requirements = document.createElement('span');
-      requirements.className = 'bankapp-opportunities__note';
-      const unmet = entry.requirements?.filter(req => !req.met).map(req => req.label);
-      requirements.textContent = unmet?.length ? `Needs: ${unmet.join(', ')}` : 'Ready to run';
-      node.append(name, roi, requirements);
+      const roiValue = time > 0 ? payout / Math.max(time, 0.0001) : payout;
+      const payoutLabel = formatCurrency(payout);
+      metrics.textContent = `${payoutLabel} • ${formatHours(time)} • ${formatMoney(Math.round(roiValue * 100) / 100)} $/h`;
+      node.appendChild(metrics);
+
+      const note = document.createElement('p');
+      note.className = 'bankapp-opportunities__note';
+
+      if (entry.type === 'commitment') {
+        const deadlineLabel = describeDeadlineLabel(entry.progress || entry);
+        const detailParts = [entry.meta || '', deadlineLabel].filter(Boolean);
+        note.textContent = detailParts.length ? detailParts.join(' • ') : 'Log hours from the Todo widget to progress.';
+        node.appendChild(note);
+
+        const timeline = createCommitmentTimeline(entry.progress || entry);
+        if (timeline) {
+          applyDeadlineTone(node, entry.progress || entry);
+          node.appendChild(timeline);
+        }
+      } else {
+        const requirements = entry.requirements || [];
+        const unmet = requirements.filter(req => !req.met).map(req => req.label);
+        const statusNotes = [];
+        if (entry.status === 'available') {
+          statusNotes.push('Ready to accept in the Hustles workspace.');
+        } else if (entry.status === 'upcoming') {
+          statusNotes.push(entry.availableInDays === 0
+            ? 'Unlocks later today.'
+            : `Unlocks in ${entry.availableInDays} day${entry.availableInDays === 1 ? '' : 's'}.`);
+        }
+        if (entry.remainingDays != null) {
+          statusNotes.push(`${entry.remainingDays} day${entry.remainingDays === 1 ? '' : 's'} on the table.`);
+          const remaining = Number(entry.remainingDays);
+          if (Number.isFinite(remaining)) {
+            if (remaining <= 1) {
+              node.classList.add('is-critical');
+            } else if (remaining <= 3) {
+              node.classList.add('is-warning');
+            }
+          }
+        }
+        if (unmet.length) {
+          statusNotes.push(`Needs: ${unmet.join(', ')}`);
+        }
+        note.textContent = statusNotes.length ? statusNotes.join(' ') : 'All requirements met. Lock it in!';
+        node.appendChild(note);
+      }
     })
   );
 

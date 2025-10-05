@@ -184,9 +184,25 @@
   font-weight: 600;
 }
 
+.todo-widget__subtitle {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--browser-subtle);
+}
+
 .todo-widget__meta {
   color: var(--browser-muted);
   font-size: 0.85rem;
+}
+
+.todo-widget__meta.todo-widget__meta--warning {
+  color: var(--browser-danger);
+  font-weight: 600;
+}
+
+.todo-widget__meta.todo-widget__meta--alert {
+  color: var(--browser-accent);
+  font-weight: 600;
 }
 
 .todo-widget__task.is-complete {

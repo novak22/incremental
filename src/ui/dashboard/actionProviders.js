@@ -55,6 +55,23 @@ export function buildQuickActionsFromProvider(state, provider) {
     };
   });
 
+  const inProgress = Array.isArray(metrics.inProgressEntries)
+    ? metrics.inProgressEntries.map(entry => ({
+        id: entry?.id,
+        title: entry?.title,
+        subtitle: entry?.subtitle || '',
+        meta: entry?.meta || '',
+        payoutText: entry?.payoutText || '',
+        payout: entry?.payout,
+        remainingDays: entry?.remainingDays ?? null,
+        deadlineDay: entry?.deadlineDay ?? null,
+        hoursRemaining: entry?.hoursRemaining ?? null,
+        hoursLogged: entry?.hoursLogged ?? null,
+        hoursRequired: entry?.hoursRequired ?? null,
+        progress: entry?.progress || null
+      }))
+    : [];
+
   const baseHours = clampNumber(state?.baseTime)
     + clampNumber(state?.bonusTime)
     + clampNumber(state?.dailyBonusTime);
@@ -78,7 +95,8 @@ export function buildQuickActionsFromProvider(state, provider) {
     day: clampNumber(state?.day),
     moneyAvailable: metrics.moneyAvailable != null
       ? clampNumber(metrics.moneyAvailable)
-      : clampNumber(state?.money)
+      : clampNumber(state?.money),
+    inProgress
   };
 
   if (scroller) {
