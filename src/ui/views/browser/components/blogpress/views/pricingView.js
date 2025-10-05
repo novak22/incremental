@@ -21,7 +21,8 @@ export default function renderPricingView(options = {}) {
   const lead = document.createElement('p');
   const setup = pricing.setup || {};
   const maintenance = pricing.maintenance || {};
-  lead.textContent = `Blueprint: ${setup.days || 0} day${setup.days === 1 ? '' : 's'} × ${formatHours(setup.hoursPerDay || 0)} ($${formatMoney(setup.cost || 0)}) • Daily upkeep ${formatHours(maintenance.hours || 0)} • $${formatMoney(maintenance.cost || 0)}`;
+  const upkeepText = maintenance.hasUpkeep ? maintenance.text : 'No upkeep';
+  lead.textContent = `Blueprint: ${setup.days || 0} day${setup.days === 1 ? '' : 's'} × ${formatHours(setup.hoursPerDay || 0)} ($${formatMoney(setup.cost || 0)}) • Daily upkeep ${upkeepText}`;
   intro.append(title, lead);
   container.appendChild(intro);
 

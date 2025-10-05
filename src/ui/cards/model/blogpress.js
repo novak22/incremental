@@ -5,6 +5,7 @@ import { describeAssetLaunchAvailability } from './assets.js';
 import { registerModelBuilder } from '../modelBuilderRegistry.js';
 import { buildSkillLock } from './skillLocks.js';
 import { clampNumber } from './sharedQuality.js';
+import { formatMaintenanceSummary } from '../../../game/assets/maintenance.js';
 import { formatBlogpressModel } from '../../blogpress/blogModel.js';
 
 function extractRelevantUpgrades(upgrades = []) {
@@ -28,7 +29,7 @@ function extractRelevantUpgrades(upgrades = []) {
 
 function buildPricing(definition, upgrades = [], { nicheOptions = [] } = {}) {
   const setup = definition?.setup || {};
-  const maintenance = definition?.maintenance || {};
+  const maintenance = formatMaintenanceSummary(definition);
   const quality = definition?.quality || {};
   const levels = ensureArray(quality.levels).map(level => ({
     level: level.level,

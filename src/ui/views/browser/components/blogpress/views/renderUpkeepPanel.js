@@ -5,10 +5,10 @@ export default function renderUpkeepPanel({ instance }) {
   title.textContent = 'Daily upkeep';
   panel.appendChild(title);
 
-  const upkeepParts = instance.maintenance?.parts || [];
+  const maintenance = instance.maintenance || {};
   const note = document.createElement('p');
   note.className = 'blogpress-panel__lead';
-  note.textContent = upkeepParts.length ? upkeepParts.join(' • ') : 'No upkeep required';
+  note.textContent = maintenance.hasUpkeep ? maintenance.text : 'No upkeep required';
   panel.appendChild(note);
 
   if (instance.status?.id === 'active' && !instance.maintenanceFunded) {

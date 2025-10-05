@@ -6,7 +6,8 @@ import {
   listAssetRequirementDescriptors
 } from '../../../game/requirements.js';
 import { getAssetEffectMultiplier } from '../../../game/upgrades/effects.js';
-import { describeAssetCardSummary, formatInstanceUpkeep } from '../utils.js';
+import { formatMaintenanceSummary } from '../../../game/assets/maintenance.js';
+import { describeAssetCardSummary } from '../utils.js';
 
 const ASSET_GROUP_NOTES = {
   Foundation: 'Steady launchpads that bankroll the rest of your ventureverse.',
@@ -129,6 +130,7 @@ function buildAssetModels(definitions = [], helpers = {}) {
     });
 
     if (definition.action) {
+      const maintenance = formatMaintenanceSummary(definition);
       const availability = describeAssetLaunchAvailability(definition, state);
       const labelText = typeof definition.action.label === 'function'
         ? definition.action.label(state)
@@ -142,7 +144,8 @@ function buildAssetModels(definitions = [], helpers = {}) {
           hoursPerDay: Number(definition.setup?.hoursPerDay) || 0,
           cost: Number(definition.setup?.cost) || 0
         },
-        upkeep: formatInstanceUpkeep(definition),
+        upkeep: maintenance.hasUpkeep ? maintenance.text : '',
+        maintenance,
         action: {
           label: labelText,
           disabled: availability.disabled,
