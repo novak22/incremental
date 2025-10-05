@@ -3,167 +3,7 @@ import { formatHours, formatMoney } from '../../../core/helpers.js';
 import { describeHustleRequirements, getHustleDailyUsage } from '../../../game/hustles/helpers.js';
 import { getAvailableOffers, getClaimedOffers, acceptHustleOffer, rollDailyOffers } from '../../../game/hustles.js';
 import { collectOutstandingActionEntries } from '../../actions/registry.js';
-
-function resolveOfferHours(offer, definition) {
-  if (!offer) return 0;
-  const metadata = offer.metadata || {};
-  const requirements = typeof metadata.requirements === 'object' && metadata.requirements !== null
-    ? metadata.requirements
-    : {};
-  const candidates = [
-    metadata.hoursRequired,
-    requirements.hours,
-    requirements.timeHours,
-    definition?.time,
-    definition?.action?.timeCost
-  ];
-  for (const value of candidates) {
-    const numeric = Number(value);
-    if (Number.isFinite(numeric) && numeric >= 0) {
-      return numeric;
-    }
-  }
-  return 0;
-}
-
-function resolveOfferPayout(offer, definition) {
-  if (!offer) return 0;
-  const metadata = offer.metadata || {};
-  const payout = typeof metadata.payout === 'object' && metadata.payout !== null
-    ? metadata.payout
-    : {};
-  const candidates = [metadata.payoutAmount, payout.amount, definition?.payout?.amount];
-  for (const value of candidates) {
-    const numeric = Number(value);
-    if (Number.isFinite(numeric) && numeric >= 0) {
-      return numeric;
-    }
-  }
-  return 0;
-}
-
-function resolveOfferSchedule(offer) {
-  if (!offer) return 'onCompletion';
-  const metadata = offer.metadata || {};
-  const payout = typeof metadata.payout === 'object' && metadata.payout !== null
-    ? metadata.payout
-    : {};
-  return metadata.payoutSchedule || payout.schedule || 'onCompletion';
-}
-
-function describeOfferMeta({
-  offer,
-  definition,
-  currentDay,
-  formatHoursFn,
-  formatMoneyFn
-}) {
-  const hours = resolveOfferHours(offer, definition);
-  const payout = resolveOfferPayout(offer, definition);
-  const schedule = resolveOfferSchedule(offer);
-  const metadata = offer?.metadata || {};
-  const progressMetadata = typeof metadata.progress === 'object' && metadata.progress !== null
-    ? metadata.progress
-    : {};
-  const hoursPerDayCandidates = [
-    metadata.hoursPerDay,
-    progressMetadata.hoursPerDay
-  ];
-  let hoursPerDay = null;
-  for (const value of hoursPerDayCandidates) {
-    const numeric = Number(value);
-    if (Number.isFinite(numeric) && numeric > 0) {
-      hoursPerDay = numeric;
-      break;
-    }
-  }
-  const daysRequiredCandidates = [
-    metadata.daysRequired,
-    progressMetadata.daysRequired
-  ];
-  let daysRequired = null;
-  for (const value of daysRequiredCandidates) {
-    const numeric = Number(value);
-    if (Number.isFinite(numeric) && numeric > 0) {
-      daysRequired = Math.max(1, Math.floor(numeric));
-      break;
-    }
-  }
-  const completionCandidates = [
-    metadata.completionMode,
-    progressMetadata.completionMode,
-    progressMetadata.completion
-  ];
-  let completionMode = null;
-  for (const candidate of completionCandidates) {
-    if (typeof candidate === 'string' && candidate.trim()) {
-      completionMode = candidate.trim();
-      break;
-    }
-  }
-  const progressLabel = typeof metadata.progressLabel === 'string' && metadata.progressLabel.trim()
-    ? metadata.progressLabel.trim()
-    : typeof progressMetadata.label === 'string' && progressMetadata.label.trim()
-      ? progressMetadata.label.trim()
-      : null;
-  const availableIn = Number.isFinite(offer.availableOnDay)
-    ? Math.max(0, Math.floor(offer.availableOnDay) - currentDay)
-    : 0;
-  const expiresIn = Number.isFinite(offer.expiresOnDay)
-    ? Math.max(0, Math.floor(offer.expiresOnDay) - currentDay + 1)
-    : null;
-
-  const parts = [];
-  if (availableIn > 0) {
-    parts.push(`Opens in ${availableIn} day${availableIn === 1 ? '' : 's'}`);
-  } else {
-    parts.push('Available now');
-  }
-
-  if (hours > 0) {
-    parts.push(`${formatHoursFn(hours)} focus`);
-  }
-
-  if (Number.isFinite(hoursPerDay) && hoursPerDay > 0) {
-    if (Number.isFinite(daysRequired) && daysRequired > 0) {
-      parts.push(`${formatHoursFn(hoursPerDay)}/day for ${daysRequired} day${daysRequired === 1 ? '' : 's'}`);
-    } else {
-      parts.push(`${formatHoursFn(hoursPerDay)}/day commitment`);
-    }
-  }
-
-  if (payout > 0) {
-    const payoutLabel = `$${formatMoneyFn(payout)}`;
-    if (!schedule || schedule === 'onCompletion') {
-      parts.push(`${payoutLabel} on completion`);
-    } else if (schedule === 'daily') {
-      parts.push(`${payoutLabel} / day`);
-    } else {
-      parts.push(`${payoutLabel} • ${schedule}`);
-    }
-  }
-
-  if (completionMode === 'manual') {
-    parts.push('Manual completion');
-  }
-
-  if (expiresIn != null) {
-    parts.push(`Expires in ${expiresIn} day${expiresIn === 1 ? '' : 's'}`);
-  }
-
-  return {
-    hours,
-    payout,
-    schedule,
-    hoursPerDay,
-    daysRequired,
-    completionMode,
-    progressLabel,
-    availableIn,
-    expiresIn,
-    summary: parts.join(' • ')
-  };
-}
+import { describeHustleOfferMeta } from '../../hustles/offerHelpers.js';
 
 export default function buildHustleModels(definitions = [], helpers = {}) {
   const {
@@ -255,10 +95,8 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
       return expiresA - expiresB;
     });
 
-    const readyOffers = [];
-    const upcomingOffers = [];
-    sortedOffers.forEach(offer => {
-      const meta = describeOfferMeta({
+    const offerEntries = sortedOffers.map(offer => {
+      const meta = describeHustleOfferMeta({
         offer,
         definition,
         currentDay,
@@ -266,7 +104,7 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
         formatMoneyFn
       });
       const ready = meta.availableIn <= 0;
-      const entry = {
+      return {
         id: offer.id,
         label: offer?.variant?.label || definition.name || offer.templateId,
         description: offer?.variant?.description || '',
@@ -283,12 +121,10 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
         ready,
         onAccept: () => acceptOffer(offer.id, { state })
       };
-      if (ready) {
-        readyOffers.push(entry);
-      } else {
-        upcomingOffers.push(entry);
-      }
     });
+
+    const readyOffers = offerEntries.filter(entry => entry.ready);
+    const upcomingOffers = offerEntries.filter(entry => !entry.ready);
 
     const outstandingForDefinition = commitmentsByDefinition.get(definition.id) || [];
     const commitments = outstandingForDefinition.map(entry => ({

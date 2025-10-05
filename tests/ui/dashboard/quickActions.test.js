@@ -4,6 +4,13 @@ import { buildQuickActions } from '../../../src/ui/dashboard/quickActions.js';
 import { buildDefaultState } from '../../../src/core/state.js';
 import { loadRegistry, resetRegistry } from '../../../src/game/registryService.js';
 import { rollDailyOffers } from '../../../src/game/hustles.js';
+import {
+  resolveOfferHours,
+  resolveOfferPayout,
+  resolveOfferSchedule,
+  describeQuickActionOfferMeta,
+  describeHustleOfferMeta
+} from '../../../src/ui/hustles/offerHelpers.js';
 
 const quickStub = {
   id: 'hustle:test',
@@ -44,4 +51,71 @@ test('buildQuickActions returns active offers with meta details', () => {
   assert.equal(offerAction.primaryLabel, 'Accept');
   assert.ok(offerAction.meta.includes('$120'));
   assert.ok(offerAction.meta.includes('1 day'));
+});
+
+test('offer helper resolves fields with custom number resolver', () => {
+  const offer = {
+    metadata: {
+      hoursRequired: 'invalid',
+      requirements: { hours: '6' },
+      payoutAmount: '275',
+      payout: { schedule: 'daily' }
+    }
+  };
+  const template = { time: '8', payout: { amount: '500' } };
+  const toNumber = value => {
+    if (value === '6') return 6;
+    const numeric = Number(value);
+    return Number.isFinite(numeric) ? numeric : NaN;
+  };
+
+  assert.equal(resolveOfferHours(offer, template, { toNumber }), 6);
+  assert.equal(resolveOfferPayout(offer, template, { toNumber }), 275);
+  assert.equal(resolveOfferSchedule(offer), 'daily');
+});
+
+test('quick action offer summary highlights payout schedule and remaining days', () => {
+  const summary = describeQuickActionOfferMeta({
+    payout: 300,
+    schedule: 'daily',
+    durationText: '4h',
+    remainingDays: 2,
+    formatMoneyFn: value => value.toString()
+  });
+  assert.equal(summary, '$300 / day • 4h • 2 days left');
+});
+
+test('hustle offer summary includes availability, focus, and completion cues', () => {
+  const offer = {
+    availableOnDay: 5,
+    expiresOnDay: 8,
+    metadata: {
+      hoursRequired: 6,
+      hoursPerDay: 2,
+      daysRequired: 3,
+      payout: { amount: 450, schedule: 'onCompletion' },
+      completionMode: 'manual',
+      progressLabel: 'Deliver reports'
+    }
+  };
+  const meta = describeHustleOfferMeta({
+    offer,
+    definition: { time: 7 },
+    currentDay: 3,
+    formatHoursFn: value => `${value}h`,
+    formatMoneyFn: value => value,
+    toNumber: Number
+  });
+
+  assert.equal(meta.hours, 6);
+  assert.equal(meta.payout, 450);
+  assert.equal(meta.availableIn, 2);
+  assert.equal(meta.expiresIn, 6);
+  assert.equal(meta.completionMode, 'manual');
+  assert.equal(meta.progressLabel, 'Deliver reports');
+  assert.ok(meta.summary.includes('Opens in 2 days'));
+  assert.ok(meta.summary.includes('6h focus'));
+  assert.ok(meta.summary.includes('$450 on completion'));
+  assert.ok(meta.summary.includes('Manual completion'));
+  assert.ok(meta.summary.includes('Expires in 6 days'));
 });

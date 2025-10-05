@@ -13,6 +13,12 @@ import { instanceLabel } from '../../game/assets/details.js';
 import { collectOutstandingActionEntries } from '../actions/registry.js';
 import { registerActionProvider } from '../actions/providers.js';
 import { getAvailableOffers, acceptHustleOffer } from '../../game/hustles.js';
+import {
+  resolveOfferHours,
+  resolveOfferPayout,
+  resolveOfferSchedule,
+  describeQuickActionOfferMeta
+} from '../hustles/offerHelpers.js';
 
 function getQualitySnapshot(instance = {}) {
   const level = Math.max(0, clampNumber(instance?.quality?.level));
@@ -71,74 +77,6 @@ function estimateRemainingRuns(asset, instance, action, remaining, state) {
   return Math.max(1, Math.ceil(remaining / progressPerRun));
 }
 
-function resolveOfferHours(offer, template) {
-  if (!offer) return 0;
-  const metadata = offer.metadata || {};
-  const requirements = typeof metadata.requirements === 'object' && metadata.requirements !== null
-    ? metadata.requirements
-    : {};
-  const candidates = [
-    metadata.hoursRequired,
-    requirements.hours,
-    requirements.timeHours,
-    template?.time,
-    template?.action?.timeCost
-  ];
-  for (const value of candidates) {
-    const numeric = clampNumber(value);
-    if (Number.isFinite(numeric) && numeric >= 0) {
-      return numeric;
-    }
-  }
-  return 0;
-}
-
-function resolveOfferPayout(offer, template) {
-  if (!offer) return 0;
-  const metadata = offer.metadata || {};
-  const payout = typeof metadata.payout === 'object' && metadata.payout !== null
-    ? metadata.payout
-    : {};
-  const candidates = [metadata.payoutAmount, payout.amount, template?.payout?.amount];
-  for (const value of candidates) {
-    const numeric = clampNumber(value);
-    if (Number.isFinite(numeric) && numeric >= 0) {
-      return numeric;
-    }
-  }
-  return 0;
-}
-
-function resolveOfferSchedule(offer) {
-  if (!offer) return 'onCompletion';
-  const metadata = offer.metadata || {};
-  const payout = typeof metadata.payout === 'object' && metadata.payout !== null
-    ? metadata.payout
-    : {};
-  return metadata.payoutSchedule || payout.schedule || 'onCompletion';
-}
-
-function describeOfferMeta({ payout, schedule, durationText, remainingDays }) {
-  const parts = [];
-  if (payout > 0) {
-    const payoutText = `$${formatMoney(payout)}`;
-    if (!schedule || schedule === 'onCompletion') {
-      parts.push(`${payoutText} on completion`);
-    } else if (schedule === 'daily') {
-      parts.push(`${payoutText} / day`);
-    } else {
-      parts.push(`${payoutText} • ${schedule}`);
-    }
-  }
-  if (durationText) {
-    parts.push(durationText);
-  }
-  if (Number.isFinite(remainingDays)) {
-    parts.push(`${remainingDays} day${remainingDays === 1 ? '' : 's'} left`);
-  }
-  return parts.join(' • ');
-}
-
 export function buildQuickActions(state) {
   const workingState = state || {};
   const offers = getAvailableOffers(workingState, { includeUpcoming: false, includeClaimed: false }) || [];
@@ -146,8 +84,8 @@ export function buildQuickActions(state) {
 
   const items = offers.map(offer => {
     const definition = getActionDefinition(offer.definitionId || offer.templateId) || {};
-    const hours = resolveOfferHours(offer, definition);
-    const payout = resolveOfferPayout(offer, definition);
+    const hours = resolveOfferHours(offer, definition, { toNumber: clampNumber });
+    const payout = resolveOfferPayout(offer, definition, { toNumber: clampNumber });
     const roi = hours > 0 ? payout / Math.max(hours, 0.0001) : payout;
     const durationText = formatHours(hours);
     const schedule = resolveOfferSchedule(offer);
@@ -162,11 +100,12 @@ export function buildQuickActions(state) {
 
     const description = offer?.variant?.description || definition?.description || '';
 
-    const meta = describeOfferMeta({
+    const meta = describeQuickActionOfferMeta({
       payout,
       schedule,
       durationText,
-      remainingDays
+      remainingDays,
+      formatMoneyFn: formatMoney
     });
 
     return {

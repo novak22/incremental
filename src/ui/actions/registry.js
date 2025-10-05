@@ -70,7 +70,7 @@ function buildProgressSnapshot({
     definition?.time,
     definition?.action?.timeCost
   ];
-  const hoursRequired = hoursRequiredCandidates.reduce((result, value) => {
+  let hoursRequired = hoursRequiredCandidates.reduce((result, value) => {
     if (result != null) {
       return result;
     }
@@ -82,10 +82,6 @@ function buildProgressSnapshot({
     progress.hoursLogged != null ? progress.hoursLogged : instance.hoursLogged,
     0
   );
-
-  const hoursRemaining = hoursRequired != null
-    ? Math.max(0, hoursRequired - hoursLogged)
-    : null;
 
   const metadataProgress = typeof accepted?.metadata?.progress === 'object' && accepted.metadata.progress !== null
     ? accepted.metadata.progress
@@ -119,6 +115,22 @@ function buildProgressSnapshot({
   if (progress && daysRequired != null && (!Number.isFinite(progress.daysRequired) || progress.daysRequired <= 0)) {
     progress.daysRequired = daysRequired;
   }
+
+  if ((hoursRequired == null || hoursRequired <= 0)
+    && Number.isFinite(hoursPerDay)
+    && hoursPerDay > 0
+    && Number.isFinite(daysRequired)
+    && daysRequired > 0) {
+    const derivedHoursRequired = hoursPerDay * daysRequired;
+    hoursRequired = derivedHoursRequired;
+    if (progress && (!Number.isFinite(progress.hoursRequired) || progress.hoursRequired <= 0)) {
+      progress.hoursRequired = derivedHoursRequired;
+    }
+  }
+
+  const hoursRemaining = hoursRequired != null
+    ? Math.max(0, hoursRequired - hoursLogged)
+    : null;
 
   const completionCandidates = [
     progress.completion,

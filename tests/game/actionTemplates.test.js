@@ -96,3 +96,42 @@ test('study template enforces enrollable availability and manual completion', ()
   assert.equal(instance.progress.hoursPerDay, 4);
   assert.equal(instance.progress.daysRequired, 5);
 });
+
+test('contract template invokes accept hooks with context payload', () => {
+  const events = [];
+  const template = createContractTemplate({
+    id: 'hooked-contract-template',
+    name: 'Hooked Contract',
+    defaultState: {}
+  }, {
+    progress: { type: 'project', completion: 'manual' },
+    accept: {
+      hooks: [context => {
+        events.push({
+          phase: 'array',
+          definitionId: context.definition.id,
+          instanceId: context.instance.id,
+          day: Number(context.state?.day) || null
+        });
+      }],
+      onAccepted: context => {
+        events.push({
+          phase: 'single',
+          metadata: context.metadata,
+          overrides: context.overrides
+        });
+      }
+    }
+  });
+
+  const state = stateModule.getState();
+  const metadata = { label: 'Hook Metadata', time: 3 };
+  const overrides = { deadlineDay: 7 };
+  const instance = template.acceptInstance({ state, metadata, overrides });
+
+  assert.ok(instance);
+  assert.equal(events.length, 2);
+  assert.equal(events[0].definitionId, 'hooked-contract-template');
+  assert.equal(events[1].metadata.label, 'Hook Metadata');
+  assert.equal(events[1].overrides.deadlineDay, 7);
+});
