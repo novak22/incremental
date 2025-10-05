@@ -4,6 +4,7 @@ import { SnapshotRepository } from './snapshotRepository.js';
 import { StateMigrationRunner } from './stateMigrationRunner.js';
 import { success, error, empty, tryCatch } from './result.js';
 import { syncNicheTrendSnapshots } from '../../game/events/syncNicheTrendSnapshots.js';
+import { maybeSpawnNicheEvents } from '../../game/events/index.js';
 
 function migrateLegacySnapshot(snapshot, context) {
   if (!snapshot || typeof snapshot !== 'object') {
@@ -129,6 +130,12 @@ export class StatePersistence {
     });
   }
 
+  ensureNicheEvents(state) {
+    if (!state) return;
+    const day = Number.isFinite(Number(state.day)) ? Number(state.day) : 1;
+    maybeSpawnNicheEvents({ state, day });
+  }
+
   load({ onFirstLoad, onReturning, onError } = {}) {
     const defaultState = this.buildDefaultState();
     this.initializeState(defaultState);
@@ -159,6 +166,7 @@ export class StatePersistence {
     state.lastSaved = lastSaved;
     state.version = effectiveVersion;
     this.ensureStateShape(state);
+    this.ensureNicheEvents(state);
     syncNicheTrendSnapshots(state);
 
     if (typeof onReturning === 'function') {
@@ -207,6 +215,7 @@ export class StatePersistence {
     state.version = Math.max(this.version, initialVersion);
     state.lastSaved = lastSavedFallback;
     this.ensureStateShape(state);
+    this.ensureNicheEvents(state);
     syncNicheTrendSnapshots(state);
 
     if (typeof onFirstLoad === 'function') {

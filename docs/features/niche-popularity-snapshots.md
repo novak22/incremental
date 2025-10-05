@@ -3,6 +3,8 @@
 ## Overview
 Niche popularity now mirrors the current roster of active trend events instead of rolling random values at the start of each day. The synchronizer composes every niche's multiplier from ongoing events and stores the results as a snapshot (`score`, `delta`, `multiplier`, `label`, `tone`, `summary`). When no events apply, niches fall back to a neutral, steady baseline so dashboards and analytics remain grounded.
 
+Trend selection now guarantees that every niche is always riding exactly one live event. The trend pool treats blueprint `chance` values as weighted picks, rerolling as soon as a previous event ends or whenever a save is loaded so no niche idles between streaks.
+
 ## Goals
 - Keep niche popularity aligned with trend events so payouts and UI copy match the live modifiers.
 - Persist multi-day events across reloads without rerolling random scores that desync the UI and analytics history.
@@ -11,5 +13,6 @@ Niche popularity now mirrors the current roster of active trend events instead o
 ## Implementation Notes
 - `syncNicheTrendSnapshots(state)` aggregates `currentPercent` modifiers from `getNicheEvents(state, nicheId)` and caches the derived snapshot for each niche.
 - Popularity initialization paths (`ensureNicheState`, persistence load/save hooks, and the day-end lifecycle) now call the synchronizer so state stays deterministic.
+- `maybeSpawnNicheEvents` promotes a single long-running trend per niche by drawing from the weighted blueprint pool during bootstraps and after the daily event advance.
 - Snapshots clamp and round derived values through `src/game/niches/popularitySnapshot.js` to avoid runaway numbers while keeping deltas for comparison charts.
 - Niche trend blueprints roll 5–10 day schedules that ramp: upbeat waves open around +10% before climbing toward +35–55% boosts, while fatigue dips start near -12% and steepen toward -35–-60% hits before easing.

@@ -29,6 +29,8 @@ test('syncNicheTrendSnapshots caches event-driven popularity and preserves histo
     const state = getState();
     state.day = 1;
 
+    state.events.active = state.events.active.filter(event => event?.target?.type !== 'niche');
+
     addEvent(state, {
       templateId: 'test-niche-trend',
       label: 'Test Trend',
@@ -73,18 +75,33 @@ test('syncNicheTrendSnapshots caches event-driven popularity and preserves histo
     snapshot = getSnapshot(state);
     assert.ok(snapshot.score <= 65, 'score should continue trending toward neutral');
     assert.ok(snapshot.previousScore >= 70, 'previous score should retain last active value');
+    const lastActiveScore = snapshot.score;
 
     state.day += 1;
     advanceEventsAfterDay(state.day);
     syncNicheTrendSnapshots(state);
 
-    assert.equal(state.events.active.length, 0, 'event should be removed after final advance');
-
     snapshot = getSnapshot(state);
-    assert.equal(snapshot.multiplier, 1, 'multiplier should reset to neutral when event ends');
-    assert.equal(snapshot.score, 50, 'score should fall back to neutral after event completion');
-    assert.equal(snapshot.previousScore, 65, 'previous score should capture last active reading for delta context');
-    assert.equal(snapshot.delta, -15, 'delta should reflect the drop back to neutral');
+    const activeTrends = state.events.active.filter(
+      event => event?.target?.type === 'niche' && event.target.nicheId === NICHE_ID
+    );
+    assert.equal(activeTrends.length, 1, 'niche should immediately receive a replacement trend');
+    assert.notEqual(
+      activeTrends[0].templateId,
+      'test-niche-trend',
+      'replacement trend should differ from the injected test blueprint'
+    );
+    assert.notEqual(snapshot.multiplier, 1, 'replacement trend should keep payouts in motion');
+    assert.equal(
+      snapshot.previousScore,
+      lastActiveScore,
+      'previous score should capture the final reading from the prior trend'
+    );
+    assert.equal(
+      Math.round(snapshot.delta),
+      Math.round(snapshot.score - snapshot.previousScore),
+      'delta should track the swing between previous and current scores'
+    );
   } finally {
     Math.random = originalRandom;
   }
