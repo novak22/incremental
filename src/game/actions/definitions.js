@@ -27,12 +27,26 @@ function applyExpiryMetadata(definition) {
 
 function applyProgressMetadata(definition, overrides = {}) {
   if (!definition) return definition;
-  if (!definition.progress) {
-    definition.progress = { ...overrides };
+  const base = typeof definition.progress === 'object' && definition.progress !== null
+    ? { ...definition.progress }
+    : {};
+  const merged = { ...overrides, ...base };
+  if (!merged.type) {
+    merged.type = overrides.type || 'instant';
   }
-  if (!definition.progress.type) {
-    definition.progress.type = overrides.type || 'instant';
+  if (!merged.completion) {
+    merged.completion = overrides.completion || (merged.type === 'instant' ? 'instant' : 'deferred');
   }
+  if (overrides.hoursRequired != null && merged.hoursRequired == null) {
+    merged.hoursRequired = overrides.hoursRequired;
+  }
+  if (overrides.hoursPerDay != null && merged.hoursPerDay == null) {
+    merged.hoursPerDay = overrides.hoursPerDay;
+  }
+  if (overrides.daysRequired != null && merged.daysRequired == null) {
+    merged.daysRequired = overrides.daysRequired;
+  }
+  definition.progress = merged;
   return definition;
 }
 
@@ -57,6 +71,7 @@ function prepareInstantActions() {
     applyExpiryMetadata(definition);
     applyProgressMetadata(definition, {
       type: 'instant',
+      completion: 'instant',
       hoursRequired: Number(definition.time || definition.action?.timeCost || 0)
     });
     return definition;
@@ -74,6 +89,7 @@ function prepareStudyActions() {
     applyExpiryMetadata(prepared);
     applyProgressMetadata(prepared, {
       type: 'study',
+      completion: 'deferred',
       hoursPerDay: prepared.studyHoursPerDay || prepared.hoursPerDay || null,
       daysRequired: prepared.studyDays || prepared.days || null
     });

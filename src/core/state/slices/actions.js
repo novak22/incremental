@@ -6,6 +6,118 @@ function resolveDefinition(id) {
   return getActionDefinition(id) || getHustleDefinition(id);
 }
 
+function normalizeProgressLog(log = {}) {
+  const normalized = {};
+  for (const [dayKey, value] of Object.entries(log || {})) {
+    const day = Math.max(1, Math.floor(Number(dayKey)) || 1);
+    const hours = Number(value);
+    if (!Number.isFinite(hours) || hours < 0) continue;
+    normalized[day] = Number.isFinite(normalized[day]) ? normalized[day] + hours : hours;
+  }
+  return normalized;
+}
+
+function normalizeInstanceProgress(definition, instance = {}) {
+  const template = typeof definition?.progress === 'object' && definition.progress !== null
+    ? definition.progress
+    : {};
+  const source = typeof instance.progress === 'object' && instance.progress !== null
+    ? instance.progress
+    : {};
+
+  const progress = {};
+  progress.type = typeof source.type === 'string' ? source.type : template.type || 'instant';
+  const fallbackCompletion = template.completion || (progress.type === 'instant' ? 'instant' : 'deferred');
+  progress.completion = typeof source.completion === 'string' ? source.completion : fallbackCompletion;
+
+  const hoursRequiredSource = toNumber(source.hoursRequired, null);
+  const hoursRequiredTemplate = toNumber(template.hoursRequired, null);
+  const hoursRequiredInstance = toNumber(instance.hoursRequired, null);
+  const resolvedHoursRequired = hoursRequiredSource != null
+    ? hoursRequiredSource
+    : hoursRequiredTemplate != null
+      ? hoursRequiredTemplate
+      : hoursRequiredInstance;
+  progress.hoursRequired = Number.isFinite(resolvedHoursRequired) && resolvedHoursRequired >= 0
+    ? resolvedHoursRequired
+    : null;
+
+  const hoursPerDaySource = toNumber(source.hoursPerDay, null);
+  const hoursPerDayTemplate = toNumber(template.hoursPerDay, null);
+  const resolvedHoursPerDay = hoursPerDaySource != null ? hoursPerDaySource : hoursPerDayTemplate;
+  progress.hoursPerDay = Number.isFinite(resolvedHoursPerDay) && resolvedHoursPerDay > 0 ? resolvedHoursPerDay : null;
+
+  const daysRequiredSource = toNumber(source.daysRequired, null);
+  const daysRequiredTemplate = toNumber(template.daysRequired, null);
+  const resolvedDaysRequired = daysRequiredSource != null ? daysRequiredSource : daysRequiredTemplate;
+  progress.daysRequired = Number.isFinite(resolvedDaysRequired) && resolvedDaysRequired > 0
+    ? Math.floor(resolvedDaysRequired)
+    : null;
+
+  let deadline = source.deadlineDay;
+  if (deadline == null) {
+    deadline = template.deadlineDay;
+  }
+  if (deadline == null) {
+    deadline = instance.deadlineDay;
+  }
+  progress.deadlineDay = Number.isFinite(deadline) && deadline > 0 ? Math.floor(deadline) : null;
+
+  const normalizedLog = normalizeProgressLog(source.dailyLog);
+  progress.dailyLog = normalizedLog;
+  let totalHours = 0;
+  let lastWorked = null;
+  for (const [dayKey, value] of Object.entries(normalizedLog)) {
+    const day = Math.max(1, Math.floor(Number(dayKey)) || 1);
+    const hours = Number(value);
+    if (!Number.isFinite(hours) || hours < 0) continue;
+    totalHours += hours;
+    if (lastWorked == null || day > lastWorked) {
+      lastWorked = day;
+    }
+  }
+
+  const hoursLoggedSource = toNumber(source.hoursLogged, null);
+  const hoursLoggedInstance = toNumber(instance.hoursLogged, null);
+  const resolvedHoursLogged = hoursLoggedSource != null
+    ? hoursLoggedSource
+    : Number.isFinite(totalHours)
+      ? totalHours
+      : hoursLoggedInstance;
+  progress.hoursLogged = Number.isFinite(resolvedHoursLogged) && resolvedHoursLogged >= 0 ? resolvedHoursLogged : 0;
+
+  const hoursPerDay = Number(progress.hoursPerDay);
+  if (Number.isFinite(hoursPerDay) && hoursPerDay > 0) {
+    const threshold = hoursPerDay - 0.0001;
+    progress.daysCompleted = Object.values(normalizedLog).filter(hours => Number(hours) >= threshold).length;
+  } else {
+    const daysCompletedSource = toNumber(source.daysCompleted, null);
+    progress.daysCompleted = Number.isFinite(daysCompletedSource) && daysCompletedSource >= 0
+      ? Math.floor(daysCompletedSource)
+      : 0;
+  }
+
+  if (lastWorked != null) {
+    progress.lastWorkedDay = lastWorked;
+  } else if (source.lastWorkedDay != null) {
+    const parsed = Math.floor(Number(source.lastWorkedDay));
+    progress.lastWorkedDay = Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  } else {
+    progress.lastWorkedDay = null;
+  }
+
+  progress.completed = source.completed === true || instance.completed === true;
+  if (source.completedOnDay != null) {
+    const parsed = Math.floor(Number(source.completedOnDay));
+    progress.completedOnDay = Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
+  } else if (progress.completed && instance.completedOnDay != null) {
+    const parsed = Math.floor(Number(instance.completedOnDay));
+    progress.completedOnDay = Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
+  }
+
+  return progress;
+}
+
 function createDefaultActionState(definition) {
   if (!definition) {
     return { instances: [] };
@@ -60,6 +172,21 @@ function normalizeActionInstance(definition, instance = {}, { state } = {}) {
   }
   if (!Array.isArray(base.notes)) {
     delete base.notes;
+  }
+  if (definition) {
+    const normalizedProgress = normalizeInstanceProgress(definition, base);
+    base.progress = normalizedProgress;
+    const progressHours = toNumber(normalizedProgress.hoursLogged, null);
+    if (Number.isFinite(progressHours) && progressHours >= 0) {
+      base.hoursLogged = progressHours;
+    } else {
+      base.progress.hoursLogged = base.hoursLogged;
+    }
+    if (normalizedProgress.deadlineDay != null && base.deadlineDay == null) {
+      base.deadlineDay = normalizedProgress.deadlineDay;
+    } else if (base.deadlineDay != null && normalizedProgress.deadlineDay == null) {
+      base.progress.deadlineDay = base.deadlineDay;
+    }
   }
   return base;
 }
