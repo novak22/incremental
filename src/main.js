@@ -17,6 +17,7 @@ import { setActiveView } from './ui/viewManager.js';
 import { resolveInitialView } from './ui/views/registry.js';
 import { ensureRegistryReady } from './game/registryBootstrap.js';
 import { dismissBootLoader } from './ui/bootLoader.js';
+import { ensureDailyOffersForDay } from './game/hustles.js';
 
 function createAppContext() {
   const stateManager = defaultStateManager;
@@ -46,6 +47,8 @@ const { returning, lastSaved } = loadState({
 if (returning) {
   handleOfflineProgress(lastSaved);
 }
+const liveState = appContext.stateManager.getState();
+ensureDailyOffersForDay({ state: liveState, day: liveState?.day });
 const initialView = resolveInitialView(document);
 setActiveView(initialView, document);
 ensureUpdateSubscriptions();
