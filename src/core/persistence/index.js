@@ -191,8 +191,8 @@ function removeLegacyNicheRollDay(snapshot) {
 
 const DEFAULT_MIGRATIONS = [
   migrateLegacySnapshot,
-  migrateLegacyHustlesToActions,
-  removeLegacyNicheRollDay
+  removeLegacyNicheRollDay,
+  migrateLegacyHustlesToActions
 ];
 
 export { SnapshotRepository, StateMigrationRunner };
