@@ -82,6 +82,14 @@ export function normalizeActionEntries(source = []) {
         orderIndex
       };
 
+      if (entry && typeof entry === 'object') {
+        Object.keys(entry).forEach(key => {
+          if (typeof key === 'string' && key.toLowerCase().includes('bucket')) {
+            normalizedEntry[key] = entry[key];
+          }
+        });
+      }
+
       if (entry?.subtitle) {
         normalizedEntry.subtitle = entry.subtitle;
       }

@@ -86,6 +86,26 @@ describe('todoWidget focus ordering', () => {
         ['upgrade-fast', 'hustle-high', 'study-a', 'hustle-low', 'upgrade-slow', 'study-b', 'misc-task']
       );
     });
+
+    it('honours explicit focus buckets supplied by providers', () => {
+      const entries = [
+        { id: 'general-task' },
+        {
+          id: 'bucketed-hustle',
+          focusBucket: 'hustle',
+          moneyPerHour: 80,
+          payout: 80,
+          durationHours: 1
+        },
+        { id: 'upgrade-item', focusCategory: 'upgrade', upgradeRemaining: 1, durationHours: 1 }
+      ];
+
+      const ordered = applyFocusOrdering(entries, 'balanced');
+      assert.deepEqual(
+        ordered.map(entry => entry.id),
+        ['upgrade-item', 'bucketed-hustle', 'general-task']
+      );
+    });
   });
 });
 
