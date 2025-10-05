@@ -47,15 +47,31 @@ function deriveWorkspaceSummary(model = {}, definitionMap = new Map()) {
 }
 
 function createCatalogHandlers({ presenter, definitionMap }) {
+  const applyUpdate = updater => {
+    if (!presenter) {
+      return;
+    }
+    if (typeof presenter.updateAndRender === 'function') {
+      presenter.updateAndRender(updater);
+      return;
+    }
+    if (typeof presenter.updateState === 'function') {
+      presenter.updateState(updater);
+    }
+    presenter.refresh?.();
+  };
+
+  const getModel = () => presenter?.getModel?.() ?? {};
+
   return {
     onSelectItem: itemId => {
-      presenter.updateState(current => reduceSelectCatalogItem(current, presenter.getModel(), definitionMap, itemId));
+      applyUpdate(current => reduceSelectCatalogItem(current, getModel(), definitionMap, itemId));
     },
     onSearch: value => {
-      presenter.updateState(current => reduceSearch(current, presenter.getModel(), definitionMap, value));
+      applyUpdate(current => reduceSearch(current, getModel(), definitionMap, value));
     },
     onSelectCategory: categoryId => {
-      presenter.updateState(current => reduceCategory(current, presenter.getModel(), definitionMap, categoryId));
+      applyUpdate(current => reduceCategory(current, getModel(), definitionMap, categoryId));
     }
   };
 }
