@@ -38,9 +38,6 @@ function createAppContext() {
 
 ensureRegistryReady();
 const appContext = createAppContext();
-const initialView = resolveInitialView(document);
-setActiveView(initialView, document);
-ensureUpdateSubscriptions();
 const { loadState, saveState } = appContext.storage;
 const { returning, lastSaved } = loadState({
   onFirstLoad: () =>
@@ -49,6 +46,9 @@ const { returning, lastSaved } = loadState({
 if (returning) {
   handleOfflineProgress(lastSaved);
 }
+const initialView = resolveInitialView(document);
+setActiveView(initialView, document);
+ensureUpdateSubscriptions();
 renderLog();
 renderCards();
 updateUI();
