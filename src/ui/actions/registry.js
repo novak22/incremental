@@ -1,4 +1,5 @@
 import { formatHours } from '../../core/helpers.js';
+import { getState } from '../../core/state.js';
 
 const DEFAULT_EMPTY_MESSAGE = 'Queue a hustle or upgrade to add new tasks.';
 
@@ -41,7 +42,9 @@ export function normalizeActionEntries(source = []) {
       const payoutText = entry?.payoutText || entry?.payoutLabel || '';
       const meta = entry?.meta || [payoutText, durationText].filter(Boolean).join(' • ');
 
-      const rawRemaining = coerceNumber(entry?.remainingRuns, null);
+      const rawRemaining = entry?.remainingRuns == null
+        ? null
+        : coerceNumber(entry.remainingRuns, null);
       const hasRemaining = Number.isFinite(rawRemaining);
       const remainingRuns = hasRemaining ? Math.max(0, rawRemaining) : null;
       const repeatable = Boolean(entry?.repeatable) || (hasRemaining && remainingRuns > 1);
@@ -289,16 +292,17 @@ function ensureResourceLabels(queue, state = {}) {
   }
 }
 
-export function buildActionQueue({ state = {}, summary = {} } = {}) {
+export function buildActionQueue({ state, summary = {} } = {}) {
+  const resolvedState = state || getState() || {};
   const queue = {
     entries: [],
     autoCompletedEntries: createAutoCompletedEntries(summary)
   };
 
-  const activeDay = coerceNumber(state?.day, null);
+  const activeDay = coerceNumber(resolvedState?.day, null);
   queue.day = Number.isFinite(activeDay) ? activeDay : null;
 
-  const snapshots = collectActionProviders({ state, summary });
+  const snapshots = collectActionProviders({ state: resolvedState, summary });
 
   snapshots.forEach(snapshot => {
     queue.entries.push(...snapshot.entries);
@@ -309,7 +313,7 @@ export function buildActionQueue({ state = {}, summary = {} } = {}) {
     queue.emptyMessage = DEFAULT_EMPTY_MESSAGE;
   }
 
-  ensureResourceLabels(queue, state);
+  ensureResourceLabels(queue, resolvedState);
 
   if (!queue.autoCompletedEntries.length) {
     delete queue.autoCompletedEntries;

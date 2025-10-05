@@ -1,4 +1,5 @@
 import { getElement } from '../../elements/registry.js';
+import { getState } from '../../../core/state.js';
 import todoWidget from './widgets/todoWidget.js';
 import appsWidget from './widgets/appsWidget.js';
 import bankWidget from './widgets/bankWidget.js';
@@ -27,10 +28,11 @@ function ensureWidget(key) {
   return module;
 }
 
-function renderTodo(state = {}, summary = {}) {
+function renderTodo(state, summary = {}) {
   const widget = ensureWidget('todo');
   if (!widget) return;
-  const model = buildActionQueue({ state, summary });
+  const resolvedState = state || getState() || {};
+  const model = buildActionQueue({ state: resolvedState, summary });
   widget.render(model);
 }
 
@@ -47,7 +49,7 @@ function renderBank(context = {}) {
 function renderDashboard(viewModel = {}, context = {}) {
   if (!viewModel) return;
   notificationsPresenter.render(viewModel.eventLog || {});
-  renderTodo(context?.state || {}, context?.summary || {});
+  renderTodo(context?.state, context?.summary || {});
   renderApps(context);
   renderBank(context);
 }
@@ -55,3 +57,5 @@ function renderDashboard(viewModel = {}, context = {}) {
 export default {
   renderDashboard
 };
+
+export { renderTodo };
