@@ -1,0 +1,2450 @@
+{
+  "metadata": {
+    "phase": "Phase 1",
+    "description": "Canonical normalized dataset derived from docs/economy.md",
+    "units": {
+      "time": "minutes",
+      "currency": "USD"
+    }
+  },
+  "assets": {
+    "blog": {
+      "name": "Personal Blog Network",
+      "base_income": 30,
+      "variance": 0.2,
+      "setup_time": 540,
+      "setup_cost": 180,
+      "maintenance_time": 36,
+      "maintenance_cost": 3,
+      "quality_curve": [
+        {
+          "level": 0,
+          "income_min": 3,
+          "income_max": 6,
+          "requirements": {}
+        },
+        {
+          "level": 1,
+          "income_min": 9,
+          "income_max": 15,
+          "requirements": {
+            "posts": 3
+          }
+        },
+        {
+          "level": 2,
+          "income_min": 16,
+          "income_max": 24,
+          "requirements": {
+            "posts": 9,
+            "seo": 2
+          }
+        },
+        {
+          "level": 3,
+          "income_min": 30,
+          "income_max": 42,
+          "requirements": {
+            "posts": 18,
+            "seo": 5,
+            "outreach": 3
+          }
+        },
+        {
+          "level": 4,
+          "income_min": 46,
+          "income_max": 62,
+          "requirements": {
+            "posts": 28,
+            "seo": 9,
+            "outreach": 6
+          }
+        },
+        {
+          "level": 5,
+          "income_min": 64,
+          "income_max": 84,
+          "requirements": {
+            "posts": 40,
+            "seo": 14,
+            "outreach": 10
+          }
+        }
+      ],
+      "requirements": {},
+      "tags": [
+        "writing",
+        "content",
+        "desktop_work"
+      ],
+      "schedule": {
+        "setup_days": 3,
+        "setup_minutes_per_day": 180
+      }
+    },
+    "ebook": {
+      "name": "Digital E-Book Series",
+      "base_income": 30,
+      "variance": 0.2,
+      "setup_time": 720,
+      "setup_cost": 260,
+      "maintenance_time": 30,
+      "maintenance_cost": 3,
+      "quality_curve": [
+        {
+          "level": 0,
+          "income_min": 3,
+          "income_max": 6,
+          "requirements": {}
+        },
+        {
+          "level": 1,
+          "income_min": 12,
+          "income_max": 20,
+          "requirements": {
+            "chapters": 6
+          }
+        },
+        {
+          "level": 2,
+          "income_min": 20,
+          "income_max": 30,
+          "requirements": {
+            "chapters": 12,
+            "cover": 1
+          }
+        },
+        {
+          "level": 3,
+          "income_min": 30,
+          "income_max": 42,
+          "requirements": {
+            "chapters": 18,
+            "cover": 2,
+            "reviews": 6
+          }
+        },
+        {
+          "level": 4,
+          "income_min": 44,
+          "income_max": 58,
+          "requirements": {
+            "chapters": 24,
+            "cover": 3,
+            "reviews": 10
+          }
+        },
+        {
+          "level": 5,
+          "income_min": 60,
+          "income_max": 78,
+          "requirements": {
+            "chapters": 32,
+            "cover": 4,
+            "reviews": 16
+          }
+        }
+      ],
+      "requirements": {
+        "knowledge": [
+          "outlineMastery"
+        ]
+      },
+      "tags": [
+        "writing",
+        "product",
+        "digital"
+      ],
+      "schedule": {
+        "setup_days": 4,
+        "setup_minutes_per_day": 180
+      }
+    },
+    "vlog": {
+      "name": "Weekly Vlog Channel",
+      "base_income": 34,
+      "variance": 0.2,
+      "setup_time": 960,
+      "setup_cost": 420,
+      "maintenance_time": 60,
+      "maintenance_cost": 9,
+      "quality_curve": [
+        {
+          "level": 0,
+          "income_min": 2,
+          "income_max": 5,
+          "requirements": {}
+        },
+        {
+          "level": 1,
+          "income_min": 12,
+          "income_max": 20,
+          "requirements": {
+            "videos": 4
+          }
+        },
+        {
+          "level": 2,
+          "income_min": 20,
+          "income_max": 30,
+          "requirements": {
+            "videos": 10,
+            "edits": 4
+          }
+        },
+        {
+          "level": 3,
+          "income_min": 32,
+          "income_max": 40,
+          "requirements": {
+            "videos": 18,
+            "edits": 7,
+            "promotion": 5
+          }
+        },
+        {
+          "level": 4,
+          "income_min": 45,
+          "income_max": 58,
+          "requirements": {
+            "videos": 26,
+            "edits": 11,
+            "promotion": 9
+          }
+        },
+        {
+          "level": 5,
+          "income_min": 62,
+          "income_max": 82,
+          "requirements": {
+            "videos": 38,
+            "edits": 16,
+            "promotion": 14
+          }
+        }
+      ],
+      "requirements": {
+        "equipment": [
+          "camera"
+        ]
+      },
+      "tags": [
+        "video",
+        "visual",
+        "content",
+        "studio"
+      ],
+      "schedule": {
+        "setup_days": 4,
+        "setup_minutes_per_day": 240
+      }
+    },
+    "stockPhotos": {
+      "name": "Stock Photo Galleries",
+      "base_income": 58,
+      "variance": 0.35,
+      "setup_time": 1200,
+      "setup_cost": 560,
+      "maintenance_time": 48,
+      "maintenance_cost": 10,
+      "quality_curve": [
+        {
+          "level": 0,
+          "income_min": 8,
+          "income_max": 14,
+          "requirements": {}
+        },
+        {
+          "level": 1,
+          "income_min": 18,
+          "income_max": 30,
+          "requirements": {
+            "shoots": 4
+          }
+        },
+        {
+          "level": 2,
+          "income_min": 34,
+          "income_max": 52,
+          "requirements": {
+            "shoots": 10,
+            "editing": 4
+          }
+        },
+        {
+          "level": 3,
+          "income_min": 54,
+          "income_max": 78,
+          "requirements": {
+            "shoots": 16,
+            "editing": 7,
+            "marketing": 5
+          }
+        },
+        {
+          "level": 4,
+          "income_min": 80,
+          "income_max": 108,
+          "requirements": {
+            "shoots": 24,
+            "editing": 11,
+            "marketing": 9
+          }
+        },
+        {
+          "level": 5,
+          "income_min": 112,
+          "income_max": 150,
+          "requirements": {
+            "shoots": 36,
+            "editing": 16,
+            "marketing": 14
+          }
+        }
+      ],
+      "requirements": {
+        "equipment": [
+          "camera",
+          "studio"
+        ],
+        "knowledge": [
+          "photoLibrary"
+        ]
+      },
+      "tags": [
+        "photo",
+        "visual",
+        "content"
+      ],
+      "schedule": {
+        "setup_days": 5,
+        "setup_minutes_per_day": 240
+      }
+    },
+    "dropshipping": {
+      "name": "Dropshipping Product Lab",
+      "base_income": 84,
+      "variance": 0.35,
+      "setup_time": 1440,
+      "setup_cost": 720,
+      "maintenance_time": 66,
+      "maintenance_cost": 12,
+      "quality_curve": [
+        {
+          "level": 0,
+          "income_min": 12,
+          "income_max": 20,
+          "requirements": {}
+        },
+        {
+          "level": 1,
+          "income_min": 24,
+          "income_max": 38,
+          "requirements": {
+            "research": 4
+          }
+        },
+        {
+          "level": 2,
+          "income_min": 44,
+          "income_max": 62,
+          "requirements": {
+            "research": 11,
+            "listing": 5
+          }
+        },
+        {
+          "level": 3,
+          "income_min": 68,
+          "income_max": 92,
+          "requirements": {
+            "research": 18,
+            "listing": 8,
+            "ads": 7
+          }
+        },
+        {
+          "level": 4,
+          "income_min": 95,
+          "income_max": 128,
+          "requirements": {
+            "research": 26,
+            "listing": 12,
+            "ads": 10
+          }
+        },
+        {
+          "level": 5,
+          "income_min": 130,
+          "income_max": 176,
+          "requirements": {
+            "research": 38,
+            "listing": 18,
+            "ads": 16
+          }
+        }
+      ],
+      "requirements": {
+        "knowledge": [
+          "ecomPlaybook"
+        ],
+        "experience": [
+          {
+            "assetId": "blog",
+            "count": 2
+          }
+        ]
+      },
+      "tags": [
+        "commerce",
+        "ecommerce",
+        "fulfillment"
+      ],
+      "schedule": {
+        "setup_days": 6,
+        "setup_minutes_per_day": 240
+      }
+    },
+    "saas": {
+      "name": "Micro SaaS Platform",
+      "base_income": 108,
+      "variance": 0.4,
+      "setup_time": 1920,
+      "setup_cost": 960,
+      "maintenance_time": 132,
+      "maintenance_cost": 24,
+      "quality_curve": [
+        {
+          "level": 0,
+          "income_min": 20,
+          "income_max": 32,
+          "requirements": {}
+        },
+        {
+          "level": 1,
+          "income_min": 32,
+          "income_max": 48,
+          "requirements": {
+            "features": 4
+          }
+        },
+        {
+          "level": 2,
+          "income_min": 54,
+          "income_max": 74,
+          "requirements": {
+            "features": 12,
+            "stability": 5
+          }
+        },
+        {
+          "level": 3,
+          "income_min": 84,
+          "income_max": 120,
+          "requirements": {
+            "features": 24,
+            "stability": 8,
+            "marketing": 6
+          }
+        },
+        {
+          "level": 4,
+          "income_min": 120,
+          "income_max": 168,
+          "requirements": {
+            "features": 34,
+            "stability": 12,
+            "marketing": 10,
+            "edge": 4
+          }
+        },
+        {
+          "level": 5,
+          "income_min": 168,
+          "income_max": 220,
+          "requirements": {
+            "features": 48,
+            "stability": 18,
+            "marketing": 15,
+            "edge": 8
+          }
+        }
+      ],
+      "requirements": {
+        "knowledge": [
+          "automationCourse"
+        ],
+        "equipment": [
+          "serverCluster"
+        ],
+        "experience": [
+          {
+            "assetId": "dropshipping",
+            "count": 1
+          },
+          {
+            "assetId": "ebook",
+            "count": 1
+          }
+        ]
+      },
+      "tags": [
+        "software",
+        "tech",
+        "product"
+      ],
+      "schedule": {
+        "setup_days": 8,
+        "setup_minutes_per_day": 240
+      }
+    }
+  },
+  "hustles": {
+    "freelance": {
+      "name": "Freelance Writing",
+      "base_income": 18,
+      "variance": 0,
+      "setup_time": 120,
+      "setup_cost": 0,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "daily_limit": null,
+      "requirements": [],
+      "skills": [
+        "writing"
+      ],
+      "tags": [
+        "writing",
+        "desktop_work"
+      ]
+    },
+    "audienceCall": {
+      "name": "Audience Q&A Blast",
+      "base_income": 12,
+      "variance": 0,
+      "setup_time": 60,
+      "setup_cost": 0,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "daily_limit": 1,
+      "requirements": [
+        {
+          "assetId": "blog",
+          "count": 1
+        }
+      ],
+      "skills": [
+        "audience"
+      ],
+      "tags": [
+        "community",
+        "live",
+        "video"
+      ]
+    },
+    "bundlePush": {
+      "name": "Bundle Promo Push",
+      "base_income": 48,
+      "variance": 0,
+      "setup_time": 150,
+      "setup_cost": 0,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "daily_limit": null,
+      "requirements": [
+        {
+          "assetId": "blog",
+          "count": 2
+        },
+        {
+          "assetId": "ebook",
+          "count": 1
+        }
+      ],
+      "skills": [
+        "promotion"
+      ],
+      "tags": [
+        "commerce",
+        "marketing"
+      ]
+    },
+    "surveySprint": {
+      "name": "Micro Survey Dash",
+      "base_income": 1,
+      "variance": 0,
+      "setup_time": 15,
+      "setup_cost": 0,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "daily_limit": 4,
+      "requirements": [],
+      "skills": [
+        "research"
+      ],
+      "tags": [
+        "ops",
+        "desktop_work"
+      ]
+    },
+    "eventPhotoGig": {
+      "name": "Event Photo Gig",
+      "base_income": 72,
+      "variance": 0,
+      "setup_time": 210,
+      "setup_cost": 0,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "daily_limit": null,
+      "requirements": [
+        {
+          "assetId": "stockPhotos",
+          "count": 1
+        }
+      ],
+      "skills": [
+        "visual"
+      ],
+      "tags": [
+        "photo",
+        "shoot",
+        "studio"
+      ]
+    },
+    "popUpWorkshop": {
+      "name": "Pop-Up Workshop",
+      "base_income": 38,
+      "variance": 0,
+      "setup_time": 150,
+      "setup_cost": 0,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "daily_limit": null,
+      "requirements": [
+        {
+          "assetId": "blog",
+          "count": 1
+        },
+        {
+          "assetId": "ebook",
+          "count": 1
+        }
+      ],
+      "skills": [
+        "audience",
+        {
+          "id": "writing",
+          "weight": 0.5
+        }
+      ],
+      "tags": [
+        "education",
+        "in_person"
+      ]
+    },
+    "vlogEditRush": {
+      "name": "Vlog Edit Rush",
+      "base_income": 24,
+      "variance": 0,
+      "setup_time": 90,
+      "setup_cost": 0,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "daily_limit": null,
+      "requirements": [
+        {
+          "assetId": "vlog",
+          "count": 1
+        }
+      ],
+      "skills": [
+        "editing"
+      ],
+      "tags": [
+        "video",
+        "editing",
+        "desktop_work"
+      ]
+    },
+    "dropshipPackParty": {
+      "name": "Dropship Pack Party",
+      "base_income": 28,
+      "variance": 0,
+      "setup_time": 120,
+      "setup_cost": 8,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "daily_limit": null,
+      "requirements": [
+        {
+          "assetId": "dropshipping",
+          "count": 1
+        }
+      ],
+      "skills": [
+        "commerce"
+      ],
+      "tags": [
+        "commerce",
+        "fulfillment"
+      ]
+    },
+    "saasBugSquash": {
+      "name": "SaaS Bug Squash",
+      "base_income": 30,
+      "variance": 0,
+      "setup_time": 60,
+      "setup_cost": 0,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "daily_limit": null,
+      "requirements": [
+        {
+          "assetId": "saas",
+          "count": 1
+        }
+      ],
+      "skills": [
+        "software",
+        {
+          "id": "infrastructure",
+          "weight": 0.5
+        }
+      ],
+      "tags": [
+        "software",
+        "ops"
+      ]
+    },
+    "audiobookNarration": {
+      "name": "Audiobook Narration",
+      "base_income": 44,
+      "variance": 0,
+      "setup_time": 165,
+      "setup_cost": 0,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "daily_limit": null,
+      "requirements": [
+        {
+          "assetId": "ebook",
+          "count": 1
+        }
+      ],
+      "skills": [
+        "audio"
+      ],
+      "tags": [
+        "audio",
+        "studio"
+      ]
+    },
+    "streetPromoSprint": {
+      "name": "Street Team Promo",
+      "base_income": 18,
+      "variance": 0,
+      "setup_time": 45,
+      "setup_cost": 5,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "daily_limit": null,
+      "requirements": [
+        {
+          "assetId": "blog",
+          "count": 2
+        }
+      ],
+      "skills": [
+        "promotion"
+      ],
+      "tags": [
+        "marketing",
+        "field"
+      ]
+    }
+  },
+  "tracks": {
+    "storycraftJumpstart": {
+      "name": "Storycraft Jumpstart",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 720,
+      "setup_cost": 0,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "schedule": {
+        "days": 3,
+        "minutes_per_day": 240
+      },
+      "rewards": {
+        "base_xp": 120,
+        "skill_split": [
+          {
+            "id": "writing",
+            "weight": 1
+          }
+        ]
+      }
+    },
+    "vlogStudioJumpstart": {
+      "name": "Creator Studio Jumpstart",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 720,
+      "setup_cost": 0,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "schedule": {
+        "days": 3,
+        "minutes_per_day": 240
+      },
+      "rewards": {
+        "base_xp": 120,
+        "skill_split": [
+          {
+            "id": "visual",
+            "weight": 1
+          }
+        ]
+      }
+    },
+    "digitalShelfPrimer": {
+      "name": "Digital Shelf Primer",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 720,
+      "setup_cost": 0,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "schedule": {
+        "days": 3,
+        "minutes_per_day": 240
+      },
+      "rewards": {
+        "base_xp": 120,
+        "skill_split": [
+          {
+            "id": "editing",
+            "weight": 1
+          }
+        ]
+      }
+    },
+    "commerceLaunchPrimer": {
+      "name": "Commerce Launch Primer",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 720,
+      "setup_cost": 0,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "schedule": {
+        "days": 3,
+        "minutes_per_day": 240
+      },
+      "rewards": {
+        "base_xp": 120,
+        "skill_split": [
+          {
+            "id": "commerce",
+            "weight": 1
+          }
+        ]
+      }
+    },
+    "microSaasJumpstart": {
+      "name": "Micro SaaS Jumpstart",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 720,
+      "setup_cost": 0,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "schedule": {
+        "days": 3,
+        "minutes_per_day": 240
+      },
+      "rewards": {
+        "base_xp": 120,
+        "skill_split": [
+          {
+            "id": "software",
+            "weight": 1
+          }
+        ]
+      }
+    },
+    "outlineMastery": {
+      "name": "Outline Mastery Workshop",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 600,
+      "setup_cost": 140,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "schedule": {
+        "days": 5,
+        "minutes_per_day": 120
+      },
+      "rewards": {
+        "base_xp": 120,
+        "skill_split": [
+          {
+            "id": "writing",
+            "weight": 1
+          }
+        ]
+      }
+    },
+    "photoLibrary": {
+      "name": "Photo Catalog Curation",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 360.0,
+      "setup_cost": 95,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "schedule": {
+        "days": 4,
+        "minutes_per_day": 90
+      },
+      "rewards": {
+        "base_xp": 120,
+        "skill_split": [
+          {
+            "id": "visual",
+            "weight": 0.5
+          },
+          {
+            "id": "editing",
+            "weight": 0.5
+          }
+        ]
+      }
+    },
+    "ecomPlaybook": {
+      "name": "E-Commerce Playbook",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 1620,
+      "setup_cost": 900,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "schedule": {
+        "days": 9,
+        "minutes_per_day": 180
+      },
+      "rewards": {
+        "base_xp": 120,
+        "skill_split": [
+          {
+            "id": "research",
+            "weight": 0.5
+          },
+          {
+            "id": "commerce",
+            "weight": 0.5
+          }
+        ]
+      }
+    },
+    "automationCourse": {
+      "name": "Automation Architecture Course",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 5400,
+      "setup_cost": 3000,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "schedule": {
+        "days": 15,
+        "minutes_per_day": 360
+      },
+      "rewards": {
+        "base_xp": 120,
+        "skill_split": [
+          {
+            "id": "software",
+            "weight": 0.6
+          },
+          {
+            "id": "infrastructure",
+            "weight": 0.4
+          }
+        ]
+      }
+    },
+    "brandVoiceLab": {
+      "name": "Brand Voice Lab",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 240,
+      "setup_cost": 120,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "schedule": {
+        "days": 4,
+        "minutes_per_day": 60
+      },
+      "rewards": {
+        "base_xp": 100,
+        "skill_split": [
+          {
+            "id": "audience",
+            "weight": 0.6
+          },
+          {
+            "id": "promotion",
+            "weight": 0.4
+          }
+        ]
+      }
+    },
+    "guerillaBuzzWorkshop": {
+      "name": "Guerrilla Buzz Workshop",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 540.0,
+      "setup_cost": 180,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "schedule": {
+        "days": 6,
+        "minutes_per_day": 90
+      },
+      "rewards": {
+        "base_xp": 110,
+        "skill_split": [
+          {
+            "id": "promotion",
+            "weight": 0.6
+          },
+          {
+            "id": "audience",
+            "weight": 0.4
+          }
+        ]
+      }
+    },
+    "curriculumDesignStudio": {
+      "name": "Curriculum Design Studio",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 900.0,
+      "setup_cost": 280,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "schedule": {
+        "days": 6,
+        "minutes_per_day": 150
+      },
+      "rewards": {
+        "base_xp": 150,
+        "skill_split": [
+          {
+            "id": "audience",
+            "weight": 0.6
+          },
+          {
+            "id": "writing",
+            "weight": 0.4
+          }
+        ]
+      }
+    },
+    "postProductionPipelineLab": {
+      "name": "Post-Production Pipeline Lab",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 2400,
+      "setup_cost": 900,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "schedule": {
+        "days": 10,
+        "minutes_per_day": 240
+      },
+      "rewards": {
+        "base_xp": 150,
+        "skill_split": [
+          {
+            "id": "editing",
+            "weight": 0.7
+          },
+          {
+            "id": "visual",
+            "weight": 0.3
+          }
+        ]
+      }
+    },
+    "fulfillmentOpsMasterclass": {
+      "name": "Fulfillment Ops Masterclass",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 2400,
+      "setup_cost": 1200,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "schedule": {
+        "days": 10,
+        "minutes_per_day": 240
+      },
+      "rewards": {
+        "base_xp": 140,
+        "skill_split": [
+          {
+            "id": "commerce",
+            "weight": 0.7
+          },
+          {
+            "id": "promotion",
+            "weight": 0.3
+          }
+        ]
+      }
+    },
+    "customerRetentionClinic": {
+      "name": "Customer Retention Clinic",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 1260,
+      "setup_cost": 1000,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "schedule": {
+        "days": 7,
+        "minutes_per_day": 180
+      },
+      "rewards": {
+        "base_xp": 140,
+        "skill_split": [
+          {
+            "id": "audience",
+            "weight": 0.4
+          },
+          {
+            "id": "promotion",
+            "weight": 0.3
+          },
+          {
+            "id": "software",
+            "weight": 0.3
+          }
+        ]
+      }
+    },
+    "narrationPerformanceWorkshop": {
+      "name": "Narration Performance Workshop",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 1260,
+      "setup_cost": 900,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "schedule": {
+        "days": 7,
+        "minutes_per_day": 180
+      },
+      "rewards": {
+        "base_xp": 130,
+        "skill_split": [
+          {
+            "id": "audio",
+            "weight": 0.6
+          },
+          {
+            "id": "writing",
+            "weight": 0.4
+          }
+        ]
+      }
+    },
+    "galleryLicensingSummit": {
+      "name": "Gallery Licensing Summit",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 1920,
+      "setup_cost": 1100,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "schedule": {
+        "days": 8,
+        "minutes_per_day": 240
+      },
+      "rewards": {
+        "base_xp": 140,
+        "skill_split": [
+          {
+            "id": "visual",
+            "weight": 0.6
+          },
+          {
+            "id": "commerce",
+            "weight": 0.4
+          }
+        ]
+      }
+    },
+    "syndicationResidency": {
+      "name": "Syndication Residency",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 2160,
+      "setup_cost": 1000,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "schedule": {
+        "days": 9,
+        "minutes_per_day": 240
+      },
+      "rewards": {
+        "base_xp": 150,
+        "skill_split": [
+          {
+            "id": "promotion",
+            "weight": 0.5
+          },
+          {
+            "id": "audience",
+            "weight": 0.3
+          },
+          {
+            "id": "writing",
+            "weight": 0.2
+          }
+        ]
+      }
+    }
+  },
+  "upgrades": {
+    "coffee": {
+      "name": "Turbo Coffee",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 0,
+      "setup_cost": 40,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "repeatable": true,
+      "category": "support",
+      "notes": "+60 minutes bonus time for the current day, max 3 uses/day."
+    },
+    "studio": {
+      "name": "Lighting Kit",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 0,
+      "setup_cost": 220,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "category": "house",
+      "tags": [
+        "photo",
+        "video"
+      ]
+    },
+    "studioExpansion": {
+      "name": "Studio Expansion",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 0,
+      "setup_cost": 540,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "category": "house",
+      "requirements": [
+        "studio"
+      ]
+    },
+    "assistant": {
+      "name": "Hire Virtual Assistant",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 0,
+      "setup_cost": 0,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "category": "infra",
+      "notes": "Hire cost $180, adds 180 bonus minutes/day, $24 daily wage."
+    },
+    "serverRack": {
+      "name": "Server Rack - Starter",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 0,
+      "setup_cost": 650,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "category": "infra"
+    },
+    "fulfillmentAutomation": {
+      "name": "Fulfillment Automation Suite",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 0,
+      "setup_cost": 780,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "category": "infra",
+      "requirements": [
+        {
+          "type": "asset",
+          "id": "dropshipping",
+          "count": 2,
+          "active": true
+        },
+        {
+          "type": "knowledge",
+          "id": "ecomPlaybook"
+        }
+      ]
+    },
+    "serverCluster": {
+      "name": "Cloud Cluster",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 0,
+      "setup_cost": 1150,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "category": "infra",
+      "requirements": [
+        "serverRack"
+      ]
+    },
+    "globalSupplyMesh": {
+      "name": "Global Supply Mesh",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 0,
+      "setup_cost": 1150,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "category": "infra",
+      "requirements": [
+        "fulfillmentAutomation",
+        {
+          "type": "asset",
+          "id": "dropshipping",
+          "count": 3,
+          "active": true
+        },
+        {
+          "type": "knowledge",
+          "id": "photoLibrary"
+        }
+      ]
+    },
+    "serverEdge": {
+      "name": "Edge Delivery Network",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 0,
+      "setup_cost": 1450,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "category": "infra",
+      "requirements": [
+        "serverCluster"
+      ]
+    },
+    "whiteLabelAlliance": {
+      "name": "White-Label Alliance",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 0,
+      "setup_cost": 1500,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "category": "infra",
+      "requirements": [
+        "globalSupplyMesh",
+        {
+          "type": "asset",
+          "id": "dropshipping",
+          "count": 4,
+          "active": true
+        },
+        {
+          "type": "knowledge",
+          "ids": [
+            "ecomPlaybook",
+            "photoLibrary"
+          ]
+        }
+      ]
+    },
+    "creatorPhone": {
+      "name": "Creator Phone - Starter",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 0,
+      "setup_cost": 140,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "category": "tech"
+    },
+    "creatorPhonePro": {
+      "name": "Creator Phone - Pro",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 0,
+      "setup_cost": 360,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "category": "tech",
+      "requirements": [
+        "creatorPhone"
+      ]
+    },
+    "creatorPhoneUltra": {
+      "name": "Creator Phone - Ultra",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 0,
+      "setup_cost": 720,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "category": "tech",
+      "requirements": [
+        "creatorPhonePro"
+      ]
+    },
+    "studioLaptop": {
+      "name": "Studio Laptop",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 0,
+      "setup_cost": 280,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "category": "tech"
+    },
+    "editingWorkstation": {
+      "name": "Editing Workstation",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 0,
+      "setup_cost": 640,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "category": "tech",
+      "requirements": [
+        "studioLaptop"
+      ]
+    },
+    "quantumRig": {
+      "name": "Quantum Creator Rig",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 0,
+      "setup_cost": 1280,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "category": "tech",
+      "requirements": [
+        "editingWorkstation"
+      ]
+    },
+    "monitorHub": {
+      "name": "Monitor Dock",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 0,
+      "setup_cost": 180,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "category": "tech"
+    },
+    "dualMonitorArray": {
+      "name": "Dual Monitor Array",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 0,
+      "setup_cost": 240,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "category": "tech",
+      "requirements": [
+        "monitorHub"
+      ]
+    },
+    "colorGradingDisplay": {
+      "name": "Color Grading Display",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 0,
+      "setup_cost": 380,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "category": "tech",
+      "requirements": [
+        "dualMonitorArray"
+      ]
+    },
+    "camera": {
+      "name": "Camera",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 0,
+      "setup_cost": 200,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "category": "tech"
+    },
+    "cameraPro": {
+      "name": "Cinema Camera Upgrade",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 0,
+      "setup_cost": 480,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "category": "tech",
+      "requirements": [
+        "camera"
+      ]
+    },
+    "audioSuite": {
+      "name": "Audio Suite",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 0,
+      "setup_cost": 420,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "category": "tech"
+    },
+    "ergonomicRefit": {
+      "name": "Ergonomic Refit",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 0,
+      "setup_cost": 180,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "category": "tech"
+    },
+    "fiberInternet": {
+      "name": "Fiber Internet Plan",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 0,
+      "setup_cost": 260,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "category": "tech"
+    },
+    "backupPowerArray": {
+      "name": "Backup Power Array",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 0,
+      "setup_cost": 260,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "category": "tech"
+    },
+    "scratchDriveArray": {
+      "name": "Scratch Drive Array",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 0,
+      "setup_cost": 320,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "category": "tech"
+    },
+    "editorialPipeline": {
+      "name": "Editorial Pipeline Suite",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 0,
+      "setup_cost": 360,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "category": "tech",
+      "requirements": [
+        "course",
+        {
+          "type": "asset",
+          "id": "blog",
+          "active": true,
+          "count": 1
+        },
+        {
+          "type": "knowledge",
+          "id": "outlineMastery"
+        }
+      ]
+    },
+    "syndicationSuite": {
+      "name": "Syndication Suite",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 0,
+      "setup_cost": 720,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "category": "tech",
+      "requirements": [
+        "editorialPipeline",
+        {
+          "type": "asset",
+          "id": "blog",
+          "active": true,
+          "count": 1
+        },
+        {
+          "type": "asset",
+          "id": "ebook",
+          "active": true,
+          "count": 1
+        },
+        {
+          "type": "knowledge",
+          "id": "brandVoiceLab"
+        }
+      ]
+    },
+    "immersiveStoryWorlds": {
+      "name": "Immersive Story Worlds",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 0,
+      "setup_cost": 1080,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "category": "tech",
+      "requirements": [
+        "syndicationSuite",
+        {
+          "type": "asset",
+          "id": "blog",
+          "active": true,
+          "count": 1
+        },
+        {
+          "type": "asset",
+          "id": "ebook",
+          "active": true,
+          "count": 1
+        },
+        {
+          "type": "asset",
+          "id": "vlog",
+          "active": true,
+          "count": 1
+        },
+        {
+          "type": "knowledge",
+          "ids": [
+            "outlineMastery",
+            "brandVoiceLab"
+          ]
+        }
+      ]
+    },
+    "course": {
+      "name": "Automation Course",
+      "base_income": 0,
+      "variance": 0,
+      "setup_time": 0,
+      "setup_cost": 260,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "category": "tech",
+      "requirements": [
+        {
+          "type": "asset",
+          "id": "blog",
+          "active": true,
+          "count": 1
+        }
+      ]
+    }
+  },
+  "modifiers": [
+    {
+      "source": "storycraftJumpstart",
+      "target": "asset:blog.income",
+      "type": "multiplier",
+      "formula": "income * (1 + 0.05)",
+      "notes": "Adds 5% to blog income."
+    },
+    {
+      "source": "vlogStudioJumpstart",
+      "target": "asset:vlog.income",
+      "type": "multiplier",
+      "formula": "income * (1 + 0.05)",
+      "notes": "Adds 5% to vlog income."
+    },
+    {
+      "source": "digitalShelfPrimer",
+      "target": "asset:ebook.income",
+      "type": "multiplier",
+      "formula": "income * (1 + 0.05)",
+      "notes": "Adds 5% to e-book income."
+    },
+    {
+      "source": "digitalShelfPrimer",
+      "target": "asset:stockPhotos.income",
+      "type": "multiplier",
+      "formula": "income * (1 + 0.05)",
+      "notes": "Adds 5% to stock photo income."
+    },
+    {
+      "source": "commerceLaunchPrimer",
+      "target": "asset:dropshipping.income",
+      "type": "multiplier",
+      "formula": "income * (1 + 0.05)",
+      "notes": "Adds 5% to dropshipping income."
+    },
+    {
+      "source": "microSaasJumpstart",
+      "target": "asset:saas.income",
+      "type": "multiplier",
+      "formula": "income * (1 + 0.05)",
+      "notes": "Adds 5% to SaaS income."
+    },
+    {
+      "source": "outlineMastery",
+      "target": "hustle:freelance.income",
+      "type": "multiplier",
+      "formula": "income * (1 + 0.25)",
+      "notes": "Freelance writing earns 25% more."
+    },
+    {
+      "source": "outlineMastery",
+      "target": "hustle:audiobookNarration.income",
+      "type": "multiplier",
+      "formula": "income * (1 + 0.15)",
+      "notes": "Audiobook narration earns 15% more."
+    },
+    {
+      "source": "photoLibrary",
+      "target": "hustle:eventPhotoGig.income",
+      "type": "multiplier",
+      "formula": "income * (1 + 0.2)",
+      "notes": "Event photo gig earns 20% more."
+    },
+    {
+      "source": "ecomPlaybook",
+      "target": "hustle:bundlePush.income",
+      "type": "flat",
+      "formula": "income + 5",
+      "notes": "Bundle promo push gains $5 flat."
+    },
+    {
+      "source": "ecomPlaybook",
+      "target": "asset:dropshipping.income",
+      "type": "multiplier",
+      "formula": "income * (1 + 0.15)",
+      "notes": "Dropshipping income +15%."
+    },
+    {
+      "source": "automationCourse",
+      "target": "hustle:saasBugSquash.income",
+      "type": "flat",
+      "formula": "income + 6",
+      "notes": "SaaS bug squash gains $6 flat."
+    },
+    {
+      "source": "automationCourse",
+      "target": "asset:saas.income",
+      "type": "multiplier",
+      "formula": "income * (1 + 0.15)",
+      "notes": "SaaS income +15%."
+    },
+    {
+      "source": "brandVoiceLab",
+      "target": "hustle:audienceCall.income",
+      "type": "flat",
+      "formula": "income + 4",
+      "notes": "Audience Q&A blast gains $4."
+    },
+    {
+      "source": "guerillaBuzzWorkshop",
+      "target": "hustle:streetPromoSprint.income",
+      "type": "multiplier",
+      "formula": "income * (1 + 0.25)",
+      "notes": "Street promo sprint +25%."
+    },
+    {
+      "source": "guerillaBuzzWorkshop",
+      "target": "hustle:surveySprint.income",
+      "type": "flat",
+      "formula": "income + 1.5",
+      "notes": "Micro survey dash gains $1.5."
+    },
+    {
+      "source": "curriculumDesignStudio",
+      "target": "hustle:popUpWorkshop.income",
+      "type": "multiplier",
+      "formula": "income * (1 + 0.3)",
+      "notes": "Pop-up workshop +30%."
+    },
+    {
+      "source": "curriculumDesignStudio",
+      "target": "hustle:bundlePush.income",
+      "type": "multiplier",
+      "formula": "income * (1 + 0.15)",
+      "notes": "Bundle promo push +15%."
+    },
+    {
+      "source": "postProductionPipelineLab",
+      "target": "hustle:vlogEditRush.income",
+      "type": "multiplier",
+      "formula": "income * (1 + 0.25)",
+      "notes": "Vlog edit rush +25%."
+    },
+    {
+      "source": "postProductionPipelineLab",
+      "target": "asset:vlog.income",
+      "type": "multiplier",
+      "formula": "income * (1 + 0.15)",
+      "notes": "Vlog income +15%."
+    },
+    {
+      "source": "fulfillmentOpsMasterclass",
+      "target": "hustle:dropshipPackParty.income",
+      "type": "multiplier",
+      "formula": "income * (1 + 0.2)",
+      "notes": "Dropship pack party +20%."
+    },
+    {
+      "source": "fulfillmentOpsMasterclass",
+      "target": "asset:dropshipping.income",
+      "type": "multiplier",
+      "formula": "income * (1 + 0.25)",
+      "notes": "Dropshipping income +25%."
+    },
+    {
+      "source": "customerRetentionClinic",
+      "target": "hustle:saasBugSquash.income",
+      "type": "flat",
+      "formula": "income + 5",
+      "notes": "SaaS bug squash gains $5."
+    },
+    {
+      "source": "customerRetentionClinic",
+      "target": "asset:saas.income",
+      "type": "multiplier",
+      "formula": "income * (1 + 0.2)",
+      "notes": "SaaS income +20%."
+    },
+    {
+      "source": "narrationPerformanceWorkshop",
+      "target": "hustle:audiobookNarration.income",
+      "type": "multiplier",
+      "formula": "income * (1 + 0.25)",
+      "notes": "Audiobook narration +25%."
+    },
+    {
+      "source": "narrationPerformanceWorkshop",
+      "target": "asset:ebook.income",
+      "type": "multiplier",
+      "formula": "income * (1 + 0.1)",
+      "notes": "E-book income +10%."
+    },
+    {
+      "source": "galleryLicensingSummit",
+      "target": "hustle:eventPhotoGig.income",
+      "type": "multiplier",
+      "formula": "income * (1 + 0.2)",
+      "notes": "Event photo gig +20%."
+    },
+    {
+      "source": "galleryLicensingSummit",
+      "target": "asset:stockPhotos.income",
+      "type": "multiplier",
+      "formula": "income * (1 + 0.15)",
+      "notes": "Stock photo income +15%."
+    },
+    {
+      "source": "syndicationResidency",
+      "target": "hustle:freelance.income",
+      "type": "multiplier",
+      "formula": "income * (1 + 0.15)",
+      "notes": "Freelance writing +15%."
+    },
+    {
+      "source": "syndicationResidency",
+      "target": "hustle:streetPromoSprint.income",
+      "type": "flat",
+      "formula": "income + 2",
+      "notes": "Street promo sprint gains $2."
+    },
+    {
+      "source": "syndicationResidency",
+      "target": "asset:blog.income",
+      "type": "multiplier",
+      "formula": "income * (1 + 0.12)",
+      "notes": "Blog income +12%."
+    },
+    {
+      "source": "coffee",
+      "target": "state:time.bonus",
+      "type": "add",
+      "formula": "minutes + 60",
+      "notes": "Adds 60 bonus minutes (max 3 per day)."
+    },
+    {
+      "source": "studio",
+      "target": "assets[tag=photo|video].maintenance_time",
+      "type": "multiplier",
+      "formula": "minutes * 0.9",
+      "notes": "Lighting kit reduces photo/video maintenance time."
+    },
+    {
+      "source": "studioExpansion",
+      "target": "assets[tag=photo|video].setup_time",
+      "type": "multiplier",
+      "formula": "minutes * 0.85",
+      "notes": "Studio expansion speeds photo/video setup."
+    },
+    {
+      "source": "studioExpansion",
+      "target": "assets[tag=photo|video].income",
+      "type": "multiplier",
+      "formula": "income * 1.15",
+      "notes": "Studio expansion boosts photo/video payouts."
+    },
+    {
+      "source": "studioExpansion",
+      "target": "assets[tag=photo|video].quality_progress",
+      "type": "multiplier",
+      "formula": "progress * 2",
+      "notes": "Studio expansion doubles photo/video quality progress."
+    },
+    {
+      "source": "studioExpansion",
+      "target": "hustles[tag=photo].quality_progress",
+      "type": "multiplier",
+      "formula": "progress * 2",
+      "notes": "Photo hustles gain double quality progress."
+    },
+    {
+      "source": "serverRack",
+      "target": "assets[tag=software|tech].setup_time",
+      "type": "multiplier",
+      "formula": "minutes * 0.95",
+      "notes": "Server rack speeds software/tech setup."
+    },
+    {
+      "source": "serverRack",
+      "target": "hustles[tag=software|automation].setup_time",
+      "type": "multiplier",
+      "formula": "minutes * 0.95",
+      "notes": "Server rack speeds software/automation hustles."
+    },
+    {
+      "source": "fulfillmentAutomation",
+      "target": "asset:dropshipping.income",
+      "type": "multiplier",
+      "formula": "income * 1.25",
+      "notes": "Automation suite boosts dropshipping payouts."
+    },
+    {
+      "source": "fulfillmentAutomation",
+      "target": "asset:dropshipping.quality_progress",
+      "type": "multiplier",
+      "formula": "progress * 2",
+      "notes": "Automation suite doubles dropshipping quality progress."
+    },
+    {
+      "source": "serverCluster",
+      "target": "asset:saas.income",
+      "type": "multiplier",
+      "formula": "income * 1.2",
+      "notes": "Cloud cluster boosts SaaS payouts."
+    },
+    {
+      "source": "serverCluster",
+      "target": "asset:saas.quality_progress",
+      "type": "multiplier",
+      "formula": "progress * 1.5",
+      "notes": "Cloud cluster boosts SaaS quality progress."
+    },
+    {
+      "source": "globalSupplyMesh",
+      "target": "asset:dropshipping.income",
+      "type": "multiplier",
+      "formula": "income * 1.3",
+      "notes": "Global supply mesh boosts dropshipping payouts."
+    },
+    {
+      "source": "globalSupplyMesh",
+      "target": "asset:dropshipping.quality_progress",
+      "type": "multiplier",
+      "formula": "progress * 1.5",
+      "notes": "Global supply mesh boosts dropshipping quality progress."
+    },
+    {
+      "source": "globalSupplyMesh",
+      "target": "asset:dropshipping.setup_time",
+      "type": "multiplier",
+      "formula": "minutes * 0.92",
+      "notes": "Global supply mesh speeds dropshipping setup."
+    },
+    {
+      "source": "globalSupplyMesh",
+      "target": "hustles[tag=commerce|ecommerce].setup_time",
+      "type": "multiplier",
+      "formula": "minutes * 0.92",
+      "notes": "Commerce/e-commerce hustles run faster."
+    },
+    {
+      "source": "globalSupplyMesh",
+      "target": "hustles[tag=commerce|ecommerce].income",
+      "type": "multiplier",
+      "formula": "income * 1.3",
+      "notes": "Commerce/e-commerce hustles earn 30% more."
+    },
+    {
+      "source": "serverEdge",
+      "target": "asset:saas.income",
+      "type": "multiplier",
+      "formula": "income * 1.35",
+      "notes": "Edge delivery boosts SaaS payouts 35%."
+    },
+    {
+      "source": "serverEdge",
+      "target": "asset:saas.quality_progress",
+      "type": "multiplier",
+      "formula": "progress * 2",
+      "notes": "Edge delivery doubles SaaS quality progress."
+    },
+    {
+      "source": "serverEdge",
+      "target": "asset:saas.maintenance_time",
+      "type": "multiplier",
+      "formula": "minutes * 0.85",
+      "notes": "Edge delivery reduces SaaS maintenance time."
+    },
+    {
+      "source": "whiteLabelAlliance",
+      "target": "assets[id=dropshipping|stockPhotos].income",
+      "type": "multiplier",
+      "formula": "income * 1.35",
+      "notes": "White-label alliance boosts dropshipping & stock photo payouts."
+    },
+    {
+      "source": "whiteLabelAlliance",
+      "target": "assets[id=dropshipping|stockPhotos].quality_progress",
+      "type": "multiplier",
+      "formula": "progress * 1.3333333333",
+      "notes": "White-label alliance increases quality progress by 4/3."
+    },
+    {
+      "source": "whiteLabelAlliance",
+      "target": "hustles[tag=commerce|photo].income",
+      "type": "multiplier",
+      "formula": "income * 1.35",
+      "notes": "Commerce/photo hustles earn 35% more."
+    },
+    {
+      "source": "whiteLabelAlliance",
+      "target": "hustles[tag=commerce|photo].quality_progress",
+      "type": "multiplier",
+      "formula": "progress * 1.3333333333",
+      "notes": "Commerce/photo hustles gain 4/3 quality progress."
+    },
+    {
+      "source": "creatorPhone",
+      "target": "hustles[tag=live|field].setup_time",
+      "type": "multiplier",
+      "formula": "minutes * 0.95",
+      "notes": "Creator phone speeds live/field hustles."
+    },
+    {
+      "source": "creatorPhone",
+      "target": "assets[tag=video].setup_time",
+      "type": "multiplier",
+      "formula": "minutes * 0.95",
+      "notes": "Creator phone speeds video setup."
+    },
+    {
+      "source": "creatorPhonePro",
+      "target": "hustles[tag=live|field].setup_time",
+      "type": "multiplier",
+      "formula": "minutes * 0.85",
+      "notes": "Creator phone pro further speeds live/field hustles."
+    },
+    {
+      "source": "creatorPhonePro",
+      "target": "assets[tag=video].setup_time",
+      "type": "multiplier",
+      "formula": "minutes * 0.85",
+      "notes": "Creator phone pro speeds video setup."
+    },
+    {
+      "source": "creatorPhonePro",
+      "target": "hustles[tag=live|field].income",
+      "type": "multiplier",
+      "formula": "income * 1.05",
+      "notes": "Creator phone pro boosts live/field payouts 5%."
+    },
+    {
+      "source": "creatorPhonePro",
+      "target": "assets[tag=video].income",
+      "type": "multiplier",
+      "formula": "income * 1.05",
+      "notes": "Creator phone pro boosts video income 5%."
+    },
+    {
+      "source": "creatorPhoneUltra",
+      "target": "hustles[tag=live|field].setup_time",
+      "type": "multiplier",
+      "formula": "minutes * 0.8",
+      "notes": "Creator phone ultra speeds live/field setup."
+    },
+    {
+      "source": "creatorPhoneUltra",
+      "target": "assets[tag=video].setup_time",
+      "type": "multiplier",
+      "formula": "minutes * 0.8",
+      "notes": "Creator phone ultra speeds video setup."
+    },
+    {
+      "source": "creatorPhoneUltra",
+      "target": "hustles[tag=live|field].income",
+      "type": "multiplier",
+      "formula": "income * 1.08",
+      "notes": "Creator phone ultra boosts live/field payouts 8%."
+    },
+    {
+      "source": "creatorPhoneUltra",
+      "target": "assets[tag=video].income",
+      "type": "multiplier",
+      "formula": "income * 1.08",
+      "notes": "Creator phone ultra boosts video income 8%."
+    },
+    {
+      "source": "studioLaptop",
+      "target": "assets[tag=desktop_work].setup_time",
+      "type": "multiplier",
+      "formula": "minutes * 0.92",
+      "notes": "Studio laptop speeds desktop setup."
+    },
+    {
+      "source": "studioLaptop",
+      "target": "hustles[tag=desktop_work].setup_time",
+      "type": "multiplier",
+      "formula": "minutes * 0.92",
+      "notes": "Studio laptop speeds desktop hustles."
+    },
+    {
+      "source": "editingWorkstation",
+      "target": "assets[tag=desktop_work|video].setup_time",
+      "type": "multiplier",
+      "formula": "minutes * 0.85",
+      "notes": "Editing workstation speeds desktop/video setup."
+    },
+    {
+      "source": "editingWorkstation",
+      "target": "assets[tag=desktop_work|video].maintenance_time",
+      "type": "multiplier",
+      "formula": "minutes * 0.9",
+      "notes": "Editing workstation trims desktop/video maintenance."
+    },
+    {
+      "source": "quantumRig",
+      "target": "assets[tag=desktop_work|software|video].maintenance_time",
+      "type": "multiplier",
+      "formula": "minutes * 0.85",
+      "notes": "Quantum rig reduces maintenance for desktop/software/video assets."
+    },
+    {
+      "source": "quantumRig",
+      "target": "assets[tag=desktop_work|software|video].income",
+      "type": "multiplier",
+      "formula": "income * 1.12",
+      "notes": "Quantum rig boosts payouts for desktop/software/video assets."
+    },
+    {
+      "source": "monitorHub",
+      "target": "assets[tag=desktop_work].setup_time",
+      "type": "multiplier",
+      "formula": "minutes * 0.95",
+      "notes": "Monitor dock speeds desktop setup."
+    },
+    {
+      "source": "dualMonitorArray",
+      "target": "assets[tag=desktop_work|video].quality_progress",
+      "type": "multiplier",
+      "formula": "progress * 1.2",
+      "notes": "Dual monitor array boosts desktop/video quality progress."
+    },
+    {
+      "source": "colorGradingDisplay",
+      "target": "assets[tag=video|photo].quality_progress",
+      "type": "multiplier",
+      "formula": "progress * 1.3",
+      "notes": "Color grading display boosts video/photo quality progress."
+    },
+    {
+      "source": "camera",
+      "target": "assets[tag=video|photo].setup_time",
+      "type": "multiplier",
+      "formula": "minutes * 0.9",
+      "notes": "Camera speeds video/photo setup."
+    },
+    {
+      "source": "camera",
+      "target": "hustles[tag=video|photo].setup_time",
+      "type": "multiplier",
+      "formula": "minutes * 0.9",
+      "notes": "Camera speeds video/photo hustles."
+    },
+    {
+      "source": "cameraPro",
+      "target": "assets[tag=video|photo].setup_time",
+      "type": "multiplier",
+      "formula": "minutes * 0.85",
+      "notes": "Cinema camera upgrade speeds video/photo setup."
+    },
+    {
+      "source": "cameraPro",
+      "target": "assets[tag=video|photo].maintenance_time",
+      "type": "multiplier",
+      "formula": "minutes * 0.85",
+      "notes": "Cinema camera upgrade reduces video/photo maintenance."
+    },
+    {
+      "source": "cameraPro",
+      "target": "assets[tag=video|photo].income",
+      "type": "multiplier",
+      "formula": "income * 1.25",
+      "notes": "Cinema camera upgrade boosts video/photo payouts."
+    },
+    {
+      "source": "cameraPro",
+      "target": "assets[tag=video|photo].quality_progress",
+      "type": "multiplier",
+      "formula": "progress * 2",
+      "notes": "Cinema camera upgrade doubles video/photo quality progress."
+    },
+    {
+      "source": "audioSuite",
+      "target": "assets[tag=audio|video].quality_progress",
+      "type": "multiplier",
+      "formula": "progress * 1.4",
+      "notes": "Audio suite boosts audio/video quality progress."
+    },
+    {
+      "source": "ergonomicRefit",
+      "target": "assets[tag=desktop_work].maintenance_time",
+      "type": "multiplier",
+      "formula": "minutes * 0.95",
+      "notes": "Ergonomic refit reduces desktop maintenance time."
+    },
+    {
+      "source": "fiberInternet",
+      "target": "assets[tag=video|software].maintenance_time",
+      "type": "multiplier",
+      "formula": "minutes * 0.9",
+      "notes": "Fiber internet reduces video/software maintenance."
+    },
+    {
+      "source": "fiberInternet",
+      "target": "hustles[tag=live|software].maintenance_time",
+      "type": "multiplier",
+      "formula": "minutes * 0.9",
+      "notes": "Fiber internet reduces maintenance for live/software hustles."
+    },
+    {
+      "source": "backupPowerArray",
+      "target": "assets[tag=desktop_work|video].maintenance_time",
+      "type": "multiplier",
+      "formula": "minutes * 0.95",
+      "notes": "Backup power reduces desktop/video maintenance."
+    },
+    {
+      "source": "scratchDriveArray",
+      "target": "assets[tag=video|photo|software].maintenance_time",
+      "type": "multiplier",
+      "formula": "minutes * 0.9",
+      "notes": "Scratch drive array reduces maintenance for video/photo/software assets."
+    },
+    {
+      "source": "editorialPipeline",
+      "target": "assets[tag=writing|content].setup_time",
+      "type": "multiplier",
+      "formula": "minutes * 0.88",
+      "notes": "Editorial pipeline speeds writing/content setup."
+    },
+    {
+      "source": "editorialPipeline",
+      "target": "assets[tag=writing|content].income",
+      "type": "multiplier",
+      "formula": "income * 1.2",
+      "notes": "Editorial pipeline boosts writing/content payouts."
+    },
+    {
+      "source": "editorialPipeline",
+      "target": "assets[tag=writing|content].quality_progress",
+      "type": "multiplier",
+      "formula": "progress * 1.5",
+      "notes": "Editorial pipeline boosts writing/content quality progress."
+    },
+    {
+      "source": "editorialPipeline",
+      "target": "hustles[tag=writing].setup_time",
+      "type": "multiplier",
+      "formula": "minutes * 0.88",
+      "notes": "Editorial pipeline speeds writing hustles."
+    },
+    {
+      "source": "editorialPipeline",
+      "target": "hustles[tag=writing].income",
+      "type": "multiplier",
+      "formula": "income * 1.2",
+      "notes": "Editorial pipeline boosts writing hustle payouts."
+    },
+    {
+      "source": "editorialPipeline",
+      "target": "hustles[tag=writing].quality_progress",
+      "type": "multiplier",
+      "formula": "progress * 1.5",
+      "notes": "Editorial pipeline boosts writing hustle quality gains."
+    },
+    {
+      "source": "syndicationSuite",
+      "target": "assets[tag=writing|content|video].maintenance_time",
+      "type": "multiplier",
+      "formula": "minutes * 0.9",
+      "notes": "Syndication suite trims maintenance for writing/content/video assets."
+    },
+    {
+      "source": "syndicationSuite",
+      "target": "assets[tag=writing|content|video].income",
+      "type": "multiplier",
+      "formula": "income * 1.25",
+      "notes": "Syndication suite boosts payouts for writing/content/video assets."
+    },
+    {
+      "source": "syndicationSuite",
+      "target": "assets[tag=writing|content|video].quality_progress",
+      "type": "multiplier",
+      "formula": "progress * 1.3333333333",
+      "notes": "Syndication suite increases quality progress by 4/3."
+    },
+    {
+      "source": "syndicationSuite",
+      "target": "hustles[tag=writing|marketing].maintenance_time",
+      "type": "multiplier",
+      "formula": "minutes * 0.9",
+      "notes": "Syndication suite reduces upkeep for writing/marketing hustles."
+    },
+    {
+      "source": "syndicationSuite",
+      "target": "hustles[tag=writing|marketing].income",
+      "type": "multiplier",
+      "formula": "income * 1.25",
+      "notes": "Syndication suite boosts writing/marketing hustle payouts."
+    },
+    {
+      "source": "syndicationSuite",
+      "target": "hustles[tag=writing|marketing].quality_progress",
+      "type": "multiplier",
+      "formula": "progress * 1.3333333333",
+      "notes": "Syndication suite increases hustle quality progress."
+    },
+    {
+      "source": "immersiveStoryWorlds",
+      "target": "assets[tag=writing|video|photo].income",
+      "type": "multiplier",
+      "formula": "income * 1.12",
+      "notes": "Immersive story worlds boosts writing/video/photo payouts."
+    },
+    {
+      "source": "immersiveStoryWorlds",
+      "target": "assets[tag=writing|video|photo].setup_time",
+      "type": "multiplier",
+      "formula": "minutes * 0.85",
+      "notes": "Immersive story worlds speeds setup for writing/video/photo assets."
+    },
+    {
+      "source": "immersiveStoryWorlds",
+      "target": "assets[tag=writing|video|photo].quality_progress",
+      "type": "multiplier",
+      "formula": "progress * 2",
+      "notes": "Immersive story worlds doubles quality progress for writing/video/photo assets."
+    },
+    {
+      "source": "course",
+      "target": "asset:blog.income",
+      "type": "multiplier",
+      "formula": "income * 1.5",
+      "notes": "Automation course boosts blog payouts 50%."
+    },
+    {
+      "source": "course",
+      "target": "asset:blog.quality_progress",
+      "type": "multiplier",
+      "formula": "progress * 2",
+      "notes": "Automation course doubles blog quality progress."
+    }
+  ]
+}
