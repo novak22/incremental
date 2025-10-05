@@ -7,6 +7,8 @@ import {
   getFocusModeConfig,
   registerFocusBucket
 } from '../../../actions/focusBuckets.js';
+import { advanceActionInstance, completeActionInstance } from '../../../../game/actions/progress.js';
+import { getActionDefinition } from '../../../../game/registryService.js';
 import todoDom from './todoDom.js';
 import todoState from './todoState.js';
 
@@ -107,6 +109,37 @@ function sortUpgradeEntries(entries = []) {
   });
 }
 
+function sortCommitmentEntries(entries = []) {
+  return [...entries].sort((a, b) => {
+    const remainingA = Number.isFinite(a?.progress?.remainingDays)
+      ? a.progress.remainingDays
+      : Infinity;
+    const remainingB = Number.isFinite(b?.progress?.remainingDays)
+      ? b.progress.remainingDays
+      : Infinity;
+    if (remainingA !== remainingB) {
+      return remainingA - remainingB;
+    }
+    const payoutA = Number.isFinite(a?.payout) ? a.payout : 0;
+    const payoutB = Number.isFinite(b?.payout) ? b.payout : 0;
+    if (payoutA !== payoutB) {
+      return payoutB - payoutA;
+    }
+    const orderA = Number.isFinite(a?.orderIndex) ? a.orderIndex : 0;
+    const orderB = Number.isFinite(b?.orderIndex) ? b.orderIndex : 0;
+    return orderA - orderB;
+  });
+}
+
+registerFocusBucket({
+  name: 'commitment',
+  comparator: sortCommitmentEntries,
+  modes: {
+    money: { order: ['commitment', 'hustle', 'upgrade'] },
+    upgrades: { order: ['commitment', 'upgrade', 'hustle'] },
+    balanced: { order: ['commitment', 'upgrade', 'hustle'], interleave: ['commitment', 'upgrade', 'hustle'] }
+  }
+});
 registerFocusBucket({ name: 'hustle', comparator: sortHustleEntries });
 registerFocusBucket({ name: 'upgrade', comparator: sortUpgradeEntries });
 
@@ -122,6 +155,74 @@ function interleaveEntries(first = [], second = []) {
     }
   }
   return results;
+}
+
+function resolveProgressStep(entry = {}) {
+  const progress = entry?.progress || {};
+  const rawStep = Number(progress.stepHours);
+  if (Number.isFinite(rawStep) && rawStep > 0) {
+    const remaining = Number(progress.hoursRemaining);
+    if (Number.isFinite(remaining) && remaining >= 0) {
+      return Math.max(0, Math.min(rawStep, remaining));
+    }
+    return rawStep;
+  }
+
+  const duration = Number(entry?.durationHours);
+  if (Number.isFinite(duration) && duration > 0) {
+    return duration;
+  }
+  return 0;
+}
+
+function createProgressHandler(entry = {}) {
+  const progress = entry?.progress || {};
+  const definitionId = progress.definitionId || entry?.definitionId;
+  const instanceId = progress.instanceId || entry?.instanceId;
+  if (!definitionId || !instanceId) {
+    return null;
+  }
+
+  return () => {
+    const definition = getActionDefinition(definitionId);
+    if (!definition) {
+      return;
+    }
+
+    const metadata = progress.metadata;
+    const remaining = Number(progress.hoursRemaining);
+    const step = resolveProgressStep(entry);
+
+    const requiresManualCompletion = progress.completion === 'manual';
+    const hasRemaining = Number.isFinite(remaining) ? remaining > 0 : true;
+    const amount = step > 0 ? step : Math.max(0, remaining);
+
+    if (requiresManualCompletion && (!hasRemaining || amount <= 0)) {
+      completeActionInstance(definition, { id: instanceId }, { metadata });
+      return;
+    }
+
+    const hours = amount > 0 ? amount : step;
+    if (!Number.isFinite(hours) || hours <= 0) {
+      completeActionInstance(definition, { id: instanceId }, { metadata });
+      return;
+    }
+
+    advanceActionInstance(definition, { id: instanceId }, { hours, metadata });
+  };
+}
+
+function attachProgressHandlers(entries = []) {
+  return entries.map(entry => {
+    if (!entry?.progress) {
+      return entry;
+    }
+    const handler = createProgressHandler(entry);
+    if (handler) {
+      entry.onClick = handler;
+    }
+    return entry;
+  });
 }
 
 function getBucketName(entry) {
@@ -331,7 +432,7 @@ export function render(model = {}) {
   todoState.seedAutoCompletedEntries(viewModel.autoCompletedEntries, formatDuration);
   todoDom.applyScrollerLimit(elements?.listWrapper, viewModel);
 
-  const entries = normalizeActionEntries(viewModel);
+  const entries = attachProgressHandlers(normalizeActionEntries(viewModel));
   const availableHours = getAvailableHours(viewModel);
   const availableMoney = getAvailableMoney(viewModel);
   const pending = entries.filter(entry => {

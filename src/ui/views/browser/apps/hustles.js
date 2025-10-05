@@ -1,6 +1,166 @@
 import { formatHours, formatMoney } from '../../../../core/helpers.js';
 import { getPageByType } from './pageLookup.js';
 import { createStat, formatRoi } from '../components/widgets.js';
+import {
+  createCommitmentTimeline,
+  applyDeadlineTone,
+  describeDeadlineLabel
+} from '../components/commitmentMeters.js';
+
+function createBadgeList(badges = []) {
+  if (!Array.isArray(badges) || !badges.length) {
+    return null;
+  }
+  const list = document.createElement('ul');
+  list.className = 'browser-card__badges';
+  badges.forEach(entry => {
+    if (!entry) return;
+    const item = document.createElement('li');
+    item.className = 'browser-card__badge';
+    item.textContent = entry;
+    list.appendChild(item);
+  });
+  return list;
+}
+
+function createCardSection(title, description) {
+  const section = document.createElement('section');
+  section.className = 'browser-card__section';
+  if (title) {
+    const heading = document.createElement('h3');
+    heading.className = 'browser-card__section-title';
+    heading.textContent = title;
+    section.appendChild(heading);
+  }
+  if (description) {
+    const note = document.createElement('p');
+    note.className = 'browser-card__section-note';
+    note.textContent = description;
+    section.appendChild(note);
+  }
+  return section;
+}
+
+function decorateUrgency(node, remainingDays) {
+  if (!node) return;
+  const numeric = Number(remainingDays);
+  node.classList.toggle('is-critical', Number.isFinite(numeric) && numeric <= 1);
+  node.classList.toggle('is-warning', Number.isFinite(numeric) && numeric > 1 && numeric <= 3);
+}
+
+function createOfferItem(offer) {
+  const item = document.createElement('li');
+  item.className = 'browser-card__list-item hustle-card__offer';
+  if (!offer.ready) {
+    item.classList.add('is-upcoming');
+  }
+  decorateUrgency(item, offer.expiresIn);
+
+  const header = document.createElement('div');
+  header.className = 'hustle-card__row';
+  const title = document.createElement('span');
+  title.className = 'hustle-card__title';
+  title.textContent = offer.label || 'Hustle offer';
+  header.appendChild(title);
+
+  if (offer.payout) {
+    const payout = document.createElement('span');
+    payout.className = 'hustle-card__value';
+    payout.textContent = `$${formatMoney(offer.payout)}`;
+    header.appendChild(payout);
+  }
+  item.appendChild(header);
+
+  if (offer.description) {
+    const summary = document.createElement('p');
+    summary.className = 'hustle-card__description';
+    summary.textContent = offer.description;
+    item.appendChild(summary);
+  }
+
+  if (offer.meta) {
+    const meta = document.createElement('p');
+    meta.className = 'hustle-card__meta';
+    meta.textContent = offer.meta;
+    item.appendChild(meta);
+  }
+
+  const actions = document.createElement('div');
+  actions.className = 'browser-card__actions';
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = offer.ready
+    ? 'browser-card__button browser-card__button--primary'
+    : 'browser-card__button';
+  button.textContent = offer.ready ? 'Accept offer' : 'Upcoming';
+  button.disabled = !offer.ready;
+  if (offer.ready && typeof offer.onAccept === 'function') {
+    button.addEventListener('click', () => {
+      offer.onAccept();
+    });
+  }
+  actions.appendChild(button);
+  item.appendChild(actions);
+
+  return item;
+}
+
+function describeCommitmentMeta(commitment) {
+  const parts = [];
+  if (commitment.meta) {
+    parts.push(commitment.meta);
+  }
+  if (commitment.payoutText) {
+    parts.push(commitment.payoutText);
+  }
+  if (commitment.remainingDays != null) {
+    parts.push(describeDeadlineLabel(commitment.progress || commitment));
+  }
+  return parts.filter(Boolean).join(' • ');
+}
+
+function createCommitmentItem(commitment) {
+  const item = document.createElement('li');
+  item.className = 'browser-card__list-item hustle-card__commitment';
+  applyDeadlineTone(item, commitment.progress || commitment);
+
+  const header = document.createElement('div');
+  header.className = 'hustle-card__row';
+  const title = document.createElement('span');
+  title.className = 'hustle-card__title';
+  title.textContent = commitment.label || 'Commitment';
+  header.appendChild(title);
+
+  if (commitment.payoutText) {
+    const payout = document.createElement('span');
+    payout.className = 'hustle-card__value';
+    payout.textContent = commitment.payoutText;
+    header.appendChild(payout);
+  }
+  item.appendChild(header);
+
+  if (commitment.description) {
+    const summary = document.createElement('p');
+    summary.className = 'hustle-card__description';
+    summary.textContent = commitment.description;
+    item.appendChild(summary);
+  }
+
+  const metaText = describeCommitmentMeta(commitment);
+  if (metaText) {
+    const meta = document.createElement('p');
+    meta.className = 'hustle-card__meta';
+    meta.textContent = metaText;
+    item.appendChild(meta);
+  }
+
+  const timeline = createCommitmentTimeline(commitment.progress || commitment);
+  if (timeline) {
+    item.appendChild(timeline);
+  }
+
+  return item;
+}
 
 function createHustleCard(definition, model) {
   const card = document.createElement('article');
@@ -28,6 +188,11 @@ function createHustleCard(definition, model) {
     summary.className = 'browser-card__summary';
     summary.textContent = model.description;
     card.appendChild(summary);
+  }
+
+  const badges = createBadgeList(model.badges);
+  if (badges) {
+    card.appendChild(badges);
   }
 
   const stats = document.createElement('div');
@@ -70,6 +235,36 @@ function createHustleCard(definition, model) {
   }
   card.appendChild(actions);
 
+  if (Array.isArray(model.commitments) && model.commitments.length) {
+    const commitmentsSection = createCardSection(
+      'Active commitments',
+      'Track multi-day gigs and keep their payouts on schedule.'
+    );
+    const list = document.createElement('ul');
+    list.className = 'browser-card__list';
+    model.commitments.forEach(commitment => {
+      const item = createCommitmentItem(commitment);
+      list.appendChild(item);
+    });
+    commitmentsSection.appendChild(list);
+    card.appendChild(commitmentsSection);
+  }
+
+  if (Array.isArray(model.offers) && model.offers.length) {
+    const offersSection = createCardSection(
+      'Market offers',
+      'Pick the variant that fits your vibe. Upcoming offers unlock soon.'
+    );
+    const list = document.createElement('ul');
+    list.className = 'browser-card__list';
+    model.offers.forEach(offer => {
+      const item = createOfferItem(offer);
+      list.appendChild(item);
+    });
+    offersSection.appendChild(list);
+    card.appendChild(offersSection);
+  }
+
   return card;
 }
 
@@ -93,6 +288,7 @@ export default function renderHustles(context = {}, definitions = [], models = [
 
   const modelMap = new Map(models.map(model => [model?.id, model]));
   let availableCount = 0;
+  let commitmentCount = 0;
 
   definitions.forEach(definition => {
     const model = modelMap.get(definition.id);
@@ -100,6 +296,10 @@ export default function renderHustles(context = {}, definitions = [], models = [
 
     if (model.filters?.available) {
       availableCount += 1;
+    }
+
+    if (Array.isArray(model.commitments)) {
+      commitmentCount += model.commitments.length;
     }
 
     const card = createHustleCard(definition, model);
@@ -113,8 +313,16 @@ export default function renderHustles(context = {}, definitions = [], models = [
     list.appendChild(empty);
   }
 
+  const metaParts = [];
+  if (availableCount > 0) {
+    metaParts.push(`${availableCount} offer${availableCount === 1 ? '' : 's'} ready`);
+  }
+  if (commitmentCount > 0) {
+    metaParts.push(`${commitmentCount} commitment${commitmentCount === 1 ? '' : 's'} active`);
+  }
+
   return {
     id: page.id,
-    meta: availableCount > 0 ? `${availableCount} hustle${availableCount === 1 ? '' : 's'} ready` : 'No hustles ready yet'
+    meta: metaParts.length ? metaParts.join(' • ') : 'No hustles ready yet'
   };
 }

@@ -149,9 +149,19 @@ function createTask(entry, model, onComplete) {
   title.textContent = entry.title;
   content.appendChild(title);
 
+  if (entry.subtitle) {
+    const subtitle = document.createElement('span');
+    subtitle.className = 'todo-widget__subtitle';
+    subtitle.textContent = entry.subtitle;
+    content.appendChild(subtitle);
+  }
+
   if (entry.meta) {
     const meta = document.createElement('span');
-    meta.className = 'todo-widget__meta';
+    const metaClass = typeof entry.metaClass === 'string' && entry.metaClass.trim()
+      ? `todo-widget__meta ${entry.metaClass}`
+      : 'todo-widget__meta';
+    meta.className = metaClass;
     meta.textContent = entry.meta;
     content.appendChild(meta);
   }

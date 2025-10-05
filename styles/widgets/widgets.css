@@ -234,6 +234,162 @@
   transition: background 140ms ease, border-color 140ms ease;
 }
 
+.browser-card__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.4rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.browser-card__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: var(--browser-radius-pill);
+  background: var(--browser-panel-elevated);
+  border: 1px solid var(--browser-panel-border);
+  font-size: 0.75rem;
+  color: var(--browser-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.browser-card__section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.browser-card__section-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.browser-card__section-note {
+  margin: 0;
+  color: var(--browser-muted);
+  font-size: 0.9rem;
+}
+
+.browser-card__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.browser-card__list-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--browser-radius-md);
+  border: 1px solid var(--browser-panel-border);
+  background: var(--browser-panel-elevated);
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.browser-card__list-item.is-warning {
+  border-color: var(--browser-accent);
+  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.16);
+}
+
+.browser-card__list-item.is-critical {
+  border-color: var(--browser-danger);
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.2);
+}
+
+.browser-card__list-item.is-upcoming {
+  opacity: 0.85;
+}
+
+.hustle-card__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: baseline;
+}
+
+.hustle-card__title {
+  font-weight: 600;
+}
+
+.hustle-card__value {
+  font-weight: 600;
+  color: var(--browser-text);
+}
+
+.hustle-card__description {
+  margin: 0;
+  color: var(--browser-muted);
+  font-size: 0.9rem;
+}
+
+.hustle-card__meta {
+  margin: 0;
+  color: var(--browser-subtle);
+  font-size: 0.85rem;
+}
+
+.commitment-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.commitment-meter {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.commitment-meter__label {
+  font-size: 0.8rem;
+  color: var(--browser-muted);
+}
+
+.commitment-meter__track {
+  position: relative;
+  width: 100%;
+  height: 0.5rem;
+  border-radius: var(--browser-radius-pill);
+  background: rgba(148, 163, 184, 0.2);
+  overflow: hidden;
+}
+
+.commitment-meter__fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 0%;
+  border-radius: inherit;
+  background: var(--browser-accent);
+  transition: width 160ms ease;
+}
+
+.commitment-meter__fill--warning,
+.commitment-meter__fill--critical {
+  background: var(--browser-danger);
+}
+
+.commitment-meter--warning .commitment-meter__label {
+  color: var(--browser-accent);
+  font-weight: 600;
+}
+
+.commitment-meter--critical .commitment-meter__label {
+  color: var(--browser-danger);
+  font-weight: 600;
+}
+
 .browser-card__button:hover {
   border-color: var(--browser-accent);
   background: var(--browser-accent-soft);
@@ -1015,6 +1171,40 @@
   border-radius: 12px;
   border: 1px solid var(--browser-panel-border);
   background: var(--browser-panel-elevated);
+}
+
+.bankapp-opportunity {
+  position: relative;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.bankapp-opportunity.is-warning,
+.bankapp-opportunity.is-critical {
+  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.14);
+}
+
+.bankapp-opportunity.is-warning {
+  border-color: var(--browser-accent);
+}
+
+.bankapp-opportunity.is-critical {
+  border-color: var(--browser-danger);
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.2);
+}
+
+.bankapp-opportunity__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: baseline;
+}
+
+.bankapp-opportunity__status {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--browser-subtle);
 }
 
 .bankapp-opportunities__name {

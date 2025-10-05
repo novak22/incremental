@@ -39,3 +39,9 @@
 ## Registry Loading
 - `loadDefaultRegistry` now registers the immutable template list (`HUSTLE_TEMPLATES`) so day-to-day market rolls no longer mutate the definitions.
 - Tests cover: slice normalization, seeding, expiry rerolls, and delayed availability to protect future tuning changes.
+
+## UI Surface Updates
+- Hustle browser cards now list active commitments beneath each template, including payout callouts, logged-hours meters, and deadline countdown bars so you can triage multi-day gigs at a glance.
+- Market offers render in the same cards as variant rows: available offers get bright accept buttons while upcoming variants show unlock timers and remain disabled until their window opens.
+- The finance dashboard separates hustle commitments from fresh offers, highlighting urgent deadlines with warning tones and mirroring the same progress meters for consistency.
+- Dashboard quick actions fall back to registry definitions whenever the market is empty, ensuring the queue always includes at least one hustle with clear ROI and time metadata.
