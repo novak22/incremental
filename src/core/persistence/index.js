@@ -238,6 +238,10 @@ export class StatePersistence {
     const merged = {
       ...base,
       ...snapshot,
+      actions: {
+        ...(defaultState.actions ? this.clone(defaultState.actions) : {}),
+        ...(snapshot.actions || {})
+      },
       hustles: {
         ...this.clone(defaultState.hustles),
         ...(snapshot.hustles || {})

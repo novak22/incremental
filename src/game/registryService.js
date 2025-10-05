@@ -1,27 +1,38 @@
 import { attachRegistryMetricIds, buildMetricIndex } from './schema/metrics.js';
 
 let registrySnapshot = null;
-let hustleMap = new Map();
+let actionMap = new Map();
 let assetMap = new Map();
 let upgradeMap = new Map();
 let metricIndex = new Map();
 
-function buildMaps({ hustles = [], assets = [], upgrades = [] }) {
-  hustleMap = new Map(hustles.map(definition => [definition.id, definition]));
+function buildMaps({ actions = [], hustles = [], assets = [], upgrades = [] }) {
+  const actionDefinitions = Array.isArray(actions) && actions.length ? actions : hustles;
+  actionMap = new Map(actionDefinitions.map(definition => [definition.id, definition]));
   assetMap = new Map(assets.map(definition => [definition.id, definition]));
   upgradeMap = new Map(upgrades.map(definition => [definition.id, definition]));
-  metricIndex = buildMetricIndex({ hustles, assets, upgrades });
+  metricIndex = buildMetricIndex({ actions: actionDefinitions, assets, upgrades });
 }
 
 export function loadRegistry(definitions = {}) {
   const prepared = attachRegistryMetricIds({
+    actions: Array.isArray(definitions.actions) ? definitions.actions : [],
     hustles: Array.isArray(definitions.hustles) ? definitions.hustles : [],
     assets: Array.isArray(definitions.assets) ? definitions.assets : [],
     upgrades: Array.isArray(definitions.upgrades) ? definitions.upgrades : []
   });
 
-  registrySnapshot = prepared;
-  buildMaps(prepared);
+  const actions = Array.isArray(prepared.actions) && prepared.actions.length
+    ? prepared.actions
+    : prepared.hustles || [];
+
+  registrySnapshot = {
+    actions,
+    assets: prepared.assets,
+    upgrades: prepared.upgrades,
+    hustles: prepared.hustles && !prepared.actions?.length ? prepared.hustles : actions
+  };
+  buildMaps(registrySnapshot);
   return registrySnapshot;
 }
 
@@ -33,7 +44,7 @@ function ensureLoaded() {
 
 export function resetRegistry() {
   registrySnapshot = null;
-  hustleMap = new Map();
+  actionMap = new Map();
   assetMap = new Map();
   upgradeMap = new Map();
   metricIndex = new Map();
@@ -45,7 +56,11 @@ export function getRegistry() {
 }
 
 export function getHustles() {
-  return getRegistry().hustles;
+  return getRegistry().actions;
+}
+
+export function getActions() {
+  return getRegistry().actions;
 }
 
 export function getAssets() {
@@ -57,8 +72,12 @@ export function getUpgrades() {
 }
 
 export function getHustleDefinition(id) {
+  return getActionDefinition(id);
+}
+
+export function getActionDefinition(id) {
   ensureLoaded();
-  return hustleMap.get(id) || null;
+  return actionMap.get(id) || null;
 }
 
 export function getAssetDefinition(id) {

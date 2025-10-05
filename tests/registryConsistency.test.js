@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {
   configureRegistry,
   getRegistrySnapshot,
-  getHustleDefinition as getHustleDefinitionFromState,
+  getActionDefinition as getActionDefinitionFromState,
   getAssetDefinition as getAssetDefinitionFromState,
   getUpgradeDefinition as getUpgradeDefinitionFromState,
   getMetricDefinition as getMetricDefinitionFromState
@@ -24,12 +24,13 @@ import {
 
 function createSampleDefinitions() {
   return {
-    hustles: [
+    actions: [
       {
         id: 'demoHustle',
         name: 'Demo Hustle',
         time: 2,
         payout: { amount: 80 },
+        defaultState: { instances: [] },
         action: {
           label: () => 'Do the thing',
           onClick: () => {}
@@ -86,11 +87,11 @@ test('registry service and state share canonical definitions', t => {
   const serviceSnapshot = getRegistry();
   assert.equal(stateSnapshot, serviceSnapshot, 'state and service should reference the same registry object');
 
-  const hustle = serviceSnapshot.hustles[0];
+  const hustle = serviceSnapshot.actions[0];
   const asset = serviceSnapshot.assets[0];
   const upgrade = serviceSnapshot.upgrades[0];
 
-  assert.equal(getHustleDefinitionFromState(hustle.id), hustle, 'state hustle lookup should match service definition');
+  assert.equal(getActionDefinitionFromState(hustle.id), hustle, 'state action lookup should match service definition');
   assert.equal(getAssetDefinitionFromState(asset.id), asset, 'state asset lookup should match service definition');
   assert.equal(getUpgradeDefinitionFromState(upgrade.id), upgrade, 'state upgrade lookup should match service definition');
 
@@ -112,12 +113,12 @@ test('ui builders consume processed registry definitions from the service', t =>
     resetRegistry();
   });
 
-  const { hustles, assets, upgrades } = getRegistry();
+  const { actions, assets, upgrades } = getRegistry();
 
-  const hustleModels = buildHustleModels(hustles, {
-    getState: () => ({ hustles: {}, daily: {} })
+  const hustleModels = buildHustleModels(actions, {
+    getState: () => ({ actions: {}, hustles: {}, daily: {} })
   });
-  assert.equal(hustleModels[0].id, hustles[0].id, 'hustle model should reflect service definition id');
+  assert.equal(hustleModels[0].id, actions[0].id, 'hustle model should reflect service definition id');
 
   const assetModels = buildAssetModels(assets, {
     getState: () => ({ assets: { demoAsset: { instances: [] } } }),

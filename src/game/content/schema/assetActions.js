@@ -1,5 +1,5 @@
 import { formatHours, formatMoney, toNumber } from '../../../core/helpers.js';
-import { countActiveAssetInstances, getHustleState, getState } from '../../../core/state.js';
+import { countActiveAssetInstances, getActionState, getState } from '../../../core/state.js';
 import { executeAction } from '../../actions.js';
 import { addMoney, spendMoney } from '../../currency.js';
 import { checkDayEnd } from '../../lifecycle.js';
@@ -16,6 +16,7 @@ import { getHustleEffectMultiplier } from '../../upgrades/effects.js';
 import { applyMetric, normalizeHustleMetrics } from './metrics.js';
 import { logEducationPayoffSummary, logHustleBlocked } from './logMessaging.js';
 import { markDirty } from '../../../core/events/invalidationBus.js';
+import { acceptActionInstance, completeActionInstance } from '../../actions/progress.js';
 
 function formatHourDetail(hours, effective) {
   if (!hours) return '⏳ Time: <strong>Instant</strong>';
@@ -68,29 +69,29 @@ export function createInstantHustle(config) {
   };
 
   function resolveDailyUsage(state = getState(), { sync = false } = {}) {
-    const hustleState = getHustleState(metadata.id, state);
+    const actionState = getActionState(metadata.id, state);
     const currentDay = Number(state?.day) || 1;
 
     if (!metadata.dailyLimit) {
       return {
-        hustleState,
+        actionState,
         currentDay,
         limit: null,
-        used: Number(hustleState.runsToday) || 0,
+        used: Number(actionState.runsToday) || 0,
         remaining: null
       };
     }
 
-    const lastRunDay = Number(hustleState.lastRunDay) || 0;
-    const usedToday = lastRunDay === currentDay ? Number(hustleState.runsToday) || 0 : 0;
+    const lastRunDay = Number(actionState.lastRunDay) || 0;
+    const usedToday = lastRunDay === currentDay ? Number(actionState.runsToday) || 0 : 0;
 
     if (sync && lastRunDay !== currentDay) {
-      hustleState.lastRunDay = currentDay;
-      hustleState.runsToday = usedToday;
+      actionState.lastRunDay = currentDay;
+      actionState.runsToday = usedToday;
     }
 
     return {
-      hustleState,
+      actionState,
       currentDay,
       limit: metadata.dailyLimit,
       used: usedToday,
@@ -102,8 +103,8 @@ export function createInstantHustle(config) {
     if (!metadata.dailyLimit) return null;
     const usage = resolveDailyUsage(state, { sync: true });
     const nextUsed = Math.min(metadata.dailyLimit, usage.used + 1);
-    usage.hustleState.lastRunDay = usage.currentDay;
-    usage.hustleState.runsToday = nextUsed;
+    usage.actionState.lastRunDay = usage.currentDay;
+    usage.actionState.runsToday = nextUsed;
     const remaining = Math.max(0, metadata.dailyLimit - nextUsed);
     return {
       limit: metadata.dailyLimit,
@@ -119,6 +120,9 @@ export function createInstantHustle(config) {
     tag: config.tag || { label: 'Instant', type: 'instant' },
     defaultState: (() => {
       const base = { ...(config.defaultState || {}) };
+      if (!Array.isArray(base.instances)) {
+        base.instances = [];
+      }
       if (metadata.dailyLimit) {
         if (typeof base.runsToday !== 'number') base.runsToday = 0;
         if (typeof base.lastRunDay !== 'number') base.lastRunDay = 0;
@@ -220,6 +224,7 @@ export function createInstantHustle(config) {
 
   function runHustle(context) {
     const effectiveTime = resolveEffectiveTime(context.state);
+    context.effectiveTime = effectiveTime;
     if (effectiveTime > 0) {
       spendTime(effectiveTime);
       applyMetric(recordTimeContribution, metadata.metrics.time, { hours: effectiveTime });
@@ -289,6 +294,7 @@ export function createInstantHustle(config) {
     const updatedUsage = updateDailyUsage(context.state);
     if (updatedUsage) {
       context.limitUsage = updatedUsage;
+      markDirty('actions');
     }
 
     config.onComplete?.(context);
@@ -320,7 +326,24 @@ export function createInstantHustle(config) {
             return resolveDailyUsage(state, { sync: false });
           }
         };
+        const effectiveTime = resolveEffectiveTime(state);
+        const deadlineDay = metadata.dailyLimit ? Number(state?.day) || null : null;
+        const instance = acceptActionInstance(definition, {
+          state,
+          metadata,
+          overrides: {
+            hoursRequired: effectiveTime > 0 ? effectiveTime : 0,
+            deadlineDay
+          }
+        });
+        if (instance) {
+          context.instance = instance;
+        }
         runHustle(context);
+        context.completionDay = Number(state?.day) || instance?.acceptedOnDay || null;
+        if (instance) {
+          completeActionInstance(definition, instance, context);
+        }
         config.onRun?.(context);
       });
       checkDayEnd();

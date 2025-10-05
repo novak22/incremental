@@ -125,6 +125,14 @@ export function createKnowledgeHustles() {
       name: track.name,
       tag: { label: 'Study', type: 'study' },
       description: track.description,
+      defaultState: { instances: [] },
+      availability: { type: 'enrollable' },
+      expiry: { type: 'permanent' },
+      progress: {
+        type: 'study',
+        hoursPerDay: track.hoursPerDay,
+        daysRequired: track.days
+      },
       details: [
         () => `🎓 Tuition: <strong>$${formatMoney(track.tuition)}</strong>`,
         () => `⏳ Study Load: <strong>${formatHours(track.hoursPerDay)} / day for ${formatDays(track.days)}</strong>`,

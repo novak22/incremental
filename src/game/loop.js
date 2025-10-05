@@ -1,6 +1,6 @@
 import { AUTOSAVE_INTERVAL_MS } from '../core/constants.js';
 import { saveState } from '../core/storage.js';
-import { HUSTLES } from './hustles.js';
+import { ACTIONS } from './hustles.js';
 import { flushDirty, markAllDirty, markDirty } from '../core/events/invalidationBus.js';
 
 let lastAutosave = Date.now();
@@ -15,7 +15,7 @@ export function startGameLoop() {
 
 export function runGameLoop() {
   const now = Date.now();
-  for (const hustle of HUSTLES) {
+  for (const hustle of ACTIONS) {
     if (typeof hustle.process === 'function') {
       const result = hustle.process(now, false);
       if (!result) {

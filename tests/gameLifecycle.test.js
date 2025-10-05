@@ -16,7 +16,7 @@ const { buildDefaultState, initializeState, getState, getAssetState, getUpgradeS
 const { getAssetDefinition } = registryModule;
 const { createAssetInstance } = assetStateModule;
 const { allocateAssetMaintenance, closeOutDay, ASSETS, getIncomeRangeForDisplay } = assetsModule;
-const { HUSTLES } = hustlesModule;
+const { ACTIONS } = hustlesModule;
 const { UPGRADES } = upgradesModule;
 const {
   KNOWLEDGE_TRACKS,

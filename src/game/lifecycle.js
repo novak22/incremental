@@ -41,6 +41,17 @@ export function endDay(auto = false) {
     : 'You called it a day. Fresh hustle awaits tomorrow.';
   addLog(`${message} Day ${state.day + 1} begins with renewed energy.`, 'info');
   state.day += 1;
+  if (state.actions && typeof state.actions === 'object') {
+    for (const actionState of Object.values(state.actions)) {
+      if (!actionState || typeof actionState !== 'object') continue;
+      if (typeof actionState.runsToday === 'number') {
+        actionState.runsToday = 0;
+      }
+      if (typeof actionState.lastRunDay === 'number' || actionState.lastRunDay === undefined) {
+        actionState.lastRunDay = state.day;
+      }
+    }
+  }
   if (state.hustles && typeof state.hustles === 'object') {
     for (const hustleState of Object.values(state.hustles)) {
       if (!hustleState || typeof hustleState !== 'object') continue;

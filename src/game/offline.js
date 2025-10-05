@@ -1,6 +1,6 @@
 import { addLog } from '../core/log.js';
 import { getState } from '../core/state.js';
-import { HUSTLES } from './hustles.js';
+import { ACTIONS } from './hustles.js';
 
 export function handleOfflineProgress(lastSaved) {
   const state = getState();
@@ -9,7 +9,7 @@ export function handleOfflineProgress(lastSaved) {
   const elapsed = Math.max(0, (now - lastSaved) / 1000);
   if (!elapsed) return;
 
-  for (const hustle of HUSTLES) {
+  for (const hustle of ACTIONS) {
     if (typeof hustle.process === 'function') {
       const result = hustle.process(now, true);
       if (result?.offlineLog) {

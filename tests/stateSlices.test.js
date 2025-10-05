@@ -2,9 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { getGameTestHarness } from './helpers/gameTestHarness.js';
 import {
-  ensureSlice as ensureHustleSlice,
-  getSliceState as getHustleSliceState
-} from '../src/core/state/slices/hustles.js';
+  ensureSlice as ensureActionSlice,
+  getSliceState as getActionSliceState
+} from '../src/core/state/slices/actions.js';
 import {
   ensureSlice as ensureAssetSlice,
   getSliceState as getAssetSliceState
@@ -21,17 +21,18 @@ import {
 const harness = await getGameTestHarness();
 const { hustlesModule, assetsModule, upgradesModule } = harness;
 
-const { HUSTLES } = hustlesModule;
+const { ACTIONS } = hustlesModule;
 const { ASSETS } = assetsModule;
 const { UPGRADES } = upgradesModule;
 
-const audienceCallDefinition = HUSTLES.find(hustle => hustle.id === 'audienceCall');
+const audienceCallDefinition = ACTIONS.find(action => action.id === 'audienceCall');
 const blogDefinition = ASSETS.find(asset => asset.id === 'blog');
 const assistantDefinition = UPGRADES.find(upgrade => upgrade.id === 'assistant');
 
 function createBaseState() {
   return {
     day: 5,
+    actions: {},
     hustles: {},
     assets: {},
     upgrades: {},
@@ -39,27 +40,28 @@ function createBaseState() {
   };
 }
 
-test('hustle slice hydrates defaults without clobbering overrides', () => {
+test('action slice hydrates defaults without clobbering overrides', () => {
   const state = createBaseState();
   state.hustles[audienceCallDefinition.id] = { runsToday: 2, note: 'keep me' };
 
-  const hustles = ensureHustleSlice(state);
-  assert.ok(hustles[audienceCallDefinition.id], 'definition entry should exist after ensure');
-  const hustleState = getHustleSliceState(state, audienceCallDefinition.id);
-  assert.equal(hustleState.runsToday, 2, 'existing counters should be preserved');
-  assert.equal(hustleState.note, 'keep me', 'custom fields should survive normalization');
+  const actions = ensureActionSlice(state);
+  assert.ok(actions[audienceCallDefinition.id], 'definition entry should exist after ensure');
+  const actionState = getActionSliceState(state, audienceCallDefinition.id);
+  assert.equal(actionState.runsToday, 2, 'existing counters should be preserved');
+  assert.equal(actionState.note, 'keep me', 'custom fields should survive normalization');
   assert.equal(
-    hustleState.lastRunDay,
+    actionState.lastRunDay,
     audienceCallDefinition.defaultState.lastRunDay,
     'default metadata should be merged in'
   );
+  assert.ok(Array.isArray(actionState.instances), 'instances array should be hydrated');
 
   const newState = createBaseState();
-  const freshHustleState = getHustleSliceState(newState, audienceCallDefinition.id);
+  const freshHustleState = getActionSliceState(newState, audienceCallDefinition.id);
   assert.deepEqual(
     freshHustleState,
     audienceCallDefinition.defaultState,
-    'new entries should clone default hustle state'
+    'new entries should clone default action state'
   );
 });
 

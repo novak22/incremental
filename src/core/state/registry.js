@@ -1,12 +1,12 @@
 import {
   getRegistry as getRegistryDefinitions,
-  getHustleDefinition as getHustleDefinitionFromService,
+  getActionDefinition as getActionDefinitionFromService,
   getAssetDefinition as getAssetDefinitionFromService,
   getUpgradeDefinition as getUpgradeDefinitionFromService,
   getMetricDefinition as getMetricDefinitionFromService
 } from '../../game/registryService.js';
 
-let registry = { hustles: [], assets: [], upgrades: [] };
+let registry = { actions: [], hustles: [], assets: [], upgrades: [] };
 
 export function configureRegistry() {
   registry = getRegistryDefinitions();
@@ -16,8 +16,12 @@ export function getRegistrySnapshot() {
   return registry;
 }
 
+export function getActionDefinition(id) {
+  return getActionDefinitionFromService(id);
+}
+
 export function getHustleDefinition(id) {
-  return getHustleDefinitionFromService(id);
+  return getActionDefinitionFromService(id);
 }
 
 export function getAssetDefinition(id) {

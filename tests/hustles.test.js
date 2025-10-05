@@ -16,12 +16,12 @@ const {
   assetsModule
 } = harness;
 
-const { getState, getAssetState, getHustleState } = stateModule;
+const { getState, getAssetState, getActionState } = stateModule;
 const { createAssetInstance } = assetStateModule;
 const { KNOWLEDGE_TRACKS, getKnowledgeProgress } = requirementsModule;
 
 const {
-  HUSTLES,
+  ACTIONS,
 } = hustlesModule;
 
 const { ASSETS, allocateAssetMaintenance } = assetsModule;
@@ -86,7 +86,7 @@ test('knowledge hustle view model summarizes study progress states', () => {
 
 test('study hustles charge tuition and auto-schedule class time', () => {
   const state = getState();
-  const studyHustle = HUSTLES.find(hustle => hustle.id.startsWith('study-outlineMastery'));
+  const studyHustle = ACTIONS.find(hustle => hustle.id.startsWith('study-outlineMastery'));
   const track = getKnowledgeProgress('outlineMastery');
   const tuition = KNOWLEDGE_TRACKS.outlineMastery.tuition;
 
@@ -112,9 +112,12 @@ test('education multipliers boost freelance writing payout once mastered', () =>
   const baseState = getState();
   baseState.money = 0;
   baseState.timeLeft = 10;
-  const baseFreelance = HUSTLES.find(hustle => hustle.id === 'freelance');
+  const baseFreelance = ACTIONS.find(hustle => hustle.id === 'freelance');
   baseFreelance.action.onClick();
   assert.equal(baseState.money, 18, 'baseline freelance payout should be unchanged without study');
+  const baseActionState = getActionState('freelance');
+  assert.ok(baseActionState.instances.length > 0, 'action run should record an instance');
+  assert.equal(baseActionState.instances.at(-1).completed, true, 'completed instance should be marked as finished');
 
   resetState();
 
@@ -123,7 +126,7 @@ test('education multipliers boost freelance writing payout once mastered', () =>
   boostedState.timeLeft = 10;
   const mastery = getKnowledgeProgress('outlineMastery', boostedState);
   mastery.completed = true;
-  const boostedFreelance = HUSTLES.find(hustle => hustle.id === 'freelance');
+  const boostedFreelance = ACTIONS.find(hustle => hustle.id === 'freelance');
   boostedFreelance.action.onClick();
 
   assert.equal(boostedState.money, 23, 'outline mastery should add a 25% payout boost (rounded)');
@@ -141,7 +144,7 @@ test('education flat bonuses add to audience call payouts', () => {
   baseState.money = 0;
   baseState.timeLeft = 10;
   getAssetState('blog', baseState).instances = [{ status: 'active' }];
-  HUSTLES.find(hustle => hustle.id === 'audienceCall').action.onClick();
+  ACTIONS.find(hustle => hustle.id === 'audienceCall').action.onClick();
   assert.equal(baseState.money, 12, 'baseline Q&A payout should be $12 without training');
 
   resetState();
@@ -152,7 +155,7 @@ test('education flat bonuses add to audience call payouts', () => {
   getAssetState('blog', boostedState).instances = [{ status: 'active' }];
   const brandVoice = getKnowledgeProgress('brandVoiceLab', boostedState);
   brandVoice.completed = true;
-  HUSTLES.find(hustle => hustle.id === 'audienceCall').action.onClick();
+  ACTIONS.find(hustle => hustle.id === 'audienceCall').action.onClick();
 
   assert.equal(boostedState.money, 16, 'brand voice lab should add a $4 tip boost');
   assert.match(
@@ -170,7 +173,7 @@ test('curriculum design studio multiplies workshop payouts', () => {
   baseState.timeLeft = 10;
   getAssetState('blog', baseState).instances = [{ status: 'active' }];
   getAssetState('ebook', baseState).instances = [{ status: 'active' }];
-  HUSTLES.find(hustle => hustle.id === 'popUpWorkshop').action.onClick();
+  ACTIONS.find(hustle => hustle.id === 'popUpWorkshop').action.onClick();
   assert.equal(baseState.money, 38, 'baseline workshop payout should be $38 without study');
 
   resetState();
@@ -182,7 +185,7 @@ test('curriculum design studio multiplies workshop payouts', () => {
   getAssetState('ebook', boostedState).instances = [{ status: 'active' }];
   const curriculum = getKnowledgeProgress('curriculumDesignStudio', boostedState);
   curriculum.completed = true;
-  HUSTLES.find(hustle => hustle.id === 'popUpWorkshop').action.onClick();
+  ACTIONS.find(hustle => hustle.id === 'popUpWorkshop').action.onClick();
 
   assert.equal(boostedState.money, 49, 'curriculum design studio should add a 30% multiplier (rounded)');
   assert.match(
@@ -250,29 +253,29 @@ test('audience call can only run once per day', () => {
   state.timeLeft = 10;
   getAssetState('blog', state).instances = [{ status: 'active' }];
 
-  const audience = HUSTLES.find(hustle => hustle.id === 'audienceCall');
+  const audience = ACTIONS.find(hustle => hustle.id === 'audienceCall');
   audience.action.onClick();
 
   assert.equal(state.money, 12, 'first run should pay out');
-  assert.equal(getHustleState('audienceCall').runsToday, 1, 'daily counter should increment after the first run');
+  assert.equal(getActionState('audienceCall').runsToday, 1, 'daily counter should increment after the first run');
 
   const beforeLogLength = state.log.length;
   audience.action.onClick();
 
   assert.equal(state.money, 12, 'second run should be blocked by the daily limit');
-  assert.equal(getHustleState('audienceCall').runsToday, 1, 'daily counter should not increase after hitting the cap');
+  assert.equal(getActionState('audienceCall').runsToday, 1, 'daily counter should not increase after hitting the cap');
   assert.equal(state.log.length, beforeLogLength + 1, 'player should receive a log warning when capped');
   assert.match(state.log.at(-1).message, /Daily limit/, 'log should mention the daily limit reason');
 
   state.timeLeft = 0;
   endDay(false);
 
-  assert.equal(getHustleState('audienceCall').runsToday, 0, 'usage should reset after a new day begins');
+  assert.equal(getActionState('audienceCall').runsToday, 0, 'usage should reset after a new day begins');
 
   const beforeMoney = state.money;
   audience.action.onClick();
   assert.equal(state.money, beforeMoney + 12, 'limit should reset the following day');
-  assert.equal(getHustleState('audienceCall').runsToday, 1, 'counter should start over on the new day');
+  assert.equal(getActionState('audienceCall').runsToday, 1, 'counter should start over on the new day');
 });
 
 test('survey sprint caps at four runs per day', () => {
@@ -282,31 +285,31 @@ test('survey sprint caps at four runs per day', () => {
   state.money = 0;
   state.timeLeft = 10;
 
-  const survey = HUSTLES.find(hustle => hustle.id === 'surveySprint');
+  const survey = ACTIONS.find(hustle => hustle.id === 'surveySprint');
 
   for (let index = 0; index < 4; index += 1) {
     survey.action.onClick();
   }
 
   assert.equal(state.money, 4, 'four successful runs should pay out $4 total');
-  assert.equal(getHustleState('surveySprint').runsToday, 4, 'counter should reflect four completed runs');
+  assert.equal(getActionState('surveySprint').runsToday, 4, 'counter should reflect four completed runs');
 
   const beforeMoney = state.money;
   const beforeLog = state.log.length;
   survey.action.onClick();
 
   assert.equal(state.money, beforeMoney, 'fifth attempt should not pay out');
-  assert.equal(getHustleState('surveySprint').runsToday, 4, 'counter should remain at the cap');
+  assert.equal(getActionState('surveySprint').runsToday, 4, 'counter should remain at the cap');
   assert.equal(state.log.length, beforeLog + 1, 'players should see a log entry explaining the limit');
   assert.match(state.log.at(-1).message, /Daily limit/, 'limit warning should mention the daily cap');
 
   state.timeLeft = 0;
   endDay(false);
 
-  assert.equal(getHustleState('surveySprint').runsToday, 0, 'counter should clear at the start of a new day');
+  assert.equal(getActionState('surveySprint').runsToday, 0, 'counter should clear at the start of a new day');
 
   const afterResetMoney = state.money;
   survey.action.onClick();
   assert.equal(state.money, afterResetMoney + 1, 'new day should allow survey sprint again');
-  assert.equal(getHustleState('surveySprint').runsToday, 1, 'counter should restart after reset');
+  assert.equal(getActionState('surveySprint').runsToday, 1, 'counter should restart after reset');
 });
