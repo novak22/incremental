@@ -18,7 +18,7 @@ const {
   buildDefaultState,
   initializeState,
   getState,
-  getHustleState,
+  getActionState,
   getAssetState,
   getUpgradeState
 } = stateModule;
@@ -28,7 +28,7 @@ const nichesModule = await import('../src/core/state/niches.js');
 const { ensureNicheStateShape } = nichesModule;
 
 const { ASSETS } = assetsModule;
-const { HUSTLES } = hustlesModule;
+const { ACTIONS } = hustlesModule;
 const { UPGRADES } = upgradesModule;
 
 const blogDefinition = ASSETS.find(asset => asset.id === 'blog');
@@ -111,13 +111,15 @@ test('normalizeAssetState seeds active instance using provided context', () => {
   assert.equal(normalized.instances[0].createdOnDay, 6);
 });
 
-test('ensureStateShape populates default hustle, asset, and upgrade state', () => {
+test('ensureStateShape populates default action, asset, and upgrade state', () => {
   const base = buildDefaultState();
   const initialized = initializeState(base);
   ensureStateShape(initialized);
 
-  for (const hustle of HUSTLES) {
-    assert.ok(initialized.hustles[hustle.id], `hustle state missing for ${hustle.id}`);
+  for (const action of ACTIONS) {
+    const actionState = getActionState(action.id, initialized);
+    assert.ok(actionState, `action state missing for ${action.id}`);
+    assert.ok(Array.isArray(actionState.instances), `action instances missing for ${action.id}`);
   }
   for (const asset of ASSETS) {
     const assetState = getAssetState(asset.id, initialized);

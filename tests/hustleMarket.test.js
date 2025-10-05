@@ -11,6 +11,11 @@ test.beforeEach(() => {
   harness.resetState();
 });
 
+test('HUSTLE_TEMPLATES includes only market-ready hustles', () => {
+  const hasStudyEntries = HUSTLE_TEMPLATES.some(template => template?.tag?.type === 'study');
+  assert.equal(hasStudyEntries, false, 'market templates should exclude study actions');
+});
+
 test('rollDailyOffers seeds offers for every template and persists metadata', () => {
   const state = getState();
   state.day = 5;
@@ -103,4 +108,3 @@ test('getAvailableOffers respects availability windows and upcoming flag', () =>
   const upcoming = getAvailableOffers(state, { day: 10, includeUpcoming: true });
   assert.equal(upcoming.length, 1, 'upcoming flag should include future offers');
 });
-

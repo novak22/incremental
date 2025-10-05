@@ -661,11 +661,11 @@ test('game loop leaves view untouched until sections are marked dirty', { concur
 
   viewManager.setActiveView(stubView, document);
 
-  const originalHustles = [...hustlesModule.HUSTLES];
-  hustlesModule.HUSTLES.splice(0, hustlesModule.HUSTLES.length);
+  const originalHustles = [...hustlesModule.ACTIONS];
+  hustlesModule.ACTIONS.splice(0, hustlesModule.ACTIONS.length);
 
   t.after(() => {
-    hustlesModule.HUSTLES.splice(0, hustlesModule.HUSTLES.length, ...originalHustles);
+    hustlesModule.ACTIONS.splice(0, hustlesModule.ACTIONS.length, ...originalHustles);
     invalidation.consumeDirty();
     viewManager.setActiveView(originalView ?? browserView, document);
   });

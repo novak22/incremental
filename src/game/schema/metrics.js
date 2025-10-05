@@ -20,7 +20,7 @@ function createQualityMetricId(definitionId, actionId, type) {
   return `asset:${definitionId}:quality:${actionId}:${suffix}`;
 }
 
-function createHustleMetricId(definitionId, type) {
+function createActionMetricId(definitionId, type) {
   const suffix = type === 'payout' ? 'payout' : type;
   return `hustle:${definitionId}:${suffix}`;
 }
@@ -38,11 +38,11 @@ function registerMetric(index, metricId, definition, category, metricType) {
   });
 }
 
-function attachHustleMetricIds(definition) {
+function attachActionMetricIds(definition) {
   if (!definition || !definition.id) return definition;
   const metricIds = { ...(definition.metricIds || {}) };
   for (const type of METRIC_TYPES) {
-    const key = createHustleMetricId(definition.id, type);
+    const key = createActionMetricId(definition.id, type);
     if (!metricIds[type]) {
       metricIds[type] = key;
     }
@@ -93,8 +93,9 @@ function attachAssetMetricIds(definition) {
   return definition;
 }
 
-export function attachRegistryMetricIds({ hustles = [], assets = [], upgrades = [] }) {
-  hustles.forEach(attachHustleMetricIds);
+export function attachRegistryMetricIds({ actions = [], hustles = [], assets = [], upgrades = [] }) {
+  const actionDefinitions = Array.isArray(actions) && actions.length ? actions : hustles;
+  actionDefinitions.forEach(attachActionMetricIds);
   assets.forEach(attachAssetMetricIds);
   upgrades.forEach(definition => {
     if (definition) {
@@ -102,18 +103,20 @@ export function attachRegistryMetricIds({ hustles = [], assets = [], upgrades = 
       definition.kind = definition.kind || 'upgrade';
     }
   });
-  return { hustles, assets, upgrades };
+  return { actions: actionDefinitions, hustles, assets, upgrades };
 }
 
-export function buildMetricIndex({ hustles = [], assets = [], upgrades = [] }) {
+export function buildMetricIndex({ actions = [], hustles = [], assets = [], upgrades = [] }) {
   const index = new Map();
 
-  for (const hustle of hustles) {
-    if (!hustle) continue;
-    const metricIds = hustle.metricIds || {};
-    registerMetric(index, metricIds.time, hustle, 'action', 'time');
-    registerMetric(index, metricIds.payout, hustle, 'action', 'payout');
-    registerMetric(index, metricIds.cost, hustle, 'action', 'cost');
+  const actionDefinitions = Array.isArray(actions) && actions.length ? actions : hustles;
+
+  for (const action of actionDefinitions) {
+    if (!action) continue;
+    const metricIds = action.metricIds || {};
+    registerMetric(index, metricIds.time, action, 'action', 'time');
+    registerMetric(index, metricIds.payout, action, 'action', 'payout');
+    registerMetric(index, metricIds.cost, action, 'action', 'cost');
   }
 
   for (const asset of assets) {

@@ -9,6 +9,10 @@ import {
 import { ensureNicheStateShape } from './state/niches.js';
 import { ensureEventState } from './state/events.js';
 import {
+  ensureSlice as ensureActionSlice,
+  getSliceState as getActionSliceState
+} from './state/slices/actions.js';
+import {
   ensureSlice as ensureHustleSlice,
   getSliceState as getHustleSliceState
 } from './state/slices/hustles.js';
@@ -82,6 +86,7 @@ class StateManager {
   ensureStateShape(target = this.state) {
     if (!target) return;
 
+    ensureActionSlice(target);
     ensureHustleSlice(target);
     ensureAssetSlice(target);
     ensureUpgradeSlice(target);
@@ -117,6 +122,7 @@ class StateManager {
       bonusTime: 0,
       dailyBonusTime: 0,
       day: 1,
+      actions: {},
       hustles: {},
       assets: {},
       upgrades: {},
@@ -168,6 +174,10 @@ class StateManager {
     return this.state;
   }
 
+  getActionState(id, target = this.state) {
+    return getActionSliceState(target, id);
+  }
+
   getHustleState(id, target = this.state) {
     return getHustleSliceState(target, id);
   }
@@ -209,6 +219,8 @@ export const initializeState = (...args) =>
 export const replaceState = (...args) =>
   defaultStateManager.replaceState(...args);
 export const getState = (...args) => defaultStateManager.getState(...args);
+export const getActionState = (...args) =>
+  defaultStateManager.getActionState(...args);
 export const getHustleState = (...args) =>
   defaultStateManager.getHustleState(...args);
 export const getAssetState = (...args) =>

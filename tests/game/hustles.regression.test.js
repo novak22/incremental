@@ -36,7 +36,7 @@ test('instant hustles still trigger UI flush through the invalidation bus', { co
   state.money = 250;
   state.timeLeft = 40;
 
-  const instantHustle = harness.hustlesModule.HUSTLES.find(hustle => hustle?.action?.onClick);
+  const instantHustle = harness.hustlesModule.ACTIONS.find(hustle => hustle?.action?.onClick);
   assert.ok(instantHustle, 'expected to find an instant hustle with an action');
 
   instantHustle.action.onClick();
@@ -54,8 +54,8 @@ test('game loop publishes dirty sections for long-running hustles', { concurrenc
 
   const spy = await withUpdateSpy(updateModule);
 
-  const originalHustles = [...harness.hustlesModule.HUSTLES];
-  harness.hustlesModule.HUSTLES.splice(0, harness.hustlesModule.HUSTLES.length, {
+  const originalHustles = [...harness.hustlesModule.ACTIONS];
+  harness.hustlesModule.ACTIONS.splice(0, harness.hustlesModule.ACTIONS.length, {
     id: 'test-hustle',
     process() {
       return { dashboard: true };
@@ -63,7 +63,7 @@ test('game loop publishes dirty sections for long-running hustles', { concurrenc
   });
 
   t.after(() => {
-    harness.hustlesModule.HUSTLES.splice(0, harness.hustlesModule.HUSTLES.length, ...originalHustles);
+    harness.hustlesModule.ACTIONS.splice(0, harness.hustlesModule.ACTIONS.length, ...originalHustles);
     spy.restore();
   });
 
