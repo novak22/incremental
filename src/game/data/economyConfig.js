@@ -231,6 +231,8 @@ export const hustles = {
   bundlePush: createHustleConfig('bundlePush'),
   // Spec: docs/normalized_economy.json → hustles.surveySprint
   surveySprint: createHustleConfig('surveySprint'),
+  // Spec: docs/normalized_economy.json → hustles.dataEntry
+  dataEntry: createHustleConfig('dataEntry'),
   // Spec: docs/normalized_economy.json → hustles.eventPhotoGig
   eventPhotoGig: createHustleConfig('eventPhotoGig'),
   // Spec: docs/normalized_economy.json → hustles.popUpWorkshop
