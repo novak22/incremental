@@ -3,6 +3,13 @@ import { rollDailyOffers, getAvailableOffers, getClaimedOffers, getMarketRollAud
 import { getState } from '../core/state.js';
 import { structuredClone } from '../core/helpers.js';
 import {
+  resolveFirstNumber,
+  resolveFirstString,
+  resolveOfferHours,
+  resolveOfferPayoutAmount,
+  resolveOfferPayoutSchedule
+} from './hustles/offerUtils.js';
+import {
   ensureHustleMarketState,
   claimHustleMarketOffer,
   getMarketOfferById,
@@ -73,63 +80,6 @@ export function ensureDailyOffersForDay({
 }
 
 const TEMPLATE_BY_ID = new Map(HUSTLE_TEMPLATES.map(template => [template.id, template]));
-
-function resolveFirstNumber(...values) {
-  for (const value of values) {
-    const parsed = Number(value);
-    if (Number.isFinite(parsed) && parsed >= 0) {
-      return parsed;
-    }
-  }
-  return null;
-}
-
-function resolveFirstString(...values) {
-  for (const value of values) {
-    if (typeof value === 'string' && value.trim().length) {
-      return value.trim();
-    }
-  }
-  return null;
-}
-
-function resolveOfferHours(offer, template) {
-  const metadata = offer?.metadata || {};
-  const requirements = typeof metadata.requirements === 'object' && metadata.requirements !== null
-    ? metadata.requirements
-    : {};
-  return resolveFirstNumber(
-    metadata.hoursRequired,
-    requirements.hours,
-    requirements.timeHours,
-    metadata.timeHours,
-    template?.time,
-    template?.action?.timeCost
-  );
-}
-
-function resolveOfferPayoutAmount(offer, template) {
-  const metadata = offer?.metadata || {};
-  const payout = typeof metadata.payout === 'object' && metadata.payout !== null
-    ? metadata.payout
-    : {};
-  return resolveFirstNumber(
-    metadata.payoutAmount,
-    payout.amount,
-    template?.payout?.amount
-  );
-}
-
-function resolveOfferPayoutSchedule(offer) {
-  const metadata = offer?.metadata || {};
-  const payout = typeof metadata.payout === 'object' && metadata.payout !== null
-    ? metadata.payout
-    : {};
-  return resolveFirstString(
-    metadata.payoutSchedule,
-    payout.schedule
-  ) || 'onCompletion';
-}
 
 export function acceptHustleOffer(offerOrId, { state = getState() } = {}) {
   const workingState = state || getState();

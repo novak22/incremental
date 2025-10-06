@@ -13,6 +13,13 @@ import {
   getMarketAvailableOffers,
   getMarketClaimedOffers
 } from '../../core/state/slices/hustleMarket.js';
+import {
+  resolveFirstNumber,
+  resolveFirstString,
+  resolveOfferHoursFromMetadata,
+  resolveOfferPayoutAmountFromMetadata,
+  resolveOfferPayoutScheduleFromMetadata
+} from './offerUtils.js';
 
 const MAX_AUDIT_ENTRIES = 30;
 const MARKET_ROLL_AUDIT = [];
@@ -193,25 +200,6 @@ function selectVariantFromPool(variants, rng = Math.random) {
   return variants[variants.length - 1];
 }
 
-function resolveFirstNumber(...values) {
-  for (const value of values) {
-    const parsed = Number(value);
-    if (Number.isFinite(parsed) && parsed >= 0) {
-      return parsed;
-    }
-  }
-  return null;
-}
-
-function resolveFirstString(...values) {
-  for (const value of values) {
-    if (typeof value === 'string' && value.trim().length) {
-      return value.trim();
-    }
-  }
-  return null;
-}
-
 function buildOfferMetadata(template, variant) {
   const baseMetadata = cloneMarketMetadata(template?.market?.metadata);
   const variantMetadata = cloneMarketMetadata(variant?.metadata);
@@ -221,15 +209,10 @@ function buildOfferMetadata(template, variant) {
     ...cloneMarketMetadata(variantMetadata.requirements)
   };
 
-  const resolvedHours = resolveFirstNumber(
-    requirements.hours,
-    requirements.timeHours,
-    variantMetadata.timeHours,
-    variantMetadata.hours,
-    baseMetadata.timeHours,
-    template?.time,
-    template?.action?.timeCost
-  );
+  const resolvedHours = resolveOfferHoursFromMetadata([
+    { ...variantMetadata, requirements },
+    baseMetadata
+  ], template, [variantMetadata.timeHours, variantMetadata.hours, baseMetadata.timeHours]);
   if (resolvedHours != null) {
     requirements.hours = resolvedHours;
   }
@@ -241,23 +224,26 @@ function buildOfferMetadata(template, variant) {
     ...variantPayout
   };
 
-  const resolvedPayoutAmount = resolveFirstNumber(
-    variantMetadata.payoutAmount,
-    variantPayout.amount,
-    payout.amount,
-    baseMetadata.payoutAmount,
-    basePayout.amount,
-    template?.payout?.amount
+  const resolvedPayoutAmount = resolveOfferPayoutAmountFromMetadata(
+    [
+      { ...variantMetadata, payout },
+      variantMetadata,
+      baseMetadata
+    ],
+    template
   );
   if (resolvedPayoutAmount != null) {
     payout.amount = resolvedPayoutAmount;
   }
 
-  const resolvedSchedule = resolveFirstString(
-    payout.schedule,
-    variantMetadata.payoutSchedule,
-    baseMetadata.payoutSchedule
-  ) || 'onCompletion';
+  const resolvedSchedule = resolveOfferPayoutScheduleFromMetadata(
+    [
+      { ...variantMetadata, payout },
+      variantMetadata,
+      baseMetadata
+    ],
+    'onCompletion'
+  );
   payout.schedule = resolvedSchedule;
 
   const metadata = {
