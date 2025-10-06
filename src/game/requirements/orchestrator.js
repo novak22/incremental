@@ -1,12 +1,8 @@
-import { formatHours, formatList, formatMoney, structuredClone } from '../../core/helpers.js';
+import { formatHours, formatList } from '../../core/helpers.js';
 import { markDirty } from '../../core/events/invalidationBus.js';
-import {
-  ensureDailyOffersForDay,
-  getAvailableOffers,
-  getClaimedOffers,
-  acceptHustleOffer,
-  releaseClaimedHustleOffer
-} from '../hustles.js';
+import { createStudyEnrollment } from './orchestrator/studyEnrollment.js';
+import { createMarketSeatManager } from './orchestrator/marketSeats.js';
+import { createTuitionLogging } from './orchestrator/tuitionLogging.js';
 export const STUDY_DIRTY_SECTIONS = Object.freeze(['cards', 'dashboard', 'player']);
 
 export function createRequirementsOrchestrator({
@@ -82,181 +78,20 @@ export function createRequirementsOrchestrator({
     };
   }
 
-  function enrollInKnowledgeTrack(id) {
-    const state = getState();
-    const track = knowledgeTracks[id];
-    if (!state || !track) return { success: false, reason: 'missing' };
-
-    const progress = getKnowledgeProgress(id);
-    if (progress.completed) {
-      addLog(`${track.name} is already complete. Grab a celebratory pastry instead.`, 'info');
-      return { success: false, reason: 'completed' };
-    }
-    if (progress.enrolled) {
-      addLog(`You're already enrolled in ${track.name}.`, 'info');
-      return { success: false, reason: 'enrolled' };
-    }
-
-    const tuition = Number(track.tuition) || 0;
-    if (tuition > 0 && state.money < tuition) {
-      addLog(`You need $${formatMoney(tuition)} ready to enroll in ${track.name}.`, 'warning');
-      return { success: false, reason: 'money' };
-    }
-
-    const definitionId = getStudyActionId(track.id);
-    const currentDay = Math.max(1, Math.floor(Number(state.day) || 1));
-
-    ensureDailyOffersForDay({ state });
-
-    const marketOffers = getAvailableOffers(state, { includeUpcoming: true }).filter(offer => {
-      return offer.definitionId === definitionId && offer.claimed !== true;
-    });
-
-    const availableOffer = marketOffers
-      .filter(offer => offer.availableOnDay <= currentDay)
-      .sort((a, b) => a.availableOnDay - b.availableOnDay)[0] || null;
-    const upcomingOffer = marketOffers
-      .filter(offer => offer.availableOnDay > currentDay)
-      .sort((a, b) => a.availableOnDay - b.availableOnDay)[0] || null;
-
-    if (!availableOffer) {
-      if (upcomingOffer) {
-        addLog(
-          `${track.name} opens new seats on day ${upcomingOffer.availableOnDay}. Save the date!`,
-          'info'
-        );
-      } else {
-        addLog(`Seats for ${track.name} are booked today. Check back tomorrow!`, 'warning');
-      }
-      return { success: false, reason: 'no_offer' };
-    }
-
-    const metadata = structuredClone(availableOffer.metadata || {});
-    const baseProgress = typeof metadata.progress === 'object' && metadata.progress !== null
-      ? metadata.progress
-      : {};
-    const seatPolicy = metadata.seatPolicy || (tuition > 0 ? 'limited' : 'always-on');
-
-    metadata.studyTrackId = track.id;
-    metadata.trackId = track.id;
-    metadata.tuitionCost = tuition;
-    metadata.tuitionDue = tuition;
-    metadata.educationBonuses = structuredClone(track.instantBoosts || []);
-    metadata.enrolledOnDay = currentDay;
-    metadata.progress = {
-      ...baseProgress,
-      studyTrackId: track.id,
-      trackId: track.id,
-      label: baseProgress.label || `Study ${track.name}`,
-      completion: baseProgress.completion || 'manual'
-    };
-    metadata.enrollment = {
-      ...(typeof metadata.enrollment === 'object' && metadata.enrollment !== null
-        ? metadata.enrollment
-        : {}),
-      seatPolicy,
-      enrolledOnDay: currentDay
-    };
-
-    const acceptancePayload = {
-      ...availableOffer,
-      metadata
-    };
-
-    const accepted = acceptHustleOffer(acceptancePayload, { state });
-    if (!accepted) {
-      addLog(`Someone else snagged the last seat in ${track.name} moments before you.`, 'warning');
-      return { success: false, reason: 'claim_failed' };
-    }
-
-    if (tuition > 0) {
-      spendMoney(tuition);
-      recordCostContribution({
-        key: `study:${track.id}:tuition`,
-        label: `🎓 ${track.name} tuition`,
-        amount: tuition,
-        category: 'investment'
-      });
-    }
-
-    progress.enrolled = true;
-    progress.enrolledOnDay = currentDay;
-    progress.studiedToday = false;
-    if (tuition > 0) {
-      progress.tuitionPaid = (Number(progress.tuitionPaid) || 0) + tuition;
-      progress.tuitionPaidOnDay = currentDay;
-    }
-
-    const acceptedMetadata = typeof accepted.metadata === 'object' && accepted.metadata !== null
-      ? accepted.metadata
-      : {};
-    accepted.metadata = {
-      ...acceptedMetadata,
-      studyTrackId: track.id,
-      trackId: track.id,
-      tuitionCost: tuition,
-      tuitionDue: tuition,
-      tuitionPaid: tuition,
-      tuitionPaidOnDay: currentDay,
-      enrolledOnDay: currentDay,
-      educationBonuses: structuredClone(track.instantBoosts || []),
-      seatPolicy
-    };
-    accepted.metadata.progress = {
-      ...(acceptedMetadata.progress || {}),
-      ...metadata.progress
-    };
-    const acceptedEnrollment = typeof acceptedMetadata.enrollment === 'object' && acceptedMetadata.enrollment !== null
-      ? acceptedMetadata.enrollment
-      : {};
-    accepted.metadata.enrollment = {
-      ...acceptedEnrollment,
-      ...metadata.enrollment
-    };
-
-    addLog(
-      `You claimed a seat in ${track.name}! ${tuition > 0 ? `Tuition paid for $${formatMoney(tuition)}.` : 'No tuition due.'} ` +
-        `Log ${formatHours(track.hoursPerDay)} each day from the action queue to progress.`,
-      'info'
-    );
-
-    markDirty(STUDY_DIRTY_SECTIONS);
-
-    return { success: true, offer: accepted };
-  }
-
-  function dropKnowledgeTrack(id) {
-    const state = getState();
-    const track = knowledgeTracks[id];
-    if (!state || !track) {
-      return { success: false, reason: 'missing' };
-    }
-
-    const progress = getKnowledgeProgress(id, state);
-    if (!progress.enrolled || progress.completed) {
-      addLog(`You're not currently enrolled in ${track.name}.`, 'info');
-      return { success: false, reason: 'not_enrolled' };
-    }
-
-    progress.enrolled = false;
-    progress.studiedToday = false;
-    progress.enrolledOnDay = null;
-
-    removeActiveStudyInstance(id, state);
-
-    const claimedStudyOffers = getClaimedOffers(state, { includeExpired: true })
-      .filter(entry => entry?.metadata?.studyTrackId === track.id);
-
-    for (const offer of claimedStudyOffers) {
-      releaseClaimedHustleOffer({ offerId: offer.offerId, acceptedId: offer.id }, { state });
-    }
-
-    addLog(`You dropped ${track.name}. Tuition stays paid, but your schedule opens back up.`, 'warning');
-
-    markDirty(STUDY_DIRTY_SECTIONS);
-
-    return { success: true };
-  }
+  const seatManager = createMarketSeatManager({ getState, addLog });
+  const tuitionLogging = createTuitionLogging({ spendMoney, recordCostContribution, addLog });
+  const { enrollInKnowledgeTrack, dropKnowledgeTrack } = createStudyEnrollment({
+    getState,
+    getKnowledgeProgress,
+    knowledgeTracks,
+    addLog,
+    markDirty,
+    seatManager,
+    tuitionLogging,
+    getStudyActionId,
+    removeActiveStudyInstance,
+    STUDY_DIRTY_SECTIONS
+  });
 
   function allocateDailyStudy({ trackIds, triggeredByEnrollment = false } = {}) {
     const state = getState();
