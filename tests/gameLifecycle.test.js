@@ -14,6 +14,7 @@ const requirementsModule = await import('../src/game/requirements.js');
 const actionsProgressModule = await import('../src/game/actions/progress/instances.js');
 const lifecycleModule = await import('../src/game/lifecycle.js');
 const hustleMarketSlice = await import('../src/core/state/slices/hustleMarket/index.js');
+const { OFFER_EXPIRY_GRACE_DAYS } = await import('../src/game/hustles/market/offerLifecycle.js');
 
 const {
   buildDefaultState,
@@ -295,7 +296,7 @@ test('ensureHustleMarketState prunes expired offers and marks expired accepted e
       definitionId: 'freelance',
       rolledOnDay: today,
       availableOnDay: today,
-      expiresOnDay: today + 1,
+      expiresOnDay: today + 1 + OFFER_EXPIRY_GRACE_DAYS,
       rolledAt: now
     }
   ];
@@ -317,7 +318,7 @@ test('ensureHustleMarketState prunes expired offers and marks expired accepted e
       templateId: 'freelance',
       definitionId: 'freelance',
       acceptedOnDay: today,
-      deadlineDay: today + 1,
+      deadlineDay: today + 1 + OFFER_EXPIRY_GRACE_DAYS,
       hoursRequired: 1,
       metadata: {}
     }

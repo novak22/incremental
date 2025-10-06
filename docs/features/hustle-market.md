@@ -22,6 +22,7 @@
 ## Recent Tuning
 - Multi-day variants now pay a 5% premium over their base hourly earnings (rounded to the nearest $5) so longer commitments feel proportionally rewarding instead of penalizing players for locking in multi-day schedules.
 - Added the Data Entry Blitz template with a 4h ledger cleanup ($20) and a two-day catalog migration (2 × 4h for $45) to give early schedulers a steady $5/hour ops gig when survey quotas dry up.
+- Every fresh offer now layers on a two-day grace period before expiring so players have breathing room to slot new contracts into their schedules without immediately losing the opportunity.
 
 ## Rolling Logic
 - `rollDailyOffers({ templates, day, now, state, rng })` clones any existing offers whose `expiresOnDay` is still in the future, then fills the configured number of template slots by selecting weighted variants (defaulting to equal weights). Variant copy counts can consume multiple slots per roll while template and variant `maxActive` values prevent overfilling.

@@ -35,7 +35,11 @@ const {
   resolveOfferPayoutSchedule
 } = await import('../src/game/hustles/offerUtils.js');
 const { buildVariantPool, selectVariantFromPool } = await import('../src/game/hustles/market/variantSelection.js');
-const { buildOfferMetadata, createOfferFromVariant } = await import('../src/game/hustles/market/offerLifecycle.js');
+const {
+  buildOfferMetadata,
+  createOfferFromVariant,
+  OFFER_EXPIRY_GRACE_DAYS
+} = await import('../src/game/hustles/market/offerLifecycle.js');
 const { getMarketRollAuditLog: directAuditLog } = await import('../src/game/hustles/market.js');
 
 test.beforeEach(() => {
@@ -216,8 +220,8 @@ test('ensureDailyOffersForDay rerolls preserve windows, durations, and capacity 
   assert.equal(todayOffer.availableOnDay, 1);
   assert.equal(
     todayOffer.expiresOnDay - todayOffer.availableOnDay,
-    2,
-    'duration should match the variant window span'
+    2 + OFFER_EXPIRY_GRACE_DAYS,
+    'duration should match the variant window span plus the expiry grace period'
   );
   assert.equal(tomorrowOffer.availableOnDay, 2, 'tomorrow variant should unlock the next day');
   assert.equal(state.hustleMarket.offers.length, 2);
@@ -300,7 +304,11 @@ test('offer lifecycle composes metadata and creates normalized offers', () => {
 
   const offer = createOfferFromVariant({ template, variant, day: 5, timestamp: 1111 });
   assert.equal(offer.availableOnDay, 6, 'available day should respect variant offsets');
-  assert.equal(offer.expiresOnDay, 9, 'expiry day should respect variant durations');
+  assert.equal(
+    offer.expiresOnDay,
+    9 + OFFER_EXPIRY_GRACE_DAYS,
+    'expiry day should respect variant durations and grace period'
+  );
   assert.equal(offer.seats, 2, 'offer seats should inherit variant overrides');
   assert.equal(offer.metadata.hoursRequired, 6, 'normalized offer metadata should expose resolved hours');
   assert.equal(offer.metadata.payoutAmount, 180, 'normalized offer metadata should expose payout amount');
