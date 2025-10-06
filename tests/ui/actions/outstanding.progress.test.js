@@ -4,6 +4,7 @@ import { buildDefaultState } from '../../../src/core/state.js';
 import { ensureSlice, resolveInstanceProgressSnapshot } from '../../../src/core/state/slices/actions/index.js';
 import { collectOutstandingActionEntries } from '../../../src/ui/actions/outstanding.js';
 import { loadRegistry, resetRegistry } from '../../../src/game/registryService.js';
+import { KNOWLEDGE_HUSTLES, rollDailyOffers, acceptHustleOffer } from '../../../src/game/hustles.js';
 
 function createTestDefinition() {
   return {
@@ -308,4 +309,32 @@ test('outstanding entries map study and maintenance commitments to canonical buc
   const maintenanceEntry = byDefinition.get(maintenanceDefinition.id);
   assert.ok(maintenanceEntry, 'expected maintenance commitment entry');
   assert.equal(maintenanceEntry.focusCategory, 'commitment');
+});
+
+test('accepted study offers keep their study focus metadata', () => {
+  resetRegistry();
+  const knowledgeTemplate = KNOWLEDGE_HUSTLES.find(template => template?.tag?.type === 'study');
+  assert.ok(knowledgeTemplate, 'expected to find a study hustle template');
+
+  loadRegistry({ actions: [knowledgeTemplate], hustles: [knowledgeTemplate], assets: [], upgrades: [] });
+
+  const state = buildDefaultState();
+  state.day = 6;
+  state.money = 10_000;
+
+  ensureSlice(state);
+
+  const [offer] = rollDailyOffers({ templates: [knowledgeTemplate], day: state.day, now: 1_000, state });
+  assert.ok(offer, 'expected a study seat offer to roll');
+  assert.equal(offer.templateCategory, 'study');
+
+  const accepted = acceptHustleOffer(offer.id, { state });
+  assert.ok(accepted, 'expected enrollment to succeed for the rolled study offer');
+  assert.equal(accepted?.metadata?.templateCategory, 'study');
+
+  const entries = collectOutstandingActionEntries(state);
+  const studyEntry = entries.find(entry => entry.definitionId === knowledgeTemplate.id);
+  assert.ok(studyEntry, 'expected an outstanding entry for the accepted study instance');
+  assert.equal(studyEntry.focusCategory, 'study');
+  assert.equal(studyEntry.progress?.metadata?.templateCategory, 'study');
 });

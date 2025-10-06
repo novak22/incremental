@@ -51,12 +51,18 @@ function createStudyAcceptHook(track) {
       if (!target || typeof target !== 'object') {
         return;
       }
+      if (!target.templateCategory) {
+        target.templateCategory = 'study';
+      }
       target.studyTrackId = track.id;
       target.trackId = track.id;
       target.tuitionCost = tuition;
       target.tuitionDue = tuition;
       target.educationBonuses = structuredClone(track.instantBoosts || []);
       const progressMetadata = ensureNestedObject(target, 'progress');
+      if (!progressMetadata.templateCategory) {
+        progressMetadata.templateCategory = 'study';
+      }
       progressMetadata.studyTrackId = track.id;
       progressMetadata.trackId = track.id;
       progressMetadata.label = progressMetadata.label || `Study ${track.name}`;
@@ -430,6 +436,7 @@ export function createKnowledgeHustles() {
         const tuition = Number(track.tuition) || 0;
         const seatPolicy = tuition > 0 ? 'limited' : 'always-on';
         const baseMetadata = {
+          templateCategory: 'study',
           studyTrackId: track.id,
           trackId: track.id,
           tuitionCost: tuition,
@@ -449,6 +456,7 @@ export function createKnowledgeHustles() {
         const durationDays = tuition > 0 ? limitedSeatDuration : 30;
 
         return {
+          category: 'study',
           slotsPerRoll: 1,
           maxActive: 1,
           metadata: baseMetadata,
