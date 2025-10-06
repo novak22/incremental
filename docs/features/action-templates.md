@@ -60,7 +60,7 @@ log manual study time while respecting shared progress metadata.
 
 ## Shared Action Card Presenter
 
-- `src/ui/views/browser/components/actionCardPresenter.js` renders contract offers, commitments, and accept buttons using template descriptors.
+- `src/ui/views/browser/apps/hustles/index.js` orchestrates the hustle workspace cards, delegating offer lists, commitments, and urgency styling to focused renderers in `offers.js`, `commitments.js`, and `urgency.js`.
 - Model builders (e.g., `buildHustleModels`) now surface `descriptors`, `actionCategory`, and friendly category labels so the presenter can reuse copy across hustles, courses, and upkeep contracts.
 - Descriptor bundles merge template-provided copy with default messaging that reinforces the accept → work → complete loop, ensuring new action types inherit the same tone automatically.
 
