@@ -4,7 +4,11 @@ import { getGameTestHarness } from './helpers/gameTestHarness.js';
 
 const harness = await getGameTestHarness();
 const { completeActionInstance, advanceActionInstance } = await import('../src/game/actions/progress/instances.js');
-const { ensureHustleMarketState } = await import('../src/core/state/slices/hustleMarket.js');
+const {
+  ensureHustleMarketState,
+  normalizeHustleMarketOffer,
+  normalizeAcceptedOffer
+} = await import('../src/core/state/slices/hustleMarket/index.js');
 const { hustlesModule, stateModule } = harness;
 const {
   rollDailyOffers,
@@ -35,6 +39,50 @@ function findEligibleTemplate(state) {
     return descriptors.every(entry => entry?.met !== false);
   }) || HUSTLE_TEMPLATES[0];
 }
+
+test('normalizeHustleMarketOffer clamps the active window and fills defaults', () => {
+  const normalized = normalizeHustleMarketOffer({
+    templateId: 'writing-course',
+    rolledOnDay: -4,
+    availableOnDay: 0,
+    expiresOnDay: -2,
+    seats: 0,
+    metadata: { payout: { amount: 150 } }
+  }, { fallbackDay: 3, fallbackTimestamp: 0 });
+
+  assert.ok(normalized, 'expected normalization to produce an offer payload');
+  assert.equal(normalized.templateId, 'writing-course');
+  assert.equal(normalized.availableOnDay, 3, 'available day should clamp to the fallback day');
+  assert.equal(normalized.expiresOnDay, 3, 'expiration should not precede availability');
+  assert.equal(normalized.rolledOnDay, 3, 'rolled day should clamp within the active window');
+  assert.equal(normalized.seats, 1, 'seats should default to at least one');
+  assert.match(normalized.id, /^market-writing-course-3-/);
+  assert.deepEqual(normalized.daysActive, [3]);
+});
+
+test('normalizeAcceptedOffer enforces payout defaults and clamps deadlines', () => {
+  const metadata = { notes: 'remember to invoice' };
+  const normalized = normalizeAcceptedOffer({
+    offerId: 'offer-normalize-test',
+    templateId: 'writing-course',
+    acceptedOnDay: -2,
+    deadlineDay: -5,
+    hoursRequired: -3,
+    payout: { amount: -50 },
+    seats: 0,
+    metadata
+  }, { fallbackDay: 4 });
+
+  assert.ok(normalized, 'accepted entry should normalize successfully');
+  assert.equal(normalized.acceptedOnDay, 4, 'accepted day should clamp to the fallback');
+  assert.equal(normalized.deadlineDay, 4, 'deadline cannot precede the accepted day');
+  assert.equal(normalized.hoursRequired, 0, 'hours should clamp to a non-negative value');
+  assert.equal(normalized.seats, 1, 'seat count should floor at one');
+  assert.equal(normalized.payout.amount, 0, 'payout amounts should clamp to zero or higher');
+  assert.equal(normalized.payout.schedule, 'onCompletion', 'missing payout schedule should default to onCompletion');
+  assert.notStrictEqual(normalized.metadata, metadata, 'metadata should be cloned');
+  assert.deepEqual(normalized.metadata, metadata, 'cloned metadata should preserve the original values');
+});
 
 test('HUSTLE_TEMPLATES includes study courses with market metadata', () => {
   const studyEntries = HUSTLE_TEMPLATES.filter(template => template?.tag?.type === 'study');

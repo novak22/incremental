@@ -17,7 +17,7 @@ import {
   ensureSlice as ensureProgressSlice,
   getSliceState as getProgressSliceState
 } from '../src/core/state/slices/progress.js';
-import { ensureHustleMarketState } from '../src/core/state/slices/hustleMarket.js';
+import { ensureHustleMarketState } from '../src/core/state/slices/hustleMarket/index.js';
 
 const harness = await getGameTestHarness();
 const { hustlesModule, assetsModule, upgradesModule } = harness;

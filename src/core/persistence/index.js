@@ -5,7 +5,7 @@ import { StateMigrationRunner } from './stateMigrationRunner.js';
 import { success, error, empty, tryCatch } from './result.js';
 import { syncNicheTrendSnapshots } from '../../game/events/syncNicheTrendSnapshots.js';
 import { maybeSpawnNicheEvents } from '../../game/events/index.js';
-import { createDefaultHustleMarketState } from '../state/slices/hustleMarket.js';
+import { createDefaultHustleMarketState } from '../state/slices/hustleMarket/index.js';
 
 function migrateLegacySnapshot(snapshot, context) {
   if (!snapshot || typeof snapshot !== 'object') {

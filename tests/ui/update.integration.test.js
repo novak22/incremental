@@ -777,7 +777,7 @@ test('accepting a hustle offer from dashboard quick actions refreshes the todo q
 
   const currentDay = Number(state.day) || 1;
 
-  const { normalizeHustleMarketOffer } = await import('../../src/core/state/slices/hustleMarket.js');
+  const { normalizeHustleMarketOffer } = await import('../../src/core/state/slices/hustleMarket/index.js');
 
   const offer = normalizeHustleMarketOffer({
     id: 'offer-dashboard-test',

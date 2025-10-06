@@ -1,5 +1,5 @@
 import { toNumber } from '../../../core/helpers.js';
-import { completeHustleMarketInstance } from '../../../core/state/slices/hustleMarket.js';
+import { completeHustleMarketInstance } from '../../../core/state/slices/hustleMarket/index.js';
 import { addMoney } from '../../currency.js';
 import { applyMetric } from '../../content/schema/metrics.js';
 import { recordPayoutContribution } from '../../metrics.js';

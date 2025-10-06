@@ -13,7 +13,7 @@ const upgradesModule = await import('../src/game/upgrades.js');
 const requirementsModule = await import('../src/game/requirements.js');
 const actionsProgressModule = await import('../src/game/actions/progress/instances.js');
 const lifecycleModule = await import('../src/game/lifecycle.js');
-const hustleMarketSlice = await import('../src/core/state/slices/hustleMarket.js');
+const hustleMarketSlice = await import('../src/core/state/slices/hustleMarket/index.js');
 
 const {
   buildDefaultState,
