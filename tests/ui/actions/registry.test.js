@@ -191,6 +191,34 @@ test('buildActionQueue includes the active day when provided', () => {
   }
 });
 
+test('buildActionQueue deduplicates entries by id and prefers interactive handlers', () => {
+  const restore = clearActionProviders();
+  try {
+    registerActionProvider(() => ({
+      id: 'duplicate-provider',
+      entries: [
+        { id: 'study-track', title: 'Study session', durationHours: 2 },
+        {
+          id: 'study-track',
+          title: 'Interactive study session',
+          durationHours: 2,
+          onClick: () => true
+        }
+      ],
+      metrics: {}
+    }));
+
+    const queue = buildActionQueue({ state: {} });
+    assert.equal(queue.entries.length, 1);
+    const [entry] = queue.entries;
+    assert.equal(entry.id, 'study-track');
+    assert.equal(entry.title, 'Interactive study session');
+    assert.equal(typeof entry.onClick, 'function');
+  } finally {
+    restore();
+  }
+});
+
 test('normalizeActionEntries mirrors todo normalization rules', () => {
   const entries = normalizeActionEntries([
     { id: 'direct', timeCost: 3, payout: 90 }

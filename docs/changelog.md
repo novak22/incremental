@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Fix: Deduplicated TODO queue entries so Learnly study sessions only appear once per day, preventing accidental double logs.
 - Hustles: Rebalanced multi-day contract payouts around base hourly earnings (with a 5% commitment bonus) and introduced the Data Entry Blitz gig with 4h and 8h variants for steady $5/hour work.
 - Hustles: Contract templates now publish multi-variant market metadata (hours-per-day, duration windows, payout schedules, copies) so daily rolls surface retainers alongside quick gigs.【F:src/game/hustles/definitions/instantHustles.js†L19-L855】
 - Tooling: `rollDailyOffers` records per-template audit summaries, exposes `getMarketRollAuditLog()`, and attaches `window.__HUSTLE_MARKET_DEBUG__` helpers for playtests.【F:src/game/hustles/market.js†L12-L755】
