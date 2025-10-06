@@ -195,7 +195,7 @@ function buildAudienceCallMarket(base = {}) {
         description: 'Coach a private cohort through deep-dive Q&A sessions across the week.',
         availableAfterDays: 1,
         durationDays: 3,
-        payoutAmount: 50,
+        payoutAmount: 55,
         hoursRequired: hours * 4,
         hoursPerDay: hours * 1.5,
         daysRequired: 3,
