@@ -18,6 +18,7 @@ import {
 } from '../core/state/slices/actionMarket/index.js';
 import { definitionRequirementsMet } from './requirements/checks.js';
 import { describeHustleRequirements } from './hustles/helpers.js';
+import { logHustleBlocked } from './content/schema/logMessaging.js';
 import { markDirty } from '../core/events/invalidationBus.js';
 import { abandonActionInstance } from './actions/progress/instances.js';
 
@@ -121,6 +122,14 @@ export function acceptHustleOffer(offerOrId, { state = getState() } = {}) {
 
   if (!template) {
     return null;
+  }
+
+  if (typeof template.getDisabledReason === 'function') {
+    const disabledReason = template.getDisabledReason(workingState);
+    if (disabledReason) {
+      logHustleBlocked(disabledReason);
+      return null;
+    }
   }
 
   if (!definitionRequirementsMet(template, workingState)) {

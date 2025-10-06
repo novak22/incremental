@@ -193,6 +193,7 @@ export function createInstantHustle(config) {
   definition.action.hiddenFromMarket = true;
 
   definition.getPrimaryOfferAction = resolvePrimaryOfferAction;
+  definition.getDisabledReason = state => hooks.getDisabledReason(state);
 
   if (typeof hooks.prepareCompletion === 'function') {
     definition.__prepareCompletion = ({ context, instance, state, completionHours }) =>
