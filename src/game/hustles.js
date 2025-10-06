@@ -129,17 +129,12 @@ export function acceptHustleOffer(offerOrId, { state = getState() } = {}) {
     return null;
   }
 
-  const metadata = offer.metadata || {};
+  const metadata = structuredClone(offer.metadata || {});
+  const acceptedOnDay = Math.max(1, Math.floor(Number(workingState.day) || offer.availableOnDay || 1));
   const hoursRequired = resolveOfferHours(offer, template);
-  const deadlineDay = Number.isFinite(Number(offer.expiresOnDay))
-    ? Math.max(fallbackDay, Math.floor(Number(offer.expiresOnDay)))
-    : null;
   const overrides = {};
   if (hoursRequired != null) {
     overrides.hoursRequired = hoursRequired;
-  }
-  if (deadlineDay != null) {
-    overrides.deadlineDay = deadlineDay;
   }
 
   const progressMetadata = typeof metadata.progress === 'object' && metadata.progress !== null
@@ -185,6 +180,34 @@ export function acceptHustleOffer(offerOrId, { state = getState() } = {}) {
     progressOverrides.label = resolvedProgressLabel;
   }
 
+  const resolvedOfferDeadline = Number.isFinite(Number(offer.expiresOnDay))
+    ? Math.max(fallbackDay, Math.floor(Number(offer.expiresOnDay)))
+    : null;
+
+  const normalizedDaysRequired = progressOverrides.daysRequired
+    ?? (Number.isFinite(resolvedDaysRequired) && resolvedDaysRequired > 0
+      ? Math.max(1, Math.floor(resolvedDaysRequired))
+      : null);
+
+  let deadlineDay = resolvedOfferDeadline;
+  if (normalizedDaysRequired != null && normalizedDaysRequired > 1) {
+    deadlineDay = acceptedOnDay + normalizedDaysRequired - 1;
+  }
+
+  if (deadlineDay != null) {
+    overrides.deadlineDay = deadlineDay;
+    progressOverrides.deadlineDay = deadlineDay;
+
+    const progressContainer = typeof metadata.progress === 'object' && metadata.progress !== null
+      ? metadata.progress
+      : (metadata.progress = {});
+    progressContainer.deadlineDay = deadlineDay;
+
+    if (typeof metadata.enrollment === 'object' && metadata.enrollment !== null) {
+      metadata.enrollment.deadlineDay = deadlineDay;
+    }
+  }
+
   if (Object.keys(progressOverrides).length) {
     overrides.progress = {
       ...overrides.progress,
@@ -224,8 +247,6 @@ export function acceptHustleOffer(offerOrId, { state = getState() } = {}) {
 
   const payoutAmount = resolveOfferPayoutAmount(offer, template);
   const payoutSchedule = resolveOfferPayoutSchedule(offer);
-  const acceptedOnDay = Math.max(1, Math.floor(Number(workingState.day) || offer.availableOnDay || 1));
-
   const payoutDetails = { schedule: payoutSchedule };
   if (payoutAmount != null) {
     payoutDetails.amount = payoutAmount;

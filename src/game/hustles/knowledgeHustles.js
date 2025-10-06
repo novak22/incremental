@@ -237,7 +237,8 @@ export function createKnowledgeHustles() {
           seatPolicy
         };
 
-        const durationDays = tuition > 0 ? 0 : 30;
+        const limitedSeatDuration = Math.max(0, (Number(track.days) || 1) - 1);
+        const durationDays = tuition > 0 ? limitedSeatDuration : 30;
 
         return {
           slotsPerRoll: 1,
