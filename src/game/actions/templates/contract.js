@@ -207,6 +207,24 @@ function normalizeAcceptHooks(options = {}) {
   return hooks;
 }
 
+function normalizeCompletionHooks(options = {}) {
+  const hooks = [];
+  if (!options) {
+    return hooks;
+  }
+  if (Array.isArray(options.hooks)) {
+    for (const hook of options.hooks) {
+      if (typeof hook === 'function') {
+        hooks.push(hook);
+      }
+    }
+  }
+  if (typeof options.onCompleted === 'function') {
+    hooks.push(options.onCompleted);
+  }
+  return hooks;
+}
+
 export function createContractTemplate(definition, options = {}) {
   const template = {
     ...definition,
@@ -289,6 +307,7 @@ export function createContractTemplate(definition, options = {}) {
   const baseAcceptOverrides = mergeOverrides(options.accept?.overrides, {});
   const acceptProgressDefaults = mergeProgress(options.accept?.progress, progressDefaults) || mergedProgress;
   const acceptHooks = normalizeAcceptHooks(options.accept);
+  const completionHooks = normalizeCompletionHooks(options.complete);
 
   template.acceptInstance = ({ overrides = {}, ...rest } = {}) => {
     const combinedOverrides = mergeOverrides(baseAcceptOverrides, overrides);
@@ -315,6 +334,12 @@ export function createContractTemplate(definition, options = {}) {
     }
     return instance;
   };
+
+  if (completionHooks.length) {
+    template.__completionHooks = completionHooks;
+  } else if (template.__completionHooks) {
+    delete template.__completionHooks;
+  }
 
   return template;
 }

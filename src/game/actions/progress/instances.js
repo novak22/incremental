@@ -211,6 +211,27 @@ export function completeActionInstance(definition, instance, context = {}) {
   });
 
   markDirty('actions');
+
+  const completionHooks = Array.isArray(definition?.__completionHooks)
+    ? definition.__completionHooks
+    : [];
+
+  if (completionHooks.length) {
+    const hookContext = {
+      ...context,
+      state,
+      definition,
+      instance: stored
+    };
+    for (const hook of completionHooks) {
+      try {
+        hook(hookContext);
+      } catch (_error) {
+        // Swallow hook errors to keep completion flow resilient.
+      }
+    }
+  }
+
   return stored;
 }
 

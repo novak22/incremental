@@ -1,9 +1,6 @@
 import knowledgeTrackData from './requirements/data/knowledgeTracks.js';
 import { getState, getActionState } from '../core/state.js';
 import { addLog } from '../core/log.js';
-import { spendMoney } from './currency.js';
-import { recordCostContribution } from './metrics.js';
-import { awardSkillProgress } from './skills/index.js';
 import { KNOWLEDGE_REWARDS } from './requirements/knowledgeTracks.js';
 import { getKnowledgeProgress } from './requirements/knowledgeProgress.js';
 import { getDefinitionRequirements } from './requirements/definitionRequirements.js';
@@ -35,10 +32,6 @@ const orchestrator = createRequirementsOrchestrator({
   abandonActionInstance,
   getKnowledgeProgress,
   knowledgeTracks,
-  knowledgeRewards: KNOWLEDGE_REWARDS,
-  spendMoney,
-  recordCostContribution,
-  awardSkillProgress,
   addLog
 });
 

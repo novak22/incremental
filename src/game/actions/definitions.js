@@ -13,12 +13,14 @@ function prepareInstantActions() {
 
 function prepareStudyActions() {
   return createKnowledgeHustles().map(definition => {
-    const template = createStudyTemplate(definition, {
+    const { templateOptions = {}, ...studyDefinition } = definition;
+    const template = createStudyTemplate(studyDefinition, {
+      ...templateOptions,
       templateKind: 'manual',
-      category: definition.category || 'study',
+      category: studyDefinition.category || 'study',
       progress: {
-        hoursPerDay: definition.studyHoursPerDay || definition.hoursPerDay || null,
-        daysRequired: definition.studyDays || definition.days || null
+        hoursPerDay: studyDefinition.studyHoursPerDay || studyDefinition.hoursPerDay || null,
+        daysRequired: studyDefinition.studyDays || studyDefinition.days || null
       }
     });
     template.kind = template.kind || 'action';
