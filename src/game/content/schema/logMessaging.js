@@ -1,6 +1,6 @@
 import { ensureArray } from '../../../core/helpers.js';
 import { addLog } from '../../../core/log.js';
-import { buildSlotLedger, describeSlotLedger } from '../../upgrades/effects.js';
+import { buildSlotLedger, describeSlotLedger } from '../../upgrades/effects/index.js';
 
 export function logHustleBlocked(reason) {
   if (!reason) return;

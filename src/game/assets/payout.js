@@ -1,6 +1,6 @@
 import { getState } from '../../core/state.js';
 import { getAssetDefinition } from '../../core/state/registry.js';
-import { getAssetEffectMultiplier } from '../upgrades/effects.js';
+import { getAssetEffectMultiplier } from '../upgrades/effects/index.js';
 import { applyModifiers } from '../data/economyMath.js';
 import { getInstanceNicheEffect } from './niches.js';
 import { applyAssetIncomeEducationBonus } from '../educationEffects.js';

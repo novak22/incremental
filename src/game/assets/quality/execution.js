@@ -1,7 +1,7 @@
 import { formatHours, formatMoney } from '../../../core/helpers.js';
 import { addLog } from '../../../core/log.js';
 import { getAssetState, getState } from '../../../core/state.js';
-import { getAssetEffectMultiplier } from '../../upgrades/effects.js';
+import { getAssetEffectMultiplier } from '../../upgrades/effects/index.js';
 import { applyModifiers } from '../../data/economyMath.js';
 import { spendMoney } from '../../currency.js';
 import { spendTime } from '../../time.js';

@@ -10,7 +10,7 @@ import {
   getAssetEffectMultiplier,
   getExclusiveConflict,
   wouldExceedSlotCapacity
-} from '../src/game/upgrades/effects.js';
+} from '../src/game/upgrades/effects/index.js';
 
 function makeUpgrade(definition) {
   return {

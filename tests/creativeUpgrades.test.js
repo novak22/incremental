@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { getGameTestHarness } from './helpers/gameTestHarness.js';
-import { getAssetEffectMultiplier } from '../src/game/upgrades/effects.js';
+import { getAssetEffectMultiplier } from '../src/game/upgrades/effects/index.js';
 
 const harness = await getGameTestHarness();
 const {

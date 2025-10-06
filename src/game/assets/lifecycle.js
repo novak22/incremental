@@ -13,7 +13,7 @@ import {
   recordPayoutContribution,
   recordTimeContribution
 } from '../metrics.js';
-import { getAssetEffectMultiplier } from '../upgrades/effects.js';
+import { getAssetEffectMultiplier } from '../upgrades/effects/index.js';
 import { formatEducationBonusSummary } from '../educationEffects.js';
 
 export function allocateAssetMaintenance() {
