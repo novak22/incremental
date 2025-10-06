@@ -7,6 +7,46 @@ import { collectOutstandingActionEntries } from '../../actions/outstanding/index
 import { describeHustleOfferMeta, describeSeatAvailability } from '../../hustles/offerHelpers.js';
 import { describeRequirementGuidance } from '../../hustles/requirements.js';
 
+function normalizeCategory(value, fallback = 'action') {
+  if (typeof value !== 'string') {
+    return fallback;
+  }
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return fallback;
+  }
+  return trimmed.toLowerCase();
+}
+
+function formatCategoryLabel(value) {
+  if (!value) {
+    return 'Action';
+  }
+  const parts = value
+    .split(/[\s:_-]+/)
+    .filter(Boolean)
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1));
+  return parts.length ? parts.join(' ') : 'Action';
+}
+
+function buildDescriptorCopy(categoryLabel) {
+  const noun = (categoryLabel || 'action').toLowerCase();
+  return {
+    ready: {
+      title: 'Ready to accept',
+      description: `Step 1 • Accept: Claim your next ${noun} and move it into your active worklist.`
+    },
+    upcoming: {
+      title: 'Queued for later',
+      description: `These ${noun} leads unlock with tomorrow's refresh. Prep so you can accept quickly.`
+    },
+    commitments: {
+      title: 'In progress',
+      description: `Step 2 • Work: Log hours until this ${noun} is complete.`
+    }
+  };
+}
+
 export default function buildHustleModels(definitions = [], helpers = {}) {
   const {
     getState: getStateFn = getState,
@@ -68,6 +108,29 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
   });
 
   return definitions.map(definition => {
+    const normalizedCategory = normalizeCategory(definition.category ?? definition.market?.category, 'hustle');
+    const baseDescriptors = typeof definition.descriptors === 'object' && definition.descriptors !== null
+      ? { ...definition.descriptors }
+      : {};
+    const descriptorCategory = normalizeCategory(baseDescriptors.category ?? normalizedCategory, normalizedCategory);
+    const categoryLabel = formatCategoryLabel(baseDescriptors.categoryLabel || descriptorCategory);
+    const descriptorCopy = buildDescriptorCopy(categoryLabel);
+    const descriptors = {
+      ...baseDescriptors,
+      category: descriptorCategory,
+      categoryLabel,
+      copy: {
+        ...descriptorCopy,
+        ...(baseDescriptors.copy || {})
+      }
+    };
+    const actionCategory = descriptors.category || normalizedCategory;
+    const categoryNoun = (descriptors.categoryLabel || 'Action').toLowerCase();
+    const defaultReadyGuidance = `Step 1 • Accept: Claim your next ${categoryNoun} and move it into your active worklist.`;
+    const defaultWaitingGuidance = `Next wave unlocks tomorrow. Prep now so you're ready to accept and start logging progress.`;
+    const defaultRerollGuidance = `Need something now? Roll a fresh ${categoryNoun} and keep the accept → work → complete loop moving.`;
+    const defaultEmptyGuidance = `Fresh leads roll in with tomorrow's refresh. Accept the next ${categoryNoun} to keep momentum.`;
+
     const time = Number(definition.time || definition.action?.timeCost) || 0;
     const payout = Number(definition.payout?.amount || definition.action?.payout) || 0;
     const roi = time > 0 ? payout / time : payout;
@@ -255,7 +318,7 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
           disabled: false,
           className: 'primary',
           onClick: primaryOffer.onAccept,
-          guidance: 'Fresh hustles just landed! Claim your next gig and keep momentum rolling.'
+          guidance: defaultReadyGuidance
         };
       } else {
         const availableIn = Number.isFinite(primaryOffer.availableIn) ? primaryOffer.availableIn : null;
@@ -266,12 +329,12 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
           disabled: true,
           className: 'primary',
           onClick: null,
-          guidance: 'Next wave of offers unlocks tomorrow. Line up your prep and check back after the reset.'
+          guidance: defaultWaitingGuidance
         };
       }
     } else if (typeof rollOffers === 'function') {
       const rerollLabel = definition.market?.manualRerollLabel || 'Roll a fresh offer';
-      const rerollGuidance = definition.market?.manualRerollHelp || 'Spin up a new lead if you can\'t wait for tomorrow.';
+      const rerollGuidance = definition.market?.manualRerollHelp || defaultRerollGuidance;
       actionConfig = {
         label: rerollLabel,
         disabled: false,
@@ -284,7 +347,7 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
       };
     } else {
       const emptyLabel = definition.market?.emptyActionLabel || 'Check back tomorrow';
-      const emptyGuidance = definition.market?.emptyGuidance || 'Fresh leads roll in with tomorrow\'s market refresh.';
+      const emptyGuidance = definition.market?.emptyGuidance || defaultEmptyGuidance;
       actionConfig = {
         label: emptyLabel,
         disabled: true,
@@ -294,6 +357,8 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
       };
     }
 
+    const templateKind = definition.templateKind || definition.type || null;
+
     const badges = [`${formatHoursFn(time)} time`];
     if (payout > 0) {
       badges.push(`$${formatMoneyFn(payout)} payout`);
@@ -301,15 +366,11 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
     if (definition.tag?.label) {
       badges.push(definition.tag.label);
     }
-    if (definition.market?.category) {
-      const categoryLabel = definition.market.category
-        .split(' ')
-        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-        .join(' ');
-      badges.push(`${categoryLabel} market`);
+    if (actionCategory) {
+      badges.push(`${descriptors.categoryLabel} track`);
     }
     if (commitments.length) {
-      badges.push(`${commitments.length} active`);
+      badges.push(`${commitments.length} in progress`);
     }
     if (upcomingOffers.length) {
       badges.push(`${upcomingOffers.length} queued`);
@@ -322,6 +383,13 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
       name: definition.name || definition.id,
       description: definition.description || '',
       tag: definition.tag || null,
+      templateKind,
+      actionCategory,
+      categoryLabel: descriptors.categoryLabel,
+      descriptors,
+      labels: {
+        category: descriptors.categoryLabel
+      },
       metrics: {
         time: { value: time, label: formatHoursFn(time) },
         payout: { value: payout, label: payout > 0 ? `$${formatMoneyFn(payout)}` : '' },
@@ -354,7 +422,10 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
         available,
         limitRemaining: usage ? usage.remaining : null,
         tag: definition.tag?.label || '',
-        category: definition.market?.category || ''
+        category: actionCategory || '',
+        actionCategory: actionCategory || '',
+        categoryLabel: descriptors.categoryLabel || '',
+        templateKind: templateKind || ''
       },
       seat: seatSummary
         ? {

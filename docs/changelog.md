@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- UI: Shared action cards now power hustles, courses, and upkeep with contract descriptors, refreshed accept → work → complete copy, and expanded TODO grouping aliases for maintenance and study variants.
 - UI: Hustle quick actions group market variants, surface commitment length and expiry, and card views now spotlight seat limits and market categories across Hustles and Learnly.
 - Fix: Deduplicated TODO queue entries so Learnly study sessions only appear once per day, preventing accidental double logs.
 - Hustles: Rebalanced multi-day contract payouts around base hourly earnings (with a 5% commitment bonus) and introduced the Data Entry Blitz gig with 4h and 8h variants for steady $5/hour work.

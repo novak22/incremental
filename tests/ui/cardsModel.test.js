@@ -63,6 +63,11 @@ test('buildHustleModels mirrors availability filters', () => {
   assert.equal(available.available, true);
   assert.equal(available.filters.available, true);
   assert.equal(available.filters.limitRemaining, null);
+  assert.equal(available.actionCategory, 'hustle');
+  assert.equal(available.descriptors.categoryLabel, 'Hustle');
+  assert.equal(available.filters.category, 'hustle');
+  assert.equal(available.filters.templateKind, '');
+  assert.equal(available.labels.category, 'Hustle');
 
   const blocked = models.find(model => model.id === 'hustle-blocked');
   assert.ok(blocked, 'expected blocked hustle model');
@@ -166,7 +171,7 @@ test('buildHustleModels prefers accepting ready offers and queues upcoming separ
   assert.equal(model.action.label, 'Accept Ready Offer');
   assert.equal(model.action.disabled, false);
   assert.equal(model.action.className, 'primary');
-  assert.match(model.action.guidance, /Fresh hustles just landed!/);
+  assert.match(model.action.guidance, /Step 1 • Accept/i);
   assert.equal(model.offers.length, 1, 'ready offers should populate the primary list');
   assert.equal(model.upcoming.length, 1, 'upcoming offers should be tracked separately');
 });

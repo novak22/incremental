@@ -7,7 +7,19 @@ import {
 } from './focusBuckets.js';
 
 const BUCKET_ALIASES = new Map([
-  ['education', 'study']
+  ['education', 'study'],
+  ['course', 'study'],
+  ['training', 'study'],
+  ['lesson', 'study'],
+  ['class', 'study'],
+  ['contract', 'hustle'],
+  ['project', 'hustle'],
+  ['gig', 'hustle'],
+  ['work', 'hustle'],
+  ['maintenance', 'commitment'],
+  ['upkeep', 'commitment'],
+  ['care', 'commitment'],
+  ['support', 'commitment']
 ]);
 
 const METRIC_KEYS = [

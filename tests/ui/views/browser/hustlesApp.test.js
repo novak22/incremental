@@ -84,19 +84,19 @@ test('renderHustles highlights accept CTA and upcoming list', () => {
 
   try {
     const result = renderHustles(context, definitions, models);
-    assert.ok(result?.meta.includes('Fresh hustles just landed!'));
+    assert.ok(result?.meta.includes('Keep the loop rolling — accept → work → complete.'));
 
     const button = document.querySelector('.browser-card__actions .browser-card__button--primary');
     assert.ok(button, 'expected primary accept CTA');
     assert.equal(button.textContent, 'Accept Ready Offer');
 
     const upcomingHeader = [...document.querySelectorAll('.browser-card__section-title')]
-      .find(node => node.textContent === 'Coming tomorrow');
+      .find(node => node.textContent === 'Queued for later');
     assert.ok(upcomingHeader, 'expected upcoming section to render');
 
     const upcomingItem = document.querySelector('.hustle-card__offer.is-upcoming .browser-card__button');
     assert.ok(upcomingItem, 'expected upcoming offer to render with disabled button');
-    assert.equal(upcomingItem.textContent, 'Unlocks in 1 day');
+    assert.equal(upcomingItem.textContent, 'Opens in 1 day');
   } finally {
     dom.window.close();
     delete globalThis.window;
@@ -281,13 +281,14 @@ test('renderHustles hides categories without unlocked offers', () => {
 
   try {
     const result = renderHustles(context, definitions, models);
-    assert.equal(result?.meta, 'No hustles ready yet');
+    assert.equal(result?.meta, 'No actions ready yet — accept your next contract to kick things off.');
 
     const cards = document.querySelectorAll('.browser-card.browser-card--hustle');
     assert.equal(cards.length, 0, 'expected no hustle categories to render');
 
     const emptyMessage = document.querySelector('.browser-empty');
-    assert.ok(emptyMessage, 'expected empty state when no unlocked hustles exist');
+    assert.ok(emptyMessage, 'expected empty state when no unlocked actions exist');
+    assert.equal(emptyMessage.textContent, 'Queue an action to see it spotlighted here.');
   } finally {
     dom.window.close();
     delete globalThis.window;
@@ -332,7 +333,7 @@ test('renderHustles falls back to empty-state language when no offers exist', ()
         disabled: true,
         className: 'secondary',
         onClick: null,
-        guidance: 'Fresh leads roll in with tomorrow\'s market refresh.'
+        guidance: 'Fresh leads roll in with tomorrow\'s refresh. Accept the next hustle to keep momentum.'
       },
       available: false,
       offers: [],
@@ -344,7 +345,7 @@ test('renderHustles falls back to empty-state language when no offers exist', ()
 
   try {
     const result = renderHustles(context, definitions, models);
-    assert.equal(result?.meta, 'No hustles ready yet');
+    assert.equal(result?.meta, 'No actions ready yet — accept your next contract to kick things off.');
 
     const button = document.querySelector('.browser-card__actions .browser-card__button');
     assert.ok(button, 'expected fallback button');
@@ -352,7 +353,7 @@ test('renderHustles falls back to empty-state language when no offers exist', ()
     assert.equal(button.disabled, true);
 
     const guidance = document.querySelector('.browser-card__note');
-    assert.ok(guidance?.textContent.includes('Fresh leads roll in'));
+    assert.ok(guidance?.textContent.includes('Accept the next hustle'));
   } finally {
     dom.window.close();
     delete globalThis.window;

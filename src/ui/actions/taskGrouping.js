@@ -17,14 +17,14 @@ import {
 } from './queueService.js';
 import { resolveStudyTrackId } from './studyTracks.js';
 
-export const DEFAULT_TODO_EMPTY_MESSAGE = 'Queue a hustle or upgrade to add new tasks.';
+export const DEFAULT_TODO_EMPTY_MESSAGE = 'Queue an action or upgrade to add new tasks.';
 
 export const TASK_GROUP_CONFIGS = [
   {
     key: 'hustle',
-    label: 'Hustles queued',
-    empty: 'Line up a gig to stack this lane.',
-    buckets: ['hustle']
+    label: 'Contracts queued',
+    empty: 'Accept a contract to stack this lane.',
+    buckets: ['hustle', 'contract', 'project', 'gig', 'work']
   },
   {
     key: 'upgrade',
@@ -35,14 +35,14 @@ export const TASK_GROUP_CONFIGS = [
   {
     key: 'study',
     label: 'Study & training',
-    empty: 'No study blocks queued yet.',
-    buckets: ['study', 'education']
+    empty: 'Enroll in a course to keep your skills leveling.',
+    buckets: ['study', 'education', 'course', 'training', 'lesson', 'class']
   },
   {
     key: 'other',
-    label: 'Assist & extras',
-    empty: 'No support tasks waiting on you.',
-    buckets: ['other', 'commitment', 'assist', 'support']
+    label: 'Upkeep & support',
+    empty: 'No upkeep tasks waiting on you.',
+    buckets: ['other', 'commitment', 'assist', 'support', 'maintenance', 'upkeep', 'care', 'service']
   }
 ];
 
