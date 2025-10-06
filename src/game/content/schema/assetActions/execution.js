@@ -256,7 +256,9 @@ export function createExecutionHooks({
       : computeCompletionHours(instance, metadata.time);
     workingContext.effectiveTime = Number.isFinite(resolvedHours) && resolvedHours >= 0 ? resolvedHours : 0;
 
-    if (workingContext.effectiveTime > 0) {
+    const shouldApplySideEffects = workingContext.__completionSideEffectsApplied !== true;
+
+    if (shouldApplySideEffects && workingContext.effectiveTime > 0) {
       applyMetric(recordTimeContribution, metadata.metrics.time, { hours: workingContext.effectiveTime });
     }
 
@@ -264,7 +266,7 @@ export function createExecutionHooks({
       workingContext.__skipDefaultPayout = true;
     };
 
-    if (metadata.skills) {
+    if (shouldApplySideEffects && metadata.skills) {
       workingContext.skillXpAwarded = awardSkillProgress({
         skills: metadata.skills,
         timeSpentHours: workingContext.effectiveTime,
@@ -310,10 +312,13 @@ export function createExecutionHooks({
       }
     }
 
-    const updatedUsage = consumeDailyUsage(state);
-    if (updatedUsage) {
-      workingContext.limitUsage = updatedUsage;
-      markDirty('actions');
+    if (shouldApplySideEffects) {
+      const updatedUsage = consumeDailyUsage(state);
+      if (updatedUsage) {
+        workingContext.limitUsage = updatedUsage;
+        markDirty('actions');
+      }
+      workingContext.__completionSideEffectsApplied = true;
     }
 
     return workingContext;
@@ -322,7 +327,9 @@ export function createExecutionHooks({
   function runHustle(context) {
     const effectiveTime = resolveEffectiveTime(context.state);
     context.effectiveTime = effectiveTime;
-    if (effectiveTime > 0) {
+    const shouldApplySideEffects = context.__completionSideEffectsApplied !== true;
+
+    if (shouldApplySideEffects && effectiveTime > 0) {
       spendTime(effectiveTime);
       applyMetric(recordTimeContribution, metadata.metrics.time, { hours: effectiveTime });
     }
@@ -333,7 +340,7 @@ export function createExecutionHooks({
 
     config.onExecute?.(context);
 
-    if (metadata.skills) {
+    if (shouldApplySideEffects && metadata.skills) {
       context.skillXpAwarded = awardSkillProgress({
         skills: metadata.skills,
         timeSpentHours: effectiveTime,
@@ -384,10 +391,13 @@ export function createExecutionHooks({
       }
     }
 
-    const updatedUsage = consumeDailyUsage(context.state);
-    if (updatedUsage) {
-      context.limitUsage = updatedUsage;
-      markDirty('actions');
+    if (shouldApplySideEffects) {
+      const updatedUsage = consumeDailyUsage(context.state);
+      if (updatedUsage) {
+        context.limitUsage = updatedUsage;
+        markDirty('actions');
+      }
+      context.__completionSideEffectsApplied = true;
     }
 
     config.onComplete?.(context);
