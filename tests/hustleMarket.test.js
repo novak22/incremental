@@ -567,6 +567,58 @@ test('acceptHustleOffer rejects offers when requirements are not met', () => {
   assert.equal(stillAvailable, true, 'offer should remain in the market for later attempts');
 });
 
+test('acceptHustleOffer enforces daily limits across multiple pending offers', () => {
+  const state = harness.resetState();
+  state.day = 9;
+  state.timeLeft = 48;
+  state.money = 10_000;
+
+  const template = HUSTLE_TEMPLATES.find(entry => entry?.id === 'surveySprint' && Number(entry.dailyLimit) > 1);
+  assert.ok(template, 'expected survey sprint template with a daily limit');
+
+  const dailyLimit = Number(template.dailyLimit);
+  assert.ok(Number.isFinite(dailyLimit) && dailyLimit > 1, 'survey sprint should advertise multiple daily runs');
+
+  rollDailyOffers({ templates: [template], day: state.day, now: 10_000, state, rng: () => 0 });
+
+  function acceptNextOffer() {
+    let available = getAvailableOffers(state, { day: state.day });
+    let offer = available.find(entry => entry.templateId === template.id);
+    if (!offer) {
+      rollDailyOffers({ templates: [template], day: state.day, now: Date.now(), state, rng: () => 0 });
+      available = getAvailableOffers(state, { day: state.day });
+      offer = available.find(entry => entry.templateId === template.id);
+    }
+    return offer ? acceptHustleOffer(offer.id, { state }) : null;
+  }
+
+  const acceptedEntries = [];
+  for (let index = 0; index < dailyLimit; index += 1) {
+    const accepted = acceptNextOffer();
+    assert.ok(accepted, `expected acceptance ${index + 1} to succeed before hitting the cap`);
+    acceptedEntries.push(accepted);
+  }
+
+  const usageSnapshot = template.getDailyUsage(state);
+  assert.equal(usageSnapshot.pending, dailyLimit, 'pending reservations should match the daily limit');
+  assert.equal(usageSnapshot.remaining, 0, 'no remaining slots should be available after reserving the limit');
+
+  const blockedAttempt = acceptNextOffer();
+  assert.equal(blockedAttempt, null, 'acceptance should fail once the daily limit is reserved');
+  const disabledReason = template.getDisabledReason(state);
+  assert.match(disabledReason, /claimed/i, 'blocked attempt should describe the claimed daily slots');
+
+  const released = releaseClaimedHustleOffer({ offerId: acceptedEntries[0].offerId }, { state });
+  assert.ok(released, 'expected release call to free a reserved slot');
+
+  const postReleaseUsage = template.getDailyUsage(state);
+  assert.equal(postReleaseUsage.pending, dailyLimit - 1, 'releasing should lower the pending reservation count');
+  assert.equal(postReleaseUsage.remaining, 1, 'one slot should reopen after releasing a claim');
+
+  const resumedAcceptance = acceptNextOffer();
+  assert.ok(resumedAcceptance, 'acceptance should succeed again after freeing capacity');
+});
+
 test('acceptHustleOffer seeds progress overrides from metadata', () => {
   const state = getState();
   state.day = 10;

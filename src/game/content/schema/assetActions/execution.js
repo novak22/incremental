@@ -24,53 +24,132 @@ function meetsAssetRequirements(requirements = [], state = getState()) {
 }
 
 export function createDailyLimitTracker(metadata) {
+  function sanitizePendingCount(value, max) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric) || numeric <= 0) {
+      return 0;
+    }
+    if (!Number.isFinite(max)) {
+      return Math.floor(numeric);
+    }
+    return Math.max(0, Math.min(Math.floor(numeric), Math.floor(max)));
+  }
+
   function resolveDailyUsage(state = getState(), { sync = false } = {}) {
     const actionState = getActionState(metadata.id, state);
     const currentDay = Number(state?.day) || 1;
+
+    const lastRunDay = Number(actionState.lastRunDay) || 0;
+    const baseRuns = Number(actionState.runsToday) || 0;
+    const sanitizedRuns = Math.max(0, baseRuns);
+    const usedToday = metadata.dailyLimit
+      ? (lastRunDay === currentDay ? sanitizedRuns : 0)
+      : sanitizedRuns;
+
+    const pendingDay = Number(actionState.pendingAcceptsDay) || 0;
+    const pendingBase = pendingDay === currentDay ? actionState.pendingAccepts : 0;
+    const pendingToday = sanitizePendingCount(pendingBase, metadata.dailyLimit);
+
+    if (sync) {
+      if (metadata.dailyLimit) {
+        if (lastRunDay !== currentDay) {
+          actionState.lastRunDay = currentDay;
+          actionState.runsToday = usedToday;
+        }
+        if (pendingDay !== currentDay) {
+          actionState.pendingAcceptsDay = pendingToday > 0 ? currentDay : null;
+          actionState.pendingAccepts = pendingToday;
+        } else if (actionState.pendingAccepts !== pendingToday) {
+          actionState.pendingAccepts = pendingToday;
+        }
+      } else if (!Number.isFinite(baseRuns) || baseRuns < 0) {
+        actionState.runsToday = 0;
+      }
+      if (pendingToday === 0 && metadata.dailyLimit) {
+        actionState.pendingAccepts = 0;
+        actionState.pendingAcceptsDay = null;
+      }
+    }
 
     if (!metadata.dailyLimit) {
       return {
         actionState,
         currentDay,
         limit: null,
-        used: Number(actionState.runsToday) || 0,
+        used: Math.max(0, baseRuns),
+        pending: pendingToday,
         remaining: null
       };
     }
 
-    const lastRunDay = Number(actionState.lastRunDay) || 0;
-    const usedToday = lastRunDay === currentDay ? Number(actionState.runsToday) || 0 : 0;
-
-    if (sync && lastRunDay !== currentDay) {
-      actionState.lastRunDay = currentDay;
-      actionState.runsToday = usedToday;
-    }
+    const remaining = Math.max(0, metadata.dailyLimit - usedToday - pendingToday);
 
     return {
       actionState,
       currentDay,
       limit: metadata.dailyLimit,
       used: usedToday,
-      remaining: Math.max(0, metadata.dailyLimit - usedToday)
+      pending: pendingToday,
+      remaining
     };
   }
 
-  function updateDailyUsage(state) {
+  function reserveDailyUsage(state = getState()) {
     if (!metadata.dailyLimit) return null;
     const usage = resolveDailyUsage(state, { sync: true });
-    const nextUsed = Math.min(metadata.dailyLimit, usage.used + 1);
-    usage.actionState.lastRunDay = usage.currentDay;
-    usage.actionState.runsToday = nextUsed;
-    const remaining = Math.max(0, metadata.dailyLimit - nextUsed);
+    if (usage.remaining <= 0) {
+      return null;
+    }
+    const available = metadata.dailyLimit - usage.used;
+    const nextPending = Math.min(available, usage.pending + 1);
+    usage.actionState.pendingAccepts = nextPending;
+    usage.actionState.pendingAcceptsDay = usage.currentDay;
+    const remaining = Math.max(0, metadata.dailyLimit - usage.used - nextPending);
     return {
       limit: metadata.dailyLimit,
-      used: nextUsed,
+      used: usage.used,
+      pending: nextPending,
       remaining,
       day: usage.currentDay
     };
   }
 
-  return { resolveDailyUsage, updateDailyUsage };
+  function releaseDailyUsage(state = getState()) {
+    if (!metadata.dailyLimit) return null;
+    const usage = resolveDailyUsage(state, { sync: true });
+    const nextPending = usage.pending > 0 ? usage.pending - 1 : 0;
+    usage.actionState.pendingAccepts = nextPending;
+    usage.actionState.pendingAcceptsDay = nextPending > 0 ? usage.currentDay : null;
+    const remaining = Math.max(0, metadata.dailyLimit - usage.used - nextPending);
+    return {
+      limit: metadata.dailyLimit,
+      used: usage.used,
+      pending: nextPending,
+      remaining,
+      day: usage.currentDay
+    };
+  }
+
+  function consumeDailyUsage(state = getState()) {
+    if (!metadata.dailyLimit) return null;
+    const usage = resolveDailyUsage(state, { sync: true });
+    const nextPending = usage.pending > 0 ? usage.pending - 1 : 0;
+    const nextUsed = Math.min(metadata.dailyLimit, usage.used + 1);
+    usage.actionState.lastRunDay = usage.currentDay;
+    usage.actionState.runsToday = nextUsed;
+    usage.actionState.pendingAccepts = nextPending;
+    usage.actionState.pendingAcceptsDay = nextPending > 0 ? usage.currentDay : null;
+    const remaining = Math.max(0, metadata.dailyLimit - nextUsed - nextPending);
+    return {
+      limit: metadata.dailyLimit,
+      used: nextUsed,
+      pending: nextPending,
+      remaining,
+      day: usage.currentDay
+    };
+  }
+
+  return { resolveDailyUsage, reserveDailyUsage, releaseDailyUsage, consumeDailyUsage };
 }
 
 export function createExecutionHooks({
@@ -78,7 +157,9 @@ export function createExecutionHooks({
   metadata,
   config,
   resolveDailyUsage,
-  updateDailyUsage
+  reserveDailyUsage,
+  releaseDailyUsage,
+  consumeDailyUsage
 }) {
   function resolveEffectiveTime(state = getState()) {
     if (!metadata.time) return metadata.time;
@@ -94,6 +175,9 @@ export function createExecutionHooks({
     if (metadata.dailyLimit) {
       const usage = resolveDailyUsage(state, { sync: true });
       if (usage.remaining <= 0) {
+        if (usage.pending > 0 && usage.used < metadata.dailyLimit) {
+          return `All ${definition.name} contracts for today are already claimed. Complete or cancel an active contract to free a slot.`;
+        }
         const runsLabel = metadata.dailyLimit === 1 ? 'once' : `${metadata.dailyLimit} times`;
         return `Daily limit reached: ${definition.name} can only run ${runsLabel} per day. Fresh slots unlock tomorrow.`;
       }
@@ -226,7 +310,7 @@ export function createExecutionHooks({
       }
     }
 
-    const updatedUsage = updateDailyUsage(state);
+    const updatedUsage = consumeDailyUsage(state);
     if (updatedUsage) {
       workingContext.limitUsage = updatedUsage;
       markDirty('actions');
@@ -300,7 +384,7 @@ export function createExecutionHooks({
       }
     }
 
-    const updatedUsage = updateDailyUsage(context.state);
+    const updatedUsage = consumeDailyUsage(context.state);
     if (updatedUsage) {
       context.limitUsage = updatedUsage;
       markDirty('actions');
@@ -377,6 +461,9 @@ export function createExecutionHooks({
     runHustle,
     disabled,
     handleActionClick,
-    prepareCompletion
+    prepareCompletion,
+    reserveDailyUsage,
+    releaseDailyUsage,
+    consumeDailyUsage
   };
 }

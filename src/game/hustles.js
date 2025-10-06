@@ -33,12 +33,48 @@ export { rollDailyOffers, getAvailableOffers, getClaimedOffers, getMarketRollAud
 
 export * from './hustles/helpers.js';
 
+function matchesAcceptedEntry(entry, identifiers = {}) {
+  if (!entry) {
+    return false;
+  }
+  const { offerId, acceptedId, instanceId } = identifiers || {};
+  return Boolean(
+    (offerId && entry.offerId === offerId)
+    || (acceptedId && entry.id === acceptedId)
+    || (instanceId && entry.instanceId === instanceId)
+  );
+}
+
 export function releaseClaimedHustleOffer(identifiers, { state = getState() } = {}) {
   const workingState = state || getState();
   if (!workingState) {
     return false;
   }
-  return releaseActionMarketOffer(workingState, HUSTLE_ACTION_CATEGORY, identifiers);
+
+  const fallbackDay = Math.max(1, Math.floor(Number(workingState.day) || 1));
+  const marketState = ensureActionMarketCategoryState(workingState, HUSTLE_ACTION_CATEGORY, { fallbackDay });
+  const candidates = Array.isArray(marketState?.accepted)
+    ? marketState.accepted.filter(entry => matchesAcceptedEntry(entry, identifiers))
+    : [];
+
+  const released = releaseActionMarketOffer(workingState, HUSTLE_ACTION_CATEGORY, identifiers);
+
+  if (released && candidates.length) {
+    for (const entry of candidates) {
+      let template = TEMPLATE_BY_ID.get(entry.templateId) || TEMPLATE_BY_ID.get(entry.definitionId);
+      if (!template) {
+        template = ACTIONS.find(definition => definition.id === entry.definitionId || definition.id === entry.templateId) || null;
+        if (template) {
+          TEMPLATE_BY_ID.set(template.id, template);
+        }
+      }
+      if (template && typeof template.releaseDailyUsage === 'function') {
+        template.releaseDailyUsage(workingState);
+      }
+    }
+  }
+
+  return released;
 }
 
 function clampDay(value, fallback = 1) {
@@ -123,6 +159,14 @@ export function acceptHustleOffer(offerOrId, { state = getState() } = {}) {
   if (!template) {
     return null;
   }
+
+  const hasDailyLimit = Number.isFinite(Number(template.dailyLimit)) && Number(template.dailyLimit) > 0;
+  const reserveDailyLimit = typeof template.reserveDailyUsage === 'function'
+    ? () => template.reserveDailyUsage(workingState)
+    : null;
+  const releaseDailyLimit = typeof template.releaseDailyUsage === 'function'
+    ? () => template.releaseDailyUsage(workingState)
+    : null;
 
   if (typeof template.getDisabledReason === 'function') {
     const disabledReason = template.getDisabledReason(workingState);
@@ -242,6 +286,24 @@ export function acceptHustleOffer(offerOrId, { state = getState() } = {}) {
     return null;
   }
 
+  let reservedUsage = null;
+  if (reserveDailyLimit) {
+    reservedUsage = reserveDailyLimit();
+    if (hasDailyLimit && !reservedUsage) {
+      if (cancelAcceptance) {
+        cancelAcceptance();
+      }
+      abandonActionInstance(template, instance.id, { state: workingState });
+      const disabledReason = typeof template.getDisabledReason === 'function'
+        ? template.getDisabledReason(workingState)
+        : null;
+      if (disabledReason) {
+        logHustleBlocked(disabledReason);
+      }
+      return null;
+    }
+  }
+
   const finalizeAcceptance = typeof instance.__finalizeStudyAcceptance === 'function'
     ? instance.__finalizeStudyAcceptance
     : null;
@@ -284,6 +346,10 @@ export function acceptHustleOffer(offerOrId, { state = getState() } = {}) {
   if (!acceptedEntry) {
     if (cancelAcceptance) {
       cancelAcceptance();
+    }
+    if (reservedUsage && releaseDailyLimit) {
+      releaseDailyLimit();
+      reservedUsage = null;
     }
     abandonActionInstance(template, instance.id, { state: workingState });
     return null;

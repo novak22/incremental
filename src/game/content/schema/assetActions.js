@@ -37,7 +37,12 @@ export function createInstantHustle(config) {
       : null
   };
 
-  const { resolveDailyUsage, updateDailyUsage } = createDailyLimitTracker(metadata);
+  const {
+    resolveDailyUsage,
+    reserveDailyUsage,
+    releaseDailyUsage,
+    consumeDailyUsage
+  } = createDailyLimitTracker(metadata);
 
   const progressDefaults = buildProgressDefaults({ metadata, config });
 
@@ -128,7 +133,9 @@ export function createInstantHustle(config) {
     metadata,
     config,
     resolveDailyUsage,
-    updateDailyUsage
+    reserveDailyUsage,
+    releaseDailyUsage,
+    consumeDailyUsage
   });
 
   definition.dailyLimit = metadata.dailyLimit;
@@ -194,6 +201,9 @@ export function createInstantHustle(config) {
 
   definition.getPrimaryOfferAction = resolvePrimaryOfferAction;
   definition.getDisabledReason = state => hooks.getDisabledReason(state);
+  definition.reserveDailyUsage = state => hooks.reserveDailyUsage(state);
+  definition.releaseDailyUsage = state => hooks.releaseDailyUsage(state);
+  definition.consumeDailyUsage = state => hooks.consumeDailyUsage(state);
 
   if (typeof hooks.prepareCompletion === 'function') {
     definition.__prepareCompletion = ({ context, instance, state, completionHours }) =>
