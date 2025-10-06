@@ -1,4 +1,11 @@
 import { structuredClone, createId } from '../../core/helpers.js';
+import {
+  clampMarketDay,
+  clampMarketDaySpan,
+  clampMarketPositiveInteger,
+  clampMarketWeight,
+  cloneMarketMetadata
+} from './normalizers.js';
 import { getState } from '../../core/state.js';
 import {
   ensureHustleMarketState,
@@ -73,58 +80,14 @@ export function getMarketRollAuditLog() {
   }));
 }
 
-function resolveDay(value, fallback = 1) {
-  const parsed = Number(value);
-  if (!Number.isFinite(parsed) || parsed <= 0) {
-    const fallbackParsed = Number(fallback);
-    if (!Number.isFinite(fallbackParsed) || fallbackParsed <= 0) {
-      return 1;
-    }
-    return Math.floor(fallbackParsed);
-  }
-  return Math.floor(parsed);
-}
-
-function resolveNonNegative(value, fallback = 0) {
-  const parsed = Number(value);
-  if (!Number.isFinite(parsed) || parsed < 0) {
-    const fallbackParsed = Number(fallback);
-    if (!Number.isFinite(fallbackParsed) || fallbackParsed < 0) {
-      return 0;
-    }
-    return Math.floor(fallbackParsed);
-  }
-  return Math.floor(parsed);
-}
-
-function resolveWeight(value, fallback = 1) {
-  const parsed = Number(value);
-  if (!Number.isFinite(parsed) || parsed <= 0) {
-    return fallback;
-  }
-  return parsed;
-}
-
-function resolvePositiveInteger(value, fallback = 1) {
-  const parsed = Number(value);
-  if (!Number.isFinite(parsed) || parsed <= 0) {
-    const fallbackParsed = Number(fallback);
-    if (!Number.isFinite(fallbackParsed) || fallbackParsed <= 0) {
-      return 1;
-    }
-    return Math.floor(fallbackParsed);
-  }
-  return Math.floor(parsed);
-}
-
 function buildVariantTemplate(template) {
   const marketConfig = template?.market || {};
-  const baseDuration = resolveNonNegative(marketConfig.durationDays ?? 0, 0);
-  const baseOffset = resolveNonNegative(
+  const baseDuration = clampMarketDaySpan(marketConfig.durationDays ?? 0, 0);
+  const baseOffset = clampMarketDaySpan(
     marketConfig.availableAfterDays ?? marketConfig.startOffsetDays ?? 0,
     0
   );
-  const templateSeats = resolvePositiveInteger(marketConfig.seats ?? 1, 1);
+  const templateSeats = clampMarketPositiveInteger(marketConfig.seats ?? 1, 1);
   return {
     id: 'default',
     label: template?.name || template?.id || 'Hustle',
@@ -162,25 +125,23 @@ function normalizeVariant(entry, index, template) {
   const variantId = typeof entry.id === 'string' && entry.id
     ? entry.id
     : `variant-${index}`;
-  const weight = resolveWeight(entry.weight, fallback.weight);
-  const duration = resolveNonNegative(
+  const weight = clampMarketWeight(entry.weight, fallback.weight);
+  const duration = clampMarketDaySpan(
     entry.durationDays ?? fallback.durationDays,
     fallback.durationDays
   );
-  const offset = resolveNonNegative(
+  const offset = clampMarketDaySpan(
     entry.availableAfterDays ?? entry.startOffsetDays ?? fallback.availableAfterDays,
     fallback.availableAfterDays
   );
-  const metadata = typeof entry.metadata === 'object' && entry.metadata !== null
-    ? structuredClone(entry.metadata)
-    : {};
-  const copies = resolvePositiveInteger(entry.copies ?? fallback.copies ?? 1, fallback.copies ?? 1);
+  const metadata = cloneMarketMetadata(entry.metadata);
+  const copies = clampMarketPositiveInteger(entry.copies ?? fallback.copies ?? 1, fallback.copies ?? 1);
   const maxActive = entry.maxActive != null
-    ? resolvePositiveInteger(entry.maxActive, copies)
+    ? clampMarketPositiveInteger(entry.maxActive, copies)
     : Math.max(1, copies);
   const seats = entry.seats != null
-    ? resolvePositiveInteger(entry.seats, fallback.seats ?? 1)
-    : resolvePositiveInteger(fallback.seats ?? 1, 1);
+    ? clampMarketPositiveInteger(entry.seats, fallback.seats ?? 1)
+    : clampMarketPositiveInteger(fallback.seats ?? 1, 1);
 
   return {
     id: variantId,
@@ -252,20 +213,12 @@ function resolveFirstString(...values) {
 }
 
 function buildOfferMetadata(template, variant) {
-  const baseMetadata = typeof template?.market?.metadata === 'object' && template.market.metadata !== null
-    ? structuredClone(template.market.metadata)
-    : {};
-  const variantMetadata = typeof variant?.metadata === 'object' && variant.metadata !== null
-    ? structuredClone(variant.metadata)
-    : {};
+  const baseMetadata = cloneMarketMetadata(template?.market?.metadata);
+  const variantMetadata = cloneMarketMetadata(variant?.metadata);
 
   const requirements = {
-    ...(typeof baseMetadata.requirements === 'object' && baseMetadata.requirements !== null
-      ? structuredClone(baseMetadata.requirements)
-      : {}),
-    ...(typeof variantMetadata.requirements === 'object' && variantMetadata.requirements !== null
-      ? structuredClone(variantMetadata.requirements)
-      : {})
+    ...cloneMarketMetadata(baseMetadata.requirements),
+    ...cloneMarketMetadata(variantMetadata.requirements)
   };
 
   const resolvedHours = resolveFirstNumber(
@@ -281,12 +234,8 @@ function buildOfferMetadata(template, variant) {
     requirements.hours = resolvedHours;
   }
 
-  const basePayout = typeof baseMetadata.payout === 'object' && baseMetadata.payout !== null
-    ? structuredClone(baseMetadata.payout)
-    : {};
-  const variantPayout = typeof variantMetadata.payout === 'object' && variantMetadata.payout !== null
-    ? structuredClone(variantMetadata.payout)
-    : {};
+  const basePayout = cloneMarketMetadata(baseMetadata.payout);
+  const variantPayout = cloneMarketMetadata(variantMetadata.payout);
   const payout = {
     ...basePayout,
     ...variantPayout
@@ -320,12 +269,8 @@ function buildOfferMetadata(template, variant) {
     durationDays: variant.durationDays
   };
 
-  const baseProgress = typeof baseMetadata.progress === 'object' && baseMetadata.progress !== null
-    ? structuredClone(baseMetadata.progress)
-    : {};
-  const variantProgress = typeof variantMetadata.progress === 'object' && variantMetadata.progress !== null
-    ? structuredClone(variantMetadata.progress)
-    : {};
+  const baseProgress = cloneMarketMetadata(baseMetadata.progress);
+  const variantProgress = cloneMarketMetadata(variantMetadata.progress);
 
   const progress = {
     ...baseProgress,
@@ -417,21 +362,21 @@ function buildOfferMetadata(template, variant) {
 }
 
 function createOfferFromVariant({ template, variant, day, timestamp }) {
-  const availableOnDay = resolveDay(day, 1) + resolveNonNegative(variant.availableAfterDays || 0, 0);
-  const expiresOnDay = availableOnDay + resolveNonNegative(variant.durationDays || 0, 0);
+  const availableOnDay = clampMarketDay(day, 1) + clampMarketDaySpan(variant.availableAfterDays || 0, 0);
+  const expiresOnDay = availableOnDay + clampMarketDaySpan(variant.durationDays || 0, 0);
   const templateCategory = typeof template?.market?.category === 'string' && template.market.category
     ? template.market.category
     : (typeof template?.market?.templateCategory === 'string' && template.market.templateCategory
       ? template.market.templateCategory
       : null);
-  const defaultSeats = resolvePositiveInteger(template?.market?.seats ?? variant.seats ?? 1, 1);
-  const variantSeats = resolvePositiveInteger(variant.seats ?? defaultSeats, defaultSeats);
+  const defaultSeats = clampMarketPositiveInteger(template?.market?.seats ?? variant.seats ?? 1, 1);
+  const variantSeats = clampMarketPositiveInteger(variant.seats ?? defaultSeats, defaultSeats);
   const rawOffer = {
     id: `offer-${variant.definitionId || template.id}-${variant.id}-${createId()}`,
     templateId: template.id,
     variantId: variant.id,
     definitionId: variant.definitionId || template.id,
-    rolledOnDay: resolveDay(day, 1),
+    rolledOnDay: clampMarketDay(day, 1),
     rolledAt: Number(timestamp) || Date.now(),
     availableOnDay,
     expiresOnDay,
@@ -461,7 +406,7 @@ function createOfferFromVariant({ template, variant, day, timestamp }) {
 
 function isOfferActiveOnOrAfterDay(offer, day) {
   if (!offer) return false;
-  const parsedDay = resolveDay(day, 1);
+  const parsedDay = clampMarketDay(day, 1);
   return offer.expiresOnDay >= parsedDay;
 }
 
@@ -473,7 +418,7 @@ export function rollDailyOffers({
   rng = Math.random
 } = {}) {
   const workingState = state || getState();
-  const currentDay = resolveDay(day, workingState?.day || 1);
+  const currentDay = clampMarketDay(day, workingState?.day || 1);
   const timestamp = Number(now);
   const resolvedTimestamp = Number.isFinite(timestamp) && timestamp >= 0 ? timestamp : Date.now();
 
@@ -516,9 +461,9 @@ export function rollDailyOffers({
     const existingActive = activity.total;
     const variants = buildVariantPool(template);
     const marketConfig = template?.market || {};
-    const templateSlotsPerRoll = resolvePositiveInteger(marketConfig.slotsPerRoll ?? 1, 1);
+    const templateSlotsPerRoll = clampMarketPositiveInteger(marketConfig.slotsPerRoll ?? 1, 1);
     const defaultTemplateMaxActive = Math.max(templateSlotsPerRoll, variants.length);
-    const templateMaxActive = resolvePositiveInteger(
+    const templateMaxActive = clampMarketPositiveInteger(
       marketConfig.maxActive != null ? marketConfig.maxActive : defaultTemplateMaxActive,
       defaultTemplateMaxActive
     );
@@ -554,7 +499,7 @@ export function rollDailyOffers({
       const availableVariants = variants.filter(variant => {
         const activeCount = activity.variants.get(variant.id) || 0;
         const pendingCount = pendingAdds.get(variant.id) || 0;
-        const variantMaxActive = resolvePositiveInteger(
+        const variantMaxActive = clampMarketPositiveInteger(
           variant.maxActive != null ? variant.maxActive : variant.copies ?? 1,
           variant.copies ?? 1
         );
@@ -575,7 +520,7 @@ export function rollDailyOffers({
 
       const activeCount = activity.variants.get(selectedVariant.id) || 0;
       const pendingCount = pendingAdds.get(selectedVariant.id) || 0;
-      const variantMaxActive = resolvePositiveInteger(
+      const variantMaxActive = clampMarketPositiveInteger(
         selectedVariant.maxActive != null ? selectedVariant.maxActive : selectedVariant.copies ?? 1,
         selectedVariant.copies ?? 1
       );
@@ -586,7 +531,7 @@ export function rollDailyOffers({
         continue;
       }
 
-      const variantCopies = resolvePositiveInteger(selectedVariant.copies ?? 1, 1);
+      const variantCopies = clampMarketPositiveInteger(selectedVariant.copies ?? 1, 1);
       const spawnCount = Math.min(variantCopies, variantCapacity, slotsRemaining);
       if (spawnCount <= 0) {
         pendingAdds.set(selectedVariant.id, pendingCount);
@@ -671,7 +616,7 @@ export function getAvailableOffers(state = getState(), {
   includeClaimed = false
 } = {}) {
   const workingState = state || getState();
-  const targetDay = resolveDay(day, workingState?.day || 1);
+  const targetDay = clampMarketDay(day, workingState?.day || 1);
   return getMarketAvailableOffers(workingState, {
     day: targetDay,
     includeUpcoming,
@@ -685,7 +630,7 @@ export function getClaimedOffers(state = getState(), {
   includeCompleted = false
 } = {}) {
   const workingState = state || getState();
-  const targetDay = resolveDay(day, workingState?.day || 1);
+  const targetDay = clampMarketDay(day, workingState?.day || 1);
   return getMarketClaimedOffers(workingState, {
     day: targetDay,
     includeExpired,

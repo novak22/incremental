@@ -1,4 +1,11 @@
 import { structuredClone, createId } from '../../helpers.js';
+import {
+  clampMarketDay as clampDay,
+  clampMarketDaySpan as clampNonNegativeInteger,
+  clampMarketNonNegativeNumber as clampNonNegativeNumber,
+  clampMarketPositiveInteger as clampPositiveInteger,
+  cloneMarketMetadata
+} from '../../../game/hustles/normalizers.js';
 
 const DEFAULT_STATE = Object.freeze({
   lastRolledAt: 0,
@@ -6,54 +13,6 @@ const DEFAULT_STATE = Object.freeze({
   offers: [],
   accepted: []
 });
-
-function clampDay(value, fallback = 1) {
-  const parsed = Number(value);
-  if (!Number.isFinite(parsed) || parsed <= 0) {
-    const fallbackParsed = Number(fallback);
-    if (!Number.isFinite(fallbackParsed) || fallbackParsed <= 0) {
-      return 1;
-    }
-    return Math.floor(fallbackParsed);
-  }
-  return Math.floor(parsed);
-}
-
-function clampNonNegativeInteger(value, fallback = 0) {
-  const parsed = Number(value);
-  if (!Number.isFinite(parsed) || parsed < 0) {
-    const fallbackParsed = Number(fallback);
-    if (!Number.isFinite(fallbackParsed) || fallbackParsed < 0) {
-      return 0;
-    }
-    return Math.floor(fallbackParsed);
-  }
-  return Math.floor(parsed);
-}
-
-function clampNonNegativeNumber(value, fallback = 0) {
-  const parsed = Number(value);
-  if (!Number.isFinite(parsed) || parsed < 0) {
-    const fallbackParsed = Number(fallback);
-    if (!Number.isFinite(fallbackParsed) || fallbackParsed < 0) {
-      return 0;
-    }
-    return fallbackParsed;
-  }
-  return parsed;
-}
-
-function clampPositiveInteger(value, fallback = 1) {
-  const parsed = Number(value);
-  if (!Number.isFinite(parsed) || parsed <= 0) {
-    const fallbackParsed = Number(fallback);
-    if (!Number.isFinite(fallbackParsed) || fallbackParsed <= 0) {
-      return 1;
-    }
-    return Math.floor(fallbackParsed);
-  }
-  return Math.floor(parsed);
-}
 
 function buildDaysActive(startDay, endDay) {
   const start = clampDay(startDay, 1);
@@ -110,9 +69,7 @@ export function normalizeHustleMarketOffer(offer, {
     ? parsedTimestamp
     : Math.max(0, Number(fallbackTimestamp) || 0);
 
-  const metadata = typeof offer.metadata === 'object' && offer.metadata !== null
-    ? structuredClone(offer.metadata)
-    : {};
+  const metadata = cloneMarketMetadata(offer.metadata);
 
   const variant = typeof offer.variant === 'object' && offer.variant !== null
     ? structuredClone(offer.variant)
@@ -193,12 +150,8 @@ function normalizeAcceptedOffer(entry, { fallbackDay = 1 } = {}) {
   const acceptedOnDay = clampDay(entry.acceptedOnDay, fallbackDay);
   const deadlineDay = clampDay(entry.deadlineDay, acceptedOnDay);
   const hoursRequired = clampNonNegativeNumber(entry.hoursRequired, 0);
-  const metadata = typeof entry.metadata === 'object' && entry.metadata !== null
-    ? structuredClone(entry.metadata)
-    : {};
-  const payout = typeof entry.payout === 'object' && entry.payout !== null
-    ? { ...entry.payout }
-    : {};
+  const metadata = cloneMarketMetadata(entry.metadata);
+  const payout = cloneMarketMetadata(entry.payout);
   if (payout.amount != null) {
     payout.amount = clampNonNegativeNumber(payout.amount, 0);
   }
@@ -334,11 +287,11 @@ export function ensureHustleMarketState(state, { fallbackDay = 1 } = {}) {
         offer.completedOnDay = acceptedEntry.completedOnDay ?? acceptedEntry.acceptedOnDay;
         offer.completedInstanceId = acceptedEntry.instanceId;
         offer.completionHoursLogged = acceptedEntry.hoursLogged ?? null;
-        offer.claimMetadata = structuredClone(acceptedEntry.metadata || {});
+        offer.claimMetadata = cloneMarketMetadata(acceptedEntry.metadata || {});
       } else {
         offer.claimed = true;
         offer.status = 'claimed';
-        offer.claimMetadata = structuredClone(acceptedEntry.metadata || {});
+        offer.claimMetadata = cloneMarketMetadata(acceptedEntry.metadata || {});
         delete offer.completedOnDay;
         delete offer.completedInstanceId;
         delete offer.completionHoursLogged;
@@ -432,7 +385,7 @@ export function claimHustleMarketOffer(state, offerId, details = {}) {
   offer.status = 'claimed';
   offer.claimedOnDay = acceptedEntry.acceptedOnDay;
   offer.instanceId = acceptedEntry.instanceId;
-  offer.claimMetadata = structuredClone(acceptedEntry.metadata || {});
+  offer.claimMetadata = cloneMarketMetadata(acceptedEntry.metadata || {});
   offer.claimDeadlineDay = acceptedEntry.deadlineDay;
   offer.seats = clampPositiveInteger(offer.seats, acceptedEntry.seats ?? offer.seats ?? 1);
   if (acceptedEntry.templateCategory && !offer.templateCategory) {
@@ -594,7 +547,7 @@ export function completeHustleMarketInstance(state, instanceId, {
     offer.instanceId = entry.instanceId;
     offer.claimedOnDay = entry.acceptedOnDay;
     offer.claimDeadlineDay = entry.deadlineDay;
-    offer.claimMetadata = structuredClone(entry.metadata || {});
+    offer.claimMetadata = cloneMarketMetadata(entry.metadata || {});
   }
 
   ensureHustleMarketState(state, { fallbackDay });
