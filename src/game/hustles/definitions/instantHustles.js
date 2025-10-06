@@ -1,18 +1,30 @@
 import { formatMoney, structuredClone } from '../../../core/helpers.js';
 import { hustles as hustleConfigs } from '../../data/economyConfig.js';
 
-const freelanceConfig = hustleConfigs.freelance; // Spec: docs/normalized_economy.json → hustles.freelance
-const audienceCallConfig = hustleConfigs.audienceCall; // Spec: docs/normalized_economy.json → hustles.audienceCall
-const bundlePushConfig = hustleConfigs.bundlePush; // Spec: docs/normalized_economy.json → hustles.bundlePush
-const surveySprintConfig = hustleConfigs.surveySprint; // Spec: docs/normalized_economy.json → hustles.surveySprint
-const dataEntryConfig = hustleConfigs.dataEntry; // Spec: docs/normalized_economy.json → hustles.dataEntry
-const eventPhotoGigConfig = hustleConfigs.eventPhotoGig; // Spec: docs/normalized_economy.json → hustles.eventPhotoGig
-const popUpWorkshopConfig = hustleConfigs.popUpWorkshop; // Spec: docs/normalized_economy.json → hustles.popUpWorkshop
-const vlogEditRushConfig = hustleConfigs.vlogEditRush; // Spec: docs/normalized_economy.json → hustles.vlogEditRush
-const dropshipPackPartyConfig = hustleConfigs.dropshipPackParty; // Spec: docs/normalized_economy.json → hustles.dropshipPackParty
-const saasBugSquashConfig = hustleConfigs.saasBugSquash; // Spec: docs/normalized_economy.json → hustles.saasBugSquash
-const audiobookNarrationConfig = hustleConfigs.audiobookNarration; // Spec: docs/normalized_economy.json → hustles.audiobookNarration
-const streetPromoSprintConfig = hustleConfigs.streetPromoSprint; // Spec: docs/normalized_economy.json → hustles.streetPromoSprint
+const requireHustleConfig = hustleId => {
+  const config = hustleConfigs[hustleId];
+
+  if (!config) {
+    throw new Error(
+      `Missing hustle configuration for "${hustleId}". Add it to src/game/data/economyConfig.js to enable this instant hustle.`
+    );
+  }
+
+  return config;
+};
+
+const freelanceConfig = requireHustleConfig('freelance'); // Spec: docs/normalized_economy.json → hustles.freelance
+const audienceCallConfig = requireHustleConfig('audienceCall'); // Spec: docs/normalized_economy.json → hustles.audienceCall
+const bundlePushConfig = requireHustleConfig('bundlePush'); // Spec: docs/normalized_economy.json → hustles.bundlePush
+const surveySprintConfig = requireHustleConfig('surveySprint'); // Spec: docs/normalized_economy.json → hustles.surveySprint
+const dataEntryConfig = requireHustleConfig('dataEntry'); // Spec: docs/normalized_economy.json → hustles.dataEntry
+const eventPhotoGigConfig = requireHustleConfig('eventPhotoGig'); // Spec: docs/normalized_economy.json → hustles.eventPhotoGig
+const popUpWorkshopConfig = requireHustleConfig('popUpWorkshop'); // Spec: docs/normalized_economy.json → hustles.popUpWorkshop
+const vlogEditRushConfig = requireHustleConfig('vlogEditRush'); // Spec: docs/normalized_economy.json → hustles.vlogEditRush
+const dropshipPackPartyConfig = requireHustleConfig('dropshipPackParty'); // Spec: docs/normalized_economy.json → hustles.dropshipPackParty
+const saasBugSquashConfig = requireHustleConfig('saasBugSquash'); // Spec: docs/normalized_economy.json → hustles.saasBugSquash
+const audiobookNarrationConfig = requireHustleConfig('audiobookNarration'); // Spec: docs/normalized_economy.json → hustles.audiobookNarration
+const streetPromoSprintConfig = requireHustleConfig('streetPromoSprint'); // Spec: docs/normalized_economy.json → hustles.streetPromoSprint
 
 const instantHustleDefinitions = [
   {
