@@ -5,7 +5,7 @@ import {
   formatAssetRequirementLabel,
   listAssetRequirementDescriptors
 } from '../../../game/requirements.js';
-import { getAssetEffectMultiplier } from '../../../game/upgrades/effects.js';
+import { getAssetEffectMultiplier } from '../../../game/upgrades/effects/index.js';
 import { formatMaintenanceSummary } from '../../../game/assets/maintenance.js';
 import { describeAssetCardSummary } from '../utils.js';
 

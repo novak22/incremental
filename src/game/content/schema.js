@@ -24,7 +24,7 @@ import {
   describeSlotLedger,
   getExclusiveConflict,
   wouldExceedSlotCapacity
-} from '../upgrades/effects.js';
+} from '../upgrades/effects/index.js';
 import { resolveDetailEntry } from '../upgrades/detailResolvers.js';
 import { resolveRequirement as resolveUpgradeRequirement } from '../upgrades/requirementResolvers.js';
 import { applyMetric, buildMetricConfig, normalizeSlotMap } from './schema/metrics.js';

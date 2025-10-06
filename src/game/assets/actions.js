@@ -14,7 +14,7 @@ import {
   recordTimeContribution
 } from '../metrics.js';
 import { awardSkillProgress } from '../skills/index.js';
-import { getAssetEffectMultiplier } from '../upgrades/effects.js';
+import { getAssetEffectMultiplier } from '../upgrades/effects/index.js';
 import { instanceLabel } from './details.js';
 import { getAssetMetricId } from './helpers.js';
 import { markDirty } from '../../core/events/invalidationBus.js';

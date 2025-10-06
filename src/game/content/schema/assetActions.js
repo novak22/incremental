@@ -12,7 +12,7 @@ import {
   describeInstantHustleEducationBonuses,
   formatEducationBonusSummary
 } from '../../educationEffects.js';
-import { getHustleEffectMultiplier } from '../../upgrades/effects.js';
+import { getHustleEffectMultiplier } from '../../upgrades/effects/index.js';
 import { applyModifiers } from '../../data/economyMath.js';
 import { applyMetric, normalizeHustleMetrics } from './metrics.js';
 import { logEducationPayoffSummary, logHustleBlocked } from './logMessaging.js';
