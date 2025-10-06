@@ -11,11 +11,14 @@ function resolveCategoryLabel(...values) {
     const trimmed = value.trim();
     if (!trimmed) continue;
     const lowered = trimmed.toLowerCase();
-    if (lowered.startsWith('study') || lowered.startsWith('education')) {
+    if (lowered.startsWith('study') || lowered.startsWith('education') || lowered.startsWith('course') || lowered.startsWith('train') || lowered.startsWith('lesson') || lowered.startsWith('class')) {
       return 'study';
     }
-    if (lowered.startsWith('maint')) {
+    if (lowered.startsWith('maint') || lowered.startsWith('upkeep') || lowered.startsWith('care') || lowered.startsWith('support')) {
       return 'maintenance';
+    }
+    if (lowered.startsWith('contract') || lowered.startsWith('project') || lowered.startsWith('gig') || lowered.startsWith('work')) {
+      return 'hustle';
     }
     return lowered;
   }

@@ -58,6 +58,13 @@ log manual study time while respecting shared progress metadata.
   (e.g., to add upkeep-specific log messages) instead of calling `acceptActionInstance` directly.
   This keeps daily limit bookkeeping aligned with the base implementation.
 
+## Shared Action Card Presenter
+
+- `src/ui/views/browser/components/actionCardPresenter.js` renders contract offers, commitments, and accept buttons using template descriptors.
+- Model builders (e.g., `buildHustleModels`) now surface `descriptors`, `actionCategory`, and friendly category labels so the presenter can reuse copy across hustles, courses, and upkeep contracts.
+- Descriptor bundles merge template-provided copy with default messaging that reinforces the accept → work → complete loop, ensuring new action types inherit the same tone automatically.
+
+
 ## Usage Pattern
 
 ```js
