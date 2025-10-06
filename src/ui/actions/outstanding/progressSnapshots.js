@@ -3,6 +3,7 @@ import {
   coercePositiveNumber,
   firstPositiveNumber
 } from '../utils.js';
+import { getInstanceProgressSnapshot } from '../../../core/state/slices/actions.js';
 
 export function resolveStudyTrackIdFromProgress(progress = {}) {
   if (!progress || typeof progress !== 'object') {
@@ -50,32 +51,15 @@ export function buildProgressSnapshot({
     return null;
   }
 
-  const progress = typeof instance.progress === 'object' && instance.progress !== null
+  const baseSnapshot = getInstanceProgressSnapshot(instance);
+  if (!baseSnapshot) {
+    return null;
+  }
+
+  const progressSource = typeof instance.progress === 'object' && instance.progress !== null
     ? instance.progress
     : {};
-
-  const hoursRequiredCandidates = [
-    instance.hoursRequired,
-    progress.hoursRequired,
-    accepted?.hoursRequired,
-    offer?.metadata?.hoursRequired,
-    offer?.metadata?.requirements?.hours,
-    offer?.metadata?.requirements?.timeHours,
-    definition?.time,
-    definition?.action?.timeCost
-  ];
-  let hoursRequired = hoursRequiredCandidates.reduce((result, value) => {
-    if (result != null) {
-      return result;
-    }
-    const numeric = coercePositiveNumber(value, null);
-    return Number.isFinite(numeric) ? numeric : null;
-  }, null);
-
-  const hoursLogged = coercePositiveNumber(
-    progress.hoursLogged != null ? progress.hoursLogged : instance.hoursLogged,
-    0
-  );
+  const progressOverrides = { ...progressSource };
 
   const metadataProgress = typeof accepted?.metadata?.progress === 'object' && accepted.metadata.progress !== null
     ? accepted.metadata.progress
@@ -83,115 +67,121 @@ export function buildProgressSnapshot({
       ? offer.metadata.progress
       : {};
 
-  const hoursPerDay = firstPositiveNumber(
-    progress.hoursPerDay,
+  const resolvedMetadata = accepted?.metadata
+    || offer?.claimMetadata
+    || offer?.metadata
+    || baseSnapshot.metadata
+    || {};
+  if (resolvedMetadata && resolvedMetadata !== progressOverrides.metadata) {
+    progressOverrides.metadata = resolvedMetadata;
+  }
+
+  const completionCandidates = [
+    progressOverrides.completionMode,
+    progressOverrides.completion,
+    metadataProgress.completionMode,
+    metadataProgress.completion,
+    accepted?.metadata?.completionMode,
+    accepted?.metadata?.completion,
+    accepted?.metadata?.progress?.completionMode,
+    accepted?.metadata?.progress?.completion,
+    offer?.claimMetadata?.completionMode,
+    offer?.claimMetadata?.completion,
+    offer?.metadata?.completionMode,
+    offer?.metadata?.completion,
+    offer?.metadata?.progress?.completionMode,
+    offer?.metadata?.progress?.completion,
+    definition?.progress?.completionMode,
+    definition?.progress?.completion
+  ];
+  for (const candidate of completionCandidates) {
+    if (typeof candidate === 'string' && candidate.trim()) {
+      progressOverrides.completion = candidate.trim();
+      break;
+    }
+  }
+
+  let hoursRequired = baseSnapshot.hoursRequired;
+  if (!(Number.isFinite(hoursRequired) && hoursRequired >= 0)) {
+    const hoursRequiredCandidates = [
+      accepted?.hoursRequired,
+      offer?.metadata?.hoursRequired,
+      offer?.metadata?.requirements?.hours,
+      offer?.metadata?.requirements?.timeHours,
+      definition?.time,
+      definition?.action?.timeCost
+    ];
+    for (const candidate of hoursRequiredCandidates) {
+      const numeric = coercePositiveNumber(candidate, null);
+      if (Number.isFinite(numeric) && numeric >= 0) {
+        hoursRequired = numeric;
+        break;
+      }
+    }
+    if (hoursRequired != null) {
+      progressOverrides.hoursRequired = hoursRequired;
+    }
+  }
+
+  const hoursPerDayCandidate = firstPositiveNumber(
+    baseSnapshot.hoursPerDay,
     accepted?.metadata?.hoursPerDay,
     metadataProgress.hoursPerDay,
     accepted?.metadata?.progress?.hoursPerDay,
     offer?.metadata?.hoursPerDay,
     offer?.metadata?.progress?.hoursPerDay
   );
-  if (progress && hoursPerDay != null && (!Number.isFinite(progress.hoursPerDay) || progress.hoursPerDay <= 0)) {
-    progress.hoursPerDay = hoursPerDay;
+  if (hoursPerDayCandidate != null
+    && (!Number.isFinite(baseSnapshot.hoursPerDay) || baseSnapshot.hoursPerDay <= 0)) {
+    progressOverrides.hoursPerDay = hoursPerDayCandidate;
   }
 
-  const daysCompleted = coercePositiveNumber(progress.daysCompleted, 0);
-
   const rawDaysRequired = firstPositiveNumber(
-    progress.daysRequired,
+    baseSnapshot.daysRequired,
     metadataProgress.daysRequired,
     accepted?.metadata?.daysRequired,
     accepted?.metadata?.progress?.daysRequired,
     offer?.metadata?.daysRequired,
     offer?.metadata?.progress?.daysRequired
   );
-  const daysRequired = rawDaysRequired != null ? Math.max(1, Math.floor(rawDaysRequired)) : null;
-  if (progress && daysRequired != null && (!Number.isFinite(progress.daysRequired) || progress.daysRequired <= 0)) {
-    progress.daysRequired = daysRequired;
+  if (rawDaysRequired != null
+    && (!Number.isFinite(baseSnapshot.daysRequired) || baseSnapshot.daysRequired <= 0)) {
+    progressOverrides.daysRequired = Math.max(1, Math.floor(rawDaysRequired));
   }
 
-  if ((hoursRequired == null || hoursRequired <= 0)
-    && Number.isFinite(hoursPerDay)
-    && hoursPerDay > 0
-    && Number.isFinite(daysRequired)
-    && daysRequired > 0) {
-    const derivedHoursRequired = hoursPerDay * daysRequired;
-    hoursRequired = derivedHoursRequired;
-    if (progress && (!Number.isFinite(progress.hoursRequired) || progress.hoursRequired <= 0)) {
-      progress.hoursRequired = derivedHoursRequired;
-    }
-  }
-
-  const hoursRemaining = hoursRequired != null
-    ? Math.max(0, hoursRequired - hoursLogged)
-    : null;
-
-  const completionCandidates = [
-    progress.completion,
-    progress.completionMode,
-    metadataProgress.completionMode,
-    metadataProgress.completion,
-    accepted?.metadata?.completionMode,
-    accepted?.metadata?.progress?.completionMode,
-    accepted?.metadata?.progress?.completion,
-    offer?.metadata?.completionMode,
-    offer?.metadata?.progress?.completionMode,
-    offer?.metadata?.progress?.completion,
-    definition?.progress?.completion
-  ];
-  let completionMode = null;
-  for (const candidate of completionCandidates) {
-    if (typeof candidate === 'string' && candidate.trim()) {
-      completionMode = candidate.trim();
-      break;
-    }
-  }
-  if (!completionMode) {
-    completionMode = progress.type === 'instant' ? 'instant' : 'manual';
-  }
-  if (progress) {
-    if (typeof progress.completion !== 'string' || !progress.completion.trim()) {
-      progress.completion = completionMode;
-    }
-    progress.completionMode = completionMode;
-  }
-
-  let stepHours = Number.isFinite(hoursPerDay) && hoursPerDay > 0 ? hoursPerDay : null;
-  if (!Number.isFinite(stepHours) || stepHours <= 0) {
-    if (hoursRemaining != null && hoursRemaining > 0 && Number.isFinite(daysRequired) && daysRequired > 0) {
-      const remainingDays = Math.max(1, daysRequired - Math.max(0, daysCompleted));
-      stepHours = hoursRemaining / remainingDays;
-    } else if (hoursRemaining != null && hoursRemaining > 0) {
-      stepHours = hoursRemaining;
-    } else if (Number.isFinite(hoursPerDay) && hoursPerDay > 0) {
-      stepHours = hoursPerDay;
-    }
-  }
-  if (!Number.isFinite(stepHours) || stepHours <= 0) {
-    stepHours = hoursRequired != null && hoursRequired > 0 ? hoursRequired : 1;
-  }
-  if (hoursRemaining != null && hoursRemaining > 0) {
-    stepHours = Math.min(stepHours, hoursRemaining);
-  } else if (hoursRemaining != null && hoursRemaining <= 0) {
-    stepHours = completionMode === 'manual' && Number.isFinite(hoursPerDay) && hoursPerDay > 0
-      ? hoursPerDay
-      : 0;
+  if ((progressOverrides.hoursRequired == null || progressOverrides.hoursRequired <= 0)
+    && Number.isFinite(progressOverrides.hoursPerDay)
+    && progressOverrides.hoursPerDay > 0
+    && Number.isFinite(progressOverrides.daysRequired)
+    && progressOverrides.daysRequired > 0) {
+    progressOverrides.hoursRequired = progressOverrides.hoursPerDay * progressOverrides.daysRequired;
   }
 
   const deadlineCandidates = [
     instance.deadlineDay,
-    progress.deadlineDay,
+    progressOverrides.deadlineDay,
+    baseSnapshot.deadlineDay,
     accepted?.deadlineDay,
     offer?.claimDeadlineDay,
     offer?.expiresOnDay
   ]
     .map(value => coerceDay(value, null))
     .filter(value => value != null);
-
   const earliestDeadline = deadlineCandidates.length ? Math.min(...deadlineCandidates) : null;
+  if (earliestDeadline != null) {
+    progressOverrides.deadlineDay = earliestDeadline;
+  }
+
+  if (typeof progressOverrides.completion !== 'string' || !progressOverrides.completion.trim()) {
+    progressOverrides.completion = baseSnapshot.completion;
+  }
+  progressOverrides.completionMode = progressOverrides.completion;
+
+  const snapshot = getInstanceProgressSnapshot({ ...instance, progress: progressOverrides }) || baseSnapshot;
+
   const currentDay = coerceDay(state?.day, 1) || 1;
-  const remainingDays = earliestDeadline != null
-    ? Math.max(0, earliestDeadline - currentDay + 1)
+  const remainingDays = snapshot.deadlineDay != null
+    ? Math.max(0, snapshot.deadlineDay - currentDay + 1)
     : null;
 
   const payoutAmount = coercePositiveNumber(
@@ -202,31 +192,57 @@ export function buildProgressSnapshot({
     || offer?.metadata?.payoutSchedule
     || 'onCompletion';
 
-  const percentComplete = hoursRequired && hoursRequired > 0
-    ? Math.max(0, Math.min(1, hoursLogged / hoursRequired))
-    : null;
+  const completionMode = snapshot.completionMode || snapshot.completion || 'manual';
+
+  let stepHours = Number.isFinite(snapshot.hoursPerDay) && snapshot.hoursPerDay > 0 ? snapshot.hoursPerDay : null;
+  if (!Number.isFinite(stepHours) || stepHours <= 0) {
+    if (snapshot.hoursRemaining != null
+      && snapshot.hoursRemaining > 0
+      && Number.isFinite(snapshot.daysRequired)
+      && snapshot.daysRequired > 0) {
+      const remainingDaySlots = Math.max(1, snapshot.daysRequired - Math.max(0, snapshot.daysCompleted));
+      stepHours = snapshot.hoursRemaining / remainingDaySlots;
+    } else if (snapshot.hoursRemaining != null && snapshot.hoursRemaining > 0) {
+      stepHours = snapshot.hoursRemaining;
+    } else if (Number.isFinite(snapshot.hoursPerDay) && snapshot.hoursPerDay > 0) {
+      stepHours = snapshot.hoursPerDay;
+    }
+  }
+  if (!Number.isFinite(stepHours) || stepHours <= 0) {
+    stepHours = snapshot.hoursRequired != null && snapshot.hoursRequired > 0
+      ? snapshot.hoursRequired
+      : 1;
+  }
+  if (snapshot.hoursRemaining != null && snapshot.hoursRemaining > 0) {
+    stepHours = Math.min(stepHours, snapshot.hoursRemaining);
+  } else if (snapshot.hoursRemaining != null && snapshot.hoursRemaining <= 0) {
+    stepHours = completionMode === 'manual' && Number.isFinite(snapshot.hoursPerDay) && snapshot.hoursPerDay > 0
+      ? snapshot.hoursPerDay
+      : 0;
+  }
 
   return {
-    definitionId: definition?.id || instance.definitionId || accepted?.definitionId || offer?.definitionId,
-    instanceId: instance.id,
+    definitionId: definition?.id || snapshot.definitionId || instance.definitionId || accepted?.definitionId || offer?.definitionId,
+    instanceId: snapshot.instanceId || instance.id,
     offerId: accepted?.offerId || offer?.id || null,
     templateId: accepted?.templateId || offer?.templateId || definition?.id || null,
-    hoursLogged,
-    hoursRequired,
-    hoursRemaining,
+    hoursLogged: snapshot.hoursLogged,
+    hoursRequired: snapshot.hoursRequired,
+    hoursRemaining: snapshot.hoursRemaining,
     stepHours,
-    hoursPerDay: Number.isFinite(hoursPerDay) && hoursPerDay > 0 ? hoursPerDay : null,
-    daysCompleted,
-    daysRequired,
+    hoursPerDay: Number.isFinite(snapshot.hoursPerDay) && snapshot.hoursPerDay > 0 ? snapshot.hoursPerDay : null,
+    daysCompleted: snapshot.daysCompleted,
+    daysRequired: snapshot.daysRequired,
     remainingDays,
-    deadlineDay: earliestDeadline,
+    deadlineDay: snapshot.deadlineDay,
     payoutAmount,
     payoutSchedule,
     completion: completionMode,
-    percentComplete,
-    metadata: accepted?.metadata || offer?.claimMetadata || offer?.metadata || {},
-    lastWorkedDay: coerceDay(progress.lastWorkedDay, null),
-    acceptedOnDay: coerceDay(instance.acceptedOnDay, null)
+    completionMode,
+    percentComplete: snapshot.percentComplete,
+    metadata: snapshot.metadata || {},
+    lastWorkedDay: coerceDay(snapshot.lastWorkedDay, null),
+    acceptedOnDay: coerceDay(snapshot.acceptedOnDay ?? instance.acceptedOnDay, null)
   };
 }
 
