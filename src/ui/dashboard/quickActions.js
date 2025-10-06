@@ -1,6 +1,7 @@
 import { formatHours } from '../../core/helpers.js';
 import { clampNumber } from './formatters.js';
 import { collectOutstandingActionEntries } from '../actions/registry.js';
+import { buildQueueMetrics } from '../actions/queueService.js';
 import { registerActionProvider } from '../actions/providers.js';
 import { executeAction } from '../../game/actions.js';
 import { acceptHustleOffer } from '../../game/hustles.js';
@@ -18,6 +19,7 @@ function buildQuickActionEntry(candidate) {
   const hints = buildQuickActionHints(candidate);
   const workingState = candidate?.state || {};
   const offer = candidate?.primaryOffer;
+  const roi = Number.isFinite(candidate?.roi) ? candidate.roi : 0;
 
   return {
     id: candidate?.id,
@@ -37,7 +39,8 @@ function buildQuickActionEntry(candidate) {
       });
       return result;
     },
-    roi: candidate?.roi ?? 0,
+    roi,
+    moneyPerHour: roi,
     timeCost: candidate?.hours ?? 0,
     payout: candidate?.payout ?? 0,
     payoutText: hints.payoutText,
@@ -106,20 +109,17 @@ export function buildQuickActionModel(state = {}) {
     disabledReason: action.disabledReason,
     excludeFromQueue: action.excludeFromQueue === true
   }));
-  const baseHours = clampNumber(state.baseTime) + clampNumber(state.bonusTime) + clampNumber(state.dailyBonusTime);
-  const hoursAvailable = Math.max(0, clampNumber(state.timeLeft));
-  const hoursSpent = Math.max(0, baseHours - hoursAvailable);
-  return {
-    entries,
+  const metrics = buildQueueMetrics(state, {
     emptyMessage: 'No ready actions. Check upgrades or ventures.',
     buttonClass: 'primary',
-    defaultLabel: 'Queue',
-    hoursAvailable,
-    hoursAvailableLabel: formatHours(hoursAvailable),
-    hoursSpent,
-    hoursSpentLabel: formatHours(hoursSpent),
+    defaultLabel: 'Queue'
+  });
+  metrics.inProgressEntries = inProgress;
+
+  return {
+    entries,
+    ...metrics,
     day: clampNumber(state.day),
-    moneyAvailable: clampNumber(state.money),
     inProgress
   };
 }
