@@ -10,6 +10,7 @@ import {
 } from '../core/state/slices/hustleMarket.js';
 import { definitionRequirementsMet } from './requirements/checks.js';
 import { describeHustleRequirements } from './hustles/helpers.js';
+import { markDirty } from '../core/events/invalidationBus.js';
 
 export const HUSTLE_TEMPLATES = INSTANT_ACTIONS;
 export const KNOWLEDGE_HUSTLES = STUDY_ACTIONS;
@@ -270,7 +271,7 @@ export function acceptHustleOffer(offerOrId, { state = getState() } = {}) {
     payoutDetails.amount = payoutAmount;
   }
 
-  return claimHustleMarketOffer(workingState, offer.id, {
+  const acceptedEntry = claimHustleMarketOffer(workingState, offer.id, {
     acceptedOnDay,
     deadlineDay: deadlineDay ?? offer.availableOnDay,
     hoursRequired: hoursRequired != null ? hoursRequired : instance.hoursRequired,
@@ -278,4 +279,14 @@ export function acceptHustleOffer(offerOrId, { state = getState() } = {}) {
     payout: payoutDetails,
     metadata
   });
+
+  if (acceptedEntry) {
+    markDirty({
+      dashboard: true,
+      cards: true,
+      headerAction: true
+    });
+  }
+
+  return acceptedEntry;
 }
