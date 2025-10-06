@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { ensureTestDom } from '../helpers/setupDom.js';
 import { getGameTestHarness } from '../helpers/gameTestHarness.js';
+import { acceptAndCompleteInstantHustle } from '../helpers/hustleActions.js';
 
 async function withUpdateSpy(updateModule) {
   const calls = [];
@@ -36,10 +37,15 @@ test('instant hustles still trigger UI flush through the invalidation bus', { co
   state.money = 250;
   state.timeLeft = 40;
 
-  const instantHustle = harness.hustlesModule.ACTIONS.find(hustle => hustle?.action?.onClick);
-  assert.ok(instantHustle, 'expected to find an instant hustle with an action');
+  const instantHustle = harness.hustlesModule.ACTIONS.find(
+    hustle => typeof hustle?.getPrimaryOfferAction === 'function' || typeof hustle?.action?.resolvePrimaryAction === 'function'
+  );
+  assert.ok(instantHustle, 'expected to find an instant hustle definition');
 
-  instantHustle.action.onClick();
+  acceptAndCompleteInstantHustle(instantHustle, state, {
+    flushAfterAccept: true,
+    flushAfterCompletion: true
+  });
 
   assert.ok(spy.calls.length > 0, 'expected updateUI to be invoked for hustle action');
   const latestCall = spy.calls[spy.calls.length - 1];

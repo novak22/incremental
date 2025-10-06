@@ -7,6 +7,7 @@
 - Hustles: Rebalanced multi-day contract payouts around base hourly earnings (with a 5% commitment bonus) and introduced the Data Entry Blitz gig with 4h and 8h variants for steady $5/hour work.
 - Hustles: Contract templates now publish multi-variant market metadata (hours-per-day, duration windows, payout schedules, copies) so daily rolls surface retainers alongside quick gigs.【F:src/game/hustles/definitions/instantHustles.js†L19-L855】
 - Tooling: `rollDailyOffers` records per-template audit summaries, exposes `getMarketRollAuditLog()`, and attaches `window.__HUSTLE_MARKET_DEBUG__` helpers for playtests.【F:src/game/hustles/market.js†L12-L755】
+- Hustles: Instant gig definitions now surface offers exclusively through the market, default accepted contracts to manual progress so to-dos appear immediately, and route payouts/skill XP through shared completion hooks. Tooling can inspect the current slot via `getPrimaryOfferAction()`.
 - Docs: Refreshed the economy guide, hustle market notes, and added a dedicated playtest script covering bootstrap, rerolls, and contract completion loops.【F:docs/economy.md†L80-L121】【F:docs/features/hustle-market.md†L94-L126】【F:docs/features/hustle-market-playtest.md†L1-L64】
 - Economy: Completing hustle market contracts now grants their promised payouts immediately when logged hours are finished, updating money totals and payout metrics.
 - Fix: Multi-day hustle contracts now honor their variant payout totals and pay the full amount once the final day is logged.

@@ -1,4 +1,4 @@
-import { createId, toNumber } from '../../../core/helpers.js';
+import { createId, structuredClone, toNumber } from '../../../core/helpers.js';
 import { getActionState, getState } from '../../../core/state.js';
 import { markDirty } from '../../../core/events/invalidationBus.js';
 import {
@@ -135,6 +135,13 @@ export function acceptActionInstance(definition, {
     ...overrides
   };
   instance.progress = createInstanceProgress(definition, { state, overrides, metadata });
+  if (metadata && typeof metadata === 'object') {
+    try {
+      instance.metadata = structuredClone(metadata);
+    } catch (_error) {
+      instance.metadata = { ...metadata };
+    }
+  }
   if (instance.progress && instance.progress.hoursRequired != null && !Number.isFinite(toNumber(instance.hoursRequired, null))) {
     instance.hoursRequired = instance.progress.hoursRequired;
   }
@@ -201,6 +208,23 @@ export function completeActionInstance(definition, instance, context = {}) {
   }
 
   const completionHours = Number(stored.hoursLogged);
+  const prepareCompletion = typeof definition?.__prepareCompletion === 'function'
+    ? definition.__prepareCompletion
+    : null;
+  if (prepareCompletion) {
+    try {
+      prepareCompletion({
+        context,
+        instance: stored,
+        state,
+        completionDay,
+        completionHours
+      });
+    } catch (_error) {
+      // Swallow preparation errors to avoid blocking completion flows.
+    }
+  }
+
   processCompletionPayout({
     definition,
     stored,
@@ -293,6 +317,13 @@ export function advanceActionInstance(definition, instanceOrId, {
     context.state = state;
     if (context.completionDay == null) {
       context.completionDay = workingDay;
+    }
+    if (context.metadata == null) {
+      if (metadata && typeof metadata === 'object') {
+        context.metadata = metadata;
+      } else if (stored.metadata && typeof stored.metadata === 'object') {
+        context.metadata = stored.metadata;
+      }
     }
     completeActionInstance(definition, stored, context);
   }

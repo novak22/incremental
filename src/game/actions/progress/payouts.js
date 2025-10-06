@@ -31,9 +31,9 @@ export function processCompletionPayout({
   const payoutCandidates = [
     context.finalPayout,
     context.payoutGranted,
+    hustleEntry.payout?.amount,
     stored.payoutAwarded,
-    hustleEntry.payoutAwarded,
-    hustleEntry.payout?.amount
+    hustleEntry.payoutAwarded
   ];
 
   let payoutAmount = null;

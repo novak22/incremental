@@ -1,11 +1,8 @@
 import { formatHours, formatMoney, toNumber } from '../../../core/helpers.js';
 import { countActiveAssetInstances, getActionState, getState } from '../../../core/state.js';
-import { executeAction } from '../../actions.js';
 import { addMoney, spendMoney } from '../../currency.js';
-import { checkDayEnd } from '../../lifecycle.js';
 import { recordCostContribution, recordPayoutContribution, recordTimeContribution } from '../../metrics.js';
 import { summarizeAssetRequirements } from '../../requirements.js';
-import { spendTime } from '../../time.js';
 import { awardSkillProgress } from '../../skills/index.js';
 import {
   applyInstantHustleEducationBonus,
@@ -15,10 +12,14 @@ import {
 import { getHustleEffectMultiplier } from '../../upgrades/effects/index.js';
 import { applyModifiers } from '../../data/economyMath.js';
 import { applyMetric, normalizeHustleMetrics } from './metrics.js';
-import { logEducationPayoffSummary, logHustleBlocked } from './logMessaging.js';
+import { logEducationPayoffSummary } from './logMessaging.js';
 import { markDirty } from '../../../core/events/invalidationBus.js';
-import { advanceActionInstance, completeActionInstance } from '../../actions/progress/instances.js';
 import { createContractTemplate } from '../../actions/templates/contract.js';
+import {
+  ensureActionMarketCategoryState,
+  getActionMarketAvailableOffers
+} from '../../../core/state/slices/actionMarket/index.js';
+import { rollDailyOffers } from '../../hustles/market.js';
 
 function formatHourDetail(hours, effective) {
   if (!hours) return '⏳ Time: <strong>Instant</strong>';
@@ -116,16 +117,34 @@ export function createInstantHustle(config) {
     };
   }
 
+  const suppliedProgress = typeof config.progress === 'object' && config.progress !== null
+    ? { ...config.progress }
+    : {};
   const progressDefaults = {
-    type: 'instant',
-    completion: 'instant',
-    ...(config.progress || {})
+    type: suppliedProgress.type || 'hustle',
+    completion: suppliedProgress.completion || (metadata.time > 0 ? 'manual' : 'instant')
   };
 
-  if (progressDefaults.hoursRequired == null) {
+  if (suppliedProgress.hoursRequired != null) {
+    progressDefaults.hoursRequired = suppliedProgress.hoursRequired;
+  } else {
     const baseHours = Number(metadata.time);
     if (Number.isFinite(baseHours) && baseHours >= 0) {
       progressDefaults.hoursRequired = baseHours;
+    }
+  }
+
+  const additionalProgressKeys = [
+    'hoursPerDay',
+    'daysRequired',
+    'deadlineDay',
+    'label',
+    'completionMode',
+    'progressLabel'
+  ];
+  for (const key of additionalProgressKeys) {
+    if (suppliedProgress[key] != null) {
+      progressDefaults[key] = suppliedProgress[key];
     }
   }
 
@@ -146,7 +165,7 @@ export function createInstantHustle(config) {
     })(),
     dailyLimit: metadata.dailyLimit,
     skills: metadata.skills,
-    progress: config.progress,
+    progress: progressDefaults,
     time: metadata.time
   };
 
@@ -158,9 +177,38 @@ export function createInstantHustle(config) {
       }
     }
   }
+  acceptHooks.push(context => {
+    const state = context?.state || getState();
+    if (!state) return;
+    if (metadata.cost > 0) {
+      spendMoney(metadata.cost);
+      applyMetric(recordCostContribution, metadata.metrics.cost, { amount: metadata.cost });
+      if (context?.instance) {
+        context.instance.costPaid = (context.instance.costPaid || 0) + metadata.cost;
+      }
+    }
+  });
+
   if (typeof config.onAccept === 'function') {
     acceptHooks.push(config.onAccept);
   }
+
+  const completionHooks = [];
+
+  completionHooks.push(hookContext => {
+    if (hookContext?.__educationSummary) {
+      logEducationPayoffSummary(hookContext.__educationSummary);
+    }
+  });
+
+  if (typeof config.onComplete === 'function') {
+    completionHooks.push(config.onComplete);
+  }
+
+  completionHooks.push(hookContext => {
+    markDirty('cards');
+    config.onRun?.(hookContext);
+  });
 
   const definition = createContractTemplate(baseDefinition, {
     templateKind: 'manual',
@@ -172,6 +220,15 @@ export function createInstantHustle(config) {
     accept: {
       progress: progressDefaults,
       hooks: acceptHooks.map(hook => context => {
+        hook({
+          ...context,
+          metadata: context.metadata || metadata,
+          definition: context.definition || definition
+        });
+      })
+    },
+    complete: {
+      hooks: completionHooks.map(hook => context => {
         hook({
           ...context,
           metadata: context.metadata || metadata,
@@ -289,151 +346,147 @@ export function createInstantHustle(config) {
     return null;
   }
 
-  function runHustle(context) {
-    const effectiveTime = resolveEffectiveTime(context.state);
-    context.effectiveTime = effectiveTime;
-    if (effectiveTime > 0) {
-      spendTime(effectiveTime);
-      applyMetric(recordTimeContribution, metadata.metrics.time, { hours: effectiveTime });
+  function computeCompletionHours(instance, fallback) {
+    const logged = Number(instance?.hoursLogged);
+    if (Number.isFinite(logged) && logged >= 0) {
+      return logged;
     }
-    if (metadata.cost > 0) {
-      spendMoney(metadata.cost);
-      applyMetric(recordCostContribution, metadata.metrics.cost, { amount: metadata.cost });
+    const progressHours = Number(instance?.progress?.hoursRequired);
+    if (Number.isFinite(progressHours) && progressHours >= 0) {
+      return progressHours;
+    }
+    return Number.isFinite(fallback) && fallback >= 0 ? fallback : 0;
+  }
+
+  function prepareCompletion({ context = {}, instance, state, completionHours }) {
+    const workingContext = context;
+    workingContext.definition = definition;
+    const instanceMetadata = instance?.metadata && typeof instance.metadata === 'object' ? instance.metadata : null;
+    const providedMetadata = workingContext.metadata && typeof workingContext.metadata === 'object'
+      ? workingContext.metadata
+      : null;
+    const resolvedMetadata = providedMetadata || instanceMetadata || metadata;
+    workingContext.metadata = resolvedMetadata;
+    workingContext.definitionMetadata = metadata;
+    workingContext.state = state;
+
+    const resolvedHours = Number.isFinite(completionHours)
+      ? completionHours
+      : computeCompletionHours(instance, metadata.time);
+    workingContext.effectiveTime = Number.isFinite(resolvedHours) && resolvedHours >= 0 ? resolvedHours : 0;
+
+    if (workingContext.effectiveTime > 0) {
+      applyMetric(recordTimeContribution, metadata.metrics.time, { hours: workingContext.effectiveTime });
     }
 
-    context.skipDefaultPayout = () => {
-      context.__skipDefaultPayout = true;
+    workingContext.skipDefaultPayout = () => {
+      workingContext.__skipDefaultPayout = true;
     };
 
-    config.onExecute?.(context);
-
     if (metadata.skills) {
-      context.skillXpAwarded = awardSkillProgress({
+      workingContext.skillXpAwarded = awardSkillProgress({
         skills: metadata.skills,
-        timeSpentHours: effectiveTime,
+        timeSpentHours: workingContext.effectiveTime,
         moneySpent: metadata.cost,
-        label: definition.name
+        label: definition.name,
+        state
       });
     }
 
-    if (metadata.payout && metadata.payout.grantOnAction && !context.__skipDefaultPayout) {
-      const basePayout = metadata.payout.amount;
+    config.onExecute?.(workingContext);
+
+    const payoutAmountCandidates = [
+      toNumber(resolvedMetadata?.payout?.amount, null),
+      toNumber(resolvedMetadata?.payoutAmount, null),
+      toNumber(instanceMetadata?.payout?.amount, null),
+      toNumber(instanceMetadata?.payoutAmount, null),
+      toNumber(metadata.payout?.amount, null)
+    ];
+    const basePayout = payoutAmountCandidates.find(value => Number.isFinite(value) && value >= 0) || 0;
+
+    if (basePayout > 0 && !workingContext.__skipDefaultPayout) {
       const { amount: educationAdjusted, applied: appliedBonuses } = applyInstantHustleEducationBonus({
         hustleId: metadata.id,
         baseAmount: basePayout,
-        state: context.state
+        state
       });
 
-      context.basePayout = basePayout;
-      context.educationAdjustedPayout = educationAdjusted;
-      context.appliedEducationBoosts = appliedBonuses;
+      workingContext.basePayout = basePayout;
+      workingContext.educationAdjustedPayout = educationAdjusted;
+      workingContext.appliedEducationBoosts = appliedBonuses;
 
-      const upgradeResult = applyHustlePayoutMultiplier(educationAdjusted, context);
+      const upgradeResult = applyHustlePayoutMultiplier(educationAdjusted, workingContext);
       const upgradedAmount = upgradeResult.amount;
       const roundedPayout = Math.max(0, Math.round(upgradedAmount));
 
-      context.upgradeMultiplier = upgradeResult.multiplier;
-      context.upgradeSources = upgradeResult.sources;
-      context.finalPayout = roundedPayout;
-      context.payoutGranted = roundedPayout;
-
-      const template = metadata.payout.message;
-      let message;
-      if (typeof template === 'function') {
-        message = template(context);
-      } else if (template) {
-        message = template;
-      } else {
-        const bonusNote = appliedBonuses.length ? ' Education bonus included!' : '';
-        const upgradeNote = upgradeResult.sources.length ? ' Upgrades amplified the payout!' : '';
-        message = `${definition.name} paid $${formatMoney(roundedPayout)}.${bonusNote}${upgradeNote}`;
-      }
-
-      addMoney(roundedPayout, message, metadata.payout.logType);
-      applyMetric(recordPayoutContribution, metadata.metrics.payout, { amount: roundedPayout });
+      workingContext.upgradeMultiplier = upgradeResult.multiplier;
+      workingContext.upgradeSources = upgradeResult.sources;
+      workingContext.finalPayout = roundedPayout;
+      workingContext.payoutGranted = roundedPayout;
 
       if (appliedBonuses.length) {
-        const summary = formatEducationBonusSummary(appliedBonuses);
-        logEducationPayoffSummary(summary);
+        workingContext.__educationSummary = formatEducationBonusSummary(appliedBonuses);
       }
     }
 
-    const updatedUsage = updateDailyUsage(context.state);
+    const updatedUsage = updateDailyUsage(state);
     if (updatedUsage) {
-      context.limitUsage = updatedUsage;
+      workingContext.limitUsage = updatedUsage;
       markDirty('actions');
     }
 
-    config.onComplete?.(context);
-    markDirty('cards');
+    return workingContext;
+  }
+
+  function resolvePrimaryOfferAction({ state = getState(), includeUpcoming = true } = {}) {
+    const workingState = state || getState();
+    if (!workingState) {
+      return null;
+    }
+    const currentDay = Math.max(1, Math.floor(Number(workingState.day) || 1));
+    const marketState = ensureActionMarketCategoryState(workingState, 'hustle', { fallbackDay: currentDay });
+    if (!marketState) {
+      return null;
+    }
+    const offers = getActionMarketAvailableOffers(workingState, 'hustle', {
+      day: currentDay,
+      includeUpcoming
+    });
+    const matching = offers.filter(offer => offer?.templateId === metadata.id || offer?.definitionId === metadata.id);
+    if (matching.length) {
+      const readyOffer = matching.find(offer => Number(offer?.availableOnDay ?? currentDay) <= currentDay);
+      const primary = readyOffer || matching[0];
+      const label = primary?.variant?.label || definition.name || primary?.templateId || metadata.id;
+      const disabledReason = getDisabledReason(workingState);
+      return {
+        type: 'offer',
+        offer: primary,
+        ready: Boolean(readyOffer),
+        label: `Accept ${label}`,
+        disabled: Boolean(disabledReason),
+        disabledReason
+      };
+    }
+
+    const rerollLabel = definition.market?.manualRerollLabel || 'Roll a fresh offer';
+    return {
+      type: 'reroll',
+      label: rerollLabel,
+      reroll: ({ day = currentDay } = {}) =>
+        rollDailyOffers({ templates: [definition], state: workingState, day, category: 'hustle' })
+    };
   }
 
   definition.action = {
-    label: config.actionLabel || 'Run Hustle',
+    label: config.actionLabel || 'Accept Offer',
     className: actionClassName,
-    disabled: () => {
-      const state = getState();
-      if (!state) return true;
-      return Boolean(getDisabledReason(state));
-    },
-    onClick: () => {
-      executeAction(() => {
-        const state = getState();
-        if (!state) return;
-        const reason = getDisabledReason(state);
-        if (reason) {
-          logHustleBlocked(reason);
-          return;
-        }
-        const context = {
-          definition,
-          state,
-          metadata,
-          get usage() {
-            return resolveDailyUsage(state, { sync: false });
-          }
-        };
-        const effectiveTime = resolveEffectiveTime(state);
-        const deadlineDay = metadata.dailyLimit ? Number(state?.day) || null : null;
-        const progressOverrides = definition.progress ? { ...definition.progress } : { ...config.progress };
-        if (deadlineDay != null) {
-          progressOverrides.deadlineDay = deadlineDay;
-        }
-        const instance = definition.acceptInstance({
-          state,
-          metadata,
-          overrides: {
-            hoursRequired: effectiveTime > 0 ? effectiveTime : 0,
-            deadlineDay,
-            progress: progressOverrides
-          }
-        });
-        if (instance) {
-          context.instance = instance;
-          const logDay = Number(state?.day) || instance.acceptedOnDay;
-          advanceActionInstance(definition, instance, {
-            state,
-            day: logDay,
-            hours: effectiveTime,
-            autoComplete: false,
-            completionContext: context,
-            metadata
-          });
-        }
-        runHustle(context);
-        context.completionDay = Number(state?.day) || instance?.acceptedOnDay || null;
-        const completionMode = (definition.progress || config.progress || {}).completion;
-        const shouldDeferCompletion = completionMode === 'deferred' || completionMode === 'manual';
-        if (instance && !shouldDeferCompletion) {
-          completeActionInstance(definition, instance, context);
-        }
-        config.onRun?.(context);
-      });
-      checkDayEnd();
-    }
+    disabled: () => true,
+    onClick: null,
+    resolvePrimaryAction: resolvePrimaryOfferAction
   };
-  definition.action.isLegacyInstant = true;
-  definition.action.hiddenFromMarket = true;
+  definition.getPrimaryOfferAction = resolvePrimaryOfferAction;
+  definition.__prepareCompletion = ({ context, instance, state, completionHours }) =>
+    prepareCompletion({ context, instance, state, completionHours });
 
   definition.metricIds = {
     time: metadata.metrics.time?.key || null,
