@@ -48,19 +48,28 @@ export function rollDailyOffers({
   const activeVariantsByTemplate = new Map();
   const templateAudits = [];
   for (const offer of preservedOffers) {
-    if (!offer || offer.claimed) continue;
+    if (!offer) continue;
     if (!activeVariantsByTemplate.has(offer.templateId)) {
       activeVariantsByTemplate.set(offer.templateId, {
         total: 0,
+        claimedSeatUsage: 0,
         variants: new Map()
       });
     }
     const activity = activeVariantsByTemplate.get(offer.templateId);
-    activity.total += 1;
-    activity.variants.set(
-      offer.variantId,
-      (activity.variants.get(offer.variantId) || 0) + 1
+    const resolvedSeats = clampMarketPositiveInteger(
+      offer?.seats ?? offer?.variant?.seats ?? 1,
+      1
     );
+    const claimedSeatPenalty = offer.claimed ? Math.max(0, resolvedSeats - 1) : 0;
+    activity.total += 1;
+    activity.claimedSeatUsage = (activity.claimedSeatUsage || 0) + claimedSeatPenalty;
+    if (!activity.variants.has(offer.variantId)) {
+      activity.variants.set(offer.variantId, { total: 0, claimedSeatUsage: 0 });
+    }
+    const variantActivity = activity.variants.get(offer.variantId);
+    variantActivity.total += 1;
+    variantActivity.claimedSeatUsage += claimedSeatPenalty;
   }
 
   for (const template of templates) {
@@ -70,6 +79,7 @@ export function rollDailyOffers({
     if (!activeVariantsByTemplate.has(templateId)) {
       activeVariantsByTemplate.set(templateId, {
         total: 0,
+        claimedSeatUsage: 0,
         variants: new Map()
       });
     }
@@ -102,7 +112,8 @@ export function rollDailyOffers({
     }
 
     const currentActive = activity.total;
-    const templateCapacity = Math.max(0, templateMaxActive - currentActive);
+    const claimedSeatPenalty = activity.claimedSeatUsage || 0;
+    const templateCapacity = Math.max(0, templateMaxActive - currentActive - claimedSeatPenalty);
     let slotsRemaining = Math.min(templateSlotsPerRoll, templateCapacity);
     if (slotsRemaining <= 0) {
       templateAudit.skipped = true;
@@ -114,13 +125,15 @@ export function rollDailyOffers({
 
     while (slotsRemaining > 0) {
       const availableVariants = variants.filter(variant => {
-        const activeCount = activity.variants.get(variant.id) || 0;
+        const variantActivity = activity.variants.get(variant.id) || { total: 0, claimedSeatUsage: 0 };
+        const activeCount = variantActivity.total;
+        const seatPenalty = variantActivity.claimedSeatUsage || 0;
         const pendingCount = pendingAdds.get(variant.id) || 0;
         const variantMaxActive = clampMarketPositiveInteger(
           variant.maxActive != null ? variant.maxActive : variant.copies ?? 1,
           variant.copies ?? 1
         );
-        const capacity = variantMaxActive - activeCount - pendingCount;
+        const capacity = variantMaxActive - activeCount - pendingCount - seatPenalty;
         return capacity > 0;
       });
 
@@ -135,13 +148,15 @@ export function rollDailyOffers({
         break;
       }
 
-      const activeCount = activity.variants.get(selectedVariant.id) || 0;
+      const variantActivity = activity.variants.get(selectedVariant.id) || { total: 0, claimedSeatUsage: 0 };
+      const activeCount = variantActivity.total;
+      const seatPenalty = variantActivity.claimedSeatUsage || 0;
       const pendingCount = pendingAdds.get(selectedVariant.id) || 0;
       const variantMaxActive = clampMarketPositiveInteger(
         selectedVariant.maxActive != null ? selectedVariant.maxActive : selectedVariant.copies ?? 1,
         selectedVariant.copies ?? 1
       );
-      const variantCapacity = Math.max(0, variantMaxActive - activeCount - pendingCount);
+      const variantCapacity = Math.max(0, variantMaxActive - activeCount - pendingCount - seatPenalty);
       if (variantCapacity <= 0) {
         pendingAdds.set(selectedVariant.id, pendingCount);
         templateAudit.reason = templateAudit.reason || 'variantCapacityReached';
@@ -176,10 +191,9 @@ export function rollDailyOffers({
       for (const [variantId, addedCount] of pendingAdds.entries()) {
         if (addedCount <= 0) continue;
         addedToTemplate += addedCount;
-        activity.variants.set(
-          variantId,
-          (activity.variants.get(variantId) || 0) + addedCount
-        );
+        const existingVariantActivity = activity.variants.get(variantId) || { total: 0, claimedSeatUsage: 0 };
+        existingVariantActivity.total += addedCount;
+        activity.variants.set(variantId, existingVariantActivity);
       }
       if (addedToTemplate > 0) {
         activity.total += addedToTemplate;
