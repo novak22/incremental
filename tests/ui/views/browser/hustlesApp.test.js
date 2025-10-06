@@ -210,6 +210,91 @@ test('renderHustles omits locked offers from DownWork feed', () => {
   }
 });
 
+test('renderHustles hides categories without unlocked offers', () => {
+  const dom = setupDom();
+  const context = {
+    ensurePageContent: (_page, builder) => {
+      const body = document.createElement('div');
+      builder({ body });
+      document.body.appendChild(body);
+      return { body };
+    }
+  };
+
+  const definitions = [
+    {
+      id: 'locked-filter',
+      name: 'Locked Filter Hustle',
+      description: 'Only unlocked offers should appear.',
+      action: { label: 'Legacy' }
+    }
+  ];
+
+  const models = [
+    {
+      id: 'locked-filter',
+      name: 'Locked Filter Hustle',
+      description: 'Only unlocked offers should appear.',
+      badges: [],
+      metrics: {
+        time: { value: 1, label: '1h' },
+        payout: { value: 25, label: '$25' },
+        roi: 25
+      },
+      requirements: { summary: 'No requirements', items: [] },
+      action: {
+        label: 'Locked — Hidden',
+        disabled: true,
+        className: 'primary',
+        onClick: null
+      },
+      available: false,
+      offers: [
+        {
+          id: 'offer-locked',
+          label: 'Locked Ready Offer',
+          description: 'Hidden because locked.',
+          meta: 'Locked meta',
+          payout: 25,
+          ready: true,
+          availableIn: 0,
+          expiresIn: 2,
+          locked: true
+        }
+      ],
+      upcoming: [
+        {
+          id: 'offer-locked-upcoming',
+          label: 'Locked Upcoming Offer',
+          description: 'Hidden upcoming offer.',
+          meta: 'Locked upcoming',
+          ready: false,
+          availableIn: 2,
+          expiresIn: 3,
+          locked: true
+        }
+      ],
+      commitments: [],
+      filters: { available: false }
+    }
+  ];
+
+  try {
+    const result = renderHustles(context, definitions, models);
+    assert.equal(result?.meta, 'No hustles ready yet');
+
+    const cards = document.querySelectorAll('.browser-card.browser-card--hustle');
+    assert.equal(cards.length, 0, 'expected no hustle categories to render');
+
+    const emptyMessage = document.querySelector('.browser-empty');
+    assert.ok(emptyMessage, 'expected empty state when no unlocked hustles exist');
+  } finally {
+    dom.window.close();
+    delete globalThis.window;
+    delete globalThis.document;
+  }
+});
+
 test('renderHustles falls back to empty-state language when no offers exist', () => {
   const dom = setupDom();
   const context = {
