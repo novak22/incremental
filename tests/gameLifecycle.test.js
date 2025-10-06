@@ -274,7 +274,7 @@ test('endDay resets action counters even when legacy hustle map is absent', () =
   assert.equal(state.day, startingDay + 1, 'day should increment when ending the day');
 });
 
-test('ensureHustleMarketState prunes expired offers and accepted entries', () => {
+test('ensureHustleMarketState prunes expired offers and marks expired accepted entries', () => {
   const now = Date.now();
   state.day = 5;
   const today = state.day;
@@ -327,10 +327,14 @@ test('ensureHustleMarketState prunes expired offers and accepted entries', () =>
 
   assert.equal(state.hustleMarket.offers.length, 1, 'expired offers should be removed from the market');
   assert.equal(state.hustleMarket.offers[0].id, 'active-offer', 'active offers should remain available');
-  assert.equal(state.hustleMarket.accepted.length, 1, 'accepted entries past their deadline should be pruned');
-  assert.equal(
-    state.hustleMarket.accepted[0].offerId,
-    'active-offer',
-    'only active accepted entries should remain after pruning'
-  );
+  assert.equal(state.hustleMarket.accepted.length, 2, 'accepted entries should be preserved for late completion processing');
+
+  const expiredEntry = state.hustleMarket.accepted.find(entry => entry.id === 'accepted-expired');
+  assert.ok(expiredEntry, 'expired accepted entries should remain in the market state');
+  assert.equal(expiredEntry.status, 'expired', 'expired accepted entries should be marked expired');
+  assert.equal(expiredEntry.expired, true, 'expired accepted entries should have the expired flag set');
+
+  const activeEntry = state.hustleMarket.accepted.find(entry => entry.id === 'accepted-active');
+  assert.ok(activeEntry, 'active accepted entries should remain after pruning');
+  assert.equal(activeEntry.offerId, 'active-offer', 'active accepted entries should remain linked to their offer');
 });
