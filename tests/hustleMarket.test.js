@@ -900,6 +900,63 @@ test('multi-day hustle variants award their full contract payout on completion',
   );
 });
 
+test('completing a hustle after its deadline still grants the payout', () => {
+  const state = getState();
+  state.day = 8;
+
+  const template = HUSTLE_TEMPLATES.find(entry => entry?.id === 'freelance') || HUSTLE_TEMPLATES[0];
+  assert.ok(template, 'expected a freelance hustle template for late completion validation');
+
+  const offers = rollDailyOffers({ templates: [template], day: state.day, now: 800, state, rng: () => 0.6 });
+  const multiDayOffer = offers.find(offer => offer.variantId === 'freelance-series');
+  assert.ok(multiDayOffer, 'expected the market roll to include the multi-day freelance offer');
+
+  const accepted = acceptHustleOffer(multiDayOffer.id, { state });
+  assert.ok(accepted, 'multi-day offer should be accepted');
+  const contractAmount = Math.round(Number(accepted.payout?.amount) || 0);
+  assert.ok(contractAmount > 0, 'late completion test requires a positive contract payout');
+
+  const deadlineDay = accepted.deadlineDay;
+  assert.ok(deadlineDay && deadlineDay > accepted.acceptedOnDay, 'multi-day offer should extend its deadline beyond the start day');
+
+  const actionState = getActionState(template.id, state);
+  const instance = actionState.instances.find(entry => entry.id === accepted.instanceId);
+  assert.ok(instance, 'accepted offer should create an action instance for completion');
+
+  const requiredHours = Math.round(Number(instance.hoursRequired) || Number(accepted.hoursRequired) || 0);
+  assert.ok(requiredHours > 0, 'late completion test requires the instance to demand logged hours');
+
+  const startingMoney = Number(state.money) || 0;
+  const completionDay = deadlineDay + 2;
+  state.day = completionDay;
+
+  ensureHustleMarketState(state, { fallbackDay: completionDay });
+  const expiredEntry = state.hustleMarket.accepted.find(entry => entry.instanceId === accepted.instanceId);
+  assert.ok(expiredEntry, 'expired hustle entry should still be tracked after normalization');
+  assert.equal(expiredEntry.status, 'expired', 'expired hustle entry should be marked as expired prior to completion');
+  assert.equal(expiredEntry.expired, true, 'expired hustle entry should expose an expired flag');
+
+  const completionResult = completeActionInstance(template, instance, {
+    state,
+    completionDay,
+    effectiveTime: requiredHours
+  });
+  assert.ok(completionResult, 'late completion should succeed when requirements are met');
+
+  const expectedMoneyTotal = startingMoney + contractAmount;
+  assert.equal(Number(state.money) || 0, expectedMoneyTotal, 'player money should increase by the contract payout even after the deadline');
+
+  const hustleEntry = state.hustleMarket.accepted.find(entry => entry.instanceId === accepted.instanceId);
+  assert.ok(hustleEntry, 'completed hustle entry should remain available after payout');
+  assert.equal(hustleEntry.status, 'complete', 'hustle entry should be marked complete after late completion');
+  assert.ok(hustleEntry.payoutPaid, 'late completion should record that the payout was granted');
+  assert.equal(
+    Math.round(Number(hustleEntry.payoutAwarded) || 0),
+    contractAmount,
+    'late completion payout amount should match the contract amount'
+  );
+});
+
 test('action market isolates categories and tags entries', () => {
   const state = harness.resetState();
   state.day = 4;
