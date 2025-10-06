@@ -50,19 +50,21 @@ export function normalizeBucketName(value) {
   return BUCKET_ALIASES.get(trimmed) || trimmed;
 }
 
+export function resolveQueueCategory(...values) {
+  for (const value of values) {
+    const normalized = normalizeBucketName(value);
+    if (normalized) {
+      return normalized;
+    }
+  }
+  return null;
+}
+
 export function resolveFocusBucket(entry = {}) {
   if (!entry || typeof entry !== 'object') {
     return DEFAULT_FOCUS_BUCKET;
   }
-  const explicit = normalizeBucketName(entry.focusBucket);
-  if (explicit) {
-    return explicit;
-  }
-  const category = normalizeBucketName(entry.focusCategory);
-  if (category) {
-    return category;
-  }
-  return DEFAULT_FOCUS_BUCKET;
+  return resolveQueueCategory(entry.focusBucket, entry.focusCategory) || DEFAULT_FOCUS_BUCKET;
 }
 
 export function collectBuckets(entries = []) {
@@ -357,6 +359,7 @@ export function applyFinalQueueMetrics(target = {}, state = {}) {
 
 export default {
   normalizeBucketName,
+  resolveQueueCategory,
   resolveFocusBucket,
   collectBuckets,
   sortBuckets,

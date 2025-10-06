@@ -1,16 +1,7 @@
-import { formatHours, formatMoney, toNumber } from '../../../core/helpers.js';
-import { countActiveAssetInstances, getActionState, getState } from '../../../core/state.js';
-import { addMoney, spendMoney } from '../../currency.js';
-import { recordCostContribution, recordPayoutContribution, recordTimeContribution } from '../../metrics.js';
-import { summarizeAssetRequirements } from '../../requirements.js';
-import { awardSkillProgress } from '../../skills/index.js';
-import {
-  applyInstantHustleEducationBonus,
-  describeInstantHustleEducationBonuses,
-  formatEducationBonusSummary
-} from '../../educationEffects.js';
-import { getHustleEffectMultiplier } from '../../upgrades/effects/index.js';
-import { applyModifiers } from '../../data/economyMath.js';
+import { toNumber } from '../../../core/helpers.js';
+import { getState } from '../../../core/state.js';
+import { spendMoney } from '../../currency.js';
+import { recordCostContribution } from '../../metrics.js';
 import { applyMetric, normalizeHustleMetrics } from './metrics.js';
 import { logEducationPayoffSummary } from './logMessaging.js';
 import { markDirty } from '../../../core/events/invalidationBus.js';
@@ -20,34 +11,9 @@ import {
   getActionMarketAvailableOffers
 } from '../../../core/state/slices/actionMarket/index.js';
 import { rollDailyOffers } from '../../hustles/market.js';
-
-function formatHourDetail(hours, effective) {
-  if (!hours) return '⏳ Time: <strong>Instant</strong>';
-  const base = formatHours(hours);
-  if (Number.isFinite(Number(effective)) && Math.abs(effective - hours) > 0.01) {
-    return `⏳ Time: <strong>${formatHours(effective)}</strong> (base ${base})`;
-  }
-  return `⏳ Time: <strong>${base}</strong>`;
-}
-
-function formatCostDetail(cost) {
-  if (!cost) return null;
-  return `💵 Cost: <strong>$${formatMoney(cost)}</strong>`;
-}
-
-function formatPayoutDetail(payout) {
-  if (!payout || !payout.amount) return null;
-  const base = `💰 Payout: <strong>$${formatMoney(payout.amount)}</strong>`;
-  if (payout.delaySeconds) {
-    return `${base} after ${payout.delaySeconds}s`;
-  }
-  return base;
-}
-
-function meetsAssetRequirements(requirements = [], state = getState()) {
-  if (!requirements?.length) return true;
-  return requirements.every(req => countActiveAssetInstances(req.assetId, state) >= toNumber(req.count, 1));
-}
+import { buildProgressDefaults, buildDefaultState } from './assetActions/progressDefaults.js';
+import { buildDetailResolvers } from './assetActions/formatting.js';
+import { createDailyLimitTracker, createExecutionHooks } from './assetActions/execution.js';
 
 export function createInstantHustle(config) {
   const metadata = {
@@ -71,98 +37,15 @@ export function createInstantHustle(config) {
       : null
   };
 
-  function resolveDailyUsage(state = getState(), { sync = false } = {}) {
-    const actionState = getActionState(metadata.id, state);
-    const currentDay = Number(state?.day) || 1;
+  const { resolveDailyUsage, updateDailyUsage } = createDailyLimitTracker(metadata);
 
-    if (!metadata.dailyLimit) {
-      return {
-        actionState,
-        currentDay,
-        limit: null,
-        used: Number(actionState.runsToday) || 0,
-        remaining: null
-      };
-    }
-
-    const lastRunDay = Number(actionState.lastRunDay) || 0;
-    const usedToday = lastRunDay === currentDay ? Number(actionState.runsToday) || 0 : 0;
-
-    if (sync && lastRunDay !== currentDay) {
-      actionState.lastRunDay = currentDay;
-      actionState.runsToday = usedToday;
-    }
-
-    return {
-      actionState,
-      currentDay,
-      limit: metadata.dailyLimit,
-      used: usedToday,
-      remaining: Math.max(0, metadata.dailyLimit - usedToday)
-    };
-  }
-
-  function updateDailyUsage(state) {
-    if (!metadata.dailyLimit) return null;
-    const usage = resolveDailyUsage(state, { sync: true });
-    const nextUsed = Math.min(metadata.dailyLimit, usage.used + 1);
-    usage.actionState.lastRunDay = usage.currentDay;
-    usage.actionState.runsToday = nextUsed;
-    const remaining = Math.max(0, metadata.dailyLimit - nextUsed);
-    return {
-      limit: metadata.dailyLimit,
-      used: nextUsed,
-      remaining,
-      day: usage.currentDay
-    };
-  }
-
-  const suppliedProgress = typeof config.progress === 'object' && config.progress !== null
-    ? { ...config.progress }
-    : {};
-  const progressDefaults = {
-    type: suppliedProgress.type || 'hustle',
-    completion: suppliedProgress.completion || (metadata.time > 0 ? 'manual' : 'instant')
-  };
-
-  if (suppliedProgress.hoursRequired != null) {
-    progressDefaults.hoursRequired = suppliedProgress.hoursRequired;
-  } else {
-    const baseHours = Number(metadata.time);
-    if (Number.isFinite(baseHours) && baseHours >= 0) {
-      progressDefaults.hoursRequired = baseHours;
-    }
-  }
-
-  const additionalProgressKeys = [
-    'hoursPerDay',
-    'daysRequired',
-    'deadlineDay',
-    'label',
-    'completionMode',
-    'progressLabel'
-  ];
-  for (const key of additionalProgressKeys) {
-    if (suppliedProgress[key] != null) {
-      progressDefaults[key] = suppliedProgress[key];
-    }
-  }
+  const progressDefaults = buildProgressDefaults({ metadata, config });
 
   const baseDefinition = {
     ...config,
     type: 'hustle',
     tag: config.tag || { label: 'Instant', type: 'instant' },
-    defaultState: (() => {
-      const base = { ...(config.defaultState || {}) };
-      if (!Array.isArray(base.instances)) {
-        base.instances = [];
-      }
-      if (metadata.dailyLimit) {
-        if (typeof base.runsToday !== 'number') base.runsToday = 0;
-        if (typeof base.lastRunDay !== 'number') base.lastRunDay = 0;
-      }
-      return base;
-    })(),
+    defaultState: buildDefaultState({ config, metadata }),
     dailyLimit: metadata.dailyLimit,
     skills: metadata.skills,
     progress: progressDefaults,
@@ -177,6 +60,7 @@ export function createInstantHustle(config) {
       }
     }
   }
+
   acceptHooks.push(context => {
     const state = context?.state || getState();
     if (!state) return;
@@ -194,7 +78,6 @@ export function createInstantHustle(config) {
   }
 
   const completionHooks = [];
-
   completionHooks.push(hookContext => {
     if (hookContext?.__educationSummary) {
       logEducationPayoffSummary(hookContext.__educationSummary);
@@ -240,203 +123,25 @@ export function createInstantHustle(config) {
 
   definition.tags = Array.isArray(config.tags) ? config.tags.slice() : [];
 
-  function resolveEffectiveTime(state = getState()) {
-    if (!metadata.time) return metadata.time;
-    const { multiplier } = getHustleEffectMultiplier(definition, 'setup_time_mult', {
-      state,
-      actionType: 'setup'
-    });
-    const adjusted = metadata.time * (Number.isFinite(multiplier) ? multiplier : 1);
-    return Number.isFinite(adjusted) ? Math.max(0, adjusted) : metadata.time;
-  }
-
-  function describeEffectiveTime() {
-    return formatHourDetail(metadata.time, resolveEffectiveTime());
-  }
-
-  function applyHustlePayoutMultiplier(amount, context) {
-    if (!amount) {
-      return { amount: 0, multiplier: 1, sources: [] };
-    }
-    const effect = getHustleEffectMultiplier(definition, 'payout_mult', {
-      state: context.state,
-      actionType: 'payout'
-    });
-    if (!effect) {
-      return { amount, multiplier: 1, sources: [] };
-    }
-
-    const baseMultiplier = Number.isFinite(effect.multiplier) ? effect.multiplier : 1;
-    if (Array.isArray(effect.modifiers) && effect.modifiers.length) {
-      const result = applyModifiers(amount, effect.modifiers, { clamp: effect.clamp });
-      const finalAmount = Number.isFinite(result?.value) ? result.value : amount;
-      const appliedSources = result.applied
-        .filter(entry => entry.type === 'multiplier')
-        .map(entry => ({ id: entry.id, label: entry.label, multiplier: entry.value }));
-      return {
-        amount: finalAmount,
-        multiplier: Number.isFinite(result?.multiplier) ? result.multiplier : baseMultiplier,
-        sources: appliedSources
-      };
-    }
-
-    if (!Number.isFinite(baseMultiplier) || baseMultiplier === 1) {
-      return { amount, multiplier: 1, sources: [] };
-    }
-    return { amount: amount * baseMultiplier, multiplier: baseMultiplier, sources: effect.sources || [] };
-  }
+  const hooks = createExecutionHooks({
+    definition,
+    metadata,
+    config,
+    resolveDailyUsage,
+    updateDailyUsage
+  });
 
   definition.dailyLimit = metadata.dailyLimit;
   definition.getDailyUsage = state => resolveDailyUsage(state, { sync: false });
 
-  const baseDetails = [];
-  if (metadata.time > 0) {
-    baseDetails.push(() => describeEffectiveTime());
-  }
-  if (metadata.cost > 0) {
-    const detail = formatCostDetail(metadata.cost);
-    if (detail) baseDetails.push(() => detail);
-  }
-  const payoutDetail = formatPayoutDetail(metadata.payout);
-  if (payoutDetail) {
-    baseDetails.push(() => payoutDetail);
-  }
-  if (metadata.requirements.length) {
-    baseDetails.push(() => `Requires: <strong>${summarizeAssetRequirements(metadata.requirements)}</strong>`);
-  }
-
-  if (metadata.dailyLimit) {
-    baseDetails.push(() => {
-      const usage = resolveDailyUsage(getState(), { sync: false });
-      const remaining = usage?.remaining ?? metadata.dailyLimit;
-      const limit = usage?.limit ?? metadata.dailyLimit;
-      const status = remaining > 0
-        ? `${remaining}/${limit} runs left today`
-        : 'Daily limit reached today';
-      return `🗓️ Daily limit: <strong>${limit} per day</strong> (${status})`;
-    });
-  }
-
-  const educationDetails = describeInstantHustleEducationBonuses(config.id);
-
-  definition.details = [...baseDetails, ...educationDetails, ...(config.details || [])];
+  definition.details = buildDetailResolvers({
+    metadata,
+    config,
+    resolveDailyUsage,
+    resolveEffectiveTime: hooks.resolveEffectiveTime
+  });
 
   const actionClassName = config.actionClassName || 'primary';
-
-  function getDisabledReason(state) {
-    if (metadata.dailyLimit) {
-      const usage = resolveDailyUsage(state, { sync: true });
-      if (usage.remaining <= 0) {
-        const runsLabel = metadata.dailyLimit === 1
-          ? 'once'
-          : `${metadata.dailyLimit} times`;
-        return `Daily limit reached: ${definition.name} can only run ${runsLabel} per day. Fresh slots unlock tomorrow.`;
-      }
-    }
-    const effectiveTime = resolveEffectiveTime(state);
-    if (effectiveTime > 0 && state.timeLeft < effectiveTime) {
-      return `You need at least ${formatHours(effectiveTime)} free before starting ${definition.name}.`;
-    }
-    if (metadata.cost > 0 && state.money < metadata.cost) {
-      return `You need $${formatMoney(metadata.cost)} before funding ${definition.name}.`;
-    }
-    if (!meetsAssetRequirements(metadata.requirements, state)) {
-      return `You still need: ${summarizeAssetRequirements(metadata.requirements, state)}.`;
-    }
-    return null;
-  }
-
-  function computeCompletionHours(instance, fallback) {
-    const logged = Number(instance?.hoursLogged);
-    if (Number.isFinite(logged) && logged >= 0) {
-      return logged;
-    }
-    const progressHours = Number(instance?.progress?.hoursRequired);
-    if (Number.isFinite(progressHours) && progressHours >= 0) {
-      return progressHours;
-    }
-    return Number.isFinite(fallback) && fallback >= 0 ? fallback : 0;
-  }
-
-  function prepareCompletion({ context = {}, instance, state, completionHours }) {
-    const workingContext = context;
-    workingContext.definition = definition;
-    const instanceMetadata = instance?.metadata && typeof instance.metadata === 'object' ? instance.metadata : null;
-    const providedMetadata = workingContext.metadata && typeof workingContext.metadata === 'object'
-      ? workingContext.metadata
-      : null;
-    const resolvedMetadata = providedMetadata || instanceMetadata || metadata;
-    workingContext.metadata = resolvedMetadata;
-    workingContext.definitionMetadata = metadata;
-    workingContext.state = state;
-
-    const resolvedHours = Number.isFinite(completionHours)
-      ? completionHours
-      : computeCompletionHours(instance, metadata.time);
-    workingContext.effectiveTime = Number.isFinite(resolvedHours) && resolvedHours >= 0 ? resolvedHours : 0;
-
-    if (workingContext.effectiveTime > 0) {
-      applyMetric(recordTimeContribution, metadata.metrics.time, { hours: workingContext.effectiveTime });
-    }
-
-    workingContext.skipDefaultPayout = () => {
-      workingContext.__skipDefaultPayout = true;
-    };
-
-    if (metadata.skills) {
-      workingContext.skillXpAwarded = awardSkillProgress({
-        skills: metadata.skills,
-        timeSpentHours: workingContext.effectiveTime,
-        moneySpent: metadata.cost,
-        label: definition.name,
-        state
-      });
-    }
-
-    config.onExecute?.(workingContext);
-
-    const payoutAmountCandidates = [
-      toNumber(resolvedMetadata?.payout?.amount, null),
-      toNumber(resolvedMetadata?.payoutAmount, null),
-      toNumber(instanceMetadata?.payout?.amount, null),
-      toNumber(instanceMetadata?.payoutAmount, null),
-      toNumber(metadata.payout?.amount, null)
-    ];
-    const basePayout = payoutAmountCandidates.find(value => Number.isFinite(value) && value >= 0) || 0;
-
-    if (basePayout > 0 && !workingContext.__skipDefaultPayout) {
-      const { amount: educationAdjusted, applied: appliedBonuses } = applyInstantHustleEducationBonus({
-        hustleId: metadata.id,
-        baseAmount: basePayout,
-        state
-      });
-
-      workingContext.basePayout = basePayout;
-      workingContext.educationAdjustedPayout = educationAdjusted;
-      workingContext.appliedEducationBoosts = appliedBonuses;
-
-      const upgradeResult = applyHustlePayoutMultiplier(educationAdjusted, workingContext);
-      const upgradedAmount = upgradeResult.amount;
-      const roundedPayout = Math.max(0, Math.round(upgradedAmount));
-
-      workingContext.upgradeMultiplier = upgradeResult.multiplier;
-      workingContext.upgradeSources = upgradeResult.sources;
-      workingContext.finalPayout = roundedPayout;
-      workingContext.payoutGranted = roundedPayout;
-
-      if (appliedBonuses.length) {
-        workingContext.__educationSummary = formatEducationBonusSummary(appliedBonuses);
-      }
-    }
-
-    const updatedUsage = updateDailyUsage(state);
-    if (updatedUsage) {
-      workingContext.limitUsage = updatedUsage;
-      markDirty('actions');
-    }
-
-    return workingContext;
-  }
 
   function resolvePrimaryOfferAction({ state = getState(), includeUpcoming = true } = {}) {
     const workingState = state || getState();
@@ -457,7 +162,7 @@ export function createInstantHustle(config) {
       const readyOffer = matching.find(offer => Number(offer?.availableOnDay ?? currentDay) <= currentDay);
       const primary = readyOffer || matching[0];
       const label = primary?.variant?.label || definition.name || primary?.templateId || metadata.id;
-      const disabledReason = getDisabledReason(workingState);
+      const disabledReason = hooks.getDisabledReason(workingState);
       return {
         type: 'offer',
         offer: primary,
@@ -481,12 +186,18 @@ export function createInstantHustle(config) {
     label: config.actionLabel || 'Accept Offer',
     className: actionClassName,
     disabled: () => true,
-    onClick: null,
+    onClick: () => hooks.handleActionClick(),
     resolvePrimaryAction: resolvePrimaryOfferAction
   };
+  definition.action.isLegacyInstant = true;
+  definition.action.hiddenFromMarket = true;
+
   definition.getPrimaryOfferAction = resolvePrimaryOfferAction;
-  definition.__prepareCompletion = ({ context, instance, state, completionHours }) =>
-    prepareCompletion({ context, instance, state, completionHours });
+
+  if (typeof hooks.prepareCompletion === 'function') {
+    definition.__prepareCompletion = ({ context, instance, state, completionHours }) =>
+      hooks.prepareCompletion({ context, instance, state, completionHours });
+  }
 
   definition.metricIds = {
     time: metadata.metrics.time?.key || null,

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { buildActionQueue } from '../../../src/ui/actions/registry.js';
-import { buildTodoGrouping } from '../../../src/ui/actions/taskGrouping.js';
+import { buildTodoGrouping, collectBuckets } from '../../../src/ui/actions/taskGrouping.js';
 import { buildQuickActionModel } from '../../../src/ui/dashboard/quickActions.js';
 import { buildTimodoroViewModel } from '../../../src/ui/views/browser/apps/timodoro/model.js';
 
@@ -53,4 +53,21 @@ test('queue metrics remain consistent across widgets and workspaces', () => {
   assert.equal(queue.hoursAvailableLabel, timodoro.hoursAvailableLabel);
   assert.equal(queue.hoursSpentLabel, timodoro.hoursSpentLabel);
   assert.equal(queue.moneyAvailable, timodoro.todoMoneyAvailable);
+});
+
+test('queue bucket collection normalizes study and maintenance aliases', () => {
+  const entries = [
+    { id: 'study-entry', focusBucket: 'Education' },
+    { id: 'maintenance-entry', focusCategory: 'Maintenance' }
+  ];
+
+  const buckets = collectBuckets(entries);
+  const studyEntries = buckets.get('study') || [];
+  const commitmentEntries = buckets.get('commitment') || [];
+
+  assert.equal(studyEntries.length, 1);
+  assert.equal(studyEntries[0].id, 'study-entry');
+
+  assert.equal(commitmentEntries.length, 1);
+  assert.equal(commitmentEntries[0].id, 'maintenance-entry');
 });
