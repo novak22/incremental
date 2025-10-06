@@ -482,6 +482,57 @@ function ensureResourceLabels(queue, state = {}) {
   }
 }
 
+function selectPreferredEntry(candidate, existing) {
+  const candidateHasHandler = typeof candidate?.onClick === 'function';
+  const existingHasHandler = typeof existing?.onClick === 'function';
+
+  if (candidateHasHandler && !existingHasHandler) {
+    return candidate;
+  }
+
+  if (!candidateHasHandler && existingHasHandler) {
+    return existing;
+  }
+
+  return existing;
+}
+
+function dedupeEntries(entries = []) {
+  if (!Array.isArray(entries) || entries.length <= 1) {
+    return entries;
+  }
+
+  const unique = [];
+  const seen = new Map();
+
+  entries.forEach(entry => {
+    if (!entry || typeof entry !== 'object') {
+      return;
+    }
+
+    const id = entry.id;
+    if (!id) {
+      unique.push(entry);
+      return;
+    }
+
+    const record = seen.get(id);
+    if (!record) {
+      const index = unique.push(entry) - 1;
+      seen.set(id, { index, entry });
+      return;
+    }
+
+    const preferred = selectPreferredEntry(entry, record.entry);
+    if (preferred !== record.entry) {
+      unique[record.index] = preferred;
+      seen.set(id, { index: record.index, entry: preferred });
+    }
+  });
+
+  return unique;
+}
+
 export function buildActionQueue({ state, summary = {} } = {}) {
   const resolvedState = state || getState() || {};
   const queue = {
@@ -509,6 +560,8 @@ export function buildActionQueue({ state, summary = {} } = {}) {
     });
     applyMetrics(queue, snapshot.metrics);
   });
+
+  queue.entries = dedupeEntries(queue.entries);
 
   if (!queue.entries.length && !queue.emptyMessage) {
     queue.emptyMessage = DEFAULT_EMPTY_MESSAGE;
