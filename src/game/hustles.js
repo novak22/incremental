@@ -355,6 +355,10 @@ export function acceptHustleOffer(offerOrId, { state = getState() } = {}) {
     return null;
   }
 
+  if (typeof template.applyAcceptanceCost === 'function') {
+    template.applyAcceptanceCost({ state: workingState, instance });
+  }
+
   if (finalizeAcceptance) {
     finalizeAcceptance({ state: workingState, acceptedEntry, metadata });
   }

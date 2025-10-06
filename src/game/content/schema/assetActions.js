@@ -1,7 +1,5 @@
 import { toNumber } from '../../../core/helpers.js';
 import { getState } from '../../../core/state.js';
-import { spendMoney } from '../../currency.js';
-import { recordCostContribution } from '../../metrics.js';
 import { applyMetric, normalizeHustleMetrics } from './metrics.js';
 import { logEducationPayoffSummary } from './logMessaging.js';
 import { markDirty } from '../../../core/events/invalidationBus.js';
@@ -67,14 +65,12 @@ export function createInstantHustle(config) {
   }
 
   acceptHooks.push(context => {
-    const state = context?.state || getState();
-    if (!state) return;
+    if (!context?.instance) {
+      return;
+    }
     if (metadata.cost > 0) {
-      spendMoney(metadata.cost);
-      applyMetric(recordCostContribution, metadata.metrics.cost, { amount: metadata.cost });
-      if (context?.instance) {
-        context.instance.costPaid = (context.instance.costPaid || 0) + metadata.cost;
-      }
+      context.instance.__pendingAcceptanceCost =
+        (context.instance.__pendingAcceptanceCost || 0) + metadata.cost;
     }
   });
 
@@ -204,6 +200,8 @@ export function createInstantHustle(config) {
   definition.reserveDailyUsage = state => hooks.reserveDailyUsage(state);
   definition.releaseDailyUsage = state => hooks.releaseDailyUsage(state);
   definition.consumeDailyUsage = state => hooks.consumeDailyUsage(state);
+  definition.applyAcceptanceCost = ({ state, instance } = {}) =>
+    hooks.applyAcceptanceCost({ state, instance });
 
   if (typeof hooks.prepareCompletion === 'function') {
     definition.__prepareCompletion = ({ context, instance, state, completionHours }) =>

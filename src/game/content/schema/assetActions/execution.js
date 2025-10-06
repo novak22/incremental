@@ -2,9 +2,9 @@ import { formatHours, formatMoney, toNumber } from '../../../../core/helpers.js'
 import { countActiveAssetInstances, getActionState, getState } from '../../../../core/state.js';
 import { markDirty } from '../../../../core/events/invalidationBus.js';
 import { executeAction } from '../../../actions.js';
-import { addMoney } from '../../../currency.js';
+import { addMoney, spendMoney } from '../../../currency.js';
 import { checkDayEnd } from '../../../lifecycle.js';
-import { recordPayoutContribution, recordTimeContribution } from '../../../metrics.js';
+import { recordCostContribution, recordPayoutContribution, recordTimeContribution } from '../../../metrics.js';
 import { summarizeAssetRequirements } from '../../../requirements.js';
 import { spendTime } from '../../../time.js';
 import { awardSkillProgress } from '../../../skills/index.js';
@@ -324,6 +324,43 @@ export function createExecutionHooks({
     return workingContext;
   }
 
+  function applyAcceptanceCost({ state = getState(), instance } = {}) {
+    if (!metadata.cost || metadata.cost <= 0) {
+      if (instance) {
+        instance.__pendingAcceptanceCost = 0;
+      }
+      return { paid: 0 };
+    }
+
+    const workingState = state || getState();
+    if (!workingState) {
+      return { paid: 0 };
+    }
+
+    const pending = Number(instance?.__pendingAcceptanceCost ?? metadata.cost);
+    if (!Number.isFinite(pending) || pending <= 0) {
+      if (instance) {
+        instance.__pendingAcceptanceCost = 0;
+      }
+      return { paid: 0 };
+    }
+
+    if (instance?.__acceptanceCostApplied) {
+      return { paid: 0 };
+    }
+
+    spendMoney(pending);
+    applyMetric(recordCostContribution, metadata.metrics.cost, { amount: pending });
+
+    if (instance) {
+      instance.costPaid = (instance.costPaid || 0) + pending;
+      instance.__pendingAcceptanceCost = 0;
+      instance.__acceptanceCostApplied = true;
+    }
+
+    return { paid: pending };
+  }
+
   function runHustle(context) {
     const effectiveTime = resolveEffectiveTime(context.state);
     context.effectiveTime = effectiveTime;
@@ -444,6 +481,7 @@ export function createExecutionHooks({
       });
       if (instance) {
         context.instance = instance;
+        applyAcceptanceCost({ state, instance });
         const logDay = Number(state?.day) || instance.acceptedOnDay;
         advanceActionInstance(definition, instance, {
           state,
@@ -474,6 +512,7 @@ export function createExecutionHooks({
     prepareCompletion,
     reserveDailyUsage,
     releaseDailyUsage,
-    consumeDailyUsage
+    consumeDailyUsage,
+    applyAcceptanceCost
   };
 }
