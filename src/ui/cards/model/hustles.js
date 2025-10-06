@@ -108,7 +108,22 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
   });
 
   return definitions.map(definition => {
-    const normalizedCategory = normalizeCategory(definition.category ?? definition.market?.category, 'hustle');
+    const templateOffers = offersByTemplate.get(definition.id) || [];
+    const resolvedCategory = (() => {
+      const explicit = definition.market?.category;
+      if (typeof explicit === 'string' && explicit.trim()) {
+        return explicit.trim();
+      }
+      const offerWithCategory = templateOffers.find(offer => typeof offer?.templateCategory === 'string' && offer.templateCategory.trim());
+      if (offerWithCategory) {
+        return offerWithCategory.templateCategory.trim();
+      }
+      return '';
+    })();
+    const normalizedCategory = normalizeCategory(
+      definition.category ?? definition.market?.category ?? resolvedCategory,
+      'hustle'
+    );
     const baseDescriptors = typeof definition.descriptors === 'object' && definition.descriptors !== null
       ? { ...definition.descriptors }
       : {};
@@ -151,8 +166,6 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
         ? `${usage.remaining}/${usage.limit} runs left today`
         : 'Daily limit reached for today. Resets tomorrow.'
       : '';
-
-    const templateOffers = offersByTemplate.get(definition.id) || [];
     const sortedOffers = [...templateOffers].sort((a, b) => {
       const availableA = Number.isFinite(a?.availableOnDay) ? a.availableOnDay : Infinity;
       const availableB = Number.isFinite(b?.availableOnDay) ? b.availableOnDay : Infinity;
@@ -200,6 +213,7 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
         seatsAvailable: meta.seatsAvailable,
         seatPolicy: meta.seatPolicy,
         seatSummary,
+        category: offer.templateCategory || resolvedCategory || '',
         onAccept: requirementsMet
           ? () => {
               let result = null;
@@ -251,7 +265,8 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
       hoursLogged: entry.progress?.hoursLogged ?? null,
       hoursRequired: entry.progress?.hoursRequired ?? null,
       percentComplete: entry.progress?.percentComplete ?? null,
-      progress: entry.progress || null
+      progress: entry.progress || null,
+      category: entry.progress?.templateCategory || entry.templateCategory || resolvedCategory || ''
     }));
 
     const acceptedForDefinition = acceptedByDefinition.get(definition.id) || [];
@@ -290,7 +305,8 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
           hoursRemaining: Number.isFinite(entry?.hoursRequired) ? entry.hoursRequired : null,
           hoursRequired: Number.isFinite(entry?.hoursRequired) ? entry.hoursRequired : null,
           percentComplete: null
-        }
+        },
+        category: entry?.templateCategory || resolvedCategory || ''
       });
     });
 
@@ -369,6 +385,16 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
     if (actionCategory) {
       badges.push(`${descriptors.categoryLabel} track`);
     }
+    const resolvedCategoryLabel = resolvedCategory
+      ? resolvedCategory
+          .split(/[\s:_-]+/)
+          .filter(Boolean)
+          .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+          .join(' ')
+      : '';
+    if (resolvedCategoryLabel && resolvedCategoryLabel !== descriptors.categoryLabel) {
+      badges.push(`${resolvedCategoryLabel} market`);
+    }
     if (commitments.length) {
       badges.push(`${commitments.length} in progress`);
     }
@@ -385,6 +411,7 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
       tag: definition.tag || null,
       templateKind,
       actionCategory,
+      category: resolvedCategory || '',
       categoryLabel: descriptors.categoryLabel,
       descriptors,
       labels: {
@@ -425,7 +452,8 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
         category: actionCategory || '',
         actionCategory: actionCategory || '',
         categoryLabel: descriptors.categoryLabel || '',
-        templateKind: templateKind || ''
+        templateKind: templateKind || '',
+        marketCategory: resolvedCategory || ''
       },
       seat: seatSummary
         ? {

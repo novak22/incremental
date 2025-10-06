@@ -29,6 +29,11 @@ import {
   ensureHustleMarketState,
   createDefaultHustleMarketState
 } from './state/slices/hustleMarket/index.js';
+import {
+  ensureActionMarketState,
+  ensureActionMarketCategoryState,
+  createDefaultActionMarketState
+} from './state/slices/actionMarket/index.js';
 import { isAutoReadType } from './logAutoReadTypes.js';
 
 function normalizeLogEntry(entry) {
@@ -91,7 +96,8 @@ class StateManager {
     ensureAssetSlice(target);
     ensureUpgradeSlice(target);
     ensureProgressSlice(target);
-    ensureHustleMarketState(target, { fallbackDay: target.day || 1 });
+    ensureActionMarketState(target);
+    ensureActionMarketCategoryState(target, 'hustle', { fallbackDay: target.day || 1 });
 
     target.totals = target.totals || {};
     const earned = Number(target.totals.earned);
@@ -115,6 +121,10 @@ class StateManager {
   }
 
   buildBaseState() {
+    const hustleMarket = createDefaultHustleMarketState();
+    const actionMarket = createDefaultActionMarketState();
+    actionMarket.categories.hustle = hustleMarket;
+
     return {
       money: 45,
       timeLeft: DEFAULT_DAY_HOURS,
@@ -149,7 +159,8 @@ class StateManager {
       },
       log: [],
       lastSaved: Date.now(),
-      hustleMarket: createDefaultHustleMarketState()
+      actionMarket,
+      hustleMarket
     };
   }
 
