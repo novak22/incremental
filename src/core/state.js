@@ -11,7 +11,7 @@ import { ensureEventState } from './state/events.js';
 import {
   ensureSlice as ensureActionSlice,
   getSliceState as getActionSliceState
-} from './state/slices/actions.js';
+} from './state/slices/actions/index.js';
 import {
   ensureSlice as ensureHustleSlice,
   getSliceState as getHustleSliceState

@@ -4,7 +4,7 @@ import { getGameTestHarness } from './helpers/gameTestHarness.js';
 import {
   ensureSlice as ensureActionSlice,
   getSliceState as getActionSliceState
-} from '../src/core/state/slices/actions.js';
+} from '../src/core/state/slices/actions/index.js';
 import {
   ensureSlice as ensureAssetSlice,
   getSliceState as getAssetSliceState
