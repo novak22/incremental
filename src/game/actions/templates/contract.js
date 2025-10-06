@@ -1,5 +1,5 @@
 import { structuredClone } from '../../../core/helpers.js';
-import { acceptActionInstance } from '../progress.js';
+import { acceptActionInstance } from '../progress/instances.js';
 
 function findFirstNumber(...values) {
   for (const value of values) {

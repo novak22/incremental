@@ -17,7 +17,7 @@ import { applyModifiers } from '../../data/economyMath.js';
 import { applyMetric, normalizeHustleMetrics } from './metrics.js';
 import { logEducationPayoffSummary, logHustleBlocked } from './logMessaging.js';
 import { markDirty } from '../../../core/events/invalidationBus.js';
-import { advanceActionInstance, completeActionInstance } from '../../actions/progress.js';
+import { advanceActionInstance, completeActionInstance } from '../../actions/progress/instances.js';
 import { createContractTemplate } from '../../actions/templates/contract.js';
 
 function formatHourDetail(hours, effective) {

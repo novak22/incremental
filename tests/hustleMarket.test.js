@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { getGameTestHarness } from './helpers/gameTestHarness.js';
 
 const harness = await getGameTestHarness();
-const { completeActionInstance, advanceActionInstance } = await import('../src/game/actions/progress.js');
+const { completeActionInstance, advanceActionInstance } = await import('../src/game/actions/progress/instances.js');
 const { ensureHustleMarketState } = await import('../src/core/state/slices/hustleMarket.js');
 const { hustlesModule, stateModule } = harness;
 const {

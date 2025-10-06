@@ -1,7 +1,7 @@
 import { formatHours } from '../../core/helpers.js';
 import { addLog } from '../../core/log.js';
 import { getState } from '../../core/state.js';
-import { advanceActionInstance, completeActionInstance } from '../../game/actions/progress.js';
+import { advanceActionInstance, completeActionInstance } from '../../game/actions/progress/instances.js';
 import { getActionDefinition } from '../../game/registryService.js';
 import { spendTime } from '../../game/time.js';
 import { allocateDailyStudy } from '../../game/requirements.js';

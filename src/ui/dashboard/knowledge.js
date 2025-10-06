@@ -7,7 +7,7 @@ import {
   getKnowledgeProgress,
   allocateDailyStudy
 } from '../../game/requirements.js';
-import { advanceActionInstance, completeActionInstance } from '../../game/actions/progress.js';
+import { advanceActionInstance, completeActionInstance } from '../../game/actions/progress/instances.js';
 import { getActionDefinition } from '../../game/registryService.js';
 import { spendTime } from '../../game/time.js';
 import { checkDayEnd } from '../../game/lifecycle.js';
