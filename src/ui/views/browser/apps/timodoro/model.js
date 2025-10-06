@@ -1,5 +1,6 @@
 import { formatHours, formatMoney } from '../../../../../core/helpers.js';
 import { buildSummaryPresentations } from '../../../../dashboard/formatters.js';
+import { buildQueueMetrics } from '../../../../actions/queueService.js';
 
 export function formatCurrency(amount) {
   const numeric = Number(amount);
@@ -84,10 +85,13 @@ export function buildSummaryEntries(summary = {}, todoModel = {}, state = {}) {
   const passiveEarnings = Math.max(0, Number(summary?.passiveEarnings) || 0);
   const totalEarnings = Math.max(0, Number(summary?.totalEarnings) || 0);
   const timeCap = computeTimeCap(state);
-  const hoursAvailable = Number.isFinite(todoModel?.hoursAvailable)
-    ? Math.max(0, todoModel.hoursAvailable)
+  const queueMetrics = buildQueueMetrics(state, todoModel);
+  const hoursAvailable = Number.isFinite(queueMetrics?.hoursAvailable)
+    ? Math.max(0, queueMetrics.hoursAvailable)
     : Math.max(0, Number(state?.timeLeft) || 0);
-  const hoursSpent = Math.max(0, timeCap - hoursAvailable);
+  const hoursSpent = Number.isFinite(queueMetrics?.hoursSpent)
+    ? Math.max(0, queueMetrics.hoursSpent)
+    : Math.max(0, timeCap - hoursAvailable);
   const percentUsed = timeCap > 0 ? Math.min(100, Math.round((hoursSpent / timeCap) * 100)) : 0;
 
   return [
@@ -117,8 +121,9 @@ export function buildBreakdown(summary = {}, todoModel = {}, state = {}) {
   const totalHours = Math.max(0, Number(summary?.totalTime) || 0);
   const maintenance = Math.max(0, Number(summary?.maintenanceHours) || 0);
   const active = Math.max(0, totalHours - maintenance);
-  const hoursAvailable = Number.isFinite(todoModel?.hoursAvailable)
-    ? Math.max(0, todoModel.hoursAvailable)
+  const queueMetrics = buildQueueMetrics(state, todoModel);
+  const hoursAvailable = Number.isFinite(queueMetrics?.hoursAvailable)
+    ? Math.max(0, queueMetrics.hoursAvailable)
     : Math.max(0, Number(state?.timeLeft) || 0);
 
   return [
@@ -155,20 +160,21 @@ export function buildTimodoroViewModel(state = {}, summary = {}, todoModel = {})
   const breakdownEntries = buildBreakdown(summary, todoModel, state);
   const todoEntries = Array.isArray(todoModel?.entries) ? todoModel.entries : [];
   const todoEmptyMessage = todoModel?.emptyMessage;
-  const todoHoursAvailable = Number.isFinite(todoModel?.hoursAvailable)
-    ? Math.max(0, todoModel.hoursAvailable)
+  const queueMetrics = buildQueueMetrics(state, todoModel);
+  const todoHoursAvailable = Number.isFinite(queueMetrics?.hoursAvailable)
+    ? Math.max(0, queueMetrics.hoursAvailable)
     : null;
-  const todoMoneyAvailable = Number.isFinite(todoModel?.moneyAvailable)
-    ? Math.max(0, todoModel.moneyAvailable)
+  const todoMoneyAvailable = Number.isFinite(queueMetrics?.moneyAvailable)
+    ? Math.max(0, queueMetrics.moneyAvailable)
     : null;
 
-  const availableLabel = todoModel?.hoursAvailableLabel
-    || formatHours(Number(todoModel?.hoursAvailable) || Number(state?.timeLeft) || 0);
+  const availableLabel = queueMetrics?.hoursAvailableLabel
+    || formatHours(Number(queueMetrics?.hoursAvailable) || Number(state?.timeLeft) || 0);
   const timeCap = computeTimeCap(state);
-  const hoursSpent = Number.isFinite(todoModel?.hoursSpent)
-    ? Math.max(0, todoModel.hoursSpent)
+  const hoursSpent = Number.isFinite(queueMetrics?.hoursSpent)
+    ? Math.max(0, queueMetrics.hoursSpent)
     : Math.max(0, timeCap - (Number(state?.timeLeft) || 0));
-  const spentLabel = formatHours(hoursSpent);
+  const spentLabel = queueMetrics?.hoursSpentLabel || formatHours(hoursSpent);
 
   const meta = buildMeta(summary, completedGroups);
 

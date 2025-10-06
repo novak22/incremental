@@ -12,6 +12,10 @@ import {
   normalizeActionEntries
 } from './utils.js';
 import {
+  buildQueueMetrics,
+  mergeQueueMetrics
+} from './queueService.js';
+import {
   registerActionProvider,
   clearActionProviders,
   collectActionProviders
@@ -473,57 +477,6 @@ function createAutoCompletedEntries(summary = {}) {
     .filter(Boolean);
 }
 
-function applyMetrics(target, metrics = {}) {
-  if (!metrics || typeof metrics !== 'object') return;
-
-  const keys = [
-    'emptyMessage',
-    'buttonClass',
-    'defaultLabel',
-    'hoursAvailable',
-    'hoursAvailableLabel',
-    'hoursSpent',
-    'hoursSpentLabel',
-    'moneyAvailable'
-  ];
-
-  keys.forEach(key => {
-    if (target[key] == null && metrics[key] != null) {
-      target[key] = metrics[key];
-    }
-  });
-
-  if (!target.scroller && metrics.scroller) {
-    target.scroller = metrics.scroller;
-  }
-}
-
-function ensureResourceLabels(queue, state = {}) {
-  if (queue.hoursAvailable == null) {
-    queue.hoursAvailable = clampToZero(state.timeLeft);
-  }
-
-  if (queue.hoursSpent == null) {
-    const baseHours = clampToZero(state.baseTime)
-      + clampToZero(state.bonusTime)
-      + clampToZero(state.dailyBonusTime);
-    const available = clampToZero(queue.hoursAvailable);
-    queue.hoursSpent = Math.max(0, baseHours - available);
-  }
-
-  if (!queue.hoursAvailableLabel && queue.hoursAvailable != null) {
-    queue.hoursAvailableLabel = formatHours(clampToZero(queue.hoursAvailable));
-  }
-
-  if (!queue.hoursSpentLabel && queue.hoursSpent != null) {
-    queue.hoursSpentLabel = formatHours(clampToZero(queue.hoursSpent));
-  }
-
-  if (queue.moneyAvailable == null && state.money != null) {
-    queue.moneyAvailable = clampToZero(state.money);
-  }
-}
-
 function selectPreferredEntry(candidate, existing) {
   const candidateHasHandler = typeof candidate?.onClick === 'function';
   const existingHasHandler = typeof existing?.onClick === 'function';
@@ -600,7 +553,7 @@ export function buildActionQueue({ state, summary = {} } = {}) {
       }
       queue.entries.push(entry);
     });
-    applyMetrics(queue, snapshot.metrics);
+    mergeQueueMetrics(queue, snapshot.metrics, resolvedState);
   });
 
   queue.entries = dedupeEntries(queue.entries);
@@ -609,7 +562,7 @@ export function buildActionQueue({ state, summary = {} } = {}) {
     queue.emptyMessage = DEFAULT_EMPTY_MESSAGE;
   }
 
-  ensureResourceLabels(queue, resolvedState);
+  Object.assign(queue, buildQueueMetrics(resolvedState, queue));
 
   if (!queue.autoCompletedEntries.length) {
     delete queue.autoCompletedEntries;

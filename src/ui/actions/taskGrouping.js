@@ -6,12 +6,15 @@ import { getActionDefinition } from '../../game/registryService.js';
 import { spendTime } from '../../game/time.js';
 import { allocateDailyStudy } from '../../game/requirements.js';
 import { checkDayEnd } from '../../game/lifecycle.js';
+import { registerFocusBucket } from './focusBuckets.js';
 import {
-  DEFAULT_FOCUS_BUCKET,
-  getFocusBucketComparator,
-  getFocusModeConfig,
-  registerFocusBucket
-} from './focusBuckets.js';
+  applyFocusOrdering as applyFocusOrderingBase,
+  collectBuckets as collectBucketsBase,
+  groupEntriesByTaskGroup as groupEntriesByTaskGroupBase,
+  rankEntriesByRoi,
+  resolveFocusBucket as resolveFocusBucketBase,
+  sortBuckets as sortBucketsBase
+} from './queueService.js';
 
 export const DEFAULT_TODO_EMPTY_MESSAGE = 'Queue a hustle or upgrade to add new tasks.';
 
@@ -42,31 +45,8 @@ export const TASK_GROUP_CONFIGS = [
   }
 ];
 
-const BUCKET_ALIASES = new Map([
-  ['education', 'study']
-]);
-
 function sortHustleEntries(entries = []) {
-  return [...entries].sort((a, b) => {
-    const roiA = Number.isFinite(a?.moneyPerHour) ? a.moneyPerHour : -Infinity;
-    const roiB = Number.isFinite(b?.moneyPerHour) ? b.moneyPerHour : -Infinity;
-    if (roiA !== roiB) {
-      return roiB - roiA;
-    }
-    const payoutA = Number.isFinite(a?.payout) ? a.payout : 0;
-    const payoutB = Number.isFinite(b?.payout) ? b.payout : 0;
-    if (payoutA !== payoutB) {
-      return payoutB - payoutA;
-    }
-    const durationA = Number.isFinite(a?.durationHours) ? a.durationHours : Infinity;
-    const durationB = Number.isFinite(b?.durationHours) ? b.durationHours : Infinity;
-    if (durationA !== durationB) {
-      return durationA - durationB;
-    }
-    const orderA = Number.isFinite(a?.orderIndex) ? a.orderIndex : 0;
-    const orderB = Number.isFinite(b?.orderIndex) ? b.orderIndex : 0;
-    return orderA - orderB;
-  });
+  return rankEntriesByRoi(entries);
 }
 
 function sortUpgradeEntries(entries = []) {
@@ -124,173 +104,24 @@ registerFocusBucket({
 registerFocusBucket({ name: 'hustle', comparator: sortHustleEntries });
 registerFocusBucket({ name: 'upgrade', comparator: sortUpgradeEntries });
 
-function normalizeBucketName(value) {
-  if (typeof value !== 'string') {
-    return null;
-  }
-  const trimmed = value.trim().toLowerCase();
-  if (!trimmed) {
-    return null;
-  }
-  return BUCKET_ALIASES.get(trimmed) || trimmed;
-}
+export const resolveFocusBucket = resolveFocusBucketBase;
 
-export function resolveFocusBucket(entry = {}) {
-  if (!entry || typeof entry !== 'object') {
-    return DEFAULT_FOCUS_BUCKET;
-  }
-  const explicit = normalizeBucketName(entry.focusBucket);
-  if (explicit) {
-    return explicit;
-  }
-  const category = normalizeBucketName(entry.focusCategory);
-  if (category) {
-    return category;
-  }
-  return DEFAULT_FOCUS_BUCKET;
-}
+export const collectBuckets = collectBucketsBase;
 
-export function collectBuckets(entries = []) {
-  const buckets = new Map();
-  (Array.isArray(entries) ? entries : [])
-    .filter(Boolean)
-    .forEach(entry => {
-      const bucketName = resolveFocusBucket(entry);
-      if (!buckets.has(bucketName)) {
-        buckets.set(bucketName, []);
-      }
-      buckets.get(bucketName).push(entry);
-    });
-  return buckets;
-}
-
-export function sortBuckets(bucketMap = new Map()) {
-  const sorted = new Map();
-  bucketMap.forEach((bucketEntries, bucketName) => {
-    const comparator = getFocusBucketComparator(bucketName);
-    sorted.set(bucketName, comparator(bucketEntries));
-  });
-  return sorted;
-}
-
-function interleaveEntries(first = [], second = []) {
-  const results = [];
-  const max = Math.max(first.length, second.length);
-  for (let index = 0; index < max; index += 1) {
-    if (first[index]) {
-      results.push(first[index]);
-    }
-    if (second[index]) {
-      results.push(second[index]);
-    }
-  }
-  return results;
-}
+export const sortBuckets = sortBucketsBase;
 
 export function applyFocusOrdering(entries = [], mode = 'balanced') {
-  if (!Array.isArray(entries) || entries.length === 0) {
-    return entries;
-  }
-
-  const buckets = collectBuckets(entries);
-  if (buckets.size === 0) {
-    return entries;
-  }
-
-  const sortedBuckets = sortBuckets(buckets);
-  const resolvedModeConfig = (() => {
-    const direct = getFocusModeConfig(mode);
-    if (direct) {
-      return direct;
-    }
-    if (mode !== 'balanced') {
-      const fallback = getFocusModeConfig('balanced');
-      if (fallback) {
-        return fallback;
-      }
-    }
-    return { order: [], interleave: [] };
-  })();
-  const order = Array.isArray(resolvedModeConfig?.order) ? resolvedModeConfig.order : [];
-  const interleaveBuckets = Array.isArray(resolvedModeConfig?.interleave)
-    ? resolvedModeConfig.interleave
-    : [];
-
-  const results = [];
-  const usedEntries = new Set();
-
-  const addEntry = entry => {
-    if (!entry || usedEntries.has(entry)) {
-      return;
-    }
-    usedEntries.add(entry);
-    results.push(entry);
-  };
-
-  const processedBuckets = new Set();
-
-  if (interleaveBuckets.length > 0) {
-    let interleaved = [];
-    interleaveBuckets.forEach((bucketName, index) => {
-      const bucketEntries = sortedBuckets.get(bucketName) || [];
-      processedBuckets.add(bucketName);
-      if (index === 0) {
-        interleaved = [...bucketEntries];
-      } else {
-        interleaved = interleaveEntries(interleaved, bucketEntries);
-      }
-    });
-    interleaved.forEach(addEntry);
-  }
-
-  order.forEach(bucketName => {
-    processedBuckets.add(bucketName);
-    const bucketEntries = sortedBuckets.get(bucketName) || [];
-    bucketEntries.forEach(addEntry);
-  });
-
-  sortedBuckets.forEach((bucketEntries, bucketName) => {
-    if (processedBuckets.has(bucketName)) {
-      return;
-    }
-    bucketEntries.forEach(addEntry);
-  });
-
-  return results;
+  return applyFocusOrderingBase(entries, mode);
 }
 
 export function groupEntriesByTaskGroup(entries = [], options = {}) {
-  const groupConfigsRaw = Array.isArray(options?.groupConfigs) && options.groupConfigs.length
+  const groupConfigs = Array.isArray(options?.groupConfigs) && options.groupConfigs.length
     ? options.groupConfigs
     : TASK_GROUP_CONFIGS;
-  const groupConfigs = groupConfigsRaw.map(config => {
-    const buckets = Array.isArray(config?.buckets) && config.buckets.length
-      ? config.buckets.map(normalizeBucketName).filter(Boolean)
-      : [normalizeBucketName(config?.key) || config?.key || DEFAULT_FOCUS_BUCKET];
-    return {
-      ...config,
-      buckets,
-      normalizedKey: normalizeBucketName(config?.key) || config?.key || DEFAULT_FOCUS_BUCKET
-    };
+  return groupEntriesByTaskGroupBase(entries, {
+    ...options,
+    groupConfigs
   });
-
-  const fallbackConfig = groupConfigs.find(config => config.buckets.includes(DEFAULT_FOCUS_BUCKET))
-    || groupConfigs[groupConfigs.length - 1];
-
-  const grouped = groupConfigs.reduce((map, config) => {
-    map[config.key] = [];
-    return map;
-  }, {});
-
-  const sortedBuckets = sortBuckets(collectBuckets(entries));
-  sortedBuckets.forEach((bucketEntries, bucketName) => {
-    const normalizedBucket = normalizeBucketName(bucketName) || DEFAULT_FOCUS_BUCKET;
-    const targetConfig = groupConfigs.find(config => config.buckets.includes(normalizedBucket))
-      || fallbackConfig;
-    grouped[targetConfig.key].push(...bucketEntries);
-  });
-
-  return grouped;
 }
 
 function normalizeAvailability(value) {

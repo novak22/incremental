@@ -11,6 +11,7 @@ import {
 import { getNextQualityLevel } from '../../game/assets/quality/levels.js';
 import { instanceLabel } from '../../game/assets/details.js';
 import { collectOutstandingActionEntries } from '../actions/registry.js';
+import { buildQueueMetrics, compareByRoi } from '../actions/queueService.js';
 import { registerActionProvider } from '../actions/providers.js';
 import { getAvailableOffers, acceptHustleOffer } from '../../game/hustles.js';
 import { executeAction } from '../../game/actions.js';
@@ -178,6 +179,7 @@ export function buildQuickActions(state) {
       : [lockGuidance, meta].filter(Boolean).join(' • ');
 
     const roi = hours > 0 ? payout / Math.max(hours, 0.0001) : payout;
+    const moneyPerHour = Number.isFinite(roi) ? roi : 0;
     const normalizedCategory = normalizeCategory(group.category || definition?.market?.category || 'hustle');
     const remainingRuns = availableOffers.length > 0 ? availableOffers.length : 1;
 
@@ -201,7 +203,7 @@ export function buildQuickActions(state) {
         });
         return result;
       },
-      roi,
+      roi: moneyPerHour,
       timeCost: hours,
       payout,
       payoutText: payout > 0 ? `$${formatMoney(payout)}` : '',
@@ -217,7 +219,8 @@ export function buildQuickActions(state) {
       disabled: !requirementsMet,
       disabledReason: lockGuidance || 'Meet the prerequisites before accepting this hustle.',
       focusCategory: normalizedCategory || 'hustle',
-      focusBucket: 'hustle'
+      focusBucket: 'hustle',
+      moneyPerHour
     };
   }).filter(Boolean);
 
@@ -250,8 +253,9 @@ export function buildQuickActions(state) {
     if (daysA !== daysB) {
       return daysA - daysB;
     }
-    if (b.roi !== a.roi) {
-      return b.roi - a.roi;
+    const roiOrder = compareByRoi(a, b);
+    if (roiOrder !== 0) {
+      return roiOrder;
     }
     return a.label.localeCompare(b.label);
   });
@@ -402,20 +406,17 @@ export function buildQuickActionModel(state = {}) {
     disabledReason: action.disabledReason,
     excludeFromQueue: action.excludeFromQueue === true
   }));
-  const baseHours = clampNumber(state.baseTime) + clampNumber(state.bonusTime) + clampNumber(state.dailyBonusTime);
-  const hoursAvailable = Math.max(0, clampNumber(state.timeLeft));
-  const hoursSpent = Math.max(0, baseHours - hoursAvailable);
-  return {
-    entries,
+  const metrics = buildQueueMetrics(state, {
     emptyMessage: 'No ready actions. Check upgrades or ventures.',
     buttonClass: 'primary',
-    defaultLabel: 'Queue',
-    hoursAvailable,
-    hoursAvailableLabel: formatHours(hoursAvailable),
-    hoursSpent,
-    hoursSpentLabel: formatHours(hoursSpent),
+    defaultLabel: 'Queue'
+  });
+  metrics.inProgressEntries = inProgress;
+
+  return {
+    entries,
+    ...metrics,
     day: clampNumber(state.day),
-    moneyAvailable: clampNumber(state.money),
     inProgress
   };
 }
