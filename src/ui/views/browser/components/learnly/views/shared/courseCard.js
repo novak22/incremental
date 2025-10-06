@@ -54,11 +54,15 @@ function createCourseCard({
 
   const stats = document.createElement('dl');
   stats.className = 'learnly-card__stats';
-  [
+  const statEntries = [
     { term: 'Tuition', detail: tuitionLabel || (course.tuition > 0 ? formatCurrency(course.tuition) : 'Included') },
     { term: 'Daily time', detail: `${formatHours(course.hoursPerDay)} / day` },
     { term: 'Course length', detail: formatDays(course.days) }
-  ].forEach(entry => {
+  ];
+  if (course.seatSummary) {
+    statEntries.push({ term: 'Seats', detail: course.seatSummary });
+  }
+  statEntries.forEach(entry => {
     const dt = document.createElement('dt');
     dt.textContent = entry.term;
     const dd = document.createElement('dd');

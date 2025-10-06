@@ -1,4 +1,5 @@
 import { describeTrackEducationBonuses } from '../../../../../game/educationEffects.js';
+import { describeSeatAvailability } from '../../../../../ui/hustles/offerHelpers.js';
 import { CATEGORY_DEFINITIONS } from './constants.js';
 
 const CATEGORY_BY_SKILL = CATEGORY_DEFINITIONS.reduce((map, category) => {
@@ -76,6 +77,26 @@ function buildCourse(track, definitionMap) {
       : Boolean(action.disabled)
     : Boolean(track.action?.disabled);
 
+  const market = definition?.market || {};
+  const marketMetadata = market?.metadata || {};
+  const seatPolicy = (() => {
+    const direct = marketMetadata.seatPolicy;
+    if (typeof direct === 'string' && direct.trim()) {
+      return direct.trim();
+    }
+    if (Array.isArray(market?.variants)) {
+      for (const variant of market.variants) {
+        const variantPolicy = variant?.metadata?.seatPolicy || variant?.metadata?.enrollment?.seatPolicy;
+        if (typeof variantPolicy === 'string' && variantPolicy.trim()) {
+          return variantPolicy.trim();
+        }
+      }
+    }
+    return null;
+  })();
+
+  const seatSummary = describeSeatAvailability({ seatPolicy }) || null;
+
   return {
     id: track.id,
     definitionId: track.definitionId,
@@ -109,7 +130,9 @@ function buildCourse(track, definitionMap) {
             disabled: Boolean(track.action.disabled),
             onClick: null
           }
-        : null
+        : null,
+    seatPolicy,
+    seatSummary
   };
 }
 

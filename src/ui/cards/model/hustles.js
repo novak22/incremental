@@ -4,7 +4,7 @@ import { describeHustleRequirements, getHustleDailyUsage } from '../../../game/h
 import { getAvailableOffers, getClaimedOffers, acceptHustleOffer, rollDailyOffers } from '../../../game/hustles.js';
 import { executeAction } from '../../../game/actions.js';
 import { collectOutstandingActionEntries } from '../../actions/registry.js';
-import { describeHustleOfferMeta } from '../../hustles/offerHelpers.js';
+import { describeHustleOfferMeta, describeSeatAvailability } from '../../hustles/offerHelpers.js';
 import { describeRequirementGuidance } from '../../hustles/requirements.js';
 
 export default function buildHustleModels(definitions = [], helpers = {}) {
@@ -110,13 +110,18 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
         formatMoneyFn
       });
       const ready = meta.availableIn <= 0 && requirementsMet;
+      const seatSummary = describeSeatAvailability({
+        seatPolicy: meta.seatPolicy,
+        seatsAvailable: meta.seatsAvailable
+      });
+      const metaSummary = [meta.summary, seatSummary].filter(Boolean).join(' • ');
       return {
         id: offer.id,
         label: offer?.variant?.label || definition.name || offer.templateId,
         description: offer?.variant?.description || '',
         meta: requirementsMet
-          ? meta.summary
-          : [requirementGuidance, meta.summary].filter(Boolean).join(' • '),
+          ? metaSummary
+          : [requirementGuidance, metaSummary].filter(Boolean).join(' • '),
         hours: meta.hours,
         payout: meta.payout,
         schedule: meta.schedule,
@@ -129,6 +134,9 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
         ready,
         locked: !requirementsMet,
         unlockHint: requirementGuidance,
+        seatsAvailable: meta.seatsAvailable,
+        seatPolicy: meta.seatPolicy,
+        seatSummary,
         onAccept: requirementsMet
           ? () => {
               let result = null;
@@ -143,6 +151,28 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
 
     const readyOffers = offerEntries.filter(entry => entry.ready);
     const upcomingOffers = offerEntries.filter(entry => !entry.ready);
+
+    const aggregatedSeatPolicy = (() => {
+      const activeEntry = offerEntries.find(entry => entry.seatPolicy);
+      if (activeEntry?.seatPolicy) {
+        return activeEntry.seatPolicy;
+      }
+      const metaPolicy = definition?.market?.metadata?.seatPolicy;
+      return typeof metaPolicy === 'string' && metaPolicy.trim() ? metaPolicy.trim() : null;
+    })();
+
+    const aggregatedSeats = offerEntries.reduce((total, entry) => {
+      const seats = Number(entry?.seatsAvailable);
+      if (!Number.isFinite(seats) || seats <= 0) {
+        return total;
+      }
+      return total + Math.floor(seats);
+    }, 0);
+
+    const seatSummary = describeSeatAvailability({
+      seatPolicy: aggregatedSeatPolicy,
+      seatsAvailable: Number.isFinite(aggregatedSeats) ? aggregatedSeats : null
+    });
 
     const outstandingForDefinition = commitmentsByDefinition.get(definition.id) || [];
     const commitments = outstandingForDefinition.map(entry => ({
@@ -268,6 +298,13 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
     if (definition.tag?.label) {
       badges.push(definition.tag.label);
     }
+    if (definition.market?.category) {
+      const categoryLabel = definition.market.category
+        .split(' ')
+        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ');
+      badges.push(`${categoryLabel} market`);
+    }
     if (commitments.length) {
       badges.push(`${commitments.length} active`);
     }
@@ -313,8 +350,16 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
         roi,
         available,
         limitRemaining: usage ? usage.remaining : null,
-        tag: definition.tag?.label || ''
-      }
+        tag: definition.tag?.label || '',
+        category: definition.market?.category || ''
+      },
+      seat: seatSummary
+        ? {
+            policy: aggregatedSeatPolicy,
+            available: aggregatedSeats,
+            summary: seatSummary
+          }
+        : null
     };
   });
 }

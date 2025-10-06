@@ -19,7 +19,9 @@ import {
   resolveOfferHours,
   resolveOfferPayout,
   resolveOfferSchedule,
-  describeQuickActionOfferMeta
+  describeQuickActionOfferMeta,
+  describeHustleOfferMeta,
+  groupOffersByTemplateVariant
 } from '../hustles/offerHelpers.js';
 import { describeRequirementGuidance } from '../hustles/requirements.js';
 
@@ -80,55 +82,114 @@ function estimateRemainingRuns(asset, instance, action, remaining, state) {
   return Math.max(1, Math.ceil(remaining / progressPerRun));
 }
 
+function normalizeCategory(value) {
+  if (typeof value !== 'string') {
+    return '';
+  }
+  const trimmed = value.trim().toLowerCase();
+  if (!trimmed) {
+    return '';
+  }
+  if (trimmed.startsWith('study') || trimmed.startsWith('education')) {
+    return 'study';
+  }
+  if (trimmed.startsWith('maint')) {
+    return 'maintenance';
+  }
+  return trimmed;
+}
+
 export function buildQuickActions(state) {
   const workingState = state || {};
   const offers = getAvailableOffers(workingState, { includeUpcoming: false, includeClaimed: false }) || [];
   const currentDay = Math.max(1, clampNumber(workingState.day) || 1);
 
-  const items = offers.map(offer => {
-    const definition = getActionDefinition(offer.definitionId || offer.templateId) || {};
+  const groups = groupOffersByTemplateVariant(offers);
+
+  const items = groups.map(group => {
+    const definition = getActionDefinition(group.definitionId || group.templateId) || {};
     const requirements = describeHustleRequirements(definition, workingState) || [];
     const unmetRequirements = requirements.filter(entry => entry && entry.met === false);
     const requirementsMet = unmetRequirements.length === 0;
     const lockGuidance = describeRequirementGuidance(unmetRequirements);
-    const hours = resolveOfferHours(offer, definition, { toNumber: clampNumber });
-    const payout = resolveOfferPayout(offer, definition, { toNumber: clampNumber });
-    const roi = hours > 0 ? payout / Math.max(hours, 0.0001) : payout;
-    const durationText = formatHours(hours);
-    const schedule = resolveOfferSchedule(offer);
-    const remainingDays = Number.isFinite(offer.expiresOnDay)
-      ? Math.max(0, Math.floor(offer.expiresOnDay) - currentDay + 1)
-      : null;
+    const availableOffers = (group.offers || [])
+      .filter(candidate => (candidate?.availableOnDay || 0) <= currentDay)
+      .sort((a, b) => {
+        const expiresA = Number.isFinite(a?.expiresOnDay) ? a.expiresOnDay : Infinity;
+        const expiresB = Number.isFinite(b?.expiresOnDay) ? b.expiresOnDay : Infinity;
+        if (expiresA !== expiresB) {
+          return expiresA - expiresB;
+        }
+        return (a?.rolledOnDay || 0) - (b?.rolledOnDay || 0);
+      });
 
-    const label = offer?.variant?.label
+    const fallbackSorted = (group.offers || []).slice().sort((a, b) => {
+      const expiresA = Number.isFinite(a?.expiresOnDay) ? a.expiresOnDay : Infinity;
+      const expiresB = Number.isFinite(b?.expiresOnDay) ? b.expiresOnDay : Infinity;
+      if (expiresA !== expiresB) {
+        return expiresA - expiresB;
+      }
+      return (a?.availableOnDay || Infinity) - (b?.availableOnDay || Infinity);
+    });
+
+    const primaryOffer = availableOffers[0] || fallbackSorted[0];
+    if (!primaryOffer) {
+      return null;
+    }
+
+    const hours = resolveOfferHours(primaryOffer, definition, { toNumber: clampNumber });
+    const payout = resolveOfferPayout(primaryOffer, definition, { toNumber: clampNumber });
+    const durationText = formatHours(hours);
+    const schedule = resolveOfferSchedule(primaryOffer);
+    const label = group.variantLabel
       || definition?.name
-      || offer?.templateId
+      || primaryOffer?.templateId
       || 'Hustle offer';
 
-    const description = offer?.variant?.description || definition?.description || '';
+    const description = primaryOffer?.variant?.description || definition?.description || '';
+
+    const offerMeta = describeHustleOfferMeta({
+      offer: primaryOffer,
+      definition,
+      currentDay,
+      formatHoursFn: formatHours,
+      formatMoneyFn: formatMoney,
+      toNumber: clampNumber
+    });
+
+    const seatsAvailable = availableOffers.reduce((total, entry) => {
+      const seats = clampNumber(entry?.seats);
+      return total + (Number.isFinite(seats) && seats > 0 ? Math.floor(seats) : 1);
+    }, 0);
 
     const meta = describeQuickActionOfferMeta({
       payout,
-      schedule,
+      schedule: offerMeta.schedule,
       durationText,
-      remainingDays,
+      daysRequired: offerMeta.daysRequired,
+      remainingDays: offerMeta.expiresIn,
+      seatPolicy: offerMeta.seatPolicy,
+      seatsAvailable: seatsAvailable > 0 ? seatsAvailable : offerMeta.seatsAvailable,
       formatMoneyFn: formatMoney
     });
 
     const enhancedMeta = requirementsMet
       ? meta
       : [lockGuidance, meta].filter(Boolean).join(' • ');
-    const descriptionText = description;
+
+    const roi = hours > 0 ? payout / Math.max(hours, 0.0001) : payout;
+    const normalizedCategory = normalizeCategory(group.category || definition?.market?.category || 'hustle');
+    const remainingRuns = availableOffers.length > 0 ? availableOffers.length : 1;
 
     return {
-      id: offer.id,
+      id: `offer-group:${group.id}`,
       label,
       primaryLabel: 'Accept',
-      description: descriptionText,
+      description,
       onClick: () => {
         let result = null;
         executeAction(() => {
-          result = acceptHustleOffer(offer.id, { state: workingState });
+          result = acceptHustleOffer(primaryOffer, { state: workingState });
         });
         return result;
       },
@@ -139,16 +200,18 @@ export function buildQuickActions(state) {
       durationHours: hours,
       durationText,
       meta: enhancedMeta,
-      repeatable: false,
-      remainingRuns: 1,
-      remainingDays,
+      repeatable: remainingRuns > 1,
+      remainingRuns,
+      remainingDays: offerMeta.expiresIn,
       schedule,
-      offer,
+      offer: primaryOffer,
       excludeFromQueue: true,
       disabled: !requirementsMet,
-      disabledReason: lockGuidance || 'Meet the prerequisites before accepting this hustle.'
+      disabledReason: lockGuidance || 'Meet the prerequisites before accepting this hustle.',
+      focusCategory: normalizedCategory || 'hustle',
+      focusBucket: 'hustle'
     };
-  });
+  }).filter(Boolean);
 
   if (!items.length) {
     const guidance = 'Fresh leads roll in with tomorrow\'s market refresh.';

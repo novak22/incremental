@@ -52,11 +52,98 @@ export function resolveOfferSchedule(offer) {
   return metadata.payoutSchedule || payout.schedule || 'onCompletion';
 }
 
+function resolveSeatPolicy(metadata = {}) {
+  if (!metadata || typeof metadata !== 'object') {
+    return null;
+  }
+  const directPolicy = metadata.seatPolicy;
+  if (typeof directPolicy === 'string' && directPolicy.trim()) {
+    return directPolicy.trim();
+  }
+  const enrollmentPolicy = metadata.enrollment?.seatPolicy;
+  if (typeof enrollmentPolicy === 'string' && enrollmentPolicy.trim()) {
+    return enrollmentPolicy.trim();
+  }
+  return null;
+}
+
+function resolveSeatCount(source, metadata, { toNumber = defaultNumberResolver } = {}) {
+  const candidates = [
+    source?.seats,
+    metadata?.seats,
+    metadata?.progress?.seats,
+    metadata?.enrollment?.seats
+  ];
+  const resolved = pickFirstFinite(candidates, { toNumber, min: 0 });
+  if (resolved == null) {
+    return null;
+  }
+  const integer = Math.floor(resolved);
+  return integer >= 0 ? integer : null;
+}
+
+export function describeSeatAvailability({ seatPolicy, seatsAvailable } = {}) {
+  if (!seatPolicy) {
+    return null;
+  }
+  if (seatPolicy === 'always-on') {
+    return 'Seat available daily';
+  }
+  if (seatPolicy === 'limited') {
+    if (Number.isFinite(seatsAvailable)) {
+      if (seatsAvailable > 0) {
+        return `${seatsAvailable} seat${seatsAvailable === 1 ? '' : 's'} today`;
+      }
+      return 'No seats available today';
+    }
+    return 'Limited seats';
+  }
+  return null;
+}
+
+export function groupOffersByTemplateVariant(offers = []) {
+  const groups = new Map();
+  (Array.isArray(offers) ? offers : [])
+    .filter(Boolean)
+    .forEach(offer => {
+      const templateId = offer?.templateId || offer?.definitionId;
+      if (!templateId) return;
+      const variantId = offer?.variantId || offer?.variant?.id || 'default';
+      const key = `${templateId}:${variantId}`;
+      if (!groups.has(key)) {
+        groups.set(key, {
+          id: key,
+          templateId,
+          variantId,
+          definitionId: offer?.definitionId || templateId,
+          variantLabel: offer?.variant?.label || null,
+          offers: [],
+          category: offer?.templateCategory || null
+        });
+      }
+      const group = groups.get(key);
+      if (!group.definitionId && offer?.definitionId) {
+        group.definitionId = offer.definitionId;
+      }
+      if (!group.variantLabel && offer?.variant?.label) {
+        group.variantLabel = offer.variant.label;
+      }
+      if (!group.category && offer?.templateCategory) {
+        group.category = offer.templateCategory;
+      }
+      group.offers.push(offer);
+    });
+  return Array.from(groups.values());
+}
+
 export function describeQuickActionOfferMeta({
   payout = 0,
   schedule,
   durationText,
+  daysRequired,
   remainingDays,
+  seatPolicy,
+  seatsAvailable,
   formatMoneyFn = formatMoney
 } = {}) {
   const parts = [];
@@ -73,8 +160,15 @@ export function describeQuickActionOfferMeta({
   if (durationText) {
     parts.push(durationText);
   }
+  if (Number.isFinite(daysRequired) && daysRequired > 0) {
+    parts.push(`${daysRequired}-day commitment`);
+  }
   if (Number.isFinite(remainingDays)) {
-    parts.push(`${remainingDays} day${remainingDays === 1 ? '' : 's'} left`);
+    parts.push(`Expires in ${remainingDays} day${remainingDays === 1 ? '' : 's'}`);
+  }
+  const seatSummary = describeSeatAvailability({ seatPolicy, seatsAvailable });
+  if (seatSummary) {
+    parts.push(seatSummary);
   }
   return parts.join(' • ');
 }
@@ -134,6 +228,10 @@ export function describeHustleOfferMeta({
     ? Math.max(0, Math.floor(offer.expiresOnDay) - currentDay + 1)
     : null;
 
+  const seatPolicy = resolveSeatPolicy(metadata);
+  const seatsAvailable = resolveSeatCount(offer, metadata, { toNumber });
+  const seatSummary = describeSeatAvailability({ seatPolicy, seatsAvailable });
+
   const parts = [];
   if (availableIn > 0) {
     parts.push(`Opens in ${availableIn} day${availableIn === 1 ? '' : 's'}`);
@@ -182,6 +280,9 @@ export function describeHustleOfferMeta({
     progressLabel,
     availableIn,
     expiresIn,
-    summary: parts.join(' • ')
+    summary: parts.join(' • '),
+    seatPolicy,
+    seatsAvailable,
+    seatSummary
   };
 }
