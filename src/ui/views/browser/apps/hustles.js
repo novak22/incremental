@@ -195,7 +195,13 @@ function createHustleCard(definition, model) {
   card.dataset.time = String(model.metrics?.time?.value ?? 0);
   card.dataset.payout = String(model.metrics?.payout?.value ?? 0);
   card.dataset.roi = String(model.metrics?.roi ?? 0);
-  card.dataset.available = model.filters?.available ? 'true' : 'false';
+  const visibleOffers = Array.isArray(model.offers)
+    ? model.offers.filter(offer => !offer?.locked)
+    : [];
+  const visibleUpcoming = Array.isArray(model.upcoming)
+    ? model.upcoming.filter(offer => !offer?.locked)
+    : [];
+  card.dataset.available = visibleOffers.length > 0 ? 'true' : 'false';
   if (model.filters?.limitRemaining !== null && model.filters?.limitRemaining !== undefined) {
     card.dataset.limitRemaining = String(model.filters.limitRemaining);
   }
@@ -289,14 +295,14 @@ function createHustleCard(definition, model) {
     card.appendChild(commitmentsSection);
   }
 
-  if (Array.isArray(model.offers) && model.offers.length) {
+  if (visibleOffers.length) {
     const offersSection = createCardSection(
       'Ready to accept',
       'Fresh hustles just landed! Grab the one that sparks your curiosity.'
     );
     const list = document.createElement('ul');
     list.className = 'browser-card__list';
-    model.offers.forEach(offer => {
+    visibleOffers.forEach(offer => {
       const item = createOfferItem(offer);
       list.appendChild(item);
     });
@@ -304,14 +310,14 @@ function createHustleCard(definition, model) {
     card.appendChild(offersSection);
   }
 
-  if (Array.isArray(model.upcoming) && model.upcoming.length) {
+  if (visibleUpcoming.length) {
     const upcomingSection = createCardSection(
       'Coming tomorrow',
       'These leads unlock with the next market refresh. Prep your pitch now!'
     );
     const list = document.createElement('ul');
     list.className = 'browser-card__list';
-    model.upcoming.forEach(offer => {
+    visibleUpcoming.forEach(offer => {
       const item = createOfferItem(offer, { upcoming: true });
       list.appendChild(item);
     });
@@ -349,7 +355,10 @@ export default function renderHustles(context = {}, definitions = [], models = [
     const model = modelMap.get(definition.id);
     if (!model) return;
 
-    if (model.filters?.available) {
+    const visibleOffersCount = Array.isArray(model.offers)
+      ? model.offers.filter(offer => !offer?.locked).length
+      : 0;
+    if (visibleOffersCount > 0) {
       availableCount += 1;
     }
 
@@ -357,8 +366,11 @@ export default function renderHustles(context = {}, definitions = [], models = [
       commitmentCount += model.commitments.length;
     }
 
-    if (Array.isArray(model.upcoming)) {
-      upcomingCount += model.upcoming.length;
+    const visibleUpcomingCount = Array.isArray(model.upcoming)
+      ? model.upcoming.filter(offer => !offer?.locked).length
+      : 0;
+    if (visibleUpcomingCount > 0) {
+      upcomingCount += visibleUpcomingCount;
     }
 
     const card = createHustleCard(definition, model);

@@ -104,6 +104,112 @@ test('renderHustles highlights accept CTA and upcoming list', () => {
   }
 });
 
+test('renderHustles omits locked offers from DownWork feed', () => {
+  const dom = setupDom();
+  const context = {
+    ensurePageContent: (_page, builder) => {
+      const body = document.createElement('div');
+      builder({ body });
+      document.body.appendChild(body);
+      return { body };
+    }
+  };
+
+  const definitions = [
+    {
+      id: 'locked-filter',
+      name: 'Locked Filter Hustle',
+      description: 'Only unlocked offers should appear.',
+      action: { label: 'Legacy' }
+    }
+  ];
+
+  const models = [
+    {
+      id: 'locked-filter',
+      name: 'Locked Filter Hustle',
+      description: 'Only unlocked offers should appear.',
+      badges: [],
+      metrics: {
+        time: { value: 1, label: '1h' },
+        payout: { value: 25, label: '$25' },
+        roi: 25
+      },
+      requirements: { summary: 'No requirements', items: [] },
+      action: {
+        label: 'Accept Open Offer',
+        disabled: false,
+        className: 'primary',
+        onClick: () => {}
+      },
+      available: true,
+      offers: [
+        {
+          id: 'offer-locked',
+          label: 'Locked Ready Offer',
+          description: 'Hidden because locked.',
+          meta: 'Locked meta',
+          payout: 25,
+          ready: true,
+          availableIn: 0,
+          expiresIn: 2,
+          locked: true
+        },
+        {
+          id: 'offer-open',
+          label: 'Open Ready Offer',
+          description: 'Visible offer.',
+          meta: 'Open now',
+          payout: 25,
+          ready: true,
+          availableIn: 0,
+          expiresIn: 2,
+          locked: false
+        }
+      ],
+      upcoming: [
+        {
+          id: 'offer-locked-upcoming',
+          label: 'Locked Upcoming Offer',
+          description: 'Hidden upcoming offer.',
+          meta: 'Locked upcoming',
+          ready: false,
+          availableIn: 2,
+          expiresIn: 3,
+          locked: true
+        },
+        {
+          id: 'offer-open-upcoming',
+          label: 'Open Upcoming Offer',
+          description: 'Visible upcoming offer.',
+          meta: 'Unlocks soon',
+          ready: false,
+          availableIn: 1,
+          expiresIn: 4,
+          locked: false
+        }
+      ],
+      commitments: [],
+      filters: { available: true }
+    }
+  ];
+
+  try {
+    renderHustles(context, definitions, models);
+
+    const titles = [...document.querySelectorAll('.hustle-card__title')]
+      .map(node => node.textContent);
+    assert.ok(titles.includes('Open Ready Offer'), 'expected unlocked offer to remain visible');
+    assert.ok(!titles.includes('Locked Ready Offer'), 'expected locked offer to be hidden');
+    assert.ok(titles.includes('Open Upcoming Offer'), 'expected unlocked upcoming to remain visible');
+    assert.ok(!titles.includes('Locked Upcoming Offer'), 'expected locked upcoming offer to be hidden');
+  } finally {
+    dom.window.close();
+    delete globalThis.window;
+    delete globalThis.document;
+  }
+});
+
 test('renderHustles falls back to empty-state language when no offers exist', () => {
   const dom = setupDom();
   const context = {
