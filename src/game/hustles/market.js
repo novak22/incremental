@@ -281,19 +281,23 @@ function buildOfferMetadata(template, variant) {
     requirements.hours = resolvedHours;
   }
 
+  const basePayout = typeof baseMetadata.payout === 'object' && baseMetadata.payout !== null
+    ? structuredClone(baseMetadata.payout)
+    : {};
+  const variantPayout = typeof variantMetadata.payout === 'object' && variantMetadata.payout !== null
+    ? structuredClone(variantMetadata.payout)
+    : {};
   const payout = {
-    ...(typeof baseMetadata.payout === 'object' && baseMetadata.payout !== null
-      ? structuredClone(baseMetadata.payout)
-      : {}),
-    ...(typeof variantMetadata.payout === 'object' && variantMetadata.payout !== null
-      ? structuredClone(variantMetadata.payout)
-      : {})
+    ...basePayout,
+    ...variantPayout
   };
 
   const resolvedPayoutAmount = resolveFirstNumber(
-    payout.amount,
     variantMetadata.payoutAmount,
+    variantPayout.amount,
+    payout.amount,
     baseMetadata.payoutAmount,
+    basePayout.amount,
     template?.payout?.amount
   );
   if (resolvedPayoutAmount != null) {
