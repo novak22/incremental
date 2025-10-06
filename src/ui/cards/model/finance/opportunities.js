@@ -3,7 +3,7 @@ import { getDailyIncomeRange } from '../../../../game/assets/payout.js';
 import { getUpgradeSnapshot } from '../upgrades.js';
 import { describeHustleRequirements } from '../../../../game/hustles/helpers.js';
 import { getAvailableOffers, getClaimedOffers } from '../../../../game/hustles.js';
-import { collectOutstandingActionEntries } from '../../../actions/registry.js';
+import { collectOutstandingActionEntries } from '../../../actions/outstanding.js';
 import { ensureArray, toCurrency } from './utils.js';
 
 function resolveOfferHours(offer, definition) {
