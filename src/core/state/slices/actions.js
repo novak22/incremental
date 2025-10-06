@@ -165,6 +165,130 @@ function normalizeInstanceProgress(definition, instance = {}) {
   return progress;
 }
 
+export function getInstanceProgressSnapshot(instance = {}) {
+  if (!instance || typeof instance !== 'object') {
+    return null;
+  }
+
+  const progress = typeof instance.progress === 'object' && instance.progress !== null
+    ? instance.progress
+    : {};
+
+  const snapshot = {};
+
+  snapshot.definitionId = typeof instance.definitionId === 'string'
+    ? instance.definitionId
+    : typeof progress.definitionId === 'string'
+      ? progress.definitionId
+      : null;
+
+  snapshot.instanceId = typeof instance.id === 'string'
+    ? instance.id
+    : typeof progress.instanceId === 'string'
+      ? progress.instanceId
+      : null;
+
+  const resolvedHoursLogged = toNumber(progress.hoursLogged, toNumber(instance.hoursLogged, 0));
+  snapshot.hoursLogged = Number.isFinite(resolvedHoursLogged) && resolvedHoursLogged >= 0
+    ? resolvedHoursLogged
+    : 0;
+
+  const hoursRequiredCandidates = [
+    progress.hoursRequired,
+    instance.hoursRequired,
+    progress.totalHours
+  ];
+  let hoursRequired = null;
+  for (const candidate of hoursRequiredCandidates) {
+    const numeric = toNumber(candidate, null);
+    if (Number.isFinite(numeric) && numeric >= 0) {
+      hoursRequired = numeric;
+      break;
+    }
+  }
+  snapshot.hoursRequired = hoursRequired;
+
+  snapshot.hoursRemaining = snapshot.hoursRequired != null
+    ? Math.max(0, snapshot.hoursRequired - snapshot.hoursLogged)
+    : null;
+
+  const parsedHoursPerDay = toNumber(progress.hoursPerDay, null);
+  snapshot.hoursPerDay = Number.isFinite(parsedHoursPerDay) && parsedHoursPerDay > 0
+    ? parsedHoursPerDay
+    : null;
+
+  const parsedDaysCompleted = toNumber(progress.daysCompleted, null);
+  snapshot.daysCompleted = Number.isFinite(parsedDaysCompleted) && parsedDaysCompleted >= 0
+    ? Math.floor(parsedDaysCompleted)
+    : 0;
+
+  const parsedDaysRequired = toNumber(progress.daysRequired, null);
+  snapshot.daysRequired = Number.isFinite(parsedDaysRequired) && parsedDaysRequired > 0
+    ? Math.floor(parsedDaysRequired)
+    : null;
+
+  const progressType = typeof progress.type === 'string' && progress.type.trim()
+    ? progress.type.trim()
+    : null;
+  snapshot.type = progressType;
+
+  const completionCandidates = [progress.completion, progress.completionMode];
+  let completionMode = null;
+  for (const candidate of completionCandidates) {
+    if (typeof candidate === 'string' && candidate.trim()) {
+      completionMode = candidate.trim();
+      break;
+    }
+  }
+  if (!completionMode) {
+    completionMode = progressType === 'instant' ? 'instant' : 'manual';
+  }
+  snapshot.completion = completionMode;
+  snapshot.completionMode = completionMode;
+
+  snapshot.percentComplete = snapshot.hoursRequired && snapshot.hoursRequired > 0
+    ? Math.max(0, Math.min(1, snapshot.hoursLogged / snapshot.hoursRequired))
+    : null;
+
+  const parsedLastWorked = toNumber(progress.lastWorkedDay, null);
+  snapshot.lastWorkedDay = Number.isFinite(parsedLastWorked) && parsedLastWorked > 0
+    ? Math.floor(parsedLastWorked)
+    : null;
+
+  const parsedDeadline = toNumber(progress.deadlineDay, null);
+  snapshot.deadlineDay = Number.isFinite(parsedDeadline) && parsedDeadline > 0
+    ? Math.floor(parsedDeadline)
+    : null;
+
+  const parsedAcceptedOn = toNumber(progress.acceptedOnDay ?? instance.acceptedOnDay, null);
+  snapshot.acceptedOnDay = Number.isFinite(parsedAcceptedOn) && parsedAcceptedOn > 0
+    ? Math.floor(parsedAcceptedOn)
+    : null;
+
+  const completed = progress.completed === true
+    || instance.completed === true
+    || progress.status === 'completed'
+    || instance.status === 'completed';
+  snapshot.completed = completed;
+
+  const parsedCompletedOn = toNumber(progress.completedOnDay ?? instance.completedOnDay, null);
+  snapshot.completedOnDay = Number.isFinite(parsedCompletedOn) && parsedCompletedOn > 0
+    ? Math.floor(parsedCompletedOn)
+    : completed
+      ? snapshot.acceptedOnDay
+      : null;
+
+  snapshot.metadata = typeof progress.metadata === 'object' && progress.metadata !== null
+    ? progress.metadata
+    : {};
+
+  if (progress.dailyLog && typeof progress.dailyLog === 'object') {
+    snapshot.dailyLog = progress.dailyLog;
+  }
+
+  return snapshot;
+}
+
 function createDefaultActionState(definition) {
   if (!definition) {
     return { instances: [] };
