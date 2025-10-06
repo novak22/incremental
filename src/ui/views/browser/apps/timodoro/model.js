@@ -1,6 +1,7 @@
 import { formatHours, formatMoney } from '../../../../../core/helpers.js';
 import { buildSummaryPresentations } from '../../../../dashboard/formatters.js';
 import { buildQueueMetrics } from '../../../../actions/queueService.js';
+import { buildQueueEntryCollection } from '../../../../actions/models.js';
 
 export function formatCurrency(amount) {
   const numeric = Number(amount);
@@ -158,7 +159,7 @@ export function buildTimodoroViewModel(state = {}, summary = {}, todoModel = {})
   const recurringEntries = buildRecurringEntries(summary);
   const summaryEntries = buildSummaryEntries(summary, todoModel, state);
   const breakdownEntries = buildBreakdown(summary, todoModel, state);
-  const todoEntries = Array.isArray(todoModel?.entries) ? todoModel.entries : [];
+  const todoEntries = buildQueueEntryCollection(todoModel);
   const todoEmptyMessage = todoModel?.emptyMessage;
   const queueMetrics = buildQueueMetrics(state, todoModel);
   const todoHoursAvailable = Number.isFinite(queueMetrics?.hoursAvailable)

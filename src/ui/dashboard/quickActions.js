@@ -2,6 +2,7 @@ import { formatHours } from '../../core/helpers.js';
 import { clampNumber } from './formatters.js';
 import { collectOutstandingActionEntries } from '../actions/outstanding.js';
 import { buildQueueMetrics } from '../actions/queueService.js';
+import { buildQueueEntryModel } from '../actions/models.js';
 import { registerActionProvider } from '../actions/providers.js';
 import { executeAction } from '../../game/actions.js';
 import { acceptHustleOffer } from '../../game/hustles.js';
@@ -21,13 +22,15 @@ function buildQuickActionEntry(candidate) {
   const offer = candidate?.primaryOffer;
   const roi = Number.isFinite(candidate?.roi) ? candidate.roi : 0;
 
-  return {
+  const baseEntry = {
     id: candidate?.id,
     groupId: candidate?.groupId,
     offerIds: candidate?.offerIds || [],
     label: hints.label,
     primaryLabel: hints.primaryLabel,
+    buttonLabel: hints.primaryLabel,
     description: hints.description,
+    subtitle: hints.description,
     onClick: () => {
       if (!offer) {
         return null;
@@ -57,6 +60,25 @@ function buildQuickActionEntry(candidate) {
     disabledReason: hints.disabledReason,
     focusCategory: hints.focusCategory,
     focusBucket: hints.focusBucket
+  };
+
+  const normalized = buildQueueEntryModel(baseEntry, {
+    title: hints.label,
+    subtitle: hints.description,
+    payout: candidate?.payout,
+    payoutText: hints.payoutText,
+    durationHours: candidate?.hours,
+    durationText: hints.durationText,
+    meta: hints.meta,
+    schedule: candidate?.schedule
+  });
+
+  return {
+    ...normalized,
+    label: hints.label,
+    primaryLabel: hints.primaryLabel,
+    buttonLabel: normalized.buttonLabel || hints.primaryLabel,
+    description: hints.description
   };
 }
 
@@ -94,9 +116,9 @@ export function buildQuickActionModel(state = {}) {
   const inProgress = buildInProgressActions(state);
   const entries = suggestions.map(action => ({
     id: action.id,
-    title: action.label,
-    subtitle: action.description,
-    buttonLabel: action.primaryLabel,
+    title: action.title || action.label,
+    subtitle: action.subtitle || action.description,
+    buttonLabel: action.buttonLabel || action.primaryLabel,
     onClick: action.onClick,
     payout: action.payout,
     payoutText: action.payoutText,
