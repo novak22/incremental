@@ -111,6 +111,12 @@ test('todo widget logging to zero hours ends the day automatically', async () =>
   const [offer] = rollDailyOffers({ templates: [template], day: state.day, now: Date.now(), state, rng: () => 0 });
   assert.ok(offer, 'expected rollDailyOffers to produce an offer');
 
+  const acceptanceHours = Math.max(0, Number(template?.time ?? offer?.metadata?.time ?? 0));
+  if (acceptanceHours > 0) {
+    state.timeLeft = acceptanceHours;
+    state.baseTime = acceptanceHours;
+  }
+
   const accepted = acceptHustleOffer(offer.id, { state });
   assert.ok(accepted, 'expected the offer to be accepted');
 

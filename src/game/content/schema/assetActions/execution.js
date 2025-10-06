@@ -24,53 +24,132 @@ function meetsAssetRequirements(requirements = [], state = getState()) {
 }
 
 export function createDailyLimitTracker(metadata) {
+  function sanitizePendingCount(value, max) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric) || numeric <= 0) {
+      return 0;
+    }
+    if (!Number.isFinite(max)) {
+      return Math.floor(numeric);
+    }
+    return Math.max(0, Math.min(Math.floor(numeric), Math.floor(max)));
+  }
+
   function resolveDailyUsage(state = getState(), { sync = false } = {}) {
     const actionState = getActionState(metadata.id, state);
     const currentDay = Number(state?.day) || 1;
+
+    const lastRunDay = Number(actionState.lastRunDay) || 0;
+    const baseRuns = Number(actionState.runsToday) || 0;
+    const sanitizedRuns = Math.max(0, baseRuns);
+    const usedToday = metadata.dailyLimit
+      ? (lastRunDay === currentDay ? sanitizedRuns : 0)
+      : sanitizedRuns;
+
+    const pendingDay = Number(actionState.pendingAcceptsDay) || 0;
+    const pendingBase = pendingDay === currentDay ? actionState.pendingAccepts : 0;
+    const pendingToday = sanitizePendingCount(pendingBase, metadata.dailyLimit);
+
+    if (sync) {
+      if (metadata.dailyLimit) {
+        if (lastRunDay !== currentDay) {
+          actionState.lastRunDay = currentDay;
+          actionState.runsToday = usedToday;
+        }
+        if (pendingDay !== currentDay) {
+          actionState.pendingAcceptsDay = pendingToday > 0 ? currentDay : null;
+          actionState.pendingAccepts = pendingToday;
+        } else if (actionState.pendingAccepts !== pendingToday) {
+          actionState.pendingAccepts = pendingToday;
+        }
+      } else if (!Number.isFinite(baseRuns) || baseRuns < 0) {
+        actionState.runsToday = 0;
+      }
+      if (pendingToday === 0 && metadata.dailyLimit) {
+        actionState.pendingAccepts = 0;
+        actionState.pendingAcceptsDay = null;
+      }
+    }
 
     if (!metadata.dailyLimit) {
       return {
         actionState,
         currentDay,
         limit: null,
-        used: Number(actionState.runsToday) || 0,
+        used: Math.max(0, baseRuns),
+        pending: pendingToday,
         remaining: null
       };
     }
 
-    const lastRunDay = Number(actionState.lastRunDay) || 0;
-    const usedToday = lastRunDay === currentDay ? Number(actionState.runsToday) || 0 : 0;
-
-    if (sync && lastRunDay !== currentDay) {
-      actionState.lastRunDay = currentDay;
-      actionState.runsToday = usedToday;
-    }
+    const remaining = Math.max(0, metadata.dailyLimit - usedToday - pendingToday);
 
     return {
       actionState,
       currentDay,
       limit: metadata.dailyLimit,
       used: usedToday,
-      remaining: Math.max(0, metadata.dailyLimit - usedToday)
+      pending: pendingToday,
+      remaining
     };
   }
 
-  function updateDailyUsage(state) {
+  function reserveDailyUsage(state = getState()) {
     if (!metadata.dailyLimit) return null;
     const usage = resolveDailyUsage(state, { sync: true });
-    const nextUsed = Math.min(metadata.dailyLimit, usage.used + 1);
-    usage.actionState.lastRunDay = usage.currentDay;
-    usage.actionState.runsToday = nextUsed;
-    const remaining = Math.max(0, metadata.dailyLimit - nextUsed);
+    if (usage.remaining <= 0) {
+      return null;
+    }
+    const available = metadata.dailyLimit - usage.used;
+    const nextPending = Math.min(available, usage.pending + 1);
+    usage.actionState.pendingAccepts = nextPending;
+    usage.actionState.pendingAcceptsDay = usage.currentDay;
+    const remaining = Math.max(0, metadata.dailyLimit - usage.used - nextPending);
     return {
       limit: metadata.dailyLimit,
-      used: nextUsed,
+      used: usage.used,
+      pending: nextPending,
       remaining,
       day: usage.currentDay
     };
   }
 
-  return { resolveDailyUsage, updateDailyUsage };
+  function releaseDailyUsage(state = getState()) {
+    if (!metadata.dailyLimit) return null;
+    const usage = resolveDailyUsage(state, { sync: true });
+    const nextPending = usage.pending > 0 ? usage.pending - 1 : 0;
+    usage.actionState.pendingAccepts = nextPending;
+    usage.actionState.pendingAcceptsDay = nextPending > 0 ? usage.currentDay : null;
+    const remaining = Math.max(0, metadata.dailyLimit - usage.used - nextPending);
+    return {
+      limit: metadata.dailyLimit,
+      used: usage.used,
+      pending: nextPending,
+      remaining,
+      day: usage.currentDay
+    };
+  }
+
+  function consumeDailyUsage(state = getState()) {
+    if (!metadata.dailyLimit) return null;
+    const usage = resolveDailyUsage(state, { sync: true });
+    const nextPending = usage.pending > 0 ? usage.pending - 1 : 0;
+    const nextUsed = Math.min(metadata.dailyLimit, usage.used + 1);
+    usage.actionState.lastRunDay = usage.currentDay;
+    usage.actionState.runsToday = nextUsed;
+    usage.actionState.pendingAccepts = nextPending;
+    usage.actionState.pendingAcceptsDay = nextPending > 0 ? usage.currentDay : null;
+    const remaining = Math.max(0, metadata.dailyLimit - nextUsed - nextPending);
+    return {
+      limit: metadata.dailyLimit,
+      used: nextUsed,
+      pending: nextPending,
+      remaining,
+      day: usage.currentDay
+    };
+  }
+
+  return { resolveDailyUsage, reserveDailyUsage, releaseDailyUsage, consumeDailyUsage };
 }
 
 export function createExecutionHooks({
@@ -78,7 +157,9 @@ export function createExecutionHooks({
   metadata,
   config,
   resolveDailyUsage,
-  updateDailyUsage
+  reserveDailyUsage,
+  releaseDailyUsage,
+  consumeDailyUsage
 }) {
   function resolveEffectiveTime(state = getState()) {
     if (!metadata.time) return metadata.time;
@@ -94,6 +175,9 @@ export function createExecutionHooks({
     if (metadata.dailyLimit) {
       const usage = resolveDailyUsage(state, { sync: true });
       if (usage.remaining <= 0) {
+        if (usage.pending > 0 && usage.used < metadata.dailyLimit) {
+          return `All ${definition.name} contracts for today are already claimed. Complete or cancel an active contract to free a slot.`;
+        }
         const runsLabel = metadata.dailyLimit === 1 ? 'once' : `${metadata.dailyLimit} times`;
         return `Daily limit reached: ${definition.name} can only run ${runsLabel} per day. Fresh slots unlock tomorrow.`;
       }
@@ -143,16 +227,148 @@ export function createExecutionHooks({
     return { amount: amount * baseMultiplier, multiplier: baseMultiplier, sources: effect.sources || [] };
   }
 
+  function computeCompletionHours(instance, fallback) {
+    const logged = Number(instance?.hoursLogged);
+    if (Number.isFinite(logged) && logged >= 0) {
+      return logged;
+    }
+    const progressHours = Number(instance?.progress?.hoursRequired);
+    if (Number.isFinite(progressHours) && progressHours >= 0) {
+      return progressHours;
+    }
+    return Number.isFinite(fallback) && fallback >= 0 ? fallback : 0;
+  }
+
+  function prepareCompletion({ context = {}, instance, state, completionHours }) {
+    const workingContext = context;
+    workingContext.definition = definition;
+    const instanceMetadata = instance?.metadata && typeof instance.metadata === 'object' ? instance.metadata : null;
+    const providedMetadata = workingContext.metadata && typeof workingContext.metadata === 'object'
+      ? workingContext.metadata
+      : null;
+    const resolvedMetadata = providedMetadata || instanceMetadata || metadata;
+    workingContext.metadata = resolvedMetadata;
+    workingContext.definitionMetadata = metadata;
+    workingContext.state = state;
+
+    const resolvedHours = Number.isFinite(completionHours)
+      ? completionHours
+      : computeCompletionHours(instance, metadata.time);
+    workingContext.effectiveTime = Number.isFinite(resolvedHours) && resolvedHours >= 0 ? resolvedHours : 0;
+
+    const shouldApplySideEffects = workingContext.__completionSideEffectsApplied !== true;
+
+    if (shouldApplySideEffects && workingContext.effectiveTime > 0) {
+      applyMetric(recordTimeContribution, metadata.metrics.time, { hours: workingContext.effectiveTime });
+    }
+
+    workingContext.skipDefaultPayout = () => {
+      workingContext.__skipDefaultPayout = true;
+    };
+
+    if (shouldApplySideEffects && metadata.skills) {
+      workingContext.skillXpAwarded = awardSkillProgress({
+        skills: metadata.skills,
+        timeSpentHours: workingContext.effectiveTime,
+        moneySpent: metadata.cost,
+        label: definition.name,
+        state
+      });
+    }
+
+    config.onExecute?.(workingContext);
+
+    const payoutAmountCandidates = [
+      toNumber(resolvedMetadata?.payout?.amount, null),
+      toNumber(resolvedMetadata?.payoutAmount, null),
+      toNumber(instanceMetadata?.payout?.amount, null),
+      toNumber(instanceMetadata?.payoutAmount, null),
+      toNumber(metadata.payout?.amount, null)
+    ];
+    const basePayout = payoutAmountCandidates.find(value => Number.isFinite(value) && value >= 0) || 0;
+
+    if (basePayout > 0 && !workingContext.__skipDefaultPayout) {
+      const { amount: educationAdjusted, applied: appliedBonuses } = applyInstantHustleEducationBonus({
+        hustleId: metadata.id,
+        baseAmount: basePayout,
+        state
+      });
+
+      workingContext.basePayout = basePayout;
+      workingContext.educationAdjustedPayout = educationAdjusted;
+      workingContext.appliedEducationBoosts = appliedBonuses;
+
+      const upgradeResult = applyHustlePayoutMultiplier(educationAdjusted, workingContext);
+      const upgradedAmount = upgradeResult.amount;
+      const roundedPayout = Math.max(0, Math.round(upgradedAmount));
+
+      workingContext.upgradeMultiplier = upgradeResult.multiplier;
+      workingContext.upgradeSources = upgradeResult.sources;
+      workingContext.finalPayout = roundedPayout;
+      workingContext.payoutGranted = roundedPayout;
+
+      if (appliedBonuses.length) {
+        workingContext.__educationSummary = formatEducationBonusSummary(appliedBonuses);
+      }
+    }
+
+    if (shouldApplySideEffects) {
+      const updatedUsage = consumeDailyUsage(state);
+      if (updatedUsage) {
+        workingContext.limitUsage = updatedUsage;
+        markDirty('actions');
+      }
+      workingContext.__completionSideEffectsApplied = true;
+    }
+
+    return workingContext;
+  }
+
+  function applyAcceptanceCost({ state = getState(), instance } = {}) {
+    if (!metadata.cost || metadata.cost <= 0) {
+      if (instance) {
+        instance.__pendingAcceptanceCost = 0;
+      }
+      return { paid: 0 };
+    }
+
+    const workingState = state || getState();
+    if (!workingState) {
+      return { paid: 0 };
+    }
+
+    const pending = Number(instance?.__pendingAcceptanceCost ?? metadata.cost);
+    if (!Number.isFinite(pending) || pending <= 0) {
+      if (instance) {
+        instance.__pendingAcceptanceCost = 0;
+      }
+      return { paid: 0 };
+    }
+
+    if (instance?.__acceptanceCostApplied) {
+      return { paid: 0 };
+    }
+
+    spendMoney(pending);
+    applyMetric(recordCostContribution, metadata.metrics.cost, { amount: pending });
+
+    if (instance) {
+      instance.costPaid = (instance.costPaid || 0) + pending;
+      instance.__pendingAcceptanceCost = 0;
+      instance.__acceptanceCostApplied = true;
+    }
+
+    return { paid: pending };
+  }
+
   function runHustle(context) {
     const effectiveTime = resolveEffectiveTime(context.state);
     context.effectiveTime = effectiveTime;
-    if (effectiveTime > 0) {
+    const shouldApplySideEffects = context.__completionSideEffectsApplied !== true;
+
+    if (shouldApplySideEffects && effectiveTime > 0) {
       spendTime(effectiveTime);
       applyMetric(recordTimeContribution, metadata.metrics.time, { hours: effectiveTime });
-    }
-    if (metadata.cost > 0) {
-      spendMoney(metadata.cost);
-      applyMetric(recordCostContribution, metadata.metrics.cost, { amount: metadata.cost });
     }
 
     context.skipDefaultPayout = () => {
@@ -161,7 +377,7 @@ export function createExecutionHooks({
 
     config.onExecute?.(context);
 
-    if (metadata.skills) {
+    if (shouldApplySideEffects && metadata.skills) {
       context.skillXpAwarded = awardSkillProgress({
         skills: metadata.skills,
         timeSpentHours: effectiveTime,
@@ -212,10 +428,13 @@ export function createExecutionHooks({
       }
     }
 
-    const updatedUsage = updateDailyUsage(context.state);
-    if (updatedUsage) {
-      context.limitUsage = updatedUsage;
-      markDirty('actions');
+    if (shouldApplySideEffects) {
+      const updatedUsage = consumeDailyUsage(context.state);
+      if (updatedUsage) {
+        context.limitUsage = updatedUsage;
+        markDirty('actions');
+      }
+      context.__completionSideEffectsApplied = true;
     }
 
     config.onComplete?.(context);
@@ -262,6 +481,7 @@ export function createExecutionHooks({
       });
       if (instance) {
         context.instance = instance;
+        applyAcceptanceCost({ state, instance });
         const logDay = Number(state?.day) || instance.acceptedOnDay;
         advanceActionInstance(definition, instance, {
           state,
@@ -279,7 +499,6 @@ export function createExecutionHooks({
       if (instance && !shouldDeferCompletion) {
         completeActionInstance(definition, instance, context);
       }
-      config.onRun?.(context);
     });
     checkDayEnd();
   }
@@ -289,6 +508,11 @@ export function createExecutionHooks({
     getDisabledReason,
     runHustle,
     disabled,
-    handleActionClick
+    handleActionClick,
+    prepareCompletion,
+    reserveDailyUsage,
+    releaseDailyUsage,
+    consumeDailyUsage,
+    applyAcceptanceCost
   };
 }

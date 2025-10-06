@@ -1,14 +1,32 @@
 export function buildProgressDefaults({ metadata, config }) {
-  const progressDefaults = {
-    type: 'instant',
-    completion: 'instant',
-    ...(config.progress || {})
-  };
+  const suppliedProgress = typeof config.progress === 'object' && config.progress !== null
+    ? { ...config.progress }
+    : {};
 
-  if (progressDefaults.hoursRequired == null) {
+  const progressDefaults = { ...suppliedProgress };
+  progressDefaults.type = suppliedProgress.type || 'hustle';
+  progressDefaults.completion = suppliedProgress.completion || (metadata.time > 0 ? 'manual' : 'instant');
+
+  if (suppliedProgress.hoursRequired != null) {
+    progressDefaults.hoursRequired = suppliedProgress.hoursRequired;
+  } else {
     const baseHours = Number(metadata.time);
     if (Number.isFinite(baseHours) && baseHours >= 0) {
       progressDefaults.hoursRequired = baseHours;
+    }
+  }
+
+  const additionalKeys = [
+    'hoursPerDay',
+    'daysRequired',
+    'deadlineDay',
+    'label',
+    'completionMode',
+    'progressLabel'
+  ];
+  for (const key of additionalKeys) {
+    if (suppliedProgress[key] != null) {
+      progressDefaults[key] = suppliedProgress[key];
     }
   }
 

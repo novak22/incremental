@@ -15,8 +15,9 @@ availability limits, progress metadata, and an `instances` ledger so the game ca
 - Action templates live in `src/game/actions/definitions.js` and currently wrap instant hustles and study sessions.
 - The `actions` state slice (see `src/core/state/slices/actions/index.js`) merges legacy hustle counters and initializes a fresh
   `instances` array for every action ID.
-- `createInstantHustle` now creates an accepted instance via `acceptActionInstance` before executing, and `completeActionInstance`
-  stores the final payout, hours logged, and applied bonuses.
+- `createInstantHustle` now seeds manual progress when an offer is accepted (defaulting to the hustle's hour requirement) and
+  `completeActionInstance` collects payouts, hours, and applied bonuses through shared completion hooks so the instance ledger
+  always reflects the final rewards.
 - End-of-day processing clears daily limits on the `actions` slice while leaving historical instances intact for summaries.
 - Completed instances linger through the day they finish and then quietly retire the following morning so the registry keeps
   focus on actionable commitments while still surfacing fresh completions in recaps.

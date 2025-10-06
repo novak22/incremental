@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { getGameTestHarness } from './helpers/gameTestHarness.js';
+import { acceptAndCompleteInstantHustle } from './helpers/hustleActions.js';
 
 const { buildTrackViewModel } = await import('../src/game/hustles/knowledgeHustles.js');
 const { formatMoney } = await import('../src/core/helpers.js');
-
 const harness = await getGameTestHarness();
 const {
   stateModule,
@@ -133,8 +133,13 @@ test('education multipliers boost freelance writing payout once mastered', () =>
   baseState.money = 0;
   baseState.timeLeft = 10;
   const baseFreelance = ACTIONS.find(hustle => hustle.id === 'freelance');
-  baseFreelance.action.onClick();
-  assert.equal(baseState.money, 18, 'baseline freelance payout should be unchanged without study');
+  const baseFreelanceRun = acceptAndCompleteInstantHustle(baseFreelance, baseState);
+  const baseFreelanceContract = Math.round(Number(baseFreelanceRun?.payout?.amount) || 0);
+  assert.equal(
+    baseState.money,
+    baseFreelanceContract,
+    `baseline freelance payout should match the accepted contract ($${baseFreelanceContract})`
+  );
   const baseActionState = getActionState('freelance');
   assert.ok(baseActionState.instances.length > 0, 'action run should record an instance');
   assert.equal(baseActionState.instances.at(-1).completed, true, 'completed instance should be marked as finished');
@@ -147,9 +152,15 @@ test('education multipliers boost freelance writing payout once mastered', () =>
   const mastery = getKnowledgeProgress('outlineMastery', boostedState);
   mastery.completed = true;
   const boostedFreelance = ACTIONS.find(hustle => hustle.id === 'freelance');
-  boostedFreelance.action.onClick();
+  const boostedFreelanceRun = acceptAndCompleteInstantHustle(boostedFreelance, boostedState);
+  const boostedFreelanceContract = Math.round(Number(boostedFreelanceRun?.payout?.amount) || 0);
+  const boostedFreelanceExpected = Math.round(boostedFreelanceContract * 1.25);
 
-  assert.equal(boostedState.money, 23, 'outline mastery should add a 25% payout boost (rounded)');
+  assert.equal(
+    boostedState.money,
+    boostedFreelanceExpected,
+    `outline mastery should add a 25% payout boost (expected $${boostedFreelanceExpected})`
+  );
   assert.match(
     boostedState.log.at(-1).message,
     /Outline Mastery Workshop/,
@@ -164,8 +175,16 @@ test('education flat bonuses add to audience call payouts', () => {
   baseState.money = 0;
   baseState.timeLeft = 10;
   getAssetState('blog', baseState).instances = [{ status: 'active' }];
-  ACTIONS.find(hustle => hustle.id === 'audienceCall').action.onClick();
-  assert.equal(baseState.money, 12, 'baseline Q&A payout should be $12 without training');
+  const baseAudience = acceptAndCompleteInstantHustle(
+    ACTIONS.find(hustle => hustle.id === 'audienceCall'),
+    baseState
+  );
+  const baseAudienceContract = Math.round(Number(baseAudience?.payout?.amount) || 0);
+  assert.equal(
+    baseState.money,
+    baseAudienceContract,
+    `baseline Q&A payout should match the accepted contract ($${baseAudienceContract})`
+  );
 
   resetState();
 
@@ -175,9 +194,17 @@ test('education flat bonuses add to audience call payouts', () => {
   getAssetState('blog', boostedState).instances = [{ status: 'active' }];
   const brandVoice = getKnowledgeProgress('brandVoiceLab', boostedState);
   brandVoice.completed = true;
-  ACTIONS.find(hustle => hustle.id === 'audienceCall').action.onClick();
+  const boostedAudience = acceptAndCompleteInstantHustle(
+    ACTIONS.find(hustle => hustle.id === 'audienceCall'),
+    boostedState
+  );
+  const boostedContract = Math.round(Number(boostedAudience?.payout?.amount) || 0);
 
-  assert.equal(boostedState.money, 16, 'brand voice lab should add a $4 tip boost');
+  assert.equal(
+    boostedState.money,
+    boostedContract + 4,
+    `brand voice lab should add a $4 tip boost (contract $${boostedContract})`
+  );
   assert.match(
     boostedState.log.at(-1).message,
     /Brand Voice Lab/,
@@ -193,8 +220,16 @@ test('curriculum design studio multiplies workshop payouts', () => {
   baseState.timeLeft = 10;
   getAssetState('blog', baseState).instances = [{ status: 'active' }];
   getAssetState('ebook', baseState).instances = [{ status: 'active' }];
-  ACTIONS.find(hustle => hustle.id === 'popUpWorkshop').action.onClick();
-  assert.equal(baseState.money, 38, 'baseline workshop payout should be $38 without study');
+  const baseWorkshop = acceptAndCompleteInstantHustle(
+    ACTIONS.find(hustle => hustle.id === 'popUpWorkshop'),
+    baseState
+  );
+  const baseWorkshopPayout = Math.round(Number(baseWorkshop?.payout?.amount) || 0);
+  assert.equal(
+    baseState.money,
+    baseWorkshopPayout,
+    `baseline workshop payout should match the accepted contract ($${baseWorkshopPayout})`
+  );
 
   resetState();
 
@@ -205,9 +240,18 @@ test('curriculum design studio multiplies workshop payouts', () => {
   getAssetState('ebook', boostedState).instances = [{ status: 'active' }];
   const curriculum = getKnowledgeProgress('curriculumDesignStudio', boostedState);
   curriculum.completed = true;
-  ACTIONS.find(hustle => hustle.id === 'popUpWorkshop').action.onClick();
+  const boostedWorkshop = acceptAndCompleteInstantHustle(
+    ACTIONS.find(hustle => hustle.id === 'popUpWorkshop'),
+    boostedState
+  );
+  const boostedContract = Number(boostedWorkshop?.payout?.amount) || 0;
+  const boostedExpected = Math.round(boostedContract * 1.3);
 
-  assert.equal(boostedState.money, 49, 'curriculum design studio should add a 30% multiplier (rounded)');
+  assert.equal(
+    boostedState.money,
+    boostedExpected,
+    `curriculum design studio should add a 30% multiplier (expected $${boostedExpected})`
+  );
   assert.match(
     boostedState.log.at(-1).message,
     /Curriculum Design Studio/,
@@ -274,18 +318,15 @@ test('audience call can only run once per day', () => {
   getAssetState('blog', state).instances = [{ status: 'active' }];
 
   const audience = ACTIONS.find(hustle => hustle.id === 'audienceCall');
-  audience.action.onClick();
+  const firstAudience = acceptAndCompleteInstantHustle(audience, state);
+  const firstAudiencePayout = Math.round(Number(firstAudience?.payout?.amount) || 0);
 
-  assert.equal(state.money, 12, 'first run should pay out');
+  assert.equal(state.money, firstAudiencePayout, `first run should grant $${firstAudiencePayout}`);
   assert.equal(getActionState('audienceCall').runsToday, 1, 'daily counter should increment after the first run');
 
-  const beforeLogLength = state.log.length;
-  audience.action.onClick();
-
-  assert.equal(state.money, 12, 'second run should be blocked by the daily limit');
-  assert.equal(getActionState('audienceCall').runsToday, 1, 'daily counter should not increase after hitting the cap');
-  assert.equal(state.log.length, beforeLogLength + 1, 'player should receive a log warning when capped');
-  assert.match(state.log.at(-1).message, /Daily limit/, 'log should mention the daily limit reason');
+  const secondOffer = audience.getPrimaryOfferAction({ state });
+  assert.ok(secondOffer?.disabled, 'primary offer should be disabled after hitting the limit');
+  assert.match(secondOffer?.disabledReason || '', /Daily limit/, 'disabled reason should mention the daily limit');
 
   state.timeLeft = 0;
   endDay(false);
@@ -293,8 +334,13 @@ test('audience call can only run once per day', () => {
   assert.equal(getActionState('audienceCall').runsToday, 0, 'usage should reset after a new day begins');
 
   const beforeMoney = state.money;
-  audience.action.onClick();
-  assert.equal(state.money, beforeMoney + 12, 'limit should reset the following day');
+  const secondAudience = acceptAndCompleteInstantHustle(audience, state);
+  const secondPayout = Math.round(Number(secondAudience?.payout?.amount) || 0);
+  assert.equal(
+    state.money,
+    beforeMoney + secondPayout,
+    `limit should reset the following day and pay $${secondPayout}`
+  );
   assert.equal(getActionState('audienceCall').runsToday, 1, 'counter should start over on the new day');
 });
 
@@ -307,21 +353,18 @@ test('survey sprint caps at four runs per day', () => {
 
   const survey = ACTIONS.find(hustle => hustle.id === 'surveySprint');
 
+  let expectedSurveyTotal = 0;
   for (let index = 0; index < 4; index += 1) {
-    survey.action.onClick();
+    const entry = acceptAndCompleteInstantHustle(survey, state);
+    expectedSurveyTotal += Math.round(Number(entry?.payout?.amount) || 0);
   }
 
-  assert.equal(state.money, 4, 'four successful runs should pay out $4 total');
+  assert.equal(state.money, expectedSurveyTotal, `four successful runs should pay out $${expectedSurveyTotal} total`);
   assert.equal(getActionState('surveySprint').runsToday, 4, 'counter should reflect four completed runs');
 
-  const beforeMoney = state.money;
-  const beforeLog = state.log.length;
-  survey.action.onClick();
-
-  assert.equal(state.money, beforeMoney, 'fifth attempt should not pay out');
-  assert.equal(getActionState('surveySprint').runsToday, 4, 'counter should remain at the cap');
-  assert.equal(state.log.length, beforeLog + 1, 'players should see a log entry explaining the limit');
-  assert.match(state.log.at(-1).message, /Daily limit/, 'limit warning should mention the daily cap');
+  const nextAction = survey.getPrimaryOfferAction({ state });
+  assert.ok(nextAction?.disabled, 'primary offer should disable after four runs');
+  assert.match(nextAction?.disabledReason || '', /Daily limit/, 'disabled reason should mention the daily cap');
 
   state.timeLeft = 0;
   endDay(false);
@@ -329,7 +372,12 @@ test('survey sprint caps at four runs per day', () => {
   assert.equal(getActionState('surveySprint').runsToday, 0, 'counter should clear at the start of a new day');
 
   const afterResetMoney = state.money;
-  survey.action.onClick();
-  assert.equal(state.money, afterResetMoney + 1, 'new day should allow survey sprint again');
+  const resetSurvey = acceptAndCompleteInstantHustle(survey, state);
+  const resetPayout = Math.round(Number(resetSurvey?.payout?.amount) || 0);
+  assert.equal(
+    state.money,
+    afterResetMoney + resetPayout,
+    `new day should allow survey sprint again with a $${resetPayout} payout`
+  );
   assert.equal(getActionState('surveySprint').runsToday, 1, 'counter should restart after reset');
 });

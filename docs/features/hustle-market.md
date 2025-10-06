@@ -71,4 +71,4 @@
 - Celebratory copy now leads the experience—"Fresh hustles just landed!"—whenever offers, upcoming slots, or commitments exist, only falling back to the quiet reroll language when the market is truly empty.
 - Dashboard quick actions surface active offers only. When the market is empty they present a "Check back tomorrow" guidance tile instead of invoking hidden instant-action fallbacks.
 - Dashboard and browser surfaces group offers by template/variant, note multi-day commitments, and call out seat policies so limited cohorts feel tangible while category filters keep the grid organized.
-- `createInstantHustle` still exposes an `action.onClick` for tests and tooling, but it is flagged with `isLegacyInstant`/`hiddenFromMarket` and UI layers ignore it when building hustle cards or quick actions so production surfaces depend exclusively on offer acceptance.
+- `createInstantHustle` exposes a `getPrimaryOfferAction()` helper (also mirrored on `definition.action.resolvePrimaryAction`) so tests and tooling can grab the current market offer or trigger a manual reroll, while production cards and quick actions rely exclusively on accepting offers from the market.

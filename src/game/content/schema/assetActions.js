@@ -1,6 +1,14 @@
 import { toNumber } from '../../../core/helpers.js';
-import { normalizeHustleMetrics } from './metrics.js';
+import { getState } from '../../../core/state.js';
+import { applyMetric, normalizeHustleMetrics } from './metrics.js';
+import { logEducationPayoffSummary } from './logMessaging.js';
+import { markDirty } from '../../../core/events/invalidationBus.js';
 import { createContractTemplate } from '../../actions/templates/contract.js';
+import {
+  ensureActionMarketCategoryState,
+  getActionMarketAvailableOffers
+} from '../../../core/state/slices/actionMarket/index.js';
+import { rollDailyOffers } from '../../hustles/market.js';
 import { buildProgressDefaults, buildDefaultState } from './assetActions/progressDefaults.js';
 import { buildDetailResolvers } from './assetActions/formatting.js';
 import { createDailyLimitTracker, createExecutionHooks } from './assetActions/execution.js';
@@ -27,7 +35,12 @@ export function createInstantHustle(config) {
       : null
   };
 
-  const { resolveDailyUsage, updateDailyUsage } = createDailyLimitTracker(metadata);
+  const {
+    resolveDailyUsage,
+    reserveDailyUsage,
+    releaseDailyUsage,
+    consumeDailyUsage
+  } = createDailyLimitTracker(metadata);
 
   const progressDefaults = buildProgressDefaults({ metadata, config });
 
@@ -38,7 +51,7 @@ export function createInstantHustle(config) {
     defaultState: buildDefaultState({ config, metadata }),
     dailyLimit: metadata.dailyLimit,
     skills: metadata.skills,
-    progress: config.progress,
+    progress: progressDefaults,
     time: metadata.time
   };
 
@@ -50,9 +63,36 @@ export function createInstantHustle(config) {
       }
     }
   }
+
+  acceptHooks.push(context => {
+    if (!context?.instance) {
+      return;
+    }
+    if (metadata.cost > 0) {
+      context.instance.__pendingAcceptanceCost =
+        (context.instance.__pendingAcceptanceCost || 0) + metadata.cost;
+    }
+  });
+
   if (typeof config.onAccept === 'function') {
     acceptHooks.push(config.onAccept);
   }
+
+  const completionHooks = [];
+  completionHooks.push(hookContext => {
+    if (hookContext?.__educationSummary) {
+      logEducationPayoffSummary(hookContext.__educationSummary);
+    }
+  });
+
+  if (typeof config.onComplete === 'function') {
+    completionHooks.push(config.onComplete);
+  }
+
+  completionHooks.push(hookContext => {
+    markDirty('cards');
+    config.onRun?.(hookContext);
+  });
 
   const definition = createContractTemplate(baseDefinition, {
     templateKind: 'manual',
@@ -70,6 +110,15 @@ export function createInstantHustle(config) {
           definition: context.definition || definition
         });
       })
+    },
+    complete: {
+      hooks: completionHooks.map(hook => context => {
+        hook({
+          ...context,
+          metadata: context.metadata || metadata,
+          definition: context.definition || definition
+        });
+      })
     }
   });
 
@@ -80,7 +129,9 @@ export function createInstantHustle(config) {
     metadata,
     config,
     resolveDailyUsage,
-    updateDailyUsage
+    reserveDailyUsage,
+    releaseDailyUsage,
+    consumeDailyUsage
   });
 
   definition.dailyLimit = metadata.dailyLimit;
@@ -95,14 +146,67 @@ export function createInstantHustle(config) {
 
   const actionClassName = config.actionClassName || 'primary';
 
+  function resolvePrimaryOfferAction({ state = getState(), includeUpcoming = true } = {}) {
+    const workingState = state || getState();
+    if (!workingState) {
+      return null;
+    }
+    const currentDay = Math.max(1, Math.floor(Number(workingState.day) || 1));
+    const marketState = ensureActionMarketCategoryState(workingState, 'hustle', { fallbackDay: currentDay });
+    if (!marketState) {
+      return null;
+    }
+    const offers = getActionMarketAvailableOffers(workingState, 'hustle', {
+      day: currentDay,
+      includeUpcoming
+    });
+    const matching = offers.filter(offer => offer?.templateId === metadata.id || offer?.definitionId === metadata.id);
+    if (matching.length) {
+      const readyOffer = matching.find(offer => Number(offer?.availableOnDay ?? currentDay) <= currentDay);
+      const primary = readyOffer || matching[0];
+      const label = primary?.variant?.label || definition.name || primary?.templateId || metadata.id;
+      const disabledReason = hooks.getDisabledReason(workingState);
+      return {
+        type: 'offer',
+        offer: primary,
+        ready: Boolean(readyOffer),
+        label: `Accept ${label}`,
+        disabled: Boolean(disabledReason),
+        disabledReason
+      };
+    }
+
+    const rerollLabel = definition.market?.manualRerollLabel || 'Roll a fresh offer';
+    return {
+      type: 'reroll',
+      label: rerollLabel,
+      reroll: ({ day = currentDay } = {}) =>
+        rollDailyOffers({ templates: [definition], state: workingState, day, category: 'hustle' })
+    };
+  }
+
   definition.action = {
-    label: config.actionLabel || 'Run Hustle',
+    label: config.actionLabel || 'Accept Offer',
     className: actionClassName,
-    disabled: hooks.disabled,
-    onClick: hooks.handleActionClick
+    disabled: () => true,
+    onClick: () => hooks.handleActionClick(),
+    resolvePrimaryAction: resolvePrimaryOfferAction
   };
   definition.action.isLegacyInstant = true;
   definition.action.hiddenFromMarket = true;
+
+  definition.getPrimaryOfferAction = resolvePrimaryOfferAction;
+  definition.getDisabledReason = state => hooks.getDisabledReason(state);
+  definition.reserveDailyUsage = state => hooks.reserveDailyUsage(state);
+  definition.releaseDailyUsage = state => hooks.releaseDailyUsage(state);
+  definition.consumeDailyUsage = state => hooks.consumeDailyUsage(state);
+  definition.applyAcceptanceCost = ({ state, instance } = {}) =>
+    hooks.applyAcceptanceCost({ state, instance });
+
+  if (typeof hooks.prepareCompletion === 'function') {
+    definition.__prepareCompletion = ({ context, instance, state, completionHours }) =>
+      hooks.prepareCompletion({ context, instance, state, completionHours });
+  }
 
   definition.metricIds = {
     time: metadata.metrics.time?.key || null,
