@@ -3,7 +3,9 @@ import { formatMoney, toNumber } from '../core/helpers.js';
 import { getState } from '../core/state.js';
 import { getKnowledgeProgress } from './requirements.js';
 
-const KNOWLEDGE_TRACKS = knowledgeTrackData;
+var KNOWLEDGE_TRACKS = null;
+
+var BOOST_INDEX;
 
 function formatPercent(value) {
   const percent = toNumber(value) * 100;
@@ -38,12 +40,20 @@ function normalizeBoost(track, raw) {
   };
 }
 
+function getKnowledgeTrackCatalog() {
+  if (!KNOWLEDGE_TRACKS) {
+    KNOWLEDGE_TRACKS = knowledgeTrackData;
+  }
+  return KNOWLEDGE_TRACKS;
+}
+
 function buildBoostIndexes() {
+  const catalog = getKnowledgeTrackCatalog();
   const byHustle = new Map();
   const byTrack = new Map();
   const byAsset = new Map();
 
-  Object.values(KNOWLEDGE_TRACKS).forEach(track => {
+  Object.values(catalog).forEach(track => {
     const entries = Array.isArray(track.instantBoosts) ? track.instantBoosts : [];
     entries
       .map(raw => normalizeBoost(track, raw))
@@ -71,16 +81,23 @@ function buildBoostIndexes() {
   return { byHustle, byTrack, byAsset };
 }
 
-const BOOST_INDEX = buildBoostIndexes();
+function ensureBoostIndex() {
+  if (!BOOST_INDEX) {
+    BOOST_INDEX = buildBoostIndexes();
+  }
+  return BOOST_INDEX;
+}
 
 function getInstantHustleEducationBonuses(hustleId) {
   if (!hustleId) return [];
-  return BOOST_INDEX.byHustle.get(hustleId) || [];
+  const index = ensureBoostIndex();
+  return index.byHustle.get(hustleId) || [];
 }
 
 function getAssetEducationBonuses(assetId) {
   if (!assetId) return [];
-  return BOOST_INDEX.byAsset.get(assetId) || [];
+  const index = ensureBoostIndex();
+  return index.byAsset.get(assetId) || [];
 }
 
 export function describeInstantHustleEducationBonuses(hustleId) {
@@ -100,7 +117,8 @@ export function describeInstantHustleEducationBonuses(hustleId) {
 
 export function describeTrackEducationBonuses(trackId) {
   if (!trackId) return [];
-  const boosts = BOOST_INDEX.byTrack.get(trackId) || [];
+  const index = ensureBoostIndex();
+  const boosts = index.byTrack.get(trackId) || [];
   return boosts.map(boost => () => {
     if (boost.trackDetail) {
       return `🎁 ${boost.trackDetail}`;

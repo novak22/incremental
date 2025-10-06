@@ -48,7 +48,8 @@ test('knowledge hustle view model summarizes study progress states', () => {
   assert.deepEqual(readyModel.datasetFlags, {
     inProgress: false,
     studiedToday: false,
-    enrolled: false
+    enrolled: false,
+    seatAvailable: true
   });
 
   resetState();
@@ -62,11 +63,16 @@ test('knowledge hustle view model summarizes study progress states', () => {
   assert.equal(enrolledModel.statusLabel, '📚 Status: <strong>2 days remaining</strong>');
   assert.equal(enrolledModel.ctaLabel, '2 days remaining');
   assert.equal(enrolledModel.canEnroll, false);
-  assert.deepEqual(enrolledModel.datasetFlags, {
+  assert.deepEqual({
+    inProgress: enrolledModel.datasetFlags.inProgress,
+    studiedToday: enrolledModel.datasetFlags.studiedToday,
+    enrolled: enrolledModel.datasetFlags.enrolled
+  }, {
     inProgress: true,
     studiedToday: true,
     enrolled: true
   });
+  assert.equal(typeof enrolledModel.datasetFlags.seatAvailable, 'boolean');
 
   resetState();
   const completedState = getState();
@@ -77,11 +83,16 @@ test('knowledge hustle view model summarizes study progress states', () => {
   assert.equal(completedModel.statusLabel, '✅ Status: <strong>Complete</strong>');
   assert.equal(completedModel.ctaLabel, 'Course Complete');
   assert.equal(completedModel.canEnroll, false);
-  assert.deepEqual(completedModel.datasetFlags, {
+  assert.deepEqual({
+    inProgress: completedModel.datasetFlags.inProgress,
+    studiedToday: completedModel.datasetFlags.studiedToday,
+    enrolled: completedModel.datasetFlags.enrolled
+  }, {
     inProgress: false,
     studiedToday: false,
     enrolled: false
   });
+  assert.equal(typeof completedModel.datasetFlags.seatAvailable, 'boolean');
 });
 
 test('study hustles charge tuition and queue manual study time', () => {

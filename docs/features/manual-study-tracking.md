@@ -11,6 +11,7 @@
 - Courses finish (and award XP + skill boosts) once players manually log the required number of study days.
 
 ## Technical Notes
-- Knowledge hustles define a `progress` template with `type: 'study'`, `hoursPerDay`, and `daysRequired`; `createRequirementsOrchestrator` seeds an action instance on enrollment.
+- Knowledge hustles now publish market metadata for each course (free tracks marked always-on, paid tracks flagged as limited seats) so Learnly enrollment flows through `acceptHustleOffer` and the shared action pipeline.
+- Knowledge track definitions still provide a `progress` template with `type: 'study'`, `hoursPerDay`, and `daysRequired`, but the orchestrator focuses on syncing knowledge progress, recording tuition spend, and awarding completions after the market offer is claimed.
 - `allocateDailyStudy` and `advanceKnowledgeTracks` read action progress logs to update `studiedToday`, advance `daysCompleted`, emit reminders, and award skills.
 - Existing saves migrate by translating enrolled courses into pending study action instances that mirror prior progress.

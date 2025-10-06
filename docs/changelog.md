@@ -11,6 +11,7 @@
 - Tooling: Balancing workbench can now simulate multi-asset lineups and upgrade combos, with a handy summary of setup hours, upkeep, and bonus time.
 - Governance: Gameplay PRs that adjust economy constants must update `docs/EconomySpec.md`, rerun `npm run rebuild-economy-docs`, and attach the refreshed appendix before review.
 - Knowledge study tracks now spawn manual study actions; log hours yourself to advance days and earn completion rewards, with migrated saves seeding pending sessions for existing enrollments.
+- Education: Course enrollment now flows through the hustle market — free tracks stay always-on while paid courses surface limited seats, with accepted offers carrying tuition and bonus metadata for dashboards.【F:src/game/hustles/knowledgeHustles.js†L1-L214】【F:src/game/requirements/orchestrator.js†L1-L227】
 - Action progress now records per-day hours, supports deferred completions, and exposes helpers for advancing or resetting in-flight hustles.
 - Unified instant hustles and study sessions under a shared action registry that tracks accepted instances, daily limits, and
   completion history without erasing legacy hustle progress.

@@ -27,9 +27,14 @@ function findEligibleTemplate(state) {
   }) || HUSTLE_TEMPLATES[0];
 }
 
-test('HUSTLE_TEMPLATES includes only market-ready hustles', () => {
-  const hasStudyEntries = HUSTLE_TEMPLATES.some(template => template?.tag?.type === 'study');
-  assert.equal(hasStudyEntries, false, 'market templates should exclude study actions');
+test('HUSTLE_TEMPLATES includes study courses with market metadata', () => {
+  const studyEntries = HUSTLE_TEMPLATES.filter(template => template?.tag?.type === 'study');
+  assert.ok(studyEntries.length > 0, 'expected study templates in market pool');
+  studyEntries.forEach(template => {
+    assert.ok(template.market, 'study template should expose market metadata');
+    assert.ok(Array.isArray(template.market.variants) && template.market.variants.length > 0,
+      'study template should define at least one market variant');
+  });
 });
 
 test('ensureDailyOffersForDay seeds bootstrap offers per template and avoids duplicate rolls', () => {
