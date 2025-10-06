@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { buildDefaultState } from '../../../src/core/state.js';
-import { ensureSlice, getInstanceProgressSnapshot } from '../../../src/core/state/slices/actions/index.js';
+import { ensureSlice, resolveInstanceProgressSnapshot } from '../../../src/core/state/slices/actions/index.js';
 import { collectOutstandingActionEntries } from '../../../src/ui/actions/outstanding.js';
 import { loadRegistry, resetRegistry } from '../../../src/game/registryService.js';
 
@@ -55,7 +55,7 @@ test('outstanding entries mirror normalized progress snapshots', () => {
   ensureSlice(state);
 
   const normalizedInstance = state.actions[definition.id].instances[0];
-  const snapshot = getInstanceProgressSnapshot(normalizedInstance);
+  const snapshot = resolveInstanceProgressSnapshot(normalizedInstance);
   const [entry] = collectOutstandingActionEntries(state);
 
   assert.ok(entry, 'expected outstanding entry for the normalized instance');
@@ -116,7 +116,7 @@ test('outstanding entries stay in sync after progress updates', () => {
   normalizedInstance.progress.daysCompleted = 3;
   normalizedInstance.progress.lastWorkedDay = state.day;
 
-  const snapshot = getInstanceProgressSnapshot(normalizedInstance);
+  const snapshot = resolveInstanceProgressSnapshot(normalizedInstance);
   const [entry] = collectOutstandingActionEntries(state);
 
   assert.ok(entry, 'expected outstanding entry after progress change');
@@ -127,4 +127,104 @@ test('outstanding entries stay in sync after progress updates', () => {
   assert.equal(progress.completion, snapshot.completionMode || snapshot.completion);
   assert.equal(progress.percentComplete, snapshot.percentComplete);
   assert.equal(progress.lastWorkedDay, snapshot.lastWorkedDay);
+});
+
+test('outstanding entries react to accepted metadata for payouts and deadlines', () => {
+  resetRegistry();
+  const definition = createTestDefinition();
+  loadRegistry({ actions: [definition], assets: [], upgrades: [] });
+
+  const state = buildDefaultState();
+  state.day = 18;
+
+  const offer = {
+    id: 'offer-1',
+    definitionId: definition.id,
+    templateId: 'template-1',
+    metadata: {
+      payoutSchedule: 'daily',
+      payoutAmount: 40,
+      progress: {
+        hoursPerDay: 2,
+        daysRequired: 5
+      }
+    },
+    expiresOnDay: state.day + 5
+  };
+
+  const accepted = {
+    id: 'accepted-1',
+    offerId: offer.id,
+    instanceId: 'instance-3',
+    definitionId: definition.id,
+    templateId: offer.templateId,
+    deadlineDay: state.day + 3,
+    metadata: {
+      completionMode: 'manual',
+      progress: {
+        completion: 'manual',
+        hoursPerDay: 2,
+        daysRequired: 5
+      }
+    },
+    payout: {
+      amount: 60,
+      schedule: 'weekly'
+    }
+  };
+
+  state.hustleMarket = {
+    offers: [offer],
+    accepted: [accepted]
+  };
+
+  state.actions = state.actions || {};
+  state.actions[definition.id] = {
+    instances: [
+      {
+        id: 'instance-3',
+        accepted: true,
+        status: 'active',
+        definitionId: definition.id,
+        acceptedOnDay: state.day - 1,
+        hoursLogged: 2,
+        progress: {
+          type: 'scheduled',
+          hoursLogged: 2,
+          daysCompleted: 1
+        }
+      }
+    ]
+  };
+
+  ensureSlice(state);
+
+  let [entry] = collectOutstandingActionEntries(state);
+  assert.ok(entry, 'expected outstanding entry with accepted metadata');
+  assert.equal(entry.progress.deadlineDay, accepted.deadlineDay);
+  assert.equal(entry.progress.payoutSchedule, accepted.payout.schedule);
+  assert.equal(entry.progress.payoutAmount, accepted.payout.amount);
+  assert.equal(entry.progress.hoursPerDay, 2);
+  assert.equal(entry.progress.daysRequired, 5);
+  assert.equal(entry.progress.hoursRequired, 10);
+
+  accepted.deadlineDay = state.day + 1;
+  accepted.payout.schedule = 'onCompletion';
+  accepted.payout.amount = 45;
+  accepted.metadata.progress.hoursPerDay = 3;
+  accepted.metadata.progress.daysRequired = 3;
+  state.actions[definition.id].instances[0].hoursLogged = 4;
+  state.actions[definition.id].instances[0].progress.hoursLogged = 4;
+  state.actions[definition.id].instances[0].progress.daysCompleted = 2;
+
+  [entry] = collectOutstandingActionEntries(state);
+  assert.ok(entry, 'expected outstanding entry after metadata update');
+  assert.equal(entry.progress.deadlineDay, accepted.deadlineDay);
+  assert.equal(entry.progress.payoutSchedule, 'onCompletion');
+  assert.equal(entry.progress.payoutAmount, 45);
+  assert.equal(entry.progress.hoursPerDay, 3);
+  assert.equal(entry.progress.daysRequired, 3);
+  assert.equal(entry.progress.hoursRequired, 9);
+  assert.equal(entry.progress.hoursRemaining, 5);
+  assert.equal(entry.progress.metadata, accepted.metadata);
 });
