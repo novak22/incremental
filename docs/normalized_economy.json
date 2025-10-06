@@ -591,6 +591,25 @@
         "desktop_work"
       ]
     },
+    "dataEntry": {
+      "name": "Data Entry Blitz",
+      "base_income": 20,
+      "variance": 0,
+      "setup_time": 240,
+      "setup_cost": 0,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "daily_limit": 2,
+      "requirements": [],
+      "skills": [
+        "ops"
+      ],
+      "tags": [
+        "ops",
+        "desktop_work"
+      ]
+    },
     "eventPhotoGig": {
       "name": "Event Photo Gig",
       "base_income": 72,

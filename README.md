@@ -32,17 +32,18 @@ Online Hustle Simulator is a browser-based incremental game about orchestrating 
 - **Event Log Controls** – The log dock keeps its running commentary but now includes a summary/detailed toggle when you want a lighter feed during long sessions.
 
 ### Hustles & Study Tracks
-- **Freelance Writing Contracts** – Choose between a 2h same-day draft ($18), a three-part mini series (3 days × 2h for $45), or a four-day retainer run (2h/day for $80) depending on your schedule.
-- **Audience Q&A Blast** – Rotate flash AMAs (1h, $12), mini workshop pairings (2 days × 1h, $24), or a coaching cohort (3 days × 1.5h, $40) once your blog audience is warmed up.
-- **Bundle Promo Push** – Launch a flash sale (2.5h, $48), host a cross-promo roadshow (3 days × 2h, $72), or revamp the evergreen funnel (5 days × 2.5h, $120) to keep offers fresh.
-- **Micro Survey Dash** – Chain together coffee break surveys (0.25h, $1, three copies), panel follow-ups (2 days × 0.5h, $3), or compile a full report sprint (3 days × 0.75h, $5).
-- **Event Photo Gig** – Shoot a pop-up showcase (3.5h, $72), book a weekend retainer (3 days × 3h, $120), or craft a tour documentary (5 days × 3h, $180) once your gallery is humming.
-- **Pop-Up Workshop** – Teach an evening intensive (2.5h, $38), mentor a weekend cohort (2 days × 2.5h, $60), or run a four-day mentor track (2h/day, $95) when demand spikes.
-- **Vlog Edit Rush** – Offer a rush cut (1.5h, $24), batch two episodes (2 days × 1.5h, $40), or lead a season launch sprint (4 days × 1.75h, $70) for partner channels.
-- **Dropship Pack Party** – Host a flash pack party (2h, $28), weather a weekend surge (2 days × 2.5h, $50), or assemble subscription boxes (4 days × 2.5h, $90) as orders scale.
-- **SaaS Bug Squash** – Jump on a hotfix (1h, $30), run a stability hardening pass (2 days × 1.25h, $55), or steer a reliability sprint (4 days × 1.5h, $90) for micro-app clients.
-- **Audiobook Narration** – Cut a feature sample (2.75h, $44), record a highlighted volume (2 days × 2.5h, $70), or deliver the series finale (5 days × 2.5h, $120) for audio superfans.
-- **Street Team Promo** – Hit the lunch rush (0.75h, $18, three copies), take over a night market (2 days × 1h, $32), or lead a festival team (4 days × 1.25h, $60) when promo fever hits.
+- **Freelance Writing Contracts** – Choose between a 2h same-day draft ($18), a three-part mini series (3 days × 2h for $55), or a four-day retainer run (2h/day for $85) depending on your schedule.
+- **Audience Q&A Blast** – Rotate flash AMAs (1h, $12), mini workshop pairings (2 days × 1h, $25), or a coaching cohort (3 days × 1.5h, $50) once your blog audience is warmed up.
+- **Bundle Promo Push** – Launch a flash sale (2.5h, $48), host a cross-promo roadshow (3 days × 2h, $120), or revamp the evergreen funnel (5 days × 2.5h, $250) to keep offers fresh.
+- **Micro Survey Dash** – Chain together coffee break surveys (0.25h, $1, three copies), panel follow-ups (2 days × 0.5h, $5), or compile a full report sprint (3 days × 0.75h, $10).
+- **Data Entry Blitz** – Clear ledger cleanups (4h, $20) or tackle catalog migrations (2 days × 4h, $45) when you need steady ops cash.
+- **Event Photo Gig** – Shoot a pop-up showcase (3.5h, $72), book a weekend retainer (3 days × 3h, $195), or craft a tour documentary (5 days × 3h, $325) once your gallery is humming.
+- **Pop-Up Workshop** – Teach an evening intensive (2.5h, $38), mentor a weekend cohort (2 days × 2.5h, $80), or run a four-day mentor track (2h/day, $130) when demand spikes.
+- **Vlog Edit Rush** – Offer a rush cut (1.5h, $24), batch two episodes (2 days × 1.5h, $50), or lead a season launch sprint (4 days × 1.75h, $120) for partner channels.
+- **Dropship Pack Party** – Host a flash pack party (2h, $28), weather a weekend surge (2 days × 2.5h, $75), or assemble subscription boxes (4 days × 2.5h, $145) as orders scale.
+- **SaaS Bug Squash** – Jump on a hotfix (1h, $30), run a stability hardening pass (2 days × 1.25h, $80), or steer a reliability sprint (4 days × 1.5h, $190) for micro-app clients.
+- **Audiobook Narration** – Cut a feature sample (2.75h, $44), record a highlighted volume (2 days × 2.5h, $85), or deliver the series finale (5 days × 2.5h, $210) for audio superfans.
+- **Street Team Promo** – Hit the lunch rush (0.75h, $18, three copies), take over a night market (2 days × 1h, $50), or lead a festival team (4 days × 1.25h, $125) when promo fever hits.
 - **Storycraft Jumpstart** – Free; 1h/day for 3 days lets you outline pillar posts, grants +120 Writing XP (level 1), and unlocks BlogPress without spending tuition.
 - **Creator Studio Jumpstart** – Free; 1h/day for 3 days pairs you with a coach, awards +120 Visual Production XP (level 1), and unlocks VideoTube.
 - **Digital Shelf Primer** – Free; 1h/day for 3 days polishes metadata basics, grants +120 Editing XP (level 1), and unlocks DigiShelf alongside gallery boosts.

@@ -19,6 +19,10 @@
   - `progressLabel` lets variants override the default log title so accepted instances read naturally in the todo list.
 - If no variants are provided the `rollDailyOffers` helper fabricates a default variant that mirrors the template. When variants exist, multiple offers can coexist so long as each variant is represented at most once per active window.
 
+## Recent Tuning
+- Multi-day variants now pay a 5% premium over their base hourly earnings (rounded to the nearest $5) so longer commitments feel proportionally rewarding instead of penalizing players for locking in multi-day schedules.
+- Added the Data Entry Blitz template with a 4h ledger cleanup ($20) and a two-day catalog migration (2 × 4h for $45) to give early schedulers a steady $5/hour ops gig when survey quotas dry up.
+
 ## Rolling Logic
 - `rollDailyOffers({ templates, day, now, state, rng })` clones any existing offers whose `expiresOnDay` is still in the future, then fills the configured number of template slots by selecting weighted variants (defaulting to equal weights). Variant copy counts can consume multiple slots per roll while template and variant `maxActive` values prevent overfilling.
 - Each new offer captures:

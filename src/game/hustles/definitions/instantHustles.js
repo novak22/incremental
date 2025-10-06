@@ -5,6 +5,7 @@ const freelanceConfig = hustleConfigs.freelance; // Spec: docs/normalized_econom
 const audienceCallConfig = hustleConfigs.audienceCall; // Spec: docs/normalized_economy.json → hustles.audienceCall
 const bundlePushConfig = hustleConfigs.bundlePush; // Spec: docs/normalized_economy.json → hustles.bundlePush
 const surveySprintConfig = hustleConfigs.surveySprint; // Spec: docs/normalized_economy.json → hustles.surveySprint
+const dataEntryConfig = hustleConfigs.dataEntry; // Spec: docs/normalized_economy.json → hustles.dataEntry
 const eventPhotoGigConfig = hustleConfigs.eventPhotoGig; // Spec: docs/normalized_economy.json → hustles.eventPhotoGig
 const popUpWorkshopConfig = hustleConfigs.popUpWorkshop; // Spec: docs/normalized_economy.json → hustles.popUpWorkshop
 const vlogEditRushConfig = hustleConfigs.vlogEditRush; // Spec: docs/normalized_economy.json → hustles.vlogEditRush
@@ -121,6 +122,33 @@ const instantHustleDefinitions = [
     },
     skills: surveySprintConfig.skills,
     actionLabel: 'Start Survey'
+  },
+  {
+    id: 'dataEntry',
+    name: 'Data Entry Blitz',
+    tag: { label: 'Instant', type: 'instant' },
+    description: 'Power through backlog spreadsheets and tidy catalogs for steady pay.',
+    tags: dataEntryConfig.tags,
+    time: dataEntryConfig.timeHours, // Spec: docs/normalized_economy.json → hustles.dataEntry.setup_time
+    dailyLimit: dataEntryConfig.dailyLimit,
+    payout: {
+      amount: dataEntryConfig.payout, // Spec: docs/normalized_economy.json → hustles.dataEntry.base_income
+      logType: 'hustle',
+      message: context => {
+        const payout = context?.finalPayout ?? context?.payoutGranted ?? dataEntryConfig.payout;
+        const bonusNote = context?.appliedEducationBoosts?.length
+          ? ' Spreadsheet superpowers made the auditors swoon.'
+          : '';
+        return `You tidied backlog data for $${formatMoney(payout)}. Clean rows, calm mind!${bonusNote}`;
+      }
+    },
+    market: structuredClone(dataEntryConfig.market || {}),
+    metrics: {
+      time: { label: '📊 Data entry focus time', category: 'hustle' },
+      payout: { label: '📊 Data entry payout', category: 'hustle' }
+    },
+    skills: dataEntryConfig.skills,
+    actionLabel: 'Log Data Hours'
   },
   {
     id: 'eventPhotoGig',
