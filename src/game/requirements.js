@@ -8,7 +8,7 @@ import { KNOWLEDGE_REWARDS } from './requirements/knowledgeTracks.js';
 import { getKnowledgeProgress } from './requirements/knowledgeProgress.js';
 import { getDefinitionRequirements } from './requirements/definitionRequirements.js';
 import { getActionDefinition } from '../core/state/registry.js';
-import { abandonActionInstance } from './actions/progress.js';
+import { abandonActionInstance } from './actions/progress/instances.js';
 import {
   buildAssetRequirementDescriptor,
   describeRequirement,

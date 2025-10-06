@@ -20,7 +20,7 @@ const { consumeDirty } = invalidationModule;
 const { normalizeActionEntries } = actionsRegistryModule;
 const { __testables: todoWidgetTestables } = todoWidgetModule;
 
-const actionsProgressModule = await import('../src/game/actions/progress.js');
+const actionsProgressModule = await import('../src/game/actions/progress/instances.js');
 const { advanceActionInstance } = actionsProgressModule;
 
 const harness = await getGameTestHarness();
