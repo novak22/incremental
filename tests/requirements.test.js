@@ -27,7 +27,8 @@ const harness = await getGameTestHarness();
 const {
   stateModule,
   requirementsModule,
-  registryModule
+  registryModule,
+  hustlesModule
 } = harness;
 
 const {
@@ -46,7 +47,8 @@ const {
   getKnowledgeProgress,
   advanceKnowledgeTracks,
   allocateDailyStudy,
-  enrollInKnowledgeTrack
+  enrollInKnowledgeTrack,
+  dropKnowledgeTrack
 } = requirementsModule;
 
 const resetState = () => harness.resetState();
@@ -374,90 +376,23 @@ test('manual study reminders and completions trigger logs and rewards', () => {
 
 test('study enrollment updates player and dashboard sections alongside cards', () => {
   consumeDirty();
-  const state = {
-    day: 1,
-    money: 500,
-    timeLeft: 12,
-    progress: { knowledge: {} },
-    log: []
-  };
+  const trackId = 'outlineMastery';
+  const track = KNOWLEDGE_TRACKS[trackId];
+  const state = getState();
+  state.money = (track.tuition || 0) + 500;
+  state.timeLeft = Math.max(state.timeLeft || 0, track.hoursPerDay + 6);
 
-  const track = {
-    id: 'paidTrack',
-    name: 'Tuition Strategy Sprint',
-    days: 2,
-    hoursPerDay: 3,
-    tuition: 150
-  };
+  const enrollResult = enrollInKnowledgeTrack(trackId);
+  assert.ok(enrollResult?.success, 'enrollment should succeed');
+  const dirtyAfterEnroll = consumeDirty();
+  assert.ok(dirtyAfterEnroll.cards && dirtyAfterEnroll.dashboard && dirtyAfterEnroll.player,
+    'enrollment should dirty core dashboards');
 
-  const ensureProgress = id => {
-    if (!state.progress.knowledge[id]) {
-      state.progress.knowledge[id] = {
-        daysCompleted: 0,
-        studiedToday: false,
-        completed: false,
-        enrolled: false,
-        enrolledOnDay: null
-      };
-    }
-    return state.progress.knowledge[id];
-  };
-
-  const actionState = { instances: [] };
-  const actionDefinition = {
-    id: `study-${track.id}`,
-    progress: {
-      type: 'study',
-      completion: 'manual',
-      hoursPerDay: track.hoursPerDay,
-      daysRequired: track.days
-    }
-  };
-
-  const orchestrator = createRequirementsOrchestrator({
-    getState: () => state,
-    getActionState: () => actionState,
-    getActionDefinition: id => (id === actionDefinition.id ? actionDefinition : null),
-    acceptActionInstance: () => {
-      const instance = {
-        id: 'instance-1',
-        definitionId: actionDefinition.id,
-        accepted: true,
-        progress: {
-          type: 'study',
-          completion: 'manual',
-          hoursPerDay: track.hoursPerDay,
-          daysRequired: track.days,
-          dailyLog: {},
-          daysCompleted: 0,
-          completed: false
-        }
-      };
-      actionState.instances.push(instance);
-      return instance;
-    },
-    abandonActionInstance: () => {
-      actionState.instances = [];
-      return true;
-    },
-    getKnowledgeProgress: ensureProgress,
-    knowledgeTracks: { [track.id]: track },
-    knowledgeRewards: {},
-    spendMoney: amount => {
-      state.money -= amount;
-    },
-    recordCostContribution: () => {},
-    awardSkillProgress: () => {},
-    addLog: () => {}
-  });
-
-  const enrollResult = orchestrator.enrollInKnowledgeTrack(track.id);
-  assert.ok(enrollResult.success);
-  assert.deepEqual(consumeDirty(), { cards: true, dashboard: true, player: true });
-
-  const dropResult = orchestrator.dropKnowledgeTrack(track.id);
-  assert.ok(dropResult.success);
-  assert.deepEqual(consumeDirty(), { cards: true, dashboard: true, player: true });
+  const dropResult = dropKnowledgeTrack(trackId);
+  assert.ok(dropResult?.success, 'dropping should succeed');
+  const dirtyAfterDrop = consumeDirty();
+  assert.ok(dirtyAfterDrop.cards && dirtyAfterDrop.dashboard && dirtyAfterDrop.player,
+    'dropping should dirty core dashboards');
 });
 
 test('knowledge track rollover invalidates study panels for completions and stalls', () => {

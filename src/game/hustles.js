@@ -11,7 +11,7 @@ import {
 import { definitionRequirementsMet } from './requirements/checks.js';
 import { describeHustleRequirements } from './hustles/helpers.js';
 
-export const HUSTLE_TEMPLATES = INSTANT_ACTIONS;
+export const HUSTLE_TEMPLATES = [...INSTANT_ACTIONS, ...STUDY_ACTIONS];
 export const HUSTLES = HUSTLE_TEMPLATES;
 export const KNOWLEDGE_HUSTLES = STUDY_ACTIONS;
 
