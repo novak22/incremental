@@ -195,8 +195,9 @@ export function buildQuickActions(state) {
       description,
       onClick: () => {
         let result = null;
+        const offerId = primaryOffer?.id || primaryOffer;
         executeAction(() => {
-          result = acceptHustleOffer(primaryOffer, { state: workingState });
+          result = acceptHustleOffer(offerId, { state: workingState });
         });
         return result;
       },
