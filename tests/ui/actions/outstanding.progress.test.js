@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { buildDefaultState } from '../../../src/core/state.js';
-import { ensureSlice, getInstanceProgressSnapshot } from '../../../src/core/state/slices/actions.js';
+import { ensureSlice, getInstanceProgressSnapshot } from '../../../src/core/state/slices/actions/index.js';
 import { collectOutstandingActionEntries } from '../../../src/ui/actions/outstanding.js';
 import { loadRegistry, resetRegistry } from '../../../src/game/registryService.js';
 

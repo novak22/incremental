@@ -3,7 +3,7 @@ import {
   coercePositiveNumber,
   firstPositiveNumber
 } from '../utils.js';
-import { getInstanceProgressSnapshot } from '../../../core/state/slices/actions.js';
+import { getInstanceProgressSnapshot } from '../../../core/state/slices/actions/index.js';
 
 export function resolveStudyTrackIdFromProgress(progress = {}) {
   if (!progress || typeof progress !== 'object') {

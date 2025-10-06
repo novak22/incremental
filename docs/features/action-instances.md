@@ -13,7 +13,7 @@ availability limits, progress metadata, and an `instances` ledger so the game ca
 
 ## Notable Details
 - Action templates live in `src/game/actions/definitions.js` and currently wrap instant hustles and study sessions.
-- The `actions` state slice (see `src/core/state/slices/actions.js`) merges legacy hustle counters and initializes a fresh
+- The `actions` state slice (see `src/core/state/slices/actions/index.js`) merges legacy hustle counters and initializes a fresh
   `instances` array for every action ID.
 - `createInstantHustle` now creates an accepted instance via `acceptActionInstance` before executing, and `completeActionInstance`
   stores the final payout, hours logged, and applied bonuses.
