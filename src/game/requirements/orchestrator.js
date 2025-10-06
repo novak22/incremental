@@ -1,12 +1,10 @@
-import { formatList, formatMoney } from '../../core/helpers.js';
+import { formatList } from '../../core/helpers.js';
 import { markDirty } from '../../core/events/invalidationBus.js';
-import {
-  ensureDailyOffersForDay,
-  getAvailableOffers,
-  getClaimedOffers,
-  acceptHustleOffer,
-  releaseClaimedHustleOffer
-} from '../hustles.js';
+import { spendMoney as spendMoneyDefault } from '../currency.js';
+import { recordCostContribution as recordCostContributionDefault } from '../metrics.js';
+import { createStudyEnrollment } from './orchestrator/studyEnrollment.js';
+import { createMarketSeatManager } from './orchestrator/marketSeats.js';
+import { createTuitionLogging } from './orchestrator/tuitionLogging.js';
 export const STUDY_DIRTY_SECTIONS = Object.freeze(['cards', 'dashboard', 'player']);
 
 export function createRequirementsOrchestrator({
@@ -16,7 +14,9 @@ export function createRequirementsOrchestrator({
   abandonActionInstance,
   getKnowledgeProgress,
   knowledgeTracks,
-  addLog
+  addLog,
+  spendMoney = spendMoneyDefault,
+  recordCostContribution = recordCostContributionDefault
 }) {
   function getStudyActionId(trackId) {
     return `study-${trackId}`;
@@ -77,96 +77,20 @@ export function createRequirementsOrchestrator({
     };
   }
 
-  function enrollInKnowledgeTrack(id) {
-    const state = getState();
-    const track = knowledgeTracks[id];
-    if (!state || !track) return { success: false, reason: 'missing' };
-
-    const progress = getKnowledgeProgress(id);
-    if (progress.completed) {
-      addLog(`${track.name} is already complete. Grab a celebratory pastry instead.`, 'info');
-      return { success: false, reason: 'completed' };
-    }
-    if (progress.enrolled) {
-      addLog(`You're already enrolled in ${track.name}.`, 'info');
-      return { success: false, reason: 'enrolled' };
-    }
-
-    const tuition = Number(track.tuition) || 0;
-    if (tuition > 0 && state.money < tuition) {
-      addLog(`You need $${formatMoney(tuition)} ready to enroll in ${track.name}.`, 'warning');
-      return { success: false, reason: 'money' };
-    }
-
-    const definitionId = getStudyActionId(track.id);
-    const currentDay = Math.max(1, Math.floor(Number(state.day) || 1));
-
-    ensureDailyOffersForDay({ state });
-
-    const marketOffers = getAvailableOffers(state, { includeUpcoming: true }).filter(offer => {
-      return offer.definitionId === definitionId && offer.claimed !== true;
-    });
-
-    const availableOffer = marketOffers
-      .filter(offer => offer.availableOnDay <= currentDay)
-      .sort((a, b) => a.availableOnDay - b.availableOnDay)[0] || null;
-    const upcomingOffer = marketOffers
-      .filter(offer => offer.availableOnDay > currentDay)
-      .sort((a, b) => a.availableOnDay - b.availableOnDay)[0] || null;
-
-    if (!availableOffer) {
-      if (upcomingOffer) {
-        addLog(
-          `${track.name} opens new seats on day ${upcomingOffer.availableOnDay}. Save the date!`,
-          'info'
-        );
-      } else {
-        addLog(`Seats for ${track.name} are booked today. Check back tomorrow!`, 'warning');
-      }
-      return { success: false, reason: 'no_offer' };
-    }
-
-    const accepted = acceptHustleOffer(availableOffer, { state });
-    if (!accepted) {
-      addLog(`Someone else snagged the last seat in ${track.name} moments before you.`, 'warning');
-      return { success: false, reason: 'claim_failed' };
-    }
-
-    return { success: true, offer: accepted };
-  }
-
-  function dropKnowledgeTrack(id) {
-    const state = getState();
-    const track = knowledgeTracks[id];
-    if (!state || !track) {
-      return { success: false, reason: 'missing' };
-    }
-
-    const progress = getKnowledgeProgress(id, state);
-    if (!progress.enrolled || progress.completed) {
-      addLog(`You're not currently enrolled in ${track.name}.`, 'info');
-      return { success: false, reason: 'not_enrolled' };
-    }
-
-    progress.enrolled = false;
-    progress.studiedToday = false;
-    progress.enrolledOnDay = null;
-
-    removeActiveStudyInstance(id, state);
-
-    const claimedStudyOffers = getClaimedOffers(state, { includeExpired: true })
-      .filter(entry => entry?.metadata?.studyTrackId === track.id);
-
-    for (const offer of claimedStudyOffers) {
-      releaseClaimedHustleOffer({ offerId: offer.offerId, acceptedId: offer.id }, { state });
-    }
-
-    addLog(`You dropped ${track.name}. Tuition stays paid, but your schedule opens back up.`, 'warning');
-
-    markDirty(STUDY_DIRTY_SECTIONS);
-
-    return { success: true };
-  }
+  const seatManager = createMarketSeatManager({ getState, addLog });
+  const tuitionLogging = createTuitionLogging({ spendMoney, recordCostContribution, addLog });
+  const { enrollInKnowledgeTrack, dropKnowledgeTrack } = createStudyEnrollment({
+    getState,
+    getKnowledgeProgress,
+    knowledgeTracks,
+    addLog,
+    markDirty,
+    seatManager,
+    tuitionLogging,
+    getStudyActionId,
+    removeActiveStudyInstance,
+    STUDY_DIRTY_SECTIONS
+  });
 
   function allocateDailyStudy({ trackIds, triggeredByEnrollment = false } = {}) {
     const state = getState();
@@ -300,4 +224,3 @@ export function createRequirementsOrchestrator({
     advanceKnowledgeTracks
   };
 }
-

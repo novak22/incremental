@@ -493,6 +493,38 @@ test('dropping a knowledge track releases the claimed hustle offer', () => {
   assert.equal(progressAfterDrop.enrolled, false, 'drop should clear enrollment flag');
   assert.equal(progressAfterDrop.studiedToday, false, 'drop should clear daily study flag');
   assert.equal(progressAfterDrop.enrolledOnDay, null, 'drop should reset enrollment day');
+  const releaseLog = state.log.find(entry => /Released 1 seat/i.test(entry?.message || ''));
+  assert.ok(releaseLog, 'dropping should log the seat release via the market manager');
+  assert.ok(releaseLog.message.includes(track.name), 'seat release log should reference the track name');
+  assert.match(state.log.at(-1)?.message || '', /You dropped/, 'final log should confirm the drop');
+});
+
+test('tuition enrollment deducts money, records contributions, and logs success messaging', () => {
+  resetState();
+  const state = getState();
+  const track = KNOWLEDGE_TRACKS.outlineMastery;
+  const enrollmentDay = state.day;
+  state.money = track.tuition + 500;
+  state.timeLeft = Math.max(state.timeLeft || 0, (track.hoursPerDay || 0) + 4);
+
+  const startingMoney = state.money;
+  const enrollResult = enrollInKnowledgeTrack(track.id);
+  assert.ok(enrollResult?.success, 'enrollment should succeed with sufficient tuition');
+
+  const progress = getKnowledgeProgress(track.id);
+  assert.equal(progress.tuitionPaid, track.tuition, 'tuition should be tracked on progress state');
+  assert.equal(progress.tuitionPaidOnDay, enrollmentDay, 'tuition day should match enrollment day');
+  assert.equal(state.money, startingMoney - track.tuition, 'tuition should deduct from money immediately');
+
+  const costKey = `study:${track.id}:tuition`;
+  const dailyMetrics = state.metrics?.daily?.costs || {};
+  assert.ok(dailyMetrics[costKey], 'daily metrics should include the tuition cost contribution');
+  assert.equal(dailyMetrics[costKey].amount, track.tuition, 'tuition contribution should match the paid amount');
+
+  const reservationLog = state.log.find(entry => /Reserved a seat/i.test(entry?.message || ''));
+  assert.ok(reservationLog, 'market seat manager should log the seat reservation and tuition payment');
+  const successLog = state.log.find(entry => /You claimed a seat/i.test(entry?.message || ''));
+  assert.ok(successLog, 'tuition logger should emit an enrollment success message');
 });
 
 test('knowledge track rollover invalidates study panels for completions and stalls', () => {
