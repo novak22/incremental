@@ -163,9 +163,13 @@ function buildOfferMetadata(template, variant) {
   return metadata;
 }
 
+const OFFER_EXPIRY_GRACE_DAYS = 2;
+
 function createOfferFromVariant({ template, variant, day, timestamp }) {
   const availableOnDay = clampMarketDay(day, 1) + clampMarketDaySpan(variant.availableAfterDays || 0, 0);
-  const expiresOnDay = availableOnDay + clampMarketDaySpan(variant.durationDays || 0, 0);
+  const expiresOnDay = availableOnDay
+    + clampMarketDaySpan(variant.durationDays || 0, 0)
+    + OFFER_EXPIRY_GRACE_DAYS;
   const templateCategory = typeof template?.market?.category === 'string' && template.market.category
     ? template.market.category
     : (typeof template?.market?.templateCategory === 'string' && template.market.templateCategory
@@ -215,9 +219,15 @@ function isOfferActiveOnOrAfterDay(offer, day) {
 const offerLifecycle = {
   buildOfferMetadata,
   createOfferFromVariant,
-  isOfferActiveOnOrAfterDay
+  isOfferActiveOnOrAfterDay,
+  OFFER_EXPIRY_GRACE_DAYS
 };
 
-export { buildOfferMetadata, createOfferFromVariant, isOfferActiveOnOrAfterDay };
+export {
+  buildOfferMetadata,
+  createOfferFromVariant,
+  isOfferActiveOnOrAfterDay,
+  OFFER_EXPIRY_GRACE_DAYS
+};
 
 export default offerLifecycle;

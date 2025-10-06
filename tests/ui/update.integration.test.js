@@ -778,6 +778,7 @@ test('accepting a hustle offer from dashboard quick actions refreshes the todo q
   const currentDay = Number(state.day) || 1;
 
   const { normalizeHustleMarketOffer } = await import('../../src/core/state/slices/hustleMarket/index.js');
+  const { OFFER_EXPIRY_GRACE_DAYS } = await import('../../src/game/hustles/market/offerLifecycle.js');
 
   const offer = normalizeHustleMarketOffer({
     id: 'offer-dashboard-test',
@@ -785,7 +786,7 @@ test('accepting a hustle offer from dashboard quick actions refreshes the todo q
     definitionId: 'freelance',
     rolledOnDay: currentDay,
     availableOnDay: currentDay,
-    expiresOnDay: currentDay + 2,
+    expiresOnDay: currentDay + 2 + OFFER_EXPIRY_GRACE_DAYS,
     metadata: {
       hoursRequired: 4,
       payoutAmount: 160,
