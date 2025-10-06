@@ -28,7 +28,7 @@ import { ensureSlice as ensureProgressSlice } from './state/slices/progress.js';
 import {
   ensureHustleMarketState,
   createDefaultHustleMarketState
-} from './state/slices/hustleMarket.js';
+} from './state/slices/hustleMarket/index.js';
 import { isAutoReadType } from './logAutoReadTypes.js';
 
 function normalizeLogEntry(entry) {

@@ -7,7 +7,7 @@ import {
 } from '../normalizers.js';
 import {
   normalizeHustleMarketOffer
-} from '../../../core/state/slices/hustleMarket.js';
+} from '../../../core/state/slices/hustleMarket/index.js';
 import {
   resolveFirstNumber,
   resolveFirstString,

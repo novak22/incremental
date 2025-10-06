@@ -15,7 +15,7 @@ import {
   getMarketOfferById,
   getMarketClaimedOffers,
   releaseHustleMarketOffer
-} from '../core/state/slices/hustleMarket.js';
+} from '../core/state/slices/hustleMarket/index.js';
 import { definitionRequirementsMet } from './requirements/checks.js';
 import { describeHustleRequirements } from './hustles/helpers.js';
 import { markDirty } from '../core/events/invalidationBus.js';

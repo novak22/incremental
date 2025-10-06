@@ -10,7 +10,7 @@ import {
   normalizeHustleMarketOffer,
   getMarketAvailableOffers,
   getMarketClaimedOffers
-} from '../../core/state/slices/hustleMarket.js';
+} from '../../core/state/slices/hustleMarket/index.js';
 import {
   attachAuditDebugTools,
   getMarketRollAuditLog,
