@@ -5,6 +5,7 @@ import {
   normalizeInstanceProgress,
   getInstanceProgressSnapshot
 } from '../../../../../src/core/state/slices/actions/progress.js';
+import resolveInstanceProgressSnapshot from '../../../../../src/core/state/slices/actions/snapshots.js';
 
 const definition = {
   id: 'practice-session',
@@ -87,4 +88,37 @@ test('getInstanceProgressSnapshot reflects normalized progress metrics', () => {
   assert.equal(snapshot.lastWorkedDay, 2);
   assert.equal(snapshot.completion, 'manual');
   assert.equal(snapshot.percentComplete, 4 / 6);
+});
+
+test('resolveInstanceProgressSnapshot applies metadata, payout, and deadline overrides', () => {
+  const instance = {
+    id: 'instance-override',
+    definitionId: definition.id,
+    acceptedOnDay: 2,
+    progress: {
+      hoursLogged: 2,
+      hoursRequired: 6
+    }
+  };
+
+  const metadata = { label: 'Override test' };
+  const snapshot = resolveInstanceProgressSnapshot(instance, {
+    progressOverrides: {
+      hoursPerDay: 2,
+      daysRequired: 3
+    },
+    metadata,
+    deadlineCandidates: [8, 4, 12],
+    payoutAmount: 45,
+    payoutSchedule: 'daily'
+  });
+
+  assert.ok(snapshot, 'expected snapshot with overrides to be returned');
+  assert.equal(snapshot.deadlineDay, 4);
+  assert.equal(snapshot.hoursPerDay, 2);
+  assert.equal(snapshot.daysRequired, 3);
+  assert.equal(snapshot.hoursRequired, 6);
+  assert.equal(snapshot.payoutAmount, 45);
+  assert.equal(snapshot.payoutSchedule, 'daily');
+  assert.equal(snapshot.metadata, metadata);
 });

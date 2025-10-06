@@ -3,7 +3,16 @@ import {
   coercePositiveNumber,
   firstPositiveNumber
 } from '../utils.js';
-import { getInstanceProgressSnapshot } from '../../../core/state/slices/actions/index.js';
+import { resolveInstanceProgressSnapshot } from '../../../core/state/slices/actions/index.js';
+
+function pickMetadata(...sources) {
+  for (const source of sources) {
+    if (source && typeof source === 'object' && !Array.isArray(source)) {
+      return source;
+    }
+  }
+  return null;
+}
 
 export function buildProgressSnapshot({
   state,
@@ -16,34 +25,20 @@ export function buildProgressSnapshot({
     return null;
   }
 
-  const baseSnapshot = getInstanceProgressSnapshot(instance);
-  if (!baseSnapshot) {
-    return null;
-  }
-
   const progressSource = typeof instance.progress === 'object' && instance.progress !== null
     ? instance.progress
     : {};
-  const progressOverrides = { ...progressSource };
-
   const metadataProgress = typeof accepted?.metadata?.progress === 'object' && accepted.metadata.progress !== null
     ? accepted.metadata.progress
     : typeof offer?.metadata?.progress === 'object' && offer.metadata.progress !== null
       ? offer.metadata.progress
       : {};
 
-  const resolvedMetadata = accepted?.metadata
-    || offer?.claimMetadata
-    || offer?.metadata
-    || baseSnapshot.metadata
-    || {};
-  if (resolvedMetadata && resolvedMetadata !== progressOverrides.metadata) {
-    progressOverrides.metadata = resolvedMetadata;
-  }
+  const progressOverrides = {};
 
   const completionCandidates = [
-    progressOverrides.completionMode,
-    progressOverrides.completion,
+    progressSource.completionMode,
+    progressSource.completion,
     metadataProgress.completionMode,
     metadataProgress.completion,
     accepted?.metadata?.completionMode,
@@ -65,54 +60,86 @@ export function buildProgressSnapshot({
       break;
     }
   }
-
-  let hoursRequired = baseSnapshot.hoursRequired;
-  if (!(Number.isFinite(hoursRequired) && hoursRequired >= 0)) {
-    const hoursRequiredCandidates = [
-      accepted?.hoursRequired,
-      offer?.metadata?.hoursRequired,
-      offer?.metadata?.requirements?.hours,
-      offer?.metadata?.requirements?.timeHours,
-      definition?.time,
-      definition?.action?.timeCost
-    ];
-    for (const candidate of hoursRequiredCandidates) {
-      const numeric = coercePositiveNumber(candidate, null);
-      if (Number.isFinite(numeric) && numeric >= 0) {
-        hoursRequired = numeric;
-        break;
-      }
-    }
-    if (hoursRequired != null) {
-      progressOverrides.hoursRequired = hoursRequired;
-    }
+  if (progressOverrides.completion) {
+    progressOverrides.completionMode = progressOverrides.completion;
   }
 
-  const hoursPerDayCandidate = firstPositiveNumber(
-    baseSnapshot.hoursPerDay,
-    accepted?.metadata?.hoursPerDay,
+  const hoursRequired = firstPositiveNumber(
+    progressSource.hoursRequired,
+    instance.hoursRequired,
+    metadataProgress.hoursRequired,
+    accepted?.metadata?.hoursRequired,
+    accepted?.metadata?.progress?.hoursRequired,
+    offer?.metadata?.hoursRequired,
+    offer?.metadata?.progress?.hoursRequired,
+    offer?.metadata?.requirements?.hours,
+    offer?.metadata?.requirements?.timeHours,
+    definition?.progress?.hoursRequired,
+    definition?.time,
+    definition?.action?.timeCost
+  );
+  if (hoursRequired != null) {
+    progressOverrides.hoursRequired = hoursRequired;
+  }
+
+  const hoursPerDay = firstPositiveNumber(
+    progressSource.hoursPerDay,
     metadataProgress.hoursPerDay,
+    accepted?.metadata?.hoursPerDay,
     accepted?.metadata?.progress?.hoursPerDay,
     offer?.metadata?.hoursPerDay,
-    offer?.metadata?.progress?.hoursPerDay
+    offer?.metadata?.progress?.hoursPerDay,
+    definition?.progress?.hoursPerDay
   );
-  if (hoursPerDayCandidate != null
-    && (!Number.isFinite(baseSnapshot.hoursPerDay) || baseSnapshot.hoursPerDay <= 0)) {
-    progressOverrides.hoursPerDay = hoursPerDayCandidate;
+  if (hoursPerDay != null) {
+    progressOverrides.hoursPerDay = hoursPerDay;
   }
 
   const rawDaysRequired = firstPositiveNumber(
-    baseSnapshot.daysRequired,
+    progressSource.daysRequired,
     metadataProgress.daysRequired,
     accepted?.metadata?.daysRequired,
     accepted?.metadata?.progress?.daysRequired,
     offer?.metadata?.daysRequired,
-    offer?.metadata?.progress?.daysRequired
+    offer?.metadata?.progress?.daysRequired,
+    definition?.progress?.daysRequired
   );
-  if (rawDaysRequired != null
-    && (!Number.isFinite(baseSnapshot.daysRequired) || baseSnapshot.daysRequired <= 0)) {
+  if (rawDaysRequired != null) {
     progressOverrides.daysRequired = Math.max(1, Math.floor(rawDaysRequired));
   }
+
+  const metadataHoursCandidates = [
+    metadataProgress.hoursRequired,
+    accepted?.metadata?.hoursRequired,
+    accepted?.metadata?.progress?.hoursRequired,
+    offer?.metadata?.hoursRequired,
+    offer?.metadata?.progress?.hoursRequired,
+    offer?.metadata?.requirements?.hours,
+    offer?.metadata?.requirements?.timeHours
+  ];
+
+  const metadataScheduleCandidates = [
+    metadataProgress.hoursPerDay,
+    metadataProgress.daysRequired,
+    accepted?.metadata?.hoursPerDay,
+    accepted?.metadata?.daysRequired,
+    accepted?.metadata?.progress?.hoursPerDay,
+    accepted?.metadata?.progress?.daysRequired,
+    offer?.metadata?.hoursPerDay,
+    offer?.metadata?.daysRequired,
+    offer?.metadata?.progress?.hoursPerDay,
+    offer?.metadata?.progress?.daysRequired
+  ];
+
+  const metadataProvidesDirectHours = metadataHoursCandidates.some(candidate => {
+    const numeric = Number(candidate);
+    return Number.isFinite(numeric) && numeric > 0;
+  });
+
+  const metadataProvidesSchedule = metadataScheduleCandidates.some(candidate => {
+    const numeric = Number(candidate);
+    return Number.isFinite(numeric) && numeric > 0;
+  });
 
   if ((progressOverrides.hoursRequired == null || progressOverrides.hoursRequired <= 0)
     && Number.isFinite(progressOverrides.hoursPerDay)
@@ -120,42 +147,69 @@ export function buildProgressSnapshot({
     && Number.isFinite(progressOverrides.daysRequired)
     && progressOverrides.daysRequired > 0) {
     progressOverrides.hoursRequired = progressOverrides.hoursPerDay * progressOverrides.daysRequired;
+  } else if (!metadataProvidesDirectHours
+    && metadataProvidesSchedule
+    && Number.isFinite(progressOverrides.hoursPerDay)
+    && progressOverrides.hoursPerDay > 0
+    && Number.isFinite(progressOverrides.daysRequired)
+    && progressOverrides.daysRequired > 0) {
+    progressOverrides.hoursRequired = progressOverrides.hoursPerDay * progressOverrides.daysRequired;
   }
 
+  const metadata = pickMetadata(
+    accepted?.metadata,
+    offer?.claimMetadata,
+    offer?.metadata,
+    progressSource.metadata
+  );
+
+  const metadataSources = [
+    accepted?.metadata,
+    offer?.claimMetadata,
+    offer?.metadata,
+    progressSource.metadata
+  ].filter(source => source && typeof source === 'object' && !Array.isArray(source));
+
   const deadlineCandidates = [
-    instance.deadlineDay,
-    progressOverrides.deadlineDay,
-    baseSnapshot.deadlineDay,
     accepted?.deadlineDay,
     offer?.claimDeadlineDay,
     offer?.expiresOnDay
-  ]
-    .map(value => coerceDay(value, null))
-    .filter(value => value != null);
-  const earliestDeadline = deadlineCandidates.length ? Math.min(...deadlineCandidates) : null;
-  if (earliestDeadline != null) {
-    progressOverrides.deadlineDay = earliestDeadline;
-  }
+  ].filter(candidate => candidate != null);
 
-  if (typeof progressOverrides.completion !== 'string' || !progressOverrides.completion.trim()) {
-    progressOverrides.completion = baseSnapshot.completion;
-  }
-  progressOverrides.completionMode = progressOverrides.completion;
+  const payoutAmountOverride = coercePositiveNumber(
+    accepted?.payout?.amount != null ? accepted.payout.amount : offer?.metadata?.payoutAmount,
+    null
+  );
 
-  const snapshot = getInstanceProgressSnapshot({ ...instance, progress: progressOverrides }) || baseSnapshot;
+  const payoutScheduleOverride = (() => {
+    const candidates = [accepted?.payout?.schedule, offer?.metadata?.payoutSchedule];
+    for (const candidate of candidates) {
+      if (typeof candidate === 'string' && candidate.trim()) {
+        return candidate.trim();
+      }
+    }
+    return null;
+  })();
+
+  const snapshot = resolveInstanceProgressSnapshot(instance, {
+    progressOverrides,
+    metadata,
+    metadataSources,
+    deadlineCandidates,
+    payoutAmount: payoutAmountOverride,
+    payoutSchedule: payoutScheduleOverride
+  });
+  if (!snapshot) {
+    return null;
+  }
 
   const currentDay = coerceDay(state?.day, 1) || 1;
   const remainingDays = snapshot.deadlineDay != null
     ? Math.max(0, snapshot.deadlineDay - currentDay + 1)
     : null;
 
-  const payoutAmount = coercePositiveNumber(
-    accepted?.payout?.amount != null ? accepted.payout.amount : offer?.metadata?.payoutAmount,
-    null
-  );
-  const payoutSchedule = accepted?.payout?.schedule
-    || offer?.metadata?.payoutSchedule
-    || 'onCompletion';
+  const payoutAmount = Number.isFinite(snapshot.payoutAmount) ? snapshot.payoutAmount : null;
+  const payoutSchedule = snapshot.payoutSchedule || 'onCompletion';
 
   const completionMode = snapshot.completionMode || snapshot.completion || 'manual';
 
