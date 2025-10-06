@@ -76,6 +76,31 @@ export function buildProgressSnapshot({
     progressOverrides.metadata = resolvedMetadata;
   }
 
+  const completionCandidates = [
+    progressOverrides.completionMode,
+    progressOverrides.completion,
+    metadataProgress.completionMode,
+    metadataProgress.completion,
+    accepted?.metadata?.completionMode,
+    accepted?.metadata?.completion,
+    accepted?.metadata?.progress?.completionMode,
+    accepted?.metadata?.progress?.completion,
+    offer?.claimMetadata?.completionMode,
+    offer?.claimMetadata?.completion,
+    offer?.metadata?.completionMode,
+    offer?.metadata?.completion,
+    offer?.metadata?.progress?.completionMode,
+    offer?.metadata?.progress?.completion,
+    definition?.progress?.completionMode,
+    definition?.progress?.completion
+  ];
+  for (const candidate of completionCandidates) {
+    if (typeof candidate === 'string' && candidate.trim()) {
+      progressOverrides.completion = candidate.trim();
+      break;
+    }
+  }
+
   let hoursRequired = baseSnapshot.hoursRequired;
   if (!(Number.isFinite(hoursRequired) && hoursRequired >= 0)) {
     const hoursRequiredCandidates = [
