@@ -90,6 +90,17 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
       : '';
 
     const templateOffers = offersByTemplate.get(definition.id) || [];
+    const resolvedCategory = (() => {
+      const explicit = definition.market?.category;
+      if (typeof explicit === 'string' && explicit.trim()) {
+        return explicit.trim();
+      }
+      const offerWithCategory = templateOffers.find(offer => typeof offer?.templateCategory === 'string' && offer.templateCategory.trim());
+      if (offerWithCategory) {
+        return offerWithCategory.templateCategory.trim();
+      }
+      return '';
+    })();
     const sortedOffers = [...templateOffers].sort((a, b) => {
       const availableA = Number.isFinite(a?.availableOnDay) ? a.availableOnDay : Infinity;
       const availableB = Number.isFinite(b?.availableOnDay) ? b.availableOnDay : Infinity;
@@ -137,6 +148,7 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
         seatsAvailable: meta.seatsAvailable,
         seatPolicy: meta.seatPolicy,
         seatSummary,
+        category: offer.templateCategory || resolvedCategory || '',
         onAccept: requirementsMet
           ? () => {
               let result = null;
@@ -188,7 +200,8 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
       hoursLogged: entry.progress?.hoursLogged ?? null,
       hoursRequired: entry.progress?.hoursRequired ?? null,
       percentComplete: entry.progress?.percentComplete ?? null,
-      progress: entry.progress || null
+      progress: entry.progress || null,
+      category: entry.progress?.templateCategory || entry.templateCategory || resolvedCategory || ''
     }));
 
     const acceptedForDefinition = acceptedByDefinition.get(definition.id) || [];
@@ -227,7 +240,8 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
           hoursRemaining: Number.isFinite(entry?.hoursRequired) ? entry.hoursRequired : null,
           hoursRequired: Number.isFinite(entry?.hoursRequired) ? entry.hoursRequired : null,
           percentComplete: null
-        }
+        },
+        category: entry?.templateCategory || resolvedCategory || ''
       });
     });
 
@@ -301,8 +315,8 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
     if (definition.tag?.label) {
       badges.push(definition.tag.label);
     }
-    if (definition.market?.category) {
-      const categoryLabel = definition.market.category
+    if (resolvedCategory) {
+      const categoryLabel = resolvedCategory
         .split(' ')
         .map(part => part.charAt(0).toUpperCase() + part.slice(1))
         .join(' ');
@@ -322,6 +336,7 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
       name: definition.name || definition.id,
       description: definition.description || '',
       tag: definition.tag || null,
+      category: resolvedCategory,
       metrics: {
         time: { value: time, label: formatHoursFn(time) },
         payout: { value: payout, label: payout > 0 ? `$${formatMoneyFn(payout)}` : '' },
@@ -354,7 +369,7 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
         available,
         limitRemaining: usage ? usage.remaining : null,
         tag: definition.tag?.label || '',
-        category: definition.market?.category || ''
+        category: resolvedCategory
       },
       seat: seatSummary
         ? {

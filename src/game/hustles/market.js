@@ -6,11 +6,11 @@ import {
 } from './normalizers.js';
 import { getState } from '../../core/state.js';
 import {
-  ensureHustleMarketState,
-  normalizeHustleMarketOffer,
-  getMarketAvailableOffers,
-  getMarketClaimedOffers
-} from '../../core/state/slices/hustleMarket/index.js';
+  ensureActionMarketCategoryState,
+  normalizeActionMarketOffer,
+  getActionMarketAvailableOffers,
+  getActionMarketClaimedOffers
+} from '../../core/state/slices/actionMarket/index.js';
 import {
   attachAuditDebugTools,
   getMarketRollAuditLog,
@@ -32,14 +32,15 @@ export function rollDailyOffers({
   day,
   now,
   state = getState(),
-  rng = Math.random
+  rng = Math.random,
+  category = 'hustle'
 } = {}) {
   const workingState = state || getState();
   const currentDay = clampMarketDay(day, workingState?.day || 1);
   const timestamp = Number(now);
   const resolvedTimestamp = Number.isFinite(timestamp) && timestamp >= 0 ? timestamp : Date.now();
 
-  const marketState = ensureHustleMarketState(workingState, { fallbackDay: currentDay });
+  const marketState = ensureActionMarketCategoryState(workingState, category, { fallbackDay: currentDay });
 
   const preservedOffers = marketState.offers
     .filter(offer => isOfferActiveOnOrAfterDay(offer, currentDay))
@@ -178,6 +179,9 @@ export function rollDailyOffers({
           day: currentDay,
           timestamp: resolvedTimestamp
         });
+        if (category && !offer.templateCategory) {
+          offer.templateCategory = category;
+        }
         preservedOffers.push(structuredClone(offer));
         templateAudit.added += 1;
       }
@@ -208,6 +212,12 @@ export function rollDailyOffers({
     }
   }
 
+  preservedOffers.forEach(offer => {
+    if (category && !offer.templateCategory) {
+      offer.templateCategory = category;
+    }
+  });
+
   preservedOffers.sort((a, b) => {
     if (a.availableOnDay === b.availableOnDay) {
       if (a.templateId === b.templateId) {
@@ -221,9 +231,10 @@ export function rollDailyOffers({
     return a.availableOnDay - b.availableOnDay;
   });
 
-  marketState.offers = preservedOffers.map(offer => normalizeHustleMarketOffer(offer, {
+  marketState.offers = preservedOffers.map(offer => normalizeActionMarketOffer(offer, {
     fallbackTimestamp: resolvedTimestamp,
-    fallbackDay: currentDay
+    fallbackDay: currentDay,
+    category
   }));
   marketState.lastRolledAt = resolvedTimestamp;
   marketState.lastRolledOnDay = currentDay;
@@ -244,11 +255,12 @@ export function rollDailyOffers({
 export function getAvailableOffers(state = getState(), {
   day,
   includeUpcoming = false,
-  includeClaimed = false
+  includeClaimed = false,
+  category = 'hustle'
 } = {}) {
   const workingState = state || getState();
   const targetDay = clampMarketDay(day, workingState?.day || 1);
-  return getMarketAvailableOffers(workingState, {
+  return getActionMarketAvailableOffers(workingState, category, {
     day: targetDay,
     includeUpcoming,
     includeClaimed
@@ -258,11 +270,12 @@ export function getAvailableOffers(state = getState(), {
 export function getClaimedOffers(state = getState(), {
   day,
   includeExpired = false,
-  includeCompleted = false
+  includeCompleted = false,
+  category = 'hustle'
 } = {}) {
   const workingState = state || getState();
   const targetDay = clampMarketDay(day, workingState?.day || 1);
-  return getMarketClaimedOffers(workingState, {
+  return getActionMarketClaimedOffers(workingState, category, {
     day: targetDay,
     includeExpired,
     includeCompleted
@@ -272,7 +285,7 @@ export function getClaimedOffers(state = getState(), {
 function attachHustleMarketDebugTools() {
   attachAuditDebugTools({
     getState,
-    getMarketAvailableOffers: (state, options) => getMarketAvailableOffers(state, options)
+    getMarketAvailableOffers: (state, options) => getActionMarketAvailableOffers(state, 'hustle', options)
   });
 }
 

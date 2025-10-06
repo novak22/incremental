@@ -9,6 +9,14 @@ const {
   normalizeHustleMarketOffer,
   normalizeAcceptedOffer
 } = await import('../src/core/state/slices/hustleMarket/index.js');
+const actionMarketModule = await import('../src/core/state/slices/actionMarket/index.js');
+const {
+  ensureActionMarketCategoryState,
+  getActionMarketAvailableOffers,
+  claimActionMarketOffer,
+  getActionMarketClaimedOffers,
+  normalizeActionMarketOffer
+} = actionMarketModule;
 const { hustlesModule, stateModule } = harness;
 const {
   rollDailyOffers,
@@ -890,4 +898,77 @@ test('multi-day hustle variants award their full contract payout on completion',
     expectedPayout,
     'stored payout award should match the multi-day contract amount'
   );
+});
+
+test('action market isolates categories and tags entries', () => {
+  const state = harness.resetState();
+  state.day = 4;
+
+  ensureActionMarketCategoryState(state, 'hustle', { fallbackDay: 4 });
+  ensureActionMarketCategoryState(state, 'study', { fallbackDay: 4 });
+
+  const studyTemplate = {
+    id: 'study-category-template',
+    name: 'Category Study',
+    time: 1,
+    payout: { amount: 5 },
+    market: {
+      category: 'study',
+      slotsPerRoll: 1,
+      variants: [
+        {
+          id: 'alpha',
+          definitionId: 'study-category-template',
+          copies: 1,
+          availableAfterDays: 0,
+          durationDays: 1
+        }
+      ]
+    }
+  };
+
+  rollDailyOffers({ templates: [studyTemplate], day: 4, state, rng: () => 0.25, category: 'study' });
+
+  const studyOffers = getActionMarketAvailableOffers(state, 'study', { day: 4, includeUpcoming: false });
+  assert.ok(studyOffers.length > 0, 'study market should roll offers');
+  assert.ok(studyOffers.every(offer => offer.templateCategory === 'study'), 'study offers should carry their category');
+
+  const hustleOffers = getActionMarketAvailableOffers(state, 'hustle', { day: 4 });
+  assert.equal(hustleOffers.length, 0, 'hustle market should remain untouched by study rolls');
+
+  const maintenanceOffer = normalizeActionMarketOffer({
+    templateId: 'maintenance-template',
+    definitionId: 'maintenance-template',
+    variantId: 'standard',
+    rolledOnDay: 4,
+    rolledAt: Date.now(),
+    availableOnDay: 4,
+    expiresOnDay: 6,
+    templateCategory: 'maintenance',
+    metadata: { payout: { amount: 10, schedule: 'onCompletion' } },
+    seats: 1
+  }, { fallbackDay: 4, category: 'maintenance' });
+
+  const maintenanceMarket = ensureActionMarketCategoryState(state, 'maintenance', { fallbackDay: 4 });
+  maintenanceMarket.offers = [maintenanceOffer];
+  maintenanceMarket.accepted = [];
+  ensureActionMarketCategoryState(state, 'maintenance', { fallbackDay: 4 });
+
+  const accepted = claimActionMarketOffer(state, 'maintenance', maintenanceOffer.id, {
+    acceptedOnDay: 4,
+    hoursRequired: 3,
+    payout: { amount: 10, schedule: 'onCompletion' },
+    metadata: { label: 'Maintenance Task' }
+  });
+
+  assert.ok(accepted, 'maintenance offer should be claimable');
+  assert.equal(accepted.templateCategory, 'maintenance', 'accepted entry should retain its category');
+
+  const maintenanceClaimed = getActionMarketClaimedOffers(state, 'maintenance', { day: 4 });
+  assert.equal(maintenanceClaimed.length, 1, 'maintenance category should report accepted entry');
+
+  const hustleClaimed = getActionMarketClaimedOffers(state, 'hustle', { day: 4 });
+  assert.equal(hustleClaimed.length, 0, 'hustle category should not be affected');
+
+  assert.strictEqual(state.hustleMarket, state.actionMarket.categories.hustle, 'hustle alias should point to category slice');
 });

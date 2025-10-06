@@ -10,12 +10,12 @@ import {
   resolveOfferPayoutSchedule
 } from './hustles/offerUtils.js';
 import {
-  ensureHustleMarketState,
-  claimHustleMarketOffer,
-  getMarketOfferById,
-  getMarketClaimedOffers,
-  releaseHustleMarketOffer
-} from '../core/state/slices/hustleMarket/index.js';
+  ensureActionMarketCategoryState,
+  claimActionMarketOffer,
+  getActionMarketOfferById,
+  getActionMarketClaimedOffers,
+  releaseActionMarketOffer
+} from '../core/state/slices/actionMarket/index.js';
 import { definitionRequirementsMet } from './requirements/checks.js';
 import { describeHustleRequirements } from './hustles/helpers.js';
 import { markDirty } from '../core/events/invalidationBus.js';
@@ -23,6 +23,8 @@ import { markDirty } from '../core/events/invalidationBus.js';
 export const HUSTLE_TEMPLATES = [...INSTANT_ACTIONS, ...STUDY_ACTIONS];
 export const HUSTLES = HUSTLE_TEMPLATES;
 export const KNOWLEDGE_HUSTLES = STUDY_ACTIONS;
+
+const HUSTLE_ACTION_CATEGORY = 'hustle';
 
 export { ACTIONS, INSTANT_ACTIONS, STUDY_ACTIONS };
 export { rollDailyOffers, getAvailableOffers, getClaimedOffers, getMarketRollAuditLog };
@@ -34,7 +36,7 @@ export function releaseClaimedHustleOffer(identifiers, { state = getState() } = 
   if (!workingState) {
     return false;
   }
-  return releaseHustleMarketOffer(workingState, identifiers);
+  return releaseActionMarketOffer(workingState, HUSTLE_ACTION_CATEGORY, identifiers);
 }
 
 function clampDay(value, fallback = 1) {
@@ -62,7 +64,7 @@ export function ensureDailyOffersForDay({
   }
 
   const currentDay = clampDay(day ?? workingState.day ?? 1, workingState.day ?? 1);
-  const marketState = ensureHustleMarketState(workingState, { fallbackDay: currentDay });
+  const marketState = ensureActionMarketCategoryState(workingState, HUSTLE_ACTION_CATEGORY, { fallbackDay: currentDay });
   const hasOffers = Array.isArray(marketState.offers) && marketState.offers.length > 0;
   const rolledToday = marketState.lastRolledOnDay === currentDay;
 
@@ -75,7 +77,8 @@ export function ensureDailyOffersForDay({
     day: currentDay,
     now,
     state: workingState,
-    rng
+    rng,
+    category: HUSTLE_ACTION_CATEGORY
   });
 }
 
@@ -88,13 +91,13 @@ export function acceptHustleOffer(offerOrId, { state = getState() } = {}) {
   }
 
   const fallbackDay = Math.max(1, Math.floor(Number(workingState.day) || 1));
-  ensureHustleMarketState(workingState, { fallbackDay });
+  ensureActionMarketCategoryState(workingState, HUSTLE_ACTION_CATEGORY, { fallbackDay });
 
   let offer = null;
   if (offerOrId && typeof offerOrId === 'object') {
     offer = offerOrId;
   } else if (typeof offerOrId === 'string') {
-    offer = getMarketOfferById(workingState, offerOrId, { day: fallbackDay });
+    offer = getActionMarketOfferById(workingState, HUSTLE_ACTION_CATEGORY, offerOrId, { day: fallbackDay });
   }
 
   if (!offer || !offer.id) {
@@ -102,7 +105,7 @@ export function acceptHustleOffer(offerOrId, { state = getState() } = {}) {
   }
 
   if (offer.claimed) {
-    const claimed = getMarketClaimedOffers(workingState, { day: fallbackDay, includeExpired: true })
+    const claimed = getActionMarketClaimedOffers(workingState, HUSTLE_ACTION_CATEGORY, { day: fallbackDay, includeExpired: true })
       .find(entry => entry.offerId === offer.id);
     return claimed || null;
   }
@@ -252,7 +255,7 @@ export function acceptHustleOffer(offerOrId, { state = getState() } = {}) {
     payoutDetails.amount = payoutAmount;
   }
 
-  const acceptedEntry = claimHustleMarketOffer(workingState, offer.id, {
+  const acceptedEntry = claimActionMarketOffer(workingState, HUSTLE_ACTION_CATEGORY, offer.id, {
     acceptedOnDay,
     deadlineDay: deadlineDay ?? offer.availableOnDay,
     hoursRequired: hoursRequired != null ? hoursRequired : instance.hoursRequired,
