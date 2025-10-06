@@ -51,6 +51,8 @@ const {
   dropKnowledgeTrack
 } = requirementsModule;
 
+const { getClaimedOffers } = hustlesModule;
+
 const resetState = () => harness.resetState();
 
 test.beforeEach(() => {
@@ -393,6 +395,32 @@ test('study enrollment updates player and dashboard sections alongside cards', (
   const dirtyAfterDrop = consumeDirty();
   assert.ok(dirtyAfterDrop.cards && dirtyAfterDrop.dashboard && dirtyAfterDrop.player,
     'dropping should dirty core dashboards');
+});
+
+test('dropping a knowledge track releases the claimed hustle offer', () => {
+  consumeDirty();
+  const trackId = 'outlineMastery';
+  const track = KNOWLEDGE_TRACKS[trackId];
+  const state = getState();
+  state.money = (track.tuition || 0) + 500;
+  state.timeLeft = Math.max(state.timeLeft || 0, (track.hoursPerDay || 0) + 4);
+
+  const enrollResult = enrollInKnowledgeTrack(trackId);
+  assert.ok(enrollResult?.success, 'enrollment should succeed');
+
+  const claimedBefore = getClaimedOffers(state, { includeExpired: true });
+  assert.ok(claimedBefore.some(entry => entry?.metadata?.studyTrackId === trackId),
+    'enrollment should claim a matching study offer');
+
+  const dropResult = dropKnowledgeTrack(trackId);
+  assert.ok(dropResult?.success, 'dropping should succeed');
+
+  const claimedAfter = getClaimedOffers(state, { includeExpired: true });
+  assert.equal(
+    claimedAfter.some(entry => entry?.metadata?.studyTrackId === trackId),
+    false,
+    'dropping should release the study offer seat'
+  );
 });
 
 test('knowledge track rollover invalidates study panels for completions and stalls', () => {

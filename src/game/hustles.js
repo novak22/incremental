@@ -6,7 +6,8 @@ import {
   ensureHustleMarketState,
   claimHustleMarketOffer,
   getMarketOfferById,
-  getMarketClaimedOffers
+  getMarketClaimedOffers,
+  releaseHustleMarketOffer
 } from '../core/state/slices/hustleMarket.js';
 import { definitionRequirementsMet } from './requirements/checks.js';
 import { describeHustleRequirements } from './hustles/helpers.js';
@@ -19,6 +20,14 @@ export { ACTIONS, INSTANT_ACTIONS, STUDY_ACTIONS };
 export { rollDailyOffers, getAvailableOffers, getClaimedOffers, getMarketRollAuditLog };
 
 export * from './hustles/helpers.js';
+
+export function releaseClaimedHustleOffer(identifiers, { state = getState() } = {}) {
+  const workingState = state || getState();
+  if (!workingState) {
+    return false;
+  }
+  return releaseHustleMarketOffer(workingState, identifiers);
+}
 
 function clampDay(value, fallback = 1) {
   const parsed = Number(value);

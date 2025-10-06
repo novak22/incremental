@@ -1,6 +1,12 @@
 import { formatHours, formatList, formatMoney, structuredClone } from '../../core/helpers.js';
 import { markDirty } from '../../core/events/invalidationBus.js';
-import { ensureDailyOffersForDay, getAvailableOffers, acceptHustleOffer } from '../hustles.js';
+import {
+  ensureDailyOffersForDay,
+  getAvailableOffers,
+  getClaimedOffers,
+  acceptHustleOffer,
+  releaseClaimedHustleOffer
+} from '../hustles.js';
 export const STUDY_DIRTY_SECTIONS = Object.freeze(['cards', 'dashboard', 'player']);
 
 export function createRequirementsOrchestrator({
@@ -237,6 +243,13 @@ export function createRequirementsOrchestrator({
     progress.enrolledOnDay = null;
 
     removeActiveStudyInstance(id, state);
+
+    const claimedStudyOffers = getClaimedOffers(state, { includeExpired: true })
+      .filter(entry => entry?.metadata?.studyTrackId === track.id);
+
+    for (const offer of claimedStudyOffers) {
+      releaseClaimedHustleOffer({ offerId: offer.offerId, acceptedId: offer.id }, { state });
+    }
 
     addLog(`You dropped ${track.name}. Tuition stays paid, but your schedule opens back up.`, 'warning');
 

@@ -443,6 +443,57 @@ export function claimHustleMarketOffer(state, offerId, details = {}) {
   return acceptedEntry;
 }
 
+export function releaseHustleMarketOffer(state, identifiers = {}) {
+  if (!state) {
+    return false;
+  }
+
+  const { offerId, acceptedId, instanceId } = identifiers || {};
+  if (!offerId && !acceptedId && !instanceId) {
+    return false;
+  }
+
+  const fallbackDay = clampDay(state.day ?? 1, 1);
+  const marketState = ensureHustleMarketState(state, { fallbackDay });
+
+  let released = false;
+  for (let index = marketState.accepted.length - 1; index >= 0; index -= 1) {
+    const entry = marketState.accepted[index];
+    if (!entry) continue;
+
+    const matchesOffer = offerId && entry.offerId === offerId;
+    const matchesAccepted = acceptedId && entry.id === acceptedId;
+    const matchesInstance = instanceId && entry.instanceId === instanceId;
+
+    if (!matchesOffer && !matchesAccepted && !matchesInstance) {
+      continue;
+    }
+
+    marketState.accepted.splice(index, 1);
+    released = true;
+
+    const offer = marketState.offers.find(item => item && item.id === entry.offerId);
+    if (offer) {
+      offer.claimed = false;
+      offer.status = 'available';
+      offer.claimedOnDay = null;
+      offer.instanceId = null;
+      delete offer.claimMetadata;
+      delete offer.claimDeadlineDay;
+      delete offer.completedOnDay;
+      delete offer.completedInstanceId;
+      delete offer.completionHoursLogged;
+    }
+  }
+
+  if (!released) {
+    return false;
+  }
+
+  ensureHustleMarketState(state, { fallbackDay });
+  return true;
+}
+
 export function getMarketOfferById(state, offerId, options = {}) {
   if (!state || !offerId) {
     return null;
