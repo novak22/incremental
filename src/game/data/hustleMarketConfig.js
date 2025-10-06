@@ -1,13 +1,5 @@
 import { structuredClone } from '../../core/helpers.js';
-import {
-  clampMarketDaySpan,
-  clampMarketPositiveInteger
-} from '../hustles/normalizers.js';
-import {
-  resolveOfferHoursFromMetadata,
-  resolveOfferPayoutAmountFromMetadata,
-  resolveOfferPayoutScheduleFromMetadata
-} from '../hustles/offerUtils.js';
+import { buildBaseMetadata, buildVariant } from '../hustles/configBuilders.js';
 
 const DEFAULT_SEATS = 1;
 
@@ -16,113 +8,44 @@ const toNumber = value => {
   return Number.isFinite(numeric) ? numeric : 0;
 };
 
-const finalizeMetadata = (metadata, { fallbackSchedule = 'onCompletion' } = {}) => {
-  const working = structuredClone(metadata);
-  if (working.hoursPerDay == null) {
-    delete working.hoursPerDay;
-  }
-  if (working.daysRequired == null) {
-    delete working.daysRequired;
-  } else {
-    working.daysRequired = clampMarketPositiveInteger(working.daysRequired, 1);
-  }
-  if (!working.progressLabel) {
-    delete working.progressLabel;
-  }
-
-  const resolvedHours = resolveOfferHoursFromMetadata(working, null);
-  if (resolvedHours != null) {
-    const requirements = working.requirements && typeof working.requirements === 'object'
-      ? working.requirements
-      : {};
-    requirements.hours = resolvedHours;
-    working.requirements = requirements;
-    working.hoursRequired = resolvedHours;
-  }
-
-  const resolvedAmount = resolveOfferPayoutAmountFromMetadata(working, null);
-  if (resolvedAmount != null) {
-    working.payout = {
-      ...(working.payout && typeof working.payout === 'object' ? working.payout : {}),
-      amount: resolvedAmount
-    };
-    working.payoutAmount = resolvedAmount;
-  }
-
-  const schedule = resolveOfferPayoutScheduleFromMetadata(working, fallbackSchedule);
-  working.payout = {
-    ...(working.payout && typeof working.payout === 'object' ? working.payout : {}),
-    schedule
-  };
-  working.payoutSchedule = schedule;
-
-  return working;
-};
-
-const buildBaseMetadata = ({ hoursRequired, payoutAmount, progressLabel, hoursPerDay, daysRequired }) => finalizeMetadata({
-  requirements: { hours: hoursRequired },
-  payout: { amount: payoutAmount },
-  hoursPerDay,
-  daysRequired,
-  progressLabel
+const parseBaseValues = base => ({
+  hours: toNumber(base.timeHours),
+  payout: toNumber(base.payout)
 });
 
-const buildVariant = ({
-  id,
-  label,
-  description,
-  copies = 1,
-  durationDays = 0,
-  availableAfterDays = 0,
-  payoutAmount,
-  progressLabel,
-  hoursRequired,
-  hoursPerDay,
-  daysRequired,
-  progress,
-  metadata = {},
-  seats
-}) => {
-  const mergedMetadata = finalizeMetadata({
-    ...metadata,
-    payoutAmount,
-    progressLabel,
-    requirements: { hours: hoursRequired },
-    hoursPerDay,
-    daysRequired
+const instantiateMarket = (definition, base = {}) => {
+  if (!definition) {
+    return null;
+  }
+
+  const context = parseBaseValues(base);
+  const metadata = typeof definition.metadata === 'function'
+    ? definition.metadata(context)
+    : structuredClone(definition.metadata || {});
+  const variants = (definition.variants || []).map(entry => {
+    if (typeof entry === 'function') {
+      return entry(context);
+    }
+    return structuredClone(entry);
   });
 
-  const variant = {
-    id,
-    label,
-    description,
-    copies,
-    durationDays: clampMarketDaySpan(durationDays, 0),
-    availableAfterDays: clampMarketDaySpan(availableAfterDays, 0),
-    metadata: mergedMetadata
+  return {
+    category: definition.category,
+    seats: definition.seats ?? DEFAULT_SEATS,
+    slotsPerRoll: definition.slotsPerRoll,
+    maxActive: definition.maxActive,
+    metadata,
+    variants
   };
-
-  if (progress) {
-    variant.metadata.progress = progress;
-  }
-
-  if (seats != null) {
-    variant.seats = clampMarketPositiveInteger(seats, DEFAULT_SEATS);
-  }
-
-  return variant;
 };
 
-function buildFreelanceMarket(base = {}) {
-  const hours = toNumber(base.timeHours);
-  const payout = toNumber(base.payout);
-
-  return {
+const MARKET_DEFINITIONS = {
+  freelance: {
     category: 'writing',
     seats: DEFAULT_SEATS,
     slotsPerRoll: 2,
     maxActive: 4,
-    metadata: buildBaseMetadata({
+    metadata: ({ hours, payout }) => buildBaseMetadata({
       hoursRequired: hours,
       payoutAmount: payout,
       progressLabel: 'Write the commissioned piece',
@@ -130,7 +53,7 @@ function buildFreelanceMarket(base = {}) {
       daysRequired: 1
     }),
     variants: [
-      buildVariant({
+      ({ hours, payout }) => buildVariant({
         id: 'freelance-rush',
         label: 'Same-Day Draft',
         description: 'Turn a trending request into a polished rush article before the news cycle flips.',
@@ -141,7 +64,7 @@ function buildFreelanceMarket(base = {}) {
         daysRequired: 1,
         progressLabel: 'Draft the rush article'
       }),
-      buildVariant({
+      ({ hours }) => buildVariant({
         id: 'freelance-series',
         label: 'Three-Part Mini Series',
         description: 'Outline, draft, and polish a three-installment story arc for a premium client.',
@@ -152,7 +75,7 @@ function buildFreelanceMarket(base = {}) {
         daysRequired: 3,
         progressLabel: 'Outline and polish the mini-series'
       }),
-      buildVariant({
+      ({ hours }) => buildVariant({
         id: 'freelance-retainer',
         label: 'Weekly Retainer Columns',
         description: 'Keep a subscriber base buzzing with a full week of evergreen columns.',
@@ -165,19 +88,13 @@ function buildFreelanceMarket(base = {}) {
         progressLabel: 'Deliver the retainer lineup'
       })
     ]
-  };
-}
-
-function buildAudienceCallMarket(base = {}) {
-  const hours = toNumber(base.timeHours);
-  const payout = toNumber(base.payout);
-
-  return {
+  },
+  audienceCall: {
     category: 'community',
     seats: DEFAULT_SEATS,
     slotsPerRoll: 2,
     maxActive: 3,
-    metadata: buildBaseMetadata({
+    metadata: ({ hours, payout }) => buildBaseMetadata({
       hoursRequired: hours,
       payoutAmount: payout,
       progressLabel: 'Host the Q&A stream',
@@ -185,7 +102,7 @@ function buildAudienceCallMarket(base = {}) {
       daysRequired: 1
     }),
     variants: [
-      buildVariant({
+      ({ hours, payout }) => buildVariant({
         id: 'audience-flash',
         label: 'Flash AMA',
         description: 'Stage a quick Q&A for superfans during the lunch break rush.',
@@ -196,7 +113,7 @@ function buildAudienceCallMarket(base = {}) {
         daysRequired: 1,
         progressLabel: 'Host the flash AMA'
       }),
-      buildVariant({
+      ({ hours }) => buildVariant({
         id: 'audience-series',
         label: 'Mini Workshop Series',
         description: 'Break a dense topic into two cozy livestreams with downloadable extras.',
@@ -207,7 +124,7 @@ function buildAudienceCallMarket(base = {}) {
         daysRequired: 2,
         progressLabel: 'Run the mini workshop series'
       }),
-      buildVariant({
+      ({ hours }) => buildVariant({
         id: 'audience-cohort',
         label: 'Community Coaching Cohort',
         description: 'Coach a private cohort through deep-dive Q&A sessions across the week.',
@@ -220,19 +137,13 @@ function buildAudienceCallMarket(base = {}) {
         progressLabel: 'Coach the cohort Q&A'
       })
     ]
-  };
-}
-
-function buildBundlePushMarket(base = {}) {
-  const hours = toNumber(base.timeHours);
-  const payout = toNumber(base.payout);
-
-  return {
+  },
+  bundlePush: {
     category: 'marketing',
     seats: DEFAULT_SEATS,
     slotsPerRoll: 2,
     maxActive: 3,
-    metadata: buildBaseMetadata({
+    metadata: ({ hours, payout }) => buildBaseMetadata({
       hoursRequired: hours,
       payoutAmount: payout,
       progressLabel: 'Bundle the featured offer',
@@ -240,7 +151,7 @@ function buildBundlePushMarket(base = {}) {
       daysRequired: 1
     }),
     variants: [
-      buildVariant({
+      ({ hours, payout }) => buildVariant({
         id: 'bundle-flash',
         label: 'Flash Sale Blast',
         description: 'Pair blog hits with a one-day bonus bundle and shout it across every channel.',
@@ -250,7 +161,7 @@ function buildBundlePushMarket(base = {}) {
         daysRequired: 1,
         progressLabel: 'Run the flash sale blast'
       }),
-      buildVariant({
+      ({ hours }) => buildVariant({
         id: 'bundle-roadshow',
         label: 'Cross-Promo Roadshow',
         description: 'Spin up a three-day partner push with curated bundles for every audience segment.',
@@ -261,7 +172,7 @@ function buildBundlePushMarket(base = {}) {
         daysRequired: 3,
         progressLabel: 'Host the cross-promo roadshow'
       }),
-      buildVariant({
+      ({ hours }) => buildVariant({
         id: 'bundle-evergreen',
         label: 'Evergreen Funnel Revamp',
         description: 'Refine the evergreen funnel, swap testimonials, and refresh every automated upsell.',
@@ -274,19 +185,13 @@ function buildBundlePushMarket(base = {}) {
         progressLabel: 'Optimize the evergreen funnel'
       })
     ]
-  };
-}
-
-function buildSurveySprintMarket(base = {}) {
-  const hours = toNumber(base.timeHours);
-  const payout = toNumber(base.payout);
-
-  return {
+  },
+  surveySprint: {
     category: 'research',
     seats: DEFAULT_SEATS,
     slotsPerRoll: 3,
     maxActive: 5,
-    metadata: buildBaseMetadata({
+    metadata: ({ hours, payout }) => buildBaseMetadata({
       hoursRequired: hours,
       payoutAmount: payout,
       progressLabel: 'Complete the survey dash',
@@ -294,7 +199,7 @@ function buildSurveySprintMarket(base = {}) {
       daysRequired: 1
     }),
     variants: [
-      buildVariant({
+      ({ hours, payout }) => buildVariant({
         id: 'survey-burst',
         label: 'Coffee Break Survey',
         description: 'Grab a quick stipend for a single micro feedback burst.',
@@ -305,7 +210,7 @@ function buildSurveySprintMarket(base = {}) {
         daysRequired: 1,
         progressLabel: 'Complete the coffee break survey'
       }),
-      buildVariant({
+      () => buildVariant({
         id: 'survey-panel',
         label: 'Panel Follow-Up',
         description: 'Call past respondents for layered follow-up insights over two evenings.',
@@ -317,7 +222,7 @@ function buildSurveySprintMarket(base = {}) {
         daysRequired: 2,
         progressLabel: 'Handle the panel follow-up'
       }),
-      buildVariant({
+      () => buildVariant({
         id: 'survey-report',
         label: 'Insights Report Sprint',
         description: 'Compile responses into a polished insights deck for premium subscribers.',
@@ -330,19 +235,13 @@ function buildSurveySprintMarket(base = {}) {
         progressLabel: 'Compile the survey report'
       })
     ]
-  };
-}
-
-function buildDataEntryMarket(base = {}) {
-  const hours = toNumber(base.timeHours);
-  const payout = toNumber(base.payout);
-
-  return {
+  },
+  dataEntry: {
     category: 'ops',
     seats: DEFAULT_SEATS,
     slotsPerRoll: 3,
     maxActive: 4,
-    metadata: buildBaseMetadata({
+    metadata: ({ hours, payout }) => buildBaseMetadata({
       hoursRequired: hours,
       payoutAmount: payout,
       progressLabel: 'Clear the queued spreadsheets',
@@ -350,7 +249,7 @@ function buildDataEntryMarket(base = {}) {
       daysRequired: 1
     }),
     variants: [
-      buildVariant({
+      ({ hours, payout }) => buildVariant({
         id: 'data-entry-ledger',
         label: 'Ledger Cleanup Sprint',
         description: 'Audit invoices and reconcile transaction logs before monthly reporting.',
@@ -361,7 +260,7 @@ function buildDataEntryMarket(base = {}) {
         daysRequired: 1,
         progressLabel: 'Reconcile the ledger backlog'
       }),
-      buildVariant({
+      ({ hours }) => buildVariant({
         id: 'data-entry-catalog',
         label: 'Catalog Migration',
         description: 'Normalize SKUs and migrate listings into a new storefront database over two days.',
@@ -373,19 +272,13 @@ function buildDataEntryMarket(base = {}) {
         progressLabel: 'Migrate the catalog inventory'
       })
     ]
-  };
-}
-
-function buildEventPhotoMarket(base = {}) {
-  const hours = toNumber(base.timeHours);
-  const payout = toNumber(base.payout);
-
-  return {
+  },
+  eventPhotoGig: {
     category: 'events',
     seats: DEFAULT_SEATS,
     slotsPerRoll: 1,
     maxActive: 2,
-    metadata: buildBaseMetadata({
+    metadata: ({ hours, payout }) => buildBaseMetadata({
       hoursRequired: hours,
       payoutAmount: payout,
       progressLabel: 'Shoot the event gallery',
@@ -393,7 +286,7 @@ function buildEventPhotoMarket(base = {}) {
       daysRequired: 1
     }),
     variants: [
-      buildVariant({
+      ({ hours, payout }) => buildVariant({
         id: 'photo-pop',
         label: 'Pop-Up Shoot',
         description: 'Capture a lively pop-up showcase with a single-day gallery sprint.',
@@ -403,7 +296,7 @@ function buildEventPhotoMarket(base = {}) {
         daysRequired: 1,
         progressLabel: 'Deliver the pop-up gallery'
       }),
-      buildVariant({
+      () => buildVariant({
         id: 'photo-weekender',
         label: 'Weekend Retainer',
         description: 'Cover a two-day festival run with daily highlight reels and VIP portraits.',
@@ -414,7 +307,7 @@ function buildEventPhotoMarket(base = {}) {
         daysRequired: 3,
         progressLabel: 'Cover the weekend retainer'
       }),
-      buildVariant({
+      () => buildVariant({
         id: 'photo-tour',
         label: 'Tour Documentary',
         description: 'Shadow a headliner for a full tour stop, from rehearsals to encore edits.',
@@ -427,19 +320,13 @@ function buildEventPhotoMarket(base = {}) {
         progressLabel: 'Produce the tour documentary set'
       })
     ]
-  };
-}
-
-function buildPopUpWorkshopMarket(base = {}) {
-  const hours = toNumber(base.timeHours);
-  const payout = toNumber(base.payout);
-
-  return {
+  },
+  popUpWorkshop: {
     category: 'education',
     seats: DEFAULT_SEATS,
     slotsPerRoll: 2,
     maxActive: 4,
-    metadata: buildBaseMetadata({
+    metadata: ({ hours, payout }) => buildBaseMetadata({
       hoursRequired: hours,
       payoutAmount: payout,
       progressLabel: 'Teach the workshop curriculum',
@@ -447,7 +334,7 @@ function buildPopUpWorkshopMarket(base = {}) {
       daysRequired: 1
     }),
     variants: [
-      buildVariant({
+      ({ hours, payout }) => buildVariant({
         id: 'workshop-evening',
         label: 'Evening Intensive',
         description: 'Host a single-evening crash course with a lively Q&A finale.',
@@ -458,7 +345,7 @@ function buildPopUpWorkshopMarket(base = {}) {
         daysRequired: 1,
         progressLabel: 'Run the evening intensive'
       }),
-      buildVariant({
+      ({ hours }) => buildVariant({
         id: 'workshop-weekend',
         label: 'Weekend Cohort',
         description: 'Stretch the curriculum into a cozy two-day cohort with templates and recaps.',
@@ -469,7 +356,7 @@ function buildPopUpWorkshopMarket(base = {}) {
         daysRequired: 2,
         progressLabel: 'Guide the weekend workshop'
       }),
-      buildVariant({
+      () => buildVariant({
         id: 'workshop-coaching',
         label: 'Mentor Track',
         description: 'Pair teaching with asynchronous feedback and office hours across the week.',
@@ -482,19 +369,13 @@ function buildPopUpWorkshopMarket(base = {}) {
         progressLabel: 'Mentor the workshop cohort'
       })
     ]
-  };
-}
-
-function buildVlogEditRushMarket(base = {}) {
-  const hours = toNumber(base.timeHours);
-  const payout = toNumber(base.payout);
-
-  return {
+  },
+  vlogEditRush: {
     category: 'video',
     seats: DEFAULT_SEATS,
     slotsPerRoll: 2,
     maxActive: 4,
-    metadata: buildBaseMetadata({
+    metadata: ({ hours, payout }) => buildBaseMetadata({
       hoursRequired: hours,
       payoutAmount: payout,
       progressLabel: 'Edit the partner episode',
@@ -502,7 +383,7 @@ function buildVlogEditRushMarket(base = {}) {
       daysRequired: 1
     }),
     variants: [
-      buildVariant({
+      ({ hours, payout }) => buildVariant({
         id: 'vlog-rush-cut',
         label: 'Rush Cut',
         description: 'Slice b-roll, color, and caption a single episode against a tight deadline.',
@@ -513,7 +394,7 @@ function buildVlogEditRushMarket(base = {}) {
         daysRequired: 1,
         progressLabel: 'Deliver the rush cut'
       }),
-      buildVariant({
+      ({ hours }) => buildVariant({
         id: 'vlog-batch',
         label: 'Batch Edit Package',
         description: 'Turn around two episodes with shared motion graphics and reusable transitions.',
@@ -524,7 +405,7 @@ function buildVlogEditRushMarket(base = {}) {
         daysRequired: 2,
         progressLabel: 'Deliver the batch edit package'
       }),
-      buildVariant({
+      () => buildVariant({
         id: 'vlog-season',
         label: 'Season Launch Sprint',
         description: 'Assemble opener graphics, teaser cuts, and QA for an entire mini-season.',
@@ -537,19 +418,13 @@ function buildVlogEditRushMarket(base = {}) {
         progressLabel: 'Assemble the season launch sprint'
       })
     ]
-  };
-}
-
-function buildDropshipPackPartyMarket(base = {}) {
-  const hours = toNumber(base.timeHours);
-  const payout = toNumber(base.payout);
-
-  return {
+  },
+  dropshipPackParty: {
     category: 'logistics',
     seats: DEFAULT_SEATS,
     slotsPerRoll: 2,
     maxActive: 4,
-    metadata: buildBaseMetadata({
+    metadata: ({ hours, payout }) => buildBaseMetadata({
       hoursRequired: hours,
       payoutAmount: payout,
       progressLabel: 'Pack the surprise boxes',
@@ -557,7 +432,7 @@ function buildDropshipPackPartyMarket(base = {}) {
       daysRequired: 1
     }),
     variants: [
-      buildVariant({
+      ({ hours, payout }) => buildVariant({
         id: 'dropship-flash-pack',
         label: 'Flash Pack Party',
         description: 'Bundle overnight orders with handwritten notes and confetti slips.',
@@ -568,7 +443,7 @@ function buildDropshipPackPartyMarket(base = {}) {
         daysRequired: 1,
         progressLabel: 'Handle the flash pack party'
       }),
-      buildVariant({
+      () => buildVariant({
         id: 'dropship-weekender',
         label: 'Weekend Fulfillment Surge',
         description: 'Keep the warehouse humming through a two-day influencer spotlight.',
@@ -579,7 +454,7 @@ function buildDropshipPackPartyMarket(base = {}) {
         daysRequired: 2,
         progressLabel: 'Handle the weekend surge'
       }),
-      buildVariant({
+      () => buildVariant({
         id: 'dropship-subscription',
         label: 'Subscription Box Assembly',
         description: 'Assemble a full month of subscription boxes with premium inserts and QA.',
@@ -592,19 +467,13 @@ function buildDropshipPackPartyMarket(base = {}) {
         progressLabel: 'Bundle the subscription shipment'
       })
     ]
-  };
-}
-
-function buildSaasBugSquashMarket(base = {}) {
-  const hours = toNumber(base.timeHours);
-  const payout = toNumber(base.payout);
-
-  return {
+  },
+  saasBugSquash: {
     category: 'software',
     seats: DEFAULT_SEATS,
     slotsPerRoll: 2,
     maxActive: 3,
-    metadata: buildBaseMetadata({
+    metadata: ({ hours, payout }) => buildBaseMetadata({
       hoursRequired: hours,
       payoutAmount: payout,
       progressLabel: 'Deploy the emergency fix',
@@ -612,7 +481,7 @@ function buildSaasBugSquashMarket(base = {}) {
       daysRequired: 1
     }),
     variants: [
-      buildVariant({
+      ({ hours, payout }) => buildVariant({
         id: 'saas-hotfix',
         label: 'Hotfix Call',
         description: 'Trace crashes and patch the production build before support tickets pile up.',
@@ -623,7 +492,7 @@ function buildSaasBugSquashMarket(base = {}) {
         daysRequired: 1,
         progressLabel: 'Ship the emergency hotfix'
       }),
-      buildVariant({
+      () => buildVariant({
         id: 'saas-hardening',
         label: 'Stability Hardening',
         description: 'Audit the service, expand tests, and close regression gaps over two days.',
@@ -634,7 +503,7 @@ function buildSaasBugSquashMarket(base = {}) {
         daysRequired: 2,
         progressLabel: 'Harden the service for stability'
       }),
-      buildVariant({
+      () => buildVariant({
         id: 'saas-sprint',
         label: 'Reliability Sprint',
         description: 'Lead a week-long reliability sprint with telemetry hooks and rollout plans.',
@@ -647,19 +516,13 @@ function buildSaasBugSquashMarket(base = {}) {
         progressLabel: 'Lead the reliability sprint'
       })
     ]
-  };
-}
-
-function buildAudiobookNarrationMarket(base = {}) {
-  const hours = toNumber(base.timeHours);
-  const payout = toNumber(base.payout);
-
-  return {
+  },
+  audiobookNarration: {
     category: 'audio',
     seats: DEFAULT_SEATS,
     slotsPerRoll: 1,
     maxActive: 2,
-    metadata: buildBaseMetadata({
+    metadata: ({ hours, payout }) => buildBaseMetadata({
       hoursRequired: hours,
       payoutAmount: payout,
       progressLabel: 'Narrate the featured chapter',
@@ -667,7 +530,7 @@ function buildAudiobookNarrationMarket(base = {}) {
       daysRequired: 1
     }),
     variants: [
-      buildVariant({
+      ({ hours, payout }) => buildVariant({
         id: 'audiobook-sample',
         label: 'Sample Chapter Session',
         description: 'Record a standout sample chapter with layered ambience and polish.',
@@ -677,7 +540,7 @@ function buildAudiobookNarrationMarket(base = {}) {
         daysRequired: 1,
         progressLabel: 'Cut the sample session'
       }),
-      buildVariant({
+      () => buildVariant({
         id: 'audiobook-volume',
         label: 'Featured Volume Marathon',
         description: 'Deliver two feature chapters with bonus pickups and breath edits.',
@@ -688,7 +551,7 @@ function buildAudiobookNarrationMarket(base = {}) {
         daysRequired: 2,
         progressLabel: 'Record the featured volume'
       }),
-      buildVariant({
+      () => buildVariant({
         id: 'audiobook-series',
         label: 'Series Finale Production',
         description: 'Narrate the season finale arc with retakes, engineering, and QC notes.',
@@ -701,19 +564,13 @@ function buildAudiobookNarrationMarket(base = {}) {
         progressLabel: 'Deliver the full series finale'
       })
     ]
-  };
-}
-
-function buildStreetPromoSprintMarket(base = {}) {
-  const hours = toNumber(base.timeHours);
-  const payout = toNumber(base.payout);
-
-  return {
+  },
+  streetPromoSprint: {
     category: 'promotion',
     seats: DEFAULT_SEATS,
     slotsPerRoll: 3,
     maxActive: 5,
-    metadata: buildBaseMetadata({
+    metadata: ({ hours, payout }) => buildBaseMetadata({
       hoursRequired: hours,
       payoutAmount: payout,
       progressLabel: 'Hit the street team route',
@@ -721,7 +578,7 @@ function buildStreetPromoSprintMarket(base = {}) {
       daysRequired: 1
     }),
     variants: [
-      buildVariant({
+      ({ hours, payout }) => buildVariant({
         id: 'street-lunch-rush',
         label: 'Lunch Rush Pop-Up',
         description: 'Drop QR stickers at the lunch market and hype a limited-time drop.',
@@ -732,7 +589,7 @@ function buildStreetPromoSprintMarket(base = {}) {
         daysRequired: 1,
         progressLabel: 'Cover the lunch rush route'
       }),
-      buildVariant({
+      () => buildVariant({
         id: 'street-market',
         label: 'Night Market Takeover',
         description: 'Coordinate volunteers and signage to dominate the evening night market.',
@@ -744,7 +601,7 @@ function buildStreetPromoSprintMarket(base = {}) {
         daysRequired: 2,
         progressLabel: 'Run the night market push'
       }),
-      buildVariant({
+      () => buildVariant({
         id: 'street-festival',
         label: 'Festival Street Team',
         description: 'Lead the festival street team with scheduled hype cycles and sponsor shout-outs.',
@@ -757,23 +614,15 @@ function buildStreetPromoSprintMarket(base = {}) {
         progressLabel: 'Lead the festival street team'
       })
     ]
-  };
-}
-
-const MARKET_BUILDERS = {
-  freelance: buildFreelanceMarket,
-  audienceCall: buildAudienceCallMarket,
-  bundlePush: buildBundlePushMarket,
-  surveySprint: buildSurveySprintMarket,
-  dataEntry: buildDataEntryMarket,
-  eventPhotoGig: buildEventPhotoMarket,
-  popUpWorkshop: buildPopUpWorkshopMarket,
-  vlogEditRush: buildVlogEditRushMarket,
-  dropshipPackParty: buildDropshipPackPartyMarket,
-  saasBugSquash: buildSaasBugSquashMarket,
-  audiobookNarration: buildAudiobookNarrationMarket,
-  streetPromoSprint: buildStreetPromoSprintMarket
+  }
 };
+
+const MARKET_BUILDERS = Object.fromEntries(
+  Object.entries(MARKET_DEFINITIONS).map(([key, definition]) => [
+    key,
+    base => instantiateMarket(definition, base)
+  ])
+);
 
 export function getHustleMarketConfig(key, baseConfig = {}) {
   const builder = MARKET_BUILDERS[key];
@@ -792,4 +641,3 @@ export function getAllHustleMarketConfigs(baseConfigs = {}) {
   });
   return Object.fromEntries(entries);
 }
-
