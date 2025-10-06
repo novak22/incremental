@@ -862,7 +862,7 @@ test('accepting a hustle offer from dashboard quick actions refreshes the todo q
   const instanceId = acceptedEntries[0]?.instanceId;
   assert.ok(instanceId, 'expected claimed hustle entry to include an instance id');
 
-  const outstandingModule = await import('../../src/ui/actions/outstanding.js');
+  const outstandingModule = await import('../../src/ui/actions/outstanding/index.js');
   const outstandingEntries = outstandingModule.collectOutstandingActionEntries(state);
   const hasOutstanding = outstandingEntries.some(entry => entry?.id === `instance:${instanceId}`);
   assert.ok(hasOutstanding, 'expected outstanding entry for the accepted hustle');
