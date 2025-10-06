@@ -6,6 +6,7 @@ import { success, error, empty, tryCatch } from './result.js';
 import { syncNicheTrendSnapshots } from '../../game/events/syncNicheTrendSnapshots.js';
 import { maybeSpawnNicheEvents } from '../../game/events/index.js';
 import { createDefaultHustleMarketState } from '../state/slices/hustleMarket/index.js';
+import { createDefaultActionMarketState } from '../state/slices/actionMarket/index.js';
 
 function migrateLegacySnapshot(snapshot, context) {
   if (!snapshot || typeof snapshot !== 'object') {
@@ -161,6 +162,16 @@ function migrateLegacyHustlesToActions(snapshot, context) {
       ? defaultState.hustleMarket
       : createDefaultHustleMarketState();
     migrated.hustleMarket = cloneValue(defaultMarket, clone);
+  }
+
+  if (!isPlainObject(migrated.actionMarket)) {
+    migrated.actionMarket = createDefaultActionMarketState();
+  }
+  const categories = isPlainObject(migrated.actionMarket.categories)
+    ? migrated.actionMarket.categories
+    : (migrated.actionMarket.categories = {});
+  if (!categories.hustle && migrated.hustleMarket) {
+    categories.hustle = migrated.hustleMarket;
   }
 
   return migrated;
