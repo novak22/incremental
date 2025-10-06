@@ -5,41 +5,6 @@ import {
 } from '../utils.js';
 import { getInstanceProgressSnapshot } from '../../../core/state/slices/actions/index.js';
 
-export function resolveStudyTrackIdFromProgress(progress = {}) {
-  if (!progress || typeof progress !== 'object') {
-    return null;
-  }
-
-  const metadata = typeof progress.metadata === 'object' && progress.metadata !== null
-    ? progress.metadata
-    : {};
-
-  const candidates = [
-    progress.studyTrackId,
-    progress.trackId,
-    metadata.studyTrackId,
-    metadata.trackId
-  ];
-
-  for (const candidate of candidates) {
-    if (typeof candidate === 'string') {
-      const trimmed = candidate.trim();
-      if (trimmed) {
-        return trimmed;
-      }
-    }
-  }
-
-  const identifiers = [progress.definitionId, metadata.definitionId];
-  for (const identifier of identifiers) {
-    if (typeof identifier === 'string' && identifier.startsWith('study-')) {
-      return identifier.slice('study-'.length);
-    }
-  }
-
-  return null;
-}
-
 export function buildProgressSnapshot({
   state,
   definition,

@@ -4,7 +4,7 @@ import { getActionDefinition } from '../../../game/registryService.js';
 import { clampToZero } from '../utils.js';
 import collectMarketIndexes from './marketIndexes.js';
 import createOutstandingEntry from './entryBuilders.js';
-import { resolveStudyTrackIdFromProgress } from './progressSnapshots.js';
+import { resolveStudyTrackId } from '../studyTracks.js';
 
 export function collectOutstandingActionEntries(state = getState()) {
   const workingState = state || getState() || {};
@@ -44,7 +44,7 @@ export function collectOutstandingActionEntries(state = getState()) {
         order: -(index * 10 + instanceIndex)
       });
       if (entry) {
-        const trackId = resolveStudyTrackIdFromProgress(entry.progress);
+        const trackId = resolveStudyTrackId(entry.progress, entry?.raw?.definition, entry);
         if (trackId) {
           const knowledge = workingState?.progress?.knowledge || {};
           if (knowledge[trackId]?.studiedToday) {
