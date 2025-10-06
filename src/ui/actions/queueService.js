@@ -319,6 +319,30 @@ export function mergeQueueMetrics(target = {}, metrics = {}, state = {}) {
   return target;
 }
 
+export function mergeQueueSnapshotMetrics(target = {}, snapshots = [], state = {}) {
+  if (!target || typeof target !== 'object') {
+    return target;
+  }
+  const list = Array.isArray(snapshots) ? snapshots : [];
+  list.forEach(snapshot => {
+    if (!snapshot || typeof snapshot !== 'object') {
+      return;
+    }
+    if (snapshot.metrics) {
+      mergeQueueMetrics(target, snapshot.metrics, state);
+    }
+  });
+  return target;
+}
+
+export function applyFinalQueueMetrics(target = {}, state = {}) {
+  if (!target || typeof target !== 'object') {
+    return target;
+  }
+  Object.assign(target, buildQueueMetrics(state, target));
+  return target;
+}
+
 export default {
   normalizeBucketName,
   resolveFocusBucket,
@@ -329,5 +353,7 @@ export default {
   compareByRoi,
   rankEntriesByRoi,
   buildQueueMetrics,
-  mergeQueueMetrics
+  mergeQueueMetrics,
+  mergeQueueSnapshotMetrics,
+  applyFinalQueueMetrics
 };

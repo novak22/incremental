@@ -3,7 +3,7 @@ import { formatHours, formatMoney } from '../../../core/helpers.js';
 import { describeHustleRequirements, getHustleDailyUsage } from '../../../game/hustles/helpers.js';
 import { getAvailableOffers, getClaimedOffers, acceptHustleOffer, rollDailyOffers } from '../../../game/hustles.js';
 import { executeAction } from '../../../game/actions.js';
-import { collectOutstandingActionEntries } from '../../actions/registry.js';
+import { collectOutstandingActionEntries } from '../../actions/outstanding.js';
 import { describeHustleOfferMeta, describeSeatAvailability } from '../../hustles/offerHelpers.js';
 import { describeRequirementGuidance } from '../../hustles/requirements.js';
 
