@@ -52,3 +52,7 @@ test('formatPercent applies clamping and hides the sign when requested', () => {
 test('formatPercent adds a plus sign for positive deltas when asked', () => {
   assert.equal(formatPercent(0.156, { signDisplay: 'always' }), '+16%');
 });
+
+test('formatCurrency parses formatted string input', () => {
+  assert.equal(formatCurrency('$1,234.5'), '$1,234.50');
+});

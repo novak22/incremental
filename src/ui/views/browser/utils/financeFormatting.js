@@ -1,8 +1,8 @@
 import { formatMoney } from '../../../../core/helpers.js';
+import { parseNumericInput } from './numberParsing.js';
 
 function normalizeAmount(value) {
-  const numeric = Number(value);
-  return Number.isFinite(numeric) ? numeric : 0;
+  return parseNumericInput(value, 0);
 }
 
 function withCents(value) {

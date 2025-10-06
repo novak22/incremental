@@ -1,5 +1,5 @@
 import { buildFinanceModel } from '../../../cards/model/index.js';
-import { formatMoney } from '../../../../core/helpers.js';
+import { formatCurrency, formatSignedCurrency } from '../utils/financeFormatting.js';
 
 let elements = null;
 let initialized = false;
@@ -7,25 +7,6 @@ let initialized = false;
 function ensureElements(widgetElements = {}) {
   if (elements) return;
   elements = widgetElements;
-}
-
-function formatCurrency(amount) {
-  const numeric = Number(amount);
-  const absolute = Math.abs(Number.isFinite(numeric) ? numeric : 0);
-  const formatted = formatMoney(Math.round(absolute * 100) / 100);
-  const prefix = numeric < 0 ? '-$' : '$';
-  return `${prefix}${formatted}`;
-}
-
-function formatSignedCurrency(amount) {
-  const numeric = Number(amount);
-  if (!Number.isFinite(numeric) || numeric === 0) {
-    return '$0';
-  }
-  const absolute = Math.abs(numeric);
-  const formatted = formatMoney(Math.round(absolute * 100) / 100);
-  const sign = numeric > 0 ? '+' : '-';
-  return `${sign}$${formatted}`;
 }
 
 function decorateValue(element, tone) {
