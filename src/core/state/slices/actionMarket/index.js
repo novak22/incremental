@@ -167,10 +167,33 @@ export function completeActionMarketInstance(state, category, instanceId, {
     return null;
   }
 
-  const fallbackDay = clampDay(completionDay ?? state.day ?? 1, 1);
+  const categoryKey = typeof category === 'string'
+    ? (category.trim().length ? category.trim() : 'default')
+    : 'default';
+  const marketStateRoot = ensureActionMarketState(state);
+  const existingCategoryState = marketStateRoot.categories?.[categoryKey];
+  const staleEntry = existingCategoryState?.accepted?.find?.(item => item?.instanceId === instanceId) || null;
+
+  const fallbackDay = clampDay(completionDay ?? state.day ?? staleEntry?.acceptedOnDay ?? 1, 1);
   const marketState = ensureActionMarketCategoryState(state, category, { fallbackDay });
 
-  const entry = marketState.accepted.find(item => item.instanceId === instanceId);
+  let entry = marketState.accepted.find(item => item.instanceId === instanceId);
+  if (!entry && staleEntry) {
+    const normalized = normalizeActionMarketAcceptedEntry(staleEntry, {
+      fallbackDay,
+      category: marketState.category
+    });
+    if (normalized) {
+      if (normalized.status !== 'complete' && normalized.deadlineDay < fallbackDay) {
+        normalized.status = 'expired';
+        normalized.expired = true;
+      } else if ('expired' in normalized) {
+        delete normalized.expired;
+      }
+      marketState.accepted.push(normalized);
+      entry = normalized;
+    }
+  }
   if (!entry) {
     return null;
   }

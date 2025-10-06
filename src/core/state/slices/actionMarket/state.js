@@ -66,7 +66,16 @@ function normalizeCategoryState(categoryState, {
       fallbackDay: normalizedFallbackDay,
       category
     }))
-    .filter(entry => entry && (entry.status === 'complete' || entry.deadlineDay >= normalizedFallbackDay));
+    .filter(entry => Boolean(entry))
+    .map(entry => {
+      if (entry.status !== 'complete' && entry.deadlineDay < normalizedFallbackDay) {
+        entry.status = 'expired';
+        entry.expired = true;
+      } else if ('expired' in entry) {
+        delete entry.expired;
+      }
+      return entry;
+    });
 
   const acceptedByOffer = new Map();
   normalizedAccepted.forEach(entry => {
@@ -103,7 +112,12 @@ function normalizeCategoryState(categoryState, {
     }
   });
 
-  const filteredAccepted = normalizedAccepted.filter(entry => normalizedOffersById.has(entry.offerId));
+  const filteredAccepted = normalizedAccepted.filter(entry => {
+    if (normalizedOffersById.has(entry.offerId)) {
+      return true;
+    }
+    return entry.status === 'complete' || entry.status === 'expired';
+  });
 
   categoryState.offers = dedupedOffers;
   categoryState.accepted = filteredAccepted;
