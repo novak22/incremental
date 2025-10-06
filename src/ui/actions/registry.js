@@ -1,5 +1,6 @@
 import { getState } from '../../core/state.js';
 import { coerceNumber, normalizeActionEntries } from './utils.js';
+import './fallbacks/findFreelanceWork.js';
 import {
   mergeQueueSnapshotMetrics,
   applyFinalQueueMetrics
