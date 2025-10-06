@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- UI: When no hustle commitments remain, the TODO queue now surfaces a "Find freelance work" task that scouts the market and auto-accepts the best freelance contract after a quick 15-minute search.
 - Hustles: Offer expirations now include a two-day grace period so freshly rolled contracts stick around long enough to plan your schedule.
 - UI: Shared action cards now power hustles, courses, and upkeep with contract descriptors, refreshed accept → work → complete copy, and expanded TODO grouping aliases for maintenance and study variants.
 - UI: Hustle quick actions group market variants, surface commitment length and expiry, and card views now spotlight seat limits and market categories across Hustles and Learnly.

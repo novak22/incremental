@@ -19,3 +19,4 @@
 - The dashboard’s Quick Actions, Asset Upgrades, and Study Enrollment widgets now register providers, so every suggestion feeds the shared queue before rendering. This keeps empty messages, scrollers, and hour counters consistent across panels.
 - The TODO queue handed to TimoDoro is built by `buildActionQueue`, meaning its task list, available/spent hour labels, and auto-completed upkeep entries all reference the same normalized data used on the landing dashboard.
 - Future task sources (events, contracts, prestige systems) should hook into the registry rather than pushing entries directly into widgets—doing so guarantees they appear on both the home dashboard and within TimoDoro summaries without extra wiring.
+- A fallback provider adds a "Find freelance work" task whenever no hustle commitments remain in the queue, automatically scouting the hustle market for the highest-paying freelance contract with the shortest commitment and accepting it on click.
