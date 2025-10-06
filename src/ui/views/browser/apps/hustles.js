@@ -195,12 +195,23 @@ function createHustleCard(definition, model) {
   card.dataset.time = String(model.metrics?.time?.value ?? 0);
   card.dataset.payout = String(model.metrics?.payout?.value ?? 0);
   card.dataset.roi = String(model.metrics?.roi ?? 0);
-  const visibleOffers = Array.isArray(model.offers)
+  const hasRawOffers = Array.isArray(model.offers) && model.offers.length > 0;
+  const hasRawUpcoming = Array.isArray(model.upcoming) && model.upcoming.length > 0;
+  const visibleOffers = hasRawOffers
     ? model.offers.filter(offer => !offer?.locked)
     : [];
-  const visibleUpcoming = Array.isArray(model.upcoming)
+  const visibleUpcoming = hasRawUpcoming
     ? model.upcoming.filter(offer => !offer?.locked)
     : [];
+  const hasCommitments = Array.isArray(model.commitments) && model.commitments.length > 0;
+
+  const hasAnySource = hasRawOffers || hasRawUpcoming;
+  const hasUnlockedContent = visibleOffers.length > 0 || visibleUpcoming.length > 0;
+
+  if (!hasUnlockedContent && hasAnySource && !hasCommitments) {
+    return null;
+  }
+
   card.dataset.available = visibleOffers.length > 0 ? 'true' : 'false';
   if (model.filters?.limitRemaining !== null && model.filters?.limitRemaining !== undefined) {
     card.dataset.limitRemaining = String(model.filters.limitRemaining);
@@ -280,7 +291,7 @@ function createHustleCard(definition, model) {
     card.appendChild(actions);
   }
 
-  if (Array.isArray(model.commitments) && model.commitments.length) {
+  if (hasCommitments) {
     const commitmentsSection = createCardSection(
       'Active commitments',
       'Track multi-day gigs and keep their payouts on schedule.'
@@ -374,7 +385,9 @@ export default function renderHustles(context = {}, definitions = [], models = [
     }
 
     const card = createHustleCard(definition, model);
-    list.appendChild(card);
+    if (card) {
+      list.appendChild(card);
+    }
   });
 
   if (!list.children.length) {
