@@ -1,262 +1,67 @@
-import { formatHours, formatMoney } from '../../core/helpers.js';
+import { formatHours } from '../../core/helpers.js';
 import { clampNumber } from './formatters.js';
-import { getAssetState } from '../../core/state.js';
-import { getAssets, getActionDefinition } from '../../game/registryService.js';
-import {
-  canPerformQualityAction,
-  getQualityActions,
-  getQualityTracks,
-  performQualityAction
-} from '../../game/assets/quality/actions.js';
-import { getNextQualityLevel } from '../../game/assets/quality/levels.js';
-import { instanceLabel } from '../../game/assets/details.js';
 import { collectOutstandingActionEntries } from '../actions/registry.js';
 import { registerActionProvider } from '../actions/providers.js';
-import { getAvailableOffers, acceptHustleOffer } from '../../game/hustles.js';
 import { executeAction } from '../../game/actions.js';
-import { describeHustleRequirements } from '../../game/hustles/helpers.js';
+import { acceptHustleOffer } from '../../game/hustles.js';
 import {
-  resolveOfferHours,
-  resolveOfferPayout,
-  resolveOfferSchedule,
-  describeQuickActionOfferMeta,
-  describeHustleOfferMeta,
-  groupOffersByTemplateVariant
-} from '../hustles/offerHelpers.js';
-import { describeRequirementGuidance } from '../hustles/requirements.js';
+  extractQuickActionCandidates,
+  buildAssetUpgradeData
+} from './quickActions/data.js';
+import {
+  ensureQuickActionEntries,
+  sortQuickActions
+} from './quickActions/filters.js';
+import { buildQuickActionHints, createEmptyQuickActionEntry } from './quickActions/hints.js';
 
-function getQualitySnapshot(instance = {}) {
-  const level = Math.max(0, clampNumber(instance?.quality?.level));
-  const progress = instance?.quality?.progress && typeof instance.quality.progress === 'object'
-    ? { ...instance.quality.progress }
-    : {};
+function buildQuickActionEntry(candidate) {
+  const hints = buildQuickActionHints(candidate);
+  const workingState = candidate?.state || {};
+  const offer = candidate?.primaryOffer;
+
   return {
-    level,
-    progress
-  };
-}
-
-function resolveProgressAmount(action, context) {
-  if (!action) return 0;
-  if (typeof action.progressAmount === 'function') {
-    try {
-      const amount = Number(action.progressAmount(context));
-      if (Number.isFinite(amount) && amount > 0) {
-        return amount;
+    id: candidate?.id,
+    groupId: candidate?.groupId,
+    offerIds: candidate?.offerIds || [],
+    label: hints.label,
+    primaryLabel: hints.primaryLabel,
+    description: hints.description,
+    onClick: () => {
+      if (!offer) {
+        return null;
       }
-    } catch (error) {
-      return 0;
-    }
-  }
-  if (Number.isFinite(Number(action.progressAmount))) {
-    const numeric = Number(action.progressAmount);
-    return numeric > 0 ? numeric : 0;
-  }
-  if (action.progressKey) {
-    return 1;
-  }
-  return 0;
-}
-
-function getProgressPerRun(asset, instance, action, state) {
-  if (!asset || !instance || !action) return 0;
-  const quality = getQualitySnapshot(instance);
-  const context = {
-    state,
-    definition: asset,
-    instance,
-    quality,
-    upgrade: id => state?.upgrades?.[id]
+      let result = null;
+      const offerId = offer?.id || offer;
+      executeAction(() => {
+        result = acceptHustleOffer(offerId, { state: workingState });
+      });
+      return result;
+    },
+    roi: candidate?.roi ?? 0,
+    timeCost: candidate?.hours ?? 0,
+    payout: candidate?.payout ?? 0,
+    payoutText: hints.payoutText,
+    durationHours: candidate?.hours ?? 0,
+    durationText: hints.durationText,
+    meta: hints.meta,
+    repeatable: hints.repeatable,
+    remainingRuns: candidate?.remainingRuns ?? 0,
+    remainingDays: candidate?.remainingDays ?? null,
+    schedule: candidate?.schedule,
+    offer,
+    excludeFromQueue: true,
+    disabled: hints.disabled,
+    disabledReason: hints.disabledReason,
+    focusCategory: hints.focusCategory,
+    focusBucket: hints.focusBucket
   };
-  return resolveProgressAmount(action, context);
-}
-
-function estimateRemainingRuns(asset, instance, action, remaining, state) {
-  if (!Number.isFinite(remaining) || remaining <= 0) {
-    return 0;
-  }
-  const progressPerRun = getProgressPerRun(asset, instance, action, state);
-  if (!Number.isFinite(progressPerRun) || progressPerRun <= 0) {
-    return null;
-  }
-  return Math.max(1, Math.ceil(remaining / progressPerRun));
-}
-
-function normalizeCategory(value) {
-  if (typeof value !== 'string') {
-    return '';
-  }
-  const trimmed = value.trim().toLowerCase();
-  if (!trimmed) {
-    return '';
-  }
-  if (trimmed.startsWith('study') || trimmed.startsWith('education')) {
-    return 'study';
-  }
-  if (trimmed.startsWith('maint')) {
-    return 'maintenance';
-  }
-  return trimmed;
 }
 
 export function buildQuickActions(state) {
-  const workingState = state || {};
-  const offers = getAvailableOffers(workingState, { includeUpcoming: false, includeClaimed: false }) || [];
-  const currentDay = Math.max(1, clampNumber(workingState.day) || 1);
-
-  const groups = groupOffersByTemplateVariant(offers);
-
-  const items = groups.map(group => {
-    const definition = getActionDefinition(group.definitionId || group.templateId) || {};
-    const requirements = describeHustleRequirements(definition, workingState) || [];
-    const unmetRequirements = requirements.filter(entry => entry && entry.met === false);
-    const requirementsMet = unmetRequirements.length === 0;
-    const lockGuidance = describeRequirementGuidance(unmetRequirements);
-    const availableOffers = (group.offers || [])
-      .filter(candidate => (candidate?.availableOnDay || 0) <= currentDay)
-      .sort((a, b) => {
-        const expiresA = Number.isFinite(a?.expiresOnDay) ? a.expiresOnDay : Infinity;
-        const expiresB = Number.isFinite(b?.expiresOnDay) ? b.expiresOnDay : Infinity;
-        if (expiresA !== expiresB) {
-          return expiresA - expiresB;
-        }
-        return (a?.rolledOnDay || 0) - (b?.rolledOnDay || 0);
-      });
-
-    const fallbackSorted = (group.offers || []).slice().sort((a, b) => {
-      const expiresA = Number.isFinite(a?.expiresOnDay) ? a.expiresOnDay : Infinity;
-      const expiresB = Number.isFinite(b?.expiresOnDay) ? b.expiresOnDay : Infinity;
-      if (expiresA !== expiresB) {
-        return expiresA - expiresB;
-      }
-      return (a?.availableOnDay || Infinity) - (b?.availableOnDay || Infinity);
-    });
-
-    const primaryOffer = availableOffers[0] || fallbackSorted[0];
-    if (!primaryOffer) {
-      return null;
-    }
-
-    const hours = resolveOfferHours(primaryOffer, definition, { toNumber: clampNumber });
-    const payout = resolveOfferPayout(primaryOffer, definition, { toNumber: clampNumber });
-    const durationText = formatHours(hours);
-    const schedule = resolveOfferSchedule(primaryOffer);
-    const label = group.variantLabel
-      || definition?.name
-      || primaryOffer?.templateId
-      || 'Hustle offer';
-
-    const description = primaryOffer?.variant?.description || definition?.description || '';
-
-    const offerMeta = describeHustleOfferMeta({
-      offer: primaryOffer,
-      definition,
-      currentDay,
-      formatHoursFn: formatHours,
-      formatMoneyFn: formatMoney,
-      toNumber: clampNumber
-    });
-
-    const seatsAvailable = availableOffers.reduce((total, entry) => {
-      const seats = clampNumber(entry?.seats);
-      return total + (Number.isFinite(seats) && seats > 0 ? Math.floor(seats) : 1);
-    }, 0);
-
-    const meta = describeQuickActionOfferMeta({
-      payout,
-      schedule: offerMeta.schedule,
-      durationText,
-      daysRequired: offerMeta.daysRequired,
-      remainingDays: offerMeta.expiresIn,
-      seatPolicy: offerMeta.seatPolicy,
-      seatsAvailable: seatsAvailable > 0 ? seatsAvailable : offerMeta.seatsAvailable,
-      formatMoneyFn: formatMoney
-    });
-
-    const enhancedMeta = requirementsMet
-      ? meta
-      : [lockGuidance, meta].filter(Boolean).join(' • ');
-
-    const roi = hours > 0 ? payout / Math.max(hours, 0.0001) : payout;
-    const normalizedCategory = normalizeCategory(group.category || definition?.market?.category || 'hustle');
-    const remainingRuns = availableOffers.length > 0 ? availableOffers.length : 1;
-
-    const actionId = primaryOffer?.id || `offer-group:${group.id}`;
-    const offerIds = Array.isArray(group.offers)
-      ? group.offers.map(entry => entry?.id).filter(Boolean)
-      : [];
-
-    return {
-      id: actionId,
-      groupId: group.id,
-      offerIds,
-      label,
-      primaryLabel: 'Accept',
-      description,
-      onClick: () => {
-        let result = null;
-        const offerId = primaryOffer?.id || primaryOffer;
-        executeAction(() => {
-          result = acceptHustleOffer(offerId, { state: workingState });
-        });
-        return result;
-      },
-      roi,
-      timeCost: hours,
-      payout,
-      payoutText: payout > 0 ? `$${formatMoney(payout)}` : '',
-      durationHours: hours,
-      durationText,
-      meta: enhancedMeta,
-      repeatable: remainingRuns > 1,
-      remainingRuns,
-      remainingDays: offerMeta.expiresIn,
-      schedule,
-      offer: primaryOffer,
-      excludeFromQueue: true,
-      disabled: !requirementsMet,
-      disabledReason: lockGuidance || 'Meet the prerequisites before accepting this hustle.',
-      focusCategory: normalizedCategory || 'hustle',
-      focusBucket: 'hustle'
-    };
-  }).filter(Boolean);
-
-  if (!items.length) {
-    const guidance = 'Fresh leads roll in with tomorrow\'s market refresh.';
-    items.push({
-      id: 'hustles:no-offers',
-      label: 'No hustle offers available',
-      primaryLabel: 'Check back tomorrow',
-      description: guidance,
-      onClick: null,
-      roi: 0,
-      timeCost: 0,
-      payout: 0,
-      payoutText: '',
-      durationHours: 0,
-      durationText: '',
-      meta: guidance,
-      repeatable: false,
-      remainingRuns: 0,
-      remainingDays: null,
-      schedule: 'onCompletion',
-      excludeFromQueue: true
-    });
-  }
-
-  items.sort((a, b) => {
-    const daysA = Number.isFinite(a.remainingDays) ? a.remainingDays : Infinity;
-    const daysB = Number.isFinite(b.remainingDays) ? b.remainingDays : Infinity;
-    if (daysA !== daysB) {
-      return daysA - daysB;
-    }
-    if (b.roi !== a.roi) {
-      return b.roi - a.roi;
-    }
-    return a.label.localeCompare(b.label);
-  });
-
-  return items;
+  const candidates = extractQuickActionCandidates(state);
+  const entries = candidates.map(buildQuickActionEntry);
+  const hydrated = ensureQuickActionEntries(entries, { fallbackFactory: createEmptyQuickActionEntry });
+  return sortQuickActions(hydrated);
 }
 
 export function buildInProgressActions(state = {}) {
@@ -278,108 +83,7 @@ export function buildInProgressActions(state = {}) {
 }
 
 export function buildAssetUpgradeRecommendations(state) {
-  if (!state) return [];
-
-  const suggestions = [];
-
-  for (const asset of getAssets()) {
-    const qualityActions = getQualityActions(asset);
-    if (!qualityActions.length) continue;
-
-    const assetState = getAssetState(asset.id, state);
-    const instances = Array.isArray(assetState?.instances) ? assetState.instances : [];
-    if (!instances.length) continue;
-
-    const tracks = getQualityTracks(asset);
-
-    instances.forEach(instance => {
-      if (instance?.status !== 'active') return;
-
-      const quality = instance.quality || {};
-      const level = Math.max(0, clampNumber(quality.level));
-      const nextLevel = getNextQualityLevel(asset, level);
-      if (!nextLevel?.requirements) return;
-
-      const progress = quality.progress || {};
-      const requirements = Object.entries(nextLevel.requirements);
-      if (!requirements.length) return;
-
-      const assetStateInstances = assetState.instances || [];
-      const assetIndex = assetStateInstances.indexOf(instance);
-      const label = instanceLabel(asset, assetIndex >= 0 ? assetIndex : 0);
-      const performance = Math.max(0, clampNumber(instance.lastIncome));
-
-      requirements.forEach(([key, targetValue]) => {
-        const target = Math.max(0, clampNumber(targetValue));
-        if (target <= 0) return;
-        const current = Math.max(0, clampNumber(progress?.[key]));
-        const remaining = Math.max(0, target - current);
-        if (remaining <= 0) return;
-
-        const action = qualityActions.find(entry => entry.progressKey === key);
-        if (!action) return;
-        if (!canPerformQualityAction(asset, instance, action, state)) return;
-
-        const completion = target > 0 ? Math.min(1, current / target) : 1;
-        const percentComplete = Math.max(0, Math.min(100, Math.round(completion * 100)));
-        const percentRemaining = Math.max(0, 100 - percentComplete);
-        const track = tracks?.[key] || {};
-        const requirementLabel = track.shortLabel || track.label || key;
-        const timeCost = Math.max(0, clampNumber(action.time));
-        const moneyCost = Math.max(0, clampNumber(action.cost));
-        const effortParts = [];
-        if (timeCost > 0) {
-          effortParts.push(`${formatHours(timeCost)} focus`);
-        }
-        if (moneyCost > 0) {
-          effortParts.push(`$${formatMoney(moneyCost)}`);
-        }
-        const progressNote = `${Math.min(current, target)}/${target} logged (${percentComplete}% complete)`;
-        const meta = effortParts.length ? `${progressNote} • ${effortParts.join(' • ')}` : progressNote;
-        const actionLabel = typeof action.label === 'function'
-          ? action.label({ definition: asset, instance, state })
-          : action.label;
-        const buttonLabel = actionLabel || 'Boost Quality';
-        const remainingRuns = estimateRemainingRuns(asset, instance, action, remaining, state);
-        const repeatable = remainingRuns == null ? true : remainingRuns > 1;
-
-        suggestions.push({
-          id: `asset-upgrade:${asset.id}:${instance.id}:${action.id}:${key}`,
-          title: `${label} · ${buttonLabel}`,
-          subtitle: `${remaining} ${requirementLabel} to go for Quality ${nextLevel.level} (${percentRemaining}% to go).`,
-          meta,
-          buttonLabel,
-          onClick: () => performQualityAction(asset.id, instance.id, action.id),
-          performance,
-          completion,
-          remaining,
-          level,
-          timeCost,
-          remainingRuns,
-          repeatable,
-          cost: moneyCost
-        });
-      });
-    });
-  }
-
-  suggestions.sort((a, b) => {
-    if (a.performance !== b.performance) {
-      return a.performance - b.performance;
-    }
-    if (a.level !== b.level) {
-      return a.level - b.level;
-    }
-    if (a.completion !== b.completion) {
-      return a.completion - b.completion;
-    }
-    if (a.remaining !== b.remaining) {
-      return b.remaining - a.remaining;
-    }
-    return a.title.localeCompare(b.title);
-  });
-
-  return suggestions;
+  return buildAssetUpgradeData(state);
 }
 
 export function buildQuickActionModel(state = {}) {
