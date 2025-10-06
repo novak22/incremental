@@ -21,6 +21,17 @@ function normalizeLocaleSeparators(value) {
   }
 
   if (hasComma) {
+    if (!hasDot) {
+      const unsigned = compact.replace(/^-/, '');
+      const groups = unsigned.split(',');
+      const fractional = groups[groups.length - 1];
+      const isLikelyDecimal = fractional.length > 0 && fractional.length <= 2;
+
+      if (!isLikelyDecimal) {
+        return compact.replace(/,/g, '');
+      }
+    }
+
     return compact.replace(/,/g, '.');
   }
 
