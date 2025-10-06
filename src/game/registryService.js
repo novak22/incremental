@@ -6,31 +6,73 @@ let assetMap = new Map();
 let upgradeMap = new Map();
 let metricIndex = new Map();
 
+function isHustleDefinition(definition) {
+  if (!definition || typeof definition !== 'object') {
+    return false;
+  }
+  const category = typeof definition.category === 'string'
+    ? definition.category.trim().toLowerCase()
+    : null;
+  if (category === 'hustle') {
+    return true;
+  }
+  const templateKind = typeof definition.templateKind === 'string'
+    ? definition.templateKind.trim().toLowerCase()
+    : null;
+  if (templateKind === 'hustle') {
+    return true;
+  }
+  const type = typeof definition.type === 'string'
+    ? definition.type.trim().toLowerCase()
+    : null;
+  if (type === 'hustle') {
+    return true;
+  }
+  if (definition.market) {
+    return true;
+  }
+  const tagType = typeof definition.tag?.type === 'string'
+    ? definition.tag.type.trim().toLowerCase()
+    : null;
+  return tagType === 'instant';
+}
+
+function deriveHustleView(actions = [], fallback = []) {
+  if (!Array.isArray(actions) || !actions.length) {
+    return Array.isArray(fallback) ? fallback : [];
+  }
+  const hustles = actions.filter(isHustleDefinition);
+  if (hustles.length) {
+    return hustles;
+  }
+  return Array.isArray(fallback) ? fallback : [];
+}
+
 function buildMaps({ actions = [], hustles = [], assets = [], upgrades = [] }) {
-  const actionDefinitions = Array.isArray(actions) && actions.length ? actions : hustles;
+  const actionDefinitions = Array.isArray(actions) ? actions : [];
   actionMap = new Map(actionDefinitions.map(definition => [definition.id, definition]));
   assetMap = new Map(assets.map(definition => [definition.id, definition]));
   upgradeMap = new Map(upgrades.map(definition => [definition.id, definition]));
-  metricIndex = buildMetricIndex({ actions: actionDefinitions, assets, upgrades });
+  metricIndex = buildMetricIndex({ actions: actionDefinitions, hustles, assets, upgrades });
 }
 
 export function loadRegistry(definitions = {}) {
+  const incomingActions = Array.isArray(definitions.actions) ? definitions.actions : [];
+  const incomingHustles = Array.isArray(definitions.hustles) ? definitions.hustles : [];
+  const incomingAssets = Array.isArray(definitions.assets) ? definitions.assets : [];
+  const incomingUpgrades = Array.isArray(definitions.upgrades) ? definitions.upgrades : [];
+
+  const canonicalActions = incomingActions.length ? incomingActions : incomingHustles;
+
   const prepared = attachRegistryMetricIds({
-    actions: Array.isArray(definitions.actions) ? definitions.actions : [],
-    hustles: Array.isArray(definitions.hustles) ? definitions.hustles : [],
-    assets: Array.isArray(definitions.assets) ? definitions.assets : [],
-    upgrades: Array.isArray(definitions.upgrades) ? definitions.upgrades : []
+    actions: canonicalActions,
+    hustles: incomingHustles,
+    assets: incomingAssets,
+    upgrades: incomingUpgrades
   });
 
-  const actions = Array.isArray(prepared.actions) && prepared.actions.length
-    ? prepared.actions
-    : Array.isArray(prepared.hustles)
-      ? prepared.hustles
-      : [];
-
-  const hustles = Array.isArray(prepared.hustles) && prepared.hustles.length
-    ? prepared.hustles
-    : actions;
+  const actions = Array.isArray(prepared.actions) ? prepared.actions : [];
+  const hustles = deriveHustleView(actions, prepared.hustles);
 
   registrySnapshot = {
     actions,
@@ -38,7 +80,12 @@ export function loadRegistry(definitions = {}) {
     upgrades: prepared.upgrades,
     hustles
   };
-  buildMaps(registrySnapshot);
+  buildMaps({
+    actions,
+    hustles,
+    assets: prepared.assets,
+    upgrades: prepared.upgrades
+  });
   return registrySnapshot;
 }
 

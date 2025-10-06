@@ -43,6 +43,18 @@ function clampNonNegativeNumber(value, fallback = 0) {
   return parsed;
 }
 
+function clampPositiveInteger(value, fallback = 1) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    const fallbackParsed = Number(fallback);
+    if (!Number.isFinite(fallbackParsed) || fallbackParsed <= 0) {
+      return 1;
+    }
+    return Math.floor(fallbackParsed);
+  }
+  return Math.floor(parsed);
+}
+
 function buildDaysActive(startDay, endDay) {
   const start = clampDay(startDay, 1);
   const end = clampDay(endDay, start);
@@ -108,6 +120,9 @@ export function normalizeHustleMarketOffer(offer, {
   if (variant && (typeof variant.id !== 'string' || !variant.id)) {
     variant.id = variantId;
   }
+  if (variant) {
+    variant.seats = clampPositiveInteger(variant.seats, offer.seats ?? 1);
+  }
 
   const id = typeof offer.id === 'string' && offer.id
     ? offer.id
@@ -119,6 +134,10 @@ export function normalizeHustleMarketOffer(offer, {
   const instanceId = typeof offer.instanceId === 'string' && offer.instanceId
     ? offer.instanceId
     : null;
+  const templateCategory = typeof offer.templateCategory === 'string' && offer.templateCategory.trim().length
+    ? offer.templateCategory.trim()
+    : null;
+  const seats = clampPositiveInteger(offer.seats, 1);
 
   const normalized = {
     id,
@@ -137,7 +156,9 @@ export function normalizeHustleMarketOffer(offer, {
     instanceId,
     status: offer.status === 'claimed' || offer.claimed === true
       ? 'claimed'
-      : 'available'
+      : 'available',
+    templateCategory,
+    seats
   };
 
   if (normalized.claimed) {
@@ -162,6 +183,9 @@ function normalizeAcceptedOffer(entry, { fallbackDay = 1 } = {}) {
     return null;
   }
 
+  const variantId = typeof entry.variantId === 'string' && entry.variantId
+    ? entry.variantId
+    : 'default';
   const definitionId = typeof entry.definitionId === 'string' && entry.definitionId
     ? entry.definitionId
     : templateId;
@@ -193,6 +217,10 @@ function normalizeAcceptedOffer(entry, { fallbackDay = 1 } = {}) {
   const instanceId = typeof entry.instanceId === 'string' && entry.instanceId
     ? entry.instanceId
     : null;
+  const seats = clampPositiveInteger(entry.seats, 1);
+  const templateCategory = typeof entry.templateCategory === 'string' && entry.templateCategory.trim().length
+    ? entry.templateCategory.trim()
+    : null;
 
   const completedOnDay = entry.completedOnDay != null
     ? clampDay(entry.completedOnDay, acceptedOnDay)
@@ -217,6 +245,7 @@ function normalizeAcceptedOffer(entry, { fallbackDay = 1 } = {}) {
     offerId,
     templateId,
     definitionId,
+    variantId,
     acceptedOnDay,
     deadlineDay,
     hoursRequired,
@@ -229,7 +258,9 @@ function normalizeAcceptedOffer(entry, { fallbackDay = 1 } = {}) {
     metadata,
     completedOnDay,
     hoursLogged,
-    completion: completion || null
+    completion: completion || null,
+    seats,
+    templateCategory
   };
 }
 
@@ -290,6 +321,13 @@ export function ensureHustleMarketState(state, { fallbackDay = 1 } = {}) {
       offer.instanceId = acceptedEntry.instanceId;
       offer.claimedOnDay = acceptedEntry.acceptedOnDay;
       offer.claimDeadlineDay = acceptedEntry.deadlineDay;
+      offer.seats = clampPositiveInteger(offer.seats, acceptedEntry.seats ?? offer.seats ?? 1);
+      if (acceptedEntry.templateCategory) {
+        offer.templateCategory = acceptedEntry.templateCategory;
+      }
+      if (acceptedEntry.variantId && offer.variantId !== acceptedEntry.variantId) {
+        offer.variantId = acceptedEntry.variantId;
+      }
       if (acceptedEntry.status === 'complete') {
         offer.claimed = false;
         offer.status = 'complete';
@@ -316,6 +354,7 @@ export function ensureHustleMarketState(state, { fallbackDay = 1 } = {}) {
       delete offer.completedInstanceId;
       delete offer.completionHoursLogged;
     }
+    offer.seats = clampPositiveInteger(offer.seats, 1);
   });
 
   const filteredAccepted = normalizedAccepted.filter(entry => normalizedOffersById.has(entry.offerId));
@@ -366,13 +405,16 @@ export function claimHustleMarketOffer(state, offerId, details = {}) {
     offerId: offer.id,
     templateId: offer.templateId,
     definitionId: offer.definitionId,
+    variantId: offer.variantId,
     acceptedOnDay: details.acceptedOnDay ?? state.day ?? offer.availableOnDay,
     deadlineDay: details.deadlineDay ?? offer.expiresOnDay,
     hoursRequired: details.hoursRequired ?? offer.metadata?.hoursRequired ?? offer.metadata?.requirements?.hours ?? 0,
     instanceId: details.instanceId ?? offer.instanceId ?? null,
     payout: details.payout ?? offer.metadata?.payout ?? {},
     status: details.status ?? 'active',
-    metadata: details.metadata ?? offer.metadata ?? {}
+    metadata: details.metadata ?? offer.metadata ?? {},
+    seats: offer.seats,
+    templateCategory: offer.templateCategory
   }, { fallbackDay: state.day || 1 });
 
   if (!acceptedEntry) {
@@ -392,6 +434,10 @@ export function claimHustleMarketOffer(state, offerId, details = {}) {
   offer.instanceId = acceptedEntry.instanceId;
   offer.claimMetadata = structuredClone(acceptedEntry.metadata || {});
   offer.claimDeadlineDay = acceptedEntry.deadlineDay;
+  offer.seats = clampPositiveInteger(offer.seats, acceptedEntry.seats ?? offer.seats ?? 1);
+  if (acceptedEntry.templateCategory && !offer.templateCategory) {
+    offer.templateCategory = acceptedEntry.templateCategory;
+  }
 
   ensureHustleMarketState(state, { fallbackDay: state.day || acceptedEntry.acceptedOnDay || 1 });
   return acceptedEntry;

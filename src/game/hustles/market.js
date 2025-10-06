@@ -124,6 +124,7 @@ function buildVariantTemplate(template) {
     marketConfig.availableAfterDays ?? marketConfig.startOffsetDays ?? 0,
     0
   );
+  const templateSeats = resolvePositiveInteger(marketConfig.seats ?? 1, 1);
   return {
     id: 'default',
     label: template?.name || template?.id || 'Hustle',
@@ -134,7 +135,8 @@ function buildVariantTemplate(template) {
     availableAfterDays: Math.max(0, baseOffset),
     metadata: {},
     copies: 1,
-    maxActive: 1
+    maxActive: 1,
+    seats: templateSeats
   };
 }
 
@@ -176,6 +178,9 @@ function normalizeVariant(entry, index, template) {
   const maxActive = entry.maxActive != null
     ? resolvePositiveInteger(entry.maxActive, copies)
     : Math.max(1, copies);
+  const seats = entry.seats != null
+    ? resolvePositiveInteger(entry.seats, fallback.seats ?? 1)
+    : resolvePositiveInteger(fallback.seats ?? 1, 1);
 
   return {
     id: variantId,
@@ -189,7 +194,8 @@ function normalizeVariant(entry, index, template) {
     availableAfterDays: Math.max(0, offset),
     metadata,
     copies,
-    maxActive
+    maxActive,
+    seats
   };
 }
 
@@ -409,6 +415,13 @@ function buildOfferMetadata(template, variant) {
 function createOfferFromVariant({ template, variant, day, timestamp }) {
   const availableOnDay = resolveDay(day, 1) + resolveNonNegative(variant.availableAfterDays || 0, 0);
   const expiresOnDay = availableOnDay + resolveNonNegative(variant.durationDays || 0, 0);
+  const templateCategory = typeof template?.market?.category === 'string' && template.market.category
+    ? template.market.category
+    : (typeof template?.market?.templateCategory === 'string' && template.market.templateCategory
+      ? template.market.templateCategory
+      : null);
+  const defaultSeats = resolvePositiveInteger(template?.market?.seats ?? variant.seats ?? 1, 1);
+  const variantSeats = resolvePositiveInteger(variant.seats ?? defaultSeats, defaultSeats);
   const rawOffer = {
     id: `offer-${variant.definitionId || template.id}-${variant.id}-${createId()}`,
     templateId: template.id,
@@ -422,9 +435,19 @@ function createOfferFromVariant({ template, variant, day, timestamp }) {
     variant: {
       id: variant.id,
       label: variant.label,
-      description: variant.description ?? null
-    }
+      description: variant.description ?? null,
+      seats: variantSeats
+    },
+    templateCategory,
+    seats: variantSeats
   };
+
+  if (rawOffer.metadata && typeof rawOffer.metadata === 'object') {
+    rawOffer.metadata.seats = variantSeats;
+    if (templateCategory) {
+      rawOffer.metadata.templateCategory = templateCategory;
+    }
+  }
 
   return normalizeHustleMarketOffer(rawOffer, {
     fallbackTimestamp: rawOffer.rolledAt,
