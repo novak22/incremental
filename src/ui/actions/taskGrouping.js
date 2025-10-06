@@ -15,6 +15,7 @@ import {
   resolveFocusBucket as resolveFocusBucketBase,
   sortBuckets as sortBucketsBase
 } from './queueService.js';
+import { resolveStudyTrackId } from './studyTracks.js';
 
 export const DEFAULT_TODO_EMPTY_MESSAGE = 'Queue a hustle or upgrade to add new tasks.';
 
@@ -283,25 +284,7 @@ export function createProgressHandler(entry = {}) {
       definition?.progress?.type === 'study' ||
       progress?.type === 'study';
     if (isStudy) {
-      const resolvedTrackId = (() => {
-        const directIdCandidates = [
-          definition.studyTrackId,
-          progress?.studyTrackId,
-          progress?.trackId,
-          definition?.progress?.studyTrackId,
-          definition?.progress?.trackId
-        ].filter(id => typeof id === 'string' && id.trim().length > 0);
-        if (directIdCandidates.length > 0) {
-          return directIdCandidates[0];
-        }
-        const stripStudyPrefix = value =>
-          typeof value === 'string' && value.startsWith('study-') ? value.slice('study-'.length) : null;
-        return (
-          stripStudyPrefix(definition?.id) ||
-          stripStudyPrefix(progress?.definitionId) ||
-          null
-        );
-      })();
+      const resolvedTrackId = resolveStudyTrackId(progress, definition, entry);
 
       if (resolvedTrackId) {
         allocateDailyStudy({ trackIds: [resolvedTrackId] });

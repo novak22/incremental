@@ -13,6 +13,7 @@ import { spendTime } from '../../game/time.js';
 import { checkDayEnd } from '../../game/lifecycle.js';
 import { collectOutstandingActionEntries } from '../actions/outstanding/index.js';
 import { registerActionProvider } from '../actions/providers.js';
+import { resolveStudyTrackId } from '../actions/studyTracks.js';
 
 function resolveProgressStep(entry = {}) {
   const progress = entry?.progress || {};
@@ -30,12 +31,6 @@ function resolveProgressStep(entry = {}) {
     return duration;
   }
   return 0;
-}
-
-function stripStudyPrefix(value) {
-  return typeof value === 'string' && value.startsWith('study-')
-    ? value.slice('study-'.length)
-    : null;
 }
 
 function createStudyProgressHandler(entry = {}) {
@@ -90,18 +85,7 @@ function createStudyProgressHandler(entry = {}) {
       || definition?.progress?.type === 'study'
       || progress?.type === 'study';
     if (isStudy) {
-      const directIds = [
-        definition.studyTrackId,
-        progress?.studyTrackId,
-        progress?.trackId,
-        definition?.progress?.studyTrackId,
-        definition?.progress?.trackId
-      ].filter(id => typeof id === 'string' && id.trim().length > 0);
-      const resolvedTrackId = directIds.length > 0
-        ? directIds[0]
-        : stripStudyPrefix(definition?.id)
-          || stripStudyPrefix(progress?.definitionId)
-          || null;
+      const resolvedTrackId = resolveStudyTrackId(progress, definition, entry);
 
       if (resolvedTrackId) {
         allocateDailyStudy({ trackIds: [resolvedTrackId] });
@@ -143,20 +127,6 @@ export function computeStudyProgress(state = {}) {
   return { percent, summary };
 }
 
-function resolveStudyTrackIdFromEntry(entry = {}) {
-  const definitionId = entry?.definitionId || entry?.progress?.definitionId || '';
-  if (typeof entry?.progress?.studyTrackId === 'string' && entry.progress.studyTrackId) {
-    return entry.progress.studyTrackId;
-  }
-  if (typeof entry?.progress?.trackId === 'string' && entry.progress.trackId) {
-    return entry.progress.trackId;
-  }
-  if (typeof definitionId === 'string' && definitionId.startsWith('study-')) {
-    return definitionId.slice('study-'.length);
-  }
-  return null;
-}
-
 function buildActiveStudyEntries(state = {}) {
   if (!state || typeof state !== 'object') {
     return [];
@@ -165,14 +135,13 @@ function buildActiveStudyEntries(state = {}) {
   const outstandingEntries = collectOutstandingActionEntries(state) || [];
   const outstandingByTrack = new Map();
   outstandingEntries
-    .filter(entry => entry?.progress?.type === 'study'
-      || (entry?.definitionId && String(entry.definitionId).startsWith('study-')))
-    .forEach(entry => {
-      const trackId = resolveStudyTrackIdFromEntry(entry);
-      if (!trackId || outstandingByTrack.has(trackId)) {
+    .map(entry => ({ entry, trackId: resolveStudyTrackId(entry?.progress, entry) }))
+    .filter(({ trackId }) => Boolean(trackId))
+    .forEach(({ trackId, entry: outstandingEntry }) => {
+      if (outstandingByTrack.has(trackId)) {
         return;
       }
-      outstandingByTrack.set(trackId, entry);
+      outstandingByTrack.set(trackId, outstandingEntry);
     });
 
   const entries = [];
