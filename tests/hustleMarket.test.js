@@ -12,7 +12,8 @@ const {
   getClaimedOffers,
   acceptHustleOffer,
   HUSTLE_TEMPLATES,
-  describeHustleRequirements
+  describeHustleRequirements,
+  getMarketRollAuditLog: hustlesAuditLog
 } = hustlesModule;
 const { getState, getActionState } = stateModule;
 const {
@@ -20,6 +21,9 @@ const {
   resolveOfferPayoutAmount,
   resolveOfferPayoutSchedule
 } = await import('../src/game/hustles/offerUtils.js');
+const { buildVariantPool, selectVariantFromPool } = await import('../src/game/hustles/market/variantSelection.js');
+const { buildOfferMetadata, createOfferFromVariant } = await import('../src/game/hustles/market/offerLifecycle.js');
+const { getMarketRollAuditLog: directAuditLog } = await import('../src/game/hustles/market.js');
 
 test.beforeEach(() => {
   harness.resetState();
@@ -175,6 +179,74 @@ test('ensureDailyOffersForDay rerolls preserve windows, durations, and capacity 
   const preservedToday = secondRoll.filter(offer => offer.variantId === 'today');
   assert.equal(preservedToday.length, 1, 'active variant should persist across the reroll');
   assert.ok(secondRoll.some(offer => offer.variantId === 'tomorrow' && offer.availableOnDay === 2));
+});
+
+test('variant selection normalizes pools and respects configured weights', () => {
+  const template = {
+    id: 'weighted-template',
+    name: 'Weighted Template',
+    market: {
+      seats: 2,
+      variants: [
+        { id: 'light', weight: 1, metadata: { payout: { amount: 50 } } },
+        { id: 'heavy', weight: 9, copies: 2, seats: 3, metadata: { requirements: { hours: 6 } } }
+      ]
+    }
+  };
+
+  const pool = buildVariantPool(template);
+  assert.equal(pool.length, 2, 'expected two normalized variants');
+  const [lightVariant, heavyVariant] = pool;
+  assert.equal(lightVariant.availableAfterDays, 0, 'fallback variant should default to immediate availability');
+  assert.equal(heavyVariant.seats, 3, 'variant-specific seat overrides should persist');
+  assert.equal(heavyVariant.copies, 2, 'variant copies should be preserved');
+
+  const selected = selectVariantFromPool(pool, () => 0.95);
+  assert.equal(selected.id, 'heavy', 'weighted selection should choose the heavier entry at high rolls');
+});
+
+test('offer lifecycle composes metadata and creates normalized offers', () => {
+  const template = {
+    id: 'metadata-template',
+    name: 'Metadata Template',
+    market: {
+      seats: 1,
+      metadata: {
+        requirements: { hours: 4 },
+        payout: { amount: 100, schedule: 'onCompletion' },
+        progress: { hoursPerDay: 2 }
+      }
+    }
+  };
+
+  const variant = {
+    id: 'metadata-variant',
+    definitionId: 'metadata-template',
+    availableAfterDays: 1,
+    durationDays: 3,
+    seats: 2,
+    metadata: {
+      requirements: { hours: 6 },
+      payout: { amount: 180, schedule: 'afterParty' },
+      progress: { daysRequired: 4 },
+      hoursPerDay: 3,
+      progressLabel: 'Daily check-ins'
+    }
+  };
+
+  const metadata = buildOfferMetadata(template, variant);
+  assert.equal(metadata.requirements.hours, 6, 'variant requirements should override template defaults');
+  assert.equal(metadata.payout.amount, 180, 'variant payout amount should override template defaults');
+  assert.equal(metadata.payout.schedule, 'afterParty', 'variant payout schedule should override template defaults');
+  assert.equal(metadata.progress.daysRequired, 4, 'progress overrides should be merged into metadata');
+  assert.equal(metadata.hoursPerDay, 3, 'metadata hoursPerDay should reflect the resolved value');
+
+  const offer = createOfferFromVariant({ template, variant, day: 5, timestamp: 1111 });
+  assert.equal(offer.availableOnDay, 6, 'available day should respect variant offsets');
+  assert.equal(offer.expiresOnDay, 9, 'expiry day should respect variant durations');
+  assert.equal(offer.seats, 2, 'offer seats should inherit variant overrides');
+  assert.equal(offer.metadata.hoursRequired, 6, 'normalized offer metadata should expose resolved hours');
+  assert.equal(offer.metadata.payoutAmount, 180, 'normalized offer metadata should expose payout amount');
 });
 
 test('rollDailyOffers builds variant metadata and allows multiple variants', () => {
@@ -433,6 +505,39 @@ test('acceptHustleOffer seeds progress overrides from metadata', () => {
     ?? accepted.metadata.progress?.label
     ?? accepted.metadata.progressLabel;
   assert.equal(progressLabel, 'Publish daily updates');
+});
+
+test('audit log debug helpers expose the latest roll summary', () => {
+  const state = harness.resetState();
+  state.day = 7;
+
+  const template = {
+    id: 'audit-hustle',
+    name: 'Audit Hustle',
+    market: {
+      variants: [{ id: 'audit-variant', copies: 1 }]
+    }
+  };
+
+  const before = directAuditLog();
+  const offers = rollDailyOffers({ templates: [template], day: state.day, now: 777, state, rng: () => 0 });
+  assert.ok(Array.isArray(offers) && offers.length > 0, 'expected offers to be rolled for audit validation');
+
+  const debugNamespace = globalThis.__HUSTLE_MARKET_DEBUG__;
+  assert.ok(debugNamespace, 'debug namespace should be attached to the global scope');
+  assert.equal(typeof debugNamespace.getAuditLog, 'function', 'debug namespace should expose getAuditLog');
+
+  const auditEntries = debugNamespace.getAuditLog();
+  assert.ok(Array.isArray(auditEntries) && auditEntries.length >= before.length, 'audit log should grow after a new roll');
+  const latest = auditEntries[auditEntries.length - 1];
+  assert.equal(latest.day, state.day, 'latest audit entry should match the rolled day');
+
+  const printedOffers = debugNamespace.printOffers();
+  assert.ok(Array.isArray(printedOffers), 'printOffers should return an array of offers');
+
+  const moduleAudit = hustlesAuditLog();
+  assert.ok(moduleAudit.length > 0, 'module export should yield audit entries');
+  assert.equal(moduleAudit[moduleAudit.length - 1].day, state.day, 'module export should mirror the latest audit entry');
 });
 
 test('availability selectors can include claimed offers when requested', () => {
