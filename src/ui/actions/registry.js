@@ -36,6 +36,41 @@ function resolveCategoryLabel(...values) {
   return null;
 }
 
+function resolveStudyTrackIdFromProgress(progress = {}) {
+  if (!progress || typeof progress !== 'object') {
+    return null;
+  }
+
+  const metadata = typeof progress.metadata === 'object' && progress.metadata !== null
+    ? progress.metadata
+    : {};
+
+  const candidates = [
+    progress.studyTrackId,
+    progress.trackId,
+    metadata.studyTrackId,
+    metadata.trackId
+  ];
+
+  for (const candidate of candidates) {
+    if (typeof candidate === 'string') {
+      const trimmed = candidate.trim();
+      if (trimmed) {
+        return trimmed;
+      }
+    }
+  }
+
+  const identifiers = [progress.definitionId, metadata.definitionId];
+  for (const identifier of identifiers) {
+    if (typeof identifier === 'string' && identifier.startsWith('study-')) {
+      return identifier.slice('study-'.length);
+    }
+  }
+
+  return null;
+}
+
 function collectMarketIndexes(state = {}) {
   const market = state?.hustleMarket || {};
   const offers = Array.isArray(market.offers) ? market.offers : [];
@@ -380,6 +415,13 @@ export function collectOutstandingActionEntries(state = getState()) {
         order: -(index * 10 + instanceIndex)
       });
       if (entry) {
+        const trackId = resolveStudyTrackIdFromProgress(entry.progress);
+        if (trackId) {
+          const knowledge = workingState?.progress?.knowledge || {};
+          if (knowledge[trackId]?.studiedToday) {
+            return;
+          }
+        }
         entries.push(entry);
       }
     });
