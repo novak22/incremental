@@ -8,6 +8,7 @@
 - Tooling: `rollDailyOffers` records per-template audit summaries, exposes `getMarketRollAuditLog()`, and attaches `window.__HUSTLE_MARKET_DEBUG__` helpers for playtests.【F:src/game/hustles/market.js†L12-L755】
 - Docs: Refreshed the economy guide, hustle market notes, and added a dedicated playtest script covering bootstrap, rerolls, and contract completion loops.【F:docs/economy.md†L80-L121】【F:docs/features/hustle-market.md†L94-L126】【F:docs/features/hustle-market-playtest.md†L1-L64】
 - Economy: Completing hustle market contracts now grants their promised payouts immediately when logged hours are finished, updating money totals and payout metrics.
+- Fix: Multi-day hustle contracts now honor their variant payout totals and pay the full amount once the final day is logged.
 - Fix: Learnly study tasks now respect their configured daily hours so courses can't be cleared by completing a 0h log.
 - Tooling: Added a Streamlit balancing workbench (`tools/balancingWorkbench/`) with live sliders, ROI charts, and PNG exports to accelerate economy tuning sessions.
 - Tooling: Balancing workbench can now simulate multi-asset lineups and upgrade combos, with a handy summary of setup hours, upkeep, and bonus time.

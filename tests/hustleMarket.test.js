@@ -550,3 +550,68 @@ test('on-completion hustle payouts award money after logging required hours', ()
   assert.ok(hustleEntry?.payoutPaid, 'accepted hustle entry should mark the payout as granted');
   assert.equal(Math.round(Number(hustleEntry.payoutAwarded) || 0), contractAmount, 'stored payout award should match the contract amount');
 });
+
+test('multi-day hustle variants award their full contract payout on completion', () => {
+  const state = getState();
+  state.day = 5;
+
+  const template = HUSTLE_TEMPLATES.find(entry => entry?.id === 'freelance') || HUSTLE_TEMPLATES[0];
+  assert.ok(template, 'expected a freelance hustle template for multi-day payout validation');
+
+  const variantDefinition = template.market?.variants?.find(variant => variant?.id === 'freelance-series');
+  assert.ok(variantDefinition, 'freelance template should expose the multi-day series variant');
+  const expectedPayout = Math.round(Number(variantDefinition.metadata?.payoutAmount) || 0);
+  assert.ok(expectedPayout > 0, 'variant payout amount should be positive');
+
+  const offers = rollDailyOffers({ templates: [template], day: state.day, now: 500, state, rng: () => 0.6 });
+  const multiDayOffer = offers.find(offer => offer.variantId === 'freelance-series');
+  assert.ok(multiDayOffer, 'expected the market roll to produce the multi-day variant offer');
+  assert.equal(
+    Math.round(Number(multiDayOffer.metadata?.payoutAmount) || 0),
+    expectedPayout,
+    'offer metadata should mirror the variant payout amount'
+  );
+
+  const accepted = acceptHustleOffer(multiDayOffer.id, { state });
+  assert.ok(accepted, 'multi-day offer should be accepted');
+  assert.equal(
+    Math.round(Number(accepted.payout?.amount) || 0),
+    expectedPayout,
+    'accepted entry should carry the full contract payout amount'
+  );
+
+  const startingMoney = Number(state.money) || 0;
+  const actionState = getActionState(template.id, state);
+  const instance = actionState.instances.find(entry => entry.id === accepted.instanceId);
+  assert.ok(instance, 'accepted offer should create an action instance');
+
+  const daysRequired = Math.max(1, Number(instance.progress?.daysRequired) || 0);
+  const hoursPerDay = (() => {
+    const direct = Number(instance.progress?.hoursPerDay);
+    if (Number.isFinite(direct) && direct > 0) {
+      return direct;
+    }
+    const metadataHours = Number(accepted.metadata?.progress?.hoursPerDay);
+    if (Number.isFinite(metadataHours) && metadataHours > 0) {
+      return metadataHours;
+    }
+    return Number(instance.hoursRequired) / daysRequired;
+  })();
+
+  for (let index = 0; index < daysRequired; index += 1) {
+    const currentDay = accepted.acceptedOnDay + index;
+    state.day = currentDay;
+    advanceActionInstance(template, { id: accepted.instanceId }, { state, day: currentDay, hours: hoursPerDay });
+  }
+
+  const expectedMoneyTotal = startingMoney + expectedPayout;
+  assert.equal(Number(state.money) || 0, expectedMoneyTotal, 'player money should increase by the full contract payout');
+
+  const hustleEntry = state.hustleMarket.accepted.find(entry => entry.instanceId === accepted.instanceId);
+  assert.ok(hustleEntry?.payoutPaid, 'accepted entry should mark the payout as granted after completion');
+  assert.equal(
+    Math.round(Number(hustleEntry.payoutAwarded) || 0),
+    expectedPayout,
+    'stored payout award should match the multi-day contract amount'
+  );
+});
