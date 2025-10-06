@@ -15,6 +15,7 @@ const {
   getAvailableOffers,
   getClaimedOffers,
   acceptHustleOffer,
+  releaseClaimedHustleOffer,
   HUSTLE_TEMPLATES,
   describeHustleRequirements,
   getMarketRollAuditLog: hustlesAuditLog
@@ -472,6 +473,70 @@ test('acceptHustleOffer claims offers and records accepted state', () => {
   const actionState = getActionState(offer.definitionId, state);
   assert.ok(actionState.instances.length > 0, 'acceptance should create an action instance');
   assert.equal(actionState.instances[0].id, accepted.instanceId);
+});
+
+test('paid knowledge track seats stay capped while enrollment is active', () => {
+  const state = harness.resetState();
+  state.day = 12;
+  state.money = 10_000;
+
+  const paidKnowledgeTemplate = HUSTLE_TEMPLATES.find(template => {
+    if (!template || template.tag?.type !== 'study') return false;
+    const tuition = Number(template?.market?.metadata?.tuitionCost ?? 0);
+    return Number.isFinite(tuition) && tuition > 0;
+  });
+
+  assert.ok(paidKnowledgeTemplate, 'expected a paid knowledge track template in the catalog');
+
+  const initialRoll = rollDailyOffers({
+    templates: [paidKnowledgeTemplate],
+    day: state.day,
+    now: 1000,
+    state,
+    rng: () => 0
+  });
+
+  const initialOffers = initialRoll.filter(offer => offer.templateId === paidKnowledgeTemplate.id);
+  assert.ok(initialOffers.length > 0, 'expected an initial knowledge seat to appear');
+  const [initialSeat] = initialOffers;
+  assert.equal(initialSeat.claimed, false, 'initial seat should be available for enrollment');
+
+  const accepted = acceptHustleOffer(initialSeat.id, { state });
+  assert.ok(accepted, 'enrollment should succeed when tuition is available');
+
+  const claimedEntries = getClaimedOffers(state, { day: state.day });
+  assert.ok(claimedEntries.find(entry => entry.offerId === initialSeat.id),
+    'claimed seat should be tracked in market state');
+
+  state.day += 1;
+  const followUpRoll = rollDailyOffers({
+    templates: [paidKnowledgeTemplate],
+    day: state.day,
+    now: 2000,
+    state,
+    rng: () => 0
+  });
+
+  const dayTwoSeats = followUpRoll.filter(offer => offer.templateId === paidKnowledgeTemplate.id);
+  assert.equal(dayTwoSeats.length, 1, 'claimed seat should block new seats from spawning the next day');
+  assert.equal(dayTwoSeats[0].id, initialSeat.id, 'existing enrollment seat should persist across rolls');
+  assert.equal(dayTwoSeats[0].claimed, true, 'seat should remain claimed until released');
+
+  const released = releaseClaimedHustleOffer({ offerId: initialSeat.id }, { state });
+  assert.ok(released, 'release call should succeed to free the seat');
+
+  state.day += 1;
+  const postReleaseRoll = rollDailyOffers({
+    templates: [paidKnowledgeTemplate],
+    day: state.day,
+    now: 3000,
+    state,
+    rng: () => 0
+  });
+
+  const reopenedSeats = postReleaseRoll.filter(offer => offer.templateId === paidKnowledgeTemplate.id);
+  assert.ok(reopenedSeats.some(offer => offer.claimed !== true),
+    'seat should become available again after the enrollment is released');
 });
 
 test('acceptHustleOffer rejects offers when requirements are not met', () => {
