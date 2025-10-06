@@ -7,7 +7,7 @@ import {
 import {
   applyAutoCompletedEntries,
   collectOutstandingActionEntries
-} from './outstanding.js';
+} from './outstanding/index.js';
 import {
   registerActionProvider,
   clearActionProviders,
