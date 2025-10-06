@@ -268,6 +268,49 @@ test('buildHustleModels provides guidance when no offers or manual rerolls exist
   assert.match(model.action.guidance, /tomorrow/i);
 });
 
+test('buildHustleModels wraps manual rerolls in executeAction to flush state', () => {
+  const hustles = [
+    {
+      id: 'manual-reroll',
+      name: 'Manual Reroll Hustle',
+      description: 'Spin the wheel for a fresh gig.'
+    }
+  ];
+
+  let executed = false;
+  let rolled = false;
+
+  const models = buildHustleModels(hustles, {
+    getState: () => ({ day: 5 }),
+    describeRequirements: () => [],
+    getUsage: () => null,
+    formatHours: value => `${value}h`,
+    formatMoney: value => value.toFixed(0),
+    getOffers: () => [],
+    getAcceptedOffers: () => [],
+    collectCommitments: () => [],
+    executeAction: fn => {
+      executed = true;
+      if (typeof fn === 'function') {
+        fn();
+      }
+    },
+    rollOffers: () => {
+      rolled = true;
+    }
+  });
+
+  assert.equal(models.length, 1);
+  const [model] = models;
+  assert.equal(model.action.label, 'Roll a fresh offer');
+  assert.equal(model.action.disabled, false);
+
+  model.action.onClick();
+
+  assert.equal(executed, true, 'executeAction should wrap manual rerolls');
+  assert.equal(rolled, true, 'rollOffers should be invoked when rerolling');
+});
+
 test('buildUpgradeModels groups families in sorted order', () => {
   const upgrades = [
     {
