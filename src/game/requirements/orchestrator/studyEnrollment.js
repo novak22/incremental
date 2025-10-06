@@ -37,6 +37,7 @@ export function createStudyEnrollment({
 
     const definitionId = getStudyActionId(track.id);
     const currentDay = Math.max(1, Math.floor(Number(state.day) || 1));
+    const tuitionPaidBaseline = Number(progress.tuitionPaid) || 0;
 
     const seatResult = seatManager.claimSeat({
       track,
@@ -49,7 +50,12 @@ export function createStudyEnrollment({
       return { success: false, reason: seatResult.reason };
     }
 
-    if (tuition > 0) {
+    const tuitionAlreadyHandled = tuition > 0
+      && progress.tuitionPaidOnDay === currentDay
+      && (Number(progress.tuitionPaid) || 0) >= tuition
+      && (Number(progress.tuitionPaid) || 0) > tuitionPaidBaseline;
+
+    if (tuition > 0 && !tuitionAlreadyHandled) {
       tuitionLogging.payTuition({ track, tuition, progress, currentDay });
     }
 

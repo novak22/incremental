@@ -336,11 +336,73 @@ test('legacy study progress seeds action instances during state ensure', () => {
   );
 });
 
+test('study enrollment hooks charge tuition and enrich accepted metadata', () => {
+  consumeDirty();
+
+  const track = KNOWLEDGE_TRACKS.outlineMastery;
+  const state = getState();
+  state.money = (track.tuition || 0) + 400;
+  state.timeLeft = Math.max(state.timeLeft || 0, (track.hoursPerDay || 0) + 4);
+
+  const startingMoney = state.money;
+  const logBaseline = state.log.length;
+
+  const result = enrollInKnowledgeTrack(track.id);
+  assert.ok(result?.success, 'enrollment should succeed when seats are available');
+
+  const accepted = result.offer;
+  assert.ok(accepted, 'acceptance should return a claimed offer');
+  assert.ok(accepted.metadata, 'accepted offer should include metadata populated by hooks');
+
+  if ((track.tuition || 0) > 0) {
+    assert.equal(state.money, startingMoney - track.tuition, 'tuition should be deducted immediately');
+    assert.equal(accepted.metadata.tuitionPaid, track.tuition, 'tuition payment should be recorded');
+    assert.equal(
+      accepted.metadata.tuitionPaidOnDay,
+      state.day,
+      'tuition payment day should align with acceptance'
+    );
+  } else {
+    assert.equal(state.money, startingMoney, 'free tracks should not deduct tuition');
+  }
+
+  const progress = getKnowledgeProgress(track.id);
+  assert.equal(progress.enrolled, true, 'enrollment flag should flip on progress');
+  assert.equal(progress.enrolledOnDay, state.day, 'enrollment day should reflect acceptance');
+  assert.equal(progress.studiedToday, false, 'daily study flag should reset on enrollment');
+  assert.equal(progress.tuitionCost, track.tuition, 'tuition cost should mirror track config');
+
+  assert.equal(accepted.metadata.progress.studyTrackId, track.id, 'metadata should tag the study track');
+  assert.equal(
+    accepted.metadata.enrollment.seatPolicy,
+    track.tuition > 0 ? 'limited' : 'always-on',
+    'enrollment metadata should document seat policy'
+  );
+
+  const newLogs = state.log.slice(logBaseline);
+  assert.ok(
+    newLogs.some(entry => /claimed a seat/i.test(entry?.message || '')),
+    'enrollment hook should log a celebratory message'
+  );
+
+  const dirty = consumeDirty();
+  STUDY_DIRTY_SECTIONS.forEach(section => {
+    assert.ok(dirty[section], `enrollment should mark ${section} dirty`);
+  });
+});
+
 test('manual study reminders and completions trigger logs and rewards', () => {
   resetState();
   const state = getState();
   const track = tracksCatalog.photoLibrary;
   const reward = rewardCatalog[track.id];
+
+  const rewardSkillIds = Array.isArray(reward?.skills)
+    ? reward.skills.map(entry => (typeof entry === 'string' ? entry : entry?.id)).filter(Boolean)
+    : [];
+  const xpBefore = rewardSkillIds.reduce((total, id) => {
+    return total + (state.skills?.[id]?.xp || 0);
+  }, 0);
 
   state.money = track.tuition + 200;
   enrollInKnowledgeTrack(track.id);
@@ -374,6 +436,11 @@ test('manual study reminders and completions trigger logs and rewards', () => {
   assert.ok(progress.skillRewarded, 'skill reward should trigger once');
   assert.match(state.log.at(-1).message, /Finished/);
   assert.equal(reward.baseXp > 0, true, 'reward metadata should exist');
+
+  const xpAfter = rewardSkillIds.reduce((total, id) => {
+    return total + (state.skills?.[id]?.xp || 0);
+  }, 0);
+  assert.ok(xpAfter > xpBefore, 'completion hook should award skill experience');
 });
 
 test('study enrollment updates player and dashboard sections alongside cards', () => {
@@ -422,6 +489,10 @@ test('dropping a knowledge track releases the claimed hustle offer', () => {
     'dropping should release the study offer seat'
   );
 
+  const progressAfterDrop = getKnowledgeProgress(trackId);
+  assert.equal(progressAfterDrop.enrolled, false, 'drop should clear enrollment flag');
+  assert.equal(progressAfterDrop.studiedToday, false, 'drop should clear daily study flag');
+  assert.equal(progressAfterDrop.enrolledOnDay, null, 'drop should reset enrollment day');
   const releaseLog = state.log.find(entry => /Released 1 seat/i.test(entry?.message || ''));
   assert.ok(releaseLog, 'dropping should log the seat release via the market manager');
   assert.ok(releaseLog.message.includes(track.name), 'seat release log should reference the track name');
@@ -570,14 +641,9 @@ test('knowledge track rollover invalidates study panels for completions and stal
       return actionStates[key] || { instances: [] };
     },
     getActionDefinition: id => actionDefinitions[id] || null,
-    acceptActionInstance: () => null,
     abandonActionInstance: () => true,
     getKnowledgeProgress: id => state.progress.knowledge[id],
     knowledgeTracks: tracks,
-    knowledgeRewards: {},
-    spendMoney: () => {},
-    recordCostContribution: () => {},
-    awardSkillProgress: () => {},
     addLog: (message, level) => logs.push({ message, level })
   });
 
@@ -592,9 +658,6 @@ test('knowledge track rollover invalidates study panels for completions and stal
   assert.equal(state.progress.knowledge.paidTrack.enrolled, false);
   assert.equal(state.progress.knowledge.paidTrack.studiedToday, false);
   assert.equal(state.progress.knowledge.freeTrack.studiedToday, false);
-  assert.ok(
-    logs.some(log => log.level === 'info' && /Finished .*Tuition Strategy Sprint/.test(log.message))
-  );
   assert.ok(
     logs.some(log => log.level === 'warning' && /did not get study hours logged today/.test(log.message))
   );

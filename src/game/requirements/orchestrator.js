@@ -1,5 +1,7 @@
-import { formatHours, formatList } from '../../core/helpers.js';
+import { formatList } from '../../core/helpers.js';
 import { markDirty } from '../../core/events/invalidationBus.js';
+import { spendMoney as spendMoneyDefault } from '../currency.js';
+import { recordCostContribution as recordCostContributionDefault } from '../metrics.js';
 import { createStudyEnrollment } from './orchestrator/studyEnrollment.js';
 import { createMarketSeatManager } from './orchestrator/marketSeats.js';
 import { createTuitionLogging } from './orchestrator/tuitionLogging.js';
@@ -12,11 +14,9 @@ export function createRequirementsOrchestrator({
   abandonActionInstance,
   getKnowledgeProgress,
   knowledgeTracks,
-  knowledgeRewards,
-  spendMoney,
-  recordCostContribution,
-  awardSkillProgress,
-  addLog
+  addLog,
+  spendMoney = spendMoneyDefault,
+  recordCostContribution = recordCostContributionDefault
 }) {
   function getStudyActionId(trackId) {
     return `study-${trackId}`;
@@ -50,23 +50,22 @@ export function createRequirementsOrchestrator({
   function evaluateStudyProgress(track, state = getState()) {
     const progress = getKnowledgeProgress(track.id, state);
     const { active, completed } = getStudyActionSnapshot(track.id, state);
-    const source = active?.progress || completed?.progress || null;
-    const existingProgress = progress || {};
+    const source = active?.progress || completed?.progress || progress || {};
     const hoursPerDay = Number(track.hoursPerDay) || Number(source?.hoursPerDay) || 0;
     const daysRequired = Number(track.days) || Number(source?.daysRequired) || 0;
     const dayKey = Number(state?.day);
 
-    let studiedToday = Boolean(existingProgress.studiedToday);
+    let studiedToday = false;
     if (Number.isFinite(dayKey)) {
-      const logSource = source?.dailyLog || existingProgress.dailyLog || {};
+      const logSource = source?.dailyLog || progress?.dailyLog || {};
       const logged = Number(logSource[dayKey]) || 0;
       const threshold = hoursPerDay > 0 ? hoursPerDay - 0.0001 : 0.1;
       studiedToday = logged >= threshold;
     }
 
-    const resolvedDaysCompleted = source?.daysCompleted ?? existingProgress.daysCompleted;
+    const resolvedDaysCompleted = source?.daysCompleted ?? progress?.daysCompleted;
     const daysCompleted = Math.min(daysRequired || Infinity, Number(resolvedDaysCompleted) || 0);
-    const completedFlag = Boolean(completed?.completed || source?.completed || existingProgress.completed);
+    const completedFlag = Boolean(completed?.completed || source?.completed);
 
     return {
       progress,
@@ -145,7 +144,6 @@ export function createRequirementsOrchestrator({
     const state = getState();
     if (!state) return;
 
-    const completedToday = [];
     const awaiting = [];
     let dirty = false;
 
@@ -158,8 +156,9 @@ export function createRequirementsOrchestrator({
         return;
       }
 
-      const { studiedToday, daysCompleted, completedFlag } = evaluateStudyProgress(track, state);
-      const isActive = Boolean(progress.enrolled && !progress.completed);
+      const { studiedToday, daysCompleted, completedFlag, activeInstance, completedInstance } =
+        evaluateStudyProgress(track, state);
+      const isActive = Boolean(activeInstance && progress.enrolled && !progress.completed);
 
       const previousDaysCompleted = Number(progress.daysCompleted) || 0;
       const nextDaysCompleted = Math.min(track.days, daysCompleted);
@@ -194,20 +193,6 @@ export function createRequirementsOrchestrator({
           progress.enrolled = false;
           progress.studiedToday = false;
           dirty = true;
-          completedToday.push(track.name);
-        }
-
-        if (!progress.skillRewarded) {
-          const reward = knowledgeRewards[id];
-          if (reward) {
-            awardSkillProgress({
-              skills: reward.skills,
-              baseXp: reward.baseXp,
-              label: track.name
-            });
-          }
-          progress.skillRewarded = true;
-          dirty = true;
         }
       } else if (isActive && !participated) {
         awaiting.push(track.name);
@@ -216,17 +201,18 @@ export function createRequirementsOrchestrator({
       if (!isActive && !completedFlag) {
         progress.studiedToday = false;
       }
-    });
 
-    if (completedToday.length) {
-      addLog(`Finished ${formatList(completedToday)} after logging every session. Stellar dedication!`, 'info');
-    }
+      if (completedInstance?.completedOnDay && progress.completedOnDay !== completedInstance.completedOnDay) {
+        progress.completedOnDay = completedInstance.completedOnDay;
+        dirty = true;
+      }
+    });
 
     if (awaiting.length) {
       addLog(`${formatList(awaiting)} did not get study hours logged today. Progress pauses until you dive back in.`, 'warning');
     }
 
-    if (dirty || completedToday.length || awaiting.length) {
+    if (dirty || awaiting.length) {
       markDirty(STUDY_DIRTY_SECTIONS);
     }
   }
@@ -238,4 +224,3 @@ export function createRequirementsOrchestrator({
     advanceKnowledgeTracks
   };
 }
-

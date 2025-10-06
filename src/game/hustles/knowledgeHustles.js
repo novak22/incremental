@@ -1,13 +1,213 @@
 import knowledgeTrackData from '../requirements/data/knowledgeTracks.js';
 import { formatDays, formatHours, formatMoney, structuredClone } from '../../core/helpers.js';
 import { getState } from '../../core/state.js';
+import { addLog } from '../../core/log.js';
+import { markDirty } from '../../core/events/invalidationBus.js';
 import { executeAction } from '../actions.js';
 import { checkDayEnd } from '../lifecycle.js';
 import { enrollInKnowledgeTrack, getKnowledgeProgress } from '../requirements.js';
 import { describeTrackEducationBonuses } from '../educationEffects.js';
 import { ensureDailyOffersForDay, getAvailableOffers } from '../hustles.js';
+import { spendMoney } from '../currency.js';
+import { recordCostContribution } from '../metrics.js';
+import { awardSkillProgress } from '../skills/index.js';
+import { KNOWLEDGE_REWARDS } from '../requirements/knowledgeTracks.js';
 
 const KNOWLEDGE_TRACKS = knowledgeTrackData;
+const STUDY_DIRTY_SECTIONS = Object.freeze(['cards', 'dashboard', 'player']);
+
+function clampDay(value, fallback = 1) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    const fallbackValue = Number(fallback);
+    return Number.isFinite(fallbackValue) && fallbackValue > 0 ? Math.floor(fallbackValue) : 1;
+  }
+  return Math.floor(parsed);
+}
+
+function ensureNestedObject(container, key) {
+  if (!container || typeof container !== 'object') {
+    return {};
+  }
+  const existing = container[key];
+  if (existing && typeof existing === 'object') {
+    return existing;
+  }
+  const created = {};
+  container[key] = created;
+  return created;
+}
+
+function createStudyAcceptHook(track) {
+  const tuition = Math.max(0, Number(track.tuition) || 0);
+  const seatPolicy = tuition > 0 ? 'limited' : 'always-on';
+  return ({ state = getState(), metadata = {}, instance } = {}) => {
+    const workingState = state || getState();
+    if (!workingState) return;
+
+    const acceptedDay = clampDay(instance?.acceptedOnDay, workingState.day);
+
+    const seedMetadata = target => {
+      if (!target || typeof target !== 'object') {
+        return;
+      }
+      target.studyTrackId = track.id;
+      target.trackId = track.id;
+      target.tuitionCost = tuition;
+      target.tuitionDue = tuition;
+      target.educationBonuses = structuredClone(track.instantBoosts || []);
+      const progressMetadata = ensureNestedObject(target, 'progress');
+      progressMetadata.studyTrackId = track.id;
+      progressMetadata.trackId = track.id;
+      progressMetadata.label = progressMetadata.label || `Study ${track.name}`;
+      progressMetadata.completion = progressMetadata.completion || 'manual';
+      if (progressMetadata.hoursPerDay == null && track.hoursPerDay != null) {
+        progressMetadata.hoursPerDay = track.hoursPerDay;
+      }
+      if (progressMetadata.daysRequired == null && track.days != null) {
+        progressMetadata.daysRequired = track.days;
+      }
+
+      const enrollmentMetadata = ensureNestedObject(target, 'enrollment');
+      enrollmentMetadata.seatPolicy = enrollmentMetadata.seatPolicy || seatPolicy;
+    };
+
+    const finalizeMetadata = target => {
+      seedMetadata(target);
+      if (!target || typeof target !== 'object') {
+        return;
+      }
+      if (tuition > 0) {
+        target.tuitionPaid = (Number(target.tuitionPaid) || 0) + tuition;
+        target.tuitionPaidOnDay = acceptedDay;
+      }
+      const enrollmentMetadata = ensureNestedObject(target, 'enrollment');
+      enrollmentMetadata.enrolledOnDay = acceptedDay;
+    };
+
+    const finalizeAcceptance = ({ state: finalizeState = workingState, acceptedEntry } = {}) => {
+      const targetState = finalizeState || getState();
+      if (!targetState) return;
+
+      const progress = getKnowledgeProgress(track.id, targetState);
+
+      if (tuition > 0) {
+        spendMoney(tuition);
+        recordCostContribution({
+          key: `study:${track.id}:tuition`,
+          label: `🎓 ${track.name} tuition`,
+          amount: tuition,
+          category: 'investment'
+        });
+        progress.tuitionPaid = (Number(progress.tuitionPaid) || 0) + tuition;
+        progress.tuitionPaidOnDay = acceptedDay;
+      }
+
+      progress.enrolled = true;
+      progress.completed = false;
+      progress.enrolledOnDay = acceptedDay;
+      progress.studiedToday = false;
+      progress.totalDays = track.days;
+      progress.hoursPerDay = track.hoursPerDay;
+      progress.tuitionCost = tuition;
+
+      finalizeMetadata(metadata);
+      if (acceptedEntry && acceptedEntry.metadata) {
+        finalizeMetadata(acceptedEntry.metadata);
+      }
+
+      if (instance && typeof instance === 'object') {
+        if (instance.progress && typeof instance.progress === 'object') {
+          instance.progress.studyTrackId = track.id;
+          instance.progress.trackId = track.id;
+          if (!instance.progress.label) {
+            instance.progress.label = `Study ${track.name}`;
+          }
+          if (instance.progress.hoursPerDay == null && track.hoursPerDay != null) {
+            instance.progress.hoursPerDay = track.hoursPerDay;
+          }
+          if (instance.progress.daysRequired == null && track.days != null) {
+            instance.progress.daysRequired = track.days;
+          }
+        }
+      }
+
+      addLog(
+        `You claimed a seat in ${track.name}! ${
+          tuition > 0 ? `Tuition paid for $${formatMoney(tuition)}.` : 'No tuition due.'
+        } Log ${formatHours(track.hoursPerDay)} each day from the action queue to progress.`,
+        'info'
+      );
+
+      markDirty(STUDY_DIRTY_SECTIONS);
+
+      if (instance && typeof instance === 'object') {
+        delete instance.__finalizeStudyAcceptance;
+        delete instance.__cancelStudyAcceptance;
+      }
+    };
+
+    const cancelAcceptance = () => {
+      if (instance && typeof instance === 'object') {
+        delete instance.__finalizeStudyAcceptance;
+        delete instance.__cancelStudyAcceptance;
+      }
+    };
+
+    seedMetadata(metadata);
+
+    if (instance && typeof instance === 'object') {
+      instance.__finalizeStudyAcceptance = finalizeAcceptance;
+      instance.__cancelStudyAcceptance = cancelAcceptance;
+    }
+  };
+}
+
+function createStudyCompletionHook(track) {
+  const reward = KNOWLEDGE_REWARDS[track.id];
+  return ({ state = getState(), instance } = {}) => {
+    const workingState = state || getState();
+    if (!workingState) return;
+
+    const progress = getKnowledgeProgress(track.id, workingState);
+    const wasCompleted = Boolean(progress.completed);
+
+    const completionDay = clampDay(instance?.completedOnDay, workingState.day);
+    const completedDays = Math.max(
+      Number(instance?.progress?.daysCompleted) || 0,
+      Number(progress.daysCompleted) || 0
+    );
+
+    progress.completed = true;
+    progress.enrolled = false;
+    progress.studiedToday = false;
+    progress.totalDays = track.days;
+    progress.hoursPerDay = track.hoursPerDay;
+    progress.daysCompleted = Math.min(track.days, completedDays || track.days || 0);
+    progress.completedOnDay = completionDay;
+
+    if (!progress.skillRewarded) {
+      if (reward) {
+        const xpAwarded = awardSkillProgress({
+          skills: reward.skills,
+          baseXp: reward.baseXp,
+          label: track.name,
+          state: workingState
+        });
+        if (instance && xpAwarded > 0) {
+          instance.skillXpAwarded = xpAwarded;
+        }
+      }
+      progress.skillRewarded = true;
+    }
+
+    if (!wasCompleted) {
+      addLog(`Finished ${track.name} after logging every session. Stellar dedication!`, 'info');
+    }
+
+    markDirty(STUDY_DIRTY_SECTIONS);
+  };
+}
 
 function getTrackDefinitionId(trackId) {
   return `study-${trackId}`;
@@ -218,6 +418,14 @@ export function createKnowledgeHustles() {
         }
       },
       cardState: (state, card) => presenter.applyCardState(card, state),
+      templateOptions: {
+        accept: {
+          hooks: [createStudyAcceptHook(track)]
+        },
+        complete: {
+          hooks: [createStudyCompletionHook(track)]
+        }
+      },
       market: (() => {
         const tuition = Number(track.tuition) || 0;
         const seatPolicy = tuition > 0 ? 'limited' : 'always-on';

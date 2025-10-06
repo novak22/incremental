@@ -19,6 +19,7 @@ import {
 import { definitionRequirementsMet } from './requirements/checks.js';
 import { describeHustleRequirements } from './hustles/helpers.js';
 import { markDirty } from '../core/events/invalidationBus.js';
+import { abandonActionInstance } from './actions/progress/instances.js';
 
 export const HUSTLE_TEMPLATES = [...INSTANT_ACTIONS, ...STUDY_ACTIONS];
 export const HUSTLES = HUSTLE_TEMPLATES;
@@ -232,6 +233,13 @@ export function acceptHustleOffer(offerOrId, { state = getState() } = {}) {
     return null;
   }
 
+  const finalizeAcceptance = typeof instance.__finalizeStudyAcceptance === 'function'
+    ? instance.__finalizeStudyAcceptance
+    : null;
+  const cancelAcceptance = typeof instance.__cancelStudyAcceptance === 'function'
+    ? instance.__cancelStudyAcceptance
+    : null;
+
   if (instance.progress && typeof instance.progress === 'object') {
     if (progressOverrides.hoursPerDay != null) {
       instance.progress.hoursPerDay = progressOverrides.hoursPerDay;
@@ -263,6 +271,18 @@ export function acceptHustleOffer(offerOrId, { state = getState() } = {}) {
     payout: payoutDetails,
     metadata
   });
+
+  if (!acceptedEntry) {
+    if (cancelAcceptance) {
+      cancelAcceptance();
+    }
+    abandonActionInstance(template, instance.id, { state: workingState });
+    return null;
+  }
+
+  if (finalizeAcceptance) {
+    finalizeAcceptance({ state: workingState, acceptedEntry, metadata });
+  }
 
   if (acceptedEntry) {
     markDirty({
