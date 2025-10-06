@@ -138,6 +138,10 @@ function describeCommitmentMeta(commitment) {
   if (commitment.payoutText) {
     parts.push(commitment.payoutText);
   }
+  const daysRequired = commitment.progress?.daysRequired ?? commitment.daysRequired;
+  if (Number.isFinite(daysRequired) && daysRequired > 0) {
+    parts.push(`${daysRequired}-day commitment`);
+  }
   if (commitment.remainingDays != null) {
     parts.push(describeDeadlineLabel(commitment.progress || commitment));
   }
@@ -216,6 +220,9 @@ function createHustleCard(definition, model) {
   if (model.filters?.limitRemaining !== null && model.filters?.limitRemaining !== undefined) {
     card.dataset.limitRemaining = String(model.filters.limitRemaining);
   }
+  if (model.filters?.category) {
+    card.dataset.category = model.filters.category;
+  }
 
   const header = document.createElement('header');
   header.className = 'browser-card__header';
@@ -253,6 +260,13 @@ function createHustleCard(definition, model) {
   meta.className = 'browser-card__meta';
   meta.textContent = model.requirements?.summary || 'No requirements';
   card.appendChild(meta);
+
+  if (model.seat?.summary) {
+    const seat = document.createElement('p');
+    seat.className = 'browser-card__note';
+    seat.textContent = model.seat.summary;
+    card.appendChild(seat);
+  }
 
   if (model.limit?.summary) {
     const limit = document.createElement('p');

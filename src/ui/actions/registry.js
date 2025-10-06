@@ -19,6 +19,23 @@ import {
 
 const DEFAULT_EMPTY_MESSAGE = 'Queue a hustle or upgrade to add new tasks.';
 
+function resolveCategoryLabel(...values) {
+  for (const value of values) {
+    if (typeof value !== 'string') continue;
+    const trimmed = value.trim();
+    if (!trimmed) continue;
+    const lowered = trimmed.toLowerCase();
+    if (lowered.startsWith('study') || lowered.startsWith('education')) {
+      return 'study';
+    }
+    if (lowered.startsWith('maint')) {
+      return 'maintenance';
+    }
+    return lowered;
+  }
+  return null;
+}
+
 function collectMarketIndexes(state = {}) {
   const market = state?.hustleMarket || {};
   const offers = Array.isArray(market.offers) ? market.offers : [];
@@ -286,6 +303,15 @@ function createOutstandingEntry({
       ? 'todo-widget__meta--alert'
       : undefined;
 
+  const category = resolveCategoryLabel(
+    progress.metadata?.templateCategory,
+    progress.metadata?.category,
+    accepted?.metadata?.templateCategory,
+    offer?.templateCategory,
+    definition?.category
+  );
+  const focusCategory = category || 'commitment';
+
   return {
     id: `instance:${instance.id}`,
     title,
@@ -299,13 +325,14 @@ function createOutstandingEntry({
     payoutText: formatPayoutSummary(progress.payoutAmount, progress.payoutSchedule),
     repeatable: remainingRuns == null ? true : remainingRuns > 1,
     remainingRuns,
-    focusCategory: 'commitment',
+    focusCategory,
     focusBucket: 'commitment',
     orderIndex: order,
     progress,
     instanceId: instance.id,
     definitionId: progress.definitionId,
     offerId: progress.offerId,
+    category: focusCategory,
     raw: {
       definition,
       instance,

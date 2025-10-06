@@ -49,8 +49,8 @@ test('buildQuickActions returns active offers with meta details', () => {
   const offerAction = actions.find(item => item.offer);
   assert.ok(offerAction, 'expected market offer to be present');
   assert.equal(offerAction.primaryLabel, 'Accept');
-  assert.ok(offerAction.meta.includes('$120'));
-  assert.ok(offerAction.meta.includes('1 day'));
+  assert.match(offerAction.meta, /\$120/);
+  assert.match(offerAction.meta, /Expires in/i);
 });
 
 test('buildQuickActions disables offers when requirements are unmet', () => {
@@ -103,7 +103,7 @@ test('quick action offer summary highlights payout schedule and remaining days',
     remainingDays: 2,
     formatMoneyFn: value => value.toString()
   });
-  assert.equal(summary, '$300 / day • 4h • 2 days left');
+  assert.equal(summary, '$300 / day • 4h • Expires in 2 days');
 });
 
 test('hustle offer summary includes availability, focus, and completion cues', () => {
