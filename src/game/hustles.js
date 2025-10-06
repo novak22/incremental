@@ -286,6 +286,13 @@ export function acceptHustleOffer(offerOrId, { state = getState() } = {}) {
     return null;
   }
 
+  const finalizeAcceptance = typeof instance.__finalizeStudyAcceptance === 'function'
+    ? instance.__finalizeStudyAcceptance
+    : null;
+  const cancelAcceptance = typeof instance.__cancelStudyAcceptance === 'function'
+    ? instance.__cancelStudyAcceptance
+    : null;
+
   let reservedUsage = null;
   if (reserveDailyLimit) {
     reservedUsage = reserveDailyLimit();
@@ -303,13 +310,6 @@ export function acceptHustleOffer(offerOrId, { state = getState() } = {}) {
       return null;
     }
   }
-
-  const finalizeAcceptance = typeof instance.__finalizeStudyAcceptance === 'function'
-    ? instance.__finalizeStudyAcceptance
-    : null;
-  const cancelAcceptance = typeof instance.__cancelStudyAcceptance === 'function'
-    ? instance.__cancelStudyAcceptance
-    : null;
 
   if (instance.progress && typeof instance.progress === 'object') {
     if (progressOverrides.hoursPerDay != null) {
