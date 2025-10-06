@@ -45,78 +45,121 @@ function createStudyAcceptHook(track) {
     const workingState = state || getState();
     if (!workingState) return;
 
-    const progress = getKnowledgeProgress(track.id, workingState);
     const acceptedDay = clampDay(instance?.acceptedOnDay, workingState.day);
 
-    if (tuition > 0) {
-      spendMoney(tuition);
-      recordCostContribution({
-        key: `study:${track.id}:tuition`,
-        label: `🎓 ${track.name} tuition`,
-        amount: tuition,
-        category: 'investment'
-      });
-      progress.tuitionPaid = (Number(progress.tuitionPaid) || 0) + tuition;
-      progress.tuitionPaidOnDay = acceptedDay;
-    }
+    const seedMetadata = target => {
+      if (!target || typeof target !== 'object') {
+        return;
+      }
+      target.studyTrackId = track.id;
+      target.trackId = track.id;
+      target.tuitionCost = tuition;
+      target.tuitionDue = tuition;
+      target.educationBonuses = structuredClone(track.instantBoosts || []);
+      const progressMetadata = ensureNestedObject(target, 'progress');
+      progressMetadata.studyTrackId = track.id;
+      progressMetadata.trackId = track.id;
+      progressMetadata.label = progressMetadata.label || `Study ${track.name}`;
+      progressMetadata.completion = progressMetadata.completion || 'manual';
+      if (progressMetadata.hoursPerDay == null && track.hoursPerDay != null) {
+        progressMetadata.hoursPerDay = track.hoursPerDay;
+      }
+      if (progressMetadata.daysRequired == null && track.days != null) {
+        progressMetadata.daysRequired = track.days;
+      }
 
-    progress.enrolled = true;
-    progress.completed = false;
-    progress.enrolledOnDay = acceptedDay;
-    progress.studiedToday = false;
-    progress.totalDays = track.days;
-    progress.hoursPerDay = track.hoursPerDay;
-    progress.tuitionCost = tuition;
+      const enrollmentMetadata = ensureNestedObject(target, 'enrollment');
+      enrollmentMetadata.seatPolicy = enrollmentMetadata.seatPolicy || seatPolicy;
+    };
 
-    metadata.studyTrackId = track.id;
-    metadata.trackId = track.id;
-    metadata.tuitionCost = tuition;
-    metadata.tuitionDue = tuition;
-    metadata.tuitionPaid = tuition > 0 ? (Number(metadata.tuitionPaid) || 0) + tuition : Number(metadata.tuitionPaid) || 0;
-    if (tuition > 0) {
-      metadata.tuitionPaidOnDay = acceptedDay;
-    }
-    metadata.educationBonuses = structuredClone(track.instantBoosts || []);
+    const finalizeMetadata = target => {
+      seedMetadata(target);
+      if (!target || typeof target !== 'object') {
+        return;
+      }
+      if (tuition > 0) {
+        target.tuitionPaid = (Number(target.tuitionPaid) || 0) + tuition;
+        target.tuitionPaidOnDay = acceptedDay;
+      }
+      const enrollmentMetadata = ensureNestedObject(target, 'enrollment');
+      enrollmentMetadata.enrolledOnDay = acceptedDay;
+    };
 
-    const progressMetadata = ensureNestedObject(metadata, 'progress');
-    progressMetadata.studyTrackId = track.id;
-    progressMetadata.trackId = track.id;
-    progressMetadata.label = progressMetadata.label || `Study ${track.name}`;
-    progressMetadata.completion = progressMetadata.completion || 'manual';
-    if (progressMetadata.hoursPerDay == null && track.hoursPerDay != null) {
-      progressMetadata.hoursPerDay = track.hoursPerDay;
-    }
-    if (progressMetadata.daysRequired == null && track.days != null) {
-      progressMetadata.daysRequired = track.days;
-    }
+    const finalizeAcceptance = ({ state: finalizeState = workingState, acceptedEntry } = {}) => {
+      const targetState = finalizeState || getState();
+      if (!targetState) return;
 
-    const enrollmentMetadata = ensureNestedObject(metadata, 'enrollment');
-    enrollmentMetadata.seatPolicy = enrollmentMetadata.seatPolicy || seatPolicy;
-    enrollmentMetadata.enrolledOnDay = acceptedDay;
+      const progress = getKnowledgeProgress(track.id, targetState);
 
-    if (instance && typeof instance === 'object') {
-      if (instance.progress && typeof instance.progress === 'object') {
-        instance.progress.studyTrackId = track.id;
-        instance.progress.trackId = track.id;
-        if (!instance.progress.label) {
-          instance.progress.label = `Study ${track.name}`;
-        }
-        if (instance.progress.hoursPerDay == null && track.hoursPerDay != null) {
-          instance.progress.hoursPerDay = track.hoursPerDay;
-        }
-        if (instance.progress.daysRequired == null && track.days != null) {
-          instance.progress.daysRequired = track.days;
+      if (tuition > 0) {
+        spendMoney(tuition);
+        recordCostContribution({
+          key: `study:${track.id}:tuition`,
+          label: `🎓 ${track.name} tuition`,
+          amount: tuition,
+          category: 'investment'
+        });
+        progress.tuitionPaid = (Number(progress.tuitionPaid) || 0) + tuition;
+        progress.tuitionPaidOnDay = acceptedDay;
+      }
+
+      progress.enrolled = true;
+      progress.completed = false;
+      progress.enrolledOnDay = acceptedDay;
+      progress.studiedToday = false;
+      progress.totalDays = track.days;
+      progress.hoursPerDay = track.hoursPerDay;
+      progress.tuitionCost = tuition;
+
+      finalizeMetadata(metadata);
+      if (acceptedEntry && acceptedEntry.metadata) {
+        finalizeMetadata(acceptedEntry.metadata);
+      }
+
+      if (instance && typeof instance === 'object') {
+        if (instance.progress && typeof instance.progress === 'object') {
+          instance.progress.studyTrackId = track.id;
+          instance.progress.trackId = track.id;
+          if (!instance.progress.label) {
+            instance.progress.label = `Study ${track.name}`;
+          }
+          if (instance.progress.hoursPerDay == null && track.hoursPerDay != null) {
+            instance.progress.hoursPerDay = track.hoursPerDay;
+          }
+          if (instance.progress.daysRequired == null && track.days != null) {
+            instance.progress.daysRequired = track.days;
+          }
         }
       }
+
+      addLog(
+        `You claimed a seat in ${track.name}! ${
+          tuition > 0 ? `Tuition paid for $${formatMoney(tuition)}.` : 'No tuition due.'
+        } Log ${formatHours(track.hoursPerDay)} each day from the action queue to progress.`,
+        'info'
+      );
+
+      markDirty(STUDY_DIRTY_SECTIONS);
+
+      if (instance && typeof instance === 'object') {
+        delete instance.__finalizeStudyAcceptance;
+        delete instance.__cancelStudyAcceptance;
+      }
+    };
+
+    const cancelAcceptance = () => {
+      if (instance && typeof instance === 'object') {
+        delete instance.__finalizeStudyAcceptance;
+        delete instance.__cancelStudyAcceptance;
+      }
+    };
+
+    seedMetadata(metadata);
+
+    if (instance && typeof instance === 'object') {
+      instance.__finalizeStudyAcceptance = finalizeAcceptance;
+      instance.__cancelStudyAcceptance = cancelAcceptance;
     }
-
-    addLog(
-      `You claimed a seat in ${track.name}! ${tuition > 0 ? `Tuition paid for $${formatMoney(tuition)}.` : 'No tuition due.'} ` +
-        `Log ${formatHours(track.hoursPerDay)} each day from the action queue to progress.`,
-      'info'
-    );
-
-    markDirty(STUDY_DIRTY_SECTIONS);
   };
 }
 
