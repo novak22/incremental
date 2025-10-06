@@ -1,19 +1,14 @@
 import { structuredClone } from '../../core/helpers.js';
+import {
+  clampMarketDaySpan,
+  clampMarketPositiveInteger
+} from '../hustles/normalizers.js';
 
 const DEFAULT_SEATS = 1;
 
 const toNumber = value => {
   const numeric = Number(value);
   return Number.isFinite(numeric) ? numeric : 0;
-};
-
-const toPositive = (value, fallback = 1) => {
-  const numeric = Number(value);
-  if (!Number.isFinite(numeric) || numeric <= 0) {
-    const fallbackNumeric = Number(fallback);
-    return Number.isFinite(fallbackNumeric) && fallbackNumeric > 0 ? Math.floor(fallbackNumeric) : 1;
-  }
-  return Math.floor(numeric);
 };
 
 const buildBaseMetadata = ({ hoursRequired, payoutAmount, progressLabel, hoursPerDay, daysRequired }) => {
@@ -69,6 +64,8 @@ const buildVariant = ({
   }
   if (daysRequired == null) {
     delete mergedMetadata.daysRequired;
+  } else {
+    mergedMetadata.daysRequired = clampMarketPositiveInteger(daysRequired, 1);
   }
   if (!progressLabel) {
     delete mergedMetadata.progressLabel;
@@ -79,8 +76,8 @@ const buildVariant = ({
     label,
     description,
     copies,
-    durationDays,
-    availableAfterDays,
+    durationDays: clampMarketDaySpan(durationDays, 0),
+    availableAfterDays: clampMarketDaySpan(availableAfterDays, 0),
     metadata: mergedMetadata
   };
 
@@ -89,7 +86,7 @@ const buildVariant = ({
   }
 
   if (seats != null) {
-    variant.seats = toPositive(seats, DEFAULT_SEATS);
+    variant.seats = clampMarketPositiveInteger(seats, DEFAULT_SEATS);
   }
 
   return variant;
