@@ -49,6 +49,9 @@ test('buildQuickActions returns active offers with meta details', () => {
   const offerAction = actions.find(item => item.offer);
   assert.ok(offerAction, 'expected market offer to be present');
   assert.equal(offerAction.primaryLabel, 'Accept');
+  assert.equal(offerAction.title, offerAction.label, 'shared model sets quick action title');
+  assert.ok(offerAction.durationText, 'shared model resolves duration text');
+  assert.ok(offerAction.payoutText.includes('$120'), 'shared model formats payout text');
   assert.match(offerAction.meta, /\$120/);
   assert.match(offerAction.meta, /Expires in/i);
 });

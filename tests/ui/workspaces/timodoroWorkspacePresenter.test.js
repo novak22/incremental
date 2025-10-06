@@ -5,6 +5,7 @@ import { JSDOM } from 'jsdom';
 import timodoroApp from '../../../src/ui/views/browser/apps/timodoro/ui.js';
 import renderTimodoro from '../../../src/ui/views/browser/apps/timodoro.js';
 import { buildTimodoroViewModel } from '../../../src/ui/views/browser/apps/timodoro/model.js';
+import { buildTodoGroups } from '../../../src/ui/views/browser/apps/timodoro/sections/todoSection.js';
 
 function withDom(t) {
   const dom = new JSDOM('<body><main id="mount"></main></body>', { url: 'http://localhost' });
@@ -52,6 +53,24 @@ function createContext(document) {
     }
   };
 }
+
+test('buildTodoGroups normalizes queue entries via shared builder', () => {
+  const { items } = buildTodoGroups([
+    {
+      id: 'test-hustle',
+      focusCategory: 'hustle',
+      payout: 150,
+      schedule: 'daily',
+      durationHours: 2
+    }
+  ]);
+
+  const hustleItems = items.hustle || [];
+  assert.equal(hustleItems.length, 1, 'groups include hustle bucket');
+  const detail = hustleItems[0]?.detail || '';
+  assert.ok(detail.includes('$150'), 'detail surfaces payout text');
+  assert.ok(detail.includes('2h'), 'detail includes normalized duration');
+});
 
 test('timodoro component renders layout and populates lists', t => {
   const dom = withDom(t);
@@ -301,6 +320,7 @@ test('buildTimodoroViewModel composes summary, recurring, and meta data', () => 
 
   assert.equal(viewModel.todoEntries.length, 1, 'todo entries forwarded from todo model');
   assert.equal(viewModel.todoEntries[0].title, 'Design Blitz', 'retains source todo data');
+  assert.ok(viewModel.todoEntries[0].durationText, 'shared model populates todo duration');
   assert.equal(
     viewModel.todoEmptyMessage,
     'Queue something inspiring.',
