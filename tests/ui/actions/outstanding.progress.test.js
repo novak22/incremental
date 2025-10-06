@@ -228,3 +228,84 @@ test('outstanding entries react to accepted metadata for payouts and deadlines',
   assert.equal(entry.progress.hoursRemaining, 5);
   assert.equal(entry.progress.metadata, accepted.metadata);
 });
+
+test('outstanding entries map study and maintenance commitments to canonical buckets', () => {
+  resetRegistry();
+  const studyDefinition = {
+    id: 'study-commitment',
+    name: 'Study Program',
+    category: 'education',
+    progress: {
+      type: 'scheduled',
+      completion: 'manual',
+      hoursPerDay: 2,
+      daysRequired: 3
+    }
+  };
+  const maintenanceDefinition = {
+    id: 'maintenance-commitment',
+    name: 'Maintenance Duty',
+    category: 'maintenance',
+    progress: {
+      type: 'scheduled',
+      completion: 'manual',
+      hoursPerDay: 1,
+      daysRequired: 2
+    }
+  };
+
+  loadRegistry({ actions: [studyDefinition, maintenanceDefinition], assets: [], upgrades: [] });
+
+  const state = buildDefaultState();
+  state.day = 7;
+  state.hustleMarket = { offers: [], accepted: [] };
+  state.actions = {
+    [studyDefinition.id]: {
+      instances: [
+        {
+          id: 'study-instance',
+          accepted: true,
+          status: 'active',
+          definitionId: studyDefinition.id,
+          hoursLogged: 0,
+          progress: {
+            type: 'scheduled',
+            hoursLogged: 0,
+            hoursPerDay: 2,
+            daysRequired: 3
+          }
+        }
+      ]
+    },
+    [maintenanceDefinition.id]: {
+      instances: [
+        {
+          id: 'maintenance-instance',
+          accepted: true,
+          status: 'active',
+          definitionId: maintenanceDefinition.id,
+          hoursLogged: 0,
+          progress: {
+            type: 'scheduled',
+            hoursLogged: 0,
+            hoursPerDay: 1,
+            daysRequired: 2
+          }
+        }
+      ]
+    }
+  };
+
+  ensureSlice(state);
+
+  const entries = collectOutstandingActionEntries(state);
+  const byDefinition = new Map(entries.map(entry => [entry.definitionId, entry]));
+
+  const studyEntry = byDefinition.get(studyDefinition.id);
+  assert.ok(studyEntry, 'expected study commitment entry');
+  assert.equal(studyEntry.focusCategory, 'study');
+
+  const maintenanceEntry = byDefinition.get(maintenanceDefinition.id);
+  assert.ok(maintenanceEntry, 'expected maintenance commitment entry');
+  assert.equal(maintenanceEntry.focusCategory, 'commitment');
+});
