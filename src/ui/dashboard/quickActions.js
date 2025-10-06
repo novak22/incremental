@@ -181,8 +181,15 @@ export function buildQuickActions(state) {
     const normalizedCategory = normalizeCategory(group.category || definition?.market?.category || 'hustle');
     const remainingRuns = availableOffers.length > 0 ? availableOffers.length : 1;
 
+    const actionId = primaryOffer?.id || `offer-group:${group.id}`;
+    const offerIds = Array.isArray(group.offers)
+      ? group.offers.map(entry => entry?.id).filter(Boolean)
+      : [];
+
     return {
-      id: `offer-group:${group.id}`,
+      id: actionId,
+      groupId: group.id,
+      offerIds,
       label,
       primaryLabel: 'Accept',
       description,
