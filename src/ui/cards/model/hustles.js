@@ -276,7 +276,10 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
         label: rerollLabel,
         disabled: false,
         className: 'secondary',
-        onClick: () => rollOffers({ templates: [definition], day: currentDay, state }),
+        onClick: () =>
+          executeActionFn(() => {
+            rollOffers({ templates: [definition], day: currentDay, state });
+          }),
         guidance: rerollGuidance
       };
     } else {
