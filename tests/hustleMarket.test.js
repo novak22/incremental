@@ -15,6 +15,11 @@ const {
   describeHustleRequirements
 } = hustlesModule;
 const { getState, getActionState } = stateModule;
+const {
+  resolveOfferHours,
+  resolveOfferPayoutAmount,
+  resolveOfferPayoutSchedule
+} = await import('../src/game/hustles/offerUtils.js');
 
 test.beforeEach(() => {
   harness.resetState();
@@ -220,6 +225,59 @@ test('rollDailyOffers builds variant metadata and allows multiple variants', () 
   assert.equal(weekendOffer.metadata.requirements.hours, 6);
   assert.equal(weekendOffer.metadata.payout.amount, 180);
   assert.equal(weekendOffer.metadata.payout.schedule, 'weekend');
+});
+
+test('offers and accepted entries derive contract fields from shared helpers', () => {
+  const baseState = harness.resetState();
+  baseState.day = 10;
+
+  const template = HUSTLE_TEMPLATES.find(entry => entry?.id === 'freelance') || HUSTLE_TEMPLATES[0];
+  assert.ok(template, 'expected a freelance template to validate contract helpers');
+
+  const rngValues = [0, 0.45, 0.9];
+  let selectedOffer = null;
+  let selectedState = null;
+  for (const value of rngValues) {
+    const attemptState = harness.resetState();
+    attemptState.day = baseState.day;
+    const offers = rollDailyOffers({ templates: [template], day: attemptState.day, now: 1000 + Math.floor(value * 100), state: attemptState, rng: () => value });
+    const variantOffer = offers.find(entry => entry.variantId && entry.variantId !== 'freelance-rush');
+    if (variantOffer) {
+      selectedOffer = variantOffer;
+      selectedState = attemptState;
+      break;
+    }
+  }
+
+  assert.ok(selectedOffer, 'expected to find a variant offer for helper validation');
+  assert.ok(selectedState, 'helper validation requires a state with the selected offer');
+
+  const expectedHours = resolveOfferHours(selectedOffer, template);
+  if (expectedHours != null) {
+    assert.equal(selectedOffer.metadata.requirements.hours, expectedHours);
+    assert.equal(selectedOffer.metadata.hoursRequired, expectedHours);
+  }
+
+  const expectedPayoutAmount = resolveOfferPayoutAmount(selectedOffer, template);
+  if (expectedPayoutAmount != null) {
+    assert.equal(Math.round(Number(selectedOffer.metadata.payout.amount) || 0), Math.round(expectedPayoutAmount));
+    assert.equal(Math.round(Number(selectedOffer.metadata.payoutAmount) || 0), Math.round(expectedPayoutAmount));
+  }
+
+  const expectedSchedule = resolveOfferPayoutSchedule(selectedOffer);
+  assert.equal(selectedOffer.metadata.payout.schedule, expectedSchedule);
+  assert.equal(selectedOffer.metadata.payoutSchedule, expectedSchedule);
+
+  const accepted = acceptHustleOffer(selectedOffer.id, { state: selectedState });
+  assert.ok(accepted, 'expected the selected offer to be accepted');
+
+  if (expectedHours != null) {
+    assert.equal(accepted.hoursRequired, expectedHours);
+  }
+  if (expectedPayoutAmount != null) {
+    assert.equal(Math.round(Number(accepted.payout?.amount) || 0), Math.round(expectedPayoutAmount));
+  }
+  assert.equal(accepted.payout?.schedule, expectedSchedule);
 });
 
 test('rollDailyOffers respects slotsPerRoll, variant copies, and maxActive', () => {

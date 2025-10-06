@@ -3,6 +3,11 @@ import {
   clampMarketDaySpan,
   clampMarketPositiveInteger
 } from '../hustles/normalizers.js';
+import {
+  resolveOfferHoursFromMetadata,
+  resolveOfferPayoutAmountFromMetadata,
+  resolveOfferPayoutScheduleFromMetadata
+} from '../hustles/offerUtils.js';
 
 const DEFAULT_SEATS = 1;
 
@@ -11,27 +16,56 @@ const toNumber = value => {
   return Number.isFinite(numeric) ? numeric : 0;
 };
 
-const buildBaseMetadata = ({ hoursRequired, payoutAmount, progressLabel, hoursPerDay, daysRequired }) => {
-  const metadata = {
-    requirements: { hours: hoursRequired },
-    payout: { amount: payoutAmount, schedule: 'onCompletion' },
-    hoursPerDay,
-    daysRequired,
-    progressLabel
+const finalizeMetadata = (metadata, { fallbackSchedule = 'onCompletion' } = {}) => {
+  const working = structuredClone(metadata);
+  if (working.hoursPerDay == null) {
+    delete working.hoursPerDay;
+  }
+  if (working.daysRequired == null) {
+    delete working.daysRequired;
+  } else {
+    working.daysRequired = clampMarketPositiveInteger(working.daysRequired, 1);
+  }
+  if (!working.progressLabel) {
+    delete working.progressLabel;
+  }
+
+  const resolvedHours = resolveOfferHoursFromMetadata(working, null);
+  if (resolvedHours != null) {
+    const requirements = working.requirements && typeof working.requirements === 'object'
+      ? working.requirements
+      : {};
+    requirements.hours = resolvedHours;
+    working.requirements = requirements;
+    working.hoursRequired = resolvedHours;
+  }
+
+  const resolvedAmount = resolveOfferPayoutAmountFromMetadata(working, null);
+  if (resolvedAmount != null) {
+    working.payout = {
+      ...(working.payout && typeof working.payout === 'object' ? working.payout : {}),
+      amount: resolvedAmount
+    };
+    working.payoutAmount = resolvedAmount;
+  }
+
+  const schedule = resolveOfferPayoutScheduleFromMetadata(working, fallbackSchedule);
+  working.payout = {
+    ...(working.payout && typeof working.payout === 'object' ? working.payout : {}),
+    schedule
   };
+  working.payoutSchedule = schedule;
 
-  if (hoursPerDay == null) {
-    delete metadata.hoursPerDay;
-  }
-  if (daysRequired == null) {
-    delete metadata.daysRequired;
-  }
-  if (!progressLabel) {
-    delete metadata.progressLabel;
-  }
-
-  return metadata;
+  return working;
 };
+
+const buildBaseMetadata = ({ hoursRequired, payoutAmount, progressLabel, hoursPerDay, daysRequired }) => finalizeMetadata({
+  requirements: { hours: hoursRequired },
+  payout: { amount: payoutAmount },
+  hoursPerDay,
+  daysRequired,
+  progressLabel
+});
 
 const buildVariant = ({
   id,
@@ -49,27 +83,14 @@ const buildVariant = ({
   metadata = {},
   seats
 }) => {
-  const mergedMetadata = {
+  const mergedMetadata = finalizeMetadata({
     ...metadata,
     payoutAmount,
-    payoutSchedule: metadata.payoutSchedule || 'onCompletion',
     progressLabel,
     requirements: { hours: hoursRequired },
     hoursPerDay,
     daysRequired
-  };
-
-  if (hoursPerDay == null) {
-    delete mergedMetadata.hoursPerDay;
-  }
-  if (daysRequired == null) {
-    delete mergedMetadata.daysRequired;
-  } else {
-    mergedMetadata.daysRequired = clampMarketPositiveInteger(daysRequired, 1);
-  }
-  if (!progressLabel) {
-    delete mergedMetadata.progressLabel;
-  }
+  });
 
   const variant = {
     id,
