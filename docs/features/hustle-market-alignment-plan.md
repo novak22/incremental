@@ -11,6 +11,7 @@
 - [x] **Offer Persistence Visibility** – Hustle definitions now publish variant metadata (hours per day, duration, payout schedule, copies) ensuring the exchange always has market-ready contracts instead of legacy instant runs.【F:src/game/hustles/definitions/instantHustles.js†L19-L855】
 - [x] **Telemetry & QA Tooling** – Market rolls feed `getMarketRollAuditLog()`, expose `window.__HUSTLE_MARKET_DEBUG__` helpers, and the playtest script in `docs/features/hustle-market-playtest.md` gives QA a repeatable checklist for bootstrap, rerolls, and contract completion.【F:src/game/hustles/market.js†L12-L210】【F:src/game/hustles/market.js†L662-L755】【F:docs/features/hustle-market-playtest.md†L1-L64】
 - [x] **Documentation Refresh** – Economy notes describe the contract market and variant catalog, while the main hustle feature doc now references telemetry hooks and debug helpers for designers.【F:docs/economy.md†L80-L121】【F:docs/features/hustle-market.md†L1-L126】
+- [x] **DownWork Depth Pass** – Doubled freelance and data entry slots, capped template rolls at six offers, and introduced a $7/hour virtual assistant track so the board always has upbeat ops work waiting.【F:src/game/data/market/freelance.js†L4-L41】【F:src/game/data/market/dataEntry.js†L4-L41】【F:src/game/data/hustleMarketConfig.js†L1-L92】【F:src/game/data/market/virtualAssistant.js†L1-L44】【F:src/game/hustles/definitions/instantHustles.js†L1-L140】
 
 ## Acceptance Criteria
 - Players see at least one active offer per eligible template without taking any manual action when they start a session.

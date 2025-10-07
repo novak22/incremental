@@ -246,7 +246,9 @@ export const hustles = {
   // Spec: docs/normalized_economy.json → hustles.audiobookNarration
   audiobookNarration: createHustleConfig('audiobookNarration'),
   // Spec: docs/normalized_economy.json → hustles.streetPromoSprint
-  streetPromoSprint: createHustleConfig('streetPromoSprint')
+  streetPromoSprint: createHustleConfig('streetPromoSprint'),
+  // Spec: docs/normalized_economy.json → hustles.virtualAssistant
+  virtualAssistant: createHustleConfig('virtualAssistant')
 };
 
 export const upgrades = {

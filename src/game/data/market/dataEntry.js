@@ -3,8 +3,8 @@ import { buildBaseMetadata, buildVariant } from '../../hustles/configBuilders.js
 export default {
   category: 'ops',
   seats: 1,
-  slotsPerRoll: 3,
-  maxActive: 4,
+  slotsPerRoll: 6,
+  maxActive: 6,
   metadata: ({ hours, payout }) => buildBaseMetadata({
     hoursRequired: hours,
     payoutAmount: payout,
@@ -17,7 +17,7 @@ export default {
       id: 'data-entry-ledger',
       label: 'Ledger Cleanup Sprint',
       description: 'Audit invoices and reconcile transaction logs before monthly reporting.',
-      copies: 2,
+      copies: 4,
       payoutAmount: payout,
       hoursRequired: hours,
       hoursPerDay: hours,

@@ -39,6 +39,7 @@ Online Hustle Simulator is a browser-based incremental game about orchestrating 
 - **Bundle Promo Push** – Launch a flash sale (2.5h, $48), host a cross-promo roadshow (3 days × 2h, $120), or revamp the evergreen funnel (5 days × 2.5h, $250) to keep offers fresh.
 - **Micro Survey Dash** – Chain together coffee break surveys (0.25h, $1, three copies), panel follow-ups (2 days × 0.5h, $5), or compile a full report sprint (3 days × 0.75h, $10).
 - **Data Entry Blitz** – Clear ledger cleanups (4h, $20) or tackle catalog migrations (2 days × 4h, $45) when you need steady ops cash.
+- **Virtual Assistant Shift** – Guard the inbox (3h, $21), coordinate calendars (2 days × 3h, $42), or prep launch research (3 days × 3h, $63) for cheerful $7/hour admin wins.
 - **Event Photo Gig** – Shoot a pop-up showcase (3.5h, $72), book a weekend retainer (3 days × 3h, $195), or craft a tour documentary (5 days × 3h, $325) once your gallery is humming.
 - **Pop-Up Workshop** – Teach an evening intensive (2.5h, $38), mentor a weekend cohort (2 days × 2.5h, $80), or run a four-day mentor track (2h/day, $130) when demand spikes.
 - **Vlog Edit Rush** – Offer a rush cut (1.5h, $24), batch two episodes (2 days × 1.5h, $50), or lead a season launch sprint (4 days × 1.75h, $120) for partner channels.

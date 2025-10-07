@@ -610,6 +610,25 @@
         "desktop_work"
       ]
     },
+    "virtualAssistant": {
+      "name": "Virtual Assistant Shift",
+      "base_income": 21,
+      "variance": 0,
+      "setup_time": 180,
+      "setup_cost": 0,
+      "maintenance_time": 0,
+      "maintenance_cost": 0,
+      "quality_curve": [],
+      "daily_limit": 1,
+      "requirements": [],
+      "skills": [
+        "ops"
+      ],
+      "tags": [
+        "ops",
+        "desktop_work"
+      ]
+    },
     "eventPhotoGig": {
       "name": "Event Photo Gig",
       "base_income": 72,

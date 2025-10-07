@@ -3,8 +3,8 @@ import { buildBaseMetadata, buildVariant } from '../../hustles/configBuilders.js
 export default {
   category: 'writing',
   seats: 1,
-  slotsPerRoll: 2,
-  maxActive: 4,
+  slotsPerRoll: 4,
+  maxActive: 6,
   metadata: ({ hours, payout }) => buildBaseMetadata({
     hoursRequired: hours,
     payoutAmount: payout,
@@ -17,7 +17,7 @@ export default {
       id: 'freelance-rush',
       label: 'Same-Day Draft',
       description: 'Turn a trending request into a polished rush article before the news cycle flips.',
-      copies: 2,
+      copies: 4,
       payoutAmount: payout,
       hoursRequired: hours,
       hoursPerDay: hours,

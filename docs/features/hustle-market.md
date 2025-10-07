@@ -21,7 +21,7 @@
 
 ## Recent Tuning
 - Multi-day variants now pay a 5% premium over their base hourly earnings (rounded to the nearest $5) so longer commitments feel proportionally rewarding instead of penalizing players for locking in multi-day schedules.
-- Added the Data Entry Blitz template with a 4h ledger cleanup ($20) and a two-day catalog migration (2 × 4h for $45) to give early schedulers a steady $5/hour ops gig when survey quotas dry up.
+- Expanded DownWork ops gigs by doubling freelance writing and data entry rolls while adding a Virtual Assistant Shift (3h at $7/hour) with multi-day variants so remote admins always spot 2–3 cheerful contracts waiting.
 - Every fresh offer now layers on a two-day grace period before expiring so players have breathing room to slot new contracts into their schedules without immediately losing the opportunity.
 
 ## Rolling Logic

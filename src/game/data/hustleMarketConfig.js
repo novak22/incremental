@@ -10,9 +10,11 @@ import popUpWorkshop from './market/popUpWorkshop.js';
 import saasBugSquash from './market/saasBugSquash.js';
 import streetPromoSprint from './market/streetPromoSprint.js';
 import surveySprint from './market/surveySprint.js';
+import virtualAssistant from './market/virtualAssistant.js';
 import vlogEditRush from './market/vlogEditRush.js';
 
 const DEFAULT_SEATS = 1;
+const GLOBAL_MAX_ACTIVE = 6;
 
 const toNumber = value => {
   const numeric = Number(value);
@@ -40,11 +42,13 @@ const instantiateMarket = (definition, base = {}) => {
     return structuredClone(entry);
   });
 
+  const maxActive = definition.maxActive ?? GLOBAL_MAX_ACTIVE;
+
   return {
     category: definition.category,
     seats: definition.seats ?? DEFAULT_SEATS,
     slotsPerRoll: definition.slotsPerRoll,
-    maxActive: definition.maxActive,
+    maxActive: Math.min(maxActive, GLOBAL_MAX_ACTIVE),
     metadata,
     variants
   };
@@ -62,6 +66,7 @@ export const MARKET_DEFINITIONS = {
   saasBugSquash,
   streetPromoSprint,
   surveySprint,
+  virtualAssistant,
   vlogEditRush
 };
 
