@@ -139,6 +139,19 @@ export function ensureActionMarketState(state) {
     marketState.categories = {};
   }
 
+  const hustleCategory = marketState.categories.hustle;
+  const hustleState = state.hustleMarket;
+
+  if (hustleState && typeof hustleState === 'object') {
+    if (!hustleCategory || typeof hustleCategory !== 'object') {
+      marketState.categories.hustle = hustleState;
+    } else {
+      state.hustleMarket = hustleCategory;
+    }
+  } else if (hustleCategory && typeof hustleCategory === 'object') {
+    state.hustleMarket = hustleCategory;
+  }
+
   return marketState;
 }
 
