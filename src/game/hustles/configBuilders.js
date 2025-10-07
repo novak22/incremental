@@ -1,70 +1,32 @@
-import { structuredClone } from '../../core/helpers.js';
-import {
-  clampMarketDaySpan,
-  clampMarketPositiveInteger
-} from './normalizers.js';
-import {
-  resolveOfferHoursFromMetadata,
-  resolveOfferPayoutAmountFromMetadata,
-  resolveOfferPayoutScheduleFromMetadata
-} from './offerUtils.js';
+import { clampMarketDaySpan, clampMarketPositiveInteger, cloneMarketMetadata } from './normalizers.js';
+import { resolveHustleMetadata } from './metadata.js';
 
-const FALLBACK_PAYOUT_SCHEDULE = 'onCompletion';
-
-export function finalizeMetadata(metadata, { fallbackSchedule = FALLBACK_PAYOUT_SCHEDULE } = {}) {
-  const working = structuredClone(metadata);
-
-  if (working.hoursPerDay == null) {
-    delete working.hoursPerDay;
-  }
-
-  if (working.daysRequired == null) {
-    delete working.daysRequired;
-  } else {
-    working.daysRequired = clampMarketPositiveInteger(working.daysRequired, 1);
-  }
-
-  if (!working.progressLabel) {
-    delete working.progressLabel;
-  }
-
-  const resolvedHours = resolveOfferHoursFromMetadata(working, null);
-  if (resolvedHours != null) {
-    const requirements = working.requirements && typeof working.requirements === 'object'
-      ? working.requirements
-      : {};
-    requirements.hours = resolvedHours;
-    working.requirements = requirements;
-    working.hoursRequired = resolvedHours;
-  }
-
-  const resolvedAmount = resolveOfferPayoutAmountFromMetadata(working, null);
-  if (resolvedAmount != null) {
-    working.payout = {
-      ...(working.payout && typeof working.payout === 'object' ? working.payout : {}),
-      amount: resolvedAmount
-    };
-    working.payoutAmount = resolvedAmount;
-  }
-
-  const schedule = resolveOfferPayoutScheduleFromMetadata(working, fallbackSchedule);
-  working.payout = {
-    ...(working.payout && typeof working.payout === 'object' ? working.payout : {}),
-    schedule
-  };
-  working.payoutSchedule = schedule;
-
-  return working;
-}
+export { finalizeMetadata } from './metadata.js';
 
 export function buildBaseMetadata({ hoursRequired, payoutAmount, progressLabel, hoursPerDay, daysRequired }) {
-  return finalizeMetadata({
-    requirements: { hours: hoursRequired },
-    payout: { amount: payoutAmount },
-    hoursPerDay,
-    daysRequired,
-    progressLabel
-  });
+  const baseMetadata = {};
+
+  if (hoursRequired != null) {
+    baseMetadata.requirements = { hours: hoursRequired };
+  }
+
+  if (payoutAmount != null) {
+    baseMetadata.payout = { amount: payoutAmount };
+  }
+
+  if (hoursPerDay != null) {
+    baseMetadata.hoursPerDay = hoursPerDay;
+  }
+
+  if (daysRequired != null) {
+    baseMetadata.daysRequired = daysRequired;
+  }
+
+  if (progressLabel) {
+    baseMetadata.progressLabel = progressLabel;
+  }
+
+  return resolveHustleMetadata({ variantMetadata: baseMetadata });
 }
 
 export function buildVariant({
@@ -83,14 +45,46 @@ export function buildVariant({
   metadata = {},
   seats
 }) {
-  const mergedMetadata = finalizeMetadata({
-    ...metadata,
-    payoutAmount,
-    progressLabel,
-    requirements: { hours: hoursRequired },
-    hoursPerDay,
-    daysRequired
-  });
+  const variantMetadata = cloneMarketMetadata(metadata);
+
+  const requirements = {
+    ...cloneMarketMetadata(metadata?.requirements)
+  };
+  if (hoursRequired != null) {
+    requirements.hours = hoursRequired;
+  }
+  if (Object.keys(requirements).length) {
+    variantMetadata.requirements = requirements;
+  }
+
+  const payout = {
+    ...cloneMarketMetadata(metadata?.payout)
+  };
+  if (payoutAmount != null) {
+    payout.amount = payoutAmount;
+    variantMetadata.payoutAmount = payoutAmount;
+  }
+  if (Object.keys(payout).length) {
+    variantMetadata.payout = payout;
+  }
+
+  if (progressLabel) {
+    variantMetadata.progressLabel = progressLabel;
+  }
+
+  if (hoursPerDay != null) {
+    variantMetadata.hoursPerDay = hoursPerDay;
+  }
+
+  if (daysRequired != null) {
+    variantMetadata.daysRequired = daysRequired;
+  }
+
+  if (progress) {
+    variantMetadata.progress = progress;
+  }
+
+  const mergedMetadata = resolveHustleMetadata({ variantMetadata });
 
   const variant = {
     id,
@@ -101,10 +95,6 @@ export function buildVariant({
     availableAfterDays: clampMarketDaySpan(availableAfterDays, 0),
     metadata: mergedMetadata
   };
-
-  if (progress) {
-    variant.metadata.progress = progress;
-  }
 
   if (seats != null) {
     variant.seats = clampMarketPositiveInteger(seats, 1);

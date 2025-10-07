@@ -36,10 +36,10 @@ const {
 } = await import('../src/game/hustles/offerUtils.js');
 const { buildVariantPool, selectVariantFromPool } = await import('../src/game/hustles/market/variantSelection.js');
 const {
-  buildOfferMetadata,
   createOfferFromVariant,
   OFFER_EXPIRY_GRACE_DAYS
 } = await import('../src/game/hustles/market/offerLifecycle.js');
+const { resolveHustleMetadata } = await import('../src/game/hustles/metadata.js');
 const { getMarketRollAuditLog: directAuditLog } = await import('../src/game/hustles/market.js');
 
 test.beforeEach(() => {
@@ -295,7 +295,14 @@ test('offer lifecycle composes metadata and creates normalized offers', () => {
     }
   };
 
-  const metadata = buildOfferMetadata(template, variant);
+  const metadata = resolveHustleMetadata({
+    template,
+    variant,
+    additionalMetadata: {
+      availableAfterDays: variant.availableAfterDays,
+      durationDays: variant.durationDays
+    }
+  });
   assert.equal(metadata.requirements.hours, 6, 'variant requirements should override template defaults');
   assert.equal(metadata.payout.amount, 180, 'variant payout amount should override template defaults');
   assert.equal(metadata.payout.schedule, 'afterParty', 'variant payout schedule should override template defaults');
@@ -312,6 +319,20 @@ test('offer lifecycle composes metadata and creates normalized offers', () => {
   assert.equal(offer.seats, 2, 'offer seats should inherit variant overrides');
   assert.equal(offer.metadata.hoursRequired, 6, 'normalized offer metadata should expose resolved hours');
   assert.equal(offer.metadata.payoutAmount, 180, 'normalized offer metadata should expose payout amount');
+});
+
+test('hustle variants retain resolver-normalized metadata', () => {
+  const template = HUSTLE_TEMPLATES.find(entry => Array.isArray(entry?.market?.variants) && entry.market.variants.length);
+  assert.ok(template, 'expected at least one hustle template to validate');
+
+  for (const variant of template.market.variants) {
+    const resolved = resolveHustleMetadata({ variantMetadata: variant.metadata });
+    assert.deepEqual(
+      variant.metadata,
+      resolved,
+      `variant ${variant.id} should expose metadata from the shared resolver`
+    );
+  }
 });
 
 test('rollDailyOffers builds variant metadata and allows multiple variants', () => {
