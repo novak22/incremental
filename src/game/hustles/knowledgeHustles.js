@@ -138,12 +138,19 @@ function createStudyAcceptHook(track) {
         }
       }
 
-      addLog(
-        `You claimed a seat in ${track.name}! ${
-          tuition > 0 ? `Tuition paid for $${formatMoney(tuition)}.` : 'No tuition due.'
-        } Log ${formatHours(track.hoursPerDay)} each day from the action queue to progress.`,
-        'info'
+      const orchestratorHandledMessaging = Boolean(
+        metadata?.enrollment?.orchestratorHandlesMessaging
+          ?? acceptedEntry?.metadata?.enrollment?.orchestratorHandlesMessaging
       );
+
+      if (!orchestratorHandledMessaging) {
+        addLog(
+          `You claimed a seat in ${track.name}! ${
+            tuition > 0 ? `Tuition paid for $${formatMoney(tuition)}.` : 'No tuition due.'
+          } Log ${formatHours(track.hoursPerDay)} each day from the action queue to progress.`,
+          'info'
+        );
+      }
 
       markDirty(STUDY_DIRTY_SECTIONS);
 

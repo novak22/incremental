@@ -67,7 +67,8 @@ export function createMarketSeatManager({ getState, addLog }) {
         ? metadata.enrollment
         : {}),
       seatPolicy,
-      enrolledOnDay: currentDay
+      enrolledOnDay: currentDay,
+      orchestratorHandlesMessaging: true
     };
 
     const accepted = acceptHustleOffer({
@@ -104,7 +105,8 @@ export function createMarketSeatManager({ getState, addLog }) {
 
     accepted.metadata.enrollment = {
       ...(acceptedMetadata.enrollment || {}),
-      ...metadata.enrollment
+      ...metadata.enrollment,
+      orchestratorHandlesMessaging: true
     };
 
     if (tuition > 0) {
