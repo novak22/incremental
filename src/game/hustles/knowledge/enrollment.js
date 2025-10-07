@@ -106,9 +106,16 @@ export function createStudyAcceptHook(track) {
         });
       }
 
+      const orchestratorHandlesMessaging = Boolean(
+        metadata?.enrollment?.orchestratorHandlesMessaging
+          || acceptedEntry?.metadata?.enrollment?.orchestratorHandlesMessaging
+      );
+
       syncInstanceProgress({ instance, track });
 
-      announceStudyEnrollment(track, tuition);
+      if (!orchestratorHandlesMessaging) {
+        announceStudyEnrollment(track, tuition);
+      }
       markStudySectionsDirty();
 
       if (instance && typeof instance === 'object') {
