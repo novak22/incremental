@@ -3,6 +3,7 @@
 ## Unreleased
 - Hustles: Doubled DownWork freelance and data entry availability, capped per-template offers at six, and introduced a $7/hour Virtual Assistant Shift so ops-minded players always have a remote contract waiting.【F:src/game/data/market/freelance.js†L4-L41】【F:src/game/data/market/dataEntry.js†L4-L41】【F:src/game/data/hustleMarketConfig.js†L1-L92】【F:src/game/data/market/virtualAssistant.js†L1-L44】【F:src/game/hustles/definitions/instantHustles.js†L1-L140】
 - UI: When no hustle commitments remain, the TODO queue now surfaces a "Find freelance work" task that scouts the market and auto-accepts the best freelance contract after a quick 15-minute search.
+- UI: When no hustle commitments remain, the TODO queue now surfaces a "Find work" task that scouts the whole hustle market and auto-accepts the best short commitment after a quick 15-minute search.
 - Hustles: Offer expirations now include a two-day grace period so freshly rolled contracts stick around long enough to plan your schedule.
 - UI: Shared action cards now power hustles, courses, and upkeep with contract descriptors, refreshed accept → work → complete copy, and expanded TODO grouping aliases for maintenance and study variants.
 - UI: Hustle quick actions group market variants, surface commitment length and expiry, and card views now spotlight seat limits and market categories across Hustles and Learnly.
