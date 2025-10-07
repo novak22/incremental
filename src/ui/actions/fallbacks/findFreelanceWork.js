@@ -3,17 +3,110 @@ import { addLog } from '../../../core/log.js';
 import { getState } from '../../../core/state.js';
 import { registerActionProvider } from '../providers.js';
 import { collectOutstandingActionEntries } from '../outstanding/index.js';
-import { getAvailableOffers, acceptHustleOffer } from '../../../game/hustles.js';
+import { getAvailableOffers, acceptHustleOffer, HUSTLE_TEMPLATES } from '../../../game/hustles.js';
 import { executeAction } from '../../../game/actions.js';
 import { spendTime } from '../../../game/time.js';
 import { checkDayEnd } from '../../../game/lifecycle.js';
 import { resolveOfferPayout } from '../../hustles/offerHelpers.js';
+import { definitionRequirementsMet } from '../../../game/requirements/checks.js';
+import { describeHustleRequirements } from '../../../game/hustles/helpers.js';
 
 const TASK_ID = 'fallback:freelance-search';
 const TASK_DURATION_HOURS = 0.25;
-const TASK_TITLE = 'Find freelance work';
-const TASK_SUBTITLE = 'Scan the market for a quick-turn writing gig.';
+const DEFAULT_TASK_TITLE = 'Find work';
+const TASK_SUBTITLE = 'Scan the gig board for a quick-turn contract.';
 const WARNING_TYPE = 'warning';
+
+const TEMPLATE_NAME_BY_ID = new Map(
+  HUSTLE_TEMPLATES
+    .filter(template => template?.id)
+    .map(template => [template.id, template.name || template.id])
+);
+
+const TEMPLATE_BY_ID = new Map(
+  HUSTLE_TEMPLATES
+    .filter(template => template?.id)
+    .map(template => [template.id, template])
+);
+
+function formatCategoryLabel(value) {
+  if (typeof value !== 'string') {
+    return '';
+  }
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return '';
+  }
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+}
+
+function resolveOfferCategory(offer = {}) {
+  const direct = typeof offer.templateCategory === 'string' && offer.templateCategory.trim()
+    ? offer.templateCategory.trim()
+    : null;
+  if (direct) {
+    return direct;
+  }
+  const metadataCategory = typeof offer.metadata?.templateCategory === 'string'
+    && offer.metadata.templateCategory.trim()
+    ? offer.metadata.templateCategory.trim()
+    : null;
+  return metadataCategory;
+}
+
+function resolveTemplateName(offer = {}) {
+  const templateId = typeof offer.templateId === 'string' && offer.templateId.trim()
+    ? offer.templateId.trim()
+    : null;
+  if (templateId && TEMPLATE_NAME_BY_ID.has(templateId)) {
+    return TEMPLATE_NAME_BY_ID.get(templateId);
+  }
+  const definitionId = typeof offer.definitionId === 'string' && offer.definitionId.trim()
+    ? offer.definitionId.trim()
+    : null;
+  if (definitionId && TEMPLATE_NAME_BY_ID.has(definitionId)) {
+    return TEMPLATE_NAME_BY_ID.get(definitionId);
+  }
+  return null;
+}
+
+function resolveOfferTemplate(offer = {}) {
+  const templateId = typeof offer.templateId === 'string' && offer.templateId.trim()
+    ? offer.templateId.trim()
+    : null;
+  if (templateId && TEMPLATE_BY_ID.has(templateId)) {
+    return TEMPLATE_BY_ID.get(templateId);
+  }
+  const definitionId = typeof offer.definitionId === 'string' && offer.definitionId.trim()
+    ? offer.definitionId.trim()
+    : null;
+  if (definitionId && TEMPLATE_BY_ID.has(definitionId)) {
+    return TEMPLATE_BY_ID.get(definitionId);
+  }
+  return null;
+}
+
+function resolveTaskTitle(candidate) {
+  const offer = candidate?.offer;
+  const templateName = resolveTemplateName(offer);
+  if (templateName) {
+    return `Find ${templateName} work`;
+  }
+  const category = resolveOfferCategory(offer);
+  if (category) {
+    return `Find ${formatCategoryLabel(category)} work`;
+  }
+  return DEFAULT_TASK_TITLE;
+}
+
+function resolveTaskSubtitle(candidate) {
+  const category = resolveOfferCategory(candidate?.offer);
+  if (category) {
+    const lowerLabel = formatCategoryLabel(category).toLowerCase();
+    return `Scout today's ${lowerLabel} gigs and snag the coziest contract.`;
+  }
+  return TASK_SUBTITLE;
+}
 
 function toFiniteNumber(value) {
   const numeric = Number(value);
@@ -72,21 +165,43 @@ function buildCandidate(offer) {
   };
 }
 
-function selectFreelanceCandidate(state) {
-  const offers = getAvailableOffers(state, { includeClaimed: false }) || [];
-  const freelanceOffers = offers.filter(offer => {
-    if (!offer || offer.status === 'claimed' || offer.claimed) {
+function isOfferEligibleForState(offer, state) {
+  const template = resolveOfferTemplate(offer);
+  if (!template) {
+    return false;
+  }
+
+  if (typeof template.getDisabledReason === 'function') {
+    const disabledReason = template.getDisabledReason(state);
+    if (disabledReason) {
       return false;
     }
-    const templateId = offer.templateId || offer.definitionId;
-    return templateId === 'freelance';
-  });
+  }
 
-  if (!freelanceOffers.length) {
+  if (!definitionRequirementsMet(template, state)) {
+    return false;
+  }
+
+  const requirementDescriptors = describeHustleRequirements(template, state) || [];
+  const unmetDescriptor = requirementDescriptors.find(entry => entry && entry.met === false);
+  if (unmetDescriptor) {
+    return false;
+  }
+
+  return true;
+}
+
+function selectHustleCandidate(state) {
+  const offers = getAvailableOffers(state, { includeClaimed: false }) || [];
+  const hustleOffers = offers.filter(offer => offer && offer.status !== 'claimed' && !offer.claimed);
+
+  const eligibleOffers = hustleOffers.filter(offer => isOfferEligibleForState(offer, state));
+
+  if (!eligibleOffers.length) {
     return null;
   }
 
-  const candidates = freelanceOffers.map(buildCandidate);
+  const candidates = eligibleOffers.map(buildCandidate);
   candidates.sort((a, b) => {
     if (a.daysRequired !== b.daysRequired) {
       return a.daysRequired - b.daysRequired;
@@ -115,8 +230,12 @@ function buildMetaSummary(candidate) {
     return '';
   }
   const parts = [];
+  const categoryLabel = formatCategoryLabel(resolveOfferCategory(candidate.offer));
+  if (categoryLabel) {
+    parts.push(categoryLabel);
+  }
   const label = candidate.offer.variant?.label;
-  if (label) {
+  if (label && label !== categoryLabel) {
     parts.push(label);
   }
   if (candidate.payout > 0) {
@@ -128,17 +247,17 @@ function buildMetaSummary(candidate) {
   return parts.join(' • ');
 }
 
-function runFreelanceSearch() {
+function runHustleSearch() {
   const state = getState();
-  const candidate = selectFreelanceCandidate(state);
+  const candidate = selectHustleCandidate(state);
   if (!candidate?.offer) {
-    addLog('No freelance gigs are open right now. Check back after the next market refresh.', WARNING_TYPE);
+    addLog('No hustle gigs are open right now. Check back after the next market refresh.', WARNING_TYPE);
     return { success: false };
   }
 
   const availableTime = toFiniteNumber(state?.timeLeft);
   if (availableTime != null && availableTime < TASK_DURATION_HOURS) {
-    addLog(`You need ${formatHours(TASK_DURATION_HOURS)} free to line up a freelance gig. Clear a little time first.`, WARNING_TYPE);
+    addLog(`You need ${formatHours(TASK_DURATION_HOURS)} free to scout a new gig. Clear a little time first.`, WARNING_TYPE);
     return { success: false };
   }
 
@@ -152,7 +271,7 @@ function runFreelanceSearch() {
   });
 
   if (!accepted) {
-    addLog('That contract slipped away before you could accept it. Keep scouting for the next one!', WARNING_TYPE);
+    addLog('That gig slipped away before you could accept it. Keep scouting for the next one!', WARNING_TYPE);
     return { success: false };
   }
 
@@ -169,13 +288,15 @@ registerActionProvider(({ state }) => {
     return null;
   }
 
-  const candidate = selectFreelanceCandidate(workingState);
+  const candidate = selectHustleCandidate(workingState);
   if (!candidate?.offer) {
     return null;
   }
 
   const durationText = formatHours(TASK_DURATION_HOURS);
   const meta = buildMetaSummary(candidate);
+  const title = resolveTaskTitle(candidate);
+  const subtitle = resolveTaskSubtitle(candidate);
 
   return {
     id: 'freelance-search-fallback',
@@ -183,15 +304,15 @@ registerActionProvider(({ state }) => {
     entries: [
       {
         id: TASK_ID,
-        title: TASK_TITLE,
-        subtitle: TASK_SUBTITLE,
+        title,
+        subtitle,
         meta,
         durationHours: TASK_DURATION_HOURS,
         durationText,
         repeatable: true,
         focusCategory: 'hustle',
         focusBucket: 'hustle',
-        onClick: runFreelanceSearch
+        onClick: runHustleSearch
       }
     ]
   };
