@@ -8,6 +8,8 @@ import { executeAction } from '../../../game/actions.js';
 import { spendTime } from '../../../game/time.js';
 import { checkDayEnd } from '../../../game/lifecycle.js';
 import { resolveOfferPayout } from '../../hustles/offerHelpers.js';
+import { definitionRequirementsMet } from '../../../game/requirements/checks.js';
+import { describeHustleRequirements } from '../../../game/hustles/helpers.js';
 
 const TASK_ID = 'fallback:freelance-search';
 const TASK_DURATION_HOURS = 0.25;
@@ -19,6 +21,12 @@ const TEMPLATE_NAME_BY_ID = new Map(
   HUSTLE_TEMPLATES
     .filter(template => template?.id)
     .map(template => [template.id, template.name || template.id])
+);
+
+const TEMPLATE_BY_ID = new Map(
+  HUSTLE_TEMPLATES
+    .filter(template => template?.id)
+    .map(template => [template.id, template])
 );
 
 function formatCategoryLabel(value) {
@@ -58,6 +66,22 @@ function resolveTemplateName(offer = {}) {
     : null;
   if (definitionId && TEMPLATE_NAME_BY_ID.has(definitionId)) {
     return TEMPLATE_NAME_BY_ID.get(definitionId);
+  }
+  return null;
+}
+
+function resolveOfferTemplate(offer = {}) {
+  const templateId = typeof offer.templateId === 'string' && offer.templateId.trim()
+    ? offer.templateId.trim()
+    : null;
+  if (templateId && TEMPLATE_BY_ID.has(templateId)) {
+    return TEMPLATE_BY_ID.get(templateId);
+  }
+  const definitionId = typeof offer.definitionId === 'string' && offer.definitionId.trim()
+    ? offer.definitionId.trim()
+    : null;
+  if (definitionId && TEMPLATE_BY_ID.has(definitionId)) {
+    return TEMPLATE_BY_ID.get(definitionId);
   }
   return null;
 }
@@ -141,15 +165,43 @@ function buildCandidate(offer) {
   };
 }
 
+function isOfferEligibleForState(offer, state) {
+  const template = resolveOfferTemplate(offer);
+  if (!template) {
+    return false;
+  }
+
+  if (typeof template.getDisabledReason === 'function') {
+    const disabledReason = template.getDisabledReason(state);
+    if (disabledReason) {
+      return false;
+    }
+  }
+
+  if (!definitionRequirementsMet(template, state)) {
+    return false;
+  }
+
+  const requirementDescriptors = describeHustleRequirements(template, state) || [];
+  const unmetDescriptor = requirementDescriptors.find(entry => entry && entry.met === false);
+  if (unmetDescriptor) {
+    return false;
+  }
+
+  return true;
+}
+
 function selectHustleCandidate(state) {
   const offers = getAvailableOffers(state, { includeClaimed: false }) || [];
   const hustleOffers = offers.filter(offer => offer && offer.status !== 'claimed' && !offer.claimed);
 
-  if (!hustleOffers.length) {
+  const eligibleOffers = hustleOffers.filter(offer => isOfferEligibleForState(offer, state));
+
+  if (!eligibleOffers.length) {
     return null;
   }
 
-  const candidates = hustleOffers.map(buildCandidate);
+  const candidates = eligibleOffers.map(buildCandidate);
   candidates.sort((a, b) => {
     if (a.daysRequired !== b.daysRequired) {
       return a.daysRequired - b.daysRequired;
