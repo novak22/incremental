@@ -3,7 +3,7 @@ import {
   formatDuration,
   formatPayoutSummary
 } from '../utils.js';
-import { resolveQueueCategory } from '../queueService.js';
+import { resolveQueueCategory } from '../queue/buckets.js';
 import buildProgressSnapshot from './progressSnapshots.js';
 
 export function createOutstandingEntry({

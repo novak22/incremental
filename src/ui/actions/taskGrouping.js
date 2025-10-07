@@ -11,10 +11,10 @@ import {
   applyFocusOrdering as applyFocusOrderingBase,
   collectBuckets as collectBucketsBase,
   groupEntriesByTaskGroup as groupEntriesByTaskGroupBase,
-  rankEntriesByRoi,
   resolveFocusBucket as resolveFocusBucketBase,
   sortBuckets as sortBucketsBase
-} from './queueService.js';
+} from './queue/buckets.js';
+import { rankEntriesByRoi } from './queue/roi.js';
 import { resolveStudyTrackId } from './studyTracks.js';
 
 export const DEFAULT_TODO_EMPTY_MESSAGE = 'Queue an action or upgrade to add new tasks.';
