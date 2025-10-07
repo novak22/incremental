@@ -1,6 +1,6 @@
 # Economy Specification Appendix (Auto-generated)
 
-Last generated: 2025-10-05T17:07:42.069Z
+Last generated: 2025-10-07T22:33:41.473Z
 
 ## Asset Summary
 | Asset | Setup Schedule | Setup Cost | Maintenance Time | Maintenance Cost | Base Income | Variance |
@@ -18,6 +18,7 @@ Last generated: 2025-10-05T17:07:42.069Z
 | Audience Q&A Blast | 60 min | $0 | $12 | 1 | blog×1 | audience |
 | Audiobook Narration | 165 min | $0 | $44 | ∞ | ebook×1 | audio |
 | Bundle Promo Push | 150 min | $0 | $48 | ∞ | blog×2, ebook×1 | promotion |
+| Data Entry Blitz | 240 min | $0 | $20 | 2 | — | ops |
 | Dropship Pack Party | 120 min | $8 | $28 | ∞ | dropshipping×1 | commerce |
 | Event Photo Gig | 210 min | $0 | $72 | ∞ | stockPhotos×1 | visual |
 | Freelance Writing | 120 min | $0 | $18 | ∞ | — | writing |
@@ -25,6 +26,7 @@ Last generated: 2025-10-05T17:07:42.069Z
 | Pop-Up Workshop | 150 min | $0 | $38 | ∞ | blog×1, ebook×1 | audience, writing 50% |
 | SaaS Bug Squash | 60 min | $0 | $30 | ∞ | saas×1 | software, infrastructure 50% |
 | Street Team Promo | 45 min | $5 | $18 | ∞ | blog×2 | promotion |
+| Virtual Assistant Shift | 180 min | $0 | $21 | 1 | — | ops |
 | Vlog Edit Rush | 90 min | $0 | $24 | ∞ | vlog×1 | editing |
 
 ## Knowledge Track Summary

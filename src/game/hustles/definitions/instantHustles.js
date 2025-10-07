@@ -25,6 +25,7 @@ const dropshipPackPartyConfig = requireHustleConfig('dropshipPackParty'); // Spe
 const saasBugSquashConfig = requireHustleConfig('saasBugSquash'); // Spec: docs/normalized_economy.json → hustles.saasBugSquash
 const audiobookNarrationConfig = requireHustleConfig('audiobookNarration'); // Spec: docs/normalized_economy.json → hustles.audiobookNarration
 const streetPromoSprintConfig = requireHustleConfig('streetPromoSprint'); // Spec: docs/normalized_economy.json → hustles.streetPromoSprint
+const virtualAssistantConfig = requireHustleConfig('virtualAssistant'); // Spec: docs/normalized_economy.json → hustles.virtualAssistant
 
 const instantHustleDefinitions = [
   {
@@ -161,6 +162,33 @@ const instantHustleDefinitions = [
     },
     skills: dataEntryConfig.skills,
     actionLabel: 'Log Data Hours'
+  },
+  {
+    id: 'virtualAssistant',
+    name: 'Virtual Assistant Shift',
+    tag: { label: 'Instant', type: 'instant' },
+    description: 'Jump into the shared inbox, tidy calendars, and keep remote workflows humming.',
+    tags: virtualAssistantConfig.tags,
+    time: virtualAssistantConfig.timeHours, // Spec: docs/normalized_economy.json → hustles.virtualAssistant.setup_time
+    dailyLimit: virtualAssistantConfig.dailyLimit,
+    payout: {
+      amount: virtualAssistantConfig.payout, // Spec: docs/normalized_economy.json → hustles.virtualAssistant.base_income
+      logType: 'hustle',
+      message: context => {
+        const payout = context?.finalPayout ?? context?.payoutGranted ?? virtualAssistantConfig.payout;
+        const bonusNote = context?.appliedEducationBoosts?.length
+          ? ' Systems savvy made every update sparkle.'
+          : '';
+        return `You kept the ops humming for $${formatMoney(payout)}. Remote magic for the win!${bonusNote}`;
+      }
+    },
+    market: structuredClone(virtualAssistantConfig.market || {}),
+    metrics: {
+      time: { label: '🧰 Virtual assistant focus time', category: 'hustle' },
+      payout: { label: '🧰 Virtual assistant payout', category: 'hustle' }
+    },
+    skills: virtualAssistantConfig.skills,
+    actionLabel: 'Assist Remotely'
   },
   {
     id: 'eventPhotoGig',
