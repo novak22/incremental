@@ -81,11 +81,3 @@ export function getHustleMarketConfig(key, baseConfig = {}) {
   return config ? structuredClone(config) : null;
 }
 
-export function getAllHustleMarketConfigs(baseConfigs = {}) {
-  const entries = Object.entries(MARKET_BUILDERS).map(([key, builder]) => {
-    const base = baseConfigs[key] || {};
-    const config = builder(base);
-    return [key, config ? structuredClone(config) : null];
-  });
-  return Object.fromEntries(entries);
-}
