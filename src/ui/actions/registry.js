@@ -4,7 +4,7 @@ import './fallbacks/findFreelanceWork.js';
 import {
   mergeQueueSnapshotMetrics,
   applyFinalQueueMetrics
-} from './queueService.js';
+} from './queue/metrics.js';
 import {
   applyAutoCompletedEntries,
   collectOutstandingActionEntries

@@ -1,7 +1,7 @@
 import { formatHours } from '../../core/helpers.js';
 import { clampNumber } from './formatters.js';
 import { collectOutstandingActionEntries } from '../actions/outstanding/index.js';
-import { buildQueueMetrics } from '../actions/queueService.js';
+import { buildQueueMetrics } from '../actions/queue/metrics.js';
 import { buildQueueEntryModel } from '../actions/models.js';
 import { registerActionProvider } from '../actions/providers.js';
 import { executeAction } from '../../game/actions.js';

@@ -1,6 +1,6 @@
 import { formatHours, formatMoney } from '../../../../../core/helpers.js';
 import { buildSummaryPresentations } from '../../../../dashboard/formatters.js';
-import { buildQueueMetrics } from '../../../../actions/queueService.js';
+import { buildQueueMetrics } from '../../../../actions/queue/metrics.js';
 import { buildQueueEntryCollection } from '../../../../actions/models.js';
 
 export function formatCurrency(amount) {
