@@ -29,6 +29,20 @@ const TEMPLATE_BY_ID = new Map(
     .map(template => [template.id, template])
 );
 
+const STUDY_CATEGORY_KEYS = new Set(['study', 'education', 'course', 'training', 'lesson', 'class']);
+
+function normalizeKey(value) {
+  if (typeof value !== 'string') {
+    return '';
+  }
+  return value.trim().toLowerCase();
+}
+
+function isStudyDescriptor(value) {
+  const normalized = normalizeKey(value);
+  return normalized && STUDY_CATEGORY_KEYS.has(normalized);
+}
+
 function formatCategoryLabel(value) {
   if (typeof value !== 'string') {
     return '';
@@ -84,6 +98,46 @@ function resolveOfferTemplate(offer = {}) {
     return TEMPLATE_BY_ID.get(definitionId);
   }
   return null;
+}
+
+function isOfferDownworkAligned(offer = {}, template = null) {
+  const resolvedTemplate = template || resolveOfferTemplate(offer) || null;
+  if (!resolvedTemplate) {
+    return false;
+  }
+
+  if (isStudyDescriptor(resolvedTemplate.category)) {
+    return false;
+  }
+
+  if (isStudyDescriptor(resolvedTemplate?.market?.category)) {
+    return false;
+  }
+
+  if (isStudyDescriptor(resolvedTemplate?.tag?.type)) {
+    return false;
+  }
+
+  if (isStudyDescriptor(resolvedTemplate?.progress?.type)) {
+    return false;
+  }
+
+  const offerCategory = normalizeKey(offer?.templateCategory || offer?.category);
+  if (isStudyDescriptor(offerCategory)) {
+    return false;
+  }
+
+  const metadataCategory = normalizeKey(offer?.metadata?.templateCategory);
+  if (isStudyDescriptor(metadataCategory)) {
+    return false;
+  }
+
+  const resolvedCategory = resolveOfferCategory(offer);
+  if (isStudyDescriptor(resolvedCategory)) {
+    return false;
+  }
+
+  return true;
 }
 
 function resolveTaskTitle(candidate) {
@@ -168,6 +222,10 @@ function buildCandidate(offer) {
 function isOfferEligibleForState(offer, state) {
   const template = resolveOfferTemplate(offer);
   if (!template) {
+    return false;
+  }
+
+  if (!isOfferDownworkAligned(offer, template)) {
     return false;
   }
 
@@ -317,3 +375,7 @@ registerActionProvider(({ state }) => {
     ]
   };
 }, -10);
+
+export const __testables = {
+  isOfferDownworkAligned
+};
