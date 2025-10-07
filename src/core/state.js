@@ -31,9 +31,8 @@ import {
 } from './state/slices/hustleMarket/index.js';
 import {
   ensureActionMarketState,
-  ensureActionMarketCategoryState,
   createDefaultActionMarketState
-} from './state/slices/actionMarket/index.js';
+} from './state/slices/actionMarket/state.js';
 import { isAutoReadType } from './logAutoReadTypes.js';
 
 function normalizeLogEntry(entry) {
@@ -97,7 +96,7 @@ class StateManager {
     ensureUpgradeSlice(target);
     ensureProgressSlice(target);
     ensureActionMarketState(target);
-    ensureActionMarketCategoryState(target, 'hustle', { fallbackDay: target.day || 1 });
+    ensureHustleMarketState(target, { fallbackDay: target.day || 1 });
 
     target.totals = target.totals || {};
     const earned = Number(target.totals.earned);

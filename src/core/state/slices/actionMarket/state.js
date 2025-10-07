@@ -125,6 +125,53 @@ function normalizeCategoryState(categoryState, {
   return categoryState;
 }
 
+function isActionMarketCategory(value) {
+  return value && typeof value === 'object';
+}
+
+function categoryHasEntries(category) {
+  if (!isActionMarketCategory(category)) {
+    return false;
+  }
+
+  const offers = Array.isArray(category.offers) ? category.offers.length : 0;
+  const accepted = Array.isArray(category.accepted) ? category.accepted.length : 0;
+  return offers > 0 || accepted > 0;
+}
+
+function synchronizeHustleCategory(state, marketState) {
+  const categories = marketState.categories;
+  const hustleCategory = isActionMarketCategory(categories.hustle)
+    ? categories.hustle
+    : null;
+  const hustleState = isActionMarketCategory(state.hustleMarket)
+    ? state.hustleMarket
+    : null;
+
+  if (hustleCategory && hustleState && hustleCategory !== hustleState) {
+    if (categoryHasEntries(hustleState) && !categoryHasEntries(hustleCategory)) {
+      categories.hustle = hustleState;
+    } else {
+      state.hustleMarket = hustleCategory;
+    }
+  } else if (hustleState && !hustleCategory) {
+    categories.hustle = hustleState;
+  } else if (hustleCategory && !hustleState) {
+    state.hustleMarket = hustleCategory;
+  }
+
+  const resolved = isActionMarketCategory(categories.hustle)
+    ? categories.hustle
+    : isActionMarketCategory(state.hustleMarket)
+      ? state.hustleMarket
+      : null;
+
+  if (resolved) {
+    categories.hustle = resolved;
+    state.hustleMarket = resolved;
+  }
+}
+
 export function ensureActionMarketState(state) {
   if (!state) {
     return createDefaultActionMarketState();
@@ -139,11 +186,7 @@ export function ensureActionMarketState(state) {
     marketState.categories = {};
   }
 
-  if (state.hustleMarket && !marketState.categories.hustle) {
-    marketState.categories.hustle = state.hustleMarket;
-  } else if (!state.hustleMarket && marketState.categories.hustle) {
-    state.hustleMarket = marketState.categories.hustle;
-  }
+  synchronizeHustleCategory(state, marketState);
 
   return marketState;
 }
@@ -160,10 +203,6 @@ export function ensureActionMarketCategoryState(state, category = 'default', opt
     fallbackDay: options.fallbackDay,
     category: key
   });
-
-  if (key === 'hustle') {
-    state.hustleMarket = categoryState;
-  }
 
   return categoryState;
 }
@@ -190,12 +229,6 @@ export function clearActionMarketCategoryState(state, category = 'default') {
   categoryState.lastRolledOnDay = 0;
   categoryState.offers = [];
   categoryState.accepted = [];
-}
-
-export function ensureHustleMarketStateCompatibility(state, options = {}) {
-  const categoryState = ensureActionMarketCategoryState(state, 'hustle', options);
-  state.hustleMarket = categoryState;
-  return categoryState;
 }
 
 export function createDefaultHustleMarketStateCompatibility() {

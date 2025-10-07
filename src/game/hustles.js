@@ -9,13 +9,15 @@ import {
   resolveOfferPayoutAmount,
   resolveOfferPayoutSchedule
 } from './hustles/offerUtils.js';
+import { ensureActionMarketCategoryState } from '../core/state/slices/actionMarket/state.js';
 import {
-  ensureActionMarketCategoryState,
   claimActionMarketOffer,
-  getActionMarketOfferById,
-  getActionMarketClaimedOffers,
   releaseActionMarketOffer
-} from '../core/state/slices/actionMarket/index.js';
+} from '../core/state/slices/actionMarket/commands.js';
+import {
+  getActionMarketOfferById,
+  getActionMarketClaimedOffers
+} from '../core/state/slices/actionMarket/selectors.js';
 import { definitionRequirementsMet } from './requirements/checks.js';
 import { describeHustleRequirements } from './hustles/helpers.js';
 import { logHustleBlocked } from './content/schema/logMessaging.js';
