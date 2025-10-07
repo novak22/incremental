@@ -231,18 +231,6 @@ export function clearActionMarketCategoryState(state, category = 'default') {
   categoryState.accepted = [];
 }
 
-export function createDefaultHustleMarketStateCompatibility() {
-  return createDefaultActionMarketCategoryState({ category: 'hustle' });
-}
-
-export function cloneHustleMarketStateCompatibility(state) {
-  return cloneActionMarketCategoryState(state, 'hustle');
-}
-
-export function clearHustleMarketStateCompatibility(state) {
-  clearActionMarketCategoryState(state, 'hustle');
-}
-
 export function createAcceptedEntryForCategory(offer, details = {}, {
   fallbackDay = 1,
   category
