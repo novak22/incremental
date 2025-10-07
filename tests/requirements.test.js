@@ -428,10 +428,8 @@ test('study enrollment hooks charge tuition and enrich accepted metadata', () =>
   );
 
   const newLogs = state.log.slice(logBaseline);
-  assert.ok(
-    newLogs.some(entry => /claimed a seat/i.test(entry?.message || '')),
-    'enrollment hook should log a celebratory message'
-  );
+  const celebratoryLogs = newLogs.filter(entry => /claimed a seat/i.test(entry?.message || ''));
+  assert.equal(celebratoryLogs.length, 1, 'enrollment should log the celebratory message exactly once');
 
   const dirty = consumeDirty();
   STUDY_DIRTY_SECTIONS.forEach(section => {
