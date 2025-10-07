@@ -263,6 +263,8 @@ export function seedKnowledgeStudyInstances({ state, sliceState }) {
     return;
   }
 
+  const currentDay = Math.max(1, Math.floor(Number(state?.day) || 1));
+
   for (const [trackId, progress] of Object.entries(knowledge)) {
     if (!progress) continue;
     const isEnrolled = progress.enrolled === true;
@@ -281,7 +283,7 @@ export function seedKnowledgeStudyInstances({ state, sliceState }) {
 
     const track = KNOWLEDGE_TRACKS[trackId];
     const instance = buildLegacyStudyInstance(definition, track, progress, state);
-    if (instance) {
+    if (instance && !shouldRetireInstance(instance, currentDay)) {
       entry.instances.push(instance);
     }
   }

@@ -10,6 +10,8 @@ const orchestratorModule = await import('../src/game/requirements/orchestrator.j
 const invalidationModule = await import('../src/core/events/invalidationBus.js');
 const actionsRegistryModule = await import('../src/ui/actions/registry.js');
 const todoWidgetModule = await import('../src/ui/views/browser/widgets/todoWidget.js');
+const actionsSliceModule = await import('../src/core/state/slices/actions/index.js');
+const actionInstancesModule = await import('../src/core/state/slices/actions/instances.js');
 
 const { default: tracksDefaultExport, KNOWLEDGE_TRACKS: tracksCatalog, KNOWLEDGE_REWARDS: rewardCatalog } = knowledgeTracksModule;
 const knowledgeTrackData = knowledgeTrackDataModule.default;
@@ -19,6 +21,8 @@ const { createRequirementsOrchestrator, STUDY_DIRTY_SECTIONS } = orchestratorMod
 const { consumeDirty } = invalidationModule;
 const { normalizeActionEntries } = actionsRegistryModule;
 const { __testables: todoWidgetTestables } = todoWidgetModule;
+const { ensureSlice: ensureActionSlice } = actionsSliceModule;
+const { COMPLETED_RETENTION_DAYS } = actionInstancesModule;
 
 const actionsProgressModule = await import('../src/game/actions/progress/instances.js');
 const { advanceActionInstance } = actionsProgressModule;
@@ -231,6 +235,50 @@ test('advancing knowledge logs completions and clears daily flags', () => {
   STUDY_DIRTY_SECTIONS.forEach(section => {
     assert.ok(dirty[section]);
   });
+});
+
+test('completed knowledge studies retire after the retention window', () => {
+  const state = getState();
+  ensureActionSlice(state);
+
+  const trackId = 'outlineMastery';
+  const definitionId = `study-${trackId}`;
+  const entry = getActionState(definitionId);
+
+  assert.ok(entry, 'expected the study action entry to exist');
+  assert.equal(entry.instances.length, 0, 'expected no baseline instances');
+
+  const completionDay = state.day;
+  entry.instances.push({
+    id: 'legacy-study',
+    definitionId,
+    accepted: true,
+    status: 'completed',
+    completed: true,
+    completedOnDay: completionDay,
+    progress: {
+      completed: true,
+      completedOnDay: completionDay
+    }
+  });
+
+  const progress = getKnowledgeProgress(trackId);
+  progress.enrolled = true;
+  progress.completed = true;
+  progress.completedOnDay = completionDay;
+
+  assert.equal(entry.instances.length, 1, 'expected the legacy instance to be seeded');
+
+  state.day = completionDay + COMPLETED_RETENTION_DAYS + 1;
+
+  ensureActionSlice(state);
+
+  const refreshedEntry = getActionState(definitionId);
+  assert.equal(
+    refreshedEntry.instances.length,
+    0,
+    'completed legacy instances outside the retention window should not return'
+  );
 });
 
 test('logging study hours updates daily study flags immediately', () => {
