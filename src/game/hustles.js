@@ -25,7 +25,6 @@ import { markDirty } from '../core/events/invalidationBus.js';
 import { abandonActionInstance } from './actions/progress/instances.js';
 
 export const HUSTLE_TEMPLATES = [...INSTANT_ACTIONS, ...STUDY_ACTIONS];
-export const HUSTLES = HUSTLE_TEMPLATES;
 export const KNOWLEDGE_HUSTLES = STUDY_ACTIONS;
 
 const HUSTLE_ACTION_CATEGORY = 'hustle';
