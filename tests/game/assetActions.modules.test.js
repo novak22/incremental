@@ -9,7 +9,7 @@ const { initializeState, getState } = stateModule;
 const registryService = await import('../../src/game/registryService.js');
 const { ensureRegistryReady } = await import('../../src/game/registryBootstrap.js');
 const { createInstantHustle } = await import('../../src/game/content/schema/assetActions.js');
-const { createDailyLimitTracker } = await import('../../src/game/content/schema/assetActions/execution.js');
+const { createDailyLimitTracker } = await import('../../src/game/content/schema/assetActions/dailyLimitTracker.js');
 
 function ensureConfigured() {
   registryService.resetRegistry();

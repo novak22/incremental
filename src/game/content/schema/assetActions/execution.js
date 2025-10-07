@@ -1,156 +1,26 @@
 import { formatHours, formatMoney, toNumber } from '../../../../core/helpers.js';
-import { countActiveAssetInstances, getActionState, getState } from '../../../../core/state.js';
+import { countActiveAssetInstances, getState } from '../../../../core/state.js';
 import { markDirty } from '../../../../core/events/invalidationBus.js';
 import { executeAction } from '../../../actions.js';
-import { addMoney, spendMoney } from '../../../currency.js';
 import { checkDayEnd } from '../../../lifecycle.js';
-import { recordCostContribution, recordPayoutContribution, recordTimeContribution } from '../../../metrics.js';
+import { recordTimeContribution } from '../../../metrics.js';
 import { summarizeAssetRequirements } from '../../../requirements.js';
 import { spendTime } from '../../../time.js';
 import { awardSkillProgress } from '../../../skills/index.js';
-import {
-  applyInstantHustleEducationBonus,
-  formatEducationBonusSummary
-} from '../../../educationEffects.js';
-import { getHustleEffectMultiplier } from '../../../upgrades/effects/index.js';
-import { applyModifiers } from '../../../data/economyMath.js';
 import { applyMetric } from '../metrics.js';
-import { logEducationPayoffSummary, logHustleBlocked } from '../logMessaging.js';
+import { logHustleBlocked } from '../logMessaging.js';
 import { advanceActionInstance, completeActionInstance } from '../../../actions/progress/instances.js';
+import { createDailyLimitTracker } from './dailyLimitTracker.js';
+import { createTimeHelpers } from './timeManagement.js';
+import { createPayoutProcessing } from './payoutProcessing.js';
+import { createAcceptanceCostApplier } from './acceptanceCost.js';
 
 function meetsAssetRequirements(requirements = [], state = getState()) {
   if (!requirements?.length) return true;
   return requirements.every(req => countActiveAssetInstances(req.assetId, state) >= toNumber(req.count, 1));
 }
 
-export function createDailyLimitTracker(metadata) {
-  function sanitizePendingCount(value, max) {
-    const numeric = Number(value);
-    if (!Number.isFinite(numeric) || numeric <= 0) {
-      return 0;
-    }
-    if (!Number.isFinite(max)) {
-      return Math.floor(numeric);
-    }
-    return Math.max(0, Math.min(Math.floor(numeric), Math.floor(max)));
-  }
-
-  function resolveDailyUsage(state = getState(), { sync = false } = {}) {
-    const actionState = getActionState(metadata.id, state);
-    const currentDay = Number(state?.day) || 1;
-
-    const lastRunDay = Number(actionState.lastRunDay) || 0;
-    const baseRuns = Number(actionState.runsToday) || 0;
-    const sanitizedRuns = Math.max(0, baseRuns);
-    const usedToday = metadata.dailyLimit
-      ? (lastRunDay === currentDay ? sanitizedRuns : 0)
-      : sanitizedRuns;
-
-    const pendingDay = Number(actionState.pendingAcceptsDay) || 0;
-    const pendingBase = pendingDay === currentDay ? actionState.pendingAccepts : 0;
-    const pendingToday = sanitizePendingCount(pendingBase, metadata.dailyLimit);
-
-    if (sync) {
-      if (metadata.dailyLimit) {
-        if (lastRunDay !== currentDay) {
-          actionState.lastRunDay = currentDay;
-          actionState.runsToday = usedToday;
-        }
-        if (pendingDay !== currentDay) {
-          actionState.pendingAcceptsDay = pendingToday > 0 ? currentDay : null;
-          actionState.pendingAccepts = pendingToday;
-        } else if (actionState.pendingAccepts !== pendingToday) {
-          actionState.pendingAccepts = pendingToday;
-        }
-      } else if (!Number.isFinite(baseRuns) || baseRuns < 0) {
-        actionState.runsToday = 0;
-      }
-      if (pendingToday === 0 && metadata.dailyLimit) {
-        actionState.pendingAccepts = 0;
-        actionState.pendingAcceptsDay = null;
-      }
-    }
-
-    if (!metadata.dailyLimit) {
-      return {
-        actionState,
-        currentDay,
-        limit: null,
-        used: Math.max(0, baseRuns),
-        pending: pendingToday,
-        remaining: null
-      };
-    }
-
-    const remaining = Math.max(0, metadata.dailyLimit - usedToday - pendingToday);
-
-    return {
-      actionState,
-      currentDay,
-      limit: metadata.dailyLimit,
-      used: usedToday,
-      pending: pendingToday,
-      remaining
-    };
-  }
-
-  function reserveDailyUsage(state = getState()) {
-    if (!metadata.dailyLimit) return null;
-    const usage = resolveDailyUsage(state, { sync: true });
-    if (usage.remaining <= 0) {
-      return null;
-    }
-    const available = metadata.dailyLimit - usage.used;
-    const nextPending = Math.min(available, usage.pending + 1);
-    usage.actionState.pendingAccepts = nextPending;
-    usage.actionState.pendingAcceptsDay = usage.currentDay;
-    const remaining = Math.max(0, metadata.dailyLimit - usage.used - nextPending);
-    return {
-      limit: metadata.dailyLimit,
-      used: usage.used,
-      pending: nextPending,
-      remaining,
-      day: usage.currentDay
-    };
-  }
-
-  function releaseDailyUsage(state = getState()) {
-    if (!metadata.dailyLimit) return null;
-    const usage = resolveDailyUsage(state, { sync: true });
-    const nextPending = usage.pending > 0 ? usage.pending - 1 : 0;
-    usage.actionState.pendingAccepts = nextPending;
-    usage.actionState.pendingAcceptsDay = nextPending > 0 ? usage.currentDay : null;
-    const remaining = Math.max(0, metadata.dailyLimit - usage.used - nextPending);
-    return {
-      limit: metadata.dailyLimit,
-      used: usage.used,
-      pending: nextPending,
-      remaining,
-      day: usage.currentDay
-    };
-  }
-
-  function consumeDailyUsage(state = getState()) {
-    if (!metadata.dailyLimit) return null;
-    const usage = resolveDailyUsage(state, { sync: true });
-    const nextPending = usage.pending > 0 ? usage.pending - 1 : 0;
-    const nextUsed = Math.min(metadata.dailyLimit, usage.used + 1);
-    usage.actionState.lastRunDay = usage.currentDay;
-    usage.actionState.runsToday = nextUsed;
-    usage.actionState.pendingAccepts = nextPending;
-    usage.actionState.pendingAcceptsDay = nextPending > 0 ? usage.currentDay : null;
-    const remaining = Math.max(0, metadata.dailyLimit - nextUsed - nextPending);
-    return {
-      limit: metadata.dailyLimit,
-      used: nextUsed,
-      pending: nextPending,
-      remaining,
-      day: usage.currentDay
-    };
-  }
-
-  return { resolveDailyUsage, reserveDailyUsage, releaseDailyUsage, consumeDailyUsage };
-}
+export { createDailyLimitTracker };
 
 export function createExecutionHooks({
   definition,
@@ -161,15 +31,10 @@ export function createExecutionHooks({
   releaseDailyUsage,
   consumeDailyUsage
 }) {
-  function resolveEffectiveTime(state = getState()) {
-    if (!metadata.time) return metadata.time;
-    const { multiplier } = getHustleEffectMultiplier(definition, 'setup_time_mult', {
-      state,
-      actionType: 'setup'
-    });
-    const adjusted = metadata.time * (Number.isFinite(multiplier) ? multiplier : 1);
-    return Number.isFinite(adjusted) ? Math.max(0, adjusted) : metadata.time;
-  }
+  const { resolveEffectiveTime, computeCompletionHours } = createTimeHelpers({ definition, metadata });
+  const { applyHustlePayoutMultiplier, calculatePayoutContext, applyPayoutSideEffects } =
+    createPayoutProcessing({ definition, metadata });
+  const applyAcceptanceCost = createAcceptanceCostApplier({ metadata });
 
   function getDisabledReason(state) {
     if (metadata.dailyLimit) {
@@ -195,50 +60,6 @@ export function createExecutionHooks({
     return null;
   }
 
-  function applyHustlePayoutMultiplier(amount, context) {
-    if (!amount) {
-      return { amount: 0, multiplier: 1, sources: [] };
-    }
-    const effect = getHustleEffectMultiplier(definition, 'payout_mult', {
-      state: context.state,
-      actionType: 'payout'
-    });
-    if (!effect) {
-      return { amount, multiplier: 1, sources: [] };
-    }
-
-    const baseMultiplier = Number.isFinite(effect.multiplier) ? effect.multiplier : 1;
-    if (Array.isArray(effect.modifiers) && effect.modifiers.length) {
-      const result = applyModifiers(amount, effect.modifiers, { clamp: effect.clamp });
-      const finalAmount = Number.isFinite(result?.value) ? result.value : amount;
-      const appliedSources = result.applied
-        .filter(entry => entry.type === 'multiplier')
-        .map(entry => ({ id: entry.id, label: entry.label, multiplier: entry.value }));
-      return {
-        amount: finalAmount,
-        multiplier: Number.isFinite(result?.multiplier) ? result.multiplier : baseMultiplier,
-        sources: appliedSources
-      };
-    }
-
-    if (!Number.isFinite(baseMultiplier) || baseMultiplier === 1) {
-      return { amount, multiplier: 1, sources: [] };
-    }
-    return { amount: amount * baseMultiplier, multiplier: baseMultiplier, sources: effect.sources || [] };
-  }
-
-  function computeCompletionHours(instance, fallback) {
-    const logged = Number(instance?.hoursLogged);
-    if (Number.isFinite(logged) && logged >= 0) {
-      return logged;
-    }
-    const progressHours = Number(instance?.progress?.hoursRequired);
-    if (Number.isFinite(progressHours) && progressHours >= 0) {
-      return progressHours;
-    }
-    return Number.isFinite(fallback) && fallback >= 0 ? fallback : 0;
-  }
-
   function prepareCompletion({ context = {}, instance, state, completionHours }) {
     const workingContext = context;
     workingContext.definition = definition;
@@ -259,7 +80,7 @@ export function createExecutionHooks({
     const shouldApplySideEffects = workingContext.__completionSideEffectsApplied !== true;
 
     if (shouldApplySideEffects && workingContext.effectiveTime > 0) {
-      applyMetric(recordTimeContribution, metadata.metrics.time, { hours: workingContext.effectiveTime });
+      applyMetric(recordTimeContribution, metadata.metrics?.time, { hours: workingContext.effectiveTime });
     }
 
     workingContext.skipDefaultPayout = () => {
@@ -287,28 +108,11 @@ export function createExecutionHooks({
     ];
     const basePayout = payoutAmountCandidates.find(value => Number.isFinite(value) && value >= 0) || 0;
 
-    if (basePayout > 0 && !workingContext.__skipDefaultPayout) {
-      const { amount: educationAdjusted, applied: appliedBonuses } = applyInstantHustleEducationBonus({
-        hustleId: metadata.id,
-        baseAmount: basePayout,
-        state
-      });
-
-      workingContext.basePayout = basePayout;
-      workingContext.educationAdjustedPayout = educationAdjusted;
-      workingContext.appliedEducationBoosts = appliedBonuses;
-
-      const upgradeResult = applyHustlePayoutMultiplier(educationAdjusted, workingContext);
-      const upgradedAmount = upgradeResult.amount;
-      const roundedPayout = Math.max(0, Math.round(upgradedAmount));
-
-      workingContext.upgradeMultiplier = upgradeResult.multiplier;
-      workingContext.upgradeSources = upgradeResult.sources;
-      workingContext.finalPayout = roundedPayout;
-      workingContext.payoutGranted = roundedPayout;
-
-      if (appliedBonuses.length) {
-        workingContext.__educationSummary = formatEducationBonusSummary(appliedBonuses);
+    const payoutDetails = calculatePayoutContext(basePayout, workingContext);
+    if (payoutDetails) {
+      Object.assign(workingContext, payoutDetails);
+      if (payoutDetails.educationSummary) {
+        workingContext.__educationSummary = payoutDetails.educationSummary;
       }
     }
 
@@ -324,43 +128,6 @@ export function createExecutionHooks({
     return workingContext;
   }
 
-  function applyAcceptanceCost({ state = getState(), instance } = {}) {
-    if (!metadata.cost || metadata.cost <= 0) {
-      if (instance) {
-        instance.__pendingAcceptanceCost = 0;
-      }
-      return { paid: 0 };
-    }
-
-    const workingState = state || getState();
-    if (!workingState) {
-      return { paid: 0 };
-    }
-
-    const pending = Number(instance?.__pendingAcceptanceCost ?? metadata.cost);
-    if (!Number.isFinite(pending) || pending <= 0) {
-      if (instance) {
-        instance.__pendingAcceptanceCost = 0;
-      }
-      return { paid: 0 };
-    }
-
-    if (instance?.__acceptanceCostApplied) {
-      return { paid: 0 };
-    }
-
-    spendMoney(pending);
-    applyMetric(recordCostContribution, metadata.metrics.cost, { amount: pending });
-
-    if (instance) {
-      instance.costPaid = (instance.costPaid || 0) + pending;
-      instance.__pendingAcceptanceCost = 0;
-      instance.__acceptanceCostApplied = true;
-    }
-
-    return { paid: pending };
-  }
-
   function runHustle(context) {
     const effectiveTime = resolveEffectiveTime(context.state);
     context.effectiveTime = effectiveTime;
@@ -368,7 +135,7 @@ export function createExecutionHooks({
 
     if (shouldApplySideEffects && effectiveTime > 0) {
       spendTime(effectiveTime);
-      applyMetric(recordTimeContribution, metadata.metrics.time, { hours: effectiveTime });
+      applyMetric(recordTimeContribution, metadata.metrics?.time, { hours: effectiveTime });
     }
 
     context.skipDefaultPayout = () => {
@@ -386,45 +153,11 @@ export function createExecutionHooks({
       });
     }
 
-    if (metadata.payout && metadata.payout.grantOnAction && !context.__skipDefaultPayout) {
-      const basePayout = metadata.payout.amount;
-      const { amount: educationAdjusted, applied: appliedBonuses } = applyInstantHustleEducationBonus({
-        hustleId: metadata.id,
-        baseAmount: basePayout,
-        state: context.state
-      });
-
-      context.basePayout = basePayout;
-      context.educationAdjustedPayout = educationAdjusted;
-      context.appliedEducationBoosts = appliedBonuses;
-
-      const upgradeResult = applyHustlePayoutMultiplier(educationAdjusted, context);
-      const upgradedAmount = upgradeResult.amount;
-      const roundedPayout = Math.max(0, Math.round(upgradedAmount));
-
-      context.upgradeMultiplier = upgradeResult.multiplier;
-      context.upgradeSources = upgradeResult.sources;
-      context.finalPayout = roundedPayout;
-      context.payoutGranted = roundedPayout;
-
-      const template = metadata.payout.message;
-      let message;
-      if (typeof template === 'function') {
-        message = template(context);
-      } else if (template) {
-        message = template;
-      } else {
-        const bonusNote = appliedBonuses.length ? ' Education bonus included!' : '';
-        const upgradeNote = upgradeResult.sources.length ? ' Upgrades amplified the payout!' : '';
-        message = `${definition.name} paid $${formatMoney(roundedPayout)}.${bonusNote}${upgradeNote}`;
-      }
-
-      addMoney(roundedPayout, message, metadata.payout.logType);
-      applyMetric(recordPayoutContribution, metadata.metrics.payout, { amount: roundedPayout });
-
-      if (appliedBonuses.length) {
-        const summary = formatEducationBonusSummary(appliedBonuses);
-        logEducationPayoffSummary(summary);
+    if (metadata.payout?.grantOnAction) {
+      const payoutDetails = calculatePayoutContext(metadata.payout.amount, context);
+      if (payoutDetails) {
+        Object.assign(context, payoutDetails);
+        applyPayoutSideEffects(context, payoutDetails);
       }
     }
 
@@ -513,6 +246,7 @@ export function createExecutionHooks({
     reserveDailyUsage,
     releaseDailyUsage,
     consumeDailyUsage,
-    applyAcceptanceCost
+    applyAcceptanceCost,
+    applyHustlePayoutMultiplier
   };
 }
