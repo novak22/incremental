@@ -1,8 +1,6 @@
 import { formatHours, formatMoney } from '../../../../../core/helpers.js';
-import {
-  getQuickActionIds as getDigishelfQuickActionIds,
-  selectDigishelfNiche
-} from '../../../../cards/model/digishelf.js';
+import { getDigishelfQuickActionIds } from '../../../../digishelf/model/shared.js';
+import { selectDigishelfNiche } from '../../../../cards/model/digishelf.js';
 import { performQualityAction } from '../../../../../game/assets/index.js';
 import { formatCurrency as baseFormatCurrency } from '../../utils/formatting.js';
 import { createCurrencyLifecycleSummary } from '../../utils/lifecycleSummaries.js';
