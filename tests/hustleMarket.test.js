@@ -9,14 +9,16 @@ const {
   normalizeHustleMarketOffer,
   normalizeAcceptedOffer
 } = await import('../src/core/state/slices/hustleMarket/index.js');
-const actionMarketModule = await import('../src/core/state/slices/actionMarket/index.js');
+const actionMarketState = await import('../src/core/state/slices/actionMarket/state.js');
+const actionMarketCommands = await import('../src/core/state/slices/actionMarket/commands.js');
+const actionMarketSelectors = await import('../src/core/state/slices/actionMarket/selectors.js');
+const { normalizeActionMarketOffer } = await import('../src/core/state/slices/actionMarket/offers.js');
+const { ensureActionMarketCategoryState } = actionMarketState;
+const { claimActionMarketOffer } = actionMarketCommands;
 const {
-  ensureActionMarketCategoryState,
   getActionMarketAvailableOffers,
-  claimActionMarketOffer,
-  getActionMarketClaimedOffers,
-  normalizeActionMarketOffer
-} = actionMarketModule;
+  getActionMarketClaimedOffers
+} = actionMarketSelectors;
 const { hustlesModule, stateModule } = harness;
 const {
   rollDailyOffers,

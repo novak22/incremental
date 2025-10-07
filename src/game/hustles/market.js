@@ -5,12 +5,12 @@ import {
   clampMarketPositiveInteger
 } from './normalizers.js';
 import { getState } from '../../core/state.js';
+import { ensureActionMarketCategoryState } from '../../core/state/slices/actionMarket/state.js';
+import { normalizeActionMarketOffer } from '../../core/state/slices/actionMarket/index.js';
 import {
-  ensureActionMarketCategoryState,
-  normalizeActionMarketOffer,
   getActionMarketAvailableOffers,
   getActionMarketClaimedOffers
-} from '../../core/state/slices/actionMarket/index.js';
+} from '../../core/state/slices/actionMarket/selectors.js';
 import {
   attachAuditDebugTools,
   getMarketRollAuditLog,

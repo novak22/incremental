@@ -4,10 +4,8 @@ import { applyMetric, normalizeHustleMetrics } from './metrics.js';
 import { logEducationPayoffSummary } from './logMessaging.js';
 import { markDirty } from '../../../core/events/invalidationBus.js';
 import { createContractTemplate } from '../../actions/templates/contract.js';
-import {
-  ensureActionMarketCategoryState,
-  getActionMarketAvailableOffers
-} from '../../../core/state/slices/actionMarket/index.js';
+import { ensureActionMarketCategoryState } from '../../../core/state/slices/actionMarket/state.js';
+import { getActionMarketAvailableOffers } from '../../../core/state/slices/actionMarket/selectors.js';
 import { rollDailyOffers } from '../../hustles/market.js';
 import { buildProgressDefaults, buildDefaultState } from './assetActions/progressDefaults.js';
 import { buildDetailResolvers } from './assetActions/formatting.js';
