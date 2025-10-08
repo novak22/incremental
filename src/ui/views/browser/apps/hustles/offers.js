@@ -3,7 +3,8 @@ import { decorateUrgency } from './urgency.js';
 
 export function createOfferItem(offer = {}, { upcoming = false } = {}) {
   const item = document.createElement('li');
-  item.className = 'browser-card__list-item hustle-card__offer';
+  item.className = 'downwork-offer';
+  item.dataset.role = 'downwork-offer';
 
   if (!offer.ready || upcoming) {
     item.classList.add('is-upcoming');
@@ -12,16 +13,16 @@ export function createOfferItem(offer = {}, { upcoming = false } = {}) {
   decorateUrgency(item, offer.expiresIn);
 
   const header = document.createElement('div');
-  header.className = 'hustle-card__row';
+  header.className = 'downwork-offer__header';
 
   const title = document.createElement('span');
-  title.className = 'hustle-card__title';
+  title.className = 'downwork-offer__title';
   title.textContent = offer.label || 'Contract offer';
   header.appendChild(title);
 
   if (offer.payout) {
     const payout = document.createElement('span');
-    payout.className = 'hustle-card__value';
+    payout.className = 'downwork-offer__value';
     payout.textContent = `$${formatMoney(offer.payout)}`;
     header.appendChild(payout);
   }
@@ -30,20 +31,30 @@ export function createOfferItem(offer = {}, { upcoming = false } = {}) {
 
   if (offer.description) {
     const summary = document.createElement('p');
-    summary.className = 'hustle-card__description';
+    summary.className = 'downwork-offer__description';
     summary.textContent = offer.description;
     item.appendChild(summary);
   }
 
+  const metaLine = document.createElement('p');
+  metaLine.className = 'downwork-offer__meta';
+  const details = [];
   if (offer.meta) {
-    const meta = document.createElement('p');
-    meta.className = 'hustle-card__meta';
-    meta.textContent = offer.meta;
-    item.appendChild(meta);
+    details.push(offer.meta);
+  }
+  if (Number.isFinite(offer.expiresIn)) {
+    const expiresLabel = offer.expiresIn === 1
+      ? 'Expires in 1 day'
+      : `Expires in ${offer.expiresIn} days`;
+    details.push(expiresLabel);
+  }
+  if (details.length) {
+    metaLine.textContent = details.join(' • ');
+    item.appendChild(metaLine);
   }
 
   const actions = document.createElement('div');
-  actions.className = 'browser-card__actions';
+  actions.className = 'downwork-offer__actions';
 
   const button = document.createElement('button');
   button.type = 'button';
@@ -52,7 +63,7 @@ export function createOfferItem(offer = {}, { upcoming = false } = {}) {
   const ready = Boolean(offer.ready) && !locked && !upcoming;
 
   if (ready) {
-    button.className = 'browser-card__button browser-card__button--primary';
+    button.className = 'downwork-offer__button downwork-offer__button--primary';
     button.textContent = offer.acceptLabel || 'Accept offer';
     button.disabled = false;
     if (typeof offer.onAccept === 'function') {
@@ -61,7 +72,7 @@ export function createOfferItem(offer = {}, { upcoming = false } = {}) {
       });
     }
   } else {
-    button.className = 'browser-card__button';
+    button.className = 'downwork-offer__button';
     if (locked) {
       button.textContent = offer.lockedLabel || 'Locked';
       button.disabled = true;
@@ -80,7 +91,7 @@ export function createOfferItem(offer = {}, { upcoming = false } = {}) {
 
   if (locked && offer.unlockHint) {
     const note = document.createElement('p');
-    note.className = 'browser-card__note';
+    note.className = 'downwork-offer__note';
     note.textContent = offer.unlockHint;
     actions.appendChild(note);
   }
@@ -92,7 +103,7 @@ export function createOfferItem(offer = {}, { upcoming = false } = {}) {
 
 export function createOfferList(offers = [], { upcoming = false } = {}) {
   const list = document.createElement('ul');
-  list.className = 'browser-card__list';
+  list.className = 'downwork-offer-list';
 
   offers.filter(Boolean).forEach(offer => {
     const item = createOfferItem(offer, { upcoming });

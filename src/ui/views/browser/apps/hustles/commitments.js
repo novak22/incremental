@@ -30,22 +30,23 @@ export function describeCommitmentMeta(commitment = {}) {
 
 export function createCommitmentItem(commitment = {}) {
   const item = document.createElement('li');
-  item.className = 'browser-card__list-item hustle-card__commitment';
+  item.className = 'downwork-commitment';
+  item.dataset.role = 'downwork-commitment';
 
   const progress = commitment.progress || commitment;
   applyDeadlineTone(item, progress);
 
   const header = document.createElement('div');
-  header.className = 'hustle-card__row';
+  header.className = 'downwork-commitment__header';
 
   const title = document.createElement('span');
-  title.className = 'hustle-card__title';
+  title.className = 'downwork-commitment__title';
   title.textContent = commitment.label || 'Commitment';
   header.appendChild(title);
 
   if (commitment.payoutText) {
     const payout = document.createElement('span');
-    payout.className = 'hustle-card__value';
+    payout.className = 'downwork-commitment__value';
     payout.textContent = commitment.payoutText;
     header.appendChild(payout);
   }
@@ -54,7 +55,7 @@ export function createCommitmentItem(commitment = {}) {
 
   if (commitment.description) {
     const summary = document.createElement('p');
-    summary.className = 'hustle-card__description';
+    summary.className = 'downwork-commitment__description';
     summary.textContent = commitment.description;
     item.appendChild(summary);
   }
@@ -62,7 +63,7 @@ export function createCommitmentItem(commitment = {}) {
   const metaText = describeCommitmentMeta(commitment);
   if (metaText) {
     const meta = document.createElement('p');
-    meta.className = 'hustle-card__meta';
+    meta.className = 'downwork-commitment__meta';
     meta.textContent = metaText;
     item.appendChild(meta);
   }
@@ -77,7 +78,7 @@ export function createCommitmentItem(commitment = {}) {
 
 export function createCommitmentList(commitments = []) {
   const list = document.createElement('ul');
-  list.className = 'browser-card__list';
+  list.className = 'downwork-commitment-list';
 
   commitments.filter(Boolean).forEach(commitment => {
     const item = createCommitmentItem(commitment);

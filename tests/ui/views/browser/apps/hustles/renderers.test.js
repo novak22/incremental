@@ -39,7 +39,7 @@ test('createOfferItem renders ready offers with accept CTA and urgency classes',
 
     const button = item.querySelector('button');
     assert.ok(button, 'expected accept button to render');
-    assert.equal(button.classList.contains('browser-card__button--primary'), true);
+    assert.equal(button.classList.contains('downwork-offer__button--primary'), true);
     assert.equal(button.disabled, false);
 
     button.click();
@@ -66,7 +66,7 @@ test('createOfferList builds upcoming entries with lock hints', () => {
 
     document.body.appendChild(list);
 
-    const item = list.querySelector('.hustle-card__offer');
+    const item = list.querySelector('.downwork-offer');
     assert.ok(item, 'expected list item to render');
     assert.equal(item.classList.contains('is-upcoming'), true);
     assert.equal(item.classList.contains('is-warning'), false, 'no urgency tone for distant expiry');
@@ -77,7 +77,7 @@ test('createOfferList builds upcoming entries with lock hints', () => {
     assert.equal(button.textContent, 'Locked');
     assert.equal(button.title, 'Complete the tutorial');
 
-    const note = list.querySelector('.browser-card__note');
+    const note = list.querySelector('.downwork-offer__note');
     assert.equal(note?.textContent, 'Complete the tutorial');
   } finally {
     dom.window.close();
@@ -107,7 +107,7 @@ test('createCommitmentItem surfaces meta and timeline progress', () => {
 
     assert.equal(item.classList.contains('is-critical'), true, 'deadline tone should mark near-due commitments');
 
-    const meta = item.querySelector('.hustle-card__meta');
+    const meta = item.querySelector('.downwork-commitment__meta');
     assert.ok(meta, 'expected commitment meta summary');
     assert.ok(meta.textContent.includes('3-day commitment'));
     assert.ok(meta.textContent.includes('Due today'));
