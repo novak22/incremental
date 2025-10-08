@@ -32,10 +32,6 @@ export default function renderOverviewPanel({ instance, formatCurrency }) {
 
   const stats = [
     {
-      label: 'Daily average',
-      value: instance.averagePayout > 0 ? formatCurrency(instance.averagePayout) : '$0'
-    },
-    {
       label: 'Lifetime income',
       value: formatCurrency(instance.lifetimeIncome)
     },
@@ -44,8 +40,16 @@ export default function renderOverviewPanel({ instance, formatCurrency }) {
       value: formatCurrency(instance.estimatedSpend)
     },
     {
+      label: 'Latest payout',
+      value: instance.latestPayout > 0 ? formatCurrency(instance.latestPayout) : 'None yet'
+    },
+    {
+      label: 'Daily average',
+      value: instance.averagePayout > 0 ? formatCurrency(instance.averagePayout) : '$0'
+    },
+    {
       label: 'Pending payout',
-      value: instance.pendingIncome > 0 ? formatCurrency(instance.pendingIncome) : 'None queued'
+      value: instance.pendingIncome > 0 ? formatCurrency(instance.pendingIncome) : 'None in queue'
     },
     instance.daysActive > 0
       ? {
