@@ -126,10 +126,13 @@ test('renderActionPanel skips disabled actions and wires handler', t => {
     formatCurrency: value => `$${value}`
   });
 
-  const buttons = panel.querySelectorAll('button');
-  assert.equal(buttons.length, 2, 'action panel should render a button for each action');
-  const firstButton = buttons[0];
+  const actionButtons = panel.querySelectorAll('.blogpress-action-list button');
+  assert.equal(actionButtons.length, 2, 'action panel should render a button for each action');
+  const firstButton = actionButtons[0];
   firstButton.dispatchEvent(new dom.window.Event('click', { bubbles: true }));
   assert.deepEqual(runArgs, ['blog-9', 'revise'], 'clicking an available action should forward to handler');
-  assert.ok(buttons[1].disabled, 'second action should be disabled when unavailable');
+  assert.ok(actionButtons[1].disabled, 'second action should be disabled when unavailable');
+
+  const sellButton = panel.querySelector('.blogpress-action-footer button');
+  assert.ok(sellButton, 'action panel should render a sell button');
 });
