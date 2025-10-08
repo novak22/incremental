@@ -93,7 +93,8 @@ export function createDetailViewController({
         renderActionPanel({
           instance,
           handlers: {
-            onRunAction: handlers.onRunAction
+            onRunAction: handlers.onRunAction,
+            onSell: handlers.onSell
           },
           formatHours,
           formatCurrency

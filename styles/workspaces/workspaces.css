@@ -611,6 +611,17 @@
   transform: translateY(-1px);
 }
 
+.blogpress-button--danger {
+  background: var(--browser-danger);
+  color: #fff;
+  box-shadow: var(--browser-shadow-soft);
+}
+
+.blogpress-button--danger:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: var(--browser-shadow-focus);
+}
+
 .blogpress-button--ghost {
   background: var(--browser-panel-elevated);
   border-color: var(--browser-panel-border);
@@ -969,6 +980,12 @@
 .blogpress-action__meta {
   color: var(--browser-muted);
   font-size: 0.82rem;
+}
+
+.blogpress-action-footer {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .blogpress-field {

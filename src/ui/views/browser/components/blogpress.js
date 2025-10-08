@@ -2,6 +2,7 @@ import { formatHours, formatMoney } from '../../../../core/helpers.js';
 import { getState } from '../../../../core/state.js';
 import { selectBlogpressNiche } from '../../../cards/model/index.js';
 import { performQualityAction } from '../../../../game/assets/index.js';
+import { calculateAssetSalePrice, sellAssetInstance } from '../../../../game/assets/actions.js';
 import { formatCurrency as baseFormatCurrency, formatNetCurrency } from '../utils/formatting.js';
 import { createCurrencyLifecycleSummary } from '../utils/lifecycleSummaries.js';
 import { showLaunchConfirmation } from '../utils/launchDialog.js';
@@ -73,6 +74,18 @@ function confirmBlogLaunch(definition = {}) {
   });
 }
 
+function confirmBlogSale({ label, price } = {}) {
+  const formatted = formatCurrency(Math.max(0, Number(price) || 0));
+  const resource = label || 'this blog';
+  const message = price > 0
+    ? `Sell ${resource} for ${formatted}? Fresh funds will head straight to your wallet.\n\nThis can’t be undone, but you can always spin up a new blog later.`
+    : `Sell ${resource}? It hasn’t earned anything yet, so there’s no cash back — but you can clear the slot for a fresh idea.\n\nThis can’t be undone.`;
+  if (typeof window === 'undefined') {
+    return true;
+  }
+  return window.confirm(message);
+}
+
 function formatRange(range = {}) {
   const min = Number(range.min) || 0;
   const max = Number(range.max) || 0;
@@ -110,6 +123,21 @@ function handleQuickAction(instanceId, actionId) {
 function handleNicheSelect(instanceId, value) {
   if (!instanceId) return;
   selectBlogpressNiche('blog', instanceId, value);
+}
+
+function handleSell(instance) {
+  if (!instance?.definition || !instance?.id) return;
+  const salePrice = Number.isFinite(Number(instance.salePrice))
+    ? Math.max(0, Number(instance.salePrice))
+    : calculateAssetSalePrice(instance.instance);
+  const confirmed = confirmBlogSale({ label: instance.label, price: salePrice });
+  if (!confirmed) {
+    return;
+  }
+  const sold = sellAssetInstance(instance.definition, instance.id);
+  if (sold) {
+    setView(VIEW_HOME);
+  }
 }
 
 async function handleBlueprintLaunch(model, launch = {}) {
@@ -223,15 +251,20 @@ function renderViews(model, state = INITIAL_STATE) {
           }
         });
       }
+      const instanceWithSale = {
+        ...instance,
+        salePrice: calculateAssetSalePrice(instance.instance)
+      };
       return renderDetailView({
-        instance,
+        instance: instanceWithSale,
         formatters,
         formatRange,
         handlers: {
           onBack: () => setView(VIEW_HOME),
           onSelectNiche: handleNicheSelect,
           onViewDetail: blogId => setView(VIEW_DETAIL, { blogId }),
-          onRunAction: (blogId, actionId) => handleQuickAction(blogId, actionId)
+          onRunAction: (blogId, actionId) => handleQuickAction(blogId, actionId),
+          onSell: handleSell
         }
       });
     }
