@@ -10,6 +10,8 @@ import { checkDayEnd } from '../../../game/lifecycle.js';
 import { resolveOfferPayout } from '../../hustles/offerHelpers.js';
 import { definitionRequirementsMet } from '../../../game/requirements/checks.js';
 import { describeHustleRequirements } from '../../../game/hustles/helpers.js';
+import { TASK_GROUP_CONFIGS } from '../taskGrouping.js';
+import { normalizeBucketName, resolveQueueCategory } from '../queue/buckets.js';
 
 const TASK_ID = 'fallback:freelance-search';
 const TASK_DURATION_HOURS = 0.25;
@@ -28,6 +30,23 @@ const TEMPLATE_BY_ID = new Map(
     .filter(template => template?.id)
     .map(template => [template.id, template])
 );
+
+const HUSTLE_BUCKET_KEYS = (() => {
+  const hustleConfig = TASK_GROUP_CONFIGS.find(config => config?.key === 'hustle');
+  const configuredBuckets = Array.isArray(hustleConfig?.buckets) ? hustleConfig.buckets : [];
+  const normalizedBuckets = configuredBuckets
+    .map(bucket => normalizeBucketName(bucket))
+    .filter(Boolean);
+  if (normalizedBuckets.length === 0) {
+    normalizedBuckets.push('hustle');
+  }
+  return new Set(normalizedBuckets);
+})();
+
+function matchesHustleBucket(value) {
+  const normalized = normalizeBucketName(value);
+  return Boolean(normalized && HUSTLE_BUCKET_KEYS.has(normalized));
+}
 
 function formatCategoryLabel(value) {
   if (typeof value !== 'string') {
@@ -84,6 +103,42 @@ function resolveOfferTemplate(offer = {}) {
     return TEMPLATE_BY_ID.get(definitionId);
   }
   return null;
+}
+
+function resolveOfferQueueCategory(offer = {}) {
+  const template = resolveOfferTemplate(offer);
+  return resolveQueueCategory(
+    offer?.focusBucket,
+    offer?.focusCategory,
+    offer?.metadata?.focusBucket,
+    offer?.metadata?.focusCategory,
+    resolveOfferCategory(offer),
+    template?.focusBucket,
+    template?.focusCategory,
+    template?.category
+  );
+}
+
+export function offerMatchesHustleGroup(offer = {}) {
+  const queueCategory = resolveOfferQueueCategory(offer);
+  if (matchesHustleBucket(queueCategory)) {
+    return true;
+  }
+
+  const template = resolveOfferTemplate(offer);
+  if (!template) {
+    return false;
+  }
+
+  if (matchesHustleBucket(template.category)) {
+    return true;
+  }
+
+  if (matchesHustleBucket(template.type)) {
+    return true;
+  }
+
+  return false;
 }
 
 function resolveTaskTitle(candidate) {
@@ -195,7 +250,9 @@ function selectHustleCandidate(state) {
   const offers = getAvailableOffers(state, { includeClaimed: false }) || [];
   const hustleOffers = offers.filter(offer => offer && offer.status !== 'claimed' && !offer.claimed);
 
-  const eligibleOffers = hustleOffers.filter(offer => isOfferEligibleForState(offer, state));
+  const eligibleOffers = hustleOffers
+    .filter(offer => isOfferEligibleForState(offer, state))
+    .filter(offer => offerMatchesHustleGroup(offer));
 
   if (!eligibleOffers.length) {
     return null;
