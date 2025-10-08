@@ -43,6 +43,11 @@ const HUSTLE_BUCKET_KEYS = (() => {
   return new Set(normalizedBuckets);
 })();
 
+function matchesHustleBucket(value) {
+  const normalized = normalizeBucketName(value);
+  return Boolean(normalized && HUSTLE_BUCKET_KEYS.has(normalized));
+}
+
 function formatCategoryLabel(value) {
   if (typeof value !== 'string') {
     return '';
@@ -116,14 +121,24 @@ function resolveOfferQueueCategory(offer = {}) {
 
 export function offerMatchesHustleGroup(offer = {}) {
   const queueCategory = resolveOfferQueueCategory(offer);
-  if (!queueCategory) {
+  if (matchesHustleBucket(queueCategory)) {
+    return true;
+  }
+
+  const template = resolveOfferTemplate(offer);
+  if (!template) {
     return false;
   }
-  const normalizedCategory = normalizeBucketName(queueCategory);
-  if (!normalizedCategory) {
-    return false;
+
+  if (matchesHustleBucket(template.category)) {
+    return true;
   }
-  return HUSTLE_BUCKET_KEYS.has(normalizedCategory);
+
+  if (matchesHustleBucket(template.type)) {
+    return true;
+  }
+
+  return false;
 }
 
 function resolveTaskTitle(candidate) {
