@@ -1,15 +1,43 @@
-function renderSummaryBar(model = {}) {
+function renderSummaryBar({ model = {}, instances = [], formatCurrency = value => String(value ?? '') } = {}) {
   const summary = document.createElement('div');
   summary.className = 'blogpress-summary';
+
   const total = model.summary?.total || 0;
   const active = model.summary?.active || 0;
   const needsUpkeep = model.summary?.needsUpkeep || 0;
-  const summaryItems = [
-    `${active} active`,
-    `${total} total`,
-    needsUpkeep > 0 ? `${needsUpkeep} need upkeep` : 'Upkeep funded'
+  const dailyPayout = instances.reduce(
+    (sum, entry) => sum + Math.max(0, Number(entry.averagePayout) || 0),
+    0
+  );
+
+  const metrics = [
+    { label: 'Active blogs', value: String(active) },
+    { label: 'Total portfolio', value: String(total) },
+    needsUpkeep > 0
+      ? { label: 'Need upkeep', value: String(needsUpkeep), tone: 'warn' }
+      : { label: 'Upkeep status', value: 'Funded', tone: 'ready' },
+    {
+      label: 'Avg payout / day',
+      value: dailyPayout > 0 ? formatCurrency(dailyPayout) : '$0'
+    }
   ];
-  summary.textContent = summaryItems.join(' • ');
+
+  metrics.forEach(metric => {
+    const item = document.createElement('div');
+    item.className = 'blogpress-summary__item';
+    if (metric.tone) {
+      item.dataset.tone = metric.tone;
+    }
+    const value = document.createElement('span');
+    value.className = 'blogpress-summary__value';
+    value.textContent = metric.value;
+    const label = document.createElement('span');
+    label.className = 'blogpress-summary__label';
+    label.textContent = metric.label;
+    item.append(value, label);
+    summary.appendChild(item);
+  });
+
   return summary;
 }
 
@@ -40,9 +68,12 @@ export default function renderHomeView(options = {}) {
   const container = document.createElement('section');
   container.className = 'blogpress-view blogpress-view--home';
 
-  container.appendChild(renderSummaryBar(model));
-
   const instances = Array.isArray(model.instances) ? model.instances : [];
+
+  container.appendChild(
+    renderSummaryBar({ model, instances, formatCurrency })
+  );
+
   if (!instances.length) {
     const empty = document.createElement('div');
     empty.className = 'blogpress-empty';
@@ -78,12 +109,25 @@ export default function renderHomeView(options = {}) {
       row.classList.add('is-selected');
     }
 
+    row.addEventListener('click', event => {
+      if (event.target.closest('button')) {
+        return;
+      }
+      (handlers.onViewDetail || (() => {}))(instance.id);
+    });
+
     const nameButton = document.createElement('button');
     nameButton.type = 'button';
     nameButton.className = 'blogpress-table__link';
     nameButton.textContent = instance.label;
     nameButton.addEventListener('click', () => (handlers.onViewDetail || (() => {}))(instance.id));
-    row.appendChild(createTableCell(nameButton, 'blogpress-table__cell blogpress-table__cell--label'));
+    const nameCell = document.createElement('div');
+    nameCell.className = 'blogpress-table__label';
+    const icon = document.createElement('span');
+    icon.className = 'blogpress-table__icon';
+    icon.textContent = '📰';
+    nameCell.append(icon, nameButton);
+    row.appendChild(createTableCell(nameCell, 'blogpress-table__cell blogpress-table__cell--label'));
 
     const niche = instance.niche;
     const nicheCell = document.createElement('div');
@@ -112,27 +156,39 @@ export default function renderHomeView(options = {}) {
     latest.textContent = instance.latestPayout > 0 ? formatCurrency(instance.latestPayout) : '—';
     const average = document.createElement('span');
     average.textContent = instance.averagePayout > 0
-      ? `Avg ${formatCurrency(instance.averagePayout)}`
+      ? `Avg ${formatCurrency(instance.averagePayout)}/day`
       : instance.status?.id === 'active'
         ? 'No earnings yet'
         : 'Launch pending';
     payoutCell.append(latest, average);
     row.appendChild(createTableCell(payoutCell));
 
-    const upkeep = document.createElement('span');
+    const upkeep = document.createElement('div');
+    upkeep.className = 'blogpress-upkeep';
     const maintenance = instance.maintenance || {};
-    upkeep.textContent = maintenance.hasUpkeep ? maintenance.text : 'None';
+    const hours = maintenance.hours > 0 ? `${formatHours(maintenance.hours)}/day` : null;
+    const cost = maintenance.cost > 0 ? `${formatCurrency(maintenance.cost)}/day` : null;
+    const upkeepParts = [hours, cost].filter(Boolean);
+    upkeep.textContent = upkeepParts.length ? upkeepParts.join(' • ') : 'None';
+    if (instance.maintenanceFunded) {
+      upkeep.dataset.state = 'funded';
+    } else if (maintenance.hasUpkeep) {
+      upkeep.dataset.state = 'due';
+    }
     row.appendChild(createTableCell(upkeep));
 
     const qualityCell = document.createElement('div');
     qualityCell.className = 'blogpress-quality';
     const levelBadge = document.createElement('span');
     levelBadge.className = 'blogpress-quality__level';
-    levelBadge.textContent = `Q${instance.qualityLevel}`;
-    const levelLabel = document.createElement('span');
-    levelLabel.className = 'blogpress-quality__label';
-    levelLabel.textContent = instance.qualityInfo?.name || 'Skeleton Drafts';
-    qualityCell.append(levelBadge, levelLabel);
+    levelBadge.textContent = instance.qualityInfo?.name || 'Skeleton Drafts';
+    const levelMeta = document.createElement('span');
+    levelMeta.className = 'blogpress-quality__meta';
+    levelMeta.textContent = `Stage ${instance.qualityLevel}`;
+    const levelIcon = document.createElement('span');
+    levelIcon.className = 'blogpress-quality__icon';
+    levelIcon.textContent = instance.milestone?.percent >= 1 ? '✨' : '🌱';
+    qualityCell.append(levelBadge, levelMeta, levelIcon);
     row.appendChild(createTableCell(qualityCell));
 
     const actionCell = document.createElement('div');
