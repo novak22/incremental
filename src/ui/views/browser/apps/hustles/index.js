@@ -31,6 +31,35 @@ const CATEGORY_THEMES = {
 const downworkState = new WeakMap();
 const rowDetails = new WeakMap();
 
+function applyAcceptanceState(detail, { inlineButton, drawerButton } = {}) {
+  if (!detail) return;
+
+  detail.accepted = true;
+  detail.acceptDisabled = true;
+
+  if (detail.rowElement) {
+    detail.rowElement.classList.add('is-accepted');
+    detail.rowElement.dataset.accepted = 'true';
+  }
+
+  const buttons = new Set();
+  if (detail.inlineAcceptButton) {
+    buttons.add(detail.inlineAcceptButton);
+  }
+  if (inlineButton) {
+    buttons.add(inlineButton);
+  }
+  if (drawerButton) {
+    buttons.add(drawerButton);
+  }
+
+  buttons.forEach(button => {
+    if (button) {
+      button.disabled = true;
+    }
+  });
+}
+
 function mergeCopy(base = {}, overrides = {}) {
   return {
     ready: { ...DEFAULT_COPY.ready, ...base.ready, ...overrides.ready },
@@ -345,7 +374,7 @@ function openDrawer(container, detail) {
     }
     if (!disabled && hasHandler) {
       clone.addEventListener('click', () => {
-        detail.onAccept();
+        detail.onAccept({ drawerButton: clone });
         clone.disabled = true;
       });
     }
@@ -427,6 +456,7 @@ export function createHustleCard({
   const actionConfig = typeof model.action === 'object' && model.action !== null ? model.action : {};
   const acceptLabel = primaryOffer?.acceptLabel || actionConfig.label || 'Accept';
   const acceptHandler = primaryOffer?.onAccept || (typeof actionConfig.onClick === 'function' ? actionConfig.onClick : null);
+  const hasAcceptHandler = typeof acceptHandler === 'function';
   const acceptDisabled = primaryOffer ? false : Boolean(actionConfig.disabled);
 
   const detail = {
@@ -446,9 +476,26 @@ export function createHustleCard({
     payoutLabel,
     acceptLabel,
     acceptDisabled,
-    onAccept: acceptHandler,
+    onAccept: null,
     actionGuidance: actionConfig.guidance || ''
   };
+
+  detail.rowElement = row;
+  detail.inlineAcceptButton = null;
+  detail.accepted = false;
+
+  if (hasAcceptHandler) {
+    detail.onAccept = ({ inlineButton, drawerButton } = {}) => {
+      if (detail.accepted || detail.acceptDisabled) {
+        return false;
+      }
+      acceptHandler();
+      applyAcceptanceState(detail, { inlineButton, drawerButton });
+      return true;
+    };
+  }
+
+  row.dataset.accepted = 'false';
 
   rowDetails.set(row, detail);
 
@@ -524,12 +571,13 @@ export function createHustleCard({
     button.type = 'button';
     button.className = 'downwork-market__accept';
     button.textContent = acceptLabel;
+    detail.inlineAcceptButton = button;
+    if (detail.acceptDisabled) {
+      button.disabled = true;
+    }
     button.addEventListener('click', () => {
-      if (primaryOffer?.onAccept) {
-        primaryOffer.onAccept();
-        button.disabled = true;
-        row.classList.add('is-accepted');
-      }
+      if (!detail.onAccept) return;
+      detail.onAccept({ inlineButton: button });
     });
     actionCell.appendChild(button);
   } else if (visibleUpcoming.length) {
@@ -546,10 +594,10 @@ export function createHustleCard({
     if (actionConfig.guidance) {
       button.title = actionConfig.guidance;
     }
-    if (!acceptDisabled && typeof acceptHandler === 'function') {
+    detail.inlineAcceptButton = button;
+    if (!acceptDisabled && detail.onAccept) {
       button.addEventListener('click', () => {
-        acceptHandler();
-        button.disabled = true;
+        detail.onAccept({ inlineButton: button });
       });
     }
     actionCell.appendChild(button);
