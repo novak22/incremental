@@ -64,9 +64,8 @@
 - Tests cover: slice normalization, seeding, expiry rerolls, and delayed availability to protect future tuning changes.
 
 ## UI Surface Updates
-- The DownWork workspace now runs on a dedicated SaaS-style shell: branded header tabs, search, run-limit status, category pills,
-  and a responsive market grid all live in a single module so players browse hustles with real hiring-dashboard energy.
-- Hustle browser cards now list active commitments beneath each template, including payout callouts, logged-hours meters, and deadline countdown bars so you can triage multi-day gigs at a glance.
+- The DownWork workspace now runs on a market dashboard shell: branded header tabs sit above category pills, ROI sorting, and a dense gig table so players skim 10–15 offers without scrolling through oversized cards.
+- Clicking a gig row opens a condensed drawer with requirements, commitments, and offer variants so you can preview context without leaving the market view.
 - Market offers render in the same cards as variant rows: ready offers headline a "Ready to accept" list with a matching accept CTA, while upcoming variants land in a dedicated "Coming tomorrow" queue with unlock timers.
 - The finance dashboard separates hustle commitments from fresh offers, highlighting urgent deadlines with warning tones and mirroring the same progress meters for consistency.
 - Hustle browser cards now offer a manual "Roll a fresh offer" button when a template has no active variants so players can nudge the market without relying on legacy instant runs.

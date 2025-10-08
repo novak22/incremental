@@ -29,6 +29,7 @@ const CATEGORY_THEMES = {
 };
 
 const downworkState = new WeakMap();
+const rowDetails = new WeakMap();
 
 function mergeCopy(base = {}, overrides = {}) {
   return {
@@ -48,7 +49,8 @@ function getDownworkState(container) {
     downworkState.set(container, {
       tab: 'market',
       category: 'all',
-      search: ''
+      search: '',
+      sort: 'roi'
     });
   }
   return downworkState.get(container);
@@ -69,59 +71,289 @@ export function describeMetaSummary({ availableCount, upcomingCount, commitmentC
   return describeCounts({ availableCount, upcomingCount, commitmentCount });
 }
 
-function buildCardSection(copy = {}, sectionKey = '') {
-  const section = document.createElement('section');
-  section.className = 'downwork-card__section';
-  if (sectionKey) {
-    section.dataset.section = sectionKey;
+function summarizeSlots(limit = null) {
+  if (!limit) return '—';
+  if (!Number.isFinite(limit.remaining) || !Number.isFinite(limit.limit)) {
+    return limit.summary || '—';
   }
-
-  if (copy.title) {
-    const heading = document.createElement('h3');
-    heading.className = 'downwork-card__section-title';
-    heading.textContent = copy.title;
-    section.appendChild(heading);
-  }
-
-  if (copy.description) {
-    const note = document.createElement('p');
-    note.className = 'downwork-card__section-note';
-    note.textContent = copy.description;
-    section.appendChild(note);
-  }
-
-  return section;
+  return `${limit.remaining}/${limit.limit}`;
 }
 
-function buildStepsSummary(categoryLabel = 'hustle') {
-  const list = document.createElement('ol');
-  list.className = 'downwork-card__steps';
+function resolveExpiresLabel(offers = [], upcoming = []) {
+  const active = offers
+    .map(offer => Number.isFinite(offer?.expiresIn) ? offer.expiresIn : null)
+    .filter(value => value !== null && value >= 0);
+  const queued = upcoming
+    .map(offer => Number.isFinite(offer?.availableIn) ? offer.availableIn : null)
+    .filter(value => value !== null && value >= 0);
 
-  const steps = [
-    { label: 'Accept offer', detail: 'Reserve a slot and sync it to your dashboard.' },
-    { label: 'Move to active worklist', detail: `Track deliverables and log ${categoryLabel.toLowerCase()} hours.` }
-  ];
+  if (active.length > 0) {
+    const soonest = Math.min(...active);
+    return {
+      value: soonest,
+      label: soonest === 0 ? 'Today' : `${soonest}d`
+    };
+  }
 
-  steps.forEach(step => {
-    const item = document.createElement('li');
-    item.className = 'downwork-card__step';
+  if (queued.length > 0) {
+    const soonestQueue = Math.min(...queued);
+    return {
+      value: soonestQueue + 0.5,
+      label: soonestQueue === 0 ? 'Queued' : `Opens ${soonestQueue}d`
+    };
+  }
 
-    const title = document.createElement('span');
-    title.className = 'downwork-card__step-label';
-    title.textContent = step.label;
-    item.appendChild(title);
+  return { value: Number.POSITIVE_INFINITY, label: '—' };
+}
 
-    if (step.detail) {
-      const detail = document.createElement('span');
-      detail.className = 'downwork-card__step-detail';
-      detail.textContent = step.detail;
-      item.appendChild(detail);
+function buildDrawer(container) {
+  let drawer = container.querySelector('[data-role="downwork-drawer"]');
+  if (drawer) return drawer;
+
+  drawer = document.createElement('aside');
+  drawer.className = 'downwork-drawer';
+  drawer.dataset.role = 'downwork-drawer';
+  drawer.hidden = true;
+
+  const inner = document.createElement('div');
+  inner.className = 'downwork-drawer__inner';
+
+  const header = document.createElement('header');
+  header.className = 'downwork-drawer__header';
+
+  const heading = document.createElement('div');
+  heading.className = 'downwork-drawer__heading';
+
+  const title = document.createElement('h2');
+  title.className = 'downwork-drawer__title';
+  title.dataset.role = 'downwork-drawer-title';
+  heading.appendChild(title);
+
+  const subtitle = document.createElement('p');
+  subtitle.className = 'downwork-drawer__subtitle';
+  subtitle.dataset.role = 'downwork-drawer-subtitle';
+  heading.appendChild(subtitle);
+
+  header.appendChild(heading);
+
+  const close = document.createElement('button');
+  close.type = 'button';
+  close.className = 'downwork-drawer__close';
+  close.dataset.role = 'downwork-drawer-close';
+  close.textContent = 'Close';
+  header.appendChild(close);
+
+  inner.appendChild(header);
+
+  const summary = document.createElement('p');
+  summary.className = 'downwork-drawer__summary';
+  summary.dataset.role = 'downwork-drawer-summary';
+  inner.appendChild(summary);
+
+  const meta = document.createElement('div');
+  meta.className = 'downwork-drawer__meta';
+  meta.dataset.role = 'downwork-drawer-meta';
+  inner.appendChild(meta);
+
+  const badgeList = document.createElement('ul');
+  badgeList.className = 'downwork-drawer__badges';
+  badgeList.dataset.role = 'downwork-drawer-badges';
+  inner.appendChild(badgeList);
+
+  const requirements = document.createElement('p');
+  requirements.className = 'downwork-drawer__requirements';
+  requirements.dataset.role = 'downwork-drawer-requirements';
+  inner.appendChild(requirements);
+
+  const seat = document.createElement('p');
+  seat.className = 'downwork-drawer__seat';
+  seat.dataset.role = 'downwork-drawer-seat';
+  inner.appendChild(seat);
+
+  const limit = document.createElement('p');
+  limit.className = 'downwork-drawer__limit';
+  limit.dataset.role = 'downwork-drawer-limit';
+  inner.appendChild(limit);
+
+  const actions = document.createElement('div');
+  actions.className = 'downwork-drawer__actions';
+
+  const accept = document.createElement('button');
+  accept.type = 'button';
+  accept.className = 'downwork-drawer__button downwork-drawer__button--primary';
+  accept.dataset.role = 'downwork-drawer-accept';
+  accept.textContent = 'Accept Gig';
+  actions.appendChild(accept);
+
+  const queue = document.createElement('button');
+  queue.type = 'button';
+  queue.className = 'downwork-drawer__button';
+  queue.dataset.role = 'downwork-drawer-queue';
+  queue.textContent = 'Queue for Later';
+  queue.disabled = true;
+  queue.title = 'Queueing opens in a later update.';
+  actions.appendChild(queue);
+
+  inner.appendChild(actions);
+
+  const guidance = document.createElement('p');
+  guidance.className = 'downwork-drawer__guidance';
+  guidance.dataset.role = 'downwork-drawer-guidance';
+  inner.appendChild(guidance);
+
+  const offers = document.createElement('div');
+  offers.className = 'downwork-drawer__offers';
+  offers.dataset.role = 'downwork-drawer-offers';
+  inner.appendChild(offers);
+
+  drawer.appendChild(inner);
+  container.appendChild(drawer);
+
+  return drawer;
+}
+
+function closeDrawer(drawer) {
+  if (!drawer) return;
+  drawer.hidden = true;
+  drawer.classList.remove('is-open');
+  drawer.dataset.currentGig = '';
+  const accept = drawer.querySelector('[data-role="downwork-drawer-accept"]');
+  if (accept) {
+    accept.disabled = false;
+    accept.replaceWith(accept.cloneNode(true));
+  }
+}
+
+function openDrawer(container, detail) {
+  if (!detail) return;
+  const drawer = buildDrawer(container);
+  const title = drawer.querySelector('[data-role="downwork-drawer-title"]');
+  const subtitle = drawer.querySelector('[data-role="downwork-drawer-subtitle"]');
+  const summary = drawer.querySelector('[data-role="downwork-drawer-summary"]');
+  const metaHost = drawer.querySelector('[data-role="downwork-drawer-meta"]');
+  const badges = drawer.querySelector('[data-role="downwork-drawer-badges"]');
+  const requirements = drawer.querySelector('[data-role="downwork-drawer-requirements"]');
+  const seat = drawer.querySelector('[data-role="downwork-drawer-seat"]');
+  const limit = drawer.querySelector('[data-role="downwork-drawer-limit"]');
+  const offersHost = drawer.querySelector('[data-role="downwork-drawer-offers"]');
+  const guidance = drawer.querySelector('[data-role="downwork-drawer-guidance"]');
+  const acceptButton = drawer.querySelector('[data-role="downwork-drawer-accept"]');
+
+  drawer.dataset.currentGig = detail.id || '';
+
+  if (title) {
+    title.textContent = detail.title || 'Gig detail';
+  }
+
+  if (subtitle) {
+    subtitle.textContent = detail.categoryLabel ? `${detail.categoryLabel} • ${detail.roiLabel}` : detail.roiLabel;
+  }
+
+  if (summary) {
+    summary.textContent = detail.description || '';
+    summary.hidden = !detail.description;
+  }
+
+  if (metaHost) {
+    metaHost.innerHTML = '';
+    const stats = [
+      createStat('Time', detail.timeLabel || '—'),
+      createStat('Payout', detail.payoutLabel || '—'),
+      createStat('ROI (/h)', detail.roiLabel || '—')
+    ];
+    stats.forEach(stat => {
+      stat.classList.add('downwork-drawer__stat');
+      metaHost.appendChild(stat);
+    });
+  }
+
+  if (badges) {
+    badges.innerHTML = '';
+    (detail.badges || []).forEach(entry => {
+      const item = document.createElement('li');
+      item.className = 'downwork-drawer__badge';
+      item.textContent = entry;
+      badges.appendChild(item);
+    });
+    badges.hidden = !badges.children.length;
+  }
+
+  if (requirements) {
+    requirements.textContent = detail.requirements || 'No requirements';
+  }
+
+  if (seat) {
+    seat.textContent = detail.seatSummary || '';
+    seat.hidden = !detail.seatSummary;
+  }
+
+  if (limit) {
+    limit.textContent = detail.limitSummary || '';
+    limit.hidden = !detail.limitSummary;
+  }
+
+  if (guidance) {
+    guidance.textContent = detail.actionGuidance || '';
+    guidance.hidden = !detail.actionGuidance;
+  }
+
+  if (offersHost) {
+    offersHost.innerHTML = '';
+    if (detail.commitments?.length) {
+      const commitmentsSection = document.createElement('section');
+      commitmentsSection.className = 'downwork-drawer__section';
+      const heading = document.createElement('h3');
+      heading.textContent = 'Active delivery';
+      commitmentsSection.appendChild(heading);
+      commitmentsSection.appendChild(createCommitmentList(detail.commitments));
+      offersHost.appendChild(commitmentsSection);
     }
 
-    list.appendChild(item);
-  });
+    if (detail.offers?.length) {
+      const readySection = document.createElement('section');
+      readySection.className = 'downwork-drawer__section';
+      const heading = document.createElement('h3');
+      heading.textContent = 'Live offers';
+      readySection.appendChild(heading);
+      readySection.appendChild(createOfferList(detail.offers));
+      offersHost.appendChild(readySection);
+    }
 
-  return list;
+    if (detail.upcoming?.length) {
+      const upcomingSection = document.createElement('section');
+      upcomingSection.className = 'downwork-drawer__section';
+      const heading = document.createElement('h3');
+      heading.textContent = 'Upcoming drops';
+      upcomingSection.appendChild(heading);
+      upcomingSection.appendChild(createOfferList(detail.upcoming, { upcoming: true }));
+      offersHost.appendChild(upcomingSection);
+    }
+  }
+
+  if (acceptButton) {
+    const clone = acceptButton.cloneNode(true);
+    clone.textContent = detail.acceptLabel || 'Accept Gig';
+    const hasHandler = typeof detail.onAccept === 'function';
+    const disabled = Boolean(detail.acceptDisabled) || !hasHandler;
+    clone.disabled = disabled;
+    if (detail.actionGuidance) {
+      clone.title = detail.actionGuidance;
+    } else if (!hasHandler) {
+      clone.title = 'No live offer to accept right now.';
+    } else {
+      clone.removeAttribute('title');
+    }
+    if (!disabled && hasHandler) {
+      clone.addEventListener('click', () => {
+        detail.onAccept();
+        clone.disabled = true;
+      });
+    }
+    acceptButton.replaceWith(clone);
+  }
+
+  drawer.hidden = false;
+  drawer.classList.add('is-open');
 }
 
 export function createHustleCard({
@@ -150,174 +382,187 @@ export function createHustleCard({
     return null;
   }
 
-  const card = document.createElement('article');
-  card.className = 'downwork-card';
-  card.dataset.role = 'downwork-card';
-  card.dataset.action = model.id || definition.id || '';
-  card.dataset.hustle = model.id || definition.id || '';
-  card.dataset.search = model.filters?.search || '';
-  card.dataset.time = String(model.metrics?.time?.value ?? 0);
-  card.dataset.payout = String(model.metrics?.payout?.value ?? 0);
-  card.dataset.roi = String(model.metrics?.roi ?? 0);
-  card.dataset.available = visibleOffers.length > 0 ? 'true' : 'false';
-  card.dataset.availableOffers = String(visibleOffers.length);
-  card.dataset.upcomingOffers = String(visibleUpcoming.length);
-  card.dataset.hasCommitments = hasCommitments ? 'true' : 'false';
+  const row = document.createElement('tr');
+  row.className = 'downwork-market__row';
+  row.dataset.role = 'downwork-row';
+  row.dataset.action = model.id || definition.id || '';
+  row.dataset.hustle = model.id || definition.id || '';
+  row.dataset.search = model.filters?.search || '';
+  row.dataset.time = String(model.metrics?.time?.value ?? 0);
+  row.dataset.payout = String(model.metrics?.payout?.value ?? 0);
+  row.dataset.roi = String(model.metrics?.roi ?? 0);
+  row.dataset.available = visibleOffers.length > 0 ? 'true' : 'false';
+  row.dataset.availableOffers = String(visibleOffers.length);
+  row.dataset.upcomingOffers = String(visibleUpcoming.length);
+  row.dataset.hasCommitments = hasCommitments ? 'true' : 'false';
+  row.dataset.hasHistory = Array.isArray(model.history) && model.history.length > 0 ? 'true' : 'false';
 
   if (model.filters?.limitRemaining !== null && model.filters?.limitRemaining !== undefined) {
-    card.dataset.limitRemaining = String(model.filters.limitRemaining);
+    row.dataset.limitRemaining = String(model.filters.limitRemaining);
   }
 
   if (model.filters?.category) {
-    card.dataset.category = model.filters.category;
-  }
-
-  if (model.actionCategory) {
-    card.dataset.actionCategory = model.actionCategory;
+    row.dataset.category = model.filters.category;
   }
 
   if (model.filters?.marketCategory) {
-    card.dataset.marketCategory = model.filters.marketCategory;
+    row.dataset.marketCategory = model.filters.marketCategory;
   }
 
   const themeKey = getThemeKey(model.filters?.marketCategory || model.category);
-  card.dataset.theme = CATEGORY_THEMES[themeKey] || 'neutral';
+  row.dataset.theme = CATEGORY_THEMES[themeKey] || 'neutral';
 
-  const header = document.createElement('header');
-  header.className = 'downwork-card__header';
+  const expires = resolveExpiresLabel(visibleOffers, visibleUpcoming);
+  row.dataset.expires = String(expires.value);
 
-  const titleBlock = document.createElement('div');
-  titleBlock.className = 'downwork-card__title-block';
+  const limit = model.limit || null;
+  const slotsLabel = summarizeSlots(limit);
 
-  const categoryLabel = model.labels?.category || model.categoryLabel || model.filters?.categoryLabel;
-  if (categoryLabel) {
-    const categoryTag = document.createElement('span');
-    categoryTag.className = 'downwork-card__category';
-    categoryTag.textContent = categoryLabel;
-    titleBlock.appendChild(categoryTag);
-  }
+  const timeLabel = model.metrics?.time?.label || formatHours(model.metrics?.time?.value ?? 0);
+  const payoutValue = model.metrics?.payout?.value ?? 0;
+  const payoutLabel = model.metrics?.payout?.label || (payoutValue > 0 ? `$${formatMoney(payoutValue)}` : 'Varies');
+  const roiLabel = formatRoi(model.metrics?.roi);
 
-  const title = document.createElement('h2');
-  title.className = 'downwork-card__title';
-  title.textContent = model.name || definition.name || 'Contract';
-  titleBlock.appendChild(title);
+  const primaryOffer = visibleOffers[0] || null;
+  const actionConfig = typeof model.action === 'object' && model.action !== null ? model.action : {};
+  const acceptLabel = primaryOffer?.acceptLabel || actionConfig.label || 'Accept';
+  const acceptHandler = primaryOffer?.onAccept || (typeof actionConfig.onClick === 'function' ? actionConfig.onClick : null);
+  const acceptDisabled = primaryOffer ? false : Boolean(actionConfig.disabled);
 
-  header.appendChild(titleBlock);
+  const detail = {
+    id: row.dataset.hustle,
+    title: model.name || definition.name || 'Contract',
+    description: model.description,
+    badges: Array.isArray(model.badges) ? model.badges : [],
+    requirements: model.requirements?.summary || 'No requirements',
+    seatSummary: model.seat?.summary || '',
+    limitSummary: model.limit?.summary || '',
+    offers: visibleOffers,
+    upcoming: visibleUpcoming,
+    commitments: model.commitments,
+    categoryLabel: model.labels?.category || model.categoryLabel || model.filters?.categoryLabel || '',
+    roiLabel,
+    timeLabel,
+    payoutLabel,
+    acceptLabel,
+    acceptDisabled,
+    onAccept: acceptHandler,
+    actionGuidance: actionConfig.guidance || ''
+  };
 
-  const roi = document.createElement('span');
-  roi.className = 'downwork-card__roi';
-  roi.textContent = formatRoi(model.metrics?.roi);
-  header.appendChild(roi);
+  rowDetails.set(row, detail);
 
-  card.appendChild(header);
+  const titleCell = document.createElement('td');
+  titleCell.className = 'downwork-market__cell downwork-market__cell--title';
+
+  const titleButton = document.createElement('button');
+  titleButton.type = 'button';
+  titleButton.className = 'downwork-market__title';
+  titleButton.dataset.role = 'downwork-title';
+  titleButton.textContent = detail.title;
+  titleCell.appendChild(titleButton);
 
   if (model.description) {
-    const summary = document.createElement('p');
-    summary.className = 'downwork-card__summary';
-    summary.textContent = model.description;
-    card.appendChild(summary);
+    const blurb = document.createElement('span');
+    blurb.className = 'downwork-market__description';
+    blurb.textContent = model.description;
+    titleCell.appendChild(blurb);
   }
 
-  const badges = Array.isArray(model.badges) ? model.badges : [];
-  if (badges.length > 0) {
-    const list = document.createElement('ul');
-    list.className = 'downwork-card__badges';
-    badges.forEach(entry => {
-      if (!entry) return;
-      const item = document.createElement('li');
-      item.className = 'downwork-card__badge';
-      item.textContent = entry;
-      list.appendChild(item);
-    });
-    card.appendChild(list);
+  row.appendChild(titleCell);
+
+  const categoryCell = document.createElement('td');
+  categoryCell.className = 'downwork-market__cell downwork-market__cell--category';
+  if (detail.categoryLabel) {
+    const chip = document.createElement('span');
+    chip.className = 'downwork-market__chip';
+    chip.textContent = detail.categoryLabel;
+    categoryCell.appendChild(chip);
+  } else {
+    categoryCell.textContent = '—';
   }
+  row.appendChild(categoryCell);
 
-  const stats = document.createElement('div');
-  stats.className = 'downwork-card__metrics';
-  const payoutValue = model.metrics?.payout?.value ?? 0;
-  const payoutLabel = model.metrics?.payout?.label
-    || (payoutValue > 0 ? `$${formatMoney(payoutValue)}` : 'Varies');
-  stats.append(
-    createStat('Time', model.metrics?.time?.label || formatHours(model.metrics?.time?.value ?? 0)),
-    createStat('Payout', payoutLabel),
-    createStat('ROI', formatRoi(model.metrics?.roi))
-  );
-  card.appendChild(stats);
+  const timeCell = document.createElement('td');
+  timeCell.className = 'downwork-market__cell downwork-market__cell--time';
+  timeCell.textContent = timeLabel;
+  row.appendChild(timeCell);
 
-  const meta = document.createElement('p');
-  meta.className = 'downwork-card__meta';
-  meta.textContent = model.requirements?.summary || 'No requirements';
-  card.appendChild(meta);
+  const payoutCell = document.createElement('td');
+  payoutCell.className = 'downwork-market__cell downwork-market__cell--payout';
+  payoutCell.textContent = payoutLabel;
+  row.appendChild(payoutCell);
 
-  if (model.seat?.summary) {
-    const seat = document.createElement('p');
-    seat.className = 'downwork-card__note';
-    seat.textContent = model.seat.summary;
-    card.appendChild(seat);
+  const roiCell = document.createElement('td');
+  roiCell.className = 'downwork-market__cell downwork-market__cell--roi';
+  roiCell.textContent = roiLabel;
+  if ((model.metrics?.roi ?? 0) >= 9) {
+    roiCell.classList.add('is-premium');
   }
+  row.appendChild(roiCell);
 
-  if (model.limit?.summary) {
-    const limit = document.createElement('p');
-    limit.className = 'downwork-card__note';
-    limit.textContent = model.limit.summary;
-    card.appendChild(limit);
-  }
+  const slotsCell = document.createElement('td');
+  slotsCell.className = 'downwork-market__cell downwork-market__cell--slots';
+  slotsCell.textContent = slotsLabel;
+  row.appendChild(slotsCell);
 
-  if (model.action?.label) {
-    const actions = document.createElement('div');
-    actions.className = 'downwork-card__actions';
+  const expiresCell = document.createElement('td');
+  expiresCell.className = 'downwork-market__cell downwork-market__cell--expires';
+  expiresCell.textContent = expires.label;
+  row.appendChild(expiresCell);
 
-    const button = document.createElement('button');
-    button.type = 'button';
-    const variantName = model.action.className === 'secondary' ? 'secondary' : 'primary';
-    button.className = `downwork-card__button downwork-card__button--${variantName}`;
-    button.textContent = model.action.label;
-    button.disabled = Boolean(model.action.disabled);
-
-    if (typeof model.action?.onClick === 'function') {
-      button.addEventListener('click', () => {
-        if (button.disabled) return;
-        model.action.onClick();
-      });
-    }
-
-    actions.appendChild(button);
-
-    if (model.action?.guidance) {
-      const note = document.createElement('p');
-      note.className = 'downwork-card__guidance';
-      note.textContent = model.action.guidance;
-      actions.appendChild(note);
-    }
-
-    card.appendChild(actions);
-  }
-
-  const steps = buildStepsSummary(model.labels?.category || model.categoryLabel || 'hustle');
-  card.appendChild(steps);
+  const actionCell = document.createElement('td');
+  actionCell.className = 'downwork-market__cell downwork-market__cell--action';
 
   if (hasCommitments) {
-    const commitmentsSection = buildCardSection(copy.commitments, 'commitments');
-    const list = createCommitmentList(model.commitments);
-    commitmentsSection.appendChild(list);
-    card.appendChild(commitmentsSection);
+    const badge = document.createElement('span');
+    badge.className = 'downwork-market__status downwork-market__status--progress';
+    badge.textContent = 'In Progress';
+    actionCell.appendChild(badge);
+  } else if (primaryOffer) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'downwork-market__accept';
+    button.textContent = acceptLabel;
+    button.addEventListener('click', () => {
+      if (primaryOffer?.onAccept) {
+        primaryOffer.onAccept();
+        button.disabled = true;
+        row.classList.add('is-accepted');
+      }
+    });
+    actionCell.appendChild(button);
+  } else if (visibleUpcoming.length) {
+    const badge = document.createElement('span');
+    badge.className = 'downwork-market__status downwork-market__status--queued';
+    badge.textContent = 'Queued';
+    actionCell.appendChild(badge);
+  } else if (actionConfig.label) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'downwork-market__accept is-secondary';
+    button.textContent = acceptLabel;
+    button.disabled = acceptDisabled;
+    if (actionConfig.guidance) {
+      button.title = actionConfig.guidance;
+    }
+    if (!acceptDisabled && typeof acceptHandler === 'function') {
+      button.addEventListener('click', () => {
+        acceptHandler();
+        button.disabled = true;
+      });
+    }
+    actionCell.appendChild(button);
+  } else {
+    const badge = document.createElement('span');
+    badge.className = 'downwork-market__status';
+    badge.textContent = 'Locked';
+    actionCell.appendChild(badge);
   }
 
-  if (visibleOffers.length) {
-    const offersSection = buildCardSection(copy.ready, 'offers');
-    const list = createOfferList(visibleOffers);
-    offersSection.appendChild(list);
-    card.appendChild(offersSection);
-  }
+  row.appendChild(actionCell);
 
-  if (visibleUpcoming.length) {
-    const upcomingSection = buildCardSection(copy.upcoming, 'upcoming');
-    const list = createOfferList(visibleUpcoming, { upcoming: true });
-    upcomingSection.appendChild(list);
-    card.appendChild(upcomingSection);
-  }
-
-  return card;
+  return row;
 }
 
 function buildShell(body) {
@@ -387,41 +632,10 @@ function buildShell(body) {
 
   controls.appendChild(tabList);
 
-  const searchForm = document.createElement('form');
-  searchForm.className = 'downwork-search';
-  searchForm.setAttribute('role', 'search');
-  searchForm.addEventListener('submit', event => {
-    event.preventDefault();
-  });
-
-  const searchLabel = document.createElement('label');
-  searchLabel.className = 'downwork-search__label';
-  searchLabel.setAttribute('for', 'downwork-search-input');
-  searchLabel.textContent = 'Search';
-  searchForm.appendChild(searchLabel);
-
-  const searchInput = document.createElement('input');
-  searchInput.type = 'search';
-  searchInput.id = 'downwork-search-input';
-  searchInput.className = 'downwork-search__input';
-  searchInput.placeholder = 'Search gigs or categories…';
-  searchInput.dataset.role = 'downwork-search-input';
-  searchForm.appendChild(searchInput);
-
-  controls.appendChild(searchForm);
-
   const status = document.createElement('p');
   status.className = 'downwork-header__status';
   status.dataset.role = 'downwork-status';
   controls.appendChild(status);
-
-  const cta = document.createElement('button');
-  cta.type = 'button';
-  cta.className = 'downwork-header__cta';
-  cta.textContent = 'Post a Gig';
-  cta.disabled = true;
-  cta.title = 'Internal beta — posting opens later.';
-  controls.appendChild(cta);
 
   header.appendChild(controls);
   container.appendChild(header);
@@ -429,12 +643,15 @@ function buildShell(body) {
   const bodyRegion = document.createElement('div');
   bodyRegion.className = 'downwork-body';
 
+  const toolbar = document.createElement('div');
+  toolbar.className = 'downwork-market__toolbar';
+
   const filters = document.createElement('div');
-  filters.className = 'downwork-filters';
+  filters.className = 'downwork-filter-group';
 
   const filterLabel = document.createElement('p');
-  filterLabel.className = 'downwork-filters__label';
-  filterLabel.textContent = 'Filter by track';
+  filterLabel.className = 'downwork-filter-group__label';
+  filterLabel.textContent = 'Tracks';
   filters.appendChild(filterLabel);
 
   const pills = document.createElement('div');
@@ -442,12 +659,69 @@ function buildShell(body) {
   pills.dataset.role = 'downwork-filter-pills';
   filters.appendChild(pills);
 
-  bodyRegion.appendChild(filters);
+  toolbar.appendChild(filters);
 
-  const grid = document.createElement('div');
-  grid.className = 'downwork-grid';
-  grid.dataset.role = 'browser-hustle-list';
-  bodyRegion.appendChild(grid);
+  const sortGroup = document.createElement('label');
+  sortGroup.className = 'downwork-sort';
+  sortGroup.textContent = 'Sort';
+
+  const sortSelect = document.createElement('select');
+  sortSelect.className = 'downwork-sort__select';
+  sortSelect.dataset.role = 'downwork-sort';
+  [
+    { value: 'roi', label: 'Highest ROI' },
+    { value: 'time', label: 'Shortest Time' },
+    { value: 'expires', label: 'Expiring Soon' },
+    { value: 'newest', label: 'Newest' }
+  ].forEach(option => {
+    const node = document.createElement('option');
+    node.value = option.value;
+    node.textContent = option.label;
+    sortSelect.appendChild(node);
+  });
+  sortGroup.appendChild(sortSelect);
+  toolbar.appendChild(sortGroup);
+
+  const searchForm = document.createElement('form');
+  searchForm.className = 'downwork-search';
+  searchForm.setAttribute('role', 'search');
+  searchForm.addEventListener('submit', event => {
+    event.preventDefault();
+  });
+
+  const searchInput = document.createElement('input');
+  searchInput.type = 'search';
+  searchInput.className = 'downwork-search__input';
+  searchInput.placeholder = 'Search gigs or keywords...';
+  searchInput.dataset.role = 'downwork-search-input';
+  searchForm.appendChild(searchInput);
+  toolbar.appendChild(searchForm);
+
+  bodyRegion.appendChild(toolbar);
+
+  const tableWrapper = document.createElement('div');
+  tableWrapper.className = 'downwork-table-wrapper';
+
+  const table = document.createElement('table');
+  table.className = 'downwork-table';
+  table.dataset.role = 'downwork-table';
+
+  const head = document.createElement('thead');
+  const headRow = document.createElement('tr');
+  ['Gig Title', 'Category', 'Time', 'Payout', 'ROI (/h)', 'Slots', 'Expires', 'Action'].forEach(label => {
+    const th = document.createElement('th');
+    th.textContent = label;
+    headRow.appendChild(th);
+  });
+  head.appendChild(headRow);
+  table.appendChild(head);
+
+  const bodyTable = document.createElement('tbody');
+  bodyTable.dataset.role = 'browser-hustle-list';
+  table.appendChild(bodyTable);
+
+  tableWrapper.appendChild(table);
+  bodyRegion.appendChild(tableWrapper);
 
   const empty = document.createElement('div');
   empty.className = 'downwork-empty';
@@ -465,6 +739,8 @@ function buildShell(body) {
 
   container.appendChild(bodyRegion);
   body.appendChild(container);
+
+  buildDrawer(container);
 
   return container;
 }
@@ -506,44 +782,77 @@ function syncCategoryPills(container, categories, state) {
   });
 }
 
-function applyFilters(container, state) {
-  const grid = container.querySelector('[data-role="browser-hustle-list"]');
-  if (!grid) return;
-  const term = state.search.trim().toLowerCase();
-  const cards = Array.from(grid.querySelectorAll('[data-role="downwork-card"]'));
-  let visibleCount = 0;
+function sortRows(rows = [], sortKey = 'roi') {
+  const cloned = [...rows];
+  cloned.sort((a, b) => {
+    const numeric = (node, key) => {
+      if (key === 'newest') {
+        return Number(node.dataset.position || '0');
+      }
+      return Number(node.dataset[key] || '0');
+    };
 
-  cards.forEach(card => {
+    switch (sortKey) {
+      case 'time':
+        return numeric(a, 'time') - numeric(b, 'time');
+      case 'expires':
+        return numeric(a, 'expires') - numeric(b, 'expires');
+      case 'newest':
+        return numeric(b, 'position') - numeric(a, 'position');
+      case 'roi':
+      default:
+        return numeric(b, 'roi') - numeric(a, 'roi');
+    }
+  });
+  return cloned;
+}
+
+function applyFilters(container, state) {
+  const body = container.querySelector('[data-role="browser-hustle-list"]');
+  if (!body) return;
+
+  const term = state.search.trim().toLowerCase();
+  const rows = Array.from(body.querySelectorAll('[data-role="downwork-row"]'));
+  const visibleRows = [];
+  const hiddenRows = [];
+
+  rows.forEach(row => {
     let visible = true;
 
     if (state.tab === 'active') {
-      visible = card.dataset.hasCommitments === 'true';
+      visible = row.dataset.hasCommitments === 'true';
     } else if (state.tab === 'history') {
-      visible = card.dataset.hasHistory === 'true';
+      visible = row.dataset.hasHistory === 'true';
     } else {
-      const offers = Number(card.dataset.availableOffers || '0');
-      const upcoming = Number(card.dataset.upcomingOffers || '0');
-      visible = offers + upcoming > 0;
+      const offers = Number(row.dataset.availableOffers || '0');
+      const upcoming = Number(row.dataset.upcomingOffers || '0');
+      visible = offers + upcoming > 0 || row.dataset.hasCommitments === 'true';
     }
 
     if (visible && state.category !== 'all') {
-      visible = (card.dataset.marketCategory || '') === state.category;
+      visible = (row.dataset.marketCategory || '') === state.category;
     }
 
     if (visible && term) {
-      const haystack = `${card.dataset.search || ''} ${card.textContent || ''}`.toLowerCase();
+      const haystack = `${row.dataset.search || ''} ${row.textContent || ''}`.toLowerCase();
       visible = haystack.includes(term);
     }
 
-    card.hidden = !visible;
+    row.hidden = !visible;
     if (visible) {
-      visibleCount += 1;
+      visibleRows.push(row);
+    } else {
+      hiddenRows.push(row);
     }
   });
 
+  const sortedVisible = sortRows(visibleRows, state.sort);
+  sortedVisible.forEach(row => body.appendChild(row));
+  hiddenRows.forEach(row => body.appendChild(row));
+
   const empty = container.querySelector('[data-role="downwork-empty"]');
   if (empty) {
-    empty.hidden = visibleCount > 0;
+    empty.hidden = sortedVisible.length > 0;
   }
 }
 
@@ -585,6 +894,38 @@ function bindInteractions(container) {
     });
     search.dataset.bound = 'true';
   }
+
+  const sort = container.querySelector('[data-role="downwork-sort"]');
+  if (sort && !sort.dataset.bound) {
+    sort.addEventListener('change', () => {
+      state.sort = sort.value;
+      applyFilters(container, state);
+    });
+    sort.dataset.bound = 'true';
+  }
+
+  const table = container.querySelector('[data-role="downwork-table"]');
+  if (table && !table.dataset.bound) {
+    table.addEventListener('click', event => {
+      const trigger = event.target.closest('[data-role="downwork-title"]');
+      if (!trigger) return;
+      const row = trigger.closest('[data-role="downwork-row"]');
+      if (!row) return;
+      const detail = rowDetails.get(row);
+      openDrawer(container, detail);
+    });
+    table.dataset.bound = 'true';
+  }
+
+  const drawer = container.querySelector('[data-role="downwork-drawer"]');
+  if (drawer && !drawer.dataset.bound) {
+    drawer.addEventListener('click', event => {
+      if (event.target.closest('[data-role="downwork-drawer-close"]')) {
+        closeDrawer(drawer);
+      }
+    });
+    drawer.dataset.bound = 'true';
+  }
 }
 
 function summarizeLimits(models = []) {
@@ -603,7 +944,7 @@ function summarizeLimits(models = []) {
     return 'All hustle slots filled.';
   }
   const label = total === 1 ? 'run' : 'runs';
-  return `${total} ${label} left today.`;
+  return `${total} ${label} left today`;
 }
 
 export default function renderHustles(context = {}, definitions = [], models = []) {
@@ -621,6 +962,11 @@ export default function renderHustles(context = {}, definitions = [], models = [
   if (!container || !list) return null;
   list.innerHTML = '';
 
+  const drawer = container.querySelector('[data-role="downwork-drawer"]');
+  if (drawer && drawer.classList.contains('is-open')) {
+    closeDrawer(drawer);
+  }
+
   const modelMap = new Map(models.map(model => [model?.id, model]));
   let availableCount = 0;
   let commitmentCount = 0;
@@ -628,7 +974,7 @@ export default function renderHustles(context = {}, definitions = [], models = [
   const state = getDownworkState(container);
   const categories = new Map();
 
-  definitions.forEach(definition => {
+  definitions.forEach((definition, index) => {
     const model = modelMap.get(definition.id);
     if (!model) return;
 
@@ -652,6 +998,7 @@ export default function renderHustles(context = {}, definitions = [], models = [
 
     const card = createHustleCard({ definition, model });
     if (card) {
+      card.dataset.position = String(index);
       const categoryKey = card.dataset.marketCategory || '';
       if (categoryKey && !categories.has(categoryKey)) {
         const label = model.labels?.category || model.categoryLabel || categoryKey;
@@ -665,6 +1012,10 @@ export default function renderHustles(context = {}, definitions = [], models = [
   syncCategoryPills(container, categoryEntries, state);
   bindInteractions(container);
   syncTabState(container, state);
+  const sortControl = container.querySelector('[data-role="downwork-sort"]');
+  if (sortControl && sortControl.value !== state.sort) {
+    sortControl.value = state.sort;
+  }
   applyFilters(container, state);
 
   const status = container.querySelector('[data-role="downwork-status"]');
