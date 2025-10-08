@@ -21,6 +21,7 @@ import renderIncomePanel from './blogpress/views/renderIncomePanel.js';
 import renderPayoutPanel from './blogpress/views/renderPayoutPanel.js';
 import renderActionPanel from './blogpress/views/renderActionPanel.js';
 import renderUpkeepPanel from './blogpress/views/renderUpkeepPanel.js';
+import renderActivityPanel from './blogpress/views/renderActivityPanel.js';
 import renderPricingView from './blogpress/views/pricingView.js';
 import renderBlueprintsView from './blogpress/views/blueprintsView.js';
 
@@ -54,7 +55,8 @@ const renderDetailView = createDetailViewController({
   renderIncomePanel,
   renderPayoutPanel,
   renderActionPanel,
-  renderUpkeepPanel
+  renderUpkeepPanel,
+  renderActivityPanel
 });
 
 function confirmBlogLaunch(definition = {}) {
@@ -154,6 +156,13 @@ function renderHeader(model, state = INITIAL_STATE) {
   const header = document.createElement('header');
   header.className = 'blogpress__header';
 
+  const brand = document.createElement('div');
+  brand.className = 'blogpress__brand';
+
+  const logo = document.createElement('span');
+  logo.className = 'blogpress__logo';
+  logo.textContent = '🪄';
+
   const title = document.createElement('div');
   title.className = 'blogpress__title';
   const heading = document.createElement('h1');
@@ -161,6 +170,8 @@ function renderHeader(model, state = INITIAL_STATE) {
   const note = document.createElement('p');
   note.textContent = 'Your faux CMS for cozy blog empires.';
   title.append(heading, note);
+
+  brand.append(logo, title);
 
   const activeCount = model.summary?.active || 0;
   const setupCount = model.summary?.setup || 0;
@@ -199,9 +210,9 @@ function renderHeader(model, state = INITIAL_STATE) {
   launchButton.className = 'blogpress-button blogpress-button--primary';
   launchButton.textContent = 'Spin up new blog';
   launchButton.addEventListener('click', () => setView(VIEW_BLUEPRINTS));
-  actions.appendChild(launchButton);
+  actions.append(nav, launchButton);
 
-  header.append(title, nav, actions);
+  header.append(brand, actions);
 
   if (setupCount > 0) {
     const info = document.createElement('p');

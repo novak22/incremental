@@ -6,7 +6,8 @@ export function createDetailViewController({
   renderIncomePanel,
   renderPayoutPanel,
   renderActionPanel,
-  renderUpkeepPanel
+  renderUpkeepPanel,
+  renderActivityPanel
 } = {}) {
   return function renderDetailView({
     instance = null,
@@ -45,11 +46,16 @@ export function createDetailViewController({
       );
     }
 
-    const grid = document.createElement('div');
-    grid.className = 'blogpress-detail-grid';
+    const layout = document.createElement('div');
+    layout.className = 'blogpress-detail-layout';
+
+    const primaryColumn = document.createElement('div');
+    primaryColumn.className = 'blogpress-detail-layout__column blogpress-detail-layout__column--primary';
+    const secondaryColumn = document.createElement('div');
+    secondaryColumn.className = 'blogpress-detail-layout__column blogpress-detail-layout__column--secondary';
 
     if (renderNichePanel) {
-      grid.appendChild(
+      primaryColumn.appendChild(
         renderNichePanel({
           instance,
           handlers: {
@@ -61,7 +67,7 @@ export function createDetailViewController({
     }
 
     if (renderQualityPanel) {
-      grid.appendChild(
+      primaryColumn.appendChild(
         renderQualityPanel({
           instance,
           formatRange
@@ -69,8 +75,26 @@ export function createDetailViewController({
       );
     }
 
+    if (renderUpkeepPanel) {
+      primaryColumn.appendChild(
+        renderUpkeepPanel({
+          instance
+        })
+      );
+    }
+
+    if (renderActivityPanel) {
+      primaryColumn.appendChild(
+        renderActivityPanel({
+          instance,
+          formatCurrency,
+          formatHours
+        })
+      );
+    }
+
     if (renderIncomePanel) {
-      grid.appendChild(
+      secondaryColumn.appendChild(
         renderIncomePanel({
           instance,
           formatCurrency,
@@ -80,7 +104,7 @@ export function createDetailViewController({
     }
 
     if (renderPayoutPanel) {
-      grid.appendChild(
+      secondaryColumn.appendChild(
         renderPayoutPanel({
           instance,
           formatCurrency
@@ -89,7 +113,7 @@ export function createDetailViewController({
     }
 
     if (renderActionPanel) {
-      grid.appendChild(
+      secondaryColumn.appendChild(
         renderActionPanel({
           instance,
           handlers: {
@@ -102,15 +126,8 @@ export function createDetailViewController({
       );
     }
 
-    if (renderUpkeepPanel) {
-      grid.appendChild(
-        renderUpkeepPanel({
-          instance
-        })
-      );
-    }
-
-    container.appendChild(grid);
+    layout.append(primaryColumn, secondaryColumn);
+    container.appendChild(layout);
     return container;
   };
 }

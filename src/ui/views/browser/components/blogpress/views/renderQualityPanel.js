@@ -2,12 +2,20 @@ export default function renderQualityPanel({ instance, formatRange }) {
   const panel = document.createElement('article');
   panel.className = 'blogpress-panel blogpress-panel--quality';
 
-  const header = document.createElement('div');
-  header.className = 'blogpress-panel__header';
   const title = document.createElement('h3');
-  title.textContent = `Quality ${instance.qualityLevel} — ${instance.qualityInfo?.name || 'Skeleton Drafts'}`;
-  header.appendChild(title);
-  panel.appendChild(header);
+  title.textContent = 'Quality & milestones';
+  panel.appendChild(title);
+
+  const stage = document.createElement('div');
+  stage.className = 'blogpress-quality-stage';
+  const stageLabel = document.createElement('span');
+  stageLabel.className = 'blogpress-quality-stage__label';
+  stageLabel.textContent = instance.qualityInfo?.name || 'Skeleton Drafts';
+  const stageMeta = document.createElement('span');
+  stageMeta.className = 'blogpress-quality-stage__meta';
+  stageMeta.textContent = `Stage ${instance.qualityLevel}`;
+  stage.append(stageLabel, stageMeta);
+  panel.appendChild(stage);
 
   if (instance.qualityInfo?.description) {
     const description = document.createElement('p');
@@ -23,6 +31,11 @@ export default function renderQualityPanel({ instance, formatRange }) {
   fill.style.width = `${Math.round((instance.milestone.percent || 0) * 100)}%`;
   progress.appendChild(fill);
   panel.appendChild(progress);
+
+  const progressIcon = document.createElement('span');
+  progressIcon.className = 'blogpress-progress__icon';
+  progressIcon.textContent = instance.milestone?.percent >= 1 ? '✨ Milestone ready' : '🌱 Growing';
+  panel.appendChild(progressIcon);
 
   if (instance.milestone.nextLevel) {
     const milestone = document.createElement('p');
