@@ -31,7 +31,10 @@ test('renderOverviewPanel lists key payout stats', t => {
     estimatedSpend: 4200,
     latestPayout: 800,
     averagePayout: 400,
-    pendingIncome: 0
+    pendingIncome: 0,
+    posts: { published: 12 },
+    seo: { score: 82, grade: 'B' },
+    backlinks: { count: 8, score: 4, nextTarget: 10 }
   };
 
   const panel = renderOverviewPanel({
@@ -42,7 +45,16 @@ test('renderOverviewPanel lists key payout stats', t => {
   const stats = [...panel.querySelectorAll('dl.blogpress-stats dd')].map(node => node.textContent);
   assert.deepEqual(
     stats,
-    ['$12000', '$4200', '$800', '$400', 'None in queue'],
+    [
+      '12 posts',
+      'B (82%)',
+      '4/5 (8 links) · Next at 10',
+      '$12000',
+      '$4200',
+      '$800',
+      '$400',
+      'None in queue'
+    ],
     'overview panel should format and display payout stats'
   );
 });

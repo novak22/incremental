@@ -1,6 +1,37 @@
 import { createId, structuredClone } from '../helpers.js';
 import { isValidNicheId } from './niches.js';
 
+function clamp(value, { min = Number.NEGATIVE_INFINITY, max = Number.POSITIVE_INFINITY } = {}) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) {
+    return min;
+  }
+  return Math.min(max, Math.max(min, numeric));
+}
+
+function normalizeSeoScore(value) {
+  const clamped = clamp(value, { min: 0, max: 100 });
+  return Math.round(clamped);
+}
+
+function normalizeBacklinkCount(value) {
+  const clamped = clamp(value, { min: 0 });
+  return Math.round(clamped);
+}
+
+function normalizeMetrics(rawMetrics = {}) {
+  const metrics = typeof rawMetrics === 'object' && rawMetrics !== null ? { ...rawMetrics } : {};
+  if (!Number.isFinite(Number(metrics.seoScore))) {
+    metrics.seoScore = 30;
+  }
+  metrics.seoScore = normalizeSeoScore(metrics.seoScore);
+  if (!Number.isFinite(Number(metrics.backlinks))) {
+    metrics.backlinks = 0;
+  }
+  metrics.backlinks = normalizeBacklinkCount(metrics.backlinks);
+  return metrics;
+}
+
 function resolveCurrentDay(context = {}) {
   if (Number.isFinite(Number(context.day))) {
     return Math.max(1, Number(context.day));
@@ -108,6 +139,8 @@ function normalizeAssetInstance(definition, instance = {}, context = {}) {
   const nicheId = typeof normalized.nicheId === 'string' ? normalized.nicheId : null;
   normalized.nicheId = nicheId && isValidNicheId(nicheId) ? nicheId : null;
 
+  normalized.metrics = normalizeMetrics(normalized.metrics);
+
   return normalized;
 }
 
@@ -129,7 +162,11 @@ export function createAssetInstance(definition, overrides = {}, context = {}) {
       level: 0,
       progress: {}
     },
-    nicheId: null
+    nicheId: null,
+    metrics: {
+      seoScore: 30,
+      backlinks: 0
+    }
   };
   const merged = { ...baseInstance, ...structuredClone(overrides) };
   if (merged.status === 'active') {

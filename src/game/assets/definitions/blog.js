@@ -3,6 +3,42 @@ import { triggerQualityActionEvents } from '../../events/index.js';
 import { createAssetDefinition } from '../../content/schema.js';
 import { assets as assetConfigs } from '../../data/economyConfig.js';
 
+function ensureBlogMetrics(instance = {}) {
+  if (!instance.metrics || typeof instance.metrics !== 'object') {
+    instance.metrics = { seoScore: 30, backlinks: 0 };
+  }
+  if (!Number.isFinite(Number(instance.metrics.seoScore))) {
+    instance.metrics.seoScore = 30;
+  }
+  if (!Number.isFinite(Number(instance.metrics.backlinks))) {
+    instance.metrics.backlinks = 0;
+  }
+  return instance.metrics;
+}
+
+function clampSeoScore(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) {
+    return 0;
+  }
+  return Math.max(0, Math.min(100, Math.round(numeric)));
+}
+
+function adjustSeoScore(instance, delta = 0) {
+  const metrics = ensureBlogMetrics(instance);
+  const current = clampSeoScore(metrics.seoScore);
+  metrics.seoScore = clampSeoScore(current + delta);
+  return metrics.seoScore;
+}
+
+function addBacklinks(instance, amount = 0) {
+  const metrics = ensureBlogMetrics(instance);
+  const numeric = Number(amount);
+  const increment = Number.isFinite(numeric) ? Math.max(0, Math.round(numeric)) : 0;
+  metrics.backlinks = Math.max(0, Math.round((metrics.backlinks || 0) + increment));
+  return metrics.backlinks;
+}
+
 const blogConfig = assetConfigs.blog; // Spec: docs/normalized_economy.json → assets.blog
 const blogSetup = blogConfig.setup; // Spec: docs/normalized_economy.json → assets.blog.schedule
 const blogMaintenance = blogConfig.maintenance; // Spec: docs/normalized_economy.json → assets.blog.maintenance_time
@@ -93,6 +129,10 @@ const blogDefinition = createAssetDefinition({
         progressAmount: () => 1,
         skills: ['writing'],
         onComplete({ definition, instance, action }) {
+          if (instance?.status === 'active') {
+            const penalty = Math.floor(Math.random() * 8) + 3; // 3–10 SEO dip
+            adjustSeoScore(instance, -penalty);
+          }
           triggerQualityActionEvents({ definition, instance, action: action || this });
         },
         log: ({ label }) => `${label} published a sparkling post. Subscribers sip the fresh ideas!`
@@ -106,6 +146,11 @@ const blogDefinition = createAssetDefinition({
         progressKey: 'seo',
         skills: ['promotion'],
         onComplete({ definition, instance, action }) {
+          if (instance?.status === 'active') {
+            const boost = Math.floor(Math.random() * 9) + 7; // 7–15 swing
+            const misfire = Math.random() < 0.1;
+            adjustSeoScore(instance, misfire ? -boost : boost);
+          }
           triggerQualityActionEvents({ definition, instance, action: action || this });
         },
         log: ({ label }) => `${label} ran an SEO tune-up. Keywords now shimmy to the top.`
@@ -119,6 +164,10 @@ const blogDefinition = createAssetDefinition({
         progressKey: 'outreach',
         skills: ['audience', { id: 'promotion', weight: 0.5 }],
         onComplete({ definition, instance, action }) {
+          if (instance?.status === 'active') {
+            const gained = Math.floor(Math.random() * 3) + 1; // 1–3 backlinks
+            addBacklinks(instance, gained);
+          }
           triggerQualityActionEvents({ definition, instance, action: action || this });
         },
         log: ({ label }) => `${label} charmed partners into fresh backlinks. Authority climbs!`
