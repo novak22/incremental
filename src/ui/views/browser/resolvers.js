@@ -35,6 +35,51 @@ function resolveNotificationPart(root, container, selectors = []) {
 }
 
 const homepageManagers = new WeakMap();
+const layoutStorageKeys = new WeakMap();
+let nextLayoutStorageId = 1;
+
+function formatStorageKeySuffix(value) {
+  if (typeof value !== 'string') {
+    return '';
+  }
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return '';
+  }
+  return trimmed.replace(/\s+/g, '-');
+}
+
+function getLayoutStorageKey(container) {
+  const baseKey = 'browser.widgets.layout';
+  if (!container) {
+    return baseKey;
+  }
+  if (layoutStorageKeys.has(container)) {
+    return layoutStorageKeys.get(container);
+  }
+
+  const dataset = container.dataset || {};
+  const candidates = [
+    dataset.layoutKey,
+    container.getAttribute?.('data-layout-key'),
+    dataset.widgetHost,
+    container.getAttribute?.('data-widget-host'),
+    dataset.role,
+    container.getAttribute?.('data-role'),
+    container.id
+  ];
+
+  const suffix = candidates
+    .map(formatStorageKeySuffix)
+    .find(value => Boolean(value));
+
+  const key = suffix
+    ? `${baseKey}.${suffix}`
+    : `${baseKey}#${nextLayoutStorageId++}`;
+
+  layoutStorageKeys.set(container, key);
+  return key;
+}
 
 const resolvers = {
   browserNavigation: root => ({
@@ -152,7 +197,8 @@ const resolvers = {
     if (!entry) {
       const state = { record: null, manager: null };
       state.manager = createLayoutManager({
-        resolveMountRecord: () => state.record
+        resolveMountRecord: () => state.record,
+        storageKey: getLayoutStorageKey(container)
       });
       entry = state;
       homepageManagers.set(container, entry);
