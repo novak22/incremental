@@ -47,9 +47,12 @@ test('createVideoTubeWorkspace wires table selection and actions', async t => {
         label: 'Launch Trailer',
         fallbackLabel: 'Launch Trailer',
         customName: 'Launch Trailer',
-        status: { label: 'Active', tone: 'ready' },
+        status: { id: 'active', label: 'Active', tone: 'ready' },
         latestPayout: 320,
+        averagePayout: 210,
         lifetimeIncome: 4200,
+        lifetimeSpend: 3600,
+        lifetimeNet: 600,
         qualityLevel: 3,
         milestone: { percent: 0.5, summary: 'Trending on feeds' },
         quickAction: {
@@ -70,6 +73,10 @@ test('createVideoTubeWorkspace wires table selection and actions', async t => {
             available: true
           }
         ],
+        pendingIncome: 140,
+        maintenanceFunded: true,
+        maintenance: { hasUpkeep: true, text: '$40 upkeep due daily' },
+        daysActive: 7,
         nicheLocked: false,
         nicheOptions: [
           { id: 'food', name: 'Foodies', label: 'Hot', summary: 'Hungry fans await' },
@@ -80,7 +87,7 @@ test('createVideoTubeWorkspace wires table selection and actions', async t => {
         id: 'vid-2',
         label: 'Behind the Scenes',
         fallbackLabel: 'Behind the Scenes',
-        status: { label: 'In setup', tone: 'pending' },
+        status: { id: 'setup', label: 'In setup', tone: 'pending' },
         latestPayout: 0,
         lifetimeIncome: 0,
         qualityLevel: 1,
@@ -126,6 +133,18 @@ test('createVideoTubeWorkspace wires table selection and actions', async t => {
 
   const detailView = mount.querySelector('.videotube-view--detail');
   assert.ok(detailView, 'detail view renders after switching tabs');
+
+  const incomeHeading = [...detailView.querySelectorAll('.videotube-panel h3')]
+    .find(node => /Income recap/i.test(node.textContent));
+  assert.ok(incomeHeading, 'income recap panel renders in detail view');
+  const incomeStats = incomeHeading.parentElement.querySelector('.videotube-stats-grid');
+  const pendingStat = [...incomeStats.querySelectorAll('dt')]
+    .find(node => node.textContent === 'Pending payout');
+  assert.ok(pendingStat, 'income recap includes pending payout stat');
+  assert.match(pendingStat.nextElementSibling.textContent, /\$/);
+  const upkeepMessage = incomeHeading.parentElement.querySelector('.videotube-panel__hint');
+  assert.ok(upkeepMessage, 'income recap surfaces upkeep message');
+  assert.match(upkeepMessage.textContent, /Upkeep covered today/i);
 
   const renameForm = detailView.querySelector('.videotube-rename');
   assert.ok(renameForm, 'rename form renders for selected video');

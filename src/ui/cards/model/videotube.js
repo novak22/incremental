@@ -98,6 +98,12 @@ function buildVideoInstances(definition, state) {
 
     const lifetimeIncome = Math.max(0, clampNumber(instance.totalIncome));
     const lifetimeSpend = estimateLifetimeSpend(definition, instance, state);
+    const lifetimeNet = lifetimeIncome - lifetimeSpend;
+    const createdOnDay = Math.max(0, clampNumber(instance?.createdOnDay));
+    const currentDay = Math.max(1, clampNumber(state?.day) || 1);
+    const daysActive = instance.status === 'active' && createdOnDay > 0
+      ? Math.max(1, currentDay - createdOnDay + 1)
+      : 0;
 
     return {
       id: instance.id,
@@ -109,10 +115,12 @@ function buildVideoInstances(definition, state) {
       averagePayout,
       lifetimeIncome,
       lifetimeSpend,
+      lifetimeNet,
       roi: computeRoi(lifetimeIncome, lifetimeSpend),
       estimatedSpend: lifetimeSpend,
       maintenanceFunded: Boolean(instance.maintenanceFundedToday),
       pendingIncome: Math.max(0, clampNumber(instance.pendingIncome)),
+      daysActive,
       qualityLevel,
       qualityInfo: qualityInfo || null,
       qualityRange,
