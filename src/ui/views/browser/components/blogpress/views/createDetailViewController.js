@@ -22,7 +22,8 @@ export function createDetailViewController({
     const {
       formatCurrency = value => String(value ?? ''),
       formatNetCurrency = value => String(value ?? ''),
-      formatHours = value => String(value ?? '')
+      formatHours = value => String(value ?? ''),
+      formatPercent = value => String(value ?? '')
     } = formatters;
 
     const container = document.createElement('section');
@@ -98,7 +99,8 @@ export function createDetailViewController({
         renderIncomePanel({
           instance,
           formatCurrency,
-          formatNetCurrency
+          formatNetCurrency,
+          formatPercent
         })
       );
     }

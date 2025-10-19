@@ -53,6 +53,40 @@ function createState() {
       },
       watchlist: [],
       analyticsHistory: []
+    },
+    events: {
+      active: [
+        {
+          id: 'event-boost',
+          templateId: 'qualityCelebration',
+          label: 'Backlink Parade',
+          stat: 'income',
+          modifierType: 'percent',
+          target: { type: 'assetInstance', assetId: 'blog', instanceId: 'blog-1' },
+          tone: 'positive',
+          currentPercent: 0.25,
+          totalDays: 3,
+          remainingDays: 2,
+          createdOnDay: 4,
+          lastProcessedDay: 4,
+          meta: {}
+        },
+        {
+          id: 'event-trend',
+          templateId: 'trendPulse',
+          label: 'Wellness Festival',
+          stat: 'income',
+          modifierType: 'percent',
+          target: { type: 'niche', nicheId: 'healthWellness' },
+          tone: 'neutral',
+          currentPercent: 0.1,
+          totalDays: 5,
+          remainingDays: 4,
+          createdOnDay: 3,
+          lastProcessedDay: 4,
+          meta: {}
+        }
+      ]
     }
   };
 }
@@ -78,6 +112,11 @@ test('formatBlogpressModel returns formatted instances and summary', () => {
   assert.equal(active.niche?.label, 'Surging');
   assert.equal(active.maintenanceFunded, true);
   assert.equal(active.payoutBreakdown.total, 28);
+  assert.equal(active.events.length, 2);
+  assert.equal(active.events[0].source, 'asset');
+  assert.equal(active.events[0].label, 'Backlink Parade');
+  assert.equal(active.events[0].percent, 0.25);
+  assert.equal(active.events[1].source, 'niche');
 
   const setup = instances.find(entry => entry.id === 'blog-2');
   assert.ok(setup, 'expected setup blog instance');
