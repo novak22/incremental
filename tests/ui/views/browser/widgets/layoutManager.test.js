@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { JSDOM } from 'jsdom';
 
 import { initElementRegistry } from '../../../../../src/ui/elements/registry.js';
-import layoutManager from '../../../../../src/ui/views/browser/widgets/layoutManager.js';
+import { createLayoutManager } from '../../../../../src/ui/views/browser/widgets/layoutManager.js';
 import {
   registerWidget,
   resetWidgetRegistry
@@ -38,18 +38,30 @@ function setupDom(widgetIds = ['todo', 'apps', 'bank']) {
 
   const container = dom.window.document.querySelector('.browser-home__widgets');
 
+  const registryState = { record: null };
+
+  const baseRecord = {
+    container,
+    listTemplates: () => Array.from(container.querySelectorAll('template[data-widget-template]')),
+    getTemplate: widgetId => container.querySelector(`template[data-widget-template="${widgetId}"]`)
+  };
+
+  registryState.record = { ...baseRecord };
+
+  const manager = createLayoutManager({
+    resolveMountRecord: () => registryState.record
+  });
+
+  registryState.record = { ...baseRecord, layoutManager: manager };
+
   initElementRegistry(dom.window.document, {
-    homepageWidgets: () => ({
-      container,
-      listTemplates: () => Array.from(container.querySelectorAll('template[data-widget-template]')),
-      getTemplate: widgetId => container.querySelector(`template[data-widget-template="${widgetId}"]`)
-    })
+    homepageWidgets: () => registryState.record
   });
 
   globalThis.window = dom.window;
   globalThis.document = dom.window.document;
 
-  return { dom, container };
+  return { dom, container, manager };
 }
 
 function getRenderedOrder(container) {
@@ -58,8 +70,8 @@ function getRenderedOrder(container) {
   ).map(node => node.dataset.widget);
 }
 
-function teardownDom(dom) {
-  layoutManager.__testables?.reset?.();
+function teardownDom(dom, manager) {
+  manager?.__testables?.reset?.();
   resetWidgetRegistry();
   initElementRegistry(null, {});
   dom?.window?.close();
@@ -68,7 +80,7 @@ function teardownDom(dom) {
 }
 
 test('renderLayout mounts controllers for registry definitions', async () => {
-  const { dom, container } = setupDom();
+  const { dom, container, manager } = setupDom();
 
   const mountLog = [];
   const controllers = new Map();
@@ -95,7 +107,7 @@ test('renderLayout mounts controllers for registry definitions', async () => {
   ['todo', 'apps', 'bank'].forEach(registerStub);
 
   try {
-    const order = layoutManager.renderLayout();
+    const order = manager.renderLayout();
     assert.deepEqual(order, ['todo', 'apps', 'bank']);
     assert.equal(mountLog.length, 3, 'each widget should mount once on first render');
     assert.deepEqual(
@@ -108,15 +120,15 @@ test('renderLayout mounts controllers for registry definitions', async () => {
     assert.deepEqual(domOrder, ['todo', 'apps', 'bank']);
 
     // Second render should reuse existing controllers without remounting.
-    layoutManager.renderLayout();
+    manager.renderLayout();
     assert.equal(mountLog.length, 3, 'controllers should not remount when already mounted');
   } finally {
-    teardownDom(dom);
+    teardownDom(dom, manager);
   }
 });
 
 test('setLayoutOrder persists sanitized ordering and rerenders the container', async () => {
-  const { dom, container } = setupDom();
+  const { dom, container, manager } = setupDom();
 
   const mountCounts = new Map();
 
@@ -145,13 +157,13 @@ test('setLayoutOrder persists sanitized ordering and rerenders the container', a
     // Seed storage with an extra id to confirm sanitization.
     dom.window.localStorage.setItem('browser.widgets.layout', JSON.stringify(['bank', 'unknown', 'apps']));
 
-    const initialOrder = layoutManager.renderLayout();
+    const initialOrder = manager.renderLayout();
     assert.deepEqual(initialOrder, ['bank', 'apps', 'todo'], 'render should drop unknown ids and append missing widgets');
 
     const initialDomOrder = getRenderedOrder(container);
     assert.deepEqual(initialDomOrder, ['bank', 'apps', 'todo']);
 
-    const nextOrder = layoutManager.setLayoutOrder(['apps', 'todo']);
+    const nextOrder = manager.setLayoutOrder(['apps', 'todo']);
     assert.deepEqual(nextOrder, ['apps', 'todo', 'bank'], 'setLayoutOrder should append missing ids after sanitizing input');
 
     const stored = JSON.parse(dom.window.localStorage.getItem('browser.widgets.layout'));
@@ -171,6 +183,6 @@ test('setLayoutOrder persists sanitized ordering and rerenders the container', a
       'controllers should mount only once even after reordering'
     );
   } finally {
-    teardownDom(dom);
+    teardownDom(dom, manager);
   }
 });

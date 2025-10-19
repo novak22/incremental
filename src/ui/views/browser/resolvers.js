@@ -1,3 +1,5 @@
+import { createLayoutManager } from './widgets/layoutManager.js';
+
 function selectFirst(root, selectors = []) {
   if (!root) return null;
   for (const selector of selectors) {
@@ -31,6 +33,8 @@ function resolveNotificationPart(root, container, selectors = []) {
     selectFirst(root, selectors)
   );
 }
+
+const homepageManagers = new WeakMap();
 
 const resolvers = {
   browserNavigation: root => ({
@@ -144,10 +148,25 @@ const resolvers = {
       return container.querySelector(`template[data-widget-template="${widgetId}"]`);
     };
 
-    return {
+    let entry = homepageManagers.get(container);
+    if (!entry) {
+      const state = { record: null, manager: null };
+      state.manager = createLayoutManager({
+        resolveMountRecord: () => state.record
+      });
+      entry = state;
+      homepageManagers.set(container, entry);
+    }
+
+    entry.record = {
       container,
       listTemplates,
       getTemplate
+    };
+
+    return {
+      ...entry.record,
+      layoutManager: entry.manager
     };
   }
 };
