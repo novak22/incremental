@@ -113,9 +113,8 @@ export function createStorage({
     renameSession(id, name, loadOptions = {}) {
       const updated = sessions.renameSession(id, name);
       if (updated && persistence.session?.id === updated.id) {
-        persistence.setSession(updated);
-        const loadResult = reloadActiveSession(loadOptions);
-        return { session: updated, loadResult };
+        const session = persistence.setSession(updated);
+        return { session, loadResult: null };
       }
       return { session: updated, loadResult: null };
     },
