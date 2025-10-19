@@ -38,6 +38,138 @@ function buildTabPath(key) {
   return normalizeTabKey(key);
 }
 
+function createHeaderChip(label, value, options = {}) {
+  if (!label && !value) {
+    return null;
+  }
+
+  const chip = document.createElement('div');
+  chip.className = 'timodoro-chip';
+  if (options.variant) {
+    chip.classList.add(`timodoro-chip--${options.variant}`);
+  }
+
+  const labelEl = document.createElement('span');
+  labelEl.className = 'timodoro-chip__label';
+  appendContent(labelEl, label || '');
+
+  const valueEl = document.createElement('span');
+  valueEl.className = 'timodoro-chip__value';
+  appendContent(valueEl, value || '');
+
+  chip.append(labelEl, valueEl);
+  return chip;
+}
+
+function createHeaderActions() {
+  const actions = document.createElement('div');
+  actions.className = 'timodoro__actions';
+
+  const primary = document.createElement('button');
+  primary.type = 'button';
+  primary.className = 'timodoro-button timodoro-button--primary';
+  appendContent(primary, 'Start Focus Block');
+
+  const secondary = document.createElement('button');
+  secondary.type = 'button';
+  secondary.className = 'timodoro-button timodoro-button--ghost';
+  appendContent(secondary, 'Share daily summary');
+
+  const tertiary = document.createElement('button');
+  tertiary.type = 'button';
+  tertiary.className = 'timodoro-button';
+  appendContent(tertiary, 'Add task to queue');
+
+  actions.append(primary, secondary, tertiary);
+  return actions;
+}
+
+function createHeader(model = {}) {
+  const header = document.createElement('header');
+  header.className = 'timodoro__header';
+
+  const info = document.createElement('div');
+  info.className = 'timodoro__header-info';
+
+  const title = document.createElement('h1');
+  title.className = 'timodoro__title';
+  appendContent(title, 'TimoDoro Control Room');
+
+  const meta = document.createElement('p');
+  meta.className = 'timodoro__meta';
+  appendContent(meta, model.meta || 'No hustle data yet.');
+
+  const chipRow = document.createElement('div');
+  chipRow.className = 'timodoro__chips';
+
+  const chips = [];
+
+  if (model.hoursAvailableLabel) {
+    chips.push(createHeaderChip('Remaining hours', model.hoursAvailableLabel, { variant: 'primary' }));
+  }
+
+  if (model.hoursSpentLabel) {
+    chips.push(createHeaderChip('Logged today', model.hoursSpentLabel));
+  }
+
+  const summaryEntries = Array.isArray(model.summaryEntries) ? model.summaryEntries : [];
+  const earningsEntry = summaryEntries.find(entry => entry?.label === 'Earnings today');
+  if (earningsEntry && earningsEntry.value) {
+    chips.push(createHeaderChip('Revenue pulse', earningsEntry.value, { variant: 'accent' }));
+  }
+
+  const renderedChips = chips.filter(Boolean);
+  renderedChips.forEach(chip => chipRow.appendChild(chip));
+
+  info.append(title, meta);
+  if (renderedChips.length > 0) {
+    info.appendChild(chipRow);
+  }
+
+  header.append(info, createHeaderActions());
+  return header;
+}
+
+function createPulseRow(entries = []) {
+  const items = Array.isArray(entries) ? entries.slice(0, 3) : [];
+  if (items.length === 0) {
+    return null;
+  }
+
+  const section = document.createElement('section');
+  section.className = 'timodoro__pulse';
+
+  items.forEach(entry => {
+    if (!entry) {
+      return;
+    }
+
+    const card = document.createElement('article');
+    card.className = 'timodoro-pulse__card';
+
+    const label = document.createElement('span');
+    label.className = 'timodoro-pulse__label';
+    appendContent(label, entry.label ?? 'Metric');
+
+    const value = document.createElement('span');
+    value.className = 'timodoro-pulse__value';
+    appendContent(value, entry.value ?? '—');
+
+    card.append(label, value);
+
+    if (entry.note) {
+      const note = document.createElement('p');
+      note.className = 'timodoro-pulse__note';
+      appendContent(note, entry.note);
+      card.appendChild(note);
+    }
+
+    section.appendChild(card);
+  });
+
+  return section;
+}
+
 function syncTabFromPath(tabs, path) {
   if (!tabs || typeof tabs.activate !== 'function') {
     return;
@@ -109,7 +241,7 @@ function createDonePanel(model = {}, config = TAB_CONFIGS[1], options = {}) {
 
   const taskCard = createCard({
     title: 'Done',
-    summary: 'Celebrate today’s finished focus blocks.',
+    summary: 'Review the cards that crossed the finish line.',
     headerClass: navigation ? 'browser-card__header--stacked' : undefined,
     headerContent: navigation || null
   });
@@ -274,6 +406,14 @@ function createTaskColumn(model = {}, options = {}) {
 
 function createLayout(model = {}, options = {}) {
   const fragment = document.createDocumentFragment();
+
+  const header = createHeader(model);
+  fragment.appendChild(header);
+
+  const pulse = createPulseRow(model.summaryEntries);
+  if (pulse) {
+    fragment.appendChild(pulse);
+  }
 
   const grid = document.createElement('div');
   grid.className = 'timodoro__grid';

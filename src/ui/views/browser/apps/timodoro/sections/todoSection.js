@@ -66,10 +66,46 @@ export function buildTodoGroups(entries = [], options = {}) {
   };
 }
 
+function createMetric(label, value, options = {}) {
+  if (!value) {
+    return null;
+  }
+
+  const metric = document.createElement('div');
+  metric.className = 'timodoro-metric';
+  if (options.variant) {
+    metric.classList.add(`timodoro-metric--${options.variant}`);
+  }
+
+  const valueEl = document.createElement('span');
+  valueEl.className = 'timodoro-metric__value';
+  appendContent(valueEl, value);
+
+  const labelEl = document.createElement('span');
+  labelEl.className = 'timodoro-metric__label';
+  appendContent(labelEl, label);
+
+  metric.append(valueEl, labelEl);
+  return metric;
+}
+
+function appendMetrics(card, metrics = []) {
+  const validMetrics = metrics.filter(Boolean);
+  if (validMetrics.length === 0) {
+    return;
+  }
+
+  const row = document.createElement('div');
+  row.className = 'timodoro-todo__metrics';
+  validMetrics.forEach(metric => row.appendChild(metric));
+  card.appendChild(row);
+}
+
 export function createTodoCard(model = {}, options = {}) {
   const { navigation } = options;
   const card = createCard({
-    title: 'ToDo',
+    title: 'Active sprint queue',
+    summary: 'Track what still needs love before today’s shutdown.',
     headerClass: navigation ? 'browser-card__header--stacked' : undefined,
     headerContent: navigation || null
   });
@@ -80,6 +116,14 @@ export function createTodoCard(model = {}, options = {}) {
     availableMoney: model.todoMoneyAvailable ?? model.moneyAvailable,
     emptyMessage: model.todoEmptyMessage
   });
+
+  appendMetrics(card, [
+    createMetric('Focus hours left', model.hoursAvailableLabel, { variant: 'primary' }),
+    typeof model.todoMoneyAvailable === 'number'
+      ? createMetric('Budget ready', formatCurrency(model.todoMoneyAvailable), { variant: 'accent' })
+      : null,
+    createMetric('Active cards', `${grouping.totalPending ?? entries.length}`, { variant: 'quiet' })
+  ]);
 
   if (grouping.totalPending === 0) {
     const emptyText = grouping.emptyMessage || DEFAULT_TODO_EMPTY_MESSAGE;
@@ -92,7 +136,7 @@ export function createTodoCard(model = {}, options = {}) {
 
   const heading = document.createElement('h3');
   heading.className = 'timodoro-section__title';
-  appendContent(heading, 'Up next');
+  appendContent(heading, 'Delivery lanes');
   section.appendChild(heading);
 
   const groupsWrapper = document.createElement('div');

@@ -59,11 +59,15 @@ function createTaskList(entries = [], emptyText, datasetRole) {
       name.className = 'timodoro-list__name';
       appendContent(name, entry.name ?? '');
 
-      const meta = document.createElement('span');
-      meta.className = 'timodoro-list__meta';
-      appendContent(meta, entry.detail ?? '');
+      item.appendChild(name);
 
-      item.append(name, meta);
+      if (entry.detail) {
+        const meta = document.createElement('span');
+        meta.className = 'timodoro-list__meta';
+        appendContent(meta, entry.detail);
+        item.appendChild(meta);
+      }
+
       return item;
     }
   });

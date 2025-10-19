@@ -14,7 +14,7 @@ function createCompletedSection(completedGroups = {}) {
 
   const heading = document.createElement('h3');
   heading.className = 'timodoro-section__title';
-  appendContent(heading, 'Completed today');
+  appendContent(heading, 'Shipped today');
 
   const groupsWrapper = document.createElement('div');
   groupsWrapper.className = 'timodoro-section__groups';

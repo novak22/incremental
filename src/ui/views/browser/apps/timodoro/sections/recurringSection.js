@@ -3,8 +3,8 @@ import { createTaskList } from '../components/lists.js';
 
 export function createRecurringCard(model = {}) {
   const card = createCard({
-    title: 'Recurring / Assistant Work',
-    summary: 'Upkeep, maintenance, and study sessions auto-logged for you.'
+    title: 'Automations & rituals',
+    summary: 'Assistants, maintenance, and study loops that keep momentum rolling.'
   });
 
   const list = createTaskList(
