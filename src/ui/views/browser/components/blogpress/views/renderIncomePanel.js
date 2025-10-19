@@ -20,6 +20,35 @@ export default function renderIncomePanel({
   incomeTitle.textContent = 'Income recap';
   incomeSection.appendChild(incomeTitle);
 
+  const trend = document.createElement('div');
+  trend.className = 'blogpress-earnings__trend';
+  const averagePayout = Math.max(0, Number(instance.averagePayout) || 0);
+  const latestPayout = Math.max(0, Number(instance.latestPayout) || 0);
+  let trendTone = 'steady';
+  let trendLabel = 'Steady';
+  if (averagePayout === 0 && latestPayout > 0) {
+    trendTone = 'boost';
+    trendLabel = 'First payout landed';
+  } else if (averagePayout > 0) {
+    const delta = latestPayout - averagePayout;
+    const deltaPercent = Math.max(
+      -150,
+      Math.min(150, Math.round((delta / averagePayout) * 100))
+    );
+    if (deltaPercent > 4) {
+      trendTone = 'up';
+      trendLabel = `▲ ${deltaPercent}% vs avg`;
+    } else if (deltaPercent < -4) {
+      trendTone = 'down';
+      trendLabel = `▼ ${Math.abs(deltaPercent)}% vs avg`;
+    } else {
+      trendLabel = '≈ Even with avg';
+    }
+  }
+  trend.dataset.tone = trendTone;
+  trend.textContent = trendLabel;
+  incomeSection.appendChild(trend);
+
   const stats = document.createElement('dl');
   stats.className = 'blogpress-stats';
 
@@ -27,15 +56,15 @@ export default function renderIncomePanel({
     {
       label: 'Daily average',
       value:
-        instance.averagePayout > 0
-          ? formatCurrency(instance.averagePayout)
+        averagePayout > 0
+          ? formatCurrency(averagePayout)
           : instance.status?.id === 'active'
             ? 'No earnings yet'
             : 'Launch pending'
     },
     {
       label: 'Latest payout',
-      value: instance.latestPayout > 0 ? formatCurrency(instance.latestPayout) : '—'
+      value: latestPayout > 0 ? formatCurrency(latestPayout) : '—'
     },
     {
       label: 'Lifetime income',
@@ -69,20 +98,17 @@ export default function renderIncomePanel({
   });
 
   incomeSection.appendChild(stats);
-  grid.appendChild(incomeSection);
 
-  const payoutSection = document.createElement('section');
-  payoutSection.className = 'blogpress-earnings__section';
-  const payoutTitle = document.createElement('h4');
-  payoutTitle.textContent = 'Payout recap';
-  payoutSection.appendChild(payoutTitle);
-
-  const payoutLead = document.createElement('p');
-  payoutLead.className = 'blogpress-earnings__lead';
-  payoutLead.textContent = instance.latestPayout > 0
-    ? `Latest payout: ${formatCurrency(instance.latestPayout)}`
-    : 'No payout logged yesterday.';
-  payoutSection.appendChild(payoutLead);
+  const payoutDetails = document.createElement('details');
+  payoutDetails.className = 'blogpress-earnings__details';
+  const payoutSummary = document.createElement('summary');
+  payoutSummary.className = 'blogpress-earnings__details-summary';
+  if (latestPayout > 0) {
+    payoutSummary.textContent = `Latest payout — ${formatCurrency(latestPayout)}`;
+  } else {
+    payoutSummary.textContent = 'Latest payout — none yet';
+  }
+  payoutDetails.appendChild(payoutSummary);
 
   if (instance.payoutBreakdown?.entries?.length) {
     const list = document.createElement('ul');
@@ -102,16 +128,16 @@ export default function renderIncomePanel({
       item.append(label, value);
       list.appendChild(item);
     });
-    payoutSection.appendChild(list);
+    payoutDetails.appendChild(list);
   } else {
     const empty = document.createElement('p');
     empty.className = 'blogpress-panel__hint';
     empty.textContent = 'Run quick actions and fund upkeep to unlock modifier breakdowns.';
-    payoutSection.appendChild(empty);
+    payoutDetails.appendChild(empty);
   }
 
-  grid.appendChild(payoutSection);
-  panel.appendChild(grid);
+  incomeSection.appendChild(payoutDetails);
+  grid.appendChild(incomeSection);
 
   const upkeepSection = document.createElement('section');
   upkeepSection.className = 'blogpress-earnings__section blogpress-earnings__section--upkeep';
@@ -155,16 +181,34 @@ export default function renderIncomePanel({
   }
   upkeepSection.appendChild(upkeepMessage);
 
-  panel.appendChild(upkeepSection);
+  grid.appendChild(upkeepSection);
+
+  const trendSection = document.createElement('section');
+  trendSection.className = 'blogpress-earnings__section blogpress-earnings__section--trend';
+  const trendTitle = document.createElement('h4');
+  trendTitle.textContent = 'Trend modifiers';
+  trendSection.appendChild(trendTitle);
 
   const events = Array.isArray(instance.events) ? instance.events : [];
   if (events.length) {
+    const activeCount = events.length;
+    const trendSummary = document.createElement('p');
+    trendSummary.className = 'blogpress-earnings__summary';
+    const topEvent = events[0];
+    const toneLabel = topEvent?.tone === 'positive'
+      ? 'boost'
+      : topEvent?.tone === 'negative'
+        ? 'dip'
+        : 'pulse';
+    trendSummary.textContent = `${activeCount} modifier${activeCount === 1 ? '' : 's'} active — ${toneLabel} in focus`;
+    trendSection.appendChild(trendSummary);
+
     const modifiers = document.createElement('details');
     modifiers.className = 'blogpress-earnings__details';
 
     const summary = document.createElement('summary');
     summary.className = 'blogpress-earnings__details-summary';
-    summary.textContent = 'Live modifiers';
+    summary.textContent = `Live modifiers — ${activeCount} active`;
     modifiers.appendChild(summary);
 
     const eventList = document.createElement('ul');
@@ -175,13 +219,13 @@ export default function renderIncomePanel({
 
       const label = document.createElement('span');
       label.className = 'blogpress-list__label';
-      const toneLabel = event.tone === 'positive'
+      const toneDescriptor = event.tone === 'positive'
         ? 'boost'
         : event.tone === 'negative'
           ? 'dip'
           : 'pulse';
       const sourceLabel = event.source === 'niche' ? 'Trend' : 'Blog';
-      label.textContent = `${sourceLabel} ${toneLabel}: ${event.label}`;
+      label.textContent = `${sourceLabel} ${toneDescriptor}: ${event.label}`;
 
       const value = document.createElement('span');
       value.className = 'blogpress-list__value';
@@ -206,8 +250,17 @@ export default function renderIncomePanel({
     });
 
     modifiers.appendChild(eventList);
-    panel.appendChild(modifiers);
+    trendSection.appendChild(modifiers);
+  } else {
+    const emptySummary = document.createElement('p');
+    emptySummary.className = 'blogpress-panel__hint';
+    emptySummary.textContent = 'No live modifiers — schedule an outreach push to stir the charts.';
+    trendSection.appendChild(emptySummary);
   }
+
+  grid.appendChild(trendSection);
+
+  panel.appendChild(grid);
 
   return panel;
 }

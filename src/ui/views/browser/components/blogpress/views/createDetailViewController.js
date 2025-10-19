@@ -135,7 +135,13 @@ export function createDetailViewController({
 
       const summary = document.createElement('summary');
       summary.className = 'blogpress-details__summary';
-      summary.textContent = 'Details';
+      const summaryParts = detailEntries
+        .map(entry => entry?.dataset?.summaryLabel)
+        .filter(Boolean)
+        .slice(0, 2);
+      summary.textContent = summaryParts.length
+        ? summaryParts.join(' • ')
+        : 'Milestones log snapshot';
       details.appendChild(summary);
 
       const content = document.createElement('div');
