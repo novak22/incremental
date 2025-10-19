@@ -137,7 +137,217 @@
 .browser-card-grid {
   display: grid;
   gap: 1.35rem;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.downwork-board {
+  display: flex;
+  flex-direction: column;
+  gap: 1.35rem;
+  position: relative;
+}
+
+.downwork-board__summary {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  padding: 1rem 1.25rem;
+  border-radius: var(--browser-radius-lg);
+  border: 1px solid var(--browser-panel-border);
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(59, 130, 246, 0.04));
+  box-shadow: var(--browser-shadow-soft);
+}
+
+.downwork-board[data-active-category] .downwork-board__summary {
+  border-color: rgba(37, 99, 235, 0.28);
+}
+
+@media (max-width: 768px) {
+  .downwork-board__summary {
+    position: static;
+  }
+}
+
+.downwork-summary__stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.downwork-summary__label {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--browser-subtle);
+}
+
+.downwork-summary__value {
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--browser-text);
+}
+
+.downwork-summary__delta {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--browser-subtle);
+}
+
+.downwork-summary__delta.is-positive {
+  color: var(--browser-accent);
+}
+
+.downwork-summary__delta.is-negative {
+  color: var(--browser-danger);
+}
+
+.downwork-board__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.downwork-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 0.9rem;
+  border-radius: var(--browser-radius-pill);
+  border: 1px solid var(--browser-panel-border);
+  background: var(--browser-panel);
+  color: var(--browser-muted);
+  font: inherit;
+  cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease, box-shadow 140ms ease;
+}
+
+.downwork-tab:hover {
+  color: var(--browser-text);
+  border-color: rgba(37, 99, 235, 0.25);
+}
+
+.downwork-tab.is-active {
+  color: var(--browser-text);
+  border-color: var(--browser-accent);
+  background: rgba(37, 99, 235, 0.12);
+  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.24);
+}
+
+.downwork-tab__icon {
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.downwork-board__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.downwork-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--browser-radius-pill);
+  border: 1px solid var(--browser-panel-border);
+  background: var(--browser-panel);
+  color: var(--browser-subtle);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease, box-shadow 140ms ease;
+}
+
+.downwork-filter:hover {
+  color: var(--browser-text);
+  border-color: rgba(37, 99, 235, 0.2);
+}
+
+.downwork-filter.is-active {
+  color: var(--browser-text);
+  border-color: var(--browser-accent);
+  background: rgba(37, 99, 235, 0.12);
+  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.18);
+}
+
+.downwork-card {
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+
+.downwork-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--browser-shadow-soft);
+  border-color: rgba(37, 99, 235, 0.35);
+}
+
+.downwork-card__header {
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.downwork-card__icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.downwork-card__metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.15rem;
+  cursor: help;
+}
+
+.downwork-card__metric {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: var(--browser-radius-pill);
+  background: var(--browser-panel-elevated);
+  color: var(--browser-muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.downwork-card__metric--roi {
+  color: var(--browser-accent);
+  background: rgba(37, 99, 235, 0.12);
+}
+
+.downwork-board__toasts {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  pointer-events: none;
+}
+
+.downwork-toast {
+  padding: 0.6rem 0.9rem;
+  border-radius: var(--browser-radius-md);
+  border: 1px solid var(--browser-panel-border);
+  background: var(--browser-panel);
+  box-shadow: var(--browser-shadow-card);
+  color: var(--browser-text);
+  opacity: 0;
+  transform: translateY(-8px);
+  transition: opacity 200ms ease, transform 200ms ease;
+}
+
+.downwork-toast.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.browser-empty--compact {
+  margin: 0.5rem 0 0;
 }
 
 .browser-card {
