@@ -163,7 +163,11 @@ export function buildAssetActionModel(state = {}) {
       durationText: formatHours(timeCost),
       moneyCost: Math.max(0, clampNumber(action.cost)),
       repeatable: Boolean(action.repeatable),
-      remainingRuns: action.remainingRuns ?? null
+      remainingRuns: action.remainingRuns ?? null,
+      remaining: Number.isFinite(action.remaining) ? action.remaining : null,
+      upgradeRemaining: Number.isFinite(action.remaining) ? action.remaining : null,
+      level: action.level,
+      targetLevel: action.targetLevel
     };
   });
   return {

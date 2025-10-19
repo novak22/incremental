@@ -235,6 +235,47 @@
   font-size: 0.9rem;
 }
 
+.timodoro-list__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.timodoro-list__action {
+  border: 1px solid rgba(37, 99, 235, 0.4);
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.08);
+  color: rgb(37, 99, 235);
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.3rem 0.85rem;
+  cursor: pointer;
+  transition: transform 150ms ease, background 150ms ease, opacity 150ms ease;
+  align-self: flex-start;
+}
+
+.timodoro-list__action:hover:not(:disabled) {
+  background: rgba(37, 99, 235, 0.16);
+  transform: translateY(-1px);
+}
+
+.timodoro-list__action:focus-visible {
+  outline: 2px solid rgba(37, 99, 235, 0.45);
+  outline-offset: 2px;
+}
+
+.timodoro-list__action:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+}
+
+.timodoro-list__action.is-busy::after {
+  content: '…';
+  margin-left: 0.3rem;
+}
+
 .timodoro-list__empty {
   margin: 0;
   padding: 0.85rem 0.9rem;

@@ -8,7 +8,7 @@ import {
   getQualityTracks,
   performQualityAction
 } from '../../../game/assets/quality/actions.js';
-import { getNextQualityLevel } from '../../../game/assets/quality/levels.js';
+import { getSortedLevels } from '../../../game/assets/quality/levels.js';
 import { instanceLabel } from '../../../game/assets/details.js';
 import { describeHustleRequirements } from '../../../game/hustles/helpers.js';
 import { describeRequirementGuidance } from '../../hustles/requirements.js';
@@ -192,67 +192,74 @@ export function buildAssetUpgradeData(state) {
 
       const quality = instance.quality || {};
       const level = Math.max(0, clampNumber(quality.level));
-      const nextLevel = getNextQualityLevel(asset, level);
-      if (!nextLevel?.requirements) return;
+      const futureLevels = getSortedLevels(asset).filter(entry => entry.level > level);
+      if (!futureLevels.length) return;
 
       const progress = quality.progress || {};
-      const requirements = Object.entries(nextLevel.requirements);
-      if (!requirements.length) return;
 
       const assetStateInstances = assetState.instances || [];
       const assetIndex = assetStateInstances.indexOf(instance);
       const label = instanceLabel(asset, assetIndex >= 0 ? assetIndex : 0);
       const performance = Math.max(0, clampNumber(instance.lastIncome));
 
-      requirements.forEach(([key, targetValue]) => {
-        const target = Math.max(0, clampNumber(targetValue));
-        if (target <= 0) return;
-        const current = Math.max(0, clampNumber(progress?.[key]));
-        const remaining = Math.max(0, target - current);
-        if (remaining <= 0) return;
+      futureLevels.forEach(levelDef => {
+        const requirements = Object.entries(levelDef.requirements || {});
+        if (!requirements.length) return;
 
-        const action = qualityActions.find(entry => entry.progressKey === key);
-        if (!action) return;
-        if (!canPerformQualityAction(asset, instance, action, state)) return;
+        requirements.forEach(([key, targetValue]) => {
+          const target = Math.max(0, clampNumber(targetValue));
+          if (target <= 0) return;
+          const current = Math.max(0, clampNumber(progress?.[key]));
+          const remaining = Math.max(0, target - current);
+          if (remaining <= 0) return;
 
-        const completion = target > 0 ? Math.min(1, current / target) : 1;
-        const percentComplete = Math.max(0, Math.min(100, Math.round(completion * 100)));
-        const percentRemaining = Math.max(0, 100 - percentComplete);
-        const track = tracks?.[key] || {};
-        const requirementLabel = track.shortLabel || track.label || key;
-        const timeCost = Math.max(0, clampNumber(action.time));
-        const moneyCost = Math.max(0, clampNumber(action.cost));
-        const effortParts = [];
-        if (timeCost > 0) {
-          effortParts.push(`${formatHours(timeCost)} focus`);
-        }
-        if (moneyCost > 0) {
-          effortParts.push(`$${formatMoney(moneyCost)}`);
-        }
-        const progressNote = `${Math.min(current, target)}/${target} logged (${percentComplete}% complete)`;
-        const meta = effortParts.length ? `${progressNote} • ${effortParts.join(' • ')}` : progressNote;
-        const actionLabel = typeof action.label === 'function'
-          ? action.label({ definition: asset, instance, state })
-          : action.label;
-        const buttonLabel = actionLabel || 'Boost Quality';
-        const remainingRuns = estimateRemainingRuns(asset, instance, action, remaining, state);
-        const repeatable = remainingRuns == null ? true : remainingRuns > 1;
+          const action = qualityActions.find(entry => entry.progressKey === key);
+          if (!action) return;
+          if (!canPerformQualityAction(asset, instance, action, state)) return;
 
-        suggestions.push({
-          id: `asset-upgrade:${asset.id}:${instance.id}:${action.id}:${key}`,
-          title: `${label} · ${buttonLabel}`,
-          subtitle: `${remaining} ${requirementLabel} to go for Quality ${nextLevel.level} (${percentRemaining}% to go).`,
-          meta,
-          buttonLabel,
-          onClick: () => performQualityAction(asset.id, instance.id, action.id),
-          performance,
-          completion,
-          remaining,
-          level,
-          timeCost,
-          remainingRuns,
-          repeatable,
-          cost: moneyCost
+          const completion = target > 0 ? Math.min(1, current / target) : 1;
+          const percentComplete = Math.max(0, Math.min(100, Math.round(completion * 100)));
+          const percentRemaining = Math.max(0, 100 - percentComplete);
+          const track = tracks?.[key] || {};
+          const requirementLabel = track.shortLabel || track.label || key;
+          const timeCost = Math.max(0, clampNumber(action.time));
+          const moneyCost = Math.max(0, clampNumber(action.cost));
+          const effortParts = [];
+          if (timeCost > 0) {
+            effortParts.push(`${formatHours(timeCost)} focus`);
+          }
+          if (moneyCost > 0) {
+            effortParts.push(`$${formatMoney(moneyCost)}`);
+          }
+          const progressNote = `${Math.min(current, target)}/${target} logged (${percentComplete}% complete)`;
+          const meta = effortParts.length ? `${progressNote} • ${effortParts.join(' • ')}` : progressNote;
+          const actionLabel = typeof action.label === 'function'
+            ? action.label({ definition: asset, instance, state })
+            : action.label;
+          const buttonLabel = actionLabel || 'Boost Quality';
+          const remainingRuns = estimateRemainingRuns(asset, instance, action, remaining, state);
+          const repeatable = remainingRuns == null ? true : remainingRuns > 1;
+
+          const orderIndex = suggestions.length;
+
+          suggestions.push({
+            id: `asset-upgrade:${asset.id}:${instance.id}:${action.id}:${key}:L${levelDef.level}`,
+            title: `${label} · ${buttonLabel}`,
+            subtitle: `${remaining} ${requirementLabel} to go for Quality ${levelDef.level} (${percentRemaining}% to go).`,
+            meta,
+            buttonLabel,
+            onClick: () => performQualityAction(asset.id, instance.id, action.id),
+            performance,
+            completion,
+            remaining,
+            level,
+            targetLevel: levelDef.level,
+            timeCost,
+            remainingRuns,
+            repeatable,
+            cost: moneyCost,
+            orderIndex
+          });
         });
       });
     });
@@ -265,11 +272,21 @@ export function buildAssetUpgradeData(state) {
     if (a.level !== b.level) {
       return a.level - b.level;
     }
+    const targetA = Number.isFinite(a?.targetLevel) ? a.targetLevel : Infinity;
+    const targetB = Number.isFinite(b?.targetLevel) ? b.targetLevel : Infinity;
+    if (targetA !== targetB) {
+      return targetA - targetB;
+    }
     if (a.completion !== b.completion) {
-      return a.completion - b.completion;
+      return b.completion - a.completion;
     }
     if (a.remaining !== b.remaining) {
-      return b.remaining - a.remaining;
+      return a.remaining - b.remaining;
+    }
+    const orderA = Number.isFinite(a?.orderIndex) ? a.orderIndex : Infinity;
+    const orderB = Number.isFinite(b?.orderIndex) ? b.orderIndex : Infinity;
+    if (orderA !== orderB) {
+      return orderA - orderB;
     }
     return a.title.localeCompare(b.title);
   });

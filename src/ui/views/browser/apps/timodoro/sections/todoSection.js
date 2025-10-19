@@ -122,6 +122,23 @@ export function buildTodoGroups(entries = [], options = {}) {
         item.detail = detailParts.join(' • ');
       }
 
+      const hasHandler = typeof normalized.onClick === 'function';
+      const requirementsMet = normalized.disabled !== true;
+      const actionLabel = normalized.buttonLabel
+        || normalized.primaryLabel
+        || normalized.defaultLabel
+        || 'Do now';
+      if (hasHandler && requirementsMet) {
+        item.action = {
+          label: actionLabel,
+          onClick: normalized.onClick
+        };
+      }
+
+      if (normalized.disabledReason) {
+        item.disabledReason = normalized.disabledReason;
+      }
+
       return item;
     });
     return map;
