@@ -199,8 +199,13 @@ function createLayoutManager({
     return true;
   }
 
-  function destroyController(id, controller) {
-    if (!controller) return;
+  function destroyControllerRecord(id, record) {
+    const controller = record?.controller;
+    if (!controller) {
+      widgetMounts.delete(id);
+      knownWidgetDefinitions.delete(id);
+      return;
+    }
     try {
       if (typeof controller.destroy === 'function') {
         controller.destroy();
@@ -212,6 +217,36 @@ function createLayoutManager({
     knownWidgetDefinitions.delete(id);
   }
 
+  function instantiateController(definition) {
+    if (!definition) {
+      return null;
+    }
+
+    const record = {
+      controller: null
+    };
+
+    try {
+      record.controller = definition.factory();
+    } catch (error) {
+      record.controller = null;
+    }
+
+    if (!record.controller && typeof definition.fallbackFactory === 'function') {
+      try {
+        record.controller = definition.fallbackFactory();
+      } catch (error) {
+        record.controller = null;
+      }
+    }
+
+    if (!record.controller) {
+      return null;
+    }
+
+    return record;
+  }
+
   function ensureWidgetControllers(definitions) {
     const registryVersion = getRegistryVersion();
     const registryUpdated = registryVersion !== knownRegistryVersion;
@@ -219,9 +254,9 @@ function createLayoutManager({
     if (registryUpdated) {
       const validIds = new Set(definitions.map(definition => definition.id));
 
-      for (const [id, controller] of widgetControllers.entries()) {
+      for (const [id, record] of widgetControllers.entries()) {
         if (!validIds.has(id)) {
-          destroyController(id, controller);
+          destroyControllerRecord(id, record);
           widgetControllers.delete(id);
         }
       }
@@ -236,8 +271,8 @@ function createLayoutManager({
           cached.factory !== definition.factory ||
           cached.fallbackFactory !== definition.fallbackFactory;
         if (definitionChanged) {
-          const controller = widgetControllers.get(definition.id);
-          destroyController(definition.id, controller);
+          const record = widgetControllers.get(definition.id);
+          destroyControllerRecord(definition.id, record);
           widgetControllers.delete(definition.id);
         }
       }
@@ -247,21 +282,9 @@ function createLayoutManager({
       if (widgetControllers.has(definition.id)) {
         continue;
       }
-      let controller = null;
-      try {
-        controller = definition.factory();
-      } catch (error) {
-        controller = null;
-      }
-      if (!controller && typeof definition.fallbackFactory === 'function') {
-        try {
-          controller = definition.fallbackFactory();
-        } catch (error) {
-          controller = null;
-        }
-      }
-      if (controller) {
-        widgetControllers.set(definition.id, controller);
+      const record = instantiateController(definition);
+      if (record) {
+        widgetControllers.set(definition.id, record);
         knownWidgetDefinitions.set(definition.id, {
           factory: definition.factory,
           fallbackFactory: definition.fallbackFactory
@@ -326,9 +349,9 @@ function createLayoutManager({
     }
 
     for (const [id, node] of nodesForMount.entries()) {
-      const controller = widgetControllers.get(id);
-      if (controller) {
-        mountWidgetController(id, controller, node);
+      const record = widgetControllers.get(id);
+      if (record?.controller) {
+        mountWidgetController(id, record.controller, node);
       }
     }
 
@@ -356,7 +379,8 @@ function createLayoutManager({
     if (!widgetControllers.has(widgetId)) {
       renderLayout();
     }
-    const controller = widgetControllers.get(widgetId) || null;
+    const record = widgetControllers.get(widgetId) || null;
+    const controller = record?.controller || null;
     if (!controller) {
       return null;
     }
@@ -387,8 +411,8 @@ function createLayoutManager({
   }
 
   function resetForTests() {
-    for (const [id, controller] of widgetControllers.entries()) {
-      destroyController(id, controller);
+    for (const [id, record] of widgetControllers.entries()) {
+      destroyControllerRecord(id, record);
     }
     widgetControllers.clear();
     widgetMounts.clear();
@@ -408,7 +432,8 @@ function createLayoutManager({
       listTemplates,
       resolveMountRecord,
       hasController(id) {
-        return widgetControllers.has(id);
+        const record = widgetControllers.get(id);
+        return Boolean(record?.controller);
       }
     }
   };
