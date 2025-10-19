@@ -83,22 +83,25 @@ test('renderLayout mounts controllers for registry definitions', async () => {
   const { dom, container, manager } = setupDom();
 
   const mountLog = [];
-  const controllers = new Map();
+  const factoryCalls = new Map();
 
   const registerStub = id => {
-    const controller = {
-      mounted: false,
-      mount: ({ container: mountContainer }) => {
-        controller.mounted = true;
-        mountLog.push({ id, container: mountContainer });
-      },
-      isMounted: () => controller.mounted
-    };
-    controllers.set(id, controller);
     registerWidget({
       id,
       title: id,
-      factory: () => controller,
+      factory: () => {
+        const count = (factoryCalls.get(id) || 0) + 1;
+        factoryCalls.set(id, count);
+        const controller = {
+          mounted: false,
+          mount: ({ container: mountContainer }) => {
+            controller.mounted = true;
+            mountLog.push({ id, container: mountContainer });
+          },
+          isMounted: () => controller.mounted
+        };
+        return controller;
+      },
       featureFlags: []
     });
   };
@@ -122,6 +125,11 @@ test('renderLayout mounts controllers for registry definitions', async () => {
     // Second render should reuse existing controllers without remounting.
     manager.renderLayout();
     assert.equal(mountLog.length, 3, 'controllers should not remount when already mounted');
+    assert.deepEqual(
+      Object.fromEntries(factoryCalls.entries()),
+      { todo: 1, apps: 1, bank: 1 },
+      'each widget should instantiate only once per host'
+    );
   } finally {
     teardownDom(dom, manager);
   }
@@ -131,21 +139,26 @@ test('setLayoutOrder persists sanitized ordering and rerenders the container', a
   const { dom, container, manager } = setupDom();
 
   const mountCounts = new Map();
+  const factoryCalls = new Map();
 
   const registerStub = id => {
-    const controller = {
-      mounted: false,
-      mount: ({ container: mountContainer }) => {
-        controller.mounted = true;
-        mountCounts.set(id, (mountCounts.get(id) || 0) + 1);
-        controller.container = mountContainer;
-      },
-      isMounted: () => controller.mounted
-    };
     registerWidget({
       id,
       title: id,
-      factory: () => controller,
+      factory: () => {
+        const count = (factoryCalls.get(id) || 0) + 1;
+        factoryCalls.set(id, count);
+        const controller = {
+          mounted: false,
+          mount: ({ container: mountContainer }) => {
+            controller.mounted = true;
+            mountCounts.set(id, (mountCounts.get(id) || 0) + 1);
+            controller.container = mountContainer;
+          },
+          isMounted: () => controller.mounted
+        };
+        return controller;
+      },
       featureFlags: []
     });
   };
@@ -181,6 +194,15 @@ test('setLayoutOrder persists sanitized ordering and rerenders the container', a
         bank: 1
       },
       'controllers should mount only once even after reordering'
+    );
+    assert.deepEqual(
+      Object.fromEntries(factoryCalls.entries()),
+      {
+        todo: 1,
+        apps: 1,
+        bank: 1
+      },
+      'factories should only run once for each widget controller instance'
     );
   } finally {
     teardownDom(dom, manager);

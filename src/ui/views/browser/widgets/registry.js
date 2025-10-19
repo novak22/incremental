@@ -1,27 +1,28 @@
-import todoWidget, { createTodoWidgetController } from './todoWidget.js';
-import appsWidget, { createAppsWidgetController } from './appsWidget.js';
-import bankWidget, { createBankWidgetController } from './bankWidget.js';
+import { createTodoWidgetController } from './todoWidget.js';
+import { createAppsWidgetController } from './appsWidget.js';
+import { createBankWidgetController } from './bankWidget.js';
+import { getSharedWidgetController } from './sharedWidgetControllers.js';
 
 const defaultDefinitions = [
   {
     id: 'todo',
     title: 'ToDo',
-    factory: () => todoWidget,
-    fallbackFactory: createTodoWidgetController,
+    factory: createTodoWidgetController,
+    fallbackFactory: () => getSharedWidgetController('todo'),
     featureFlags: []
   },
   {
     id: 'apps',
     title: 'Apps',
-    factory: () => appsWidget,
-    fallbackFactory: createAppsWidgetController,
+    factory: createAppsWidgetController,
+    fallbackFactory: () => getSharedWidgetController('apps'),
     featureFlags: []
   },
   {
     id: 'bank',
     title: 'Bank Snapshot',
-    factory: () => bankWidget,
-    fallbackFactory: createBankWidgetController,
+    factory: createBankWidgetController,
+    fallbackFactory: () => getSharedWidgetController('bank'),
     featureFlags: []
   }
 ];
