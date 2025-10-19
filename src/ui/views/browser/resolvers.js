@@ -144,6 +144,13 @@ const resolvers = {
       note: root.getElementById('browser-widget-apps-note'),
       sortToggle: root.getElementById('browser-widget-apps-sort-toggle')
     },
+    downwork: {
+      container: root.querySelector('[data-widget="downwork"]'),
+      list: root.getElementById('browser-widget-downwork-list'),
+      empty: root.getElementById('browser-widget-downwork-empty'),
+      note: root.getElementById('browser-widget-downwork-note'),
+      sortButtons: root.querySelectorAll('[data-widget="downwork"] [data-sort]')
+    },
     bank: {
       container: root.querySelector('[data-widget="bank"]'),
       stats: root.getElementById('browser-widget-bank-stats'),

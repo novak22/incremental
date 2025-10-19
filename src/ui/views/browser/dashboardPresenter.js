@@ -2,6 +2,7 @@ import { getElement } from '../../elements/registry.js';
 import { getState } from '../../../core/state.js';
 import todoWidget from './widgets/todoWidget.js';
 import appsWidget from './widgets/appsWidget.js';
+import downworkWidget from './widgets/downworkWidget.js';
 import bankWidget from './widgets/bankWidget.js';
 import notificationsPresenter from './notificationsPresenter.js';
 import { buildActionQueue } from '../../actions/registry.js';
@@ -9,6 +10,7 @@ import { buildActionQueue } from '../../actions/registry.js';
 const widgetModules = {
   todo: todoWidget,
   apps: appsWidget,
+  downwork: downworkWidget,
   bank: bankWidget
 };
 
@@ -41,6 +43,11 @@ function renderApps(context = {}) {
   widget?.render(context);
 }
 
+function renderDownwork(context = {}) {
+  const widget = ensureWidget('downwork');
+  widget?.render(context);
+}
+
 function renderBank(context = {}) {
   const widget = ensureWidget('bank');
   widget?.render(context);
@@ -51,6 +58,7 @@ function renderDashboard(viewModel = {}, context = {}) {
   notificationsPresenter.render(viewModel.eventLog || {});
   renderTodo(context?.state, context?.summary || {});
   renderApps(context);
+  renderDownwork(context);
   renderBank(context);
 }
 

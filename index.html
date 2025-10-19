@@ -16,6 +16,7 @@
   <link rel="stylesheet" href="styles/widgets/home.css" />
   <link rel="stylesheet" href="styles/widgets/apps.css" />
   <link rel="stylesheet" href="styles/widgets/todo.css" />
+  <link rel="stylesheet" href="styles/widgets/downwork.css" />
   <link rel="stylesheet" href="styles/widgets/bank.css" />
   <!-- Workspace views -->
   <link rel="stylesheet" href="styles/workspaces/workspaces.css" />
@@ -226,6 +227,57 @@
                   </section>
 
                   <button id="browser-widget-todo-end" class="todo-widget__end" type="button">End Day</button>
+                </section>
+
+                <section
+                  class="browser-widget downwork-widget"
+                  data-widget="downwork"
+                  aria-labelledby="browser-widget-downwork-heading"
+                >
+                  <header class="browser-widget__header downwork-widget__header">
+                    <div class="downwork-widget__intro">
+                      <h2 id="browser-widget-downwork-heading" class="browser-widget__title">
+                        <a
+                          class="browser-widget__title-link"
+                          href="https://downwork.hub/"
+                          data-site-target="downwork"
+                        >
+                          <span class="browser-widget__title-icon" aria-hidden="true">📝</span>
+                          <span class="browser-widget__title-text">DownWork Gigs</span>
+                        </a>
+                      </h2>
+                      <p id="browser-widget-downwork-note" class="downwork-widget__note">
+                        Spot the best freelance contracts that fit your free time and lock them in fast.
+                      </p>
+                    </div>
+                    <div class="downwork-widget__controls" role="group" aria-label="Sort DownWork gigs">
+                      <span class="downwork-widget__sort-label">Sort by:</span>
+                      <div class="downwork-widget__sort-buttons">
+                        <button
+                          class="downwork-widget__sort-button"
+                          type="button"
+                          data-sort="rate"
+                          aria-pressed="true"
+                        >Per hour</button>
+                        <button
+                          class="downwork-widget__sort-button"
+                          type="button"
+                          data-sort="payout"
+                          aria-pressed="false"
+                        >Total money</button>
+                        <button
+                          class="downwork-widget__sort-button"
+                          type="button"
+                          data-sort="time"
+                          aria-pressed="false"
+                        >Work time</button>
+                      </div>
+                    </div>
+                  </header>
+                  <ul id="browser-widget-downwork-list" class="downwork-widget__list" aria-live="polite"></ul>
+                  <p id="browser-widget-downwork-empty" class="downwork-widget__empty" hidden>
+                    No unlocked gigs match your remaining focus window yet. Check back after the next market refresh.
+                  </p>
                 </section>
 
                 <section

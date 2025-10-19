@@ -1,0 +1,193 @@
+.downwork-widget {
+  --downwork-widget-card-bg: var(--browser-panel-elevated);
+  --downwork-widget-card-border: var(--browser-panel-border);
+  --downwork-widget-chip-bg: var(--browser-panel-subtle);
+}
+
+.downwork-widget__header {
+  align-items: flex-start;
+}
+
+.downwork-widget__intro {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.downwork-widget__intro h2 {
+  margin: 0;
+}
+
+.downwork-widget__note {
+  margin: 0.2rem 0 0;
+  color: var(--browser-muted);
+  font-size: 0.85rem;
+}
+
+.downwork-widget__controls {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.downwork-widget__sort-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--browser-muted-strong);
+}
+
+.downwork-widget__sort-buttons {
+  display: inline-flex;
+  gap: 0.25rem;
+}
+
+.downwork-widget__sort-button {
+  border: 1px solid transparent;
+  border-radius: var(--browser-radius-pill);
+  padding: 0.25rem 0.65rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: var(--browser-panel-subtle);
+  color: inherit;
+  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+
+.downwork-widget__sort-button:hover,
+.downwork-widget__sort-button:focus-visible {
+  background: var(--browser-panel-hover);
+  color: var(--browser-accent);
+  border-color: var(--browser-accent-soft);
+  outline: none;
+}
+
+.downwork-widget__sort-button[aria-pressed='true'] {
+  background: var(--browser-accent);
+  color: var(--browser-panel);
+  border-color: transparent;
+}
+
+.downwork-widget__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.downwork-widget__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0.95rem 1.1rem;
+  border-radius: var(--browser-radius-md);
+  border: 1px solid var(--downwork-widget-card-border);
+  background: var(--downwork-widget-card-bg);
+  box-shadow: var(--browser-shadow-soft);
+}
+
+.downwork-widget__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.downwork-widget__meta {
+  margin: 0.2rem 0 0;
+  font-size: 0.82rem;
+  color: var(--browser-muted);
+}
+
+.downwork-widget__description {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--browser-muted-strong);
+}
+
+.downwork-widget__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1.1rem;
+  margin: 0;
+}
+
+.downwork-widget__stat {
+  display: flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+}
+
+.downwork-widget__stat-label {
+  color: var(--browser-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.7rem;
+}
+
+.downwork-widget__stat-value {
+  font-weight: 700;
+  color: inherit;
+}
+
+.downwork-widget__actions {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.downwork-widget__accept {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.45rem 1.1rem;
+  border-radius: var(--browser-radius-pill);
+  border: none;
+  background: var(--browser-accent);
+  color: var(--browser-panel);
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  box-shadow: var(--browser-shadow-soft);
+  transition: transform 120ms ease, box-shadow 120ms ease, background-color 140ms ease;
+}
+
+.downwork-widget__accept:hover:not(:disabled),
+.downwork-widget__accept:focus-visible:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: var(--browser-shadow-hover);
+  background: var(--browser-accent-strong);
+  outline: none;
+}
+
+.downwork-widget__accept:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: var(--browser-shadow-soft);
+}
+
+.downwork-widget__accept:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.downwork-widget__empty {
+  margin: 0;
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--browser-radius-md);
+  background: var(--browser-panel-subtle);
+  color: var(--browser-muted-strong);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 900px) {
+  .downwork-widget__controls {
+    width: 100%;
+    align-items: flex-start;
+  }
+
+  .downwork-widget__sort-buttons {
+    flex-wrap: wrap;
+  }
+}
