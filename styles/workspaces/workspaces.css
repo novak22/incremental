@@ -1105,6 +1105,134 @@
   color: var(--browser-muted);
 }
 
+.blogpress-panel--performance {
+  gap: 1rem;
+}
+
+.blogpress-performance__stage {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.blogpress-performance__stage-label {
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.blogpress-performance__stage-meta {
+  font-size: 0.85rem;
+  color: var(--browser-muted);
+}
+
+.blogpress-performance__stats {
+  margin-top: 0.35rem;
+}
+
+.blogpress-performance__progress {
+  margin-top: 0.5rem;
+}
+
+.blogpress-performance__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(58, 123, 250, 0.12);
+  color: var(--blogpress-accent);
+  font-weight: 600;
+  width: fit-content;
+}
+
+.blogpress-performance__status-icon {
+  font-size: 1.1rem;
+}
+
+.blogpress-performance__status-label {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.blogpress-panel--detail {
+  gap: 0.6rem;
+  background: var(--browser-panel-elevated);
+}
+
+.blogpress-panel--earnings {
+  gap: 1.2rem;
+}
+
+.blogpress-earnings__grid {
+  display: grid;
+  gap: 1.1rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.blogpress-earnings__section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.blogpress-earnings__section h4 {
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 700;
+}
+
+.blogpress-earnings__lead {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--browser-muted);
+}
+
+.blogpress-earnings__section--upkeep {
+  padding: 1rem;
+  border-radius: 14px;
+  background: rgba(58, 123, 250, 0.08);
+  border: 1px solid rgba(58, 123, 250, 0.18);
+}
+
+.blogpress-earnings__details {
+  margin: 0;
+  border-radius: 12px;
+  border: 1px solid var(--browser-panel-border);
+  background: var(--browser-panel-elevated);
+  padding: 0.75rem 1rem;
+}
+
+.blogpress-earnings__details[open] {
+  box-shadow: var(--browser-shadow-soft);
+}
+
+.blogpress-earnings__details-summary {
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+
+.blogpress-earnings__details-summary::-webkit-details-marker {
+  display: none;
+}
+
+.blogpress-earnings__details-summary::before {
+  content: '▸';
+  margin-right: 0.35rem;
+  transition: transform 180ms ease;
+  font-size: 0.75rem;
+}
+
+.blogpress-earnings__details[open] .blogpress-earnings__details-summary::before {
+  transform: rotate(90deg);
+}
+
+.blogpress-earnings__details > ul {
+  margin-top: 0.8rem;
+}
+
 .blogpress-stats {
   display: grid;
   gap: 0.5rem;
@@ -1157,14 +1285,61 @@
 }
 
 .blogpress-detail-layout {
-  display: grid;
-  gap: 1.4rem;
-}
-
-.blogpress-detail-layout__column {
   display: flex;
   flex-direction: column;
+  gap: 1.6rem;
+}
+
+.blogpress-detail-tier {
+  display: grid;
   gap: 1.2rem;
+}
+
+.blogpress-detail-tier--primary {
+  align-items: stretch;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.blogpress-detail-tier--secondary {
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.blogpress-details {
+  border-radius: 18px;
+  border: 1px solid var(--browser-panel-border);
+  background: var(--browser-panel);
+  padding: 0.6rem 1rem 1rem;
+  box-shadow: var(--browser-shadow-soft);
+}
+
+.blogpress-details__summary {
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.blogpress-details__summary::-webkit-details-marker {
+  display: none;
+}
+
+.blogpress-details__summary::before {
+  content: '▸';
+  transition: transform 180ms ease;
+  font-size: 0.8rem;
+}
+
+.blogpress-details[open] .blogpress-details__summary::before {
+  transform: rotate(90deg);
+}
+
+.blogpress-details__content {
+  margin-top: 0.8rem;
+  display: grid;
+  gap: 1rem;
 }
 
 .blogpress-activity {
@@ -1236,7 +1411,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.85rem 1rem;
+  padding: 1rem 1.15rem;
   border-radius: 12px;
   background: var(--browser-panel-elevated);
   border: 1px solid var(--browser-panel-border);
@@ -1251,6 +1426,16 @@
 .blogpress-action__meta {
   color: var(--browser-muted);
   font-size: 0.82rem;
+}
+
+.blogpress-panel--actions {
+  gap: 1.1rem;
+}
+
+.blogpress-panel--actions .blogpress-button {
+  padding: 0.85rem 1.45rem;
+  font-size: 1rem;
+  font-weight: 700;
 }
 
 .blogpress-action-footer {

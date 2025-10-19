@@ -28,9 +28,8 @@ test('createDetailViewController composes panels and forwards handlers', t => {
     niche: 0,
     quality: 0,
     income: 0,
-    payout: 0,
     actions: 0,
-    upkeep: 0
+    activity: 0
   };
 
   const controller = createDetailViewController({
@@ -55,20 +54,16 @@ test('createDetailViewController composes panels and forwards handlers', t => {
     },
     renderQualityPanel: () => {
       calls.quality += 1;
-      const node = document.createElement('div');
-      node.dataset.panel = 'quality';
-      return node;
+      const panel = document.createElement('div');
+      panel.dataset.panel = 'quality';
+      const details = document.createElement('div');
+      details.dataset.panel = 'quality-details';
+      return { panel, details };
     },
     renderIncomePanel: () => {
       calls.income += 1;
       const node = document.createElement('div');
       node.dataset.panel = 'income';
-      return node;
-    },
-    renderPayoutPanel: () => {
-      calls.payout += 1;
-      const node = document.createElement('div');
-      node.dataset.panel = 'payout';
       return node;
     },
     renderActionPanel: ({ handlers }) => {
@@ -78,10 +73,10 @@ test('createDetailViewController composes panels and forwards handlers', t => {
       node.addEventListener('custom', () => handlers.onRunAction('blog-1', 'revamp'));
       return node;
     },
-    renderUpkeepPanel: () => {
-      calls.upkeep += 1;
+    renderActivityPanel: () => {
+      calls.activity += 1;
       const node = document.createElement('div');
-      node.dataset.panel = 'upkeep';
+      node.dataset.panel = 'activity';
       return node;
     }
   });
@@ -116,7 +111,15 @@ test('createDetailViewController composes panels and forwards handlers', t => {
   assert.ok(view, 'controller should return a DOM node');
   assert.equal(view.className, 'blogpress-view blogpress-view--detail');
   assert.equal(calls.back, 1, 'controller should build back button once');
-  assert.equal(view.querySelectorAll('[data-panel]').length, 7, 'controller should append all panels');
+  assert.equal(calls.activity, 1, 'controller should build activity panel once');
+
+  const panels = view.querySelectorAll('[data-panel]');
+  assert.ok(panels.length >= 5, 'controller should append all primary panels');
+  assert.ok(view.querySelector('[data-panel="quality"]'), 'quality panel should mount in primary tier');
+  const detailsPanel = view.querySelector('details.blogpress-details');
+  assert.ok(detailsPanel, 'details accordion should render');
+  assert.ok(detailsPanel.querySelector('[data-panel="quality-details"]'), 'quality details should appear inside accordion');
+  assert.ok(detailsPanel.querySelector('[data-panel="activity"]'), 'activity panel should appear inside accordion');
 
   const backButton = view.querySelector('button');
   backButton.dispatchEvent(new dom.window.Event('click', { bubbles: true }));
