@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Persistence: Save data now lives in session-aware slots with helpers to list, create, rename, switch, and delete runs without overwriting legacy saves.
 - UI: Browser home widgets now populate via a layout manager that clones page templates, mounts controllers on demand, and honors saved widget order from local storage.
 - BlogPress: Detail views now show posts published, an A–F SEO grade influenced by writing and sprint actions, and a backlink rank that tracks outreach progress toward quality milestones.
 - UI: DownWork hustles now open in a tabbed planning board with a sticky capacity summary, quick filter pills, ROI hover metrics, and celebratory accept-toasts so players plan their queue instead of scrolling the old horizontal feed.【F:src/ui/views/browser/apps/hustles/index.js†L7-L860】【F:styles/widgets/widgets.css†L137-L349】

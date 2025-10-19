@@ -2,6 +2,7 @@ import { getAssetDefinition } from '../state/registry.js';
 import { createAssetInstance } from '../state/assets.js';
 import { SnapshotRepository } from './snapshotRepository.js';
 import { StateMigrationRunner } from './stateMigrationRunner.js';
+import { SessionRepository } from './sessionRepository.js';
 import { success, error, empty, tryCatch } from './result.js';
 import { syncNicheTrendSnapshots } from '../../game/events/syncNicheTrendSnapshots.js';
 import { maybeSpawnNicheEvents } from '../../game/events/index.js';
@@ -206,7 +207,7 @@ const DEFAULT_MIGRATIONS = [
   migrateLegacyHustlesToActions
 ];
 
-export { SnapshotRepository, StateMigrationRunner };
+export { SnapshotRepository, StateMigrationRunner, SessionRepository };
 
 export class StatePersistence {
   constructor({
@@ -224,7 +225,9 @@ export class StatePersistence {
     migrations = DEFAULT_MIGRATIONS,
     logger = console,
     repository,
-    migrationRunner
+    migrationRunner,
+    session,
+    sessionRepository
   }) {
     this.storageKey = storageKey;
     this.clone = clone;
@@ -242,14 +245,28 @@ export class StatePersistence {
     };
     this.logger = logger;
 
+    this.sessionRepository =
+      sessionRepository ?? new SessionRepository({ storageKey, storage });
+
+    const initialSession = this.sessionRepository.ensureSession(session);
+    this.session = initialSession;
+
+    const resolvedSnapshotKey = this.sessionRepository.resolveSnapshotKey(initialSession.id);
+
     this.repository =
-      repository ?? new SnapshotRepository({ storageKey, storage });
+      repository ?? new SnapshotRepository({ storageKey: resolvedSnapshotKey, storage: this.sessionRepository.storage });
+
+    if (repository && repository.storageKey !== resolvedSnapshotKey) {
+      this.repository.storageKey = resolvedSnapshotKey;
+    }
+
     this.migrationRunner =
       migrationRunner ?? new StateMigrationRunner({ migrations });
 
     Object.defineProperty(this, 'storage', {
       get: () => this.repository.storage,
       set: value => {
+        this.sessionRepository.storage = value;
         this.repository.storage = value;
       }
     });
@@ -269,7 +286,39 @@ export class StatePersistence {
     maybeSpawnNicheEvents({ state, day });
   }
 
+  setSession(sessionDescriptor) {
+    const resolvedSession = this.sessionRepository.ensureSession(sessionDescriptor);
+    this.session = resolvedSession;
+    const snapshotKey = this.sessionRepository.resolveSnapshotKey(resolvedSession.id);
+    if (this.repository) {
+      this.repository.storageKey = snapshotKey;
+      this.repository.storage = this.sessionRepository.storage;
+    } else {
+      this.repository = new SnapshotRepository({
+        storageKey: snapshotKey,
+        storage: this.sessionRepository.storage
+      });
+    }
+    return resolvedSession;
+  }
+
+  getActiveSession() {
+    return this.sessionRepository.getActiveSession();
+  }
+
+  refreshActiveSession() {
+    let active = this.sessionRepository.getActiveSession();
+    if (!active) {
+      active = this.sessionRepository.ensureSession();
+    }
+    if (!active) {
+      return null;
+    }
+    return this.setSession(active);
+  }
+
   load({ onFirstLoad, onReturning, onError } = {}) {
+    this.refreshActiveSession();
     const defaultState = this.buildDefaultState();
     this.initializeState(defaultState);
 
@@ -298,6 +347,7 @@ export class StatePersistence {
     const state = this.getState();
     state.lastSaved = lastSaved;
     state.version = effectiveVersion;
+    this.sessionRepository.updateSession(this.session.id, { lastSaved });
     this.ensureStateShape(state);
     this.ensureNicheEvents(state);
     syncNicheTrendSnapshots(state);
@@ -347,6 +397,7 @@ export class StatePersistence {
     const initialVersion = Number.isInteger(state.version) ? state.version : 0;
     state.version = Math.max(this.version, initialVersion);
     state.lastSaved = lastSavedFallback;
+    this.sessionRepository.updateSession(this.session.id, { lastSaved: lastSavedFallback });
     this.ensureStateShape(state);
     this.ensureNicheEvents(state);
     syncNicheTrendSnapshots(state);
@@ -359,6 +410,7 @@ export class StatePersistence {
   }
 
   save() {
+    this.refreshActiveSession();
     const state = this.getState();
     if (!state) return null;
     this.ensureStateShape(state);
@@ -376,6 +428,7 @@ export class StatePersistence {
       this.logger?.error?.('Failed to save game', saveResult.error);
       return null;
     }
+    this.sessionRepository.updateSession(this.session.id, { lastSaved });
     return { lastSaved };
   }
 

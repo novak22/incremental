@@ -15,6 +15,24 @@ const { addLog } = logModule;
 const { archiveNicheAnalytics } = await import('../src/game/analytics/niches.js');
 
 const STORAGE_KEY = 'online-hustle-sim-v2';
+const SESSION_INDEX_KEY = `${STORAGE_KEY}:sessions`;
+
+function getActiveSessionDescriptor() {
+  const rawIndex = localStorage.getItem(SESSION_INDEX_KEY);
+  if (!rawIndex) {
+    return null;
+  }
+  const index = JSON.parse(rawIndex);
+  if (!index || typeof index !== 'object') {
+    return null;
+  }
+  const sessions = index.sessions && typeof index.sessions === 'object' ? index.sessions : {};
+  const activeId = index.activeSessionId;
+  if (!activeId) {
+    return null;
+  }
+  return sessions[activeId] ?? null;
+}
 
 const resetState = () => harness.resetState();
 
@@ -41,7 +59,9 @@ test('saveState persists current progress and loadState restores it', () => {
   blogState.instances.push({ status: 'active', daysRemaining: 0, daysCompleted: 1 });
 
   saveState();
-  const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+  const activeSession = getActiveSessionDescriptor();
+  assert.ok(activeSession?.storageKey, 'expected storage key for active session');
+  const saved = JSON.parse(localStorage.getItem(activeSession.storageKey));
   assert.equal(saved.money, 321);
   assert.ok(saved.assets.blog.instances.length >= 1);
   assert.equal(saved.version, getState().version);
@@ -93,11 +113,47 @@ test('saveState persists a trimmed niche analytics history snapshot', () => {
   }
 
   saveState();
-  const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+  const activeSession = getActiveSessionDescriptor();
+  assert.ok(activeSession?.storageKey, 'expected storage key for active session');
+  const saved = JSON.parse(localStorage.getItem(activeSession.storageKey));
   const history = saved?.niches?.analyticsHistory;
 
   assert.ok(Array.isArray(history), 'expected analytics history array in snapshot');
   assert.equal(history.length, 7, 'keeps only the newest seven entries');
   assert.equal(history[0].day, 3);
   assert.equal(history.at(-1).day, 9);
+});
+
+test('session repository APIs create, switch, and delete slots', () => {
+  const primaryLoad = loadState();
+  assert.equal(primaryLoad.returning, false);
+  const primarySession = storageModule.getActiveSession();
+  assert.ok(primarySession?.id, 'expected default session id');
+  const defaultMoney = getState().money;
+
+  const state = getState();
+  state.money = 777;
+  saveState();
+
+  const { session: altSession, loadResult: altLoad } = storageModule.createSession({ name: 'Alt Slot' });
+  assert.ok(altSession?.id, 'expected new session id');
+  assert.notEqual(altSession.id, primarySession.id);
+  assert.equal(altLoad.returning, false, 'new sessions should start from defaults');
+  assert.equal(getState().money, defaultMoney, 'new session should load default money');
+
+  const altState = getState();
+  altState.money = 1234;
+  saveState();
+
+  const { loadResult: restored } = storageModule.setActiveSession(primarySession.id);
+  assert.equal(restored.returning, true, 'existing session should load saved data');
+  assert.equal(getState().money, 777, 'primary session restores saved money');
+
+  const sessions = storageModule.listSessions();
+  assert.equal(sessions.length, 2, 'expected two sessions tracked');
+
+  const { removed, session: fallback } = storageModule.deleteSession(altSession.id);
+  assert.equal(removed.id, altSession.id);
+  assert.equal(fallback.id, primarySession.id, 'fallback to primary after deletion');
+  assert.equal(storageModule.listSessions().length, 1, 'only primary session remains');
 });
