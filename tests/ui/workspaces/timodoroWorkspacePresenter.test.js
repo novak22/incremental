@@ -4,7 +4,7 @@ import { JSDOM } from 'jsdom';
 
 import timodoroApp from '../../../src/ui/views/browser/apps/timodoro/ui.js';
 import renderTimodoro from '../../../src/ui/views/browser/apps/timodoro.js';
-import { buildTimodoroViewModel } from '../../../src/ui/views/browser/apps/timodoro/model.js';
+import { buildTimodoroViewModel, buildSummaryEntries } from '../../../src/ui/views/browser/apps/timodoro/model.js';
 import { buildTodoGroups } from '../../../src/ui/views/browser/apps/timodoro/sections/todoSection.js';
 
 function withDom(t) {
@@ -53,6 +53,23 @@ function createContext(document) {
     }
   };
 }
+
+test('cash hauled reflects derived active earnings when metrics omit them', () => {
+  const entries = buildSummaryEntries(
+    {
+      totalEarnings: 320,
+      passiveEarnings: 120,
+      activeEarnings: 0
+    },
+    {},
+    {},
+    {}
+  );
+
+  const cashEntry = entries.find(entry => entry.label === 'Cash hauled');
+  assert.ok(cashEntry, 'includes cash hauled summary entry');
+  assert.equal(cashEntry?.note, '$200 active • $120 passive');
+});
 
 test('buildTodoGroups normalizes queue entries via shared builder', () => {
   const { items } = buildTodoGroups([

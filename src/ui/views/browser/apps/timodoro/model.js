@@ -91,9 +91,14 @@ function countCompletedTasks(completedGroups = {}) {
 
 export function buildSummaryEntries(summary = {}, todoModel = {}, state = {}, completedGroups = {}) {
   const totalHours = Math.max(0, Number(summary?.totalTime) || 0);
-  const activeEarnings = Math.max(0, Number(summary?.activeEarnings) || 0);
-  const passiveEarnings = Math.max(0, Number(summary?.passiveEarnings) || 0);
   const totalEarnings = Math.max(0, Number(summary?.totalEarnings) || 0);
+  const passiveEarnings = Math.max(0, Number(summary?.passiveEarnings) || 0);
+  const recordedActive = Number(summary?.activeEarnings);
+  let activeEarnings = Math.max(0, Number.isFinite(recordedActive) ? recordedActive : 0);
+  const derivedActive = Math.max(0, totalEarnings - passiveEarnings);
+  if ((activeEarnings <= 0 && derivedActive > 0) || Math.abs(activeEarnings - derivedActive) <= 0.01) {
+    activeEarnings = derivedActive;
+  }
   const timeCap = computeTimeCap(state);
   const queueMetrics = buildQueueMetrics(state, todoModel);
   const hoursAvailable = Number.isFinite(queueMetrics?.hoursAvailable)
