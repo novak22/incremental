@@ -130,23 +130,24 @@ const resolvers = {
       return null;
     }
 
-    const listWidgets = () => {
+    const listTemplates = () => {
       if (!container?.querySelectorAll) {
         return [];
       }
-      return Array.from(container.querySelectorAll('[data-widget]'));
+      return Array.from(container.querySelectorAll('template[data-widget-template]'));
     };
 
-    const getWidgetContainer = widgetId => {
-      if (!widgetId) return null;
-      const widgets = listWidgets();
-      return widgets.find(node => node?.dataset?.widget === widgetId) || null;
+    const getTemplate = widgetId => {
+      if (!widgetId || !container?.querySelector) {
+        return null;
+      }
+      return container.querySelector(`template[data-widget-template="${widgetId}"]`);
     };
 
     return {
       container,
-      getWidgetContainer,
-      getWidgetContainers: listWidgets
+      listTemplates,
+      getTemplate
     };
   }
 };

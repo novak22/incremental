@@ -15,6 +15,8 @@ const todoWidgetModule = await import('../src/ui/views/browser/widgets/todoWidge
 const todoWidget = todoWidgetModule.default;
 
 const { getState, getUpgradeState } = stateModule;
+const layoutManagerModule = await import('../src/ui/views/browser/widgets/layoutManager.js');
+const layoutManager = layoutManagerModule.default;
 const { getTimeCap, spendTime, gainTime } = timeModule;
 const { addMoney, spendMoney } = currencyModule;
 const { endDay, checkDayEnd } = lifecycleModule;
@@ -29,6 +31,7 @@ const {
 const resetState = () => harness.resetState();
 
 test.beforeEach(() => {
+  layoutManager.__testables?.reset?.();
   resetState();
 });
 
@@ -128,6 +131,7 @@ test('todo widget logging to zero hours ends the day automatically', async () =>
   state.baseTime = requiredHours;
   state.timeLeft = requiredHours;
 
+  layoutManager.renderLayout();
   const queue = buildActionQueue({ state, summary: {} });
   const todoContainer = document.querySelector('[data-widget="todo"]');
   assert.ok(todoContainer, 'todo widget container should exist in the DOM');
