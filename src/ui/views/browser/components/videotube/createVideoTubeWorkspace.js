@@ -4,7 +4,8 @@ import { setAssetInstanceName } from '../../../../../game/assets/actions.js';
 import { selectVideoTubeNiche } from '../../../../cards/model/index.js';
 import {
   formatCurrency as baseFormatCurrency,
-  formatPercent as baseFormatPercent
+  formatPercent as baseFormatPercent,
+  formatNetCurrency as baseFormatNetCurrency
 } from '../../utils/formatting.js';
 import { registerAssetWorkspace, createActionDelegates } from '../../utils/assetWorkspaceRegistry.js';
 import { getWorkspaceLockTheme } from '../common/workspaceLockThemes.js';
@@ -43,6 +44,8 @@ const formatPercent = value =>
     clampMax: 1,
     signDisplay: 'never'
   });
+const formatNetCurrency = value =>
+  baseFormatNetCurrency(value, { precision: 'integer', zeroDisplay: '$0' });
 
 function ensureSelectedVideo(state = {}, model = {}) {
   const instances = Array.isArray(model.instances) ? model.instances : [];
@@ -124,6 +127,7 @@ const videoTubeWorkspaceRegistration = registerAssetWorkspace({
       createView: helpers =>
         createDetailView({
           formatCurrency,
+          formatNetCurrency,
           formatHours,
           onQuickAction: createActionDelegates(helpers).quickAction,
           onRename: handleRename,

@@ -1,5 +1,6 @@
 import {
   renderActionsPanel,
+  renderIncomePanel,
   renderNichePanel,
   renderPayoutPanel,
   renderQualityPanel,
@@ -8,9 +9,10 @@ import {
 } from './detail/index.js';
 
 export function createDetailView(options = {}) {
-  const { formatCurrency, formatHours, onQuickAction, onRename, onNicheSelect } = options;
+  const { formatCurrency, formatNetCurrency, formatHours, onQuickAction, onRename, onNicheSelect } = options;
 
   const panelRenderers = [
+    video => renderIncomePanel(video, { formatCurrency, formatNetCurrency }),
     video => renderQualityPanel(video, { formatHours }),
     video => renderPayoutPanel(video, { formatCurrency }),
     video => renderActionsPanel(video, { formatCurrency, formatHours, onQuickAction }),
