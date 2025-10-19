@@ -22,7 +22,9 @@ export function createStorage({
   migrations,
   logger,
   repository,
-  migrationRunner
+  migrationRunner,
+  session,
+  sessionRepository
 } = {}) {
   const resolvedStateManager =
     stateManager === null ? createStateManager() : stateManager ?? defaultStateManager;
@@ -65,8 +67,12 @@ export function createStorage({
     migrations,
     logger,
     repository,
-    migrationRunner
+    migrationRunner,
+    session,
+    sessionRepository
   });
+
+  const sessions = persistence.sessionRepository;
 
   function ensureStorageReference() {
     if (!persistence.storage && globalThis?.localStorage) {
@@ -74,15 +80,53 @@ export function createStorage({
     }
   }
 
+  function reloadActiveSession(loadOptions = {}) {
+    ensureStorageReference();
+    return persistence.load(loadOptions);
+  }
+
+  function applySessionChange(sessionEntry, loadOptions = {}) {
+    const activeSession = persistence.setSession(sessionEntry);
+    const loadResult = reloadActiveSession(loadOptions);
+    return { session: activeSession, loadResult };
+  }
+
   return {
     persistence,
     loadState(options = {}) {
-      ensureStorageReference();
-      return persistence.load(options);
+      return reloadActiveSession(options);
     },
     saveState() {
       ensureStorageReference();
       return persistence.save();
+    },
+    getActiveSession() {
+      return persistence.getActiveSession();
+    },
+    listSessions() {
+      return sessions.listSessions();
+    },
+    createSession(descriptor = {}, loadOptions = {}) {
+      const created = sessions.createSession(descriptor, { setActive: true });
+      return applySessionChange(created, loadOptions);
+    },
+    renameSession(id, name, loadOptions = {}) {
+      const updated = sessions.renameSession(id, name);
+      if (updated && persistence.session?.id === updated.id) {
+        persistence.setSession(updated);
+        const loadResult = reloadActiveSession(loadOptions);
+        return { session: updated, loadResult };
+      }
+      return { session: updated, loadResult: null };
+    },
+    deleteSession(id, loadOptions = {}) {
+      const { removed, nextSession } = sessions.deleteSession(id);
+      const result = applySessionChange(nextSession, loadOptions);
+      return { removed, ...result };
+    },
+    setActiveSession(descriptor, loadOptions = {}) {
+      const active = sessions.setActiveSession(descriptor);
+      return applySessionChange(active, loadOptions);
     }
   };
 }
@@ -91,4 +135,10 @@ const defaultStorage = createStorage();
 
 export const loadState = (...args) => defaultStorage.loadState(...args);
 export const saveState = (...args) => defaultStorage.saveState(...args);
+export const getActiveSession = (...args) => defaultStorage.getActiveSession(...args);
+export const listSessions = (...args) => defaultStorage.listSessions(...args);
+export const createSession = (...args) => defaultStorage.createSession(...args);
+export const renameSession = (...args) => defaultStorage.renameSession(...args);
+export const deleteSession = (...args) => defaultStorage.deleteSession(...args);
+export const setActiveSession = (...args) => defaultStorage.setActiveSession(...args);
 

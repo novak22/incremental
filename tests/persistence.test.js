@@ -26,14 +26,21 @@ function createPersistence({ storage, migrations = [] } = {}) {
     version: 0
   });
 
+  const effectiveStorage = {
+    getItem: storage?.getItem?.bind(storage) ?? (() => null),
+    setItem: storage?.setItem?.bind(storage) ?? (() => {}),
+    removeItem: storage?.removeItem?.bind(storage) ?? (() => {})
+  };
+
   const repository = new SnapshotRepository({
     storageKey: 'test-key',
-    storage
+    storage: effectiveStorage
   });
   const migrationRunner = new StateMigrationRunner({ migrations });
 
   const persistence = new StatePersistence({
     storageKey: 'test-key',
+    storage: effectiveStorage,
     clone,
     now: () => nowValue,
     buildDefaultState: () => baseState(),

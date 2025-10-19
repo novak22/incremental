@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Persistence: Save data now lives in session-aware slots with helpers to list, create, rename, switch, and delete runs without overwriting legacy saves.
 - UI: Browser home widgets now populate via a layout manager that clones page templates, mounts controllers on demand, and honors saved widget order from local storage.
 - BlogPress: Detail views now show posts published, an A–F SEO grade influenced by writing and sprint actions, and a backlink rank that tracks outreach progress toward quality milestones.
 - Hustles: Doubled DownWork freelance and data entry availability, capped per-template offers at six, and introduced a $7/hour Virtual Assistant Shift so ops-minded players always have a remote contract waiting.【F:src/game/data/market/freelance.js†L4-L41】【F:src/game/data/market/dataEntry.js†L4-L41】【F:src/game/data/hustleMarketConfig.js†L1-L92】【F:src/game/data/market/virtualAssistant.js†L1-L44】【F:src/game/hustles/definitions/instantHustles.js†L1-L140】

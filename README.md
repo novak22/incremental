@@ -96,7 +96,8 @@ Each asset supports multiple instances, tracks setup progress, and rolls a daily
 - **Automation Course** – $260 once you have an active blog; permanently boosts blog daily payouts by +50% and doubles post-quality progress.
 
 ### Persistence & Offline Behaviour
-- **Autosave** – State saves every few seconds to `localStorage` (new key: `online-hustle-sim-v2`).
+- **Autosave** – State saves every few seconds to `localStorage` with a session index (`online-hustle-sim-v2:sessions`) and per-slot snapshot keys.
+- **Multiple Sessions** – Developers can spin up additional save slots via the storage context to try balance changes without overwriting a primary run.
 - **Offline Reminder** – The clock pauses while you are away; advance in-game days to keep assets earning.
 
 ## Current Feature Set
