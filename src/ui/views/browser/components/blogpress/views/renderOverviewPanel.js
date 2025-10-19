@@ -16,17 +16,6 @@ export default function renderOverviewPanel({ instance, formatCurrency }) {
 
   panel.appendChild(header);
 
-  const subhead = document.createElement('p');
-  subhead.className = 'blogpress-overview__hint';
-  subhead.textContent = 'Track payouts, upkeep, and vibe in one comfy dashboard.';
-  panel.appendChild(subhead);
-
-  const url = document.createElement('div');
-  url.className = 'blogpress-overview__url';
-  const slug = instance.id || 'draft';
-  url.textContent = `https://blogpress.hub/blog/${slug}`;
-  panel.appendChild(url);
-
   const list = document.createElement('dl');
   list.className = 'blogpress-stats blogpress-stats--compact';
 
