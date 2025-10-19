@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
+import { JSDOM } from 'jsdom';
+
 import {
   getState,
   initializeState,
@@ -18,6 +20,41 @@ import dashboardPresenter, {
   renderTodo,
   __testables
 } from '../../../../src/ui/views/browser/dashboardPresenter.js';
+
+function setupHomeWidgetsDom(widgetIds = []) {
+  const templateHtml = widgetIds
+    .map(
+      id => `
+        <template data-widget-template="${id}">
+          <section data-widget="${id}" class="browser-widget"></section>
+        </template>
+      `
+    )
+    .join('');
+
+  const dom = new JSDOM(`
+    <!doctype html>
+    <html>
+      <body>
+        <div class="browser-home__widgets">
+          ${templateHtml}
+        </div>
+      </body>
+    </html>
+  `);
+
+  const container = dom.window.document.querySelector('.browser-home__widgets');
+
+  initElementRegistry(dom.window.document, {
+    homepageWidgets: () => ({
+      container,
+      listTemplates: () => Array.from(container.querySelectorAll('template[data-widget-template]')),
+      getTemplate: widgetId => container.querySelector(`template[data-widget-template="${widgetId}"]`)
+    })
+  });
+
+  return dom;
+}
 
 await import('../../../../src/ui/dashboard/quickActions.js');
 
@@ -43,17 +80,7 @@ test('renderTodo falls back to the current state when none is provided', async (
   todoWidget.mount = () => {};
   todoWidget.isMounted = () => true;
 
-  const todoContainer = { dataset: { widget: 'todo' } };
-
-  initElementRegistry({}, {
-    homepageWidgets: () => ({
-      container: {
-        querySelector: selector => (selector === '[data-widget="todo"]' ? todoContainer : null),
-        querySelectorAll: () => [todoContainer]
-      },
-      getWidgetContainer: id => (id === 'todo' ? todoContainer : null)
-    })
-  });
+  const dom = setupHomeWidgetsDom(['todo']);
 
   __testables.reset();
   resetWidgetRegistry();
@@ -79,6 +106,7 @@ test('renderTodo falls back to the current state when none is provided', async (
     __testables.reset();
     resetWidgetRegistry();
     initElementRegistry(null, {});
+    dom.window.close();
     restoreState();
   }
 });
@@ -90,17 +118,7 @@ test('dashboard presenter responds to widget registry updates', async () => {
   const mountCalls = [];
   const destroyCalls = [];
 
-  const widgetContainer = { dataset: { widget: 'custom' } };
-
-  initElementRegistry({}, {
-    homepageWidgets: () => ({
-      container: {
-        querySelector: selector => (selector === '[data-widget="custom"]' ? widgetContainer : null),
-        querySelectorAll: () => [widgetContainer]
-      },
-      getWidgetContainer: id => (id === 'custom' ? widgetContainer : null)
-    })
-  });
+  const dom = setupHomeWidgetsDom(['custom']);
 
   __testables.reset();
   resetWidgetRegistry();
@@ -134,6 +152,7 @@ test('dashboard presenter responds to widget registry updates', async () => {
     __testables.reset();
     resetWidgetRegistry();
     initElementRegistry(null, {});
+    dom.window.close();
   }
 });
 
@@ -144,17 +163,7 @@ test('dashboard presenter rebuilds controllers when a widget definition changes'
   const mountCalls = [];
   const destroyCalls = [];
 
-  const widgetContainer = { dataset: { widget: 'custom' } };
-
-  initElementRegistry({}, {
-    homepageWidgets: () => ({
-      container: {
-        querySelector: selector => (selector === '[data-widget="custom"]' ? widgetContainer : null),
-        querySelectorAll: () => [widgetContainer]
-      },
-      getWidgetContainer: id => (id === 'custom' ? widgetContainer : null)
-    })
-  });
+  const dom = setupHomeWidgetsDom(['custom']);
 
   __testables.reset();
   resetWidgetRegistry();
@@ -207,6 +216,7 @@ test('dashboard presenter rebuilds controllers when a widget definition changes'
     __testables.reset();
     resetWidgetRegistry();
     initElementRegistry(null, {});
+    dom.window.close();
   }
 });
 
@@ -216,17 +226,7 @@ test('dashboard presenter retries controller creation when a factory throws', as
 
   const mountCalls = [];
 
-  const widgetContainer = { dataset: { widget: 'flaky' } };
-
-  initElementRegistry({}, {
-    homepageWidgets: () => ({
-      container: {
-        querySelector: selector => (selector === '[data-widget="flaky"]' ? widgetContainer : null),
-        querySelectorAll: () => [widgetContainer]
-      },
-      getWidgetContainer: id => (id === 'flaky' ? widgetContainer : null)
-    })
-  });
+  const dom = setupHomeWidgetsDom(['flaky']);
 
   __testables.reset();
   resetWidgetRegistry();
@@ -264,5 +264,6 @@ test('dashboard presenter retries controller creation when a factory throws', as
     __testables.reset();
     resetWidgetRegistry();
     initElementRegistry(null, {});
+    dom.window.close();
   }
 });
