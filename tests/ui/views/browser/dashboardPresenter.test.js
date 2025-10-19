@@ -209,3 +209,60 @@ test('dashboard presenter rebuilds controllers when a widget definition changes'
     initElementRegistry(null, {});
   }
 });
+
+test('dashboard presenter retries controller creation when a factory throws', async () => {
+  ensureRegistryReady();
+  initializeState();
+
+  const mountCalls = [];
+
+  const widgetContainer = { dataset: { widget: 'flaky' } };
+
+  initElementRegistry({}, {
+    homepageWidgets: () => ({
+      container: {
+        querySelector: selector => (selector === '[data-widget="flaky"]' ? widgetContainer : null),
+        querySelectorAll: () => [widgetContainer]
+      },
+      getWidgetContainer: id => (id === 'flaky' ? widgetContainer : null)
+    })
+  });
+
+  __testables.reset();
+  resetWidgetRegistry();
+
+  let attempts = 0;
+  const resilientController = {
+    mount: () => {
+      mountCalls.push('mounted');
+    },
+    isMounted: () => true
+  };
+
+  registerWidget({
+    id: 'flaky',
+    title: 'Flaky',
+    factory: () => {
+      attempts += 1;
+      if (attempts === 1) {
+        throw new Error('not ready');
+      }
+      return resilientController;
+    },
+    featureFlags: []
+  });
+
+  try {
+    dashboardPresenter.renderDashboard({}, {});
+
+    dashboardPresenter.renderDashboard({}, {});
+    assert.deepEqual(mountCalls, ['mounted'], 'flaky controller should mount after retrying');
+    assert.equal(attempts, 2, 'factory should be invoked again on the retry');
+    assert.ok(__testables.hasController('flaky'), 'flaky controller should be cached after a successful retry');
+  } finally {
+    unregisterWidget('flaky');
+    __testables.reset();
+    resetWidgetRegistry();
+    initElementRegistry(null, {});
+  }
+});

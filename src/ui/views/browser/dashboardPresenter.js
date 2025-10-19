@@ -114,7 +114,9 @@ function ensureWidgetControllers() {
   const definitions = getWidgetDefinitions();
   const registryVersion = getWidgetRegistryVersion();
 
-  if (registryVersion !== knownRegistryVersion) {
+  const registryUpdated = registryVersion !== knownRegistryVersion;
+
+  if (registryUpdated) {
     const validIds = new Set(definitions.map(definition => definition.id));
 
     for (const [id, controller] of widgetControllers.entries()) {
@@ -139,33 +141,35 @@ function ensureWidgetControllers() {
         widgetControllers.delete(definition.id);
       }
     }
+  }
 
-    for (const definition of definitions) {
-      if (widgetControllers.has(definition.id)) {
-        continue;
-      }
-      let controller = null;
+  for (const definition of definitions) {
+    if (widgetControllers.has(definition.id)) {
+      continue;
+    }
+    let controller = null;
+    try {
+      controller = definition.factory();
+    } catch (error) {
+      controller = null;
+    }
+    if (!controller && typeof definition.fallbackFactory === 'function') {
       try {
-        controller = definition.factory();
+        controller = definition.fallbackFactory();
       } catch (error) {
         controller = null;
       }
-      if (!controller && typeof definition.fallbackFactory === 'function') {
-        try {
-          controller = definition.fallbackFactory();
-        } catch (error) {
-          controller = null;
-        }
-      }
-      if (controller) {
-        widgetControllers.set(definition.id, controller);
-        knownWidgetDefinitions.set(definition.id, {
-          factory: definition.factory,
-          fallbackFactory: definition.fallbackFactory
-        });
-      }
     }
+    if (controller) {
+      widgetControllers.set(definition.id, controller);
+      knownWidgetDefinitions.set(definition.id, {
+        factory: definition.factory,
+        fallbackFactory: definition.fallbackFactory
+      });
+    }
+  }
 
+  if (registryUpdated) {
     knownRegistryVersion = registryVersion;
   }
 
@@ -238,7 +242,10 @@ function resetForTests() {
 }
 
 const __testables = {
-  reset: resetForTests
+  reset: resetForTests,
+  hasController(id) {
+    return widgetControllers.has(id);
+  }
 };
 
 export default {
