@@ -1,18 +1,25 @@
 function createDragHandlers({
-  elementsRef,
+  getList,
   getSortMode,
   canSort,
   onSwap
 }) {
   let dragSourceId = null;
 
-  function getList() {
-    return elementsRef()?.list || null;
+  function getListElement() {
+    if (typeof getList === 'function') {
+      try {
+        return getList() || null;
+      } catch (error) {
+        return null;
+      }
+    }
+    return null;
   }
 
   function clearDragState() {
     dragSourceId = null;
-    const list = getList();
+    const list = getListElement();
     if (!list) return;
     list.querySelectorAll('.apps-widget__tile').forEach(tile => {
       tile.classList.remove('is-dragging');
@@ -21,13 +28,13 @@ function createDragHandlers({
   }
 
   function handleDragStart(event) {
-    if (!getSortMode()) {
-      event.preventDefault();
+    if (!getSortMode?.()) {
+      event.preventDefault?.();
       return;
     }
-    const list = getList();
+    const list = getListElement();
     if (!list) return;
-    const tile = event.target.closest('.apps-widget__tile');
+    const tile = event.target?.closest?.('.apps-widget__tile');
     if (!tile || !list.contains(tile)) return;
     const siteId = tile.dataset.siteTarget;
     if (!siteId) return;
@@ -40,10 +47,10 @@ function createDragHandlers({
   }
 
   function handleDragEnter(event) {
-    if (!getSortMode()) return;
-    const list = getList();
+    if (!getSortMode?.()) return;
+    const list = getListElement();
     if (!list) return;
-    const tile = event.target.closest('.apps-widget__tile');
+    const tile = event.target?.closest?.('.apps-widget__tile');
     if (!tile || !list.contains(tile)) return;
     const siteId = tile.dataset.siteTarget;
     if (!siteId || siteId === dragSourceId) return;
@@ -51,24 +58,24 @@ function createDragHandlers({
   }
 
   function handleDragOver(event) {
-    if (!getSortMode()) return;
-    const list = getList();
+    if (!getSortMode?.()) return;
+    const list = getListElement();
     if (!list) return;
-    const tile = event.target.closest('.apps-widget__tile');
+    const tile = event.target?.closest?.('.apps-widget__tile');
     if (!tile || !list.contains(tile)) return;
     const siteId = tile.dataset.siteTarget;
     if (!siteId || siteId === dragSourceId) return;
-    event.preventDefault();
+    event.preventDefault?.();
     if (event.dataTransfer) {
       event.dataTransfer.dropEffect = 'move';
     }
   }
 
   function handleDragLeave(event) {
-    if (!getSortMode()) return;
-    const list = getList();
+    if (!getSortMode?.()) return;
+    const list = getListElement();
     if (!list) return;
-    const tile = event.target.closest('.apps-widget__tile');
+    const tile = event.target?.closest?.('.apps-widget__tile');
     if (!tile || !list.contains(tile)) return;
     const siteId = tile.dataset.siteTarget;
     if (!siteId || siteId === dragSourceId) return;
@@ -76,18 +83,18 @@ function createDragHandlers({
   }
 
   function handleDrop(event) {
-    if (!getSortMode()) return;
-    const list = getList();
+    if (!getSortMode?.()) return;
+    const list = getListElement();
     if (!list) return;
-    const tile = event.target.closest('.apps-widget__tile');
+    const tile = event.target?.closest?.('.apps-widget__tile');
     if (!tile || !list.contains(tile)) return;
-    event.preventDefault();
+    event.preventDefault?.();
     const targetId = tile.dataset.siteTarget;
     if (!targetId || targetId === dragSourceId) {
       clearDragState();
       return;
     }
-    onSwap(dragSourceId, targetId);
+    onSwap?.(dragSourceId, targetId);
     clearDragState();
   }
 
@@ -96,9 +103,9 @@ function createDragHandlers({
   }
 
   function updateDraggableState() {
-    const list = getList();
+    const list = getListElement();
     if (!list) return;
-    const allowSort = getSortMode() && canSort();
+    const allowSort = Boolean(getSortMode?.()) && Boolean(canSort?.());
     list.querySelectorAll('.apps-widget__tile').forEach(tile => {
       tile.draggable = allowSort;
       if (allowSort) {
@@ -125,3 +132,4 @@ function createDragHandlers({
 }
 
 export { createDragHandlers };
+export default createDragHandlers;

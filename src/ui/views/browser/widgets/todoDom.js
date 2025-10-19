@@ -41,12 +41,17 @@ function prepareElements(widgetElements = {}) {
   return elements;
 }
 
-function bindEndDay(button, handler) {
-  if (!button || button.dataset.bound === 'true') return;
-  if (typeof handler !== 'function') return;
+function bindEndDay(button, handler, addListener) {
+  if (!button || typeof handler !== 'function') return () => {};
+
+  if (typeof addListener === 'function') {
+    return addListener(button, 'click', handler);
+  }
 
   button.addEventListener('click', handler);
-  button.dataset.bound = 'true';
+  return () => {
+    button.removeEventListener('click', handler);
+  };
 }
 
 function syncFocusButtons(buttons = [], activeMode) {
@@ -59,23 +64,33 @@ function syncFocusButtons(buttons = [], activeMode) {
   });
 }
 
-function bindFocusControls(buttons = [], onFocusChange, activeMode) {
+function bindFocusControls(buttons = [], onFocusChange, activeMode, addListener) {
   if (!Array.isArray(buttons) || !buttons.length) {
-    return;
+    return [];
   }
 
+  const disposers = [];
+
   buttons.forEach(button => {
-    if (!button || button.dataset.focusBound === 'true') return;
-    button.addEventListener('click', () => {
-      const mode = button.dataset.focus;
+    if (!button) return;
+    const listener = () => {
+      const mode = button.dataset?.focus;
       if (typeof onFocusChange === 'function') {
         onFocusChange(mode);
       }
-    });
-    button.dataset.focusBound = 'true';
+    };
+    if (typeof addListener === 'function') {
+      disposers.push(addListener(button, 'click', listener));
+    } else {
+      button.addEventListener('click', listener);
+      disposers.push(() => {
+        button.removeEventListener('click', listener);
+      });
+    }
   });
 
   syncFocusButtons(buttons, activeMode);
+  return disposers;
 }
 
 function applyScrollerLimit(listWrapper, model = {}) {
