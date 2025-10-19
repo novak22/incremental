@@ -124,33 +124,31 @@ const resolvers = {
   homepage: root => ({
     container: root.getElementById('browser-home')
   }),
-  homepageWidgets: root => ({
-    todo: {
-      container: root.querySelector('[data-widget="todo"]'),
-      list: root.getElementById('browser-widget-todo-list'),
-      done: root.getElementById('browser-widget-todo-done'),
-      listWrapper: root.querySelector('[data-widget="todo"] .todo-widget__list-wrapper'),
-      note: root.getElementById('browser-widget-todo-note'),
-      doneHeading: root.getElementById('browser-widget-todo-done-heading'),
-      availableValue: root.getElementById('browser-widget-todo-available'),
-      spentValue: root.getElementById('browser-widget-todo-spent'),
-      endDayButton: root.getElementById('browser-widget-todo-end'),
-      focusGroup: root.querySelector('[data-widget="todo"] [data-focus-group]'),
-      focusButtons: root.querySelectorAll('[data-widget="todo"] [data-focus]')
-    },
-    apps: {
-      container: root.querySelector('[data-widget="apps"]'),
-      list: root.getElementById('browser-widget-apps-list'),
-      note: root.getElementById('browser-widget-apps-note'),
-      sortToggle: root.getElementById('browser-widget-apps-sort-toggle')
-    },
-    bank: {
-      container: root.querySelector('[data-widget="bank"]'),
-      stats: root.getElementById('browser-widget-bank-stats'),
-      footnote: root.getElementById('browser-widget-bank-footnote'),
-      highlights: root.getElementById('browser-widget-bank-highlights')
+  homepageWidgets: root => {
+    const container = root.querySelector('.browser-home__widgets');
+    if (!container) {
+      return null;
     }
-  })
+
+    const listWidgets = () => {
+      if (!container?.querySelectorAll) {
+        return [];
+      }
+      return Array.from(container.querySelectorAll('[data-widget]'));
+    };
+
+    const getWidgetContainer = widgetId => {
+      if (!widgetId) return null;
+      const widgets = listWidgets();
+      return widgets.find(node => node?.dataset?.widget === widgetId) || null;
+    };
+
+    return {
+      container,
+      getWidgetContainer,
+      getWidgetContainers: listWidgets
+    };
+  }
 };
 
 export default resolvers;

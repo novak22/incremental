@@ -16,6 +16,25 @@ import {
 } from './apps/index.js';
 import { createWidgetController } from './createWidgetController.js';
 
+function prepareElements(widgetElements = {}) {
+  const elements = { ...widgetElements };
+  const { container } = elements;
+
+  if (!elements.list && container?.querySelector) {
+    elements.list = container.querySelector('[data-role="browser-app-launcher"], .apps-widget__list');
+  }
+
+  if (!elements.note && container?.querySelector) {
+    elements.note = container.querySelector('#browser-widget-apps-note, .apps-widget__intro p');
+  }
+
+  if (!elements.sortToggle && container?.querySelector) {
+    elements.sortToggle = container.querySelector('#browser-widget-apps-sort-toggle, .apps-widget__sort-toggle');
+  }
+
+  return elements;
+}
+
 const DEFAULT_NOTE = 'Hover to preview each workspace, click to launch instantly.';
 const EMPTY_NOTE = 'Unlock more workspaces through upgrades and courses.';
 const SORT_NOTE = 'Sorting mode active — drag tiles to swap their spots.';
@@ -29,6 +48,7 @@ export function createAppsWidgetController() {
   let unsubscribeSummaries = null;
 
   const controller = createWidgetController({
+    prepareElements,
     onMount({ elements, addListener, controller: api }) {
       dragHandlers = createDragHandlers({
         getList: () => api.getElements()?.list || null,
