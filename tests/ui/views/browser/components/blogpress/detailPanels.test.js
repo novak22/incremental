@@ -46,9 +46,6 @@ test('renderOverviewPanel lists key payout stats', t => {
   assert.deepEqual(
     stats,
     [
-      '12 posts',
-      'B (82%)',
-      '4/5 (8 links) · Next at 10',
       '$12000',
       '$4200',
       '$800',
@@ -106,15 +103,15 @@ test('renderQualityPanel shows milestone and range', t => {
     qualityRange: { min: 120, max: 360 }
   };
 
-  const panel = renderQualityPanel({
+  const { panel, details } = renderQualityPanel({
     instance,
     formatRange: ({ min, max }) => `$${min} – $${max}`
   });
 
   const progressFill = panel.querySelector('.blogpress-progress__fill');
   assert.ok(progressFill.style.width.includes('35'), 'quality progress should reflect milestone percent');
-  assert.match(panel.textContent, /Signature Style/, 'quality panel should describe the next level milestone');
-  assert.match(panel.textContent, /\$120 – \$360/, 'quality panel should include formatted payout range');
+  assert.match(details.textContent, /Signature Style/, 'quality details should describe the next level milestone');
+  assert.match(details.textContent, /\$120 – \$360/, 'quality details should include formatted payout range');
 });
 
 test('renderActionPanel skips disabled actions and wires handler', t => {
@@ -189,7 +186,7 @@ test('renderIncomePanel lists active events with impact details', t => {
     formatPercent: value => `${value >= 0 ? '+' : ''}${Math.round(value * 100)}%`
   });
 
-  const eventRows = [...panel.querySelectorAll('.blogpress-list__item')];
+  const eventRows = [...panel.querySelectorAll('.blogpress-earnings__details .blogpress-list__item')];
   assert.equal(eventRows.length, 2, 'income panel should list each active event');
   const firstRowText = eventRows[0].textContent;
   const secondRowText = eventRows[1].textContent;

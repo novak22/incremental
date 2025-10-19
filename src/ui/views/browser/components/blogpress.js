@@ -22,9 +22,7 @@ import renderOverviewPanel from './blogpress/views/renderOverviewPanel.js';
 import renderNichePanel from './blogpress/views/renderNichePanel.js';
 import renderQualityPanel from './blogpress/views/renderQualityPanel.js';
 import renderIncomePanel from './blogpress/views/renderIncomePanel.js';
-import renderPayoutPanel from './blogpress/views/renderPayoutPanel.js';
 import renderActionPanel from './blogpress/views/renderActionPanel.js';
-import renderUpkeepPanel from './blogpress/views/renderUpkeepPanel.js';
 import renderActivityPanel from './blogpress/views/renderActivityPanel.js';
 import renderPricingView from './blogpress/views/pricingView.js';
 import renderBlueprintsView from './blogpress/views/blueprintsView.js';
@@ -67,9 +65,7 @@ const renderDetailView = createDetailViewController({
   renderNichePanel,
   renderQualityPanel,
   renderIncomePanel,
-  renderPayoutPanel,
   renderActionPanel,
-  renderUpkeepPanel,
   renderActivityPanel
 });
 

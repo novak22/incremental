@@ -4,9 +4,7 @@ export function createDetailViewController({
   renderNichePanel,
   renderQualityPanel,
   renderIncomePanel,
-  renderPayoutPanel,
   renderActionPanel,
-  renderUpkeepPanel,
   renderActivityPanel
 } = {}) {
   return function renderDetailView({
@@ -50,86 +48,103 @@ export function createDetailViewController({
     const layout = document.createElement('div');
     layout.className = 'blogpress-detail-layout';
 
-    const primaryColumn = document.createElement('div');
-    primaryColumn.className = 'blogpress-detail-layout__column blogpress-detail-layout__column--primary';
-    const secondaryColumn = document.createElement('div');
-    secondaryColumn.className = 'blogpress-detail-layout__column blogpress-detail-layout__column--secondary';
-
-    if (renderNichePanel) {
-      primaryColumn.appendChild(
-        renderNichePanel({
-          instance,
-          handlers: {
-            onSelectNiche: handlers.onSelectNiche,
-            onViewDetail: handlers.onViewDetail
-          }
-        })
-      );
-    }
+    const primaryTier = document.createElement('div');
+    primaryTier.className = 'blogpress-detail-tier blogpress-detail-tier--primary';
+    const secondaryTier = document.createElement('div');
+    secondaryTier.className = 'blogpress-detail-tier blogpress-detail-tier--secondary';
+    const detailEntries = [];
 
     if (renderQualityPanel) {
-      primaryColumn.appendChild(
-        renderQualityPanel({
-          instance,
-          formatRange
-        })
-      );
-    }
-
-    if (renderUpkeepPanel) {
-      primaryColumn.appendChild(
-        renderUpkeepPanel({
-          instance
-        })
-      );
-    }
-
-    if (renderActivityPanel) {
-      primaryColumn.appendChild(
-        renderActivityPanel({
-          instance,
-          formatCurrency,
-          formatHours
-        })
-      );
+      const performanceResult = renderQualityPanel({
+        instance,
+        formatRange
+      });
+      const performancePanel = performanceResult?.panel || performanceResult;
+      const performanceDetails = performanceResult?.details;
+      if (performancePanel instanceof HTMLElement) {
+        primaryTier.appendChild(performancePanel);
+      }
+      if (performanceDetails instanceof HTMLElement) {
+        detailEntries.push(performanceDetails);
+      }
     }
 
     if (renderIncomePanel) {
-      secondaryColumn.appendChild(
-        renderIncomePanel({
-          instance,
-          formatCurrency,
-          formatNetCurrency,
-          formatPercent
-        })
-      );
-    }
-
-    if (renderPayoutPanel) {
-      secondaryColumn.appendChild(
-        renderPayoutPanel({
-          instance,
-          formatCurrency
-        })
-      );
+      const earningsPanel = renderIncomePanel({
+        instance,
+        formatCurrency,
+        formatNetCurrency,
+        formatPercent
+      });
+      if (earningsPanel instanceof HTMLElement) {
+        primaryTier.appendChild(earningsPanel);
+      }
     }
 
     if (renderActionPanel) {
-      secondaryColumn.appendChild(
-        renderActionPanel({
-          instance,
-          handlers: {
-            onRunAction: handlers.onRunAction,
-            onSell: handlers.onSell
-          },
-          formatHours,
-          formatCurrency
-        })
-      );
+      const actionsPanel = renderActionPanel({
+        instance,
+        handlers: {
+          onRunAction: handlers.onRunAction,
+          onSell: handlers.onSell
+        },
+        formatHours,
+        formatCurrency
+      });
+      if (actionsPanel instanceof HTMLElement) {
+        primaryTier.appendChild(actionsPanel);
+      }
     }
 
-    layout.append(primaryColumn, secondaryColumn);
+    if (renderNichePanel) {
+      const nichePanel = renderNichePanel({
+        instance,
+        handlers: {
+          onSelectNiche: handlers.onSelectNiche,
+          onViewDetail: handlers.onViewDetail
+        }
+      });
+      if (nichePanel instanceof HTMLElement) {
+        secondaryTier.appendChild(nichePanel);
+      }
+    }
+
+    if (renderActivityPanel) {
+      const activityPanel = renderActivityPanel({
+        instance,
+        formatCurrency,
+        formatHours
+      });
+      if (activityPanel instanceof HTMLElement) {
+        detailEntries.push(activityPanel);
+      }
+    }
+
+    if (primaryTier.children.length > 0) {
+      layout.appendChild(primaryTier);
+    }
+    if (secondaryTier.children.length > 0) {
+      layout.appendChild(secondaryTier);
+    }
+
     container.appendChild(layout);
+
+    if (detailEntries.length > 0) {
+      const details = document.createElement('details');
+      details.className = 'blogpress-details';
+
+      const summary = document.createElement('summary');
+      summary.className = 'blogpress-details__summary';
+      summary.textContent = 'Details';
+      details.appendChild(summary);
+
+      const content = document.createElement('div');
+      content.className = 'blogpress-details__content';
+      detailEntries.forEach(entry => content.appendChild(entry));
+      details.appendChild(content);
+
+      container.appendChild(details);
+    }
     return container;
   };
 }

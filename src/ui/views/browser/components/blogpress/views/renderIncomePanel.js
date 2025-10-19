@@ -5,11 +5,20 @@ export default function renderIncomePanel({
   formatPercent = value => String(value ?? '')
 }) {
   const panel = document.createElement('article');
-  panel.className = 'blogpress-panel blogpress-panel--income';
+  panel.className = 'blogpress-panel blogpress-panel--earnings';
 
   const title = document.createElement('h3');
-  title.textContent = 'Income recap';
+  title.textContent = 'Earnings & Upkeep';
   panel.appendChild(title);
+
+  const grid = document.createElement('div');
+  grid.className = 'blogpress-earnings__grid';
+
+  const incomeSection = document.createElement('section');
+  incomeSection.className = 'blogpress-earnings__section';
+  const incomeTitle = document.createElement('h4');
+  incomeTitle.textContent = 'Income recap';
+  incomeSection.appendChild(incomeTitle);
 
   const stats = document.createElement('dl');
   stats.className = 'blogpress-stats';
@@ -59,14 +68,104 @@ export default function renderIncomePanel({
     stats.append(dt, dd);
   });
 
-  panel.appendChild(stats);
+  incomeSection.appendChild(stats);
+  grid.appendChild(incomeSection);
+
+  const payoutSection = document.createElement('section');
+  payoutSection.className = 'blogpress-earnings__section';
+  const payoutTitle = document.createElement('h4');
+  payoutTitle.textContent = 'Payout recap';
+  payoutSection.appendChild(payoutTitle);
+
+  const payoutLead = document.createElement('p');
+  payoutLead.className = 'blogpress-earnings__lead';
+  payoutLead.textContent = instance.latestPayout > 0
+    ? `Latest payout: ${formatCurrency(instance.latestPayout)}`
+    : 'No payout logged yesterday.';
+  payoutSection.appendChild(payoutLead);
+
+  if (instance.payoutBreakdown?.entries?.length) {
+    const list = document.createElement('ul');
+    list.className = 'blogpress-list';
+    instance.payoutBreakdown.entries.forEach(entry => {
+      const item = document.createElement('li');
+      item.className = 'blogpress-list__item';
+      const label = document.createElement('span');
+      label.className = 'blogpress-list__label';
+      label.textContent = entry.label;
+      const value = document.createElement('span');
+      value.className = 'blogpress-list__value';
+      const amount = Number(entry.amount) || 0;
+      value.textContent = amount >= 0
+        ? `+${formatCurrency(amount)}`
+        : `−${formatCurrency(Math.abs(amount))}`;
+      item.append(label, value);
+      list.appendChild(item);
+    });
+    payoutSection.appendChild(list);
+  } else {
+    const empty = document.createElement('p');
+    empty.className = 'blogpress-panel__hint';
+    empty.textContent = 'Run quick actions and fund upkeep to unlock modifier breakdowns.';
+    payoutSection.appendChild(empty);
+  }
+
+  grid.appendChild(payoutSection);
+  panel.appendChild(grid);
+
+  const upkeepSection = document.createElement('section');
+  upkeepSection.className = 'blogpress-earnings__section blogpress-earnings__section--upkeep';
+  const upkeepTitle = document.createElement('h4');
+  upkeepTitle.textContent = 'Daily upkeep';
+  upkeepSection.appendChild(upkeepTitle);
+
+  const maintenance = instance.maintenance || {};
+  const status = document.createElement('span');
+  status.className = 'blogpress-upkeep__status';
+  if (!maintenance.hasUpkeep) {
+    status.dataset.state = 'none';
+    status.textContent = 'No upkeep required';
+  } else if (instance.maintenanceFunded) {
+    status.dataset.state = 'funded';
+    status.textContent = 'Funded today';
+  } else {
+    status.dataset.state = 'due';
+    status.textContent = 'Due today';
+  }
+  upkeepSection.appendChild(status);
+
+  const upkeepNote = document.createElement('p');
+  upkeepNote.className = 'blogpress-panel__lead';
+  upkeepNote.textContent = maintenance.hasUpkeep ? maintenance.text : 'Keep vibing — no upkeep costs yet.';
+  upkeepSection.appendChild(upkeepNote);
+
+  const upkeepMessage = document.createElement('p');
+  const upkeepSummary = maintenance.hasUpkeep ? maintenance.text : 'No upkeep';
+  if (instance.status?.id === 'active') {
+    if (instance.maintenanceFunded) {
+      upkeepMessage.className = 'blogpress-panel__hint';
+      upkeepMessage.textContent = `Upkeep covered today (${upkeepSummary}). Expect the payout at day end.`;
+    } else {
+      upkeepMessage.className = 'blogpress-panel__warning';
+      upkeepMessage.textContent = `Upkeep still due (${upkeepSummary}). Fund hours or cash to restart payouts.`;
+    }
+  } else {
+    upkeepMessage.className = 'blogpress-panel__hint';
+    upkeepMessage.textContent = 'Income tracking begins once launch prep wraps.';
+  }
+  upkeepSection.appendChild(upkeepMessage);
+
+  panel.appendChild(upkeepSection);
 
   const events = Array.isArray(instance.events) ? instance.events : [];
   if (events.length) {
-    const eventTitle = document.createElement('p');
-    eventTitle.className = 'blogpress-panel__section-title';
-    eventTitle.textContent = 'Live modifiers';
-    panel.appendChild(eventTitle);
+    const modifiers = document.createElement('details');
+    modifiers.className = 'blogpress-earnings__details';
+
+    const summary = document.createElement('summary');
+    summary.className = 'blogpress-earnings__details-summary';
+    summary.textContent = 'Live modifiers';
+    modifiers.appendChild(summary);
 
     const eventList = document.createElement('ul');
     eventList.className = 'blogpress-list';
@@ -106,25 +205,9 @@ export default function renderIncomePanel({
       eventList.appendChild(item);
     });
 
-    panel.appendChild(eventList);
+    modifiers.appendChild(eventList);
+    panel.appendChild(modifiers);
   }
-
-  const upkeepMessage = document.createElement('p');
-  const maintenance = instance.maintenance || {};
-  const upkeepSummary = maintenance.hasUpkeep ? maintenance.text : 'No upkeep';
-  if (instance.status?.id === 'active') {
-    if (instance.maintenanceFunded) {
-      upkeepMessage.className = 'blogpress-panel__hint';
-      upkeepMessage.textContent = `Upkeep covered today (${upkeepSummary}). Expect the payout at day end.`;
-    } else {
-      upkeepMessage.className = 'blogpress-panel__warning';
-      upkeepMessage.textContent = `Upkeep still due (${upkeepSummary}). Fund hours or cash to restart payouts.`;
-    }
-  } else {
-    upkeepMessage.className = 'blogpress-panel__hint';
-    upkeepMessage.textContent = 'Income tracking begins once launch prep wraps.';
-  }
-  panel.appendChild(upkeepMessage);
 
   return panel;
 }
