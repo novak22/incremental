@@ -8,7 +8,7 @@
 .browser-home__widgets {
   width: 100%;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: var(--browser-home-widget-gap, var(--browser-home-spacing, 1.5rem));
   align-items: stretch;
   margin: 0;
@@ -16,6 +16,13 @@
 
 .browser-home__widgets > .browser-widget {
   min-width: 0;
+  justify-self: stretch;
+}
+
+@media (max-width: 720px) {
+  .browser-home__widgets {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .browser-home__header {
