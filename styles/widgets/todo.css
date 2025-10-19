@@ -14,6 +14,232 @@
   width: 100%;
 }
 
+.todo-widget__timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.25rem 0 0.4rem;
+}
+
+.todo-timeline__scroller {
+  position: relative;
+  overflow-x: auto;
+  overflow-y: visible;
+  padding-bottom: 0.25rem;
+  scrollbar-width: thin;
+}
+
+.todo-timeline__track {
+  position: relative;
+  min-width: 640px;
+  padding: 0.5rem 0 1.3rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.todo-timeline__markers {
+  position: relative;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  height: 1.15rem;
+}
+
+.todo-timeline__marker {
+  position: absolute;
+  inset-block-start: 0;
+  transform: translateX(-50%);
+  font-size: 0.75rem;
+  color: var(--browser-subtle);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  user-select: none;
+  left: var(--todo-timeline-marker);
+}
+
+.todo-timeline__grid {
+  position: relative;
+  height: 4.9rem;
+  border-radius: 14px;
+  background: linear-gradient(
+      to right,
+      rgba(148, 163, 184, 0.16) 0,
+      rgba(148, 163, 184, 0.06) 100%
+    );
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.18);
+}
+
+.todo-timeline__blocks {
+  position: absolute;
+  inset: 1.35rem 0 0;
+  min-height: 3.8rem;
+}
+
+.todo-timeline__block {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: var(--todo-timeline-start);
+  inline-size: max(3.2rem, var(--todo-timeline-width));
+  min-height: 3.3rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  color: var(--browser-subtle);
+  background: rgba(148, 163, 184, 0.22);
+  border: 1px solid rgba(148, 163, 184, 0.26);
+  box-shadow: 0 8px 16px rgba(15, 23, 42, 0.06);
+  overflow: hidden;
+  animation: todo-timeline-pop 220ms ease;
+}
+
+.todo-timeline__block::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.todo-timeline__block.is-past {
+  opacity: 0.55;
+}
+
+.todo-timeline__block.is-current {
+  border-color: var(--browser-accent);
+  box-shadow: 0 12px 22px rgba(30, 79, 214, 0.18);
+  opacity: 1;
+}
+
+.todo-timeline__block.is-placeholder {
+  background: rgba(148, 163, 184, 0.12);
+  border-style: dashed;
+  color: var(--browser-muted);
+}
+
+.todo-timeline__block--contract {
+  color: #0f172a;
+  background: var(--browser-accent-soft);
+  border-color: rgba(30, 79, 214, 0.4);
+}
+
+.todo-timeline__block--upgrade {
+  background: repeating-linear-gradient(
+      135deg,
+      rgba(30, 79, 214, 0.16) 0,
+      rgba(30, 79, 214, 0.16) 8px,
+      rgba(30, 79, 214, 0.32) 8px,
+      rgba(30, 79, 214, 0.32) 16px
+    );
+  border-color: rgba(30, 79, 214, 0.5);
+  color: #0f172a;
+}
+
+.todo-timeline__block--study {
+  background: rgba(236, 239, 255, 0.65);
+  border: 2px dotted rgba(30, 41, 59, 0.4);
+  color: var(--browser-subtle);
+}
+
+.todo-timeline__block--upkeep {
+  min-height: 2.4rem;
+  padding-block: 0.45rem;
+  background: rgba(148, 163, 184, 0.18);
+  border-color: rgba(148, 163, 184, 0.35);
+}
+
+.todo-timeline__block-title {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: inherit;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.todo-timeline__block-meta {
+  margin: 0;
+  font-size: 0.78rem;
+  color: rgba(15, 23, 42, 0.64);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.todo-timeline__block.is-past .todo-timeline__block-meta {
+  color: rgba(15, 23, 42, 0.5);
+}
+
+.todo-timeline__block-action {
+  margin-top: auto;
+  align-self: flex-start;
+  font: inherit;
+  font-weight: 600;
+  border: none;
+  border-radius: 999px;
+  padding: 0.35rem 0.85rem;
+  cursor: pointer;
+  background: var(--browser-accent);
+  color: #fff;
+  transition: background 160ms ease, transform 160ms ease;
+}
+
+.todo-timeline__block-action:hover {
+  background: #1e4fd6;
+}
+
+.todo-timeline__block-action:active {
+  transform: translateY(1px);
+}
+
+.todo-timeline__block-action:focus-visible {
+  outline: 2px solid rgba(30, 79, 214, 0.6);
+  outline-offset: 3px;
+}
+
+.todo-timeline__now {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: var(--todo-timeline-now);
+  width: 2px;
+  border-radius: 999px;
+  background: var(--browser-accent);
+  box-shadow: 0 0 10px rgba(30, 79, 214, 0.5);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.todo-timeline__hooks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.todo-timeline__hook {
+  position: absolute;
+  opacity: 0;
+}
+
+.todo-timeline__empty {
+  margin: 0.25rem 0 0;
+  font-size: 0.82rem;
+  color: var(--browser-muted);
+}
+
+@keyframes todo-timeline-pop {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .todo-widget__focus {
   display: flex;
   flex-wrap: wrap;

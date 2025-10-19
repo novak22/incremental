@@ -41,6 +41,7 @@ function seedAutoCompletedEntries(entries = [], formatDuration = hours => format
     const durationText = entry?.durationText || formatDuration(durationHours);
     const count = Number.isFinite(entry?.count) && entry.count > 0 ? entry.count : 1;
     const completedAt = existing?.completedAt ?? Date.now();
+    const focusCategory = entry?.focusCategory || entry?.category || existing?.focusCategory || null;
 
     completedItems.set(id, {
       id,
@@ -50,7 +51,8 @@ function seedAutoCompletedEntries(entries = [], formatDuration = hours => format
       repeatable: false,
       remainingRuns: null,
       count,
-      completedAt
+      completedAt,
+      focusCategory
     });
   });
 }
@@ -125,7 +127,8 @@ function recordCompletion(entry, {
     repeatable,
     remainingRuns,
     count,
-    completedAt: Date.now()
+    completedAt: Date.now(),
+    focusCategory: entry.focusCategory || existing?.focusCategory || null
   };
 
   completedItems.set(entry.id, record);
