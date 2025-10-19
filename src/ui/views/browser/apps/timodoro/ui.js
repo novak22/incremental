@@ -108,8 +108,8 @@ function createDonePanel(model = {}, config = TAB_CONFIGS[1], options = {}) {
   panel.setAttribute('aria-labelledby', labelId || config.buttonId);
 
   const taskCard = createCard({
-    title: 'Done',
-    summary: 'Celebrate today’s finished focus blocks.',
+    title: 'Wins logged',
+    summary: 'Celebrate freshly cleared focus blocks.',
     headerClass: navigation ? 'browser-card__header--stacked' : undefined,
     headerContent: navigation || null
   });

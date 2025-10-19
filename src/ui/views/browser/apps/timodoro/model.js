@@ -80,7 +80,16 @@ export function buildRecurringEntries(summary = {}) {
   return [...maintenance, ...study];
 }
 
-export function buildSummaryEntries(summary = {}, todoModel = {}, state = {}) {
+function countCompletedTasks(completedGroups = {}) {
+  return Object.values(completedGroups).reduce((total, group) => {
+    if (!Array.isArray(group)) {
+      return total;
+    }
+    return total + group.length;
+  }, 0);
+}
+
+export function buildSummaryEntries(summary = {}, todoModel = {}, state = {}, completedGroups = {}) {
   const totalHours = Math.max(0, Number(summary?.totalTime) || 0);
   const activeEarnings = Math.max(0, Number(summary?.activeEarnings) || 0);
   const passiveEarnings = Math.max(0, Number(summary?.passiveEarnings) || 0);
@@ -95,24 +104,28 @@ export function buildSummaryEntries(summary = {}, todoModel = {}, state = {}) {
     : Math.max(0, timeCap - hoursAvailable);
   const percentUsed = timeCap > 0 ? Math.min(100, Math.round((hoursSpent / timeCap) * 100)) : 0;
 
+  const taskCount = countCompletedTasks(completedGroups);
+
   return [
     {
-      label: 'Hours logged',
-      value: formatHours(totalHours),
-      note: totalHours > 0 ? 'Across all workstreams today.' : 'No focus hours logged yet.'
-    },
-    {
-      label: 'Earnings today',
+      label: 'Cash hauled',
       value: formatCurrency(totalEarnings),
       note: totalEarnings > 0
         ? `${formatCurrency(activeEarnings)} active • ${formatCurrency(passiveEarnings)} passive`
         : 'Ship a gig to see cash roll in.'
     },
     {
-      label: 'Time used',
-      value: `${percentUsed}%`,
+      label: 'Focus logged',
+      value: formatHours(totalHours),
+      note: totalHours > 0
+        ? (taskCount > 0 ? `Across ${taskCount} win${taskCount === 1 ? '' : 's'} today.` : 'Across today’s push.')
+        : 'No focus hours logged yet.'
+    },
+    {
+      label: 'Cap burn',
+      value: timeCap > 0 ? `${percentUsed}%` : '—',
       note: timeCap > 0
-        ? `${formatHours(hoursSpent)} of ${formatHours(timeCap)} booked.`
+        ? `${formatHours(hoursSpent)} of ${formatHours(timeCap)} tapped.`
         : 'Daily cap not set yet.'
     }
   ];
@@ -157,7 +170,7 @@ export function buildMeta(summary = {}, completedGroups = {}) {
 export function buildTimodoroViewModel(state = {}, summary = {}, todoModel = {}) {
   const completedGroups = buildCompletedGroups(summary);
   const recurringEntries = buildRecurringEntries(summary);
-  const summaryEntries = buildSummaryEntries(summary, todoModel, state);
+  const summaryEntries = buildSummaryEntries(summary, todoModel, state, completedGroups);
   const breakdownEntries = buildBreakdown(summary, todoModel, state);
   const todoEntries = buildQueueEntryCollection(todoModel);
   const todoEmptyMessage = todoModel?.emptyMessage;
@@ -177,6 +190,12 @@ export function buildTimodoroViewModel(state = {}, summary = {}, todoModel = {})
     : Math.max(0, timeCap - (Number(state?.timeLeft) || 0));
   const spentLabel = queueMetrics?.hoursSpentLabel || formatHours(hoursSpent);
 
+  const streakValue = Number(summary?.focusStreak ?? summary?.streakDays ?? summary?.streak);
+  const streakDays = Number.isFinite(streakValue) ? Math.max(0, streakValue) : 0;
+  const focusStreakLabel = streakDays > 0
+    ? `🔥 ${streakDays}-day focus streak alive.`
+    : 'No streak yet — today is a fresh start.';
+
   const meta = buildMeta(summary, completedGroups);
 
   return {
@@ -190,6 +209,7 @@ export function buildTimodoroViewModel(state = {}, summary = {}, todoModel = {})
     todoMoneyAvailable,
     hoursAvailableLabel: availableLabel,
     hoursSpentLabel: spentLabel,
+    focusStreakLabel,
     meta
   };
 }

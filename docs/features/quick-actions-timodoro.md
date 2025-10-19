@@ -12,12 +12,12 @@
 4. **Action model** – the dashboard provider composes quick actions, in-progress tasks, and asset upgrade data into registries so view code simply binds lists to cards.
 
 ## Timodoro Sections
-- **ToDo Section** – `todoSection.js` groups queued work by focus bucket, builds cards with navigation headers, and encapsulates empty-state messaging.
+- **Focus Queue** – `todoSection.js` now highlights the next actionable entry with a hero call-to-action before listing grouped tasks, keeping the primary sprint obvious without hiding the original queues.
 - **Recurring Section** – `recurringSection.js` renders maintenance/assistant logs, sharing list helpers with other workspaces.
-- **Summary Column** – `summarySection.js` handles snapshot stats and daily totals, wiring dataset roles used by tests and analytics hooks.
+- **Summary Column** – `summarySection.js` condenses streaks, hour stats, and earnings into the "Daily pulse" card so tests still find the same dataset roles while the layout feels more like an energized productivity sim.
 
 ## Snapshot & Recurring Stats
-- Snapshot cards highlight available vs. spent focus hours using shared widget helpers so future productivity modes can mirror the pattern.
+- The Daily pulse card keeps hour availability and streak copy in one place, while `buildTimodoroViewModel` exposes friendlier labels (`focusStreakLabel`, `Cash hauled`, etc.) for other presenters to reuse.
 - Recurring lists reuse the same task list renderer as ToDo items, ensuring assistant reports remain visually consistent with manual tasks.
 
 ## Future Considerations
