@@ -23,6 +23,73 @@ function appendDetail(parts, value) {
   parts.push(normalized);
 }
 
+function createFocusHero(entry = {}) {
+  const hero = document.createElement('section');
+  hero.className = 'timodoro-focus';
+
+  const label = document.createElement('p');
+  label.className = 'timodoro-focus__label';
+  appendContent(label, 'Next focus block');
+
+  const title = document.createElement('h3');
+  title.className = 'timodoro-focus__title';
+  appendContent(title, entry.title || 'Queue a mission to get rolling.');
+
+  const meta = document.createElement('p');
+  meta.className = 'timodoro-focus__meta';
+  appendContent(meta, entry.meta || 'Line up a hustle to prime your flow.');
+
+  const actionRow = document.createElement('div');
+  actionRow.className = 'timodoro-focus__actions';
+
+  const cta = document.createElement('button');
+  cta.type = 'button';
+  cta.className = 'timodoro-focus__cta';
+  const actionLabel = entry.buttonLabel || 'Start focus block';
+  appendContent(cta, actionLabel);
+
+  const hasClickHandler = typeof entry.onClick === 'function';
+  if (!hasClickHandler) {
+    cta.disabled = true;
+    cta.classList.add('timodoro-focus__cta--disabled');
+    cta.title = 'Queue a task to unlock your next sprint.';
+  } else {
+    cta.addEventListener('click', () => {
+      if (cta.disabled) {
+        return;
+      }
+      cta.disabled = true;
+      cta.classList.add('is-busy');
+      const result = entry.onClick?.();
+      if (!result || result.success !== true) {
+        cta.disabled = false;
+        cta.classList.remove('is-busy');
+        return;
+      }
+      hero.classList.add('timodoro-focus--completed');
+      const raf = typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function'
+        ? window.requestAnimationFrame
+        : (fn => setTimeout(fn, 0));
+      raf(() => {
+        hero.classList.add('timodoro-focus--celebrate');
+      });
+    });
+  }
+
+  actionRow.appendChild(cta);
+
+  if (entry.subtitle) {
+    const subtitle = document.createElement('p');
+    subtitle.className = 'timodoro-focus__subtitle';
+    appendContent(subtitle, entry.subtitle);
+    actionRow.appendChild(subtitle);
+  }
+
+  hero.append(label, title, meta, actionRow);
+
+  return hero;
+}
+
 export function buildTodoGroups(entries = [], options = {}) {
   const grouping = buildTodoGrouping(entries, options);
   const groupedEntries = grouping.groups || {};
@@ -60,39 +127,48 @@ export function buildTodoGroups(entries = [], options = {}) {
     return map;
   }, {});
 
+  const nextEntry = Array.isArray(grouping.entries) ? grouping.entries[0] : null;
+  const nextEntryModel = nextEntry ? buildQueueEntryModel(nextEntry) : null;
+
   return {
     items: itemsByKey,
-    grouping
+    grouping,
+    nextEntry: nextEntryModel
   };
 }
 
 export function createTodoCard(model = {}, options = {}) {
   const { navigation } = options;
   const card = createCard({
-    title: 'ToDo',
+    title: 'Focus queue',
     headerClass: navigation ? 'browser-card__header--stacked' : undefined,
-    headerContent: navigation || null
+    headerContent: navigation || null,
+    summary: 'Lock in your next hustle sprint.'
   });
 
   const entries = Array.isArray(model.todoEntries) ? model.todoEntries : [];
-  const { items: groupedItems, grouping } = buildTodoGroups(entries, {
+  const { items: groupedItems, grouping, nextEntry } = buildTodoGroups(entries, {
     availableHours: model.todoHoursAvailable ?? model.hoursAvailable,
     availableMoney: model.todoMoneyAvailable ?? model.moneyAvailable,
     emptyMessage: model.todoEmptyMessage
   });
 
-  if (grouping.totalPending === 0) {
+  if (!nextEntry && grouping.totalPending === 0) {
     const emptyText = grouping.emptyMessage || DEFAULT_TODO_EMPTY_MESSAGE;
     card.appendChild(createTaskList([], emptyText, 'timodoro-todo'));
     return card;
   }
 
+  if (nextEntry) {
+    card.appendChild(createFocusHero(nextEntry));
+  }
+
   const section = document.createElement('section');
-  section.className = 'timodoro-section';
+  section.className = 'timodoro-section timodoro-section--queue';
 
   const heading = document.createElement('h3');
   heading.className = 'timodoro-section__title';
-  appendContent(heading, 'Up next');
+  appendContent(heading, 'Queue intel');
   section.appendChild(heading);
 
   const groupsWrapper = document.createElement('div');

@@ -14,7 +14,7 @@ function createCompletedSection(completedGroups = {}) {
 
   const heading = document.createElement('h3');
   heading.className = 'timodoro-section__title';
-  appendContent(heading, 'Completed today');
+  appendContent(heading, 'Wins logged today');
 
   const groupsWrapper = document.createElement('div');
   groupsWrapper.className = 'timodoro-section__groups';
@@ -31,6 +31,7 @@ function createCompletedSection(completedGroups = {}) {
       ? completedGroups[groupConfig.key]
       : [];
     const list = createTaskList(entries, groupConfig.empty, `timodoro-completed-${groupConfig.key}`);
+    list.classList.add('timodoro-list--completed');
 
     group.append(title, list);
     groupsWrapper.appendChild(group);
