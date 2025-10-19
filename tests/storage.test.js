@@ -78,6 +78,7 @@ test('legacy saves migrate to new asset structure', () => {
     money: 500,
     timeLeft: 7,
     day: 12,
+    lastSaved: 123456,
     blog: {
       active: true,
       buffer: 80,
@@ -101,6 +102,22 @@ test('legacy saves migrate to new asset structure', () => {
   assert.equal(getUpgradeState('coffee').usedToday, 2);
   assert.ok(state.log.some(entry => entry.message === 'Legacy entry'));
   assert.ok(Number.isInteger(state.version));
+
+  const indexRaw = localStorage.getItem(SESSION_INDEX_KEY);
+  assert.ok(indexRaw, 'session index is created');
+  const index = JSON.parse(indexRaw);
+  assert.ok(index.version >= 1, 'session index records migration version');
+
+  const activeSession = getActiveSessionDescriptor();
+  assert.equal(activeSession.id, 'default');
+  assert.equal(activeSession.lastSaved, 123456);
+  assert.ok(
+    activeSession.storageKey.endsWith(':session:default'),
+    `expected storage key to migrate to default session slot, got ${activeSession.storageKey}`
+  );
+  assert.equal(localStorage.getItem(STORAGE_KEY), null, 'legacy key removed after migration');
+  const migratedSnapshot = JSON.parse(localStorage.getItem(activeSession.storageKey));
+  assert.equal(migratedSnapshot.money, 500);
 });
 
 test('saveState persists a trimmed niche analytics history snapshot', () => {

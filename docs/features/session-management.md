@@ -27,6 +27,7 @@
   }
   ```
 - Each session entry records its `storageKey`, allowing the default slot to keep using the legacy `online-hustle-sim-v2` blob when present.
+- On initialization the repository migrates any pre-session single-slot save stored at `online-hustle-sim-v2` into the default session, copying the snapshot to `online-hustle-sim-v2:session:default`, preserving `lastSaved`, and deleting the stale root key to avoid duplicates. The migration is versioned so future session index changes can build on the same runner.
 - `StatePersistence` now resolves the snapshot key via the session repository before every load/save and updates `lastSaved` metadata after successful writes.
 - `createStorage` wraps the repository helpers so switching the active session automatically replays the existing persistence pipeline (`loadState`, migrations, default seeding, etc.).
 - Tests cover creating a second session, swapping back to the primary slot, and pruning extra saves to ensure the index stays tidy.
