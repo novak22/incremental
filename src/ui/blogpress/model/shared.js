@@ -115,6 +115,75 @@ function formatNiche(nicheInfo) {
   };
 }
 
+function deriveSeoGrade(score) {
+  if (!Number.isFinite(Number(score))) {
+    return 'F';
+  }
+  const numeric = Number(score);
+  if (numeric >= 90) return 'A';
+  if (numeric >= 80) return 'B';
+  if (numeric >= 70) return 'C';
+  if (numeric >= 60) return 'D';
+  return 'F';
+}
+
+function normalizeSeoScore(instance) {
+  const raw = instance?.metrics?.seoScore;
+  const numeric = Number(raw);
+  if (!Number.isFinite(numeric)) {
+    return 30;
+  }
+  return Math.max(0, Math.min(100, Math.round(numeric)));
+}
+
+function normalizeBacklinkCount(instance) {
+  const raw = instance?.metrics?.backlinks;
+  const numeric = Number(raw);
+  if (!Number.isFinite(numeric)) {
+    return 0;
+  }
+  return Math.max(0, Math.round(numeric));
+}
+
+function collectBacklinkThresholds(definition) {
+  const levels = ensureArray(definition?.quality?.levels);
+  const thresholds = [];
+  for (let level = 1; level <= 5; level += 1) {
+    const levelDef = levels.find(entry => Number(entry?.level) === level) || {};
+    const requirement = Number(levelDef?.requirements?.outreach);
+    thresholds.push({
+      level,
+      requirement: Number.isFinite(requirement) ? Math.max(0, requirement) : 0
+    });
+  }
+  return thresholds;
+}
+
+function calculateBacklinkScore({ definition, backlinksCount }) {
+  const thresholds = collectBacklinkThresholds(definition);
+  let score = 1;
+  thresholds.forEach(entry => {
+    if (backlinksCount >= entry.requirement) {
+      score = Math.max(score, Math.min(5, entry.level));
+    }
+  });
+  return {
+    score: Math.min(5, Math.max(1, Math.round(score))),
+    thresholds
+  };
+}
+
+function findNextBacklinkTarget({ thresholds = [], count, currentScore }) {
+  const next = thresholds
+    .filter(entry => entry.level > currentScore)
+    .sort((a, b) => a.level - b.level)
+    .find(entry => count < entry.requirement);
+  if (!next) {
+    return null;
+  }
+  return Math.max(0, next.requirement);
+}
+
 export function formatBlogpressInstance(definition, instance, index, state, shared = {}) {
   const actions = ensureArray(shared.actions);
   const actionSnapshots = actions.map(action =>
@@ -139,6 +208,16 @@ export function formatBlogpressInstance(definition, instance, index, state, shar
   const milestone = buildMilestoneProgress(definition, instance);
   const payoutBreakdown = buildPayoutBreakdown(instance);
   const events = collectInstanceEvents(definition, instance, state);
+  const postsWritten = Math.max(0, Math.round(clampNumber(instance?.quality?.progress?.posts)));
+  const seoScore = normalizeSeoScore(instance);
+  const seoGrade = deriveSeoGrade(seoScore);
+  const backlinksCount = normalizeBacklinkCount(instance);
+  const backlinkSummary = calculateBacklinkScore({ definition, backlinksCount });
+  const nextBacklinkTarget = findNextBacklinkTarget({
+    thresholds: backlinkSummary.thresholds,
+    count: backlinksCount,
+    currentScore: backlinkSummary.score
+  });
 
   return {
     id: instance.id,
@@ -164,6 +243,18 @@ export function formatBlogpressInstance(definition, instance, index, state, shar
     nicheLocked: Boolean(instance.nicheId),
     nicheOptions: ensureArray(shared.nicheOptions),
     maintenance: shared.maintenance,
+    posts: {
+      published: postsWritten
+    },
+    seo: {
+      score: seoScore,
+      grade: seoGrade
+    },
+    backlinks: {
+      count: backlinksCount,
+      score: backlinkSummary.score,
+      nextTarget: nextBacklinkTarget
+    },
     definition,
     instance
   };

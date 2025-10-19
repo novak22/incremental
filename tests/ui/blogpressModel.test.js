@@ -20,6 +20,7 @@ function createState() {
             totalIncome: 140,
             pendingIncome: 12,
             maintenanceFundedToday: true,
+            metrics: { seoScore: 88, backlinks: 6 },
             quality: { level: 1, progress: { posts: 3, seo: 1 } },
             nicheId: 'healthWellness',
             lastIncomeBreakdown: {
@@ -40,6 +41,7 @@ function createState() {
             totalIncome: 0,
             pendingIncome: 0,
             maintenanceFundedToday: false,
+            metrics: {},
             quality: { level: 0, progress: {} }
           }
         ]
@@ -117,12 +119,19 @@ test('formatBlogpressModel returns formatted instances and summary', () => {
   assert.equal(active.events[0].label, 'Backlink Parade');
   assert.equal(active.events[0].percent, 0.25);
   assert.equal(active.events[1].source, 'niche');
+  assert.equal(active.posts?.published, 3);
+  assert.equal(active.seo?.score, 88);
+  assert.equal(active.seo?.grade, 'B');
+  assert.equal(active.backlinks?.count, 6);
+  assert.equal(active.backlinks?.score, 4);
 
   const setup = instances.find(entry => entry.id === 'blog-2');
   assert.ok(setup, 'expected setup blog instance');
   assert.equal(setup.status?.id, 'setup');
   assert.equal(setup.quickAction?.available, false);
   assert.match(setup.quickAction?.disabledReason || '', /Launch finishes in/);
+  assert.equal(setup.seo?.score, 30);
+  assert.equal(setup.backlinks?.count, 0);
 
   assert.ok(Array.isArray(nicheOptions));
   const nicheIds = nicheOptions.map(option => option.id);

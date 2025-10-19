@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- BlogPress: Detail views now show posts published, an A–F SEO grade influenced by writing and sprint actions, and a backlink rank that tracks outreach progress toward quality milestones.
 - Hustles: Doubled DownWork freelance and data entry availability, capped per-template offers at six, and introduced a $7/hour Virtual Assistant Shift so ops-minded players always have a remote contract waiting.【F:src/game/data/market/freelance.js†L4-L41】【F:src/game/data/market/dataEntry.js†L4-L41】【F:src/game/data/hustleMarketConfig.js†L1-L92】【F:src/game/data/market/virtualAssistant.js†L1-L44】【F:src/game/hustles/definitions/instantHustles.js†L1-L140】
 - UI: When no hustle commitments remain, the TODO queue now surfaces a "Find freelance work" task that scouts the market and auto-accepts the best freelance contract after a quick 15-minute search.
 - UI: When no hustle commitments remain, the TODO queue now surfaces a "Find work" task that scouts the whole hustle market and auto-accepts the best short commitment after a quick 15-minute search.

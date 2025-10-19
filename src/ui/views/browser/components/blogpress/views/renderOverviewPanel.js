@@ -19,7 +19,31 @@ export default function renderOverviewPanel({ instance, formatCurrency }) {
   const list = document.createElement('dl');
   list.className = 'blogpress-stats blogpress-stats--compact';
 
+  const postsPublished = Math.max(0, Math.round(Number(instance?.posts?.published) || 0));
+  const seoScore = Math.max(0, Math.min(100, Math.round(Number(instance?.seo?.score) || 0)));
+  const seoGrade = instance?.seo?.grade || 'F';
+  const backlinkScore = Math.max(1, Math.min(5, Math.round(Number(instance?.backlinks?.score) || 1)));
+  const backlinkCount = Math.max(0, Math.round(Number(instance?.backlinks?.count) || 0));
+  const backlinkNext = Number.isFinite(Number(instance?.backlinks?.nextTarget))
+    ? Math.max(0, Math.round(Number(instance.backlinks.nextTarget)))
+    : null;
+  const backlinkDetails = backlinkNext && backlinkNext > backlinkCount
+    ? `${backlinkScore}/5 (${backlinkCount} link${backlinkCount === 1 ? '' : 's'}) · Next at ${backlinkNext}`
+    : `${backlinkScore}/5 (${backlinkCount} link${backlinkCount === 1 ? '' : 's'})`;
+
   const stats = [
+    {
+      label: 'Posts published',
+      value: postsPublished === 1 ? '1 post' : `${postsPublished} posts`
+    },
+    {
+      label: 'SEO grade',
+      value: `${seoGrade} (${seoScore}%)`
+    },
+    {
+      label: 'Backlink rank',
+      value: backlinkDetails
+    },
     {
       label: 'Lifetime income',
       value: formatCurrency(instance.lifetimeIncome)
