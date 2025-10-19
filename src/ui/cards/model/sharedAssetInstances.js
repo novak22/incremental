@@ -66,7 +66,7 @@ export function buildPayoutBreakdown(instance, options = {}) {
     const baseEntry = {
       id: entry?.id || entry?.label || fallbackId,
       label: entry?.label || fallbackLabel,
-      amount: Math.max(0, clampNumber(entry?.amount)),
+      amount: clampNumber(entry?.amount),
       percent: Number.isFinite(Number(entry?.percent)) ? Number(entry.percent) : null,
       type: entry?.type || fallbackId
     };
