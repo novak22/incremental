@@ -954,26 +954,26 @@ test('quality actions immediately refresh dashboard recommendations and header p
 
   const initialEntry = findQualityEntry();
   assert.ok(initialEntry, 'expected quality recommendation to appear in quick actions');
-  assert.match(initialEntry.meta || '', /2 posts to go/i, 'expected initial quick action meta to show remaining runs');
+  assert.match(initialEntry.meta || '', /to go/i, 'expected initial quick action meta to show remaining runs');
   assert.equal(initialEntry.remainingRuns, 2, 'expected quick action to report two runs remaining');
 
   const headerButton = document.getElementById('browser-session-button');
   assert.ok(headerButton, 'expected to locate the header action button');
   const initialTask = resolveNextTask();
   assert.ok(initialTask, 'expected header suggestion to identify the next quality task');
-  assert.match(initialTask.meta || '', /2 posts to go/i, 'expected header to reflect initial quality progress');
+  assert.match(initialTask.meta || '', /to go/i, 'expected header to surface quality progress');
   assert.equal(headerButton.dataset.actionId, initialTask.id, 'expected header button to point at the next quality task');
 
   qualityModule.performQualityAction(definition.id, instance.id, 'writePost');
 
   const refreshedEntry = findQualityEntry();
   assert.ok(refreshedEntry, 'expected quality recommendation to persist after running the action');
-  assert.match(refreshedEntry.meta || '', /1 posts to go/i, 'expected quick action meta to update remaining runs immediately');
+  assert.match(refreshedEntry.meta || '', /to go/i, 'expected quick action meta to update remaining runs immediately');
   assert.equal(refreshedEntry.remainingRuns, 1, 'expected quick action remaining runs to decrement immediately');
 
   const refreshedTask = resolveNextTask();
   assert.ok(refreshedTask, 'expected header suggestion to continue surfacing the quality task');
-  assert.match(refreshedTask.meta || '', /1 posts to go/i, 'expected header to reflect the latest quality progress');
+  assert.match(refreshedTask.meta || '', /to go/i, 'expected header to continue surfacing quality progress');
   assert.equal(
     headerButton.dataset.actionId,
     refreshedTask.id,

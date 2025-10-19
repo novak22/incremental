@@ -13,6 +13,7 @@
 
 ## Timodoro Sections
 - **Focus Queue** – `todoSection.js` now highlights the next actionable entry with a hero call-to-action before listing grouped tasks, keeping the primary sprint obvious without hiding the original queues.
+- **Queue intel** – grouped task lists now surface every upgrade requirement across upcoming quality levels and add a subtle "Do now" micro-CTA whenever the queue entry is runnable, nudging players to pounce on ready boosts.
 - **Recurring Section** – `recurringSection.js` renders maintenance/assistant logs, sharing list helpers with other workspaces.
 - **Summary Column** – `summarySection.js` condenses streaks, hour stats, and earnings into the "Daily pulse" card so tests still find the same dataset roles while the layout feels more like an energized productivity sim.
 

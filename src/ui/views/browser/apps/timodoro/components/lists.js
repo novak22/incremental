@@ -64,6 +64,35 @@ function createTaskList(entries = [], emptyText, datasetRole) {
       appendContent(meta, entry.detail ?? '');
 
       item.append(name, meta);
+
+      if (entry.action && typeof entry.action.onClick === 'function') {
+        const actions = document.createElement('div');
+        actions.className = 'timodoro-list__actions';
+
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'timodoro-list__action';
+        appendContent(button, entry.action.label || 'Do now');
+
+        button.addEventListener('click', () => {
+          if (button.disabled) {
+            return;
+          }
+          button.disabled = true;
+          button.classList.add('is-busy');
+          const result = entry.action.onClick?.();
+          if (!result || result.success !== true) {
+            button.disabled = false;
+            button.classList.remove('is-busy');
+          }
+        });
+
+        actions.appendChild(button);
+        item.appendChild(actions);
+      } else if (entry.disabledReason) {
+        item.title = entry.disabledReason;
+      }
+
       return item;
     }
   });
