@@ -299,14 +299,13 @@ test('fulfillment ops masterclass boosts dropshipping asset payouts and logs the
   }
 });
 
-test('offline progress adds a friendly reminder when nothing resolves', () => {
+test('offline progress stays quiet when nothing resolves', () => {
   const state = getState();
   const beforeLogLength = state.log.length;
 
   handleOfflineProgress(Date.now() - 60000);
 
-  assert.equal(state.log.length, beforeLogLength + 1);
-  assert.match(state.log.at(-1).message, /While you were away, the clock paused/);
+  assert.equal(state.log.length, beforeLogLength);
 });
 
 test('audience call can only run once per day', () => {
