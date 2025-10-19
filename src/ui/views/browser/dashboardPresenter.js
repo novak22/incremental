@@ -9,6 +9,7 @@ import {
 
 const widgetControllers = new Map();
 const widgetMounts = new Map();
+const knownWidgetDefinitions = new Map();
 let knownRegistryVersion = -1;
 
 function getWidgetMounts() {
@@ -68,6 +69,7 @@ function destroyController(id, controller) {
       // Swallow teardown errors to avoid breaking shutdown flows.
     }
   }
+  knownWidgetDefinitions.delete(id);
   widgetMounts.delete(id);
 }
 
@@ -123,6 +125,22 @@ function ensureWidgetControllers() {
     }
 
     for (const definition of definitions) {
+      if (!widgetControllers.has(definition.id)) {
+        continue;
+      }
+      const cached = knownWidgetDefinitions.get(definition.id);
+      const definitionChanged =
+        !cached ||
+        cached.factory !== definition.factory ||
+        cached.fallbackFactory !== definition.fallbackFactory;
+      if (definitionChanged) {
+        const controller = widgetControllers.get(definition.id);
+        destroyController(definition.id, controller);
+        widgetControllers.delete(definition.id);
+      }
+    }
+
+    for (const definition of definitions) {
       if (widgetControllers.has(definition.id)) {
         continue;
       }
@@ -141,6 +159,10 @@ function ensureWidgetControllers() {
       }
       if (controller) {
         widgetControllers.set(definition.id, controller);
+        knownWidgetDefinitions.set(definition.id, {
+          factory: definition.factory,
+          fallbackFactory: definition.fallbackFactory
+        });
       }
     }
 
@@ -211,6 +233,7 @@ function resetForTests() {
   }
   widgetControllers.clear();
   widgetMounts.clear();
+  knownWidgetDefinitions.clear();
   knownRegistryVersion = -1;
 }
 

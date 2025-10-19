@@ -136,3 +136,76 @@ test('dashboard presenter responds to widget registry updates', async () => {
     initElementRegistry(null, {});
   }
 });
+
+test('dashboard presenter rebuilds controllers when a widget definition changes', async () => {
+  ensureRegistryReady();
+  initializeState();
+
+  const mountCalls = [];
+  const destroyCalls = [];
+
+  const widgetContainer = { dataset: { widget: 'custom' } };
+
+  initElementRegistry({}, {
+    homepageWidgets: () => ({
+      container: {
+        querySelector: selector => (selector === '[data-widget="custom"]' ? widgetContainer : null),
+        querySelectorAll: () => [widgetContainer]
+      },
+      getWidgetContainer: id => (id === 'custom' ? widgetContainer : null)
+    })
+  });
+
+  __testables.reset();
+  resetWidgetRegistry();
+
+  const firstController = {
+    mount: () => {
+      mountCalls.push('first');
+    },
+    destroy: () => {
+      destroyCalls.push('first');
+    },
+    isMounted: () => true
+  };
+
+  registerWidget({
+    id: 'custom',
+    title: 'Custom',
+    factory: () => firstController,
+    featureFlags: []
+  });
+
+  try {
+    dashboardPresenter.renderDashboard({}, {});
+    assert.deepEqual(mountCalls, ['first'], 'first controller should mount once');
+    assert.deepEqual(destroyCalls, [], 'first controller should not be destroyed before replacement');
+
+    const secondController = {
+      mount: () => {
+        mountCalls.push('second');
+      },
+      destroy: () => {
+        destroyCalls.push('second');
+      },
+      isMounted: () => true
+    };
+
+    registerWidget({
+      id: 'custom',
+      title: 'Custom',
+      factory: () => secondController,
+      featureFlags: []
+    });
+
+    dashboardPresenter.renderDashboard({}, {});
+
+    assert.deepEqual(destroyCalls, ['first'], 'first controller should be destroyed when definition changes');
+    assert.deepEqual(mountCalls, ['first', 'second'], 'second controller should mount after re-registering');
+  } finally {
+    unregisterWidget('custom');
+    __testables.reset();
+    resetWidgetRegistry();
+    initElementRegistry(null, {});
+  }
+});
