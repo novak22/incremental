@@ -15,6 +15,51 @@ function toArray(value) {
 
 function prepareElements(widgetElements = {}) {
   const elements = { ...widgetElements };
+  const { container } = elements;
+
+  const select = selectors => {
+    if (!container?.querySelector) {
+      return null;
+    }
+    for (const selector of selectors) {
+      if (!selector) continue;
+      const node = container.querySelector(selector);
+      if (node) return node;
+    }
+    return null;
+  };
+
+  if (!elements.list) {
+    elements.list = select(['#browser-widget-todo-list', '.todo-widget__list']);
+  }
+
+  if (!elements.done) {
+    elements.done = select(['#browser-widget-todo-done', '.todo-widget__done-list']);
+  }
+
+  if (!elements.doneHeading) {
+    elements.doneHeading = select(['#browser-widget-todo-done-heading', '.todo-widget__done h3']);
+  }
+
+  if (!elements.note) {
+    elements.note = select(['#browser-widget-todo-note', '.todo-widget__intro p']);
+  }
+
+  if (!elements.availableValue) {
+    elements.availableValue = select(['#browser-widget-todo-available', '.todo-widget__hours dd:first-of-type']);
+  }
+
+  if (!elements.spentValue) {
+    elements.spentValue = select(['#browser-widget-todo-spent', '.todo-widget__hours dd:last-of-type']);
+  }
+
+  if (!elements.endDayButton) {
+    elements.endDayButton = select(['#browser-widget-todo-end', '.todo-widget__end']);
+  }
+
+  if (!elements.focusGroup) {
+    elements.focusGroup = select(['[data-focus-group]', '.todo-widget__focus']);
+  }
 
   if (!elements.listWrapper && elements.container?.querySelector) {
     const wrapper = elements.container.querySelector('.todo-widget__list-wrapper');

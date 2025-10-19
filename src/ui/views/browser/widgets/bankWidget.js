@@ -2,6 +2,25 @@ import { buildFinanceModel } from '../../../cards/model/index.js';
 import { formatMoney } from '../../../../core/helpers.js';
 import { createWidgetController } from './createWidgetController.js';
 
+function prepareElements(widgetElements = {}) {
+  const elements = { ...widgetElements };
+  const { container } = elements;
+
+  if (!elements.stats && container?.querySelector) {
+    elements.stats = container.querySelector('#browser-widget-bank-stats, .bank-widget__stats');
+  }
+
+  if (!elements.footnote && container?.querySelector) {
+    elements.footnote = container.querySelector('#browser-widget-bank-footnote, .bank-widget__footnote');
+  }
+
+  if (!elements.highlights && container?.querySelector) {
+    elements.highlights = container.querySelector('#browser-widget-bank-highlights, .bank-widget__highlights');
+  }
+
+  return elements;
+}
+
 function formatCurrency(amount) {
   const numeric = Number(amount);
   const absolute = Math.abs(Number.isFinite(numeric) ? numeric : 0);
@@ -231,6 +250,7 @@ function renderHighlights(elements = {}, header = {}) {
 
 function createBankWidgetController() {
   const controller = createWidgetController({
+    prepareElements,
     onRender(_context, model) {
       renderInternal(model);
     },

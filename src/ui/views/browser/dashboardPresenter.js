@@ -1,49 +1,200 @@
 import { getElement } from '../../elements/registry.js';
 import { getState } from '../../../core/state.js';
-import todoWidget from './widgets/todoWidget.js';
-import appsWidget from './widgets/appsWidget.js';
-import bankWidget from './widgets/bankWidget.js';
 import notificationsPresenter from './notificationsPresenter.js';
 import { buildActionQueue } from '../../actions/registry.js';
+import {
+  getWidgetDefinitions,
+  getWidgetRegistryVersion
+} from './widgets/registry.js';
 
-const widgetModules = {
-  todo: todoWidget,
-  apps: appsWidget,
-  bank: bankWidget
-};
+const widgetControllers = new Map();
+const widgetMounts = new Map();
+let knownRegistryVersion = -1;
 
 function getWidgetMounts() {
-  return getElement('homepageWidgets') || {};
+  const mounts = getElement('homepageWidgets');
+  if (!mounts || typeof mounts !== 'object') {
+    return null;
+  }
+  return mounts;
 }
 
-function ensureWidget(key) {
-  const module = widgetModules[key];
-  if (!module) return null;
-  const mounts = getWidgetMounts();
-  const target = mounts[key];
-  if (!target) return null;
-  if (typeof module.init === 'function') {
-    module.init(target);
+function resolveWidgetContainer(mounts, widgetId) {
+  if (!mounts || !widgetId) return null;
+
+  if (typeof mounts.getWidgetContainer === 'function') {
+    const container = mounts.getWidgetContainer(widgetId);
+    if (container) {
+      return container;
+    }
   }
-  return module;
+
+  if (typeof mounts.getWidgetContainers === 'function') {
+    const containers = mounts.getWidgetContainers();
+    if (Array.isArray(containers)) {
+      const found = containers.find(node => node?.dataset?.widget === widgetId);
+      if (found) {
+        return found;
+      }
+    }
+  }
+
+  if (mounts.container?.querySelectorAll) {
+    const nodes = mounts.container.querySelectorAll('[data-widget]');
+    for (const node of nodes) {
+      if (node?.dataset?.widget === widgetId) {
+        return node;
+      }
+    }
+  }
+
+  const legacy = mounts[widgetId];
+  if (legacy) {
+    if (legacy.container) {
+      return legacy.container;
+    }
+    return legacy;
+  }
+
+  return null;
+}
+
+function destroyController(id, controller) {
+  if (!controller) return;
+  if (typeof controller.destroy === 'function') {
+    try {
+      controller.destroy();
+    } catch (error) {
+      // Swallow teardown errors to avoid breaking shutdown flows.
+    }
+  }
+  widgetMounts.delete(id);
+}
+
+function mountWidgetController(id, controller, mounts) {
+  if (!controller) {
+    return false;
+  }
+
+  const container = resolveWidgetContainer(mounts, id);
+  if (!container) {
+    widgetMounts.delete(id);
+    return false;
+  }
+
+  const previous = widgetMounts.get(id);
+  if (previous?.container === container && typeof controller.isMounted === 'function') {
+    if (controller.isMounted()) {
+      return true;
+    }
+  }
+
+  try {
+    if (typeof controller.mount === 'function') {
+      controller.mount({ container });
+    } else if (typeof controller.init === 'function') {
+      controller.init({ container });
+    }
+  } catch (error) {
+    return false;
+  }
+
+  if (typeof controller.isMounted === 'function' && !controller.isMounted()) {
+    return false;
+  }
+
+  widgetMounts.set(id, { container });
+  return true;
+}
+
+function ensureWidgetControllers() {
+  const mounts = getWidgetMounts();
+  const definitions = getWidgetDefinitions();
+  const registryVersion = getWidgetRegistryVersion();
+
+  if (registryVersion !== knownRegistryVersion) {
+    const validIds = new Set(definitions.map(definition => definition.id));
+
+    for (const [id, controller] of widgetControllers.entries()) {
+      if (!validIds.has(id)) {
+        destroyController(id, controller);
+        widgetControllers.delete(id);
+      }
+    }
+
+    for (const definition of definitions) {
+      if (widgetControllers.has(definition.id)) {
+        continue;
+      }
+      let controller = null;
+      try {
+        controller = definition.factory();
+      } catch (error) {
+        controller = null;
+      }
+      if (!controller && typeof definition.fallbackFactory === 'function') {
+        try {
+          controller = definition.fallbackFactory();
+        } catch (error) {
+          controller = null;
+        }
+      }
+      if (controller) {
+        widgetControllers.set(definition.id, controller);
+      }
+    }
+
+    knownRegistryVersion = registryVersion;
+  }
+
+  if (!mounts) {
+    return;
+  }
+
+  for (const definition of definitions) {
+    const controller = widgetControllers.get(definition.id);
+    if (!controller) continue;
+    mountWidgetController(definition.id, controller, mounts);
+  }
+}
+
+function getWidgetController(widgetId) {
+  if (!widgetId) return null;
+  ensureWidgetControllers();
+  const controller = widgetControllers.get(widgetId) || null;
+  if (!controller) {
+    return null;
+  }
+  if (!widgetMounts.has(widgetId) && typeof controller.isMounted === 'function') {
+    if (!controller.isMounted()) {
+      return null;
+    }
+  }
+  return controller;
 }
 
 function renderTodo(state, summary = {}) {
-  const widget = ensureWidget('todo');
+  const widget = getWidgetController('todo');
   if (!widget) return;
   const resolvedState = state || getState() || {};
   const model = buildActionQueue({ state: resolvedState, summary });
-  widget.render(model);
+  if (typeof widget.render === 'function') {
+    widget.render(model);
+  }
 }
 
 function renderApps(context = {}) {
-  const widget = ensureWidget('apps');
-  widget?.render(context);
+  const widget = getWidgetController('apps');
+  if (typeof widget?.render === 'function') {
+    widget.render(context);
+  }
 }
 
 function renderBank(context = {}) {
-  const widget = ensureWidget('bank');
-  widget?.render(context);
+  const widget = getWidgetController('bank');
+  if (typeof widget?.render === 'function') {
+    widget.render(context);
+  }
 }
 
 function renderDashboard(viewModel = {}, context = {}) {
@@ -54,8 +205,24 @@ function renderDashboard(viewModel = {}, context = {}) {
   renderBank(context);
 }
 
+function resetForTests() {
+  for (const [id, controller] of widgetControllers.entries()) {
+    destroyController(id, controller);
+  }
+  widgetControllers.clear();
+  widgetMounts.clear();
+  knownRegistryVersion = -1;
+}
+
+const __testables = {
+  reset: resetForTests
+};
+
 export default {
   renderDashboard
 };
 
-export { renderTodo };
+export {
+  renderTodo,
+  __testables
+};
