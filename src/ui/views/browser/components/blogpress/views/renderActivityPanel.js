@@ -75,11 +75,14 @@ export default function renderActivityPanel({
       list.appendChild(entry);
     });
     panel.appendChild(list);
+    const headItem = logItems[0];
+    panel.dataset.summaryLabel = `Activity log — ${headItem.label}: ${headItem.detail}`;
   } else {
     const empty = document.createElement('p');
     empty.className = 'blogpress-panel__hint';
     empty.textContent = 'Run a sprint or publish a post to seed your activity timeline.';
     panel.appendChild(empty);
+    panel.dataset.summaryLabel = 'Activity log — Quiet day, no updates yet';
   }
 
   return panel;

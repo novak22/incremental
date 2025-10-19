@@ -92,6 +92,8 @@ export default function renderQualityPanel({ instance, formatRange }) {
     detailPanel.appendChild(description);
   }
 
+  const stageNumber = Number(instance.qualityLevel) || 1;
+  const stageDescriptor = `Stage ${stageNumber}`;
   if (instance.milestone?.nextLevel) {
     const milestone = document.createElement('p');
     milestone.className = 'blogpress-panel__note';
@@ -115,6 +117,12 @@ export default function renderQualityPanel({ instance, formatRange }) {
   range.className = 'blogpress-panel__range';
   range.textContent = `Daily range at this tier: ${formatRange(instance.qualityRange)}`;
   detailPanel.appendChild(range);
+
+  const milestonePercent = Math.round((instance.milestone?.percent || 0) * 100);
+  const milestoneStatus = milestoneReady
+    ? 'Milestone ready'
+    : `Next at ${Math.max(milestonePercent, 1)}%`;
+  detailPanel.dataset.summaryLabel = `Milestones log — ${stageDescriptor}, ${milestoneStatus}`;
 
   return { panel, details: detailPanel };
 }

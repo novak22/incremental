@@ -10,6 +10,8 @@ export default function renderActionPanel({ instance, handlers = {}, formatHours
     actions.sort((a, b) => Number(b.available) - Number(a.available));
   }
 
+  const nextAction = actions.find(action => action.available);
+
   if (!actions.length) {
     const note = document.createElement('p');
     note.className = 'blogpress-panel__hint';
@@ -22,6 +24,11 @@ export default function renderActionPanel({ instance, handlers = {}, formatHours
     actions.forEach(action => {
       const item = document.createElement('li');
       item.className = 'blogpress-action';
+      if (nextAction && action.id === nextAction.id) {
+        item.classList.add('blogpress-action--next');
+      } else if (!action.available) {
+        item.classList.add('blogpress-action--idle');
+      }
       const label = document.createElement('div');
       label.className = 'blogpress-action__label';
       label.textContent = action.label;
@@ -37,8 +44,11 @@ export default function renderActionPanel({ instance, handlers = {}, formatHours
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'blogpress-button blogpress-button--primary';
-      button.textContent = action.available ? 'Run' : 'Locked';
+      button.textContent = action.available ? 'Run' : 'Resting';
       button.disabled = !action.available;
+      if (!action.available) {
+        button.classList.add('is-idle');
+      }
       if (action.disabledReason) {
         button.title = action.disabledReason;
       }
@@ -57,6 +67,19 @@ export default function renderActionPanel({ instance, handlers = {}, formatHours
   const footer = document.createElement('footer');
   footer.className = 'blogpress-action-footer';
 
+  const sellBlock = document.createElement('div');
+  sellBlock.className = 'blogpress-action-footer__retire';
+
+  const retireLabel = document.createElement('p');
+  retireLabel.className = 'blogpress-action-footer__label';
+  retireLabel.textContent = 'Retire blog';
+  sellBlock.appendChild(retireLabel);
+
+  const retireHint = document.createElement('p');
+  retireHint.className = 'blogpress-panel__hint';
+  retireHint.textContent = 'Cash out when you need momentum for a new build.';
+  sellBlock.appendChild(retireHint);
+
   const salePrice = Math.max(0, Number(instance.salePrice) || 0);
   const sellButton = document.createElement('button');
   sellButton.type = 'button';
@@ -68,7 +91,8 @@ export default function renderActionPanel({ instance, handlers = {}, formatHours
     if (handlers.onSell) handlers.onSell(instance);
   });
 
-  footer.appendChild(sellButton);
+  sellBlock.appendChild(sellButton);
+  footer.appendChild(sellBlock);
   panel.appendChild(footer);
   return panel;
 }
