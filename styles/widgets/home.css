@@ -7,26 +7,26 @@
 
 .browser-home__widgets {
   width: 100%;
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--browser-home-widget-gap, var(--browser-home-spacing, 1.5rem));
   align-items: stretch;
-  justify-content: space-between;
   margin: 0;
 }
 
 .browser-home__widgets > .browser-widget {
-  flex: 1 1 0;
-  min-width: 280px;
+  min-width: 0;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1180px) {
   .browser-home__widgets {
-    flex-direction: column;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
 
-  .browser-home__widgets > .browser-widget {
-    min-width: 0;
+@media (max-width: 720px) {
+  .browser-home__widgets {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
