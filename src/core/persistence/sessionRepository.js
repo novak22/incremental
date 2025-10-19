@@ -92,15 +92,12 @@ function migrateLegacySingleSlotIndex(index, context = {}) {
       };
 
   const migrated = context.createEmptyIndex ? context.createEmptyIndex() : { version: 0, activeSessionId: null, sessions: {} };
-  migrated.sessions[sessionEntry.id] = sessionEntry;
-  migrated.activeSessionId = sessionEntry.id;
-
   if (storageKey !== baseStorageKey) {
     try {
       storage.setItem(storageKey, legacyRaw);
     } catch (error) {
       console?.error?.('Failed to migrate legacy session snapshot', error);
-      return migrated;
+      return working;
     }
     try {
       storage.removeItem(baseStorageKey);
@@ -108,6 +105,9 @@ function migrateLegacySingleSlotIndex(index, context = {}) {
       console?.error?.('Failed to remove legacy session snapshot', error);
     }
   }
+
+  migrated.sessions[sessionEntry.id] = sessionEntry;
+  migrated.activeSessionId = sessionEntry.id;
 
   return migrated;
 }
