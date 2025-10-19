@@ -21,6 +21,7 @@ export class SessionRepository {
     this.storage = storage;
     this.indexStorageKey = storageKey ? `${storageKey}:sessions` : undefined;
     this.indexCache = null;
+    this.indexCacheRaw = null;
   }
 
   get storageKey() {
@@ -31,6 +32,7 @@ export class SessionRepository {
     this.baseStorageKey = value;
     this.indexStorageKey = value ? `${value}:sessions` : undefined;
     this.indexCache = null;
+    this.indexCacheRaw = null;
   }
 
   defaultSessionId() {
@@ -75,19 +77,29 @@ export class SessionRepository {
     return { activeSessionId: null, sessions: {} };
   }
 
-  loadIndexFromStorage() {
+  loadIndexFromStorage({ raw } = {}) {
     if (!this.storage || !this.indexStorageKey) {
-      return this.createEmptyIndex();
+      return { index: this.createEmptyIndex(), raw: null };
+    }
+
+    let rawValue = raw;
+    if (rawValue === undefined) {
+      try {
+        rawValue = this.storage.getItem(this.indexStorageKey);
+      } catch (error) {
+        console?.error?.('Failed to read session index', error);
+        return { index: this.createEmptyIndex(), raw: null };
+      }
+    }
+
+    if (!rawValue) {
+      return { index: this.createEmptyIndex(), raw: rawValue ?? null };
     }
 
     try {
-      const raw = this.storage.getItem(this.indexStorageKey);
-      if (!raw) {
-        return this.createEmptyIndex();
-      }
-      const parsed = JSON.parse(raw);
+      const parsed = JSON.parse(rawValue);
       if (!isObject(parsed)) {
-        return this.createEmptyIndex();
+        return { index: this.createEmptyIndex(), raw: rawValue };
       }
       const sessions = isObject(parsed.sessions) ? parsed.sessions : {};
       const sanitizedSessions = {};
@@ -105,27 +117,32 @@ export class SessionRepository {
         typeof parsed.activeSessionId === 'string' && sanitizedSessions[parsed.activeSessionId]
           ? parsed.activeSessionId
           : null;
-      return { activeSessionId, sessions: sanitizedSessions };
+      return { index: { activeSessionId, sessions: sanitizedSessions }, raw: rawValue };
     } catch (error) {
       console?.error?.('Failed to parse session index', error);
-      return this.createEmptyIndex();
+      return { index: this.createEmptyIndex(), raw: rawValue ?? null };
     }
   }
 
   persistIndex(index) {
     if (!this.storage || !this.indexStorageKey) {
-      return;
+      return null;
     }
     try {
-      this.storage.setItem(this.indexStorageKey, JSON.stringify(index));
+      const serialized = JSON.stringify(index);
+      this.storage.setItem(this.indexStorageKey, serialized);
+      return serialized;
     } catch (error) {
       console?.error?.('Failed to persist session index', error);
+      return null;
     }
   }
 
   getIndex() {
     if (!this.indexCache) {
-      this.indexCache = this.loadIndexFromStorage();
+      const { index, raw } = this.loadIndexFromStorage();
+      this.indexCache = index;
+      this.indexCacheRaw = raw;
       return this.indexCache;
     }
 
@@ -134,10 +151,16 @@ export class SessionRepository {
         const raw = this.storage.getItem(this.indexStorageKey);
         if (!raw) {
           this.indexCache = this.createEmptyIndex();
+          this.indexCacheRaw = raw ?? null;
+        } else if (raw !== this.indexCacheRaw) {
+          const { index } = this.loadIndexFromStorage({ raw });
+          this.indexCache = index;
+          this.indexCacheRaw = raw;
         }
       } catch (error) {
         console?.error?.('Failed to refresh session index', error);
         this.indexCache = this.createEmptyIndex();
+        this.indexCacheRaw = null;
       }
     }
     return this.indexCache;
@@ -146,7 +169,8 @@ export class SessionRepository {
   setIndex(index) {
     const normalized = this.normalizeIndex(index);
     this.indexCache = normalized;
-    this.persistIndex(normalized);
+    const serialized = this.persistIndex(normalized);
+    this.indexCacheRaw = serialized;
     return this.indexCache;
   }
 
