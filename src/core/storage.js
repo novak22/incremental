@@ -123,6 +123,26 @@ export function createStorage({
       const result = applySessionChange(nextSession, loadOptions);
       return { removed, ...result };
     },
+    resetActiveSession(loadOptions = {}) {
+      ensureStorageReference();
+      let active = persistence.getActiveSession();
+      if (!active) {
+        active = persistence.refreshActiveSession();
+      }
+      if (!active) {
+        const loadResult = reloadActiveSession(loadOptions);
+        return { session: null, loadResult };
+      }
+      if (active.storageKey) {
+        try {
+          persistence.storage?.removeItem?.(active.storageKey);
+        } catch (error) {
+          persistence.logger?.error?.('Failed to clear session snapshot during reset', error);
+        }
+      }
+      persistence.sessionRepository.updateSession(active.id, { lastSaved: null });
+      return applySessionChange(active, loadOptions);
+    },
     setActiveSession(descriptor, loadOptions = {}) {
       const active = sessions.setActiveSession(descriptor);
       return applySessionChange(active, loadOptions);
@@ -140,4 +160,5 @@ export const createSession = (...args) => defaultStorage.createSession(...args);
 export const renameSession = (...args) => defaultStorage.renameSession(...args);
 export const deleteSession = (...args) => defaultStorage.deleteSession(...args);
 export const setActiveSession = (...args) => defaultStorage.setActiveSession(...args);
+export const resetActiveSession = (...args) => defaultStorage.resetActiveSession(...args);
 
