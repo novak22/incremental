@@ -191,14 +191,16 @@ export function acceptHustleOffer(offerOrId, { state = getState() } = {}) {
   const acceptedOnDay = Math.max(1, Math.floor(Number(workingState.day) || offer.availableOnDay || 1));
   const hoursRequired = resolveOfferHours(offer, template);
   const overrides = {};
-  if (hoursRequired != null) {
-    overrides.hoursRequired = hoursRequired;
-  }
 
   const progressMetadata = typeof metadata.progress === 'object' && metadata.progress !== null
     ? metadata.progress
     : {};
   const progressOverrides = {};
+
+  if (hoursRequired != null) {
+    overrides.hoursRequired = hoursRequired;
+    progressOverrides.hoursRequired = hoursRequired;
+  }
 
   const resolvedHoursPerDay = resolveFirstNumber(
     metadata.hoursPerDay,
