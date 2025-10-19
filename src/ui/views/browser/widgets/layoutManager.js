@@ -10,24 +10,6 @@ import {
   getOrderedWidgetIds
 } from './userLayoutStorage.js';
 
-const widgetControllers = new Map();
-const widgetMounts = new Map();
-const knownWidgetDefinitions = new Map();
-let knownRegistryVersion = -1;
-let activeContainer = null;
-let currentLayoutOrder = [];
-
-function resolveMountRecord() {
-  const record = getElement('homepageWidgets');
-  if (!record) {
-    return null;
-  }
-  if (record.container) {
-    return record;
-  }
-  return { container: record };
-}
-
 function getMountContainer(record) {
   if (!record) return null;
   return record.container || null;
@@ -58,81 +40,6 @@ function getTemplate(record, widgetId) {
     return null;
   }
   return container.querySelector(`template[data-widget-template="${widgetId}"]`);
-}
-
-function destroyController(id, controller) {
-  if (!controller) return;
-  try {
-    if (typeof controller.destroy === 'function') {
-      controller.destroy();
-    }
-  } catch (error) {
-    // Ignore teardown errors to keep shutdown resilient.
-  }
-  widgetMounts.delete(id);
-  knownWidgetDefinitions.delete(id);
-}
-
-function ensureWidgetControllers(definitions) {
-  const registryVersion = getWidgetRegistryVersion();
-  const registryUpdated = registryVersion !== knownRegistryVersion;
-
-  if (registryUpdated) {
-    const validIds = new Set(definitions.map(definition => definition.id));
-
-    for (const [id, controller] of widgetControllers.entries()) {
-      if (!validIds.has(id)) {
-        destroyController(id, controller);
-        widgetControllers.delete(id);
-      }
-    }
-
-    for (const definition of definitions) {
-      if (!widgetControllers.has(definition.id)) {
-        continue;
-      }
-      const cached = knownWidgetDefinitions.get(definition.id);
-      const definitionChanged =
-        !cached ||
-        cached.factory !== definition.factory ||
-        cached.fallbackFactory !== definition.fallbackFactory;
-      if (definitionChanged) {
-        const controller = widgetControllers.get(definition.id);
-        destroyController(definition.id, controller);
-        widgetControllers.delete(definition.id);
-      }
-    }
-  }
-
-  for (const definition of definitions) {
-    if (widgetControllers.has(definition.id)) {
-      continue;
-    }
-    let controller = null;
-    try {
-      controller = definition.factory();
-    } catch (error) {
-      controller = null;
-    }
-    if (!controller && typeof definition.fallbackFactory === 'function') {
-      try {
-        controller = definition.fallbackFactory();
-      } catch (error) {
-        controller = null;
-      }
-    }
-    if (controller) {
-      widgetControllers.set(definition.id, controller);
-      knownWidgetDefinitions.set(definition.id, {
-        factory: definition.factory,
-        fallbackFactory: definition.fallbackFactory
-      });
-    }
-  }
-
-  if (registryUpdated) {
-    knownRegistryVersion = registryVersion;
-  }
 }
 
 function collectExistingNodes(container) {
@@ -232,147 +139,326 @@ function mountWidgetController(id, controller, container) {
   return true;
 }
 
-function resolveLayoutOrder(definitions) {
-  const storedOrder = loadLayoutOrder();
-  const availableIds = definitions.map(definition => definition.id);
-  return getOrderedWidgetIds(availableIds, storedOrder);
-}
-
-function applyLayoutToContainer(container, record, definitions) {
-  if (!container) {
-    return [];
-  }
-
-  const ownerDocument = container.ownerDocument || (typeof document !== 'undefined' ? document : null);
-  const existingNodes = collectExistingNodes(container);
-  const nextOrder = resolveLayoutOrder(definitions);
-  const fragment = ownerDocument?.createDocumentFragment ? ownerDocument.createDocumentFragment() : null;
-  const nodesForMount = new Map();
-
-  for (const id of nextOrder) {
-    const definition = getWidgetDefinition(id);
-    if (!definition) {
-      continue;
-    }
-    let node = existingNodes.get(id);
-    if (node) {
-      existingNodes.delete(id);
-    } else {
-      node = createWidgetNode(record, definition, ownerDocument);
-    }
-    if (!node) {
-      continue;
-    }
-    node.setAttribute('data-widget', definition.id);
-    if (!node.classList?.contains('browser-widget')) {
-      node.classList?.add('browser-widget');
-    }
-    if (fragment) {
-      fragment.appendChild(node);
-    } else {
-      container.appendChild(node);
-    }
-    nodesForMount.set(id, node);
-  }
-
-  for (const leftover of existingNodes.values()) {
-    leftover.remove();
-  }
-
-  if (fragment) {
-    container.appendChild(fragment);
-  }
-
-  for (const [id, node] of nodesForMount.entries()) {
-    const controller = widgetControllers.get(id);
-    if (controller) {
-      mountWidgetController(id, controller, node);
-    }
-  }
-
-  currentLayoutOrder = nextOrder;
-  activeContainer = container;
-  return nextOrder;
-}
-
-function renderLayout({ container } = {}) {
-  const record = resolveMountRecord();
-  const targetContainer = container || getMountContainer(record);
-  const definitions = getWidgetDefinitions();
-  ensureWidgetControllers(definitions);
-  if (!targetContainer) {
-    return [];
-  }
-  const order = applyLayoutToContainer(targetContainer, record, definitions);
-  return order;
-}
-
-function getWidgetControllerInstance(widgetId) {
-  if (!widgetId) return null;
-  if (!widgetControllers.has(widgetId)) {
-    renderLayout();
-  }
-  const controller = widgetControllers.get(widgetId) || null;
-  if (!controller) {
+function defaultResolveMountRecord() {
+  const record = getElement('homepageWidgets');
+  if (!record) {
     return null;
   }
-  if (!widgetMounts.has(widgetId) && typeof controller.isMounted === 'function') {
-    if (!controller.isMounted()) {
-      return null;
+  if (record.container) {
+    return record;
+  }
+  return { container: record };
+}
+
+function createLayoutManager({
+  resolveMountRecord = defaultResolveMountRecord,
+  getDefinitions = getWidgetDefinitions,
+  getDefinition = getWidgetDefinition,
+  getRegistryVersion = getWidgetRegistryVersion,
+  loadOrder = loadLayoutOrder,
+  persistOrder = persistLayoutOrder,
+  storageKey
+} = {}) {
+  const widgetControllers = new Map();
+  const widgetMounts = new Map();
+  const knownWidgetDefinitions = new Map();
+  let knownRegistryVersion = -1;
+  let activeContainer = null;
+  let currentLayoutOrder = [];
+
+  function mountWidgetController(id, controller, container) {
+    if (!controller || !container) {
+      widgetMounts.delete(id);
+      return false;
+    }
+
+    const previous = widgetMounts.get(id);
+    if (previous?.container === container && typeof controller.isMounted === 'function') {
+      if (controller.isMounted()) {
+        return true;
+      }
+    }
+
+    try {
+      if (typeof controller.mount === 'function') {
+        controller.mount({ container });
+      } else if (typeof controller.init === 'function') {
+        controller.init({ container });
+      }
+    } catch (error) {
+      widgetMounts.delete(id);
+      return false;
+    }
+
+    if (typeof controller.isMounted === 'function' && !controller.isMounted()) {
+      widgetMounts.delete(id);
+      return false;
+    }
+
+    widgetMounts.set(id, { container });
+    return true;
+  }
+
+  function destroyController(id, controller) {
+    if (!controller) return;
+    try {
+      if (typeof controller.destroy === 'function') {
+        controller.destroy();
+      }
+    } catch (error) {
+      // Ignore teardown errors to keep shutdown resilient.
+    }
+    widgetMounts.delete(id);
+    knownWidgetDefinitions.delete(id);
+  }
+
+  function ensureWidgetControllers(definitions) {
+    const registryVersion = getRegistryVersion();
+    const registryUpdated = registryVersion !== knownRegistryVersion;
+
+    if (registryUpdated) {
+      const validIds = new Set(definitions.map(definition => definition.id));
+
+      for (const [id, controller] of widgetControllers.entries()) {
+        if (!validIds.has(id)) {
+          destroyController(id, controller);
+          widgetControllers.delete(id);
+        }
+      }
+
+      for (const definition of definitions) {
+        if (!widgetControllers.has(definition.id)) {
+          continue;
+        }
+        const cached = knownWidgetDefinitions.get(definition.id);
+        const definitionChanged =
+          !cached ||
+          cached.factory !== definition.factory ||
+          cached.fallbackFactory !== definition.fallbackFactory;
+        if (definitionChanged) {
+          const controller = widgetControllers.get(definition.id);
+          destroyController(definition.id, controller);
+          widgetControllers.delete(definition.id);
+        }
+      }
+    }
+
+    for (const definition of definitions) {
+      if (widgetControllers.has(definition.id)) {
+        continue;
+      }
+      let controller = null;
+      try {
+        controller = definition.factory();
+      } catch (error) {
+        controller = null;
+      }
+      if (!controller && typeof definition.fallbackFactory === 'function') {
+        try {
+          controller = definition.fallbackFactory();
+        } catch (error) {
+          controller = null;
+        }
+      }
+      if (controller) {
+        widgetControllers.set(definition.id, controller);
+        knownWidgetDefinitions.set(definition.id, {
+          factory: definition.factory,
+          fallbackFactory: definition.fallbackFactory
+        });
+      }
+    }
+
+    if (registryUpdated) {
+      knownRegistryVersion = registryVersion;
     }
   }
-  return controller;
+
+  function resolveLayoutOrder(definitions) {
+    const storedOrder = loadOrder(storageKey);
+    const availableIds = definitions.map(definition => definition.id);
+    return getOrderedWidgetIds(availableIds, storedOrder);
+  }
+
+  function applyLayoutToContainer(container, record, definitions) {
+    if (!container) {
+      return [];
+    }
+
+    const ownerDocument = container.ownerDocument || (typeof document !== 'undefined' ? document : null);
+    const existingNodes = collectExistingNodes(container);
+    const nextOrder = resolveLayoutOrder(definitions);
+    const fragment = ownerDocument?.createDocumentFragment ? ownerDocument.createDocumentFragment() : null;
+    const nodesForMount = new Map();
+
+    for (const id of nextOrder) {
+      const definition = getDefinition(id);
+      if (!definition) {
+        continue;
+      }
+      let node = existingNodes.get(id);
+      if (node) {
+        existingNodes.delete(id);
+      } else {
+        node = createWidgetNode(record, definition, ownerDocument);
+      }
+      if (!node) {
+        continue;
+      }
+      node.setAttribute('data-widget', definition.id);
+      if (!node.classList?.contains('browser-widget')) {
+        node.classList?.add('browser-widget');
+      }
+      if (fragment) {
+        fragment.appendChild(node);
+      } else {
+        container.appendChild(node);
+      }
+      nodesForMount.set(id, node);
+    }
+
+    for (const leftover of existingNodes.values()) {
+      leftover.remove();
+    }
+
+    if (fragment) {
+      container.appendChild(fragment);
+    }
+
+    for (const [id, node] of nodesForMount.entries()) {
+      const controller = widgetControllers.get(id);
+      if (controller) {
+        mountWidgetController(id, controller, node);
+      }
+    }
+
+    currentLayoutOrder = nextOrder.slice();
+    activeContainer = container;
+    return nextOrder;
+  }
+
+  function renderLayout({ container } = {}) {
+    const record = resolveMountRecord();
+    const targetContainer = container || getMountContainer(record);
+    const definitions = getDefinitions();
+    ensureWidgetControllers(definitions);
+    if (!targetContainer) {
+      activeContainer = null;
+      currentLayoutOrder = [];
+      return [];
+    }
+    const order = applyLayoutToContainer(targetContainer, record, definitions);
+    return order;
+  }
+
+  function getWidgetControllerInstance(widgetId) {
+    if (!widgetId) return null;
+    if (!widgetControllers.has(widgetId)) {
+      renderLayout();
+    }
+    const controller = widgetControllers.get(widgetId) || null;
+    if (!controller) {
+      return null;
+    }
+    if (!widgetMounts.has(widgetId) && typeof controller.isMounted === 'function') {
+      if (!controller.isMounted()) {
+        return null;
+      }
+    }
+    return controller;
+  }
+
+  function getLayoutOrder() {
+    if (!currentLayoutOrder.length) {
+      const definitions = getDefinitions();
+      return resolveLayoutOrder(definitions);
+    }
+    return currentLayoutOrder.slice();
+  }
+
+  function setLayoutOrder(order = []) {
+    const definitions = getDefinitions();
+    const availableIds = definitions.map(definition => definition.id);
+    const normalized = getOrderedWidgetIds(availableIds, Array.isArray(order) ? order : []);
+    persistOrder(normalized, storageKey);
+    currentLayoutOrder = normalized.slice();
+    renderLayout({ container: activeContainer });
+    return currentLayoutOrder.slice();
+  }
+
+  function resetForTests() {
+    for (const [id, controller] of widgetControllers.entries()) {
+      destroyController(id, controller);
+    }
+    widgetControllers.clear();
+    widgetMounts.clear();
+    knownWidgetDefinitions.clear();
+    knownRegistryVersion = -1;
+    currentLayoutOrder = [];
+    activeContainer = null;
+  }
+
+  return {
+    renderLayout,
+    getWidgetController: getWidgetControllerInstance,
+    getLayoutOrder,
+    setLayoutOrder,
+    __testables: {
+      reset: resetForTests,
+      listTemplates,
+      resolveMountRecord,
+      hasController(id) {
+        return widgetControllers.has(id);
+      }
+    }
+  };
+}
+
+const fallbackLayoutManager = createLayoutManager();
+
+function getDefaultInstance() {
+  const record = defaultResolveMountRecord();
+  if (record?.layoutManager) {
+    return record.layoutManager;
+  }
+  return fallbackLayoutManager;
+}
+
+function renderLayout(options) {
+  return getDefaultInstance().renderLayout(options);
+}
+
+function getWidgetController(widgetId) {
+  return getDefaultInstance().getWidgetController(widgetId);
 }
 
 function getLayoutOrder() {
-  if (!currentLayoutOrder.length) {
-    const definitions = getWidgetDefinitions();
-    return resolveLayoutOrder(definitions);
-  }
-  return currentLayoutOrder.slice();
+  return getDefaultInstance().getLayoutOrder();
 }
 
 function setLayoutOrder(order = []) {
-  const definitions = getWidgetDefinitions();
-  const availableIds = definitions.map(definition => definition.id);
-  const normalized = getOrderedWidgetIds(availableIds, Array.isArray(order) ? order : []);
-  persistLayoutOrder(normalized);
-  currentLayoutOrder = normalized.slice();
-  renderLayout({ container: activeContainer });
-  return currentLayoutOrder.slice();
-}
-
-function resetForTests() {
-  for (const [id, controller] of widgetControllers.entries()) {
-    destroyController(id, controller);
-  }
-  widgetControllers.clear();
-  widgetMounts.clear();
-  knownWidgetDefinitions.clear();
-  knownRegistryVersion = -1;
-  currentLayoutOrder = [];
-  activeContainer = null;
+  return getDefaultInstance().setLayoutOrder(order);
 }
 
 const layoutManager = {
   renderLayout,
-  getWidgetController: getWidgetControllerInstance,
+  getWidgetController,
   getLayoutOrder,
-  setLayoutOrder,
-  __testables: {
-    reset: resetForTests,
-    listTemplates,
-    resolveMountRecord,
-    hasController(id) {
-      return widgetControllers.has(id);
-    }
-  }
+  setLayoutOrder
 };
+
+Object.defineProperty(layoutManager, '__testables', {
+  enumerable: true,
+  get() {
+    return getDefaultInstance().__testables;
+  }
+});
 
 export default layoutManager;
 export {
+  createLayoutManager,
   renderLayout,
-  getWidgetControllerInstance as getWidgetController,
+  getWidgetController,
   getLayoutOrder,
   setLayoutOrder
 };
