@@ -1,13 +1,6 @@
 import { buildFinanceModel } from '../../../cards/model/index.js';
 import { formatMoney } from '../../../../core/helpers.js';
-
-let elements = null;
-let initialized = false;
-
-function ensureElements(widgetElements = {}) {
-  if (elements) return;
-  elements = widgetElements;
-}
+import { createWidgetController } from './createWidgetController.js';
 
 function formatCurrency(amount) {
   const numeric = Number(amount);
@@ -54,7 +47,7 @@ function buildStat(label, value, tone = 'neutral') {
   return row;
 }
 
-function renderStats(header = {}) {
+function renderStats(elements = {}, header = {}) {
   if (!elements?.stats) return;
   const balance = Number(header?.currentBalance ?? header?.cashOnHand ?? 0);
   const netDaily = Number(header?.netDaily ?? 0);
@@ -76,7 +69,7 @@ function renderStats(header = {}) {
   stats.forEach(stat => elements.stats.appendChild(stat));
 }
 
-function renderFootnote(header = {}) {
+function renderFootnote(elements = {}, header = {}) {
   if (!elements?.footnote) return;
   const earned = Number(header?.lifetimeEarned ?? 0);
   const spent = Number(header?.lifetimeSpent ?? 0);
@@ -117,7 +110,7 @@ function createChip({ id, label, value, tone = 'neutral', note, position }) {
   return chip;
 }
 
-function renderHighlights(header = {}) {
+function renderHighlights(elements = {}, header = {}) {
   if (!elements?.highlights) return;
 
   const chipDefinitions = [];
@@ -236,38 +229,64 @@ function renderHighlights(header = {}) {
   elements.highlights.hidden = false;
 }
 
-function render(context = {}) {
-  if (!initialized) return;
-  if (!context?.state) {
-    if (elements?.stats) {
-      elements.stats.innerHTML = '';
+function createBankWidgetController() {
+  const controller = createWidgetController({
+    onRender(_context, model) {
+      renderInternal(model);
+    },
+    onDestroy({ elements }) {
+      if (elements?.stats) {
+        elements.stats.innerHTML = '';
+      }
+      if (elements?.footnote) {
+        elements.footnote.hidden = true;
+        elements.footnote.textContent = '';
+      }
+      if (elements?.highlights) {
+        elements.highlights.hidden = true;
+        elements.highlights.innerHTML = '';
+      }
     }
-    if (elements?.footnote) {
-      elements.footnote.hidden = true;
-      elements.footnote.textContent = '';
-    }
-    if (elements?.highlights) {
-      elements.highlights.hidden = true;
-      elements.highlights.innerHTML = '';
-    }
-    return;
+  });
+
+  function getElements() {
+    return controller.getElements() || {};
   }
 
-  const model = buildFinanceModel(undefined, undefined, {
-    getState: () => context.state
-  });
-  renderStats(model?.header || {});
-  renderFootnote(model?.header || {});
-  renderHighlights(model?.header || {});
+  function renderInternal(context = {}) {
+    const elements = getElements();
+    if (!context?.state) {
+      if (elements.stats) {
+        elements.stats.innerHTML = '';
+      }
+      if (elements.footnote) {
+        elements.footnote.hidden = true;
+        elements.footnote.textContent = '';
+      }
+      if (elements.highlights) {
+        elements.highlights.hidden = true;
+        elements.highlights.innerHTML = '';
+      }
+      return;
+    }
+
+    const model = buildFinanceModel(undefined, undefined, {
+      getState: () => context.state
+    });
+    renderStats(elements, model?.header || {});
+    renderFootnote(elements, model?.header || {});
+    renderHighlights(elements, model?.header || {});
+  }
+
+  return {
+    ...controller,
+    init: controller.mount,
+    render: context => controller.render(context),
+    destroy: controller.destroy
+  };
 }
 
-function init(widgetElements = {}) {
-  if (initialized) return;
-  ensureElements(widgetElements);
-  initialized = true;
-}
+const bankWidget = createBankWidgetController();
 
-export default {
-  init,
-  render
-};
+export default bankWidget;
+export { createBankWidgetController };

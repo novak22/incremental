@@ -93,6 +93,11 @@ function getPendingEntries() {
   return pendingEntries;
 }
 
+function clearTransientState() {
+  pendingEntries = [];
+  lastModel = null;
+}
+
 function getCompletion(entryId) {
   if (!entryId) return null;
   return completedItems.get(entryId) || null;
@@ -154,6 +159,7 @@ export {
   getFocusModes,
   getLastModel,
   getPendingEntries,
+  clearTransientState,
   recordCompletion,
   resetCompletedForDay,
   seedAutoCompletedEntries,
@@ -170,6 +176,7 @@ export default {
   getFocusModes,
   getLastModel,
   getPendingEntries,
+  clearTransientState,
   recordCompletion,
   resetCompletedForDay,
   seedAutoCompletedEntries,
