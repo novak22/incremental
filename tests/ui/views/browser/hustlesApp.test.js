@@ -86,9 +86,26 @@ test('renderHustles highlights accept CTA and upcoming list', () => {
     const result = renderHustles(context, definitions, models);
     assert.ok(result?.meta.includes('Keep the loop rolling — accept → work → complete.'));
 
+    const summaryStats = document.querySelectorAll('.downwork-summary__stat');
+    assert.equal(summaryStats.length, 3, 'expected three summary stats to render');
+    assert.equal(document.querySelector('[data-role="downwork-focus-value"]')?.textContent, '0h');
+    assert.equal(document.querySelector('[data-role="downwork-accepted-value"]')?.textContent, '0');
+    assert.equal(document.querySelector('[data-role="downwork-payout-value"]')?.textContent, '$50');
+
+    const tabs = document.querySelectorAll('.downwork-tab');
+    assert.equal(tabs.length, 1, 'expected single hustle category tab');
+    assert.ok(tabs[0].textContent.includes('Daily Hustles'));
+
+    const filters = document.querySelectorAll('.downwork-filter');
+    assert.equal(filters.length, 4, 'expected quick filter pills');
+
     const button = document.querySelector('.browser-card__actions .browser-card__button--primary');
     assert.ok(button, 'expected primary accept CTA');
     assert.equal(button.textContent, 'Accept Ready Offer');
+
+    const readyOfferButton = document.querySelector('.hustle-card__offer .browser-card__button');
+    assert.ok(readyOfferButton, 'expected ready offer button to render');
+    assert.equal(readyOfferButton.textContent, 'Accept & Queue');
 
     const upcomingHeader = [...document.querySelectorAll('.browser-card__section-title')]
       .find(node => node.textContent === 'Queued for later');
@@ -97,6 +114,14 @@ test('renderHustles highlights accept CTA and upcoming list', () => {
     const upcomingItem = document.querySelector('.hustle-card__offer.is-upcoming .browser-card__button');
     assert.ok(upcomingItem, 'expected upcoming offer to render with disabled button');
     assert.equal(upcomingItem.textContent, 'Opens in 1 day');
+
+    const skillFilter = [...filters].find(node => node.textContent.includes('Skill XP'));
+    assert.ok(skillFilter, 'expected skill filter button');
+    skillFilter.click();
+    const filteredEmpty = document.querySelector('.browser-empty--compact');
+    assert.ok(filteredEmpty, 'expected filtered empty state');
+    skillFilter.click();
+    assert.ok(document.querySelector('.browser-card.browser-card--hustle'), 'expected card to return after clearing filter');
   } finally {
     dom.window.close();
     delete globalThis.window;

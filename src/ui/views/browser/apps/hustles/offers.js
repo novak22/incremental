@@ -1,7 +1,27 @@
 import { formatMoney } from '../../../../../core/helpers.js';
 import { decorateUrgency } from './urgency.js';
 
-export function createOfferItem(offer = {}, { upcoming = false } = {}) {
+function resolveFocusHours(offer = {}, model = {}) {
+  if (Number.isFinite(offer.hoursRequired)) {
+    return offer.hoursRequired;
+  }
+  if (Number.isFinite(model.metrics?.time?.value)) {
+    return model.metrics.time.value;
+  }
+  return null;
+}
+
+function resolvePayout(offer = {}, model = {}) {
+  if (Number.isFinite(offer.payout)) {
+    return offer.payout;
+  }
+  if (Number.isFinite(model.metrics?.payout?.value)) {
+    return model.metrics.payout.value;
+  }
+  return 0;
+}
+
+export function createOfferItem(offer = {}, { upcoming = false, onAccept, model } = {}) {
   const item = document.createElement('li');
   item.className = 'browser-card__list-item hustle-card__offer';
 
@@ -53,10 +73,15 @@ export function createOfferItem(offer = {}, { upcoming = false } = {}) {
 
   if (ready) {
     button.className = 'browser-card__button browser-card__button--primary';
-    button.textContent = offer.acceptLabel || 'Accept offer';
+    button.textContent = offer.acceptLabel || 'Accept & Queue';
     button.disabled = false;
     if (typeof offer.onAccept === 'function') {
       button.addEventListener('click', () => {
+        const payout = resolvePayout(offer, model);
+        const focusHours = resolveFocusHours(offer, model);
+        if (typeof onAccept === 'function') {
+          onAccept({ offer, model, payout, focusHours });
+        }
         offer.onAccept();
       });
     }
@@ -90,12 +115,13 @@ export function createOfferItem(offer = {}, { upcoming = false } = {}) {
   return item;
 }
 
-export function createOfferList(offers = [], { upcoming = false } = {}) {
+export function createOfferList(offers = [], options = {}) {
+  const { upcoming = false } = options;
   const list = document.createElement('ul');
   list.className = 'browser-card__list';
 
   offers.filter(Boolean).forEach(offer => {
-    const item = createOfferItem(offer, { upcoming });
+    const item = createOfferItem(offer, options);
     list.appendChild(item);
   });
 
