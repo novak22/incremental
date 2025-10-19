@@ -3,7 +3,11 @@ import { getState } from '../../../../core/state.js';
 import { selectBlogpressNiche } from '../../../cards/model/index.js';
 import { performQualityAction } from '../../../../game/assets/index.js';
 import { calculateAssetSalePrice, sellAssetInstance } from '../../../../game/assets/actions.js';
-import { formatCurrency as baseFormatCurrency, formatNetCurrency } from '../utils/formatting.js';
+import {
+  formatCurrency as baseFormatCurrency,
+  formatNetCurrency,
+  formatPercent as baseFormatPercent
+} from '../utils/formatting.js';
 import { createCurrencyLifecycleSummary } from '../utils/lifecycleSummaries.js';
 import { showLaunchConfirmation } from '../utils/launchDialog.js';
 import { createTabbedWorkspacePresenter } from '../utils/createTabbedWorkspacePresenter.js';
@@ -41,6 +45,16 @@ const {
 } = getWorkspaceLockTheme('blogpress');
 
 const formatCurrency = amount => baseFormatCurrency(amount, { precision: 'integer', clampZero: true });
+const formatPercent = (value, options = {}) => {
+  const numeric = Number(value);
+  const precision = Number.isFinite(numeric) && Math.abs(numeric) < 0.1 ? 1 : 0;
+  return baseFormatPercent(value, {
+    precision,
+    signDisplay: 'always',
+    zeroDisplay: '0%',
+    ...options
+  });
+};
 
 const { describeSetupSummary, describeUpkeepSummary } = createCurrencyLifecycleSummary({
   formatCurrency: value => `$${formatMoney(value)}`,
@@ -229,7 +243,8 @@ function renderViews(model, state = INITIAL_STATE) {
     formatCurrency,
     formatHours,
     formatMoney,
-    formatNetCurrency
+    formatNetCurrency,
+    formatPercent
   };
 
   switch (state.view) {

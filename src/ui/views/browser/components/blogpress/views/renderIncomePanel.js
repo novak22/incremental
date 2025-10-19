@@ -1,4 +1,9 @@
-export default function renderIncomePanel({ instance, formatCurrency, formatNetCurrency }) {
+export default function renderIncomePanel({
+  instance,
+  formatCurrency,
+  formatNetCurrency,
+  formatPercent = value => String(value ?? '')
+}) {
   const panel = document.createElement('article');
   panel.className = 'blogpress-panel blogpress-panel--income';
 
@@ -55,6 +60,54 @@ export default function renderIncomePanel({ instance, formatCurrency, formatNetC
   });
 
   panel.appendChild(stats);
+
+  const events = Array.isArray(instance.events) ? instance.events : [];
+  if (events.length) {
+    const eventTitle = document.createElement('p');
+    eventTitle.className = 'blogpress-panel__section-title';
+    eventTitle.textContent = 'Live modifiers';
+    panel.appendChild(eventTitle);
+
+    const eventList = document.createElement('ul');
+    eventList.className = 'blogpress-list';
+    events.forEach(event => {
+      const item = document.createElement('li');
+      item.className = 'blogpress-list__item';
+
+      const label = document.createElement('span');
+      label.className = 'blogpress-list__label';
+      const toneLabel = event.tone === 'positive'
+        ? 'boost'
+        : event.tone === 'negative'
+          ? 'dip'
+          : 'pulse';
+      const sourceLabel = event.source === 'niche' ? 'Trend' : 'Blog';
+      label.textContent = `${sourceLabel} ${toneLabel}: ${event.label}`;
+
+      const value = document.createElement('span');
+      value.className = 'blogpress-list__value';
+      const percentText = typeof formatPercent === 'function'
+        ? formatPercent(event.percent || 0)
+        : `${Math.round((Number(event.percent) || 0) * 100)}%`;
+      const remaining = typeof event.remainingDays === 'number' && Number.isFinite(event.remainingDays)
+        ? Math.max(0, event.remainingDays)
+        : null;
+      let timing;
+      if (remaining === 0) {
+        timing = 'Final day';
+      } else if (remaining === 1) {
+        timing = '1 day left';
+      } else if (remaining != null) {
+        timing = `${remaining} days left`;
+      }
+      value.textContent = timing ? `${percentText} • ${timing}` : percentText;
+
+      item.append(label, value);
+      eventList.appendChild(item);
+    });
+
+    panel.appendChild(eventList);
+  }
 
   const upkeepMessage = document.createElement('p');
   const maintenance = instance.maintenance || {};

@@ -1076,6 +1076,12 @@
   color: var(--browser-danger);
 }
 
+.blogpress-panel__section-title {
+  margin: 0.75rem 0 0.35rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
 .blogpress-progress {
   width: 100%;
   height: 0.6rem;

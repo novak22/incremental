@@ -18,6 +18,7 @@ import {
   buildMilestoneProgress as createMilestoneProgress,
   buildActionSnapshot
 } from '../../cards/model/sharedQuality.js';
+import { getAssetEvents, getNicheEvents } from '../../../game/events/index.js';
 
 const DEFAULT_MILESTONE_COPY = {
   maxedSummary: 'Maxed out — future milestones queued for future builds.',
@@ -26,6 +27,75 @@ const DEFAULT_MILESTONE_COPY = {
 
 function buildMilestoneProgress(definition, instance) {
   return createMilestoneProgress(definition, instance, DEFAULT_MILESTONE_COPY);
+}
+
+function normalizePercent(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) {
+    return 0;
+  }
+  return numeric;
+}
+
+function normalizeDays(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) {
+    return null;
+  }
+  return Math.max(0, Math.round(numeric));
+}
+
+function formatEventSnapshot(event, { source = 'asset' } = {}) {
+  if (!event) {
+    return null;
+  }
+  if (event.stat && event.stat !== 'income') {
+    return null;
+  }
+  if (event.modifierType && event.modifierType !== 'percent') {
+    return null;
+  }
+
+  const percent = normalizePercent(event.currentPercent);
+  const remainingDays = normalizeDays(event.remainingDays);
+  const totalDays = normalizeDays(event.totalDays);
+
+  return {
+    id: event.id || `${source}:${event.templateId || 'event'}`,
+    label: event.label || event.templateId || 'Event',
+    percent,
+    tone: event.tone || 'neutral',
+    remainingDays,
+    totalDays,
+    source
+  };
+}
+
+function collectInstanceEvents(definition, instance, state) {
+  if (!definition || !instance) {
+    return [];
+  }
+
+  const events = [];
+  const assetEvents = getAssetEvents(state, definition.id, instance.id);
+  assetEvents.forEach(event => {
+    const formatted = formatEventSnapshot(event, { source: 'asset' });
+    if (formatted) {
+      events.push(formatted);
+    }
+  });
+
+  if (instance.nicheId) {
+    const nicheEvents = getNicheEvents(state, instance.nicheId);
+    nicheEvents.forEach(event => {
+      const formatted = formatEventSnapshot(event, { source: 'niche' });
+      if (formatted) {
+        events.push(formatted);
+      }
+    });
+  }
+
+  return events.sort((a, b) => Math.abs(b.percent || 0) - Math.abs(a.percent || 0));
 }
 
 function formatNiche(nicheInfo) {
@@ -68,6 +138,7 @@ export function formatBlogpressInstance(definition, instance, index, state, shar
   const qualityRange = getInstanceQualityRange(definition, instance);
   const milestone = buildMilestoneProgress(definition, instance);
   const payoutBreakdown = buildPayoutBreakdown(instance);
+  const events = collectInstanceEvents(definition, instance, state);
 
   return {
     id: instance.id,
@@ -86,6 +157,7 @@ export function formatBlogpressInstance(definition, instance, index, state, shar
     qualityRange,
     milestone,
     payoutBreakdown,
+    events,
     actions: actionSnapshots,
     quickAction,
     niche: formatNiche(nicheInfo),

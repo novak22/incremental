@@ -5,6 +5,7 @@ import renderOverviewPanel from '../../../../../../src/ui/views/browser/componen
 import renderNichePanel from '../../../../../../src/ui/views/browser/components/blogpress/views/renderNichePanel.js';
 import renderQualityPanel from '../../../../../../src/ui/views/browser/components/blogpress/views/renderQualityPanel.js';
 import renderActionPanel from '../../../../../../src/ui/views/browser/components/blogpress/views/renderActionPanel.js';
+import renderIncomePanel from '../../../../../../src/ui/views/browser/components/blogpress/views/renderIncomePanel.js';
 
 function withDom(t) {
   const dom = new JSDOM('<!doctype html><html><body></body></html>', { url: 'http://localhost' });
@@ -135,4 +136,54 @@ test('renderActionPanel skips disabled actions and wires handler', t => {
 
   const sellButton = panel.querySelector('.blogpress-action-footer button');
   assert.ok(sellButton, 'action panel should render a sell button');
+});
+
+test('renderIncomePanel lists active events with impact details', t => {
+  withDom(t);
+  const instance = {
+    status: { id: 'active', label: 'Active' },
+    averagePayout: 120,
+    latestPayout: 140,
+    lifetimeIncome: 840,
+    estimatedSpend: 420,
+    lifetimeNet: 420,
+    pendingIncome: 60,
+    maintenanceFunded: true,
+    maintenance: { hasUpkeep: true, text: '2h • $20/day' },
+    events: [
+      {
+        id: 'event-boost',
+        label: 'Backlink Parade',
+        percent: 0.25,
+        tone: 'positive',
+        remainingDays: 2,
+        source: 'asset'
+      },
+      {
+        id: 'event-trend',
+        label: 'Wellness Festival',
+        percent: -0.1,
+        tone: 'negative',
+        remainingDays: 1,
+        source: 'niche'
+      }
+    ]
+  };
+
+  const panel = renderIncomePanel({
+    instance,
+    formatCurrency: value => `$${value}`,
+    formatNetCurrency: value => `$${value}`,
+    formatPercent: value => `${value >= 0 ? '+' : ''}${Math.round(value * 100)}%`
+  });
+
+  const eventRows = [...panel.querySelectorAll('.blogpress-list__item')];
+  assert.equal(eventRows.length, 2, 'income panel should list each active event');
+  const firstRowText = eventRows[0].textContent;
+  const secondRowText = eventRows[1].textContent;
+  assert.match(firstRowText, /Backlink Parade/, 'should include asset event label');
+  assert.match(firstRowText, /\+25%/, 'should format positive impact with sign');
+  assert.match(secondRowText, /Wellness Festival/, 'should include trend event label');
+  assert.match(secondRowText, /-10%/, 'should format negative impact');
+  assert.match(secondRowText, /1 day left|Final day/, 'should describe remaining time');
 });
