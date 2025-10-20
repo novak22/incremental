@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { buildDefaultState } from '../../../src/core/state.js';
 import { ensureSlice, resolveInstanceProgressSnapshot } from '../../../src/core/state/slices/actions/index.js';
-import { collectOutstandingActionEntries } from '../../../src/ui/actions/outstanding.js';
+import { collectOutstandingActionEntries } from '../../../src/ui/actions/outstanding/index.js';
 import { loadRegistry, resetRegistry } from '../../../src/game/registryService.js';
 import { KNOWLEDGE_HUSTLES, rollDailyOffers, acceptHustleOffer } from '../../../src/game/hustles.js';
 
