@@ -746,6 +746,17 @@
   list-style: none;
 }
 
+.downwork-card .browser-card__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.85rem;
+  align-items: stretch;
+}
+
+.downwork-card .browser-card__list-item {
+  height: 100%;
+}
+
 .browser-card__list-item {
   display: flex;
   flex-direction: column;
