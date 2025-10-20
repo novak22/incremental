@@ -123,7 +123,10 @@ sessionSwitcherController = initSessionSwitcher({
   },
   onResetActiveSession: () =>
     runSessionOperation(loadOptions => storage.resetActiveSession(loadOptions), { reason: 'reset' }),
-  onSaveSession: () => wrappedSaveState()
+  onSaveSession: () => wrappedSaveState(),
+  onExportSession: ({ id }) => storage.exportSession({ id }),
+  onImportSession: ({ data }) =>
+    runSessionOperation(loadOptions => storage.importSession(data, loadOptions), { reason: 'import' })
 });
 
 runSessionOperation(

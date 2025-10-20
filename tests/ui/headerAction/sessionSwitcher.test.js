@@ -15,9 +15,21 @@ function setupSessionSwitcher({
   onActivateSession,
   onDeleteSession,
   onSaveSession,
+  onExportSession,
+  onImportSession,
   now
 } = {}) {
   initElementRegistry(dom.window.document, browserResolvers);
+  const safeAlert =
+    typeof dom.window.alert === 'function'
+      ? (...args) => {
+          try {
+            return dom.window.alert(...args);
+          } catch (error) {
+            return undefined;
+          }
+        }
+      : () => {};
   return initSessionSwitcher({
     storage: {
       listSessions,
@@ -28,6 +40,9 @@ function setupSessionSwitcher({
     onActivateSession,
     onDeleteSession,
     onSaveSession,
+    onExportSession,
+    onImportSession,
+    alert: safeAlert,
     now
   });
 }
@@ -131,5 +146,138 @@ test('deleting a session confirms the action and closes the panel', { concurrenc
     assert.equal(summary.getAttribute('aria-expanded'), 'false');
   } finally {
     dom.window.confirm = originalConfirm;
+  }
+});
+
+test('exporting the active session saves and triggers a download', { concurrency: false }, async () => {
+  const calls = [];
+  const sessions = [{ id: 'default', name: 'Main Hustle', lastSaved: 10, metadata: {} }];
+
+  const appended = [];
+  const originalAppend = dom.window.document.body.appendChild;
+  dom.window.document.body.appendChild = function append(node) {
+    appended.push(node);
+    return originalAppend.call(this, node);
+  };
+
+  const createdUrls = [];
+  const originalCreateObjectURL = dom.window.URL.createObjectURL;
+  const originalRevokeObjectURL = dom.window.URL.revokeObjectURL;
+  dom.window.URL.createObjectURL = blob => {
+    assert.ok(blob, 'expected blob to be created for export');
+    const url = `blob:${createdUrls.length}`;
+    createdUrls.push(url);
+    return url;
+  };
+  dom.window.URL.revokeObjectURL = href => {
+    createdUrls.push(`revoked:${href}`);
+  };
+
+  try {
+    setupSessionSwitcher({
+      listSessions: () => sessions.map(session => ({ ...session })),
+      getActiveSession: () => ({ ...sessions[0] }),
+      onSaveSession: () => {
+        calls.push('save');
+      },
+      onExportSession: ({ id }) => {
+        calls.push(`export:${id}`);
+        return { type: 'test', snapshot: { value: 1 } };
+      },
+      now: () => 42
+    });
+
+    const summary = dom.window.document.querySelector('[data-session-summary]');
+    summary.click();
+    const exportButton = dom.window.document.querySelector('[data-session-export]');
+    assert.ok(exportButton, 'expected export button');
+    exportButton.click();
+
+    await new Promise(resolve => dom.window.setTimeout(resolve, 0));
+
+    assert.deepEqual(calls, ['save', 'export:default']);
+    assert.ok(createdUrls.some(url => url.startsWith('blob:')), 'expected blob URL to be created');
+    assert.ok(
+      appended.some(node => node.dataset?.sessionDownload === 'true' && node.tagName === 'A'),
+      'expected anchor element appended for download'
+    );
+    assert.ok(
+      createdUrls.includes(`revoked:${createdUrls[0]}`),
+      'expected blob URL to be revoked after download'
+    );
+  } finally {
+    dom.window.document.body.appendChild = originalAppend;
+    dom.window.URL.createObjectURL = originalCreateObjectURL;
+    dom.window.URL.revokeObjectURL = originalRevokeObjectURL;
+  }
+});
+
+test('importing a session forwards parsed payload to the handler', { concurrency: false }, async () => {
+  const sessions = [{ id: 'default', name: 'Main Hustle', lastSaved: 10, metadata: {} }];
+  const calls = [];
+
+  setupSessionSwitcher({
+    listSessions: () => sessions.map(session => ({ ...session })),
+    getActiveSession: () => ({ ...sessions[0] }),
+    onImportSession: async ({ data }) => {
+      calls.push(data.snapshot.money);
+    }
+  });
+
+  const summary = dom.window.document.querySelector('[data-session-summary]');
+  summary.click();
+  const importInput = dom.window.document.querySelector('[data-session-import-input]');
+  assert.ok(importInput, 'expected hidden import input');
+
+  const payload = {
+    type: 'online-hustle-sim/session',
+    snapshot: { money: 999 }
+  };
+  const file = {
+    text: () => Promise.resolve(JSON.stringify(payload))
+  };
+  Object.defineProperty(importInput, 'files', {
+    configurable: true,
+    value: [file]
+  });
+
+  importInput.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+
+  await new Promise(resolve => dom.window.setTimeout(resolve, 0));
+
+  assert.deepEqual(calls, [999]);
+  assert.equal(importInput.value, '', 'import input should reset after processing');
+});
+
+test('importing invalid json shows a friendly alert', { concurrency: false }, async () => {
+  const sessions = [{ id: 'default', name: 'Main Hustle', lastSaved: 10, metadata: {} }];
+  const alerts = [];
+  const originalAlert = dom.window.alert;
+  dom.window.alert = message => {
+    alerts.push(message);
+  };
+
+  try {
+    setupSessionSwitcher({
+      listSessions: () => sessions.map(session => ({ ...session })),
+      getActiveSession: () => ({ ...sessions[0] })
+    });
+
+    const summary = dom.window.document.querySelector('[data-session-summary]');
+    summary.click();
+    const importInput = dom.window.document.querySelector('[data-session-import-input]');
+    const badFile = { text: () => Promise.resolve('not-json') };
+    Object.defineProperty(importInput, 'files', {
+      configurable: true,
+      value: [badFile]
+    });
+
+    importInput.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+
+    await new Promise(resolve => dom.window.setTimeout(resolve, 0));
+
+    assert.equal(alerts.length, 1, 'expected a friendly alert for invalid imports');
+  } finally {
+    dom.window.alert = originalAlert;
   }
 });

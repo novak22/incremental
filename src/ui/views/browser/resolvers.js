@@ -108,7 +108,11 @@ const resolvers = {
       empty: container.querySelector('[data-session-empty]'),
       createButton: container.querySelector('[data-session-create]'),
       resetButton: container.querySelector('[data-session-reset]'),
-      closeButton: container.querySelector('[data-session-close]')
+      closeButton: container.querySelector('[data-session-close]'),
+      exportButton: container.querySelector('[data-session-export]'),
+      importButton: container.querySelector('[data-session-import]'),
+      importInput: container.querySelector('[data-session-import-input]'),
+      toolsBlurb: container.querySelector('[data-session-tools-blurb]')
     };
   },
   browserNotifications: root => {

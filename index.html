@@ -176,6 +176,27 @@
                 Reset current session
               </button>
             </div>
+            <div class="browser-session-switcher__tools">
+              <p class="browser-session-switcher__tools-note" data-session-tools-blurb>
+                Bring your hustle adventures along for the ride or load a friend’s tale.
+              </p>
+              <div class="browser-session-switcher__tools-actions">
+                <button type="button" class="browser-button browser-button--text" data-session-export>
+                  Export active session
+                </button>
+                <button type="button" class="browser-button browser-button--text" data-session-import>
+                  Import session file
+                </button>
+                <input
+                  type="file"
+                  accept="application/json"
+                  data-session-import-input
+                  aria-hidden="true"
+                  tabindex="-1"
+                  hidden
+                />
+              </div>
+            </div>
           </div>
         </div>
         <button id="browser-session-button" class="browser-button browser-button--primary" type="button">End Day</button>
