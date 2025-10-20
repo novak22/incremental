@@ -155,7 +155,7 @@ export function buildTodoGroups(entries = [], options = {}) {
 }
 
 export function createTodoCard(model = {}, options = {}) {
-  const { navigation } = options;
+  const { navigation, todoGroups } = options;
   const card = createCard({
     title: 'Focus queue',
     headerClass: navigation ? 'browser-card__header--stacked' : undefined,
@@ -164,11 +164,12 @@ export function createTodoCard(model = {}, options = {}) {
   });
 
   const entries = Array.isArray(model.todoEntries) ? model.todoEntries : [];
-  const { items: groupedItems, grouping, nextEntry } = buildTodoGroups(entries, {
+  const computedGroups = todoGroups || buildTodoGroups(entries, {
     availableHours: model.todoHoursAvailable ?? model.hoursAvailable,
     availableMoney: model.todoMoneyAvailable ?? model.moneyAvailable,
     emptyMessage: model.todoEmptyMessage
   });
+  const { items: groupedItems, grouping, nextEntry } = computedGroups;
 
   if (!nextEntry && grouping.totalPending === 0) {
     const emptyText = grouping.emptyMessage || DEFAULT_TODO_EMPTY_MESSAGE;

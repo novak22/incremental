@@ -80,6 +80,34 @@ export function buildRecurringEntries(summary = {}) {
   return [...maintenance, ...study];
 }
 
+export function buildTimelineCompletedEntries(summary = {}) {
+  const entries = Array.isArray(summary?.timeBreakdown) ? summary.timeBreakdown : [];
+  return entries
+    .map((entry, index) => {
+      const hours = Math.max(0, Number(entry?.hours) || 0);
+      if (hours <= 0) {
+        return null;
+      }
+
+      const category = typeof entry?.category === 'string' ? entry.category.toLowerCase() : '';
+      const label = entry?.label
+        || entry?.definition?.label
+        || entry?.definition?.name
+        || 'Completed focus block';
+
+      return {
+        id: `summary:${entry?.key || index}`,
+        title: label,
+        durationHours: hours,
+        durationText: formatHours(hours),
+        focusCategory: category || null,
+        category,
+        completedAt: index
+      };
+    })
+    .filter(Boolean);
+}
+
 function countCompletedTasks(completedGroups = {}) {
   return Object.values(completedGroups).reduce((total, group) => {
     if (!Array.isArray(group)) {
@@ -197,6 +225,7 @@ export function buildTimodoroViewModel(state = {}, summary = {}, todoModel = {})
     : 'No streak yet — today is a fresh start.';
 
   const meta = buildMeta(summary, completedGroups);
+  const timelineCompletedEntries = buildTimelineCompletedEntries(summary);
 
   return {
     completedGroups,
@@ -207,9 +236,11 @@ export function buildTimodoroViewModel(state = {}, summary = {}, todoModel = {})
     todoEmptyMessage,
     todoHoursAvailable,
     todoMoneyAvailable,
+    hoursSpent,
     hoursAvailableLabel: availableLabel,
     hoursSpentLabel: spentLabel,
     focusStreakLabel,
-    meta
+    meta,
+    timelineCompletedEntries
   };
 }

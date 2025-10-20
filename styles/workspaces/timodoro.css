@@ -5,6 +5,14 @@
   gap: 1.8rem;
 }
 
+.timodoro-timeline-card {
+  gap: 1rem;
+}
+
+.timodoro-timeline-card .todo-widget__timeline {
+  padding-top: 0.1rem;
+}
+
 .timodoro-tabs {
   display: flex;
   flex-direction: column;

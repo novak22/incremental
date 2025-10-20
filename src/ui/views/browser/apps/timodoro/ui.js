@@ -2,7 +2,8 @@ import { appendContent } from '../../components/common/domHelpers.js';
 import { getWorkspacePath } from '../../layout/workspaces.js';
 import { createCard } from './components/card.js';
 import { createCompletedSection } from './sections/completedSection.js';
-import { createTodoCard } from './sections/todoSection.js';
+import { buildTimelineModel, renderTimeline, teardownTimeline } from '../../widgets/todoTimeline.js';
+import { buildTodoGroups, createTodoCard } from './sections/todoSection.js';
 import { createRecurringCard } from './sections/recurringSection.js';
 import { createSummaryColumn } from './sections/summarySection.js';
 
@@ -82,7 +83,7 @@ function observePagePath(mount, tabs) {
 }
 
 function createTodoPanel(model = {}, config = TAB_CONFIGS[0], options = {}) {
-  const { navigation, labelId } = options;
+  const { navigation, labelId, todoGroups } = options;
   const panel = document.createElement('div');
   panel.className = 'timodoro-tabs__panel';
   panel.dataset.tab = config.key;
@@ -92,7 +93,7 @@ function createTodoPanel(model = {}, config = TAB_CONFIGS[0], options = {}) {
   panel.setAttribute('role', 'tabpanel');
   panel.setAttribute('aria-labelledby', labelId || config.buttonId);
 
-  panel.appendChild(createTodoCard(model, { navigation }));
+  panel.appendChild(createTodoCard(model, { navigation, todoGroups }));
   return panel;
 }
 
@@ -119,6 +120,44 @@ function createDonePanel(model = {}, config = TAB_CONFIGS[1], options = {}) {
   return panel;
 }
 
+function createTimelineCard(model = {}, options = {}) {
+  const { pendingEntries = [], onRun } = options;
+  const card = createCard({
+    title: 'Daily timeline',
+    summary: 'Map today’s hustle arc from warm-up to wrap-up.'
+  });
+  card.classList.add('timodoro-timeline-card');
+
+  const container = document.createElement('div');
+  container.className = 'todo-widget__timeline';
+  container.dataset.role = 'timodoro-timeline';
+  container.setAttribute('aria-label', 'Daily flow timeline');
+
+  const timelineModel = buildTimelineModel({
+    viewModel: { hoursSpent: model?.hoursSpent },
+    pendingEntries,
+    completedEntries: Array.isArray(model?.timelineCompletedEntries)
+      ? model.timelineCompletedEntries
+      : [],
+    now: new Date()
+  });
+
+  const runHandler = typeof onRun === 'function'
+    ? onRun
+    : entry => {
+        if (entry && typeof entry.onClick === 'function') {
+          entry.onClick();
+        }
+      };
+
+  renderTimeline(container, timelineModel, {
+    onRun: runHandler
+  });
+
+  card.appendChild(container);
+  return card;
+}
+
 function createTabButton(config, onSelect, options = {}) {
   const button = document.createElement('button');
   button.type = 'button';
@@ -137,7 +176,7 @@ function createTabButton(config, onSelect, options = {}) {
 }
 
 function createTabs(model = {}, options = {}) {
-  const { initialTab = DEFAULT_TAB_KEY, onSelect } = options;
+  const { initialTab = DEFAULT_TAB_KEY, onSelect, todoGroups } = options;
 
   const wrapper = document.createElement('section');
   wrapper.className = 'timodoro-tabs';
@@ -242,7 +281,8 @@ function createTabs(model = {}, options = {}) {
     const { nav } = buildNavigation(idSuffix, 'timodoro-tabs__nav--inline');
     const panelOptions = {
       navigation: nav,
-      labelId: buildButtonId(config, idSuffix)
+      labelId: buildButtonId(config, idSuffix),
+      todoGroups
     };
     const panel = config.key === 'done'
       ? createDonePanel(model, config, panelOptions)
@@ -275,15 +315,27 @@ function createTaskColumn(model = {}, options = {}) {
 function createLayout(model = {}, options = {}) {
   const fragment = document.createDocumentFragment();
 
+  const entries = Array.isArray(model.todoEntries) ? model.todoEntries : [];
+  const todoGroups = buildTodoGroups(entries, {
+    availableHours: model.todoHoursAvailable ?? model.hoursAvailable,
+    availableMoney: model.todoMoneyAvailable ?? model.moneyAvailable,
+    emptyMessage: model.todoEmptyMessage
+  });
+
+  fragment.appendChild(createTimelineCard(model, {
+    pendingEntries: todoGroups?.grouping?.entries || [],
+    onRun: options.onRun
+  }));
+
   const grid = document.createElement('div');
   grid.className = 'timodoro__grid';
 
-  const { column, tabs } = createTaskColumn(model, options);
+  const { column, tabs } = createTaskColumn(model, { ...options, todoGroups });
 
   grid.append(column, createSummaryColumn(model));
   fragment.appendChild(grid);
 
-  return { fragment, tabs };
+  return { fragment, tabs, todoGroups };
 }
 
 function render(model = {}, context = {}) {
@@ -307,6 +359,11 @@ function render(model = {}, context = {}) {
   if (!mount) {
     summary.urlPath = buildTabPath(initialTab);
     return summary;
+  }
+
+  const previousTimeline = mount.querySelector?.('[data-role="timodoro-timeline"]');
+  if (previousTimeline) {
+    teardownTimeline(previousTimeline);
   }
 
   mount.innerHTML = '';

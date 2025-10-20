@@ -1,5 +1,4 @@
 import { DEFAULT_TODO_EMPTY_MESSAGE } from '../../../actions/taskGrouping.js';
-import { renderTimeline as renderTimelineImpl, teardownTimeline as teardownTimelineImpl } from './todoTimeline.js';
 
 function toArray(value) {
   if (Array.isArray(value)) {
@@ -44,10 +43,6 @@ function prepareElements(widgetElements = {}) {
 
   if (!elements.note) {
     elements.note = select(['#browser-widget-todo-note', '.todo-widget__intro p']);
-  }
-
-  if (!elements.timeline) {
-    elements.timeline = select(['#browser-widget-todo-timeline', '.todo-widget__timeline']);
   }
 
   if (!elements.availableValue) {
@@ -334,33 +329,16 @@ function renderCompleted(list, heading, entries = [], formatDuration) {
   });
 }
 
-function renderTimeline(container, model, options) {
-  if (!container) {
-    return;
-  }
-  renderTimelineImpl(container, model, options);
-}
-
-function teardownTimeline(container) {
-  if (!container) {
-    return;
-  }
-  teardownTimelineImpl(container);
-  container.innerHTML = '';
-}
-
 export {
   applyScrollerLimit,
   bindEndDay,
   bindFocusControls,
-  renderTimeline,
   prepareElements,
   renderCompleted,
   renderEmptyState,
   renderHours,
   renderPending,
   syncFocusButtons,
-  teardownTimeline,
   updateNote
 };
 
@@ -368,13 +346,11 @@ export default {
   applyScrollerLimit,
   bindEndDay,
   bindFocusControls,
-  renderTimeline,
   prepareElements,
   renderCompleted,
   renderEmptyState,
   renderHours,
   renderPending,
   syncFocusButtons,
-  teardownTimeline,
   updateNote
 };
