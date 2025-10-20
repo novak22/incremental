@@ -7,7 +7,7 @@ import { success, error, empty, tryCatch } from './result.js';
 import { syncNicheTrendSnapshots } from '../../game/events/syncNicheTrendSnapshots.js';
 import { maybeSpawnNicheEvents } from '../../game/events/index.js';
 import { createDefaultHustleMarketState } from '../state/slices/hustleMarket/index.js';
-import { createDefaultActionMarketState } from '../state/slices/actionMarket/index.js';
+import { createDefaultActionMarketState } from '../state/slices/actionMarket/state.js';
 
 function migrateLegacySnapshot(snapshot, context) {
   if (!snapshot || typeof snapshot !== 'object') {

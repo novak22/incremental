@@ -132,7 +132,7 @@ export function createAcceptedEntryFromOffer(offer, details = {}, {
   }, { fallbackDay, category });
 }
 
-export function matchesAcceptedIdentifiers(entry, identifiers = {}) {
+function matchesAcceptedIdentifiers(entry, identifiers = {}) {
   if (!entry) {
     return false;
   }

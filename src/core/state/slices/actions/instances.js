@@ -4,14 +4,14 @@ import { getActionDefinition, getHustleDefinition } from '../../registry.js';
 import { normalizeInstanceProgress } from './progress.js';
 
 const KNOWLEDGE_TRACKS = knowledgeTrackData;
-export const MAX_ACTION_INSTANCES = 100;
+const MAX_ACTION_INSTANCES = 100;
 export const COMPLETED_RETENTION_DAYS = 1;
 
 export function resolveDefinition(id) {
   return getActionDefinition(id) || getHustleDefinition(id);
 }
 
-export function isInstanceCompleted(instance) {
+function isInstanceCompleted(instance) {
   if (!instance || typeof instance !== 'object') {
     return false;
   }
@@ -26,7 +26,7 @@ export function isInstanceCompleted(instance) {
   return false;
 }
 
-export function resolveCompletionDay(instance) {
+function resolveCompletionDay(instance) {
   if (!instance || typeof instance !== 'object') {
     return null;
   }
@@ -66,7 +66,7 @@ export function createDefaultActionState(definition) {
   return base;
 }
 
-export function normalizeActionInstance(definition, instance = {}, { state } = {}) {
+function normalizeActionInstance(definition, instance = {}, { state } = {}) {
   const base = typeof instance === 'object' && instance !== null ? { ...instance } : {};
   const fallbackDay = Math.max(1, Math.floor(Number(state?.day) || 1));
   if (!base.id) {
@@ -192,7 +192,7 @@ export function normalizeActionState(definition, entry = {}, context) {
   return normalized;
 }
 
-export function buildLegacyStudyInstance(definition, track, progress, state) {
+function buildLegacyStudyInstance(definition, track, progress, state) {
   if (!definition || !track || !progress) {
     return null;
   }
@@ -257,7 +257,7 @@ export function buildLegacyStudyInstance(definition, track, progress, state) {
   return normalizeActionInstance(definition, overrides, { state });
 }
 
-export function seedKnowledgeStudyInstances({ state, sliceState }) {
+function seedKnowledgeStudyInstances({ state, sliceState }) {
   const knowledge = state?.progress?.knowledge;
   if (!knowledge || typeof knowledge !== 'object') {
     return;

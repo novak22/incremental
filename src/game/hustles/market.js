@@ -6,7 +6,7 @@ import {
 } from './normalizers.js';
 import { getState } from '../../core/state.js';
 import { ensureActionMarketCategoryState } from '../../core/state/slices/actionMarket/state.js';
-import { normalizeActionMarketOffer } from '../../core/state/slices/actionMarket/index.js';
+import { normalizeActionMarketOffer } from '../../core/state/slices/actionMarket/offers.js';
 import {
   getActionMarketAvailableOffers,
   getActionMarketClaimedOffers
