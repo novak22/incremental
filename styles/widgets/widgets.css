@@ -314,9 +314,16 @@
 }
 
 .downwork-board__list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
   gap: 1.25rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  align-items: stretch;
+  justify-items: center;
+}
+
+.downwork-board__list .browser-card {
+  width: 100%;
+  max-width: 320px;
 }
 
 .downwork-filter-row {

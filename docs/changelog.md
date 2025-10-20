@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- UI: DownWork gig listings now flow in a responsive grid that fits multiple cards per row while gracefully wrapping on smaller screens.
 - Simulation: Blog assets now accumulate daily visit totals alongside payouts, updating hourly progress and rolling finished days into lifetime reach without touching cash flow.
 - BlogPress: Performance detail panels surface projected daily visits plus the visitors logged so far today, making audience momentum easy to spot at a glance.
 - UI/Persistence: The session switcher now exports the active slot to a JSON download and can import shared saves into a fresh slot right from the dropdown, perfect for handing QA or balancing runs around the studio.
