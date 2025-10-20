@@ -75,4 +75,3 @@ export function renderUpgradeBuffs(container, state) {
   });
 }
 
-export default renderUpgradeBuffs;

@@ -317,4 +317,3 @@ export function renderActionEntry(doc, entry, index) {
   return item;
 }
 
-export default renderActionEntry;

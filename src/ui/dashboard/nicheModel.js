@@ -155,5 +155,3 @@ export function buildNicheViewModel(state) {
   };
 }
 
-export default buildNicheViewModel;
-

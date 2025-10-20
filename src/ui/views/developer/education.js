@@ -63,4 +63,3 @@ export function renderEducationBuffs(container, state) {
   });
 }
 
-export default renderEducationBuffs;

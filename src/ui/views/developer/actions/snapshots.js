@@ -296,4 +296,3 @@ export function collectActionSnapshots(state) {
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
-export default collectActionSnapshots;

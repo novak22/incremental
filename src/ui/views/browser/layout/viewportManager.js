@@ -30,4 +30,3 @@ export function createViewportManager({ windowRef = typeof window !== 'undefined
   };
 }
 
-export default createViewportManager;

@@ -2,8 +2,8 @@ import { formatHours } from '../../../core/helpers.js';
 import { getState } from '../../../core/state.js';
 import { getActionDefinition } from '../../../game/registryService.js';
 import { clampToZero } from '../utils.js';
-import collectMarketIndexes from './marketIndexes.js';
-import createOutstandingEntry from './entryBuilders.js';
+import { collectMarketIndexes } from './marketIndexes.js';
+import { createOutstandingEntry } from './entryBuilders.js';
 import { resolveStudyTrackId } from '../studyTracks.js';
 
 export function collectOutstandingActionEntries(state = getState()) {

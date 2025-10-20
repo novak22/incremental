@@ -11,4 +11,3 @@ export function createTabSessionController({ initTabControls, workspaceManager }
   };
 }
 
-export default createTabSessionController;

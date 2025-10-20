@@ -11,4 +11,3 @@ export function renderTimeBuffs(container, state) {
   setText(container, '[data-dev-field="dailyBonus"]', daily);
 }
 
-export default renderTimeBuffs;

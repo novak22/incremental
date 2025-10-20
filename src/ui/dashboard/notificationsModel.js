@@ -94,5 +94,3 @@ export function buildEventLogModel(state = {}) {
   };
 }
 
-export default buildNotificationModel;
-

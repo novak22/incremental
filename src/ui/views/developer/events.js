@@ -74,4 +74,3 @@ export function renderEvents(container, state) {
     });
 }
 
-export default renderEvents;
