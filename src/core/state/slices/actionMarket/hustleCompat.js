@@ -1,22 +1,8 @@
 import {
-  DEFAULT_ACTION_MARKET_CATEGORY_STATE,
-  clearActionMarketCategoryState,
-  cloneActionMarketCategoryState,
   createDefaultActionMarketCategoryState,
   ensureActionMarketCategoryState
 } from './state.js';
-import {
-  claimActionMarketOffer,
-  completeActionMarketInstance,
-  releaseActionMarketOffer
-} from './commands.js';
-import {
-  getActionMarketAvailableOffers,
-  getActionMarketClaimedOffers,
-  getActionMarketOfferById
-} from './selectors.js';
-
-export const DEFAULT_HUSTLE_MARKET_STATE = DEFAULT_ACTION_MARKET_CATEGORY_STATE;
+import { completeActionMarketInstance } from './commands.js';
 
 export function createDefaultHustleMarketState() {
   return createDefaultActionMarketCategoryState({ category: 'hustle' });
@@ -28,19 +14,7 @@ export function ensureHustleMarketState(state, options = {}) {
   return categoryState;
 }
 
-export function getHustleMarketState(state, options = {}) {
-  return ensureHustleMarketState(state, options);
-}
-
-export function cloneHustleMarketState(state) {
-  return cloneActionMarketCategoryState(state, 'hustle');
-}
-
-export function clearHustleMarketState(state) {
-  clearActionMarketCategoryState(state, 'hustle');
-}
-
-export function mirrorHustleMarketState(state, categoryState = null) {
+function mirrorHustleMarketState(state, categoryState = null) {
   if (!state || typeof state !== 'object') {
     return;
   }
@@ -59,26 +33,6 @@ export function mirrorHustleMarketState(state, categoryState = null) {
     state.hustleMarket = ensureActionMarketCategoryState(state, 'hustle');
     categories.hustle = state.hustleMarket;
   }
-}
-
-export function claimHustleMarketOffer(state, offerId, details = {}) {
-  return claimActionMarketOffer(state, 'hustle', offerId, details);
-}
-
-export function releaseHustleMarketOffer(state, identifiers = {}) {
-  return releaseActionMarketOffer(state, 'hustle', identifiers);
-}
-
-export function getMarketOfferById(state, offerId, options = {}) {
-  return getActionMarketOfferById(state, 'hustle', offerId, options);
-}
-
-export function getMarketAvailableOffers(state, options = {}) {
-  return getActionMarketAvailableOffers(state, 'hustle', options);
-}
-
-export function getMarketClaimedOffers(state, options = {}) {
-  return getActionMarketClaimedOffers(state, 'hustle', options);
 }
 
 export function completeHustleMarketInstance(state, instanceId, details = {}) {
