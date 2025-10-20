@@ -7,7 +7,7 @@ fast while grounding every experiment in the authoritative simulation logic.
 ## Player Impact
 - Tighter tuning means players feel steady cash momentum and clearer upgrade payoffs throughout the opening hours.
 - Designers can vet balance adjustments quickly, reducing the risk of shipping spikes that stall or trivialize progress.
-- Exported charts slide straight into changelog notes so stakeholders see the before/after story at a glance.
+- Exported charts shape the punchy changelog bullet while deeper graphs can live beside the archive entry for before/after context.
 
 ## Key Parameters
 - Starting cash, daily hours, assistant costs, and passive blog upkeep are all adjustable via sliders.
@@ -23,4 +23,4 @@ fast while grounding every experiment in the authoritative simulation logic.
 ## Follow-up Actions
 - When the team approves a new target, update `docs/normalized_economy.json`, rerun `npm run rebuild-economy-docs`, and
   regenerate `docs/economy_sim_report_assets` with the workbench snapshot button.
-- Capture notable findings in `docs/economy_sim_report.md` and the main `docs/changelog.md` entry for transparency.
+- Capture notable findings in `docs/economy_sim_report.md`, add a distilled highlight to `docs/changelog.md`, and stash extended commentary in `docs/archive/changelog-legacy.md` when needed.
