@@ -348,8 +348,7 @@ export class SessionRepository {
         }
       } catch (error) {
         console?.error?.('Failed to refresh session index', error);
-        this.indexCache = this.createEmptyIndex();
-        this.indexCacheRaw = null;
+        this.indexCacheRaw = undefined;
       }
     }
     return this.indexCache;
