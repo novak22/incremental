@@ -5,17 +5,17 @@ import { getSharedWidgetController } from './sharedWidgetControllers.js';
 
 const defaultDefinitions = [
   {
-    id: 'todo',
-    title: 'ToDo',
-    factory: createTodoWidgetController,
-    fallbackFactory: () => getSharedWidgetController('todo'),
-    featureFlags: []
-  },
-  {
     id: 'apps',
     title: 'Bookmarks',
     factory: createAppsWidgetController,
     fallbackFactory: () => getSharedWidgetController('apps'),
+    featureFlags: []
+  },
+  {
+    id: 'todo',
+    title: 'ToDo',
+    factory: createTodoWidgetController,
+    fallbackFactory: () => getSharedWidgetController('todo'),
     featureFlags: []
   },
   {
