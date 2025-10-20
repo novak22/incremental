@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { getGameTestHarness } from './helpers/gameTestHarness.js';
 
+const constantsModule = await import('../src/core/constants.js');
 const knowledgeTracksModule = await import('../src/game/requirements/knowledgeTracks.js');
 const knowledgeTrackDataModule = await import('../src/game/requirements/data/knowledgeTracks.js');
 const maintenanceModule = await import('../src/game/requirements/maintenanceReserve.js');
@@ -13,6 +14,7 @@ const todoWidgetModule = await import('../src/ui/views/browser/widgets/todoWidge
 const actionsSliceModule = await import('../src/core/state/slices/actions/index.js');
 const actionInstancesModule = await import('../src/core/state/slices/actions/instances.js');
 
+const { DEFAULT_DAY_HOURS } = constantsModule;
 const { default: tracksDefaultExport, KNOWLEDGE_TRACKS: tracksCatalog, KNOWLEDGE_REWARDS: rewardCatalog } = knowledgeTracksModule;
 const knowledgeTrackData = knowledgeTrackDataModule.default;
 const { estimateManualMaintenanceReserve } = maintenanceModule;
@@ -106,6 +108,33 @@ test('manual maintenance reserve respects assistant support', () => {
 
   const assisted = estimateManualMaintenanceReserve(state);
   assert.equal(assisted, 0);
+});
+
+test('study allocation warns when maintenance reserve consumes focus', () => {
+  resetState();
+  consumeDirty();
+
+  const state = getState();
+  state.assets.blog.instances = [{ status: 'active' }];
+
+  const manualReserve = estimateManualMaintenanceReserve(state);
+  const bufferHours = Math.max(2, Math.round(((state.baseTime || DEFAULT_DAY_HOURS)) * 0.25));
+  const track = KNOWLEDGE_TRACKS.outlineMastery;
+
+  state.money = (track.tuition || 0) + 100;
+  state.timeLeft = manualReserve + bufferHours - 0.25;
+
+  const enrollResult = enrollInKnowledgeTrack(track.id);
+  assert.ok(enrollResult?.success, 'enrollment should succeed even with tight schedule');
+
+  consumeDirty();
+  allocateDailyStudy({ trackIds: [track.id] });
+
+  const lastLog = state.log.at(-1);
+  assert.ok(lastLog, 'expected a warning log to be generated');
+  assert.match(lastLog.message, /No focus left/i);
+  assert.match(lastLog.message, /upkeep/i);
+  assert.match(lastLog.message, /buffer/i);
 });
 
 test('requirement label reflects missing equipment and updates after unlock', () => {

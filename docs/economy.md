@@ -17,7 +17,7 @@ This document enumerates every economic rule, constant, and dependency extracted
 
 ### Assistant-Adjusted Reserve
 
-- Manual maintenance reserve deducts available assistant hours (each adds `ASSISTANT_CONFIG.hoursPerAssistant = 3h`) before predicting remaining human time needed, ensuring study doesn’t steal hours required for upkeep.【F:src/game/requirements/maintenanceReserve.js†L5-L29】【F:src/game/assistant.js†L12-L33】
+- Manual maintenance reserve deducts available assistant hours (each adds `ASSISTANT_CONFIG.hoursPerAssistant = 3h`) before predicting remaining human time needed. Requirement descriptors surface the upkeep + daily buffer reserve, and study allocation warns when that reserve leaves no focus for enrolled tracks.【F:src/game/requirements/maintenanceReserve.js†L5-L29】【F:src/game/requirements/descriptors.js†L8-L87】【F:src/game/requirements/orchestrator.js†L1-L153】
 
 ## 2. Skill & Character Progression
 
@@ -39,7 +39,7 @@ This document enumerates every economic rule, constant, and dependency extracted
 ### Track Scheduling & Advancement
 
 - **Enrollment:** Tuition (if any) is charged immediately, progress is flagged, and study time for the new track is scheduled the same day when possible.【F:src/game/requirements/orchestrator.js†L21-L83】
-- **Daily allocation:** For each enrolled, incomplete track not yet studied today, the orchestrator spends `track.hoursPerDay` provided enough time remains after subtracting the maintenance reserve and buffer. Time or money shortages log warnings and skip the session.【F:src/game/requirements/orchestrator.js†L89-L162】
+- **Daily allocation:** For each enrolled, incomplete track not yet studied today, the orchestrator spends `track.hoursPerDay` when focus remains after the maintenance reserve and buffer; if not, it logs how much time must be freed before study can continue.【F:src/game/requirements/orchestrator.js†L96-L153】
 - **Progress:** Each studied track gains one completed day per real day studied; upon finishing all required days the track auto-completes, unenrolls, and awards the configured skill XP (once).【F:src/game/requirements/orchestrator.js†L165-L229】
 - **Knowledge state defaults:** Tracks store total days, hours/day, tuition, completion flags, and enrollment metadata per entry.【F:src/game/requirements/knowledgeProgress.js†L1-L24】
 
