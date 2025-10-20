@@ -2,6 +2,7 @@ import { formatHours, formatMoney } from '../../../../../core/helpers.js';
 import { buildSummaryPresentations } from '../../../../dashboard/formatters.js';
 import { buildQueueMetrics } from '../../../../actions/queue/metrics.js';
 import { buildQueueEntryCollection } from '../../../../actions/models.js';
+import todoState from '../../widgets/todoState.js';
 
 export function formatCurrency(amount) {
   const numeric = Number(amount);
@@ -78,6 +79,83 @@ export function buildRecurringEntries(summary = {}) {
   }));
 
   return [...maintenance, ...study];
+}
+
+export function buildTimelineCompletedEntries(summary = {}, options = {}) {
+  const recordedEntries = Array.isArray(options?.completedEntries)
+    ? options.completedEntries
+    : [];
+
+  const recordedTimeline = recordedEntries
+    .filter(entry => {
+      if (!entry) return false;
+      const hours = Math.max(0, Number(entry?.durationHours) || 0);
+      return hours > 0;
+    })
+    .map((entry, index) => {
+      const hours = Math.max(0, Number(entry?.durationHours) || 0);
+      const timestamp = Number(entry?.completedAt);
+      const category = typeof entry?.focusCategory === 'string'
+        ? entry.focusCategory.toLowerCase()
+        : typeof entry?.category === 'string'
+          ? entry.category.toLowerCase()
+          : '';
+      const repeatCount = Number.isFinite(entry?.count) && entry.count > 0 ? entry.count : 1;
+
+      return {
+        id: entry?.id || `completed:${index}`,
+        title: entry?.title || 'Completed focus block',
+        durationHours: hours,
+        durationText: entry?.durationText || formatHours(hours),
+        focusCategory: category || null,
+        category,
+        completedAt: Number.isFinite(timestamp) ? timestamp : index,
+        count: repeatCount
+      };
+    })
+    .sort((a, b) => {
+      const timeA = Number(a?.completedAt);
+      const timeB = Number(b?.completedAt);
+      if (Number.isFinite(timeA) && Number.isFinite(timeB)) {
+        if (timeA === timeB) return 0;
+        return timeA - timeB;
+      }
+      if (Number.isFinite(timeA)) return -1;
+      if (Number.isFinite(timeB)) return 1;
+      return 0;
+    });
+
+  if (recordedTimeline.length > 0) {
+    return recordedTimeline;
+  }
+
+  const entries = Array.isArray(summary?.timeBreakdown) ? summary.timeBreakdown : [];
+  return entries
+    .slice()
+    .reverse()
+    .map((entry, index) => {
+      const hours = Math.max(0, Number(entry?.hours) || 0);
+      if (hours <= 0) {
+        return null;
+      }
+
+      const category = typeof entry?.category === 'string' ? entry.category.toLowerCase() : '';
+      const label = entry?.label
+        || entry?.definition?.label
+        || entry?.definition?.name
+        || 'Completed focus block';
+
+      return {
+        id: `summary:${entry?.key || index}`,
+        title: label,
+        durationHours: hours,
+        durationText: formatHours(hours),
+        focusCategory: category || null,
+        category,
+        completedAt: index
+      };
+    })
+    .filter(Boolean);
 }
 
 function countCompletedTasks(completedGroups = {}) {
@@ -197,6 +275,10 @@ export function buildTimodoroViewModel(state = {}, summary = {}, todoModel = {})
     : 'No streak yet — today is a fresh start.';
 
   const meta = buildMeta(summary, completedGroups);
+  const recordedTimelineEntries = todoState?.getCompletedEntries?.() || [];
+  const timelineCompletedEntries = buildTimelineCompletedEntries(summary, {
+    completedEntries: recordedTimelineEntries
+  });
 
   return {
     completedGroups,
@@ -207,9 +289,11 @@ export function buildTimodoroViewModel(state = {}, summary = {}, todoModel = {})
     todoEmptyMessage,
     todoHoursAvailable,
     todoMoneyAvailable,
+    hoursSpent,
     hoursAvailableLabel: availableLabel,
     hoursSpentLabel: spentLabel,
     focusStreakLabel,
-    meta
+    meta,
+    timelineCompletedEntries
   };
 }

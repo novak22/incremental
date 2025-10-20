@@ -11,9 +11,9 @@
 - The always-on "Do now" micro-CTA mirrors the queue’s next entry so action-oriented players can trigger momentum directly from the schedule view.
 
 ## Implementation Notes
-- `todoTimeline.js` converts the todo widget model into timeline segments, clamps durations into a 08:00–24:00 window, and tags each block with category metadata for styling.
-- `todoDom.renderTimeline` mounts the rendered track above the existing queue, reusing the widget controller lifecycle to keep intervals and DOM nodes tidy.
-- Task type styles follow the home widget language: contracts reuse the accent fill, upgrades use a striped gradient, study slots have dotted borders, and upkeep renders as a lighter background bar.
+- `todoTimeline.js` converts the planner model into timeline segments, clamps durations into a 08:00–24:00 window, and tags each block with category metadata for styling.
+- `timodoro/ui.js` mounts the rendered track above the daily grid, reusing the planner lifecycle to keep intervals and DOM nodes tidy.
+- Task type styles follow the planner language: contracts reuse the accent fill, upgrades use a striped gradient, study slots have dotted borders, and upkeep renders as a lighter background bar.
 - The current-time indicator refreshes every minute with a lightweight ticker stored in a `WeakMap`, preventing orphaned intervals when the widget rerenders or unmounts.
 
 ## Future Hooks

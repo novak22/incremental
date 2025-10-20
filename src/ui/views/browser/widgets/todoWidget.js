@@ -8,7 +8,6 @@ import {
 } from '../../../actions/taskGrouping.js';
 import todoDom from './todoDom.js';
 import todoState from './todoState.js';
-import { buildTimelineModel } from './todoTimeline.js';
 import { createWidgetController } from './createWidgetController.js';
 
 function defaultEndDay() {
@@ -42,7 +41,6 @@ function createTodoWidgetController() {
       if (elements?.note) {
         elements.note.textContent = DEFAULT_TODO_EMPTY_MESSAGE;
       }
-      todoDom.teardownTimeline(elements?.timeline);
     }
   });
 
@@ -226,16 +224,6 @@ function createTodoWidgetController() {
     todoState.setPendingEntries(grouping.entries);
 
     const completedEntries = todoState.getCompletedEntries();
-    const timelineModel = buildTimelineModel({
-      viewModel,
-      pendingEntries: grouping.entries,
-      completedEntries,
-      now: new Date()
-    });
-    todoDom.renderTimeline(elements?.timeline, timelineModel, {
-      onRun: entry => handleCompletion(entry, viewModel)
-    });
-
     todoDom.renderHours(elements, viewModel, formatHours);
     const emptyMessage = grouping.emptyMessage || DEFAULT_TODO_EMPTY_MESSAGE;
     todoDom.updateNote(elements?.note, { ...viewModel, emptyMessage }, grouping.totalPending);

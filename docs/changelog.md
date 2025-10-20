@@ -15,7 +15,7 @@
 - UI: Hustle quick actions group market variants, surface commitment length and expiry, and card views now spotlight seat limits and market categories across Hustles and Learnly.
 - UI: Timodoro’s dashboard leans into the sim vibe with a focus-block hero CTA, Daily pulse summary card, and celebratory completed-task styling so the next sprint and streak momentum stay front and center.
 - UI: Timodoro queue intel now shows every runnable upgrade requirement across future quality levels and adds a mini "Do now" button to ready actions so players can trigger boosts straight from the list.
-- UI: Home ToDo widget now opens with a horizontal 08:00–24:00 timeline that dims completed tasks, highlights the current moment, and offers a "Do now" shortcut for the next actionable item.
+- UI: Timodoro now opens with a horizontal 08:00–24:00 timeline that dims completed tasks, highlights the current moment, and offers a "Do now" shortcut for the next actionable item right from the planner.
 - Fix: Deduplicated TODO queue entries so Learnly study sessions only appear once per day, preventing accidental double logs.
 - Hustles: Rebalanced multi-day contract payouts around base hourly earnings (with a 5% commitment bonus) and introduced the Data Entry Blitz gig with 4h and 8h variants for steady $5/hour work.
 - Hustles: Contract templates now publish multi-variant market metadata (hours-per-day, duration windows, payout schedules, copies) so daily rolls surface retainers alongside quick gigs.【F:src/game/hustles/definitions/instantHustles.js†L19-L855】
