@@ -100,8 +100,11 @@ test('renderHustles highlights accept CTA and upcoming list', () => {
     const filters = document.querySelectorAll('button[data-filter-id]');
     assert.equal(filters.length, 4, 'expected quick filter pills');
 
-    const tagFilters = document.querySelectorAll('button[data-tag-id]');
-    assert.ok(tagFilters.length > 0, 'expected tag filter pills to render');
+    const categoryFilters = document.querySelectorAll('button[data-category-id]');
+    assert.ok(categoryFilters.length > 0, 'expected category filter pills to render');
+    const hustleFilter = document.querySelector('button[data-category-id="priority-hustle"]');
+    assert.ok(hustleFilter, 'expected hustle category filter pill');
+    assert.ok(hustleFilter.textContent.includes('Priority Hustle'));
 
     const button = document.querySelector('.browser-card__actions .browser-card__button--primary');
     assert.ok(button, 'expected primary accept CTA');

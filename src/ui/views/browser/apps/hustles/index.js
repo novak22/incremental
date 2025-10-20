@@ -274,14 +274,14 @@ function getBoardState(board) {
     boardStateMap.set(board, {
       activeCategory: null,
       activeFilters: new Set(),
-      activeTags: new Set(),
+      activeCategoryFilters: new Set(),
       summary: {
         focusHours: 0,
         acceptedCount: 0,
         potentialPayout: 0
       },
       elements: {},
-      availableTags: new Map(),
+      availableCategoryFilters: new Map(),
       thresholds: {
         payoutHigh: 0,
         shortTask: 0,
@@ -832,9 +832,12 @@ export function createHustleCard({
 
   const card = document.createElement('article');
   card.className = 'browser-card browser-card--action browser-card--hustle downwork-card';
-  card.dataset.action = model.id || definition.id || '';
-  card.dataset.hustle = model.id || definition.id || '';
+  const hustleId = model.id || definition.id || '';
+  card.dataset.action = hustleId;
+  card.dataset.hustle = hustleId;
   card.dataset.search = model.filters?.search || '';
+  const hustleLabel = model.name || definition.name || 'Contract';
+  card.dataset.hustleLabel = hustleLabel;
   const timeValue = Number(model.metrics?.time?.value ?? 0);
   const payoutMetricValue = Number(model.metrics?.payout?.value ?? 0);
   const roiValue = Number(model.metrics?.roi ?? 0);
@@ -848,6 +851,7 @@ export function createHustleCard({
   card.dataset.payout = String(cardPayoutValue);
   card.dataset.roi = String(roiValue);
   card.dataset.available = visibleOffers.length > 0 ? 'true' : 'false';
+  card.dataset.readyOfferCount = String(Math.max(0, visibleOffers.length));
 
   if (model.filters?.limitRemaining !== null && model.filters?.limitRemaining !== undefined) {
     card.dataset.limitRemaining = String(model.filters.limitRemaining);
@@ -865,7 +869,7 @@ export function createHustleCard({
   header.appendChild(icon);
   const title = document.createElement('h2');
   title.className = 'browser-card__title';
-  title.textContent = model.name || definition.name || 'Contract';
+  title.textContent = hustleLabel;
   header.appendChild(title);
   card.appendChild(header);
 
@@ -1171,32 +1175,24 @@ export default function renderHustles(context = {}, definitions = [], models = [
     expiringSoon: Number.isFinite(minExpiry) ? Math.min(2, Math.max(0, minExpiry)) : 2
   };
 
-  const tagMeta = new Map();
+  const categoryFilterMeta = new Map();
   allCards.forEach(card => {
-    let entries = [];
-    try {
-      entries = JSON.parse(card.dataset.tagList || '[]');
-    } catch (error) {
-      entries = [];
+    const id = (card.dataset.hustle || '').trim();
+    const label = (card.dataset.hustleLabel || '').trim();
+    if (!id || !label) return;
+    if (!categoryFilterMeta.has(id)) {
+      categoryFilterMeta.set(id, { id, label, ready: 0, cards: 0 });
     }
-    const seen = new Set();
-    entries.forEach(entry => {
-      const id = typeof entry?.id === 'string' ? entry.id : '';
-      if (!id || seen.has(id)) return;
-      seen.add(id);
-      const label = typeof entry?.label === 'string' && entry.label.trim().length > 0
-        ? entry.label
-        : formatTagLabel(id);
-      if (!tagMeta.has(id)) {
-        tagMeta.set(id, { id, label, count: 0 });
-      }
-      const meta = tagMeta.get(id);
-      meta.count += 1;
-    });
+    const meta = categoryFilterMeta.get(id);
+    const readyCount = Number(card.dataset.readyOfferCount);
+    if (Number.isFinite(readyCount) && readyCount > 0) {
+      meta.ready += readyCount;
+    }
+    meta.cards += 1;
   });
-  boardState.availableTags = tagMeta;
-  boardState.activeTags = new Set(
-    [...boardState.activeTags].filter(id => tagMeta.has(id))
+  boardState.availableCategoryFilters = categoryFilterMeta;
+  boardState.activeCategoryFilters = new Set(
+    [...boardState.activeCategoryFilters].filter(id => categoryFilterMeta.has(id))
   );
 
   const focusHoursLeft = resolveFocusHoursLeft(context, models);
@@ -1222,7 +1218,7 @@ export default function renderHustles(context = {}, definitions = [], models = [
   if (!sortedCategories.length) {
     boardState.activeCategory = null;
     boardState.activeFilters.clear();
-    boardState.activeTags.clear();
+    boardState.activeCategoryFilters.clear();
     const empty = document.createElement('p');
     empty.className = 'browser-empty';
     empty.textContent = 'Queue an action to see it spotlighted here.';
@@ -1295,21 +1291,27 @@ export default function renderHustles(context = {}, definitions = [], models = [
     });
   }
 
-  const tagButtons = new Map();
-  const tagEntries = Array.from(tagMeta.values()).sort((a, b) => {
-    if (b.count !== a.count) return b.count - a.count;
-    return a.label.localeCompare(b.label);
-  });
+  const categoryFilterButtons = new Map();
+  const categoryFilterEntries = Array.from(boardState.availableCategoryFilters.values())
+    .map(entry => ({
+      id: entry.id,
+      label: entry.label,
+      count: entry.ready > 0 ? entry.ready : entry.cards
+    }))
+    .sort((a, b) => {
+      if (b.count !== a.count) return b.count - a.count;
+      return a.label.localeCompare(b.label);
+    });
 
-  if (tagEntries.length) {
-    const { row, chips } = createFilterRow('Tags');
+  if (categoryFilterEntries.length) {
+    const { row, chips } = createFilterRow('Hustle types');
     filtersContainer.appendChild(row);
 
-    tagEntries.forEach(entry => {
+    categoryFilterEntries.forEach(entry => {
       const button = document.createElement('button');
       button.type = 'button';
-      button.className = 'downwork-filter downwork-filter--tag';
-      button.dataset.tagId = entry.id;
+      button.className = 'downwork-filter downwork-filter--category';
+      button.dataset.categoryId = entry.id;
 
       const labelSpan = document.createElement('span');
       labelSpan.className = 'downwork-filter__label';
@@ -1321,22 +1323,22 @@ export default function renderHustles(context = {}, definitions = [], models = [
       countBadge.textContent = String(entry.count);
       button.appendChild(countBadge);
 
-      const isActive = boardState.activeTags.has(entry.id);
+      const isActive = boardState.activeCategoryFilters.has(entry.id);
       button.classList.toggle('is-active', isActive);
       button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
 
       button.addEventListener('click', () => {
-        if (boardState.activeTags.has(entry.id)) {
-          boardState.activeTags.delete(entry.id);
+        if (boardState.activeCategoryFilters.has(entry.id)) {
+          boardState.activeCategoryFilters.delete(entry.id);
         } else {
-          boardState.activeTags.add(entry.id);
+          boardState.activeCategoryFilters.add(entry.id);
         }
         updateFilterSelection();
         renderActiveCategory();
       });
 
       chips.appendChild(button);
-      tagButtons.set(entry.id, button);
+      categoryFilterButtons.set(entry.id, button);
     });
   }
 
@@ -1370,29 +1372,27 @@ export default function renderHustles(context = {}, definitions = [], models = [
     }
   };
 
-  function cardMatchesActiveTags(card) {
-    if (!boardState.activeTags.size) {
+  function cardMatchesActiveCategoryFilters(card) {
+    if (!boardState.activeCategoryFilters.size) {
       return true;
     }
-    const raw = (card.dataset.tags || '').trim();
-    if (!raw) return false;
-    const tags = raw.split(/\s+/).filter(Boolean);
-    if (!tags.length) return false;
-    return [...boardState.activeTags].every(tag => tags.includes(tag));
+    const id = (card.dataset.hustle || '').trim();
+    if (!id) return false;
+    return boardState.activeCategoryFilters.has(id);
   }
 
   function applyActiveFilters(cards = []) {
     const predicates = [...boardState.activeFilters]
       .map(id => filterPredicates[id])
       .filter(Boolean);
-    if (!predicates.length && !boardState.activeTags.size) {
+    if (!predicates.length && !boardState.activeCategoryFilters.size) {
       return cards.slice();
     }
     return cards.filter(card => {
       if (predicates.length && !predicates.every(predicate => predicate(card))) {
         return false;
       }
-      return cardMatchesActiveTags(card);
+      return cardMatchesActiveCategoryFilters(card);
     });
   }
 
@@ -1406,7 +1406,7 @@ export default function renderHustles(context = {}, definitions = [], models = [
   }
 
   function hasActiveFilters() {
-    return boardState.activeFilters.size > 0 || boardState.activeTags.size > 0;
+    return boardState.activeFilters.size > 0 || boardState.activeCategoryFilters.size > 0;
   }
 
   function updateQuickFilterSelection() {
@@ -1417,9 +1417,9 @@ export default function renderHustles(context = {}, definitions = [], models = [
     });
   }
 
-  function updateTagFilterSelection() {
-    tagButtons.forEach((button, id) => {
-      const isActive = boardState.activeTags.has(id);
+  function updateCategoryFilterSelection() {
+    categoryFilterButtons.forEach((button, id) => {
+      const isActive = boardState.activeCategoryFilters.has(id);
       button.classList.toggle('is-active', isActive);
       button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
     });
@@ -1427,7 +1427,7 @@ export default function renderHustles(context = {}, definitions = [], models = [
 
   function updateFilterSelection() {
     updateQuickFilterSelection();
-    updateTagFilterSelection();
+    updateCategoryFilterSelection();
     const filtered = hasActiveFilters();
     board.classList.toggle('is-filtered', filtered);
     list.classList.toggle('is-filtered', filtered);
