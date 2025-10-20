@@ -85,6 +85,7 @@ export function hireAssistant() {
   state.bonusTime += ASSISTANT_CONFIG.hoursPerAssistant;
   gainTime(ASSISTANT_CONFIG.hoursPerAssistant);
   markDirty(CORE_UI_SECTIONS);
+  markDirty('cards');
   addLog(
     `You hired a virtual assistant! They add +${ASSISTANT_CONFIG.hoursPerAssistant}h and expect $${ASSISTANT_CONFIG.hourlyRate}/hr.`,
     'upgrade'
