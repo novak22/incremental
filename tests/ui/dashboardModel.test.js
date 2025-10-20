@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import buildDashboardViewModel, {
+import {
+  buildDashboardViewModel,
   buildQuickActionModel,
   buildAssetActionModel,
   buildStudyEnrollmentActionModel
@@ -8,7 +9,8 @@ import buildDashboardViewModel, {
 import { buildDefaultState } from '../../src/core/state.js';
 import { getAssets, getUpgrades, resetRegistry } from '../../src/game/registryService.js';
 import { ensureRegistryReady } from '../../src/game/registryBootstrap.js';
-import buildNicheViewModel, {
+import {
+  buildNicheViewModel,
   createHighlightDefaults,
   composeHighlightMessages,
   buildNicheHighlights,
@@ -21,7 +23,8 @@ import {
   buildEventLog,
   buildEventLogModel
 } from '../../src/ui/dashboard/notificationsModel.js';
-import buildDashboardActionModels, {
+import {
+  buildDashboardActionModels,
   selectProvider,
   buildQuickActionsFromProvider,
   buildAssetActionsFromProvider,

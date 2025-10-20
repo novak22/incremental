@@ -105,4 +105,3 @@ export function createNavigationEventsController({
   };
 }
 
-export default createNavigationEventsController;

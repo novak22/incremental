@@ -5,7 +5,7 @@ import {
   normalizeInstanceProgress,
   getInstanceProgressSnapshot
 } from '../../../../../src/core/state/slices/actions/progress.js';
-import resolveInstanceProgressSnapshot from '../../../../../src/core/state/slices/actions/snapshots.js';
+import { resolveInstanceProgressSnapshot } from '../../../../../src/core/state/slices/actions/snapshots.js';
 
 const definition = {
   id: 'practice-session',

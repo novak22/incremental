@@ -141,4 +141,3 @@ export function resolveInstanceProgressSnapshot(instance = {}, options = {}) {
   return snapshot;
 }
 
-export default resolveInstanceProgressSnapshot;

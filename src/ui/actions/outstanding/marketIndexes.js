@@ -24,4 +24,3 @@ export function collectMarketIndexes(state = {}) {
   return { offersById, acceptedByInstance, acceptedByOffer };
 }
 
-export default collectMarketIndexes;

@@ -29,4 +29,3 @@ export function renderActionMemory(container, state) {
   });
 }
 
-export default renderActionMemory;

@@ -4,4 +4,3 @@ export function renderStateDump(container, state) {
   output.textContent = JSON.stringify(state, null, 2);
 }
 
-export default renderStateDump;

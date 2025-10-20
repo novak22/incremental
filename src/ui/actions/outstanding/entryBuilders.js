@@ -4,7 +4,7 @@ import {
   formatPayoutSummary
 } from '../utils.js';
 import { resolveQueueCategory } from '../queue/buckets.js';
-import buildProgressSnapshot from './progressSnapshots.js';
+import { buildProgressSnapshot } from './progressSnapshots.js';
 
 export function createOutstandingEntry({
   state,
@@ -95,4 +95,3 @@ export function createOutstandingEntry({
   };
 }
 
-export default createOutstandingEntry;

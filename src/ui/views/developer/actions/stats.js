@@ -29,4 +29,3 @@ export function renderActionStats(container, entries) {
   statsSection.hidden = false;
 }
 
-export default renderActionStats;

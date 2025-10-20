@@ -1,14 +1,15 @@
 import { formatHours, formatMoney } from '../../core/helpers.js';
 import { clampNumber } from './formatters.js';
 import { buildDailySummaries } from './passiveIncome.js';
-import buildDashboardActionModels, {
+import {
+  buildDashboardActionModels,
   buildQuickActionModel,
   buildAssetActionModel,
   buildQuickActions,
   buildAssetUpgradeRecommendations,
   buildStudyEnrollmentActionModel
 } from './actionProviders.js';
-import buildNicheViewModel from './nicheModel.js';
+import { buildNicheViewModel } from './nicheModel.js';
 import {
   buildNotificationModel,
   buildEventLogModel
@@ -50,6 +51,4 @@ export {
   buildAssetUpgradeRecommendations,
   buildStudyEnrollmentActionModel
 };
-
-export default buildDashboardViewModel;
 

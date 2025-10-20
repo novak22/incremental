@@ -29,4 +29,3 @@ export function isHustleDefinition(definition) {
   return tagType === 'instant';
 }
 
-export default isHustleDefinition;

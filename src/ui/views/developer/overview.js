@@ -29,4 +29,3 @@ export function renderOverview(container, state) {
   setText(container, '[data-dev-field="updated"]', summary.updated);
 }
 
-export default renderOverview;

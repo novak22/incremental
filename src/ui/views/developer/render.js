@@ -28,4 +28,3 @@ export function renderDeveloperView(rootDocument = document) {
   renderStateDump(container, state);
 }
 
-export default renderDeveloperView;

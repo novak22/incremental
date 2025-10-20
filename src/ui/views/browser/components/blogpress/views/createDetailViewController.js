@@ -155,4 +155,3 @@ export function createDetailViewController({
   };
 }
 
-export default createDetailViewController;

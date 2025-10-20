@@ -5,4 +5,3 @@ export function setText(root, selector, value) {
   }
 }
 
-export default setText;
