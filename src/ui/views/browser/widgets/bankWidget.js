@@ -275,7 +275,8 @@ function createBankWidgetController() {
 
   function renderInternal(context = {}) {
     const elements = getElements();
-    if (!context?.state) {
+    const { state, summary } = context || {};
+    if (!state) {
       if (elements.stats) {
         elements.stats.innerHTML = '';
       }
@@ -290,9 +291,14 @@ function createBankWidgetController() {
       return;
     }
 
-    const model = buildFinanceModel(undefined, undefined, {
-      getState: () => context.state
-    });
+    const injected = {
+      getState: () => state
+    };
+    if (summary && typeof summary === 'object') {
+      injected.computeDailySummary = () => summary;
+    }
+
+    const model = buildFinanceModel(undefined, undefined, injected);
     renderStats(elements, model?.header || {});
     renderFootnote(elements, model?.header || {});
     renderHighlights(elements, model?.header || {});
