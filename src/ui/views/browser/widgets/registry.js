@@ -13,7 +13,7 @@ const defaultDefinitions = [
   },
   {
     id: 'apps',
-    title: 'Apps',
+    title: 'Bookmarks',
     factory: createAppsWidgetController,
     fallbackFactory: () => getSharedWidgetController('apps'),
     featureFlags: []
