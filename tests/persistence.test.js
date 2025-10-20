@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {
   SnapshotRepository,
   StateMigrationRunner,
-  StatePersistence
+  StatePersistence,
+  SessionRepository
 } from '../src/core/persistence/index.js';
 import {
   success,
@@ -201,5 +202,52 @@ test('result helper composes map and chain operations', () => {
   const guarded = tryCatch(() => JSON.parse('{ bad json'));
   assert.equal(guarded.type, 'error');
   assert.ok(guarded.error instanceof Error);
+});
+
+test('legacy session migration retries when snapshot copy fails', () => {
+  const storageKey = 'legacy-session';
+  const defaultSessionKey = `${storageKey}:session:default`;
+  const indexKey = `${storageKey}:sessions`;
+  const legacySnapshot = JSON.stringify({
+    lastSaved: 987654321,
+    sessionMetadata: { vibe: 'focused' }
+  });
+
+  const store = new Map([[storageKey, legacySnapshot]]);
+  let shouldFailCopy = true;
+  const storage = {
+    getItem: key => (store.has(key) ? store.get(key) : null),
+    setItem: (key, value) => {
+      if (key === defaultSessionKey && shouldFailCopy) {
+        shouldFailCopy = false;
+        throw new Error('quota exceeded');
+      }
+      store.set(key, value);
+    },
+    removeItem: key => {
+      store.delete(key);
+    }
+  };
+
+  const repository = new SessionRepository({ storageKey, storage });
+
+  const firstIndex = repository.getIndex();
+  assert.equal(firstIndex.version, 0);
+  assert.deepEqual(firstIndex.sessions, {});
+  assert.equal(store.has(defaultSessionKey), false);
+  assert.ok(store.has(storageKey));
+
+  repository.indexCache = null;
+  repository.indexCacheRaw = null;
+
+  const secondIndex = repository.getIndex();
+  const sessionId = repository.defaultSessionId();
+  assert.equal(secondIndex.version, repository.indexMigrationRunner.version);
+  assert.ok(secondIndex.sessions[sessionId]);
+  assert.equal(secondIndex.sessions[sessionId].storageKey, defaultSessionKey);
+  assert.equal(secondIndex.sessions[sessionId].lastSaved, 987654321);
+  assert.equal(store.has(storageKey), false);
+  assert.ok(store.has(defaultSessionKey));
+  assert.ok(store.has(indexKey));
 });
 
