@@ -314,7 +314,7 @@ export class StatePersistence {
     this.logger = logger;
 
     this.sessionRepository =
-      sessionRepository ?? new SessionRepository({ storageKey, storage });
+      sessionRepository ?? new SessionRepository({ storageKey, storage, logger: this.logger });
 
     const initialSession = this.sessionRepository.ensureSession(session);
     this.session = initialSession;
