@@ -15,6 +15,82 @@
   margin: 0;
 }
 
+.browser-home__actions {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.25rem;
+}
+
+.browser-home__reorder-toggle {
+  font-weight: 600;
+  gap: 0.35rem;
+}
+
+.browser-home__reorder-toggle[aria-pressed='true'] {
+  color: var(--browser-accent);
+}
+
+.browser-home__widgets--reordering > [data-widget] {
+  cursor: grab;
+  position: relative;
+  transition: transform 160ms ease, box-shadow 160ms ease, opacity 160ms ease;
+}
+
+.browser-home__widgets--reordering > [data-widget].is-dragging {
+  cursor: grabbing;
+  opacity: 0.92;
+  box-shadow: var(--browser-shadow-card, 0 20px 60px rgba(15, 23, 42, 0.12));
+}
+
+.browser-home__widgets--reordering > [data-widget].is-drop-target::after {
+  content: '';
+  position: absolute;
+  inset: -0.35rem;
+  border-radius: var(--browser-radius-xl, 1.5rem);
+  border: 2px dashed var(--browser-accent);
+  pointer-events: none;
+}
+
+.browser-widget__drag-handle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 0.3rem 0.55rem;
+  margin: -0.25rem 0 0 0;
+  border: 1px dashed var(--browser-panel-border);
+  border-radius: var(--browser-radius-pill);
+  background: transparent;
+  color: var(--browser-muted);
+  cursor: grab;
+  font-size: 0.85rem;
+  transition: color 160ms ease, border-color 160ms ease, background-color 160ms ease;
+}
+
+.browser-widget__drag-handle .browser-widget__drag-icon {
+  font-size: 1rem;
+}
+
+.browser-widget__drag-handle:focus-visible {
+  outline: 2px solid var(--browser-accent);
+  outline-offset: 2px;
+}
+
+.browser-home__widgets--reordering .browser-widget__drag-handle {
+  display: inline-flex;
+}
+
+.browser-home__widgets--reordering .browser-widget__drag-handle:hover,
+.browser-home__widgets--reordering .browser-widget__drag-handle:focus-visible {
+  color: var(--browser-accent);
+  border-color: var(--browser-accent);
+  background: var(--browser-accent-soft);
+}
+
+.browser-home__widgets--reordering > [data-widget].is-dragging .browser-widget__drag-handle {
+  cursor: grabbing;
+}
+
 .browser-home__widgets > .browser-widget {
   flex: 1 1 0;
   min-width: 280px;
