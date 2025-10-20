@@ -201,10 +201,78 @@ function removeLegacyNicheRollDay(snapshot) {
   return migrated;
 }
 
+function ensureAssetTrafficMetrics(snapshot) {
+  if (!snapshot || typeof snapshot !== 'object') {
+    return snapshot;
+  }
+
+  const assets = snapshot.assets;
+  if (!assets || typeof assets !== 'object') {
+    return snapshot;
+  }
+
+  let assetsChanged = false;
+  const migratedAssets = { ...assets };
+
+  for (const [assetId, assetState] of Object.entries(assets)) {
+    if (!assetState || typeof assetState !== 'object') continue;
+    const instances = Array.isArray(assetState.instances) ? assetState.instances : null;
+    if (!instances) continue;
+
+    let instanceChanged = false;
+    const migratedInstances = instances.map(instance => {
+      if (!instance || typeof instance !== 'object') {
+        return instance;
+      }
+      const metrics = instance.metrics;
+      if (!metrics || typeof metrics !== 'object') {
+        return instance;
+      }
+
+      let metricsChanged = false;
+      const patchedMetrics = { ...metrics };
+
+      if (!Number.isFinite(Number(patchedMetrics.dailyViews))) {
+        patchedMetrics.dailyViews = 0;
+        metricsChanged = true;
+      }
+
+      if (!Number.isFinite(Number(patchedMetrics.lifetimeViews))) {
+        patchedMetrics.lifetimeViews = 0;
+        metricsChanged = true;
+      }
+
+      if (patchedMetrics.lastViewBreakdown === undefined) {
+        patchedMetrics.lastViewBreakdown = null;
+        metricsChanged = true;
+      }
+
+      if (!metricsChanged) {
+        return instance;
+      }
+
+      instanceChanged = true;
+      return { ...instance, metrics: patchedMetrics };
+    });
+
+    if (!instanceChanged) continue;
+
+    assetsChanged = true;
+    migratedAssets[assetId] = { ...assetState, instances: migratedInstances };
+  }
+
+  if (!assetsChanged) {
+    return snapshot;
+  }
+
+  return { ...snapshot, assets: migratedAssets };
+}
+
 const DEFAULT_MIGRATIONS = [
   migrateLegacySnapshot,
   removeLegacyNicheRollDay,
-  migrateLegacyHustlesToActions
+  migrateLegacyHustlesToActions,
+  ensureAssetTrafficMetrics
 ];
 
 export { SnapshotRepository, StateMigrationRunner, SessionRepository };

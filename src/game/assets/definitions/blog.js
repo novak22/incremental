@@ -4,16 +4,25 @@ import { createAssetDefinition } from '../../content/schema.js';
 import { assets as assetConfigs } from '../../data/economyConfig.js';
 
 function ensureBlogMetrics(instance = {}) {
-  if (!instance.metrics || typeof instance.metrics !== 'object') {
-    instance.metrics = { seoScore: 30, backlinks: 0 };
+  const metrics =
+    instance.metrics && typeof instance.metrics === 'object' ? instance.metrics : (instance.metrics = {});
+
+  if (!Number.isFinite(Number(metrics.seoScore))) {
+    metrics.seoScore = 30;
   }
-  if (!Number.isFinite(Number(instance.metrics.seoScore))) {
-    instance.metrics.seoScore = 30;
+  if (!Number.isFinite(Number(metrics.backlinks))) {
+    metrics.backlinks = 0;
   }
-  if (!Number.isFinite(Number(instance.metrics.backlinks))) {
-    instance.metrics.backlinks = 0;
+  if (!Number.isFinite(Number(metrics.dailyViews))) {
+    metrics.dailyViews = 0;
   }
-  return instance.metrics;
+  if (!Number.isFinite(Number(metrics.lifetimeViews))) {
+    metrics.lifetimeViews = 0;
+  }
+  if (metrics.lastViewBreakdown === undefined) {
+    metrics.lastViewBreakdown = null;
+  }
+  return metrics;
 }
 
 function clampSeoScore(value) {
