@@ -95,10 +95,11 @@ function normalizeMetrics(rawMetrics = {}) {
   metrics.lastViewBreakdown = normalizeViewBreakdown(metrics.lastViewBreakdown, metrics.dailyViews);
   const dailyVisitProgress = Number(metrics.dailyVisitProgress);
   metrics.dailyVisitProgress = Number.isFinite(dailyVisitProgress) ? Math.max(0, dailyVisitProgress) : 0;
-  const currentVisitTarget = Number(metrics.currentDailyVisitTarget);
-  metrics.currentDailyVisitTarget = Number.isFinite(currentVisitTarget) ? Math.max(0, currentVisitTarget) : 0;
   const fallbackViews = Math.round(metrics.dailyVisitProgress || metrics.dailyViews || 0);
   metrics.currentVisitBreakdown = normalizeViewBreakdown(metrics.currentVisitBreakdown, fallbackViews);
+  if ('currentDailyVisitTarget' in metrics) {
+    delete metrics.currentDailyVisitTarget;
+  }
   return metrics;
 }
 
@@ -240,7 +241,6 @@ export function createAssetInstance(definition, overrides = {}, context = {}) {
       lifetimeViews: 0,
       lastViewBreakdown: null,
       dailyVisitProgress: 0,
-      currentDailyVisitTarget: 0,
       currentVisitBreakdown: null
     }
   };

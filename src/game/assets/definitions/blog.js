@@ -25,9 +25,6 @@ function ensureBlogMetrics(instance = {}) {
   if (!Number.isFinite(Number(metrics.dailyVisitProgress))) {
     metrics.dailyVisitProgress = 0;
   }
-  if (!Number.isFinite(Number(metrics.currentDailyVisitTarget))) {
-    metrics.currentDailyVisitTarget = 0;
-  }
   if (metrics.currentVisitBreakdown === undefined) {
     metrics.currentVisitBreakdown = null;
   }

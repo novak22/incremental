@@ -72,10 +72,11 @@ function ensureVisitMetrics(instance) {
   metrics.dailyVisitProgress = Number.isFinite(progress) ? progress : 0;
   const dailyViews = Number(metrics.dailyViews);
   metrics.dailyViews = Number.isFinite(dailyViews) ? Math.max(0, Math.floor(dailyViews)) : 0;
-  const target = Number(metrics.currentDailyVisitTarget);
-  metrics.currentDailyVisitTarget = Number.isFinite(target) ? Math.max(0, target) : 0;
   if (!metrics.currentVisitBreakdown || typeof metrics.currentVisitBreakdown !== 'object') {
     metrics.currentVisitBreakdown = null;
+  }
+  if ('currentDailyVisitTarget' in metrics) {
+    delete metrics.currentDailyVisitTarget;
   }
   return metrics;
 }
@@ -83,7 +84,6 @@ function ensureVisitMetrics(instance) {
 function applyVisitProgress(instance, snapshot, hoursElapsed) {
   const metrics = ensureVisitMetrics(instance);
   const visitsPerDay = Number(snapshot?.visitsPerDay) || 0;
-  metrics.currentDailyVisitTarget = visitsPerDay;
   metrics.currentVisitBreakdown = snapshot?.breakdown || null;
   if (visitsPerDay <= 0 || hoursElapsed <= 0) {
     return;
@@ -171,7 +171,6 @@ export function finalizeDailyVisitProgress(instance) {
   }
   metrics.dailyVisitProgress = 0;
   metrics.dailyViews = 0;
-  metrics.currentDailyVisitTarget = 0;
   metrics.currentVisitBreakdown = null;
 }
 
@@ -180,7 +179,6 @@ export function resetVisitTracking(instance) {
   const metrics = ensureVisitMetrics(instance);
   metrics.dailyVisitProgress = 0;
   metrics.dailyViews = 0;
-  metrics.currentDailyVisitTarget = 0;
   metrics.currentVisitBreakdown = null;
 }
 
