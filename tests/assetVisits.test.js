@@ -7,8 +7,7 @@ const harness = await getGameTestHarness();
 const { stateModule, registryModule, assetStateModule, timeModule, lifecycleModule } = harness;
 
 const { DEFAULT_DAY_HOURS } = await import('../src/core/constants.js');
-const { projectIncomeFromBase } = await import('../src/game/assets/payout.js');
-const { VISIT_CONSTANTS } = await import('../src/game/assets/visits.js');
+const { default: projectVisitsFromBase } = await import('../src/game/assets/visitsCalculator.js');
 const { getInstanceQualityRange } = await import('../src/game/assets/quality/levels.js');
 
 function setupActiveBlog() {
@@ -28,8 +27,13 @@ function computeProjectedDailyVisits({ definition, assetState, instance }) {
   const min = Number(range.min) || 0;
   const max = Number(range.max) || 0;
   const base = Math.max(0, Math.round((min + max) / 2));
-  const projection = projectIncomeFromBase(definition, assetState, instance, base);
-  return Math.max(0, Math.round(projection.payoutRounded)) * VISIT_CONSTANTS.VISITS_PER_DOLLAR;
+  const projection = projectVisitsFromBase({
+    definition,
+    assetState,
+    instance,
+    baseAmount: base
+  });
+  return Math.max(0, Math.round(projection.visitsPerDay || 0));
 }
 
 test('blog visits accrue proportionally with time spent', () => {

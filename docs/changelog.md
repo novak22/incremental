@@ -3,6 +3,7 @@
 ## Unreleased
 - UI: DownWork gig cards now keep each category lane full-width while tiling offers inside every card so multiple gigs share a row and wrap gracefully on smaller screens.
 - Simulation: Blog assets now accumulate daily visit totals alongside payouts, updating hourly progress and rolling finished days into lifetime reach without touching cash flow.
+- Simulation: Added `src/game/assets/visitsCalculator.js` so traffic projections share the income engine, convert modifiers into visit counts, and optionally skip event triggers for parity with today’s behaviour.
 - BlogPress: Performance detail panels surface projected daily visits plus the visitors logged so far today, making audience momentum easy to spot at a glance.
 - UI/Persistence: The session switcher now exports the active slot to a JSON download and can import shared saves into a fresh slot right from the dropdown, perfect for handing QA or balancing runs around the studio.
 - Persistence/UI: Switching slots now autosaves the outgoing session, refreshes the header pill instantly, and ensures deleting a slot falls back to the next available save so the roster never goes blank mid-play.
