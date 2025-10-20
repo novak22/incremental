@@ -10,10 +10,19 @@ export {
   getMarketOfferById,
   getMarketAvailableOffers,
   getMarketClaimedOffers,
-  completeHustleMarketInstance,
-  normalizeActionMarketOffer as normalizeHustleMarketOffer,
-  normalizeActionMarketAcceptedEntry as normalizeAcceptedOffer
-} from '../actionMarket/index.js';
+  completeHustleMarketInstance
+} from '../actionMarket/hustleCompat.js';
 
-export { cloneOffer, decorateOfferWithAccepted } from '../actionMarket/offers.js';
-export { createAcceptedEntryFromOffer, getClaimedEntries, removeAcceptedEntries, completeAcceptedEntry } from '../actionMarket/accepted.js';
+export {
+  normalizeActionMarketOffer as normalizeHustleMarketOffer,
+  cloneOffer,
+  decorateOfferWithAccepted
+} from '../actionMarket/offers.js';
+
+export {
+  normalizeActionMarketAcceptedEntry as normalizeAcceptedOffer,
+  createAcceptedEntryFromOffer,
+  getClaimedEntries,
+  removeAcceptedEntries,
+  completeAcceptedEntry
+} from '../actionMarket/accepted.js';

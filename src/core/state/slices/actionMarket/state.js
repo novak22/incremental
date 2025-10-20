@@ -5,7 +5,7 @@ import {
   clampMarketPositiveInteger as clampPositiveInteger
 } from '../../../../game/hustles/normalizers.js';
 import { decorateOfferWithAccepted, normalizeActionMarketOffer } from './offers.js';
-import { createAcceptedEntryFromOffer, normalizeActionMarketAcceptedEntry } from './accepted.js';
+import { normalizeActionMarketAcceptedEntry } from './accepted.js';
 
 export const DEFAULT_ACTION_MARKET_CATEGORY_STATE = Object.freeze({
   category: null,
@@ -13,10 +13,6 @@ export const DEFAULT_ACTION_MARKET_CATEGORY_STATE = Object.freeze({
   lastRolledOnDay: 0,
   offers: [],
   accepted: []
-});
-
-export const DEFAULT_ACTION_MARKET_STATE = Object.freeze({
-  categories: Object.freeze({})
 });
 
 export function createDefaultActionMarketCategoryState({ category = null } = {}) {
@@ -207,12 +203,8 @@ export function ensureActionMarketCategoryState(state, category = 'default', opt
   return categoryState;
 }
 
-export function getActionMarketCategoryState(state, category = 'default', options = {}) {
-  return ensureActionMarketCategoryState(state, category, options);
-}
-
 export function cloneActionMarketCategoryState(state, category = 'default') {
-  const ensured = getActionMarketCategoryState(state, category);
+  const ensured = ensureActionMarketCategoryState(state, category);
   return {
     category: ensured.category,
     lastRolledAt: ensured.lastRolledAt,
@@ -231,9 +223,3 @@ export function clearActionMarketCategoryState(state, category = 'default') {
   categoryState.accepted = [];
 }
 
-export function createAcceptedEntryForCategory(offer, details = {}, {
-  fallbackDay = 1,
-  category
-} = {}) {
-  return createAcceptedEntryFromOffer(offer, details, { fallbackDay, category });
-}

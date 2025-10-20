@@ -12,10 +12,7 @@ import {
   ensureSlice as ensureActionSlice,
   getSliceState as getActionSliceState
 } from './state/slices/actions/index.js';
-import {
-  ensureSlice as ensureHustleSlice,
-  getSliceState as getHustleSliceState
-} from './state/slices/hustles.js';
+import { ensureSlice as ensureHustleSlice } from './state/slices/hustles.js';
 import {
   ensureSlice as ensureAssetSlice,
   getSliceState as getAssetSliceState
@@ -189,10 +186,6 @@ class StateManager {
     return getActionSliceState(target, id);
   }
 
-  getHustleState(id, target = this.state) {
-    return getHustleSliceState(target, id);
-  }
-
   getAssetState(id, target = this.state) {
     return getAssetSliceState(target, id);
   }
@@ -232,8 +225,6 @@ export const replaceState = (...args) =>
 export const getState = (...args) => defaultStateManager.getState(...args);
 export const getActionState = (...args) =>
   defaultStateManager.getActionState(...args);
-export const getHustleState = (...args) =>
-  defaultStateManager.getHustleState(...args);
 export const getAssetState = (...args) =>
   defaultStateManager.getAssetState(...args);
 export const getUpgradeState = (...args) =>
