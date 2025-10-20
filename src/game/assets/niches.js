@@ -124,6 +124,10 @@ export function setNicheWatchlist(nicheId, watchlisted) {
   executeAction(() => {
     const data = ensureNicheState();
     if (!data) return;
+    const knownIds = data?.popularity ? new Set(Object.keys(data.popularity)) : new Set();
+    if (!knownIds.has(nicheId)) {
+      return;
+    }
     const list = new Set(Array.isArray(data.watchlist) ? data.watchlist : []);
     const hasEntry = list.has(nicheId);
     if (watchlisted && !hasEntry) {
