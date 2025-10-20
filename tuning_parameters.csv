@@ -1,566 +1,566 @@
 parameter,value,units,category,impact,source
-- **Initial resources:** New games start with `$45` cash and `14` hours of available time (also the base daily time cap).,45,usd,time,linear,docs/economy.md:L7
-- **Initial resources:** New games start with `$45` cash and `14` hours of available time (also the base daily time cap).,14,hours,time,linear,docs/economy.md:L7
-- **Money mutations:** All cash additions clamp to ≥0 and emit `moneyChanged` events. Spending also clamps the balance to ≥0.,0,,limit,cap,docs/economy.md:L10
-- **Money mutations:** All cash additions clamp to ≥0 and emit `moneyChanged` events. Spending also clamps the balance to ≥0.,0,,other,cap,docs/economy.md:L10
-"- **Daily maintenance buffer:** Study scheduling keeps at least `max(2, round(DEFAULT_DAY_HOURS * 0.25))` hours free for manual tasks; with the default 14-hour day this buffer is `4` hours.",2,,time,cap,docs/economy.md:L11
-"- **Daily maintenance buffer:** Study scheduling keeps at least `max(2, round(DEFAULT_DAY_HOURS * 0.25))` hours free for manual tasks; with the default 14-hour day this buffer is `4` hours.",0.25,,time,cap,docs/economy.md:L11
-"- **Daily maintenance buffer:** Study scheduling keeps at least `max(2, round(DEFAULT_DAY_HOURS * 0.25))` hours free for manual tasks; with the default 14-hour day this buffer is `4` hours.",14,,time,linear,docs/economy.md:L11
-"- **Daily maintenance buffer:** Study scheduling keeps at least `max(2, round(DEFAULT_DAY_HOURS * 0.25))` hours free for manual tasks; with the default 14-hour day this buffer is `4` hours.",4,hours,time,linear,docs/economy.md:L11
-"- Manual maintenance reserve deducts available assistant hours (each adds `ASSISTANT_CONFIG.hoursPerAssistant = 3h`) before predicting remaining human time needed, ensuring study doesn’t steal hours required for upkeep.",3,,other,linear,docs/economy.md:L20
-"- **Skill levels:** XP thresholds per level: 0 (Novice), 100 (Apprentice), 300 (Specialist), 700 (Expert), 1200 (Master).",0,xp,xp,linear,docs/economy.md:L25
-"- **Skill levels:** XP thresholds per level: 0 (Novice), 100 (Apprentice), 300 (Specialist), 700 (Expert), 1200 (Master).",100,xp,xp,linear,docs/economy.md:L25
-"- **Skill levels:** XP thresholds per level: 0 (Novice), 100 (Apprentice), 300 (Specialist), 700 (Expert), 1200 (Master).",300,,progression,linear,docs/economy.md:L25
-"- **Skill levels:** XP thresholds per level: 0 (Novice), 100 (Apprentice), 300 (Specialist), 700 (Expert), 1200 (Master).",700,,other,linear,docs/economy.md:L25
-"- **Skill levels:** XP thresholds per level: 0 (Novice), 100 (Apprentice), 300 (Specialist), 700 (Expert), 1200 (Master).",1200,xp,xp,linear,docs/economy.md:L25
-"- **Character levels:** Overall XP thresholds: 0, 300, 750, 1400, 2200 for levels 1–5.",0,xp,xp,linear,docs/economy.md:L26
-"- **Character levels:** Overall XP thresholds: 0, 300, 750, 1400, 2200 for levels 1–5.",300,xp,xp,linear,docs/economy.md:L26
-"- **Character levels:** Overall XP thresholds: 0, 300, 750, 1400, 2200 for levels 1–5.",750,xp,xp,linear,docs/economy.md:L26
-"- **Character levels:** Overall XP thresholds: 0, 300, 750, 1400, 2200 for levels 1–5.",1400,xp,xp,linear,docs/economy.md:L26
-"- **Character levels:** Overall XP thresholds: 0, 300, 750, 1400, 2200 for levels 1–5.",2200,xp,xp,linear,docs/economy.md:L26
-"- **Character levels:** Overall XP thresholds: 0, 300, 750, 1400, 2200 for levels 1–5.",1,,progression,linear,docs/economy.md:L26
-"- **Character levels:** Overall XP thresholds: 0, 300, 750, 1400, 2200 for levels 1–5.",5,,progression,linear,docs/economy.md:L26
-- **XP generation:** `TIME_XP_RATE = 5` XP/hour and `MONEY_XP_INTERVAL = 25` dollars per 1 XP. Base XP is `timeXp + floor(moneySpent / 25)` unless an explicit `baseXp` override is provided; nonzero effort always yields at least 1 XP.,5,xp,xp,linear,docs/economy.md:L27
-- **XP generation:** `TIME_XP_RATE = 5` XP/hour and `MONEY_XP_INTERVAL = 25` dollars per 1 XP. Base XP is `timeXp + floor(moneySpent / 25)` unless an explicit `baseXp` override is provided; nonzero effort always yields at least 1 XP.,25,xp,xp,linear,docs/economy.md:L27
-- **XP generation:** `TIME_XP_RATE = 5` XP/hour and `MONEY_XP_INTERVAL = 25` dollars per 1 XP. Base XP is `timeXp + floor(moneySpent / 25)` unless an explicit `baseXp` override is provided; nonzero effort always yields at least 1 XP.,1,xp,xp,linear,docs/economy.md:L27
-"- **Awarding XP:** Activities normalize their skill list weights, apply at least 1 XP per skill (`max(1, round(base * weight))`), level up skills and character, and refresh UI upon gains.",1,xp,xp,cap,docs/economy.md:L28
-"- **Config:** Hiring costs `$180`, daily wage equals `hoursPerAssistant (3) * hourlyRate ($8) = $24`, and teams max at 4 assistants.",180,usd,cost,linear,docs/economy.md:L32
-"- **Config:** Hiring costs `$180`, daily wage equals `hoursPerAssistant (3) * hourlyRate ($8) = $24`, and teams max at 4 assistants.",3,,cost,linear,docs/economy.md:L32
-"- **Config:** Hiring costs `$180`, daily wage equals `hoursPerAssistant (3) * hourlyRate ($8) = $24`, and teams max at 4 assistants.",8,usd,limit,cap,docs/economy.md:L32
-"- **Config:** Hiring costs `$180`, daily wage equals `hoursPerAssistant (3) * hourlyRate ($8) = $24`, and teams max at 4 assistants.",24,usd,limit,cap,docs/economy.md:L32
-"- **Config:** Hiring costs `$180`, daily wage equals `hoursPerAssistant (3) * hourlyRate ($8) = $24`, and teams max at 4 assistants.",4,,limit,cap,docs/economy.md:L32
-"- **Hiring:** Requires available cash and unused headcount. On hire, cash decreases by `$180`, +3 bonus hours are added (and immediately granted), costs are logged, and commerce skill XP is awarded based on money spent.",180,usd,time,linear,docs/economy.md:L33
-"- **Hiring:** Requires available cash and unused headcount. On hire, cash decreases by `$180`, +3 bonus hours are added (and immediately granted), costs are logged, and commerce skill XP is awarded based on money spent.",3,usd,time,linear,docs/economy.md:L33
-"- **Firing:** Reduces assistant count, removes 3 bonus hours from daily support, and deducts 3 hours from current time left (cannot go below zero in code).",3,,time,linear,docs/economy.md:L34
-"- **Firing:** Reduces assistant count, removes 3 bonus hours from daily support, and deducts 3 hours from current time left (cannot go below zero in code).",3,hours,time,linear,docs/economy.md:L34
-- **Payroll:** Every day deducts `assistantCount * 3h * $8` whether or not funds cover it; logs a warning if the balance dips below zero during payment.,3,,time,linear,docs/economy.md:L35
-- **Payroll:** Every day deducts `assistantCount * 3h * $8` whether or not funds cover it; logs a warning if the balance dips below zero during payment.,8,usd,time,linear,docs/economy.md:L35
-"- **Instant hustle boosts:** Completing tracks unlocks flat or multiplier bonuses enumerated per hustle; multipliers add to 1 (i.e., `1 + amount`), flats add additive dollars before upgrade multipliers.",1,,other,linear,docs/economy.md:L48
-- **Asset income boosts:** Completed tracks also grant asset multipliers or flats using the same formula (`total = base * (1 + sumMultipliers) + sumFlats`).,1,,other,linear,docs/economy.md:L49
-| storycraftJumpstart | 4 | 3 | $0 | Blog income +5% (multiplier). |,4,,income,linear,docs/economy.md:L57
-| storycraftJumpstart | 4 | 3 | $0 | Blog income +5% (multiplier). |,3,,income,linear,docs/economy.md:L57
-| storycraftJumpstart | 4 | 3 | $0 | Blog income +5% (multiplier). |,0,usd,cost,linear,docs/economy.md:L57
-| storycraftJumpstart | 4 | 3 | $0 | Blog income +5% (multiplier). |,5,percent,income,linear,docs/economy.md:L57
-| vlogStudioJumpstart | 4 | 3 | $0 | Vlog income +5%. |,4,,income,linear,docs/economy.md:L58
-| vlogStudioJumpstart | 4 | 3 | $0 | Vlog income +5%. |,3,,income,linear,docs/economy.md:L58
-| vlogStudioJumpstart | 4 | 3 | $0 | Vlog income +5%. |,0,usd,cost,linear,docs/economy.md:L58
-| vlogStudioJumpstart | 4 | 3 | $0 | Vlog income +5%. |,5,percent,income,linear,docs/economy.md:L58
-"| digitalShelfPrimer | 4 | 3 | $0 | E-book +5%, Stock Photos +5%. |",4,,other,linear,docs/economy.md:L59
-"| digitalShelfPrimer | 4 | 3 | $0 | E-book +5%, Stock Photos +5%. |",3,,other,linear,docs/economy.md:L59
-"| digitalShelfPrimer | 4 | 3 | $0 | E-book +5%, Stock Photos +5%. |",0,usd,cost,linear,docs/economy.md:L59
-"| digitalShelfPrimer | 4 | 3 | $0 | E-book +5%, Stock Photos +5%. |",5,percent,income,linear,docs/economy.md:L59
-| commerceLaunchPrimer | 4 | 3 | $0 | Dropshipping +5%. |,4,,other,linear,docs/economy.md:L60
-| commerceLaunchPrimer | 4 | 3 | $0 | Dropshipping +5%. |,3,,other,linear,docs/economy.md:L60
-| commerceLaunchPrimer | 4 | 3 | $0 | Dropshipping +5%. |,0,usd,cost,linear,docs/economy.md:L60
-| commerceLaunchPrimer | 4 | 3 | $0 | Dropshipping +5%. |,5,percent,income,linear,docs/economy.md:L60
-| microSaasJumpstart | 4 | 3 | $0 | SaaS +5%. |,4,,other,linear,docs/economy.md:L61
-| microSaasJumpstart | 4 | 3 | $0 | SaaS +5%. |,3,,other,linear,docs/economy.md:L61
-| microSaasJumpstart | 4 | 3 | $0 | SaaS +5%. |,0,usd,cost,linear,docs/economy.md:L61
-| microSaasJumpstart | 4 | 3 | $0 | SaaS +5%. |,5,usd,cost,linear,docs/economy.md:L61
-| outlineMastery | 2 | 5 | $140 | Freelance payout +25%; Audiobook payout +15%. |,2,,income,linear,docs/economy.md:L62
-| outlineMastery | 2 | 5 | $140 | Freelance payout +25%; Audiobook payout +15%. |,5,,income,linear,docs/economy.md:L62
-| outlineMastery | 2 | 5 | $140 | Freelance payout +25%; Audiobook payout +15%. |,140,usd,cost,linear,docs/economy.md:L62
-| outlineMastery | 2 | 5 | $140 | Freelance payout +25%; Audiobook payout +15%. |,25,percent,income,linear,docs/economy.md:L62
-| outlineMastery | 2 | 5 | $140 | Freelance payout +25%; Audiobook payout +15%. |,15,percent,income,linear,docs/economy.md:L62
-| photoLibrary | 1.5 | 4 | $95 | Event Photo Gig payout +20%. |,1.5,,income,linear,docs/economy.md:L63
-| photoLibrary | 1.5 | 4 | $95 | Event Photo Gig payout +20%. |,4,,income,linear,docs/economy.md:L63
-| photoLibrary | 1.5 | 4 | $95 | Event Photo Gig payout +20%. |,95,usd,cost,linear,docs/economy.md:L63
-| photoLibrary | 1.5 | 4 | $95 | Event Photo Gig payout +20%. |,20,percent,income,linear,docs/economy.md:L63
-| ecomPlaybook | 3 | 9 | $900 | Bundle Promo Push +$5 flat; Dropshipping +15%. |,3,,other,linear,docs/economy.md:L64
-| ecomPlaybook | 3 | 9 | $900 | Bundle Promo Push +$5 flat; Dropshipping +15%. |,9,,other,linear,docs/economy.md:L64
-| ecomPlaybook | 3 | 9 | $900 | Bundle Promo Push +$5 flat; Dropshipping +15%. |,900,usd,cost,linear,docs/economy.md:L64
-| ecomPlaybook | 3 | 9 | $900 | Bundle Promo Push +$5 flat; Dropshipping +15%. |,5,usd,cost,linear,docs/economy.md:L64
-| ecomPlaybook | 3 | 9 | $900 | Bundle Promo Push +$5 flat; Dropshipping +15%. |,15,percent,income,linear,docs/economy.md:L64
-| automationCourse | 6 | 15 | $3000 | SaaS Bug Squash +$6 flat; SaaS +15%. |,6,,other,linear,docs/economy.md:L65
-| automationCourse | 6 | 15 | $3000 | SaaS Bug Squash +$6 flat; SaaS +15%. |,15,,other,linear,docs/economy.md:L65
-| automationCourse | 6 | 15 | $3000 | SaaS Bug Squash +$6 flat; SaaS +15%. |,3000,usd,cost,linear,docs/economy.md:L65
-| automationCourse | 6 | 15 | $3000 | SaaS Bug Squash +$6 flat; SaaS +15%. |,6,usd,cost,linear,docs/economy.md:L65
-| automationCourse | 6 | 15 | $3000 | SaaS Bug Squash +$6 flat; SaaS +15%. |,15,percent,income,linear,docs/economy.md:L65
-| brandVoiceLab | 1 | 4 | $120 | Audience Call +$4 flat. |,1,,other,linear,docs/economy.md:L66
-| brandVoiceLab | 1 | 4 | $120 | Audience Call +$4 flat. |,4,,other,linear,docs/economy.md:L66
-| brandVoiceLab | 1 | 4 | $120 | Audience Call +$4 flat. |,120,usd,cost,linear,docs/economy.md:L66
-| brandVoiceLab | 1 | 4 | $120 | Audience Call +$4 flat. |,4,usd,cost,linear,docs/economy.md:L66
-| guerillaBuzzWorkshop | 1.5 | 6 | $180 | Street Promo Sprint +25%; Survey Sprint +$1.5 flat. |,1.5,,other,linear,docs/economy.md:L67
-| guerillaBuzzWorkshop | 1.5 | 6 | $180 | Street Promo Sprint +25%; Survey Sprint +$1.5 flat. |,6,,other,linear,docs/economy.md:L67
-| guerillaBuzzWorkshop | 1.5 | 6 | $180 | Street Promo Sprint +25%; Survey Sprint +$1.5 flat. |,180,usd,cost,linear,docs/economy.md:L67
-| guerillaBuzzWorkshop | 1.5 | 6 | $180 | Street Promo Sprint +25%; Survey Sprint +$1.5 flat. |,25,percent,income,linear,docs/economy.md:L67
-| guerillaBuzzWorkshop | 1.5 | 6 | $180 | Street Promo Sprint +25%; Survey Sprint +$1.5 flat. |,1.5,usd,cost,linear,docs/economy.md:L67
-| curriculumDesignStudio | 2.5 | 6 | $280 | Pop-Up Workshop +30%; Bundle Push +15%. |,2.5,,other,linear,docs/economy.md:L68
-| curriculumDesignStudio | 2.5 | 6 | $280 | Pop-Up Workshop +30%; Bundle Push +15%. |,6,,other,linear,docs/economy.md:L68
-| curriculumDesignStudio | 2.5 | 6 | $280 | Pop-Up Workshop +30%; Bundle Push +15%. |,280,usd,cost,linear,docs/economy.md:L68
-| curriculumDesignStudio | 2.5 | 6 | $280 | Pop-Up Workshop +30%; Bundle Push +15%. |,30,percent,income,linear,docs/economy.md:L68
-| curriculumDesignStudio | 2.5 | 6 | $280 | Pop-Up Workshop +30%; Bundle Push +15%. |,15,percent,income,linear,docs/economy.md:L68
-| postProductionPipelineLab | 4 | 10 | $900 | Vlog Edit Rush +25%; Vlog income +15%. |,4,,other,linear,docs/economy.md:L69
-| postProductionPipelineLab | 4 | 10 | $900 | Vlog Edit Rush +25%; Vlog income +15%. |,10,,other,linear,docs/economy.md:L69
-| postProductionPipelineLab | 4 | 10 | $900 | Vlog Edit Rush +25%; Vlog income +15%. |,900,usd,cost,linear,docs/economy.md:L69
-| postProductionPipelineLab | 4 | 10 | $900 | Vlog Edit Rush +25%; Vlog income +15%. |,25,percent,income,linear,docs/economy.md:L69
-| postProductionPipelineLab | 4 | 10 | $900 | Vlog Edit Rush +25%; Vlog income +15%. |,15,percent,income,linear,docs/economy.md:L69
-| fulfillmentOpsMasterclass | 4 | 10 | $1200 | Dropship Pack Party +20%; Dropshipping +25%. |,4,,other,linear,docs/economy.md:L70
-| fulfillmentOpsMasterclass | 4 | 10 | $1200 | Dropship Pack Party +20%; Dropshipping +25%. |,10,,other,linear,docs/economy.md:L70
-| fulfillmentOpsMasterclass | 4 | 10 | $1200 | Dropship Pack Party +20%; Dropshipping +25%. |,1200,usd,cost,linear,docs/economy.md:L70
-| fulfillmentOpsMasterclass | 4 | 10 | $1200 | Dropship Pack Party +20%; Dropshipping +25%. |,20,percent,income,linear,docs/economy.md:L70
-| fulfillmentOpsMasterclass | 4 | 10 | $1200 | Dropship Pack Party +20%; Dropshipping +25%. |,25,percent,income,linear,docs/economy.md:L70
-| customerRetentionClinic | 3 | 7 | $1000 | SaaS Bug Squash +$5 flat; SaaS +20%. |,3,,other,linear,docs/economy.md:L71
-| customerRetentionClinic | 3 | 7 | $1000 | SaaS Bug Squash +$5 flat; SaaS +20%. |,7,,other,linear,docs/economy.md:L71
-| customerRetentionClinic | 3 | 7 | $1000 | SaaS Bug Squash +$5 flat; SaaS +20%. |,1000,usd,cost,linear,docs/economy.md:L71
-| customerRetentionClinic | 3 | 7 | $1000 | SaaS Bug Squash +$5 flat; SaaS +20%. |,5,usd,cost,linear,docs/economy.md:L71
-| customerRetentionClinic | 3 | 7 | $1000 | SaaS Bug Squash +$5 flat; SaaS +20%. |,20,percent,income,linear,docs/economy.md:L71
-| narrationPerformanceWorkshop | 3 | 7 | $900 | Audiobook Narration +25%; E-book +10%. |,3,,other,linear,docs/economy.md:L72
-| narrationPerformanceWorkshop | 3 | 7 | $900 | Audiobook Narration +25%; E-book +10%. |,7,,other,linear,docs/economy.md:L72
-| narrationPerformanceWorkshop | 3 | 7 | $900 | Audiobook Narration +25%; E-book +10%. |,900,usd,cost,linear,docs/economy.md:L72
-| narrationPerformanceWorkshop | 3 | 7 | $900 | Audiobook Narration +25%; E-book +10%. |,25,percent,income,linear,docs/economy.md:L72
-| narrationPerformanceWorkshop | 3 | 7 | $900 | Audiobook Narration +25%; E-book +10%. |,10,percent,income,linear,docs/economy.md:L72
-| galleryLicensingSummit | 4 | 8 | $1100 | Event Photo Gig +20%; Stock Photos +15%. |,4,,other,linear,docs/economy.md:L73
-| galleryLicensingSummit | 4 | 8 | $1100 | Event Photo Gig +20%; Stock Photos +15%. |,8,,other,linear,docs/economy.md:L73
-| galleryLicensingSummit | 4 | 8 | $1100 | Event Photo Gig +20%; Stock Photos +15%. |,1100,usd,cost,linear,docs/economy.md:L73
-| galleryLicensingSummit | 4 | 8 | $1100 | Event Photo Gig +20%; Stock Photos +15%. |,20,percent,income,linear,docs/economy.md:L73
-| galleryLicensingSummit | 4 | 8 | $1100 | Event Photo Gig +20%; Stock Photos +15%. |,15,percent,income,linear,docs/economy.md:L73
-| syndicationResidency | 4 | 9 | $1000 | Freelance +15%; Street Promo Sprint +$2 flat; Blog +12%. |,4,,other,linear,docs/economy.md:L74
-| syndicationResidency | 4 | 9 | $1000 | Freelance +15%; Street Promo Sprint +$2 flat; Blog +12%. |,9,,other,linear,docs/economy.md:L74
-| syndicationResidency | 4 | 9 | $1000 | Freelance +15%; Street Promo Sprint +$2 flat; Blog +12%. |,1000,usd,cost,linear,docs/economy.md:L74
-| syndicationResidency | 4 | 9 | $1000 | Freelance +15%; Street Promo Sprint +$2 flat; Blog +12%. |,15,percent,income,linear,docs/economy.md:L74
-| syndicationResidency | 4 | 9 | $1000 | Freelance +15%; Street Promo Sprint +$2 flat; Blog +12%. |,2,usd,cost,linear,docs/economy.md:L74
-| syndicationResidency | 4 | 9 | $1000 | Freelance +15%; Street Promo Sprint +$2 flat; Blog +12%. |,12,percent,income,linear,docs/economy.md:L74
-| storycraftJumpstart | 120 | Writing 100%. |,120,,other,linear,docs/economy.md:L82
-| storycraftJumpstart | 120 | Writing 100%. |,100,percent,income,linear,docs/economy.md:L82
-| vlogStudioJumpstart | 120 | Visual 100%. |,120,,other,linear,docs/economy.md:L83
-| vlogStudioJumpstart | 120 | Visual 100%. |,100,percent,income,linear,docs/economy.md:L83
-| digitalShelfPrimer | 120 | Editing 100%. |,120,,other,linear,docs/economy.md:L84
-| digitalShelfPrimer | 120 | Editing 100%. |,100,percent,income,linear,docs/economy.md:L84
-| commerceLaunchPrimer | 120 | Commerce 100%. |,120,,other,linear,docs/economy.md:L85
-| commerceLaunchPrimer | 120 | Commerce 100%. |,100,percent,income,linear,docs/economy.md:L85
-| microSaasJumpstart | 120 | Software 100%. |,120,,other,linear,docs/economy.md:L86
-| microSaasJumpstart | 120 | Software 100%. |,100,percent,income,linear,docs/economy.md:L86
-| outlineMastery | 120 | Writing 100%. |,120,,other,linear,docs/economy.md:L87
-| outlineMastery | 120 | Writing 100%. |,100,percent,income,linear,docs/economy.md:L87
-"| photoLibrary | 120 | Visual 50%, Editing 50%. |",120,,other,linear,docs/economy.md:L88
-"| photoLibrary | 120 | Visual 50%, Editing 50%. |",50,percent,income,linear,docs/economy.md:L88
-"| ecomPlaybook | 120 | Research 50%, Commerce 50%. |",120,,other,linear,docs/economy.md:L89
-"| ecomPlaybook | 120 | Research 50%, Commerce 50%. |",50,percent,income,linear,docs/economy.md:L89
-"| automationCourse | 120 | Software 60%, Infrastructure 40%. |",120,,other,linear,docs/economy.md:L90
-"| automationCourse | 120 | Software 60%, Infrastructure 40%. |",60,percent,income,linear,docs/economy.md:L90
-"| automationCourse | 120 | Software 60%, Infrastructure 40%. |",40,percent,income,linear,docs/economy.md:L90
-"| brandVoiceLab | 100 | Audience 60%, Promotion 40%. |",100,,other,linear,docs/economy.md:L91
-"| brandVoiceLab | 100 | Audience 60%, Promotion 40%. |",60,percent,income,linear,docs/economy.md:L91
-"| brandVoiceLab | 100 | Audience 60%, Promotion 40%. |",40,percent,income,linear,docs/economy.md:L91
-"| guerillaBuzzWorkshop | 110 | Promotion 60%, Audience 40%. |",110,,other,linear,docs/economy.md:L92
-"| guerillaBuzzWorkshop | 110 | Promotion 60%, Audience 40%. |",60,percent,income,linear,docs/economy.md:L92
-"| guerillaBuzzWorkshop | 110 | Promotion 60%, Audience 40%. |",40,percent,income,linear,docs/economy.md:L92
-"| curriculumDesignStudio | 150 | Audience 60%, Writing 40%. |",150,,other,linear,docs/economy.md:L93
-"| curriculumDesignStudio | 150 | Audience 60%, Writing 40%. |",60,percent,income,linear,docs/economy.md:L93
-"| curriculumDesignStudio | 150 | Audience 60%, Writing 40%. |",40,percent,income,linear,docs/economy.md:L93
-"| postProductionPipelineLab | 150 | Editing 70%, Visual 30%. |",150,,other,linear,docs/economy.md:L94
-"| postProductionPipelineLab | 150 | Editing 70%, Visual 30%. |",70,percent,income,linear,docs/economy.md:L94
-"| postProductionPipelineLab | 150 | Editing 70%, Visual 30%. |",30,percent,income,linear,docs/economy.md:L94
-"| fulfillmentOpsMasterclass | 140 | Commerce 70%, Promotion 30%. |",140,,other,linear,docs/economy.md:L95
-"| fulfillmentOpsMasterclass | 140 | Commerce 70%, Promotion 30%. |",70,percent,income,linear,docs/economy.md:L95
-"| fulfillmentOpsMasterclass | 140 | Commerce 70%, Promotion 30%. |",30,percent,income,linear,docs/economy.md:L95
-"| customerRetentionClinic | 140 | Audience 40%, Promotion 30%, Software 30%. |",140,,other,linear,docs/economy.md:L96
-"| customerRetentionClinic | 140 | Audience 40%, Promotion 30%, Software 30%. |",40,percent,income,linear,docs/economy.md:L96
-"| customerRetentionClinic | 140 | Audience 40%, Promotion 30%, Software 30%. |",30,percent,income,linear,docs/economy.md:L96
-"| narrationPerformanceWorkshop | 130 | Audio 60%, Writing 40%. |",130,,other,linear,docs/economy.md:L97
-"| narrationPerformanceWorkshop | 130 | Audio 60%, Writing 40%. |",60,percent,income,linear,docs/economy.md:L97
-"| narrationPerformanceWorkshop | 130 | Audio 60%, Writing 40%. |",40,percent,income,linear,docs/economy.md:L97
-"| galleryLicensingSummit | 140 | Visual 60%, Commerce 40%. |",140,,other,linear,docs/economy.md:L98
-"| galleryLicensingSummit | 140 | Visual 60%, Commerce 40%. |",60,percent,income,linear,docs/economy.md:L98
-"| galleryLicensingSummit | 140 | Visual 60%, Commerce 40%. |",40,percent,income,linear,docs/economy.md:L98
-"| syndicationResidency | 150 | Promotion 50%, Audience 30%, Writing 20%. |",150,,other,linear,docs/economy.md:L99
-"| syndicationResidency | 150 | Promotion 50%, Audience 30%, Writing 20%. |",50,percent,income,linear,docs/economy.md:L99
-"| syndicationResidency | 150 | Promotion 50%, Audience 30%, Writing 20%. |",30,percent,income,linear,docs/economy.md:L99
-"| syndicationResidency | 150 | Promotion 50%, Audience 30%, Writing 20%. |",20,percent,income,linear,docs/economy.md:L99
-| Freelance Writing | 2 | $0 | ∞ | $18 | None | Writing. |,2,,other,linear,docs/economy.md:L115
-| Freelance Writing | 2 | $0 | ∞ | $18 | None | Writing. |,0,usd,cost,linear,docs/economy.md:L115
-| Freelance Writing | 2 | $0 | ∞ | $18 | None | Writing. |,18,usd,cost,linear,docs/economy.md:L115
-| Audience Q&A Blast | 1 | $0 | 1 | $12 | Blog asset ≥1. | Audience. |,1,,other,linear,docs/economy.md:L116
-| Audience Q&A Blast | 1 | $0 | 1 | $12 | Blog asset ≥1. | Audience. |,0,usd,cost,linear,docs/economy.md:L116
-| Audience Q&A Blast | 1 | $0 | 1 | $12 | Blog asset ≥1. | Audience. |,1,usd,cost,linear,docs/economy.md:L116
-| Audience Q&A Blast | 1 | $0 | 1 | $12 | Blog asset ≥1. | Audience. |,12,usd,cost,linear,docs/economy.md:L116
-| Bundle Promo Push | 2.5 | $0 | ∞ | $48 | Blog ≥2 and E-book ≥1. | Promotion. |,2.5,,other,linear,docs/economy.md:L117
-| Bundle Promo Push | 2.5 | $0 | ∞ | $48 | Blog ≥2 and E-book ≥1. | Promotion. |,0,usd,cost,linear,docs/economy.md:L117
-| Bundle Promo Push | 2.5 | $0 | ∞ | $48 | Blog ≥2 and E-book ≥1. | Promotion. |,48,usd,cost,linear,docs/economy.md:L117
-| Bundle Promo Push | 2.5 | $0 | ∞ | $48 | Blog ≥2 and E-book ≥1. | Promotion. |,2,usd,cost,linear,docs/economy.md:L117
-| Bundle Promo Push | 2.5 | $0 | ∞ | $48 | Blog ≥2 and E-book ≥1. | Promotion. |,1,,other,linear,docs/economy.md:L117
-| Micro Survey Dash | 0.25 | $0 | 4 | $1 | None | Research. |,0.25,,other,linear,docs/economy.md:L118
-| Micro Survey Dash | 0.25 | $0 | 4 | $1 | None | Research. |,0,usd,cost,linear,docs/economy.md:L118
-| Micro Survey Dash | 0.25 | $0 | 4 | $1 | None | Research. |,4,usd,cost,linear,docs/economy.md:L118
-| Micro Survey Dash | 0.25 | $0 | 4 | $1 | None | Research. |,1,usd,cost,linear,docs/economy.md:L118
-| Event Photo Gig | 3.5 | $0 | ∞ | $72 | Stock Photos ≥1. | Visual. |,3.5,,other,linear,docs/economy.md:L119
-| Event Photo Gig | 3.5 | $0 | ∞ | $72 | Stock Photos ≥1. | Visual. |,0,usd,cost,linear,docs/economy.md:L119
-| Event Photo Gig | 3.5 | $0 | ∞ | $72 | Stock Photos ≥1. | Visual. |,72,usd,cost,linear,docs/economy.md:L119
-| Event Photo Gig | 3.5 | $0 | ∞ | $72 | Stock Photos ≥1. | Visual. |,1,,other,linear,docs/economy.md:L119
-"| Pop-Up Workshop | 2.5 | $0 | ∞ | $38 | Blog ≥1, E-book ≥1. | Audience (Writing weight 0.5). |",2.5,,other,linear,docs/economy.md:L120
-"| Pop-Up Workshop | 2.5 | $0 | ∞ | $38 | Blog ≥1, E-book ≥1. | Audience (Writing weight 0.5). |",0,usd,cost,linear,docs/economy.md:L120
-"| Pop-Up Workshop | 2.5 | $0 | ∞ | $38 | Blog ≥1, E-book ≥1. | Audience (Writing weight 0.5). |",38,usd,cost,linear,docs/economy.md:L120
-"| Pop-Up Workshop | 2.5 | $0 | ∞ | $38 | Blog ≥1, E-book ≥1. | Audience (Writing weight 0.5). |",1,usd,cost,linear,docs/economy.md:L120
-"| Pop-Up Workshop | 2.5 | $0 | ∞ | $38 | Blog ≥1, E-book ≥1. | Audience (Writing weight 0.5). |",1,,other,linear,docs/economy.md:L120
-"| Pop-Up Workshop | 2.5 | $0 | ∞ | $38 | Blog ≥1, E-book ≥1. | Audience (Writing weight 0.5). |",0.5,,other,linear,docs/economy.md:L120
-| Vlog Edit Rush | 1.5 | $0 | ∞ | $24 | Vlog ≥1. | Editing. |,1.5,,other,linear,docs/economy.md:L121
-| Vlog Edit Rush | 1.5 | $0 | ∞ | $24 | Vlog ≥1. | Editing. |,0,usd,cost,linear,docs/economy.md:L121
-| Vlog Edit Rush | 1.5 | $0 | ∞ | $24 | Vlog ≥1. | Editing. |,24,usd,cost,linear,docs/economy.md:L121
-| Vlog Edit Rush | 1.5 | $0 | ∞ | $24 | Vlog ≥1. | Editing. |,1,usd,cost,linear,docs/economy.md:L121
-| Dropship Pack Party | 2 | $8 | ∞ | $28 | Dropshipping ≥1. | Commerce. |,2,,other,linear,docs/economy.md:L122
-| Dropship Pack Party | 2 | $8 | ∞ | $28 | Dropshipping ≥1. | Commerce. |,8,usd,cost,linear,docs/economy.md:L122
-| Dropship Pack Party | 2 | $8 | ∞ | $28 | Dropshipping ≥1. | Commerce. |,28,usd,cost,linear,docs/economy.md:L122
-| Dropship Pack Party | 2 | $8 | ∞ | $28 | Dropshipping ≥1. | Commerce. |,1,,other,linear,docs/economy.md:L122
-| SaaS Bug Squash | 1 | $0 | ∞ | $30 | SaaS ≥1. | Software (Infrastructure weight 0.5). |,1,,other,linear,docs/economy.md:L123
-| SaaS Bug Squash | 1 | $0 | ∞ | $30 | SaaS ≥1. | Software (Infrastructure weight 0.5). |,0,usd,cost,linear,docs/economy.md:L123
-| SaaS Bug Squash | 1 | $0 | ∞ | $30 | SaaS ≥1. | Software (Infrastructure weight 0.5). |,30,usd,cost,linear,docs/economy.md:L123
-| SaaS Bug Squash | 1 | $0 | ∞ | $30 | SaaS ≥1. | Software (Infrastructure weight 0.5). |,1,usd,cost,linear,docs/economy.md:L123
-| SaaS Bug Squash | 1 | $0 | ∞ | $30 | SaaS ≥1. | Software (Infrastructure weight 0.5). |,0.5,,other,linear,docs/economy.md:L123
-| Audiobook Narration | 2.75 | $0 | ∞ | $44 | E-book ≥1. | Audio. |,2.75,,other,linear,docs/economy.md:L124
-| Audiobook Narration | 2.75 | $0 | ∞ | $44 | E-book ≥1. | Audio. |,0,usd,cost,linear,docs/economy.md:L124
-| Audiobook Narration | 2.75 | $0 | ∞ | $44 | E-book ≥1. | Audio. |,44,usd,cost,linear,docs/economy.md:L124
-| Audiobook Narration | 2.75 | $0 | ∞ | $44 | E-book ≥1. | Audio. |,1,,other,linear,docs/economy.md:L124
-| Street Team Promo | 0.75 | $5 | ∞ | $18 | Blog ≥2. | Promotion. |,0.75,,other,linear,docs/economy.md:L125
-| Street Team Promo | 0.75 | $5 | ∞ | $18 | Blog ≥2. | Promotion. |,5,usd,cost,linear,docs/economy.md:L125
-| Street Team Promo | 0.75 | $5 | ∞ | $18 | Blog ≥2. | Promotion. |,18,usd,cost,linear,docs/economy.md:L125
-| Street Team Promo | 0.75 | $5 | ∞ | $18 | Blog ≥2. | Promotion. |,2,usd,cost,linear,docs/economy.md:L125
-"Each knowledge track also exposes a “Study” card whose action enrolls the course (time cost 0, money cost equals tuition) and defers to the orchestrator for ongoing study time. Card text reflects enrollment status and bonuses.",0,,time,linear,docs/economy.md:L129
-"1. **Quality range:** Each asset instance references its current quality level to derive `[min,max]` income bounds.",1,,other,linear,docs/economy.md:L135
-2. **Random roll:** Daily income equals `round(min + rand() * (max - min))` before modifiers.,2,,income,linear,docs/economy.md:L136
-3. **Definition modifiers:** Optional custom modifiers can override the amount and contribute labeled breakdown entries.,3,,other,linear,docs/economy.md:L137
-"4. **Events & niches:** Active niche multipliers, scripted events, and education bonuses apply sequentially, all tracked for UI breakdowns.",4,,income,linear,docs/economy.md:L138
-5. **Upgrade multipliers:** Asset upgrades with `payout_mult` multiply the final amount via chained factors; deltas are stored per source.,5,,other,linear,docs/economy.md:L139
-6. **Rounding & storage:** Amounts round to whole dollars; breakdown entries track adjustments and are cached on the instance.,6,,other,linear,docs/economy.md:L140
-"- **Setup:** 3 days × 3h, $180 cost. Maintenance: 0.6h/day, $3/day.",3,days,time,linear,docs/economy.md:L150
-"- **Setup:** 3 days × 3h, $180 cost. Maintenance: 0.6h/day, $3/day.",3,,time,linear,docs/economy.md:L150
-"- **Setup:** 3 days × 3h, $180 cost. Maintenance: 0.6h/day, $3/day.",180,usd,time,linear,docs/economy.md:L150
-"- **Setup:** 3 days × 3h, $180 cost. Maintenance: 0.6h/day, $3/day.",0.6,,time,linear,docs/economy.md:L150
-"- **Setup:** 3 days × 3h, $180 cost. Maintenance: 0.6h/day, $3/day.",3,usd,time,linear,docs/economy.md:L150
-"- **Income:** Base 30, variance 0.2 (quality table defines min/max payouts).",30,,income,linear,docs/economy.md:L151
-"- **Income:** Base 30, variance 0.2 (quality table defines min/max payouts).",0.2,,limit,cap,docs/economy.md:L151
-"- 0: $3–6, no requirements.",0,,other,linear,docs/economy.md:L153
-"- 0: $3–6, no requirements.",3,usd,cost,linear,docs/economy.md:L153
-"- 0: $3–6, no requirements.",6,usd,cost,linear,docs/economy.md:L153
-"- 1: $9–15, requires 3 posts.",1,,requirement,linear,docs/economy.md:L154
-"- 1: $9–15, requires 3 posts.",9,usd,cost,linear,docs/economy.md:L154
-"- 1: $9–15, requires 3 posts.",15,usd,cost,linear,docs/economy.md:L154
-"- 1: $9–15, requires 3 posts.",3,count,requirement,linear,docs/economy.md:L154
-"- 2: $16–24, requires 9 posts & 2 SEO sprints.",2,,requirement,linear,docs/economy.md:L155
-"- 2: $16–24, requires 9 posts & 2 SEO sprints.",16,usd,cost,linear,docs/economy.md:L155
-"- 2: $16–24, requires 9 posts & 2 SEO sprints.",24,usd,cost,linear,docs/economy.md:L155
-"- 2: $16–24, requires 9 posts & 2 SEO sprints.",9,count,requirement,linear,docs/economy.md:L155
-"- 2: $16–24, requires 9 posts & 2 SEO sprints.",2,count,requirement,linear,docs/economy.md:L155
-"- 3: $30–42, requires 18 posts, 5 SEO, 3 outreach.",3,,requirement,linear,docs/economy.md:L156
-"- 3: $30–42, requires 18 posts, 5 SEO, 3 outreach.",30,usd,cost,linear,docs/economy.md:L156
-"- 3: $30–42, requires 18 posts, 5 SEO, 3 outreach.",42,usd,cost,linear,docs/economy.md:L156
-"- 3: $30–42, requires 18 posts, 5 SEO, 3 outreach.",18,count,requirement,linear,docs/economy.md:L156
-"- 3: $30–42, requires 18 posts, 5 SEO, 3 outreach.",5,count,requirement,linear,docs/economy.md:L156
-"- 3: $30–42, requires 18 posts, 5 SEO, 3 outreach.",3,count,requirement,linear,docs/economy.md:L156
-"- 4: $46–62, requires 28 posts, 9 SEO, 6 outreach.",4,,requirement,linear,docs/economy.md:L157
-"- 4: $46–62, requires 28 posts, 9 SEO, 6 outreach.",46,usd,cost,linear,docs/economy.md:L157
-"- 4: $46–62, requires 28 posts, 9 SEO, 6 outreach.",62,usd,cost,linear,docs/economy.md:L157
-"- 4: $46–62, requires 28 posts, 9 SEO, 6 outreach.",28,count,requirement,linear,docs/economy.md:L157
-"- 4: $46–62, requires 28 posts, 9 SEO, 6 outreach.",9,count,requirement,linear,docs/economy.md:L157
-"- 4: $46–62, requires 28 posts, 9 SEO, 6 outreach.",6,count,requirement,linear,docs/economy.md:L157
-"- 5: $64–84, requires 40 posts, 14 SEO, 10 outreach.",5,,requirement,linear,docs/economy.md:L158
-"- 5: $64–84, requires 40 posts, 14 SEO, 10 outreach.",64,usd,cost,linear,docs/economy.md:L158
-"- 5: $64–84, requires 40 posts, 14 SEO, 10 outreach.",84,usd,cost,linear,docs/economy.md:L158
-"- 5: $64–84, requires 40 posts, 14 SEO, 10 outreach.",40,count,requirement,linear,docs/economy.md:L158
-"- 5: $64–84, requires 40 posts, 14 SEO, 10 outreach.",14,count,requirement,linear,docs/economy.md:L158
-"- 5: $64–84, requires 40 posts, 14 SEO, 10 outreach.",10,count,requirement,linear,docs/economy.md:L158
-"- **Quality Actions:** Write Post (3h, 1/day), SEO Sprint (2h + $16), Backlink Outreach (1.5h + $16).",3,,time,linear,docs/economy.md:L159
-"- **Quality Actions:** Write Post (3h, 1/day), SEO Sprint (2h + $16), Backlink Outreach (1.5h + $16).",1,,time,linear,docs/economy.md:L159
-"- **Quality Actions:** Write Post (3h, 1/day), SEO Sprint (2h + $16), Backlink Outreach (1.5h + $16).",2,,time,linear,docs/economy.md:L159
-"- **Quality Actions:** Write Post (3h, 1/day), SEO Sprint (2h + $16), Backlink Outreach (1.5h + $16).",16,usd,time,linear,docs/economy.md:L159
-"- **Quality Actions:** Write Post (3h, 1/day), SEO Sprint (2h + $16), Backlink Outreach (1.5h + $16).",1.5,,other,linear,docs/economy.md:L159
-"- **Quality Actions:** Write Post (3h, 1/day), SEO Sprint (2h + $16), Backlink Outreach (1.5h + $16).",16,usd,cost,linear,docs/economy.md:L159
-"- **Setup:** 4 days × 3h, $260. Maintenance: 0.5h, $3.",4,days,time,linear,docs/economy.md:L163
-"- **Setup:** 4 days × 3h, $260. Maintenance: 0.5h, $3.",3,,time,linear,docs/economy.md:L163
-"- **Setup:** 4 days × 3h, $260. Maintenance: 0.5h, $3.",260,usd,time,linear,docs/economy.md:L163
-"- **Setup:** 4 days × 3h, $260. Maintenance: 0.5h, $3.",0.5,,time,linear,docs/economy.md:L163
-"- **Setup:** 4 days × 3h, $260. Maintenance: 0.5h, $3.",3,usd,time,linear,docs/economy.md:L163
-- 0: $3–6.,0,,other,linear,docs/economy.md:L166
-- 0: $3–6.,3,usd,cost,linear,docs/economy.md:L166
-- 0: $3–6.,6,usd,cost,linear,docs/economy.md:L166
-- 1: $12–20 (6 chapters).,1,,requirement,linear,docs/economy.md:L167
-- 1: $12–20 (6 chapters).,12,usd,cost,linear,docs/economy.md:L167
-- 1: $12–20 (6 chapters).,20,usd,cost,linear,docs/economy.md:L167
-- 1: $12–20 (6 chapters).,6,usd,cost,linear,docs/economy.md:L167
-"- 2: $20–30 (12 chapters, 1 cover).",2,,requirement,linear,docs/economy.md:L168
-"- 2: $20–30 (12 chapters, 1 cover).",20,usd,cost,linear,docs/economy.md:L168
-"- 2: $20–30 (12 chapters, 1 cover).",30,usd,cost,linear,docs/economy.md:L168
-"- 2: $20–30 (12 chapters, 1 cover).",12,usd,cost,linear,docs/economy.md:L168
-"- 2: $20–30 (12 chapters, 1 cover).",1,,requirement,linear,docs/economy.md:L168
-"- 3: $30–42 (18 chapters, 2 covers, 6 reviews).",3,,requirement,linear,docs/economy.md:L169
-"- 3: $30–42 (18 chapters, 2 covers, 6 reviews).",30,usd,cost,linear,docs/economy.md:L169
-"- 3: $30–42 (18 chapters, 2 covers, 6 reviews).",42,usd,cost,linear,docs/economy.md:L169
-"- 3: $30–42 (18 chapters, 2 covers, 6 reviews).",18,usd,cost,linear,docs/economy.md:L169
-"- 3: $30–42 (18 chapters, 2 covers, 6 reviews).",2,count,requirement,linear,docs/economy.md:L169
-"- 3: $30–42 (18 chapters, 2 covers, 6 reviews).",6,count,requirement,linear,docs/economy.md:L169
-"- 4: $44–58 (24 chapters, 3 covers, 10 reviews).",4,,requirement,linear,docs/economy.md:L170
-"- 4: $44–58 (24 chapters, 3 covers, 10 reviews).",44,usd,cost,linear,docs/economy.md:L170
-"- 4: $44–58 (24 chapters, 3 covers, 10 reviews).",58,usd,cost,linear,docs/economy.md:L170
-"- 4: $44–58 (24 chapters, 3 covers, 10 reviews).",24,usd,cost,linear,docs/economy.md:L170
-"- 4: $44–58 (24 chapters, 3 covers, 10 reviews).",3,count,requirement,linear,docs/economy.md:L170
-"- 4: $44–58 (24 chapters, 3 covers, 10 reviews).",10,count,requirement,linear,docs/economy.md:L170
-"- 5: $60–78 (32 chapters, 4 covers, 16 reviews).",5,,requirement,linear,docs/economy.md:L171
-"- 5: $60–78 (32 chapters, 4 covers, 16 reviews).",60,usd,cost,linear,docs/economy.md:L171
-"- 5: $60–78 (32 chapters, 4 covers, 16 reviews).",78,usd,cost,linear,docs/economy.md:L171
-"- 5: $60–78 (32 chapters, 4 covers, 16 reviews).",32,usd,cost,linear,docs/economy.md:L171
-"- 5: $60–78 (32 chapters, 4 covers, 16 reviews).",4,count,requirement,linear,docs/economy.md:L171
-"- 5: $60–78 (32 chapters, 4 covers, 16 reviews).",16,count,requirement,linear,docs/economy.md:L171
-"- **Actions:** Write Chapter (2.5h), Commission Cover (1.5h + $60), Rally Reviews (1.25h + $10).",2.5,,other,linear,docs/economy.md:L172
-"- **Actions:** Write Chapter (2.5h), Commission Cover (1.5h + $60), Rally Reviews (1.25h + $10).",1.5,,requirement,linear,docs/economy.md:L172
-"- **Actions:** Write Chapter (2.5h), Commission Cover (1.5h + $60), Rally Reviews (1.25h + $10).",60,usd,cost,linear,docs/economy.md:L172
-"- **Actions:** Write Chapter (2.5h), Commission Cover (1.5h + $60), Rally Reviews (1.25h + $10).",1.25,,requirement,linear,docs/economy.md:L172
-"- **Actions:** Write Chapter (2.5h), Commission Cover (1.5h + $60), Rally Reviews (1.25h + $10).",10,usd,cost,linear,docs/economy.md:L172
-"- **Setup:** 4 days × 4h, $420. Maintenance: 1h, $9.",4,days,time,linear,docs/economy.md:L176
-"- **Setup:** 4 days × 4h, $420. Maintenance: 1h, $9.",4,,time,linear,docs/economy.md:L176
-"- **Setup:** 4 days × 4h, $420. Maintenance: 1h, $9.",420,usd,time,linear,docs/economy.md:L176
-"- **Setup:** 4 days × 4h, $420. Maintenance: 1h, $9.",1,,time,linear,docs/economy.md:L176
-"- **Setup:** 4 days × 4h, $420. Maintenance: 1h, $9.",9,usd,time,linear,docs/economy.md:L176
-- 0: $2–5.,0,,other,linear,docs/economy.md:L179
-- 0: $2–5.,2,usd,cost,linear,docs/economy.md:L179
-- 0: $2–5.,5,usd,cost,linear,docs/economy.md:L179
-- 1: $12–20 (4 episodes).,1,,other,linear,docs/economy.md:L180
-- 1: $12–20 (4 episodes).,12,usd,cost,linear,docs/economy.md:L180
-- 1: $12–20 (4 episodes).,20,usd,cost,linear,docs/economy.md:L180
-- 1: $12–20 (4 episodes).,4,usd,cost,linear,docs/economy.md:L180
-"- 2: $20–30 (10 episodes, 4 edits).",2,,other,linear,docs/economy.md:L181
-"- 2: $20–30 (10 episodes, 4 edits).",20,usd,cost,linear,docs/economy.md:L181
-"- 2: $20–30 (10 episodes, 4 edits).",30,usd,cost,linear,docs/economy.md:L181
-"- 2: $20–30 (10 episodes, 4 edits).",10,usd,cost,linear,docs/economy.md:L181
-"- 2: $20–30 (10 episodes, 4 edits).",4,,other,linear,docs/economy.md:L181
-"- 3: $32–40 (18 episodes, 7 edits, 5 promos).",3,,other,linear,docs/economy.md:L182
-"- 3: $32–40 (18 episodes, 7 edits, 5 promos).",32,usd,cost,linear,docs/economy.md:L182
-"- 3: $32–40 (18 episodes, 7 edits, 5 promos).",40,usd,cost,linear,docs/economy.md:L182
-"- 3: $32–40 (18 episodes, 7 edits, 5 promos).",18,usd,cost,linear,docs/economy.md:L182
-"- 3: $32–40 (18 episodes, 7 edits, 5 promos).",7,,other,linear,docs/economy.md:L182
-"- 3: $32–40 (18 episodes, 7 edits, 5 promos).",5,count,other,linear,docs/economy.md:L182
-"- 4: $45–58 (26 episodes, 11 edits, 9 promos).",4,,other,linear,docs/economy.md:L183
-"- 4: $45–58 (26 episodes, 11 edits, 9 promos).",45,usd,cost,linear,docs/economy.md:L183
-"- 4: $45–58 (26 episodes, 11 edits, 9 promos).",58,usd,cost,linear,docs/economy.md:L183
-"- 4: $45–58 (26 episodes, 11 edits, 9 promos).",26,usd,cost,linear,docs/economy.md:L183
-"- 4: $45–58 (26 episodes, 11 edits, 9 promos).",11,,other,linear,docs/economy.md:L183
-"- 4: $45–58 (26 episodes, 11 edits, 9 promos).",9,count,other,linear,docs/economy.md:L183
-"- 5: $62–82 (38 episodes, 16 edits, 14 promos).",5,,other,linear,docs/economy.md:L184
-"- 5: $62–82 (38 episodes, 16 edits, 14 promos).",62,usd,cost,linear,docs/economy.md:L184
-"- 5: $62–82 (38 episodes, 16 edits, 14 promos).",82,usd,cost,linear,docs/economy.md:L184
-"- 5: $62–82 (38 episodes, 16 edits, 14 promos).",38,usd,cost,linear,docs/economy.md:L184
-"- 5: $62–82 (38 episodes, 16 edits, 14 promos).",16,,other,linear,docs/economy.md:L184
-"- 5: $62–82 (38 episodes, 16 edits, 14 promos).",14,count,other,linear,docs/economy.md:L184
-"- **Actions:** Film Episode (5h), Polish Edit (2.5h + $16), Promo Blast (2h + $24).",5,,other,linear,docs/economy.md:L185
-"- **Actions:** Film Episode (5h), Polish Edit (2.5h + $16), Promo Blast (2h + $24).",2.5,,other,linear,docs/economy.md:L185
-"- **Actions:** Film Episode (5h), Polish Edit (2.5h + $16), Promo Blast (2h + $24).",16,usd,cost,linear,docs/economy.md:L185
-"- **Actions:** Film Episode (5h), Polish Edit (2.5h + $16), Promo Blast (2h + $24).",2,,other,linear,docs/economy.md:L185
-"- **Actions:** Film Episode (5h), Polish Edit (2.5h + $16), Promo Blast (2h + $24).",24,usd,cost,linear,docs/economy.md:L185
-"- **Setup:** 5 days × 4h, $560. Maintenance: 0.8h, $10.",5,days,time,linear,docs/economy.md:L189
-"- **Setup:** 5 days × 4h, $560. Maintenance: 0.8h, $10.",4,,time,linear,docs/economy.md:L189
-"- **Setup:** 5 days × 4h, $560. Maintenance: 0.8h, $10.",560,usd,time,linear,docs/economy.md:L189
-"- **Setup:** 5 days × 4h, $560. Maintenance: 0.8h, $10.",0.8,,time,linear,docs/economy.md:L189
-"- **Setup:** 5 days × 4h, $560. Maintenance: 0.8h, $10.",10,usd,time,linear,docs/economy.md:L189
-- 0: $8–14.,0,,other,linear,docs/economy.md:L192
-- 0: $8–14.,8,usd,cost,linear,docs/economy.md:L192
-- 0: $8–14.,14,usd,cost,linear,docs/economy.md:L192
-- 1: $18–30 (4 shoots).,1,,requirement,linear,docs/economy.md:L193
-- 1: $18–30 (4 shoots).,18,usd,cost,linear,docs/economy.md:L193
-- 1: $18–30 (4 shoots).,30,usd,cost,linear,docs/economy.md:L193
-- 1: $18–30 (4 shoots).,4,usd,cost,linear,docs/economy.md:L193
-"- 2: $34–52 (10 shoots, 4 edits).",2,,requirement,linear,docs/economy.md:L194
-"- 2: $34–52 (10 shoots, 4 edits).",34,usd,cost,linear,docs/economy.md:L194
-"- 2: $34–52 (10 shoots, 4 edits).",52,usd,cost,linear,docs/economy.md:L194
-"- 2: $34–52 (10 shoots, 4 edits).",10,usd,cost,linear,docs/economy.md:L194
-"- 2: $34–52 (10 shoots, 4 edits).",4,,requirement,linear,docs/economy.md:L194
-"- 3: $54–78 (16 shoots, 7 edits, 5 marketing pushes).",3,,requirement,linear,docs/economy.md:L195
-"- 3: $54–78 (16 shoots, 7 edits, 5 marketing pushes).",54,usd,cost,linear,docs/economy.md:L195
-"- 3: $54–78 (16 shoots, 7 edits, 5 marketing pushes).",78,usd,cost,linear,docs/economy.md:L195
-"- 3: $54–78 (16 shoots, 7 edits, 5 marketing pushes).",16,usd,cost,linear,docs/economy.md:L195
-"- 3: $54–78 (16 shoots, 7 edits, 5 marketing pushes).",7,,requirement,linear,docs/economy.md:L195
-"- 3: $54–78 (16 shoots, 7 edits, 5 marketing pushes).",5,count,requirement,linear,docs/economy.md:L195
-"- 4: $80–108 (24 shoots, 11 edits, 9 marketing).",4,,requirement,linear,docs/economy.md:L196
-"- 4: $80–108 (24 shoots, 11 edits, 9 marketing).",80,usd,cost,linear,docs/economy.md:L196
-"- 4: $80–108 (24 shoots, 11 edits, 9 marketing).",108,usd,cost,linear,docs/economy.md:L196
-"- 4: $80–108 (24 shoots, 11 edits, 9 marketing).",24,usd,cost,linear,docs/economy.md:L196
-"- 4: $80–108 (24 shoots, 11 edits, 9 marketing).",11,,requirement,linear,docs/economy.md:L196
-"- 4: $80–108 (24 shoots, 11 edits, 9 marketing).",9,count,requirement,linear,docs/economy.md:L196
-"- 5: $112–150 (36 shoots, 16 edits, 14 marketing).",5,,requirement,linear,docs/economy.md:L197
-"- 5: $112–150 (36 shoots, 16 edits, 14 marketing).",112,usd,cost,linear,docs/economy.md:L197
-"- 5: $112–150 (36 shoots, 16 edits, 14 marketing).",150,usd,cost,linear,docs/economy.md:L197
-"- 5: $112–150 (36 shoots, 16 edits, 14 marketing).",36,usd,cost,linear,docs/economy.md:L197
-"- 5: $112–150 (36 shoots, 16 edits, 14 marketing).",16,,requirement,linear,docs/economy.md:L197
-"- 5: $112–150 (36 shoots, 16 edits, 14 marketing).",14,count,requirement,linear,docs/economy.md:L197
-"- **Actions:** Plan Shoot (3.5h + $22), Batch Edit (2h + $14), Run Promo (2h + $16).",3.5,,other,linear,docs/economy.md:L198
-"- **Actions:** Plan Shoot (3.5h + $22), Batch Edit (2h + $14), Run Promo (2h + $16).",22,usd,cost,linear,docs/economy.md:L198
-"- **Actions:** Plan Shoot (3.5h + $22), Batch Edit (2h + $14), Run Promo (2h + $16).",2,,other,linear,docs/economy.md:L198
-"- **Actions:** Plan Shoot (3.5h + $22), Batch Edit (2h + $14), Run Promo (2h + $16).",14,usd,cost,linear,docs/economy.md:L198
-"- **Actions:** Plan Shoot (3.5h + $22), Batch Edit (2h + $14), Run Promo (2h + $16).",16,usd,cost,linear,docs/economy.md:L198
-"- **Setup:** 6 days × 4h, $720. Maintenance: 1.1h, $12.",6,days,time,linear,docs/economy.md:L202
-"- **Setup:** 6 days × 4h, $720. Maintenance: 1.1h, $12.",4,,time,linear,docs/economy.md:L202
-"- **Setup:** 6 days × 4h, $720. Maintenance: 1.1h, $12.",720,usd,time,linear,docs/economy.md:L202
-"- **Setup:** 6 days × 4h, $720. Maintenance: 1.1h, $12.",1.1,,time,linear,docs/economy.md:L202
-"- **Setup:** 6 days × 4h, $720. Maintenance: 1.1h, $12.",12,usd,time,linear,docs/economy.md:L202
-- **Requirements:** Complete `ecomPlaybook` track; own ≥2 blogs and ≥1 e-book (experience).,2,,other,linear,docs/economy.md:L203
-- **Requirements:** Complete `ecomPlaybook` track; own ≥2 blogs and ≥1 e-book (experience).,1,,other,linear,docs/economy.md:L203
-- 0: $12–20.,0,,other,linear,docs/economy.md:L205
-- 0: $12–20.,12,usd,cost,linear,docs/economy.md:L205
-- 0: $12–20.,20,usd,cost,linear,docs/economy.md:L205
-- 1: $24–38 (4 research runs).,1,,other,linear,docs/economy.md:L206
-- 1: $24–38 (4 research runs).,24,usd,cost,linear,docs/economy.md:L206
-- 1: $24–38 (4 research runs).,38,usd,cost,linear,docs/economy.md:L206
-- 1: $24–38 (4 research runs).,4,usd,cost,linear,docs/economy.md:L206
-"- 2: $44–62 (11 research, 5 listings).",2,,requirement,linear,docs/economy.md:L207
-"- 2: $44–62 (11 research, 5 listings).",44,usd,cost,linear,docs/economy.md:L207
-"- 2: $44–62 (11 research, 5 listings).",62,usd,cost,linear,docs/economy.md:L207
-"- 2: $44–62 (11 research, 5 listings).",11,usd,cost,linear,docs/economy.md:L207
-"- 2: $44–62 (11 research, 5 listings).",5,count,requirement,linear,docs/economy.md:L207
-"- 3: $68–92 (18 research, 8 listings, 7 ads).",3,,requirement,linear,docs/economy.md:L208
-"- 3: $68–92 (18 research, 8 listings, 7 ads).",68,usd,cost,linear,docs/economy.md:L208
-"- 3: $68–92 (18 research, 8 listings, 7 ads).",92,usd,cost,linear,docs/economy.md:L208
-"- 3: $68–92 (18 research, 8 listings, 7 ads).",18,usd,cost,linear,docs/economy.md:L208
-"- 3: $68–92 (18 research, 8 listings, 7 ads).",8,count,requirement,linear,docs/economy.md:L208
-"- 3: $68–92 (18 research, 8 listings, 7 ads).",7,count,requirement,linear,docs/economy.md:L208
-"- 4: $95–128 (26 research, 12 listings, 10 ads).",4,,requirement,linear,docs/economy.md:L209
-"- 4: $95–128 (26 research, 12 listings, 10 ads).",95,usd,cost,linear,docs/economy.md:L209
-"- 4: $95–128 (26 research, 12 listings, 10 ads).",128,usd,cost,linear,docs/economy.md:L209
-"- 4: $95–128 (26 research, 12 listings, 10 ads).",26,usd,cost,linear,docs/economy.md:L209
-"- 4: $95–128 (26 research, 12 listings, 10 ads).",12,count,requirement,linear,docs/economy.md:L209
-"- 4: $95–128 (26 research, 12 listings, 10 ads).",10,count,requirement,linear,docs/economy.md:L209
-"- 5: $130–176 (38 research, 18 listings, 16 ads).",5,,requirement,linear,docs/economy.md:L210
-"- 5: $130–176 (38 research, 18 listings, 16 ads).",130,usd,cost,linear,docs/economy.md:L210
-"- 5: $130–176 (38 research, 18 listings, 16 ads).",176,usd,cost,linear,docs/economy.md:L210
-"- 5: $130–176 (38 research, 18 listings, 16 ads).",38,usd,cost,linear,docs/economy.md:L210
-"- 5: $130–176 (38 research, 18 listings, 16 ads).",18,count,requirement,linear,docs/economy.md:L210
-"- 5: $130–176 (38 research, 18 listings, 16 ads).",16,count,requirement,linear,docs/economy.md:L210
-"- **Actions:** Research Product (3h), Optimize Listing (1.8h + $28), Experiment With Ads (2.2h + $34).",3,,requirement,linear,docs/economy.md:L211
-"- **Actions:** Research Product (3h), Optimize Listing (1.8h + $28), Experiment With Ads (2.2h + $34).",1.8,,requirement,linear,docs/economy.md:L211
-"- **Actions:** Research Product (3h), Optimize Listing (1.8h + $28), Experiment With Ads (2.2h + $34).",28,usd,cost,linear,docs/economy.md:L211
-"- **Actions:** Research Product (3h), Optimize Listing (1.8h + $28), Experiment With Ads (2.2h + $34).",2.2,xp,xp,linear,docs/economy.md:L211
-"- **Actions:** Research Product (3h), Optimize Listing (1.8h + $28), Experiment With Ads (2.2h + $34).",34,usd,cost,linear,docs/economy.md:L211
-"- **Setup:** 8 days × 4h, $960. Maintenance: 2.2h, $24.",8,days,time,linear,docs/economy.md:L215
-"- **Setup:** 8 days × 4h, $960. Maintenance: 2.2h, $24.",4,,time,linear,docs/economy.md:L215
-"- **Setup:** 8 days × 4h, $960. Maintenance: 2.2h, $24.",960,usd,time,linear,docs/economy.md:L215
-"- **Setup:** 8 days × 4h, $960. Maintenance: 2.2h, $24.",2.2,,time,linear,docs/economy.md:L215
-"- **Setup:** 8 days × 4h, $960. Maintenance: 2.2h, $24.",24,usd,time,linear,docs/economy.md:L215
-"- **Requirements:** Complete `automationCourse`, own `serverCluster` equipment, and have ≥1 Dropshipping & ≥1 E-book active instances.",1,,other,linear,docs/economy.md:L216
-- 0: $20–32.,0,,other,linear,docs/economy.md:L218
-- 0: $20–32.,20,usd,cost,linear,docs/economy.md:L218
-- 0: $20–32.,32,usd,cost,linear,docs/economy.md:L218
-- 1: $32–48 (4 features).,1,,requirement,linear,docs/economy.md:L219
-- 1: $32–48 (4 features).,32,usd,cost,linear,docs/economy.md:L219
-- 1: $32–48 (4 features).,48,usd,cost,linear,docs/economy.md:L219
-- 1: $32–48 (4 features).,4,usd,cost,linear,docs/economy.md:L219
-"- 2: $54–74 (12 features, 5 stability).",2,,requirement,linear,docs/economy.md:L220
-"- 2: $54–74 (12 features, 5 stability).",54,usd,cost,linear,docs/economy.md:L220
-"- 2: $54–74 (12 features, 5 stability).",74,usd,cost,linear,docs/economy.md:L220
-"- 2: $54–74 (12 features, 5 stability).",12,usd,cost,linear,docs/economy.md:L220
-"- 2: $54–74 (12 features, 5 stability).",5,count,requirement,linear,docs/economy.md:L220
-"- 3: $84–120 (24 features, 8 stability, 6 marketing).",3,,requirement,linear,docs/economy.md:L221
-"- 3: $84–120 (24 features, 8 stability, 6 marketing).",84,usd,cost,linear,docs/economy.md:L221
-"- 3: $84–120 (24 features, 8 stability, 6 marketing).",120,usd,cost,linear,docs/economy.md:L221
-"- 3: $84–120 (24 features, 8 stability, 6 marketing).",24,usd,cost,linear,docs/economy.md:L221
-"- 3: $84–120 (24 features, 8 stability, 6 marketing).",8,count,requirement,linear,docs/economy.md:L221
-"- 3: $84–120 (24 features, 8 stability, 6 marketing).",6,count,requirement,linear,docs/economy.md:L221
-"- 4: $120–168 (34 features, 12 stability, 10 marketing, 4 edge).",4,,requirement,linear,docs/economy.md:L222
-"- 4: $120–168 (34 features, 12 stability, 10 marketing, 4 edge).",120,usd,cost,linear,docs/economy.md:L222
-"- 4: $120–168 (34 features, 12 stability, 10 marketing, 4 edge).",168,usd,cost,linear,docs/economy.md:L222
-"- 4: $120–168 (34 features, 12 stability, 10 marketing, 4 edge).",34,usd,cost,linear,docs/economy.md:L222
-"- 4: $120–168 (34 features, 12 stability, 10 marketing, 4 edge).",12,count,requirement,linear,docs/economy.md:L222
-"- 4: $120–168 (34 features, 12 stability, 10 marketing, 4 edge).",10,count,requirement,linear,docs/economy.md:L222
-"- 4: $120–168 (34 features, 12 stability, 10 marketing, 4 edge).",4,count,requirement,linear,docs/economy.md:L222
-"- 5: $168–220 (48 features, 18 stability, 15 marketing, 8 edge).",5,,requirement,linear,docs/economy.md:L223
-"- 5: $168–220 (48 features, 18 stability, 15 marketing, 8 edge).",168,usd,cost,linear,docs/economy.md:L223
-"- 5: $168–220 (48 features, 18 stability, 15 marketing, 8 edge).",220,usd,cost,linear,docs/economy.md:L223
-"- 5: $168–220 (48 features, 18 stability, 15 marketing, 8 edge).",48,usd,cost,linear,docs/economy.md:L223
-"- 5: $168–220 (48 features, 18 stability, 15 marketing, 8 edge).",18,count,requirement,linear,docs/economy.md:L223
-"- 5: $168–220 (48 features, 18 stability, 15 marketing, 8 edge).",15,count,requirement,linear,docs/economy.md:L223
-"- 5: $168–220 (48 features, 18 stability, 15 marketing, 8 edge).",8,count,requirement,linear,docs/economy.md:L223
-"- **Actions:** Ship Feature (3.2h + $28), Improve Stability (2.5h + $36), Launch Campaign (2.5h + $44), Deploy Edge Nodes (3h + $64, requires `serverEdge`).",3.2,,requirement,linear,docs/economy.md:L224
-"- **Actions:** Ship Feature (3.2h + $28), Improve Stability (2.5h + $36), Launch Campaign (2.5h + $44), Deploy Edge Nodes (3h + $64, requires `serverEdge`).",28,usd,cost,linear,docs/economy.md:L224
-"- **Actions:** Ship Feature (3.2h + $28), Improve Stability (2.5h + $36), Launch Campaign (2.5h + $44), Deploy Edge Nodes (3h + $64, requires `serverEdge`).",2.5,,requirement,linear,docs/economy.md:L224
-"- **Actions:** Ship Feature (3.2h + $28), Improve Stability (2.5h + $36), Launch Campaign (2.5h + $44), Deploy Edge Nodes (3h + $64, requires `serverEdge`).",36,usd,cost,linear,docs/economy.md:L224
-"- **Actions:** Ship Feature (3.2h + $28), Improve Stability (2.5h + $36), Launch Campaign (2.5h + $44), Deploy Edge Nodes (3h + $64, requires `serverEdge`).",44,usd,cost,linear,docs/economy.md:L224
-"- **Actions:** Ship Feature (3.2h + $28), Improve Stability (2.5h + $36), Launch Campaign (2.5h + $44), Deploy Edge Nodes (3h + $64, requires `serverEdge`).",3,,requirement,linear,docs/economy.md:L224
-"- **Actions:** Ship Feature (3.2h + $28), Improve Stability (2.5h + $36), Launch Campaign (2.5h + $44), Deploy Edge Nodes (3h + $64, requires `serverEdge`).",64,usd,cost,linear,docs/economy.md:L224
-- **Turbo Coffee (`coffee`):** Repeatable boost costing $40 that grants +1 hour for the current day; usage per day capped at `COFFEE_LIMIT = 3`. UI disables when limit hit or no time remains.,40,usd,time,linear,docs/economy.md:L236
-- **Turbo Coffee (`coffee`):** Repeatable boost costing $40 that grants +1 hour for the current day; usage per day capped at `COFFEE_LIMIT = 3`. UI disables when limit hit or no time remains.,1,hours,time,linear,docs/economy.md:L236
-- **Turbo Coffee (`coffee`):** Repeatable boost costing $40 that grants +1 hour for the current day; usage per day capped at `COFFEE_LIMIT = 3`. UI disables when limit hit or no time remains.,3,,time,cap,docs/economy.md:L236
-| studio | $220 | Exclusive `house:lighting` slot | `maint_time_mult: 0.9` for photo/video asset maintenance actions (unlock Stock Photo).,220,usd,cost,linear,docs/economy.md:L242
-| studio | $220 | Exclusive `house:lighting` slot | `maint_time_mult: 0.9` for photo/video asset maintenance actions (unlock Stock Photo).,0.9,,time,linear,docs/economy.md:L242
-"| studioExpansion | $540 | Requires `studio`; exclusive `house:studio` | `setup_time_mult: 0.85`, `payout_mult: 1.15`, `quality_progress_mult: 2` for photo/video assets and photo hustles.",540,usd,cost,linear,docs/economy.md:L243
-"| studioExpansion | $540 | Requires `studio`; exclusive `house:studio` | `setup_time_mult: 0.85`, `payout_mult: 1.15`, `quality_progress_mult: 2` for photo/video assets and photo hustles.",0.85,,time,linear,docs/economy.md:L243
-"| studioExpansion | $540 | Requires `studio`; exclusive `house:studio` | `setup_time_mult: 0.85`, `payout_mult: 1.15`, `quality_progress_mult: 2` for photo/video assets and photo hustles.",1.15,,time,linear,docs/economy.md:L243
-"| studioExpansion | $540 | Requires `studio`; exclusive `house:studio` | `setup_time_mult: 0.85`, `payout_mult: 1.15`, `quality_progress_mult: 2` for photo/video assets and photo hustles.",2,,income,linear,docs/economy.md:L243
-| assistant | $0 | Repeatable | Managed via `assistantHooks`; adds hire/fire controls (see Assistants). |,0,usd,cost,linear,docs/economy.md:L251
-| serverRack | $650 | None | `setup_time_mult: 0.95` for software/tech assets & hustles (setup actions). |,650,usd,time,linear,docs/economy.md:L252
-| serverRack | $650 | None | `setup_time_mult: 0.95` for software/tech assets & hustles (setup actions). |,0.95,,time,linear,docs/economy.md:L252
-"| fulfillmentAutomation | $780 | Active dropshipping ≥2, completed `ecomPlaybook` | Dropshipping `payout_mult: 1.25`, `quality_progress_mult: 2`. |",780,usd,cost,linear,docs/economy.md:L253
-"| fulfillmentAutomation | $780 | Active dropshipping ≥2, completed `ecomPlaybook` | Dropshipping `payout_mult: 1.25`, `quality_progress_mult: 2`. |",2,,other,linear,docs/economy.md:L253
-"| fulfillmentAutomation | $780 | Active dropshipping ≥2, completed `ecomPlaybook` | Dropshipping `payout_mult: 1.25`, `quality_progress_mult: 2`. |",1.25,,income,linear,docs/economy.md:L253
-"| fulfillmentAutomation | $780 | Active dropshipping ≥2, completed `ecomPlaybook` | Dropshipping `payout_mult: 1.25`, `quality_progress_mult: 2`. |",2,,income,linear,docs/economy.md:L253
-"| serverCluster | $1150 | Requires `serverRack` | SaaS `payout_mult: 1.2`, `quality_progress_mult: 1.5`. |",1150,usd,cost,linear,docs/economy.md:L254
-"| serverCluster | $1150 | Requires `serverRack` | SaaS `payout_mult: 1.2`, `quality_progress_mult: 1.5`. |",1.2,,income,linear,docs/economy.md:L254
-"| serverCluster | $1150 | Requires `serverRack` | SaaS `payout_mult: 1.2`, `quality_progress_mult: 1.5`. |",1.5,,income,linear,docs/economy.md:L254
-"| globalSupplyMesh | $1150 | `fulfillmentAutomation`, active dropshipping ≥3, completed `photoLibrary` | Dropshipping `payout_mult: 1.3`, `quality_progress_mult: 1.5`, `setup_time_mult: 0.92`; applies to commerce/photo hustles. |",1150,usd,cost,linear,docs/economy.md:L255
-"| globalSupplyMesh | $1150 | `fulfillmentAutomation`, active dropshipping ≥3, completed `photoLibrary` | Dropshipping `payout_mult: 1.3`, `quality_progress_mult: 1.5`, `setup_time_mult: 0.92`; applies to commerce/photo hustles. |",3,,other,linear,docs/economy.md:L255
-"| globalSupplyMesh | $1150 | `fulfillmentAutomation`, active dropshipping ≥3, completed `photoLibrary` | Dropshipping `payout_mult: 1.3`, `quality_progress_mult: 1.5`, `setup_time_mult: 0.92`; applies to commerce/photo hustles. |",1.3,,income,linear,docs/economy.md:L255
-"| globalSupplyMesh | $1150 | `fulfillmentAutomation`, active dropshipping ≥3, completed `photoLibrary` | Dropshipping `payout_mult: 1.3`, `quality_progress_mult: 1.5`, `setup_time_mult: 0.92`; applies to commerce/photo hustles. |",1.5,,time,linear,docs/economy.md:L255
-"| globalSupplyMesh | $1150 | `fulfillmentAutomation`, active dropshipping ≥3, completed `photoLibrary` | Dropshipping `payout_mult: 1.3`, `quality_progress_mult: 1.5`, `setup_time_mult: 0.92`; applies to commerce/photo hustles. |",0.92,,time,linear,docs/economy.md:L255
-"| serverEdge | $1450 | Requires `serverCluster` | SaaS `payout_mult: 1.35`, `quality_progress_mult: 2`, `maint_time_mult: 0.85`. |",1450,usd,cost,linear,docs/economy.md:L256
-"| serverEdge | $1450 | Requires `serverCluster` | SaaS `payout_mult: 1.35`, `quality_progress_mult: 2`, `maint_time_mult: 0.85`. |",1.35,,income,linear,docs/economy.md:L256
-"| serverEdge | $1450 | Requires `serverCluster` | SaaS `payout_mult: 1.35`, `quality_progress_mult: 2`, `maint_time_mult: 0.85`. |",2,,time,linear,docs/economy.md:L256
-"| serverEdge | $1450 | Requires `serverCluster` | SaaS `payout_mult: 1.35`, `quality_progress_mult: 2`, `maint_time_mult: 0.85`. |",0.85,,time,linear,docs/economy.md:L256
-"| whiteLabelAlliance | $1500 | `globalSupplyMesh`, active dropshipping ≥4, completed `ecomPlaybook` & `photoLibrary` | Dropshipping & Stock Photos `payout_mult: 1.35`, `quality_progress_mult: 4/3`. |",1.333333333,,income,linear,docs/economy.md:L257
-"| whiteLabelAlliance | $1500 | `globalSupplyMesh`, active dropshipping ≥4, completed `ecomPlaybook` & `photoLibrary` | Dropshipping & Stock Photos `payout_mult: 1.35`, `quality_progress_mult: 4/3`. |",1500,usd,cost,linear,docs/economy.md:L257
-"| whiteLabelAlliance | $1500 | `globalSupplyMesh`, active dropshipping ≥4, completed `ecomPlaybook` & `photoLibrary` | Dropshipping & Stock Photos `payout_mult: 1.35`, `quality_progress_mult: 4/3`. |",4,,other,linear,docs/economy.md:L257
-"| whiteLabelAlliance | $1500 | `globalSupplyMesh`, active dropshipping ≥4, completed `ecomPlaybook` & `photoLibrary` | Dropshipping & Stock Photos `payout_mult: 1.35`, `quality_progress_mult: 4/3`. |",1.35,,income,linear,docs/economy.md:L257
-| creatorPhone | $140 | None | `setup_time_mult: 0.95` for live/field hustles and video assets. |,140,usd,time,linear,docs/economy.md:L267
-| creatorPhone | $140 | None | `setup_time_mult: 0.95` for live/field hustles and video assets. |,0.95,,time,linear,docs/economy.md:L267
-"| creatorPhonePro | $360 | creatorPhone | `setup_time_mult: 0.85`, `payout_mult: 1.05` for same targets. |",360,usd,time,linear,docs/economy.md:L268
-"| creatorPhonePro | $360 | creatorPhone | `setup_time_mult: 0.85`, `payout_mult: 1.05` for same targets. |",0.85,,time,linear,docs/economy.md:L268
-"| creatorPhonePro | $360 | creatorPhone | `setup_time_mult: 0.85`, `payout_mult: 1.05` for same targets. |",1.05,,time,linear,docs/economy.md:L268
-"| creatorPhoneUltra | $720 | creatorPhonePro | `setup_time_mult: 0.8`, `payout_mult: 1.08`. |",720,usd,time,linear,docs/economy.md:L269
-"| creatorPhoneUltra | $720 | creatorPhonePro | `setup_time_mult: 0.8`, `payout_mult: 1.08`. |",0.8,,time,linear,docs/economy.md:L269
-"| creatorPhoneUltra | $720 | creatorPhonePro | `setup_time_mult: 0.8`, `payout_mult: 1.08`. |",1.08,,time,linear,docs/economy.md:L269
-| studioLaptop | $280 | None | `setup_time_mult: 0.92` for desktop_work assets/hustles. |,280,usd,time,linear,docs/economy.md:L275
-| studioLaptop | $280 | None | `setup_time_mult: 0.92` for desktop_work assets/hustles. |,0.92,,time,linear,docs/economy.md:L275
-"| editingWorkstation | $640 | studioLaptop | `setup_time_mult: 0.85`, `maint_time_mult: 0.9` for desktop_work/video assets. |",640,usd,time,linear,docs/economy.md:L276
-"| editingWorkstation | $640 | studioLaptop | `setup_time_mult: 0.85`, `maint_time_mult: 0.9` for desktop_work/video assets. |",0.85,,time,linear,docs/economy.md:L276
-"| editingWorkstation | $640 | studioLaptop | `setup_time_mult: 0.85`, `maint_time_mult: 0.9` for desktop_work/video assets. |",0.9,,time,linear,docs/economy.md:L276
-"| quantumRig | $1280 | editingWorkstation | `payout_mult: 1.12`, `maint_time_mult: 0.85` for desktop_work/software/video assets. |",1280,usd,cost,linear,docs/economy.md:L277
-"| quantumRig | $1280 | editingWorkstation | `payout_mult: 1.12`, `maint_time_mult: 0.85` for desktop_work/software/video assets. |",1.12,,time,linear,docs/economy.md:L277
-"| quantumRig | $1280 | editingWorkstation | `payout_mult: 1.12`, `maint_time_mult: 0.85` for desktop_work/software/video assets. |",0.85,,time,linear,docs/economy.md:L277
-| monitorHub | $180 | None | Provides 2 monitor slots; `setup_time_mult: 0.95` desktop_work setup. |,180,usd,cost,linear,docs/economy.md:L283
-| monitorHub | $180 | None | Provides 2 monitor slots; `setup_time_mult: 0.95` desktop_work setup. |,2,,time,linear,docs/economy.md:L283
-| monitorHub | $180 | None | Provides 2 monitor slots; `setup_time_mult: 0.95` desktop_work setup. |,0.95,,time,linear,docs/economy.md:L283
-"| dualMonitorArray | $240 | monitorHub, consumes 1 slot | `quality_progress_mult: 1.2` for desktop_work/video assets. |",240,usd,cost,linear,docs/economy.md:L284
-"| dualMonitorArray | $240 | monitorHub, consumes 1 slot | `quality_progress_mult: 1.2` for desktop_work/video assets. |",1,,income,linear,docs/economy.md:L284
-"| dualMonitorArray | $240 | monitorHub, consumes 1 slot | `quality_progress_mult: 1.2` for desktop_work/video assets. |",1.2,,income,linear,docs/economy.md:L284
-"| colorGradingDisplay | $380 | dualMonitorArray, consumes 1 slot | `quality_progress_mult: 1.3` for video/photo assets. |",380,usd,cost,linear,docs/economy.md:L285
-"| colorGradingDisplay | $380 | dualMonitorArray, consumes 1 slot | `quality_progress_mult: 1.3` for video/photo assets. |",1,,income,linear,docs/economy.md:L285
-"| colorGradingDisplay | $380 | dualMonitorArray, consumes 1 slot | `quality_progress_mult: 1.3` for video/photo assets. |",1.3,,income,linear,docs/economy.md:L285
-| camera | $200 | None | Unlocks vlog/stock photo assets; `setup_time_mult: 0.9` for photo/video setups. |,200,usd,cost,linear,docs/economy.md:L291
-| camera | $200 | None | Unlocks vlog/stock photo assets; `setup_time_mult: 0.9` for photo/video setups. |,0.9,,time,linear,docs/economy.md:L291
-"| cameraPro | $480 | camera | `setup_time_mult: 0.85`, `maint_time_mult: 0.85`, `payout_mult: 1.25`, `quality_progress_mult: 2` for photo/video assets and actions. |",480,usd,time,linear,docs/economy.md:L292
-"| cameraPro | $480 | camera | `setup_time_mult: 0.85`, `maint_time_mult: 0.85`, `payout_mult: 1.25`, `quality_progress_mult: 2` for photo/video assets and actions. |",0.85,,time,linear,docs/economy.md:L292
-"| cameraPro | $480 | camera | `setup_time_mult: 0.85`, `maint_time_mult: 0.85`, `payout_mult: 1.25`, `quality_progress_mult: 2` for photo/video assets and actions. |",1.25,,time,linear,docs/economy.md:L292
-"| cameraPro | $480 | camera | `setup_time_mult: 0.85`, `maint_time_mult: 0.85`, `payout_mult: 1.25`, `quality_progress_mult: 2` for photo/video assets and actions. |",2,,income,linear,docs/economy.md:L292
-Single upgrade: `audioSuite` costs $420 and multiplies quality progress by 1.4 for audio/video assets.,420,usd,cost,linear,docs/economy.md:L296
-Single upgrade: `audioSuite` costs $420 and multiplies quality progress by 1.4 for audio/video assets.,1.4,,other,linear,docs/economy.md:L296
-- `ergonomicRefit` costs $180 and multiplies desktop_work maintenance time by 0.95.,180,usd,cost,linear,docs/economy.md:L300
-- `ergonomicRefit` costs $180 and multiplies desktop_work maintenance time by 0.95.,0.95,,time,linear,docs/economy.md:L300
-- `fiberInternet` costs $260 and multiplies maintenance time by 0.9 for video/software assets and live/software hustles.,260,usd,time,linear,docs/economy.md:L301
-- `fiberInternet` costs $260 and multiplies maintenance time by 0.9 for video/software assets and live/software hustles.,0.9,,time,linear,docs/economy.md:L301
-- `backupPowerArray` costs $260 and multiplies maintenance time by 0.95 for desktop_work/video assets.,260,usd,time,linear,docs/economy.md:L302
-- `backupPowerArray` costs $260 and multiplies maintenance time by 0.95 for desktop_work/video assets.,0.95,,time,linear,docs/economy.md:L302
-- `scratchDriveArray` costs $320 and multiplies maintenance time by 0.9 for video/photo/software assets.,320,usd,time,linear,docs/economy.md:L303
-- `scratchDriveArray` costs $320 and multiplies maintenance time by 0.9 for video/photo/software assets.,0.9,,time,linear,docs/economy.md:L303
-"| editorialPipeline | $360 | Course upgrade, active blog, completed Outline Mastery | `setup_time_mult: 0.88`, `payout_mult: 1.2`, `quality_progress_mult: 1.5` for writing/content assets and writing hustles. |",360,usd,cost,linear,docs/economy.md:L309
-"| editorialPipeline | $360 | Course upgrade, active blog, completed Outline Mastery | `setup_time_mult: 0.88`, `payout_mult: 1.2`, `quality_progress_mult: 1.5` for writing/content assets and writing hustles. |",0.88,,time,linear,docs/economy.md:L309
-"| editorialPipeline | $360 | Course upgrade, active blog, completed Outline Mastery | `setup_time_mult: 0.88`, `payout_mult: 1.2`, `quality_progress_mult: 1.5` for writing/content assets and writing hustles. |",1.2,,time,linear,docs/economy.md:L309
-"| editorialPipeline | $360 | Course upgrade, active blog, completed Outline Mastery | `setup_time_mult: 0.88`, `payout_mult: 1.2`, `quality_progress_mult: 1.5` for writing/content assets and writing hustles. |",1.5,,income,linear,docs/economy.md:L309
-"| syndicationSuite | $720 | editorialPipeline, active blog & e-book, completed Brand Voice Lab | `maint_time_mult: 0.9`, `payout_mult: 1.25`, `quality_progress_mult: 4/3` for writing/content/video assets and writing/marketing hustles. |",1.333333333,,income,linear,docs/economy.md:L310
-"| syndicationSuite | $720 | editorialPipeline, active blog & e-book, completed Brand Voice Lab | `maint_time_mult: 0.9`, `payout_mult: 1.25`, `quality_progress_mult: 4/3` for writing/content/video assets and writing/marketing hustles. |",720,usd,cost,linear,docs/economy.md:L310
-"| syndicationSuite | $720 | editorialPipeline, active blog & e-book, completed Brand Voice Lab | `maint_time_mult: 0.9`, `payout_mult: 1.25`, `quality_progress_mult: 4/3` for writing/content/video assets and writing/marketing hustles. |",0.9,,time,linear,docs/economy.md:L310
-"| syndicationSuite | $720 | editorialPipeline, active blog & e-book, completed Brand Voice Lab | `maint_time_mult: 0.9`, `payout_mult: 1.25`, `quality_progress_mult: 4/3` for writing/content/video assets and writing/marketing hustles. |",1.25,,time,linear,docs/economy.md:L310
-"| immersiveStoryWorlds | $1080 | syndicationSuite, active blog/e-book/vlog, completed Outline Mastery & Brand Voice Lab | `payout_mult: 1.12`, `setup_time_mult: 0.85`, `quality_progress_mult: 2` for writing/video/photo assets. |",1080,usd,cost,linear,docs/economy.md:L311
-"| immersiveStoryWorlds | $1080 | syndicationSuite, active blog/e-book/vlog, completed Outline Mastery & Brand Voice Lab | `payout_mult: 1.12`, `setup_time_mult: 0.85`, `quality_progress_mult: 2` for writing/video/photo assets. |",1.12,,time,linear,docs/economy.md:L311
-"| immersiveStoryWorlds | $1080 | syndicationSuite, active blog/e-book/vlog, completed Outline Mastery & Brand Voice Lab | `payout_mult: 1.12`, `setup_time_mult: 0.85`, `quality_progress_mult: 2` for writing/video/photo assets. |",0.85,,time,linear,docs/economy.md:L311
-"| immersiveStoryWorlds | $1080 | syndicationSuite, active blog/e-book/vlog, completed Outline Mastery & Brand Voice Lab | `payout_mult: 1.12`, `setup_time_mult: 0.85`, `quality_progress_mult: 2` for writing/video/photo assets. |",2,,income,linear,docs/economy.md:L311
-"| course | $260 | Active blog | `payout_mult: 1.5`, `quality_progress_mult: 2` for blog assets. |",260,usd,cost,linear,docs/economy.md:L312
-"| course | $260 | Active blog | `payout_mult: 1.5`, `quality_progress_mult: 2` for blog assets. |",1.5,,income,linear,docs/economy.md:L312
-"| course | $260 | Active blog | `payout_mult: 1.5`, `quality_progress_mult: 2` for blog assets. |",2,,income,linear,docs/economy.md:L312
-"- Hustle education bonuses stack additively (multipliers add to 1, flats add outright) before upgrade multipliers; card details include unlocked bonus descriptions drawn from the same data set.",1,,other,linear,docs/economy.md:L320
+- **Initial resources:** New games start with `$45` cash and `14` hours of available time (also the base daily time cap).,45,usd,time,linear,docs/archive/economy/economy.md:L7
+- **Initial resources:** New games start with `$45` cash and `14` hours of available time (also the base daily time cap).,14,hours,time,linear,docs/archive/economy/economy.md:L7
+- **Money mutations:** All cash additions clamp to ≥0 and emit `moneyChanged` events. Spending also clamps the balance to ≥0.,0,,limit,cap,docs/archive/economy/economy.md:L10
+- **Money mutations:** All cash additions clamp to ≥0 and emit `moneyChanged` events. Spending also clamps the balance to ≥0.,0,,other,cap,docs/archive/economy/economy.md:L10
+"- **Daily maintenance buffer:** Study scheduling keeps at least `max(2, round(DEFAULT_DAY_HOURS * 0.25))` hours free for manual tasks; with the default 14-hour day this buffer is `4` hours.",2,,time,cap,docs/archive/economy/economy.md:L11
+"- **Daily maintenance buffer:** Study scheduling keeps at least `max(2, round(DEFAULT_DAY_HOURS * 0.25))` hours free for manual tasks; with the default 14-hour day this buffer is `4` hours.",0.25,,time,cap,docs/archive/economy/economy.md:L11
+"- **Daily maintenance buffer:** Study scheduling keeps at least `max(2, round(DEFAULT_DAY_HOURS * 0.25))` hours free for manual tasks; with the default 14-hour day this buffer is `4` hours.",14,,time,linear,docs/archive/economy/economy.md:L11
+"- **Daily maintenance buffer:** Study scheduling keeps at least `max(2, round(DEFAULT_DAY_HOURS * 0.25))` hours free for manual tasks; with the default 14-hour day this buffer is `4` hours.",4,hours,time,linear,docs/archive/economy/economy.md:L11
+"- Manual maintenance reserve deducts available assistant hours (each adds `ASSISTANT_CONFIG.hoursPerAssistant = 3h`) before predicting remaining human time needed, ensuring study doesn’t steal hours required for upkeep.",3,,other,linear,docs/archive/economy/economy.md:L20
+"- **Skill levels:** XP thresholds per level: 0 (Novice), 100 (Apprentice), 300 (Specialist), 700 (Expert), 1200 (Master).",0,xp,xp,linear,docs/archive/economy/economy.md:L25
+"- **Skill levels:** XP thresholds per level: 0 (Novice), 100 (Apprentice), 300 (Specialist), 700 (Expert), 1200 (Master).",100,xp,xp,linear,docs/archive/economy/economy.md:L25
+"- **Skill levels:** XP thresholds per level: 0 (Novice), 100 (Apprentice), 300 (Specialist), 700 (Expert), 1200 (Master).",300,,progression,linear,docs/archive/economy/economy.md:L25
+"- **Skill levels:** XP thresholds per level: 0 (Novice), 100 (Apprentice), 300 (Specialist), 700 (Expert), 1200 (Master).",700,,other,linear,docs/archive/economy/economy.md:L25
+"- **Skill levels:** XP thresholds per level: 0 (Novice), 100 (Apprentice), 300 (Specialist), 700 (Expert), 1200 (Master).",1200,xp,xp,linear,docs/archive/economy/economy.md:L25
+"- **Character levels:** Overall XP thresholds: 0, 300, 750, 1400, 2200 for levels 1–5.",0,xp,xp,linear,docs/archive/economy/economy.md:L26
+"- **Character levels:** Overall XP thresholds: 0, 300, 750, 1400, 2200 for levels 1–5.",300,xp,xp,linear,docs/archive/economy/economy.md:L26
+"- **Character levels:** Overall XP thresholds: 0, 300, 750, 1400, 2200 for levels 1–5.",750,xp,xp,linear,docs/archive/economy/economy.md:L26
+"- **Character levels:** Overall XP thresholds: 0, 300, 750, 1400, 2200 for levels 1–5.",1400,xp,xp,linear,docs/archive/economy/economy.md:L26
+"- **Character levels:** Overall XP thresholds: 0, 300, 750, 1400, 2200 for levels 1–5.",2200,xp,xp,linear,docs/archive/economy/economy.md:L26
+"- **Character levels:** Overall XP thresholds: 0, 300, 750, 1400, 2200 for levels 1–5.",1,,progression,linear,docs/archive/economy/economy.md:L26
+"- **Character levels:** Overall XP thresholds: 0, 300, 750, 1400, 2200 for levels 1–5.",5,,progression,linear,docs/archive/economy/economy.md:L26
+- **XP generation:** `TIME_XP_RATE = 5` XP/hour and `MONEY_XP_INTERVAL = 25` dollars per 1 XP. Base XP is `timeXp + floor(moneySpent / 25)` unless an explicit `baseXp` override is provided; nonzero effort always yields at least 1 XP.,5,xp,xp,linear,docs/archive/economy/economy.md:L27
+- **XP generation:** `TIME_XP_RATE = 5` XP/hour and `MONEY_XP_INTERVAL = 25` dollars per 1 XP. Base XP is `timeXp + floor(moneySpent / 25)` unless an explicit `baseXp` override is provided; nonzero effort always yields at least 1 XP.,25,xp,xp,linear,docs/archive/economy/economy.md:L27
+- **XP generation:** `TIME_XP_RATE = 5` XP/hour and `MONEY_XP_INTERVAL = 25` dollars per 1 XP. Base XP is `timeXp + floor(moneySpent / 25)` unless an explicit `baseXp` override is provided; nonzero effort always yields at least 1 XP.,1,xp,xp,linear,docs/archive/economy/economy.md:L27
+"- **Awarding XP:** Activities normalize their skill list weights, apply at least 1 XP per skill (`max(1, round(base * weight))`), level up skills and character, and refresh UI upon gains.",1,xp,xp,cap,docs/archive/economy/economy.md:L28
+"- **Config:** Hiring costs `$180`, daily wage equals `hoursPerAssistant (3) * hourlyRate ($8) = $24`, and teams max at 4 assistants.",180,usd,cost,linear,docs/archive/economy/economy.md:L32
+"- **Config:** Hiring costs `$180`, daily wage equals `hoursPerAssistant (3) * hourlyRate ($8) = $24`, and teams max at 4 assistants.",3,,cost,linear,docs/archive/economy/economy.md:L32
+"- **Config:** Hiring costs `$180`, daily wage equals `hoursPerAssistant (3) * hourlyRate ($8) = $24`, and teams max at 4 assistants.",8,usd,limit,cap,docs/archive/economy/economy.md:L32
+"- **Config:** Hiring costs `$180`, daily wage equals `hoursPerAssistant (3) * hourlyRate ($8) = $24`, and teams max at 4 assistants.",24,usd,limit,cap,docs/archive/economy/economy.md:L32
+"- **Config:** Hiring costs `$180`, daily wage equals `hoursPerAssistant (3) * hourlyRate ($8) = $24`, and teams max at 4 assistants.",4,,limit,cap,docs/archive/economy/economy.md:L32
+"- **Hiring:** Requires available cash and unused headcount. On hire, cash decreases by `$180`, +3 bonus hours are added (and immediately granted), costs are logged, and commerce skill XP is awarded based on money spent.",180,usd,time,linear,docs/archive/economy/economy.md:L33
+"- **Hiring:** Requires available cash and unused headcount. On hire, cash decreases by `$180`, +3 bonus hours are added (and immediately granted), costs are logged, and commerce skill XP is awarded based on money spent.",3,usd,time,linear,docs/archive/economy/economy.md:L33
+"- **Firing:** Reduces assistant count, removes 3 bonus hours from daily support, and deducts 3 hours from current time left (cannot go below zero in code).",3,,time,linear,docs/archive/economy/economy.md:L34
+"- **Firing:** Reduces assistant count, removes 3 bonus hours from daily support, and deducts 3 hours from current time left (cannot go below zero in code).",3,hours,time,linear,docs/archive/economy/economy.md:L34
+- **Payroll:** Every day deducts `assistantCount * 3h * $8` whether or not funds cover it; logs a warning if the balance dips below zero during payment.,3,,time,linear,docs/archive/economy/economy.md:L35
+- **Payroll:** Every day deducts `assistantCount * 3h * $8` whether or not funds cover it; logs a warning if the balance dips below zero during payment.,8,usd,time,linear,docs/archive/economy/economy.md:L35
+"- **Instant hustle boosts:** Completing tracks unlocks flat or multiplier bonuses enumerated per hustle; multipliers add to 1 (i.e., `1 + amount`), flats add additive dollars before upgrade multipliers.",1,,other,linear,docs/archive/economy/economy.md:L48
+- **Asset income boosts:** Completed tracks also grant asset multipliers or flats using the same formula (`total = base * (1 + sumMultipliers) + sumFlats`).,1,,other,linear,docs/archive/economy/economy.md:L49
+| storycraftJumpstart | 4 | 3 | $0 | Blog income +5% (multiplier). |,4,,income,linear,docs/archive/economy/economy.md:L57
+| storycraftJumpstart | 4 | 3 | $0 | Blog income +5% (multiplier). |,3,,income,linear,docs/archive/economy/economy.md:L57
+| storycraftJumpstart | 4 | 3 | $0 | Blog income +5% (multiplier). |,0,usd,cost,linear,docs/archive/economy/economy.md:L57
+| storycraftJumpstart | 4 | 3 | $0 | Blog income +5% (multiplier). |,5,percent,income,linear,docs/archive/economy/economy.md:L57
+| vlogStudioJumpstart | 4 | 3 | $0 | Vlog income +5%. |,4,,income,linear,docs/archive/economy/economy.md:L58
+| vlogStudioJumpstart | 4 | 3 | $0 | Vlog income +5%. |,3,,income,linear,docs/archive/economy/economy.md:L58
+| vlogStudioJumpstart | 4 | 3 | $0 | Vlog income +5%. |,0,usd,cost,linear,docs/archive/economy/economy.md:L58
+| vlogStudioJumpstart | 4 | 3 | $0 | Vlog income +5%. |,5,percent,income,linear,docs/archive/economy/economy.md:L58
+"| digitalShelfPrimer | 4 | 3 | $0 | E-book +5%, Stock Photos +5%. |",4,,other,linear,docs/archive/economy/economy.md:L59
+"| digitalShelfPrimer | 4 | 3 | $0 | E-book +5%, Stock Photos +5%. |",3,,other,linear,docs/archive/economy/economy.md:L59
+"| digitalShelfPrimer | 4 | 3 | $0 | E-book +5%, Stock Photos +5%. |",0,usd,cost,linear,docs/archive/economy/economy.md:L59
+"| digitalShelfPrimer | 4 | 3 | $0 | E-book +5%, Stock Photos +5%. |",5,percent,income,linear,docs/archive/economy/economy.md:L59
+| commerceLaunchPrimer | 4 | 3 | $0 | Dropshipping +5%. |,4,,other,linear,docs/archive/economy/economy.md:L60
+| commerceLaunchPrimer | 4 | 3 | $0 | Dropshipping +5%. |,3,,other,linear,docs/archive/economy/economy.md:L60
+| commerceLaunchPrimer | 4 | 3 | $0 | Dropshipping +5%. |,0,usd,cost,linear,docs/archive/economy/economy.md:L60
+| commerceLaunchPrimer | 4 | 3 | $0 | Dropshipping +5%. |,5,percent,income,linear,docs/archive/economy/economy.md:L60
+| microSaasJumpstart | 4 | 3 | $0 | SaaS +5%. |,4,,other,linear,docs/archive/economy/economy.md:L61
+| microSaasJumpstart | 4 | 3 | $0 | SaaS +5%. |,3,,other,linear,docs/archive/economy/economy.md:L61
+| microSaasJumpstart | 4 | 3 | $0 | SaaS +5%. |,0,usd,cost,linear,docs/archive/economy/economy.md:L61
+| microSaasJumpstart | 4 | 3 | $0 | SaaS +5%. |,5,usd,cost,linear,docs/archive/economy/economy.md:L61
+| outlineMastery | 2 | 5 | $140 | Freelance payout +25%; Audiobook payout +15%. |,2,,income,linear,docs/archive/economy/economy.md:L62
+| outlineMastery | 2 | 5 | $140 | Freelance payout +25%; Audiobook payout +15%. |,5,,income,linear,docs/archive/economy/economy.md:L62
+| outlineMastery | 2 | 5 | $140 | Freelance payout +25%; Audiobook payout +15%. |,140,usd,cost,linear,docs/archive/economy/economy.md:L62
+| outlineMastery | 2 | 5 | $140 | Freelance payout +25%; Audiobook payout +15%. |,25,percent,income,linear,docs/archive/economy/economy.md:L62
+| outlineMastery | 2 | 5 | $140 | Freelance payout +25%; Audiobook payout +15%. |,15,percent,income,linear,docs/archive/economy/economy.md:L62
+| photoLibrary | 1.5 | 4 | $95 | Event Photo Gig payout +20%. |,1.5,,income,linear,docs/archive/economy/economy.md:L63
+| photoLibrary | 1.5 | 4 | $95 | Event Photo Gig payout +20%. |,4,,income,linear,docs/archive/economy/economy.md:L63
+| photoLibrary | 1.5 | 4 | $95 | Event Photo Gig payout +20%. |,95,usd,cost,linear,docs/archive/economy/economy.md:L63
+| photoLibrary | 1.5 | 4 | $95 | Event Photo Gig payout +20%. |,20,percent,income,linear,docs/archive/economy/economy.md:L63
+| ecomPlaybook | 3 | 9 | $900 | Bundle Promo Push +$5 flat; Dropshipping +15%. |,3,,other,linear,docs/archive/economy/economy.md:L64
+| ecomPlaybook | 3 | 9 | $900 | Bundle Promo Push +$5 flat; Dropshipping +15%. |,9,,other,linear,docs/archive/economy/economy.md:L64
+| ecomPlaybook | 3 | 9 | $900 | Bundle Promo Push +$5 flat; Dropshipping +15%. |,900,usd,cost,linear,docs/archive/economy/economy.md:L64
+| ecomPlaybook | 3 | 9 | $900 | Bundle Promo Push +$5 flat; Dropshipping +15%. |,5,usd,cost,linear,docs/archive/economy/economy.md:L64
+| ecomPlaybook | 3 | 9 | $900 | Bundle Promo Push +$5 flat; Dropshipping +15%. |,15,percent,income,linear,docs/archive/economy/economy.md:L64
+| automationCourse | 6 | 15 | $3000 | SaaS Bug Squash +$6 flat; SaaS +15%. |,6,,other,linear,docs/archive/economy/economy.md:L65
+| automationCourse | 6 | 15 | $3000 | SaaS Bug Squash +$6 flat; SaaS +15%. |,15,,other,linear,docs/archive/economy/economy.md:L65
+| automationCourse | 6 | 15 | $3000 | SaaS Bug Squash +$6 flat; SaaS +15%. |,3000,usd,cost,linear,docs/archive/economy/economy.md:L65
+| automationCourse | 6 | 15 | $3000 | SaaS Bug Squash +$6 flat; SaaS +15%. |,6,usd,cost,linear,docs/archive/economy/economy.md:L65
+| automationCourse | 6 | 15 | $3000 | SaaS Bug Squash +$6 flat; SaaS +15%. |,15,percent,income,linear,docs/archive/economy/economy.md:L65
+| brandVoiceLab | 1 | 4 | $120 | Audience Call +$4 flat. |,1,,other,linear,docs/archive/economy/economy.md:L66
+| brandVoiceLab | 1 | 4 | $120 | Audience Call +$4 flat. |,4,,other,linear,docs/archive/economy/economy.md:L66
+| brandVoiceLab | 1 | 4 | $120 | Audience Call +$4 flat. |,120,usd,cost,linear,docs/archive/economy/economy.md:L66
+| brandVoiceLab | 1 | 4 | $120 | Audience Call +$4 flat. |,4,usd,cost,linear,docs/archive/economy/economy.md:L66
+| guerillaBuzzWorkshop | 1.5 | 6 | $180 | Street Promo Sprint +25%; Survey Sprint +$1.5 flat. |,1.5,,other,linear,docs/archive/economy/economy.md:L67
+| guerillaBuzzWorkshop | 1.5 | 6 | $180 | Street Promo Sprint +25%; Survey Sprint +$1.5 flat. |,6,,other,linear,docs/archive/economy/economy.md:L67
+| guerillaBuzzWorkshop | 1.5 | 6 | $180 | Street Promo Sprint +25%; Survey Sprint +$1.5 flat. |,180,usd,cost,linear,docs/archive/economy/economy.md:L67
+| guerillaBuzzWorkshop | 1.5 | 6 | $180 | Street Promo Sprint +25%; Survey Sprint +$1.5 flat. |,25,percent,income,linear,docs/archive/economy/economy.md:L67
+| guerillaBuzzWorkshop | 1.5 | 6 | $180 | Street Promo Sprint +25%; Survey Sprint +$1.5 flat. |,1.5,usd,cost,linear,docs/archive/economy/economy.md:L67
+| curriculumDesignStudio | 2.5 | 6 | $280 | Pop-Up Workshop +30%; Bundle Push +15%. |,2.5,,other,linear,docs/archive/economy/economy.md:L68
+| curriculumDesignStudio | 2.5 | 6 | $280 | Pop-Up Workshop +30%; Bundle Push +15%. |,6,,other,linear,docs/archive/economy/economy.md:L68
+| curriculumDesignStudio | 2.5 | 6 | $280 | Pop-Up Workshop +30%; Bundle Push +15%. |,280,usd,cost,linear,docs/archive/economy/economy.md:L68
+| curriculumDesignStudio | 2.5 | 6 | $280 | Pop-Up Workshop +30%; Bundle Push +15%. |,30,percent,income,linear,docs/archive/economy/economy.md:L68
+| curriculumDesignStudio | 2.5 | 6 | $280 | Pop-Up Workshop +30%; Bundle Push +15%. |,15,percent,income,linear,docs/archive/economy/economy.md:L68
+| postProductionPipelineLab | 4 | 10 | $900 | Vlog Edit Rush +25%; Vlog income +15%. |,4,,other,linear,docs/archive/economy/economy.md:L69
+| postProductionPipelineLab | 4 | 10 | $900 | Vlog Edit Rush +25%; Vlog income +15%. |,10,,other,linear,docs/archive/economy/economy.md:L69
+| postProductionPipelineLab | 4 | 10 | $900 | Vlog Edit Rush +25%; Vlog income +15%. |,900,usd,cost,linear,docs/archive/economy/economy.md:L69
+| postProductionPipelineLab | 4 | 10 | $900 | Vlog Edit Rush +25%; Vlog income +15%. |,25,percent,income,linear,docs/archive/economy/economy.md:L69
+| postProductionPipelineLab | 4 | 10 | $900 | Vlog Edit Rush +25%; Vlog income +15%. |,15,percent,income,linear,docs/archive/economy/economy.md:L69
+| fulfillmentOpsMasterclass | 4 | 10 | $1200 | Dropship Pack Party +20%; Dropshipping +25%. |,4,,other,linear,docs/archive/economy/economy.md:L70
+| fulfillmentOpsMasterclass | 4 | 10 | $1200 | Dropship Pack Party +20%; Dropshipping +25%. |,10,,other,linear,docs/archive/economy/economy.md:L70
+| fulfillmentOpsMasterclass | 4 | 10 | $1200 | Dropship Pack Party +20%; Dropshipping +25%. |,1200,usd,cost,linear,docs/archive/economy/economy.md:L70
+| fulfillmentOpsMasterclass | 4 | 10 | $1200 | Dropship Pack Party +20%; Dropshipping +25%. |,20,percent,income,linear,docs/archive/economy/economy.md:L70
+| fulfillmentOpsMasterclass | 4 | 10 | $1200 | Dropship Pack Party +20%; Dropshipping +25%. |,25,percent,income,linear,docs/archive/economy/economy.md:L70
+| customerRetentionClinic | 3 | 7 | $1000 | SaaS Bug Squash +$5 flat; SaaS +20%. |,3,,other,linear,docs/archive/economy/economy.md:L71
+| customerRetentionClinic | 3 | 7 | $1000 | SaaS Bug Squash +$5 flat; SaaS +20%. |,7,,other,linear,docs/archive/economy/economy.md:L71
+| customerRetentionClinic | 3 | 7 | $1000 | SaaS Bug Squash +$5 flat; SaaS +20%. |,1000,usd,cost,linear,docs/archive/economy/economy.md:L71
+| customerRetentionClinic | 3 | 7 | $1000 | SaaS Bug Squash +$5 flat; SaaS +20%. |,5,usd,cost,linear,docs/archive/economy/economy.md:L71
+| customerRetentionClinic | 3 | 7 | $1000 | SaaS Bug Squash +$5 flat; SaaS +20%. |,20,percent,income,linear,docs/archive/economy/economy.md:L71
+| narrationPerformanceWorkshop | 3 | 7 | $900 | Audiobook Narration +25%; E-book +10%. |,3,,other,linear,docs/archive/economy/economy.md:L72
+| narrationPerformanceWorkshop | 3 | 7 | $900 | Audiobook Narration +25%; E-book +10%. |,7,,other,linear,docs/archive/economy/economy.md:L72
+| narrationPerformanceWorkshop | 3 | 7 | $900 | Audiobook Narration +25%; E-book +10%. |,900,usd,cost,linear,docs/archive/economy/economy.md:L72
+| narrationPerformanceWorkshop | 3 | 7 | $900 | Audiobook Narration +25%; E-book +10%. |,25,percent,income,linear,docs/archive/economy/economy.md:L72
+| narrationPerformanceWorkshop | 3 | 7 | $900 | Audiobook Narration +25%; E-book +10%. |,10,percent,income,linear,docs/archive/economy/economy.md:L72
+| galleryLicensingSummit | 4 | 8 | $1100 | Event Photo Gig +20%; Stock Photos +15%. |,4,,other,linear,docs/archive/economy/economy.md:L73
+| galleryLicensingSummit | 4 | 8 | $1100 | Event Photo Gig +20%; Stock Photos +15%. |,8,,other,linear,docs/archive/economy/economy.md:L73
+| galleryLicensingSummit | 4 | 8 | $1100 | Event Photo Gig +20%; Stock Photos +15%. |,1100,usd,cost,linear,docs/archive/economy/economy.md:L73
+| galleryLicensingSummit | 4 | 8 | $1100 | Event Photo Gig +20%; Stock Photos +15%. |,20,percent,income,linear,docs/archive/economy/economy.md:L73
+| galleryLicensingSummit | 4 | 8 | $1100 | Event Photo Gig +20%; Stock Photos +15%. |,15,percent,income,linear,docs/archive/economy/economy.md:L73
+| syndicationResidency | 4 | 9 | $1000 | Freelance +15%; Street Promo Sprint +$2 flat; Blog +12%. |,4,,other,linear,docs/archive/economy/economy.md:L74
+| syndicationResidency | 4 | 9 | $1000 | Freelance +15%; Street Promo Sprint +$2 flat; Blog +12%. |,9,,other,linear,docs/archive/economy/economy.md:L74
+| syndicationResidency | 4 | 9 | $1000 | Freelance +15%; Street Promo Sprint +$2 flat; Blog +12%. |,1000,usd,cost,linear,docs/archive/economy/economy.md:L74
+| syndicationResidency | 4 | 9 | $1000 | Freelance +15%; Street Promo Sprint +$2 flat; Blog +12%. |,15,percent,income,linear,docs/archive/economy/economy.md:L74
+| syndicationResidency | 4 | 9 | $1000 | Freelance +15%; Street Promo Sprint +$2 flat; Blog +12%. |,2,usd,cost,linear,docs/archive/economy/economy.md:L74
+| syndicationResidency | 4 | 9 | $1000 | Freelance +15%; Street Promo Sprint +$2 flat; Blog +12%. |,12,percent,income,linear,docs/archive/economy/economy.md:L74
+| storycraftJumpstart | 120 | Writing 100%. |,120,,other,linear,docs/archive/economy/economy.md:L82
+| storycraftJumpstart | 120 | Writing 100%. |,100,percent,income,linear,docs/archive/economy/economy.md:L82
+| vlogStudioJumpstart | 120 | Visual 100%. |,120,,other,linear,docs/archive/economy/economy.md:L83
+| vlogStudioJumpstart | 120 | Visual 100%. |,100,percent,income,linear,docs/archive/economy/economy.md:L83
+| digitalShelfPrimer | 120 | Editing 100%. |,120,,other,linear,docs/archive/economy/economy.md:L84
+| digitalShelfPrimer | 120 | Editing 100%. |,100,percent,income,linear,docs/archive/economy/economy.md:L84
+| commerceLaunchPrimer | 120 | Commerce 100%. |,120,,other,linear,docs/archive/economy/economy.md:L85
+| commerceLaunchPrimer | 120 | Commerce 100%. |,100,percent,income,linear,docs/archive/economy/economy.md:L85
+| microSaasJumpstart | 120 | Software 100%. |,120,,other,linear,docs/archive/economy/economy.md:L86
+| microSaasJumpstart | 120 | Software 100%. |,100,percent,income,linear,docs/archive/economy/economy.md:L86
+| outlineMastery | 120 | Writing 100%. |,120,,other,linear,docs/archive/economy/economy.md:L87
+| outlineMastery | 120 | Writing 100%. |,100,percent,income,linear,docs/archive/economy/economy.md:L87
+"| photoLibrary | 120 | Visual 50%, Editing 50%. |",120,,other,linear,docs/archive/economy/economy.md:L88
+"| photoLibrary | 120 | Visual 50%, Editing 50%. |",50,percent,income,linear,docs/archive/economy/economy.md:L88
+"| ecomPlaybook | 120 | Research 50%, Commerce 50%. |",120,,other,linear,docs/archive/economy/economy.md:L89
+"| ecomPlaybook | 120 | Research 50%, Commerce 50%. |",50,percent,income,linear,docs/archive/economy/economy.md:L89
+"| automationCourse | 120 | Software 60%, Infrastructure 40%. |",120,,other,linear,docs/archive/economy/economy.md:L90
+"| automationCourse | 120 | Software 60%, Infrastructure 40%. |",60,percent,income,linear,docs/archive/economy/economy.md:L90
+"| automationCourse | 120 | Software 60%, Infrastructure 40%. |",40,percent,income,linear,docs/archive/economy/economy.md:L90
+"| brandVoiceLab | 100 | Audience 60%, Promotion 40%. |",100,,other,linear,docs/archive/economy/economy.md:L91
+"| brandVoiceLab | 100 | Audience 60%, Promotion 40%. |",60,percent,income,linear,docs/archive/economy/economy.md:L91
+"| brandVoiceLab | 100 | Audience 60%, Promotion 40%. |",40,percent,income,linear,docs/archive/economy/economy.md:L91
+"| guerillaBuzzWorkshop | 110 | Promotion 60%, Audience 40%. |",110,,other,linear,docs/archive/economy/economy.md:L92
+"| guerillaBuzzWorkshop | 110 | Promotion 60%, Audience 40%. |",60,percent,income,linear,docs/archive/economy/economy.md:L92
+"| guerillaBuzzWorkshop | 110 | Promotion 60%, Audience 40%. |",40,percent,income,linear,docs/archive/economy/economy.md:L92
+"| curriculumDesignStudio | 150 | Audience 60%, Writing 40%. |",150,,other,linear,docs/archive/economy/economy.md:L93
+"| curriculumDesignStudio | 150 | Audience 60%, Writing 40%. |",60,percent,income,linear,docs/archive/economy/economy.md:L93
+"| curriculumDesignStudio | 150 | Audience 60%, Writing 40%. |",40,percent,income,linear,docs/archive/economy/economy.md:L93
+"| postProductionPipelineLab | 150 | Editing 70%, Visual 30%. |",150,,other,linear,docs/archive/economy/economy.md:L94
+"| postProductionPipelineLab | 150 | Editing 70%, Visual 30%. |",70,percent,income,linear,docs/archive/economy/economy.md:L94
+"| postProductionPipelineLab | 150 | Editing 70%, Visual 30%. |",30,percent,income,linear,docs/archive/economy/economy.md:L94
+"| fulfillmentOpsMasterclass | 140 | Commerce 70%, Promotion 30%. |",140,,other,linear,docs/archive/economy/economy.md:L95
+"| fulfillmentOpsMasterclass | 140 | Commerce 70%, Promotion 30%. |",70,percent,income,linear,docs/archive/economy/economy.md:L95
+"| fulfillmentOpsMasterclass | 140 | Commerce 70%, Promotion 30%. |",30,percent,income,linear,docs/archive/economy/economy.md:L95
+"| customerRetentionClinic | 140 | Audience 40%, Promotion 30%, Software 30%. |",140,,other,linear,docs/archive/economy/economy.md:L96
+"| customerRetentionClinic | 140 | Audience 40%, Promotion 30%, Software 30%. |",40,percent,income,linear,docs/archive/economy/economy.md:L96
+"| customerRetentionClinic | 140 | Audience 40%, Promotion 30%, Software 30%. |",30,percent,income,linear,docs/archive/economy/economy.md:L96
+"| narrationPerformanceWorkshop | 130 | Audio 60%, Writing 40%. |",130,,other,linear,docs/archive/economy/economy.md:L97
+"| narrationPerformanceWorkshop | 130 | Audio 60%, Writing 40%. |",60,percent,income,linear,docs/archive/economy/economy.md:L97
+"| narrationPerformanceWorkshop | 130 | Audio 60%, Writing 40%. |",40,percent,income,linear,docs/archive/economy/economy.md:L97
+"| galleryLicensingSummit | 140 | Visual 60%, Commerce 40%. |",140,,other,linear,docs/archive/economy/economy.md:L98
+"| galleryLicensingSummit | 140 | Visual 60%, Commerce 40%. |",60,percent,income,linear,docs/archive/economy/economy.md:L98
+"| galleryLicensingSummit | 140 | Visual 60%, Commerce 40%. |",40,percent,income,linear,docs/archive/economy/economy.md:L98
+"| syndicationResidency | 150 | Promotion 50%, Audience 30%, Writing 20%. |",150,,other,linear,docs/archive/economy/economy.md:L99
+"| syndicationResidency | 150 | Promotion 50%, Audience 30%, Writing 20%. |",50,percent,income,linear,docs/archive/economy/economy.md:L99
+"| syndicationResidency | 150 | Promotion 50%, Audience 30%, Writing 20%. |",30,percent,income,linear,docs/archive/economy/economy.md:L99
+"| syndicationResidency | 150 | Promotion 50%, Audience 30%, Writing 20%. |",20,percent,income,linear,docs/archive/economy/economy.md:L99
+| Freelance Writing | 2 | $0 | ∞ | $18 | None | Writing. |,2,,other,linear,docs/archive/economy/economy.md:L115
+| Freelance Writing | 2 | $0 | ∞ | $18 | None | Writing. |,0,usd,cost,linear,docs/archive/economy/economy.md:L115
+| Freelance Writing | 2 | $0 | ∞ | $18 | None | Writing. |,18,usd,cost,linear,docs/archive/economy/economy.md:L115
+| Audience Q&A Blast | 1 | $0 | 1 | $12 | Blog asset ≥1. | Audience. |,1,,other,linear,docs/archive/economy/economy.md:L116
+| Audience Q&A Blast | 1 | $0 | 1 | $12 | Blog asset ≥1. | Audience. |,0,usd,cost,linear,docs/archive/economy/economy.md:L116
+| Audience Q&A Blast | 1 | $0 | 1 | $12 | Blog asset ≥1. | Audience. |,1,usd,cost,linear,docs/archive/economy/economy.md:L116
+| Audience Q&A Blast | 1 | $0 | 1 | $12 | Blog asset ≥1. | Audience. |,12,usd,cost,linear,docs/archive/economy/economy.md:L116
+| Bundle Promo Push | 2.5 | $0 | ∞ | $48 | Blog ≥2 and E-book ≥1. | Promotion. |,2.5,,other,linear,docs/archive/economy/economy.md:L117
+| Bundle Promo Push | 2.5 | $0 | ∞ | $48 | Blog ≥2 and E-book ≥1. | Promotion. |,0,usd,cost,linear,docs/archive/economy/economy.md:L117
+| Bundle Promo Push | 2.5 | $0 | ∞ | $48 | Blog ≥2 and E-book ≥1. | Promotion. |,48,usd,cost,linear,docs/archive/economy/economy.md:L117
+| Bundle Promo Push | 2.5 | $0 | ∞ | $48 | Blog ≥2 and E-book ≥1. | Promotion. |,2,usd,cost,linear,docs/archive/economy/economy.md:L117
+| Bundle Promo Push | 2.5 | $0 | ∞ | $48 | Blog ≥2 and E-book ≥1. | Promotion. |,1,,other,linear,docs/archive/economy/economy.md:L117
+| Micro Survey Dash | 0.25 | $0 | 4 | $1 | None | Research. |,0.25,,other,linear,docs/archive/economy/economy.md:L118
+| Micro Survey Dash | 0.25 | $0 | 4 | $1 | None | Research. |,0,usd,cost,linear,docs/archive/economy/economy.md:L118
+| Micro Survey Dash | 0.25 | $0 | 4 | $1 | None | Research. |,4,usd,cost,linear,docs/archive/economy/economy.md:L118
+| Micro Survey Dash | 0.25 | $0 | 4 | $1 | None | Research. |,1,usd,cost,linear,docs/archive/economy/economy.md:L118
+| Event Photo Gig | 3.5 | $0 | ∞ | $72 | Stock Photos ≥1. | Visual. |,3.5,,other,linear,docs/archive/economy/economy.md:L119
+| Event Photo Gig | 3.5 | $0 | ∞ | $72 | Stock Photos ≥1. | Visual. |,0,usd,cost,linear,docs/archive/economy/economy.md:L119
+| Event Photo Gig | 3.5 | $0 | ∞ | $72 | Stock Photos ≥1. | Visual. |,72,usd,cost,linear,docs/archive/economy/economy.md:L119
+| Event Photo Gig | 3.5 | $0 | ∞ | $72 | Stock Photos ≥1. | Visual. |,1,,other,linear,docs/archive/economy/economy.md:L119
+"| Pop-Up Workshop | 2.5 | $0 | ∞ | $38 | Blog ≥1, E-book ≥1. | Audience (Writing weight 0.5). |",2.5,,other,linear,docs/archive/economy/economy.md:L120
+"| Pop-Up Workshop | 2.5 | $0 | ∞ | $38 | Blog ≥1, E-book ≥1. | Audience (Writing weight 0.5). |",0,usd,cost,linear,docs/archive/economy/economy.md:L120
+"| Pop-Up Workshop | 2.5 | $0 | ∞ | $38 | Blog ≥1, E-book ≥1. | Audience (Writing weight 0.5). |",38,usd,cost,linear,docs/archive/economy/economy.md:L120
+"| Pop-Up Workshop | 2.5 | $0 | ∞ | $38 | Blog ≥1, E-book ≥1. | Audience (Writing weight 0.5). |",1,usd,cost,linear,docs/archive/economy/economy.md:L120
+"| Pop-Up Workshop | 2.5 | $0 | ∞ | $38 | Blog ≥1, E-book ≥1. | Audience (Writing weight 0.5). |",1,,other,linear,docs/archive/economy/economy.md:L120
+"| Pop-Up Workshop | 2.5 | $0 | ∞ | $38 | Blog ≥1, E-book ≥1. | Audience (Writing weight 0.5). |",0.5,,other,linear,docs/archive/economy/economy.md:L120
+| Vlog Edit Rush | 1.5 | $0 | ∞ | $24 | Vlog ≥1. | Editing. |,1.5,,other,linear,docs/archive/economy/economy.md:L121
+| Vlog Edit Rush | 1.5 | $0 | ∞ | $24 | Vlog ≥1. | Editing. |,0,usd,cost,linear,docs/archive/economy/economy.md:L121
+| Vlog Edit Rush | 1.5 | $0 | ∞ | $24 | Vlog ≥1. | Editing. |,24,usd,cost,linear,docs/archive/economy/economy.md:L121
+| Vlog Edit Rush | 1.5 | $0 | ∞ | $24 | Vlog ≥1. | Editing. |,1,usd,cost,linear,docs/archive/economy/economy.md:L121
+| Dropship Pack Party | 2 | $8 | ∞ | $28 | Dropshipping ≥1. | Commerce. |,2,,other,linear,docs/archive/economy/economy.md:L122
+| Dropship Pack Party | 2 | $8 | ∞ | $28 | Dropshipping ≥1. | Commerce. |,8,usd,cost,linear,docs/archive/economy/economy.md:L122
+| Dropship Pack Party | 2 | $8 | ∞ | $28 | Dropshipping ≥1. | Commerce. |,28,usd,cost,linear,docs/archive/economy/economy.md:L122
+| Dropship Pack Party | 2 | $8 | ∞ | $28 | Dropshipping ≥1. | Commerce. |,1,,other,linear,docs/archive/economy/economy.md:L122
+| SaaS Bug Squash | 1 | $0 | ∞ | $30 | SaaS ≥1. | Software (Infrastructure weight 0.5). |,1,,other,linear,docs/archive/economy/economy.md:L123
+| SaaS Bug Squash | 1 | $0 | ∞ | $30 | SaaS ≥1. | Software (Infrastructure weight 0.5). |,0,usd,cost,linear,docs/archive/economy/economy.md:L123
+| SaaS Bug Squash | 1 | $0 | ∞ | $30 | SaaS ≥1. | Software (Infrastructure weight 0.5). |,30,usd,cost,linear,docs/archive/economy/economy.md:L123
+| SaaS Bug Squash | 1 | $0 | ∞ | $30 | SaaS ≥1. | Software (Infrastructure weight 0.5). |,1,usd,cost,linear,docs/archive/economy/economy.md:L123
+| SaaS Bug Squash | 1 | $0 | ∞ | $30 | SaaS ≥1. | Software (Infrastructure weight 0.5). |,0.5,,other,linear,docs/archive/economy/economy.md:L123
+| Audiobook Narration | 2.75 | $0 | ∞ | $44 | E-book ≥1. | Audio. |,2.75,,other,linear,docs/archive/economy/economy.md:L124
+| Audiobook Narration | 2.75 | $0 | ∞ | $44 | E-book ≥1. | Audio. |,0,usd,cost,linear,docs/archive/economy/economy.md:L124
+| Audiobook Narration | 2.75 | $0 | ∞ | $44 | E-book ≥1. | Audio. |,44,usd,cost,linear,docs/archive/economy/economy.md:L124
+| Audiobook Narration | 2.75 | $0 | ∞ | $44 | E-book ≥1. | Audio. |,1,,other,linear,docs/archive/economy/economy.md:L124
+| Street Team Promo | 0.75 | $5 | ∞ | $18 | Blog ≥2. | Promotion. |,0.75,,other,linear,docs/archive/economy/economy.md:L125
+| Street Team Promo | 0.75 | $5 | ∞ | $18 | Blog ≥2. | Promotion. |,5,usd,cost,linear,docs/archive/economy/economy.md:L125
+| Street Team Promo | 0.75 | $5 | ∞ | $18 | Blog ≥2. | Promotion. |,18,usd,cost,linear,docs/archive/economy/economy.md:L125
+| Street Team Promo | 0.75 | $5 | ∞ | $18 | Blog ≥2. | Promotion. |,2,usd,cost,linear,docs/archive/economy/economy.md:L125
+"Each knowledge track also exposes a “Study” card whose action enrolls the course (time cost 0, money cost equals tuition) and defers to the orchestrator for ongoing study time. Card text reflects enrollment status and bonuses.",0,,time,linear,docs/archive/economy/economy.md:L129
+"1. **Quality range:** Each asset instance references its current quality level to derive `[min,max]` income bounds.",1,,other,linear,docs/archive/economy/economy.md:L135
+2. **Random roll:** Daily income equals `round(min + rand() * (max - min))` before modifiers.,2,,income,linear,docs/archive/economy/economy.md:L136
+3. **Definition modifiers:** Optional custom modifiers can override the amount and contribute labeled breakdown entries.,3,,other,linear,docs/archive/economy/economy.md:L137
+"4. **Events & niches:** Active niche multipliers, scripted events, and education bonuses apply sequentially, all tracked for UI breakdowns.",4,,income,linear,docs/archive/economy/economy.md:L138
+5. **Upgrade multipliers:** Asset upgrades with `payout_mult` multiply the final amount via chained factors; deltas are stored per source.,5,,other,linear,docs/archive/economy/economy.md:L139
+6. **Rounding & storage:** Amounts round to whole dollars; breakdown entries track adjustments and are cached on the instance.,6,,other,linear,docs/archive/economy/economy.md:L140
+"- **Setup:** 3 days × 3h, $180 cost. Maintenance: 0.6h/day, $3/day.",3,days,time,linear,docs/archive/economy/economy.md:L150
+"- **Setup:** 3 days × 3h, $180 cost. Maintenance: 0.6h/day, $3/day.",3,,time,linear,docs/archive/economy/economy.md:L150
+"- **Setup:** 3 days × 3h, $180 cost. Maintenance: 0.6h/day, $3/day.",180,usd,time,linear,docs/archive/economy/economy.md:L150
+"- **Setup:** 3 days × 3h, $180 cost. Maintenance: 0.6h/day, $3/day.",0.6,,time,linear,docs/archive/economy/economy.md:L150
+"- **Setup:** 3 days × 3h, $180 cost. Maintenance: 0.6h/day, $3/day.",3,usd,time,linear,docs/archive/economy/economy.md:L150
+"- **Income:** Base 30, variance 0.2 (quality table defines min/max payouts).",30,,income,linear,docs/archive/economy/economy.md:L151
+"- **Income:** Base 30, variance 0.2 (quality table defines min/max payouts).",0.2,,limit,cap,docs/archive/economy/economy.md:L151
+"- 0: $3–6, no requirements.",0,,other,linear,docs/archive/economy/economy.md:L153
+"- 0: $3–6, no requirements.",3,usd,cost,linear,docs/archive/economy/economy.md:L153
+"- 0: $3–6, no requirements.",6,usd,cost,linear,docs/archive/economy/economy.md:L153
+"- 1: $9–15, requires 3 posts.",1,,requirement,linear,docs/archive/economy/economy.md:L154
+"- 1: $9–15, requires 3 posts.",9,usd,cost,linear,docs/archive/economy/economy.md:L154
+"- 1: $9–15, requires 3 posts.",15,usd,cost,linear,docs/archive/economy/economy.md:L154
+"- 1: $9–15, requires 3 posts.",3,count,requirement,linear,docs/archive/economy/economy.md:L154
+"- 2: $16–24, requires 9 posts & 2 SEO sprints.",2,,requirement,linear,docs/archive/economy/economy.md:L155
+"- 2: $16–24, requires 9 posts & 2 SEO sprints.",16,usd,cost,linear,docs/archive/economy/economy.md:L155
+"- 2: $16–24, requires 9 posts & 2 SEO sprints.",24,usd,cost,linear,docs/archive/economy/economy.md:L155
+"- 2: $16–24, requires 9 posts & 2 SEO sprints.",9,count,requirement,linear,docs/archive/economy/economy.md:L155
+"- 2: $16–24, requires 9 posts & 2 SEO sprints.",2,count,requirement,linear,docs/archive/economy/economy.md:L155
+"- 3: $30–42, requires 18 posts, 5 SEO, 3 outreach.",3,,requirement,linear,docs/archive/economy/economy.md:L156
+"- 3: $30–42, requires 18 posts, 5 SEO, 3 outreach.",30,usd,cost,linear,docs/archive/economy/economy.md:L156
+"- 3: $30–42, requires 18 posts, 5 SEO, 3 outreach.",42,usd,cost,linear,docs/archive/economy/economy.md:L156
+"- 3: $30–42, requires 18 posts, 5 SEO, 3 outreach.",18,count,requirement,linear,docs/archive/economy/economy.md:L156
+"- 3: $30–42, requires 18 posts, 5 SEO, 3 outreach.",5,count,requirement,linear,docs/archive/economy/economy.md:L156
+"- 3: $30–42, requires 18 posts, 5 SEO, 3 outreach.",3,count,requirement,linear,docs/archive/economy/economy.md:L156
+"- 4: $46–62, requires 28 posts, 9 SEO, 6 outreach.",4,,requirement,linear,docs/archive/economy/economy.md:L157
+"- 4: $46–62, requires 28 posts, 9 SEO, 6 outreach.",46,usd,cost,linear,docs/archive/economy/economy.md:L157
+"- 4: $46–62, requires 28 posts, 9 SEO, 6 outreach.",62,usd,cost,linear,docs/archive/economy/economy.md:L157
+"- 4: $46–62, requires 28 posts, 9 SEO, 6 outreach.",28,count,requirement,linear,docs/archive/economy/economy.md:L157
+"- 4: $46–62, requires 28 posts, 9 SEO, 6 outreach.",9,count,requirement,linear,docs/archive/economy/economy.md:L157
+"- 4: $46–62, requires 28 posts, 9 SEO, 6 outreach.",6,count,requirement,linear,docs/archive/economy/economy.md:L157
+"- 5: $64–84, requires 40 posts, 14 SEO, 10 outreach.",5,,requirement,linear,docs/archive/economy/economy.md:L158
+"- 5: $64–84, requires 40 posts, 14 SEO, 10 outreach.",64,usd,cost,linear,docs/archive/economy/economy.md:L158
+"- 5: $64–84, requires 40 posts, 14 SEO, 10 outreach.",84,usd,cost,linear,docs/archive/economy/economy.md:L158
+"- 5: $64–84, requires 40 posts, 14 SEO, 10 outreach.",40,count,requirement,linear,docs/archive/economy/economy.md:L158
+"- 5: $64–84, requires 40 posts, 14 SEO, 10 outreach.",14,count,requirement,linear,docs/archive/economy/economy.md:L158
+"- 5: $64–84, requires 40 posts, 14 SEO, 10 outreach.",10,count,requirement,linear,docs/archive/economy/economy.md:L158
+"- **Quality Actions:** Write Post (3h, 1/day), SEO Sprint (2h + $16), Backlink Outreach (1.5h + $16).",3,,time,linear,docs/archive/economy/economy.md:L159
+"- **Quality Actions:** Write Post (3h, 1/day), SEO Sprint (2h + $16), Backlink Outreach (1.5h + $16).",1,,time,linear,docs/archive/economy/economy.md:L159
+"- **Quality Actions:** Write Post (3h, 1/day), SEO Sprint (2h + $16), Backlink Outreach (1.5h + $16).",2,,time,linear,docs/archive/economy/economy.md:L159
+"- **Quality Actions:** Write Post (3h, 1/day), SEO Sprint (2h + $16), Backlink Outreach (1.5h + $16).",16,usd,time,linear,docs/archive/economy/economy.md:L159
+"- **Quality Actions:** Write Post (3h, 1/day), SEO Sprint (2h + $16), Backlink Outreach (1.5h + $16).",1.5,,other,linear,docs/archive/economy/economy.md:L159
+"- **Quality Actions:** Write Post (3h, 1/day), SEO Sprint (2h + $16), Backlink Outreach (1.5h + $16).",16,usd,cost,linear,docs/archive/economy/economy.md:L159
+"- **Setup:** 4 days × 3h, $260. Maintenance: 0.5h, $3.",4,days,time,linear,docs/archive/economy/economy.md:L163
+"- **Setup:** 4 days × 3h, $260. Maintenance: 0.5h, $3.",3,,time,linear,docs/archive/economy/economy.md:L163
+"- **Setup:** 4 days × 3h, $260. Maintenance: 0.5h, $3.",260,usd,time,linear,docs/archive/economy/economy.md:L163
+"- **Setup:** 4 days × 3h, $260. Maintenance: 0.5h, $3.",0.5,,time,linear,docs/archive/economy/economy.md:L163
+"- **Setup:** 4 days × 3h, $260. Maintenance: 0.5h, $3.",3,usd,time,linear,docs/archive/economy/economy.md:L163
+- 0: $3–6.,0,,other,linear,docs/archive/economy/economy.md:L166
+- 0: $3–6.,3,usd,cost,linear,docs/archive/economy/economy.md:L166
+- 0: $3–6.,6,usd,cost,linear,docs/archive/economy/economy.md:L166
+- 1: $12–20 (6 chapters).,1,,requirement,linear,docs/archive/economy/economy.md:L167
+- 1: $12–20 (6 chapters).,12,usd,cost,linear,docs/archive/economy/economy.md:L167
+- 1: $12–20 (6 chapters).,20,usd,cost,linear,docs/archive/economy/economy.md:L167
+- 1: $12–20 (6 chapters).,6,usd,cost,linear,docs/archive/economy/economy.md:L167
+"- 2: $20–30 (12 chapters, 1 cover).",2,,requirement,linear,docs/archive/economy/economy.md:L168
+"- 2: $20–30 (12 chapters, 1 cover).",20,usd,cost,linear,docs/archive/economy/economy.md:L168
+"- 2: $20–30 (12 chapters, 1 cover).",30,usd,cost,linear,docs/archive/economy/economy.md:L168
+"- 2: $20–30 (12 chapters, 1 cover).",12,usd,cost,linear,docs/archive/economy/economy.md:L168
+"- 2: $20–30 (12 chapters, 1 cover).",1,,requirement,linear,docs/archive/economy/economy.md:L168
+"- 3: $30–42 (18 chapters, 2 covers, 6 reviews).",3,,requirement,linear,docs/archive/economy/economy.md:L169
+"- 3: $30–42 (18 chapters, 2 covers, 6 reviews).",30,usd,cost,linear,docs/archive/economy/economy.md:L169
+"- 3: $30–42 (18 chapters, 2 covers, 6 reviews).",42,usd,cost,linear,docs/archive/economy/economy.md:L169
+"- 3: $30–42 (18 chapters, 2 covers, 6 reviews).",18,usd,cost,linear,docs/archive/economy/economy.md:L169
+"- 3: $30–42 (18 chapters, 2 covers, 6 reviews).",2,count,requirement,linear,docs/archive/economy/economy.md:L169
+"- 3: $30–42 (18 chapters, 2 covers, 6 reviews).",6,count,requirement,linear,docs/archive/economy/economy.md:L169
+"- 4: $44–58 (24 chapters, 3 covers, 10 reviews).",4,,requirement,linear,docs/archive/economy/economy.md:L170
+"- 4: $44–58 (24 chapters, 3 covers, 10 reviews).",44,usd,cost,linear,docs/archive/economy/economy.md:L170
+"- 4: $44–58 (24 chapters, 3 covers, 10 reviews).",58,usd,cost,linear,docs/archive/economy/economy.md:L170
+"- 4: $44–58 (24 chapters, 3 covers, 10 reviews).",24,usd,cost,linear,docs/archive/economy/economy.md:L170
+"- 4: $44–58 (24 chapters, 3 covers, 10 reviews).",3,count,requirement,linear,docs/archive/economy/economy.md:L170
+"- 4: $44–58 (24 chapters, 3 covers, 10 reviews).",10,count,requirement,linear,docs/archive/economy/economy.md:L170
+"- 5: $60–78 (32 chapters, 4 covers, 16 reviews).",5,,requirement,linear,docs/archive/economy/economy.md:L171
+"- 5: $60–78 (32 chapters, 4 covers, 16 reviews).",60,usd,cost,linear,docs/archive/economy/economy.md:L171
+"- 5: $60–78 (32 chapters, 4 covers, 16 reviews).",78,usd,cost,linear,docs/archive/economy/economy.md:L171
+"- 5: $60–78 (32 chapters, 4 covers, 16 reviews).",32,usd,cost,linear,docs/archive/economy/economy.md:L171
+"- 5: $60–78 (32 chapters, 4 covers, 16 reviews).",4,count,requirement,linear,docs/archive/economy/economy.md:L171
+"- 5: $60–78 (32 chapters, 4 covers, 16 reviews).",16,count,requirement,linear,docs/archive/economy/economy.md:L171
+"- **Actions:** Write Chapter (2.5h), Commission Cover (1.5h + $60), Rally Reviews (1.25h + $10).",2.5,,other,linear,docs/archive/economy/economy.md:L172
+"- **Actions:** Write Chapter (2.5h), Commission Cover (1.5h + $60), Rally Reviews (1.25h + $10).",1.5,,requirement,linear,docs/archive/economy/economy.md:L172
+"- **Actions:** Write Chapter (2.5h), Commission Cover (1.5h + $60), Rally Reviews (1.25h + $10).",60,usd,cost,linear,docs/archive/economy/economy.md:L172
+"- **Actions:** Write Chapter (2.5h), Commission Cover (1.5h + $60), Rally Reviews (1.25h + $10).",1.25,,requirement,linear,docs/archive/economy/economy.md:L172
+"- **Actions:** Write Chapter (2.5h), Commission Cover (1.5h + $60), Rally Reviews (1.25h + $10).",10,usd,cost,linear,docs/archive/economy/economy.md:L172
+"- **Setup:** 4 days × 4h, $420. Maintenance: 1h, $9.",4,days,time,linear,docs/archive/economy/economy.md:L176
+"- **Setup:** 4 days × 4h, $420. Maintenance: 1h, $9.",4,,time,linear,docs/archive/economy/economy.md:L176
+"- **Setup:** 4 days × 4h, $420. Maintenance: 1h, $9.",420,usd,time,linear,docs/archive/economy/economy.md:L176
+"- **Setup:** 4 days × 4h, $420. Maintenance: 1h, $9.",1,,time,linear,docs/archive/economy/economy.md:L176
+"- **Setup:** 4 days × 4h, $420. Maintenance: 1h, $9.",9,usd,time,linear,docs/archive/economy/economy.md:L176
+- 0: $2–5.,0,,other,linear,docs/archive/economy/economy.md:L179
+- 0: $2–5.,2,usd,cost,linear,docs/archive/economy/economy.md:L179
+- 0: $2–5.,5,usd,cost,linear,docs/archive/economy/economy.md:L179
+- 1: $12–20 (4 episodes).,1,,other,linear,docs/archive/economy/economy.md:L180
+- 1: $12–20 (4 episodes).,12,usd,cost,linear,docs/archive/economy/economy.md:L180
+- 1: $12–20 (4 episodes).,20,usd,cost,linear,docs/archive/economy/economy.md:L180
+- 1: $12–20 (4 episodes).,4,usd,cost,linear,docs/archive/economy/economy.md:L180
+"- 2: $20–30 (10 episodes, 4 edits).",2,,other,linear,docs/archive/economy/economy.md:L181
+"- 2: $20–30 (10 episodes, 4 edits).",20,usd,cost,linear,docs/archive/economy/economy.md:L181
+"- 2: $20–30 (10 episodes, 4 edits).",30,usd,cost,linear,docs/archive/economy/economy.md:L181
+"- 2: $20–30 (10 episodes, 4 edits).",10,usd,cost,linear,docs/archive/economy/economy.md:L181
+"- 2: $20–30 (10 episodes, 4 edits).",4,,other,linear,docs/archive/economy/economy.md:L181
+"- 3: $32–40 (18 episodes, 7 edits, 5 promos).",3,,other,linear,docs/archive/economy/economy.md:L182
+"- 3: $32–40 (18 episodes, 7 edits, 5 promos).",32,usd,cost,linear,docs/archive/economy/economy.md:L182
+"- 3: $32–40 (18 episodes, 7 edits, 5 promos).",40,usd,cost,linear,docs/archive/economy/economy.md:L182
+"- 3: $32–40 (18 episodes, 7 edits, 5 promos).",18,usd,cost,linear,docs/archive/economy/economy.md:L182
+"- 3: $32–40 (18 episodes, 7 edits, 5 promos).",7,,other,linear,docs/archive/economy/economy.md:L182
+"- 3: $32–40 (18 episodes, 7 edits, 5 promos).",5,count,other,linear,docs/archive/economy/economy.md:L182
+"- 4: $45–58 (26 episodes, 11 edits, 9 promos).",4,,other,linear,docs/archive/economy/economy.md:L183
+"- 4: $45–58 (26 episodes, 11 edits, 9 promos).",45,usd,cost,linear,docs/archive/economy/economy.md:L183
+"- 4: $45–58 (26 episodes, 11 edits, 9 promos).",58,usd,cost,linear,docs/archive/economy/economy.md:L183
+"- 4: $45–58 (26 episodes, 11 edits, 9 promos).",26,usd,cost,linear,docs/archive/economy/economy.md:L183
+"- 4: $45–58 (26 episodes, 11 edits, 9 promos).",11,,other,linear,docs/archive/economy/economy.md:L183
+"- 4: $45–58 (26 episodes, 11 edits, 9 promos).",9,count,other,linear,docs/archive/economy/economy.md:L183
+"- 5: $62–82 (38 episodes, 16 edits, 14 promos).",5,,other,linear,docs/archive/economy/economy.md:L184
+"- 5: $62–82 (38 episodes, 16 edits, 14 promos).",62,usd,cost,linear,docs/archive/economy/economy.md:L184
+"- 5: $62–82 (38 episodes, 16 edits, 14 promos).",82,usd,cost,linear,docs/archive/economy/economy.md:L184
+"- 5: $62–82 (38 episodes, 16 edits, 14 promos).",38,usd,cost,linear,docs/archive/economy/economy.md:L184
+"- 5: $62–82 (38 episodes, 16 edits, 14 promos).",16,,other,linear,docs/archive/economy/economy.md:L184
+"- 5: $62–82 (38 episodes, 16 edits, 14 promos).",14,count,other,linear,docs/archive/economy/economy.md:L184
+"- **Actions:** Film Episode (5h), Polish Edit (2.5h + $16), Promo Blast (2h + $24).",5,,other,linear,docs/archive/economy/economy.md:L185
+"- **Actions:** Film Episode (5h), Polish Edit (2.5h + $16), Promo Blast (2h + $24).",2.5,,other,linear,docs/archive/economy/economy.md:L185
+"- **Actions:** Film Episode (5h), Polish Edit (2.5h + $16), Promo Blast (2h + $24).",16,usd,cost,linear,docs/archive/economy/economy.md:L185
+"- **Actions:** Film Episode (5h), Polish Edit (2.5h + $16), Promo Blast (2h + $24).",2,,other,linear,docs/archive/economy/economy.md:L185
+"- **Actions:** Film Episode (5h), Polish Edit (2.5h + $16), Promo Blast (2h + $24).",24,usd,cost,linear,docs/archive/economy/economy.md:L185
+"- **Setup:** 5 days × 4h, $560. Maintenance: 0.8h, $10.",5,days,time,linear,docs/archive/economy/economy.md:L189
+"- **Setup:** 5 days × 4h, $560. Maintenance: 0.8h, $10.",4,,time,linear,docs/archive/economy/economy.md:L189
+"- **Setup:** 5 days × 4h, $560. Maintenance: 0.8h, $10.",560,usd,time,linear,docs/archive/economy/economy.md:L189
+"- **Setup:** 5 days × 4h, $560. Maintenance: 0.8h, $10.",0.8,,time,linear,docs/archive/economy/economy.md:L189
+"- **Setup:** 5 days × 4h, $560. Maintenance: 0.8h, $10.",10,usd,time,linear,docs/archive/economy/economy.md:L189
+- 0: $8–14.,0,,other,linear,docs/archive/economy/economy.md:L192
+- 0: $8–14.,8,usd,cost,linear,docs/archive/economy/economy.md:L192
+- 0: $8–14.,14,usd,cost,linear,docs/archive/economy/economy.md:L192
+- 1: $18–30 (4 shoots).,1,,requirement,linear,docs/archive/economy/economy.md:L193
+- 1: $18–30 (4 shoots).,18,usd,cost,linear,docs/archive/economy/economy.md:L193
+- 1: $18–30 (4 shoots).,30,usd,cost,linear,docs/archive/economy/economy.md:L193
+- 1: $18–30 (4 shoots).,4,usd,cost,linear,docs/archive/economy/economy.md:L193
+"- 2: $34–52 (10 shoots, 4 edits).",2,,requirement,linear,docs/archive/economy/economy.md:L194
+"- 2: $34–52 (10 shoots, 4 edits).",34,usd,cost,linear,docs/archive/economy/economy.md:L194
+"- 2: $34–52 (10 shoots, 4 edits).",52,usd,cost,linear,docs/archive/economy/economy.md:L194
+"- 2: $34–52 (10 shoots, 4 edits).",10,usd,cost,linear,docs/archive/economy/economy.md:L194
+"- 2: $34–52 (10 shoots, 4 edits).",4,,requirement,linear,docs/archive/economy/economy.md:L194
+"- 3: $54–78 (16 shoots, 7 edits, 5 marketing pushes).",3,,requirement,linear,docs/archive/economy/economy.md:L195
+"- 3: $54–78 (16 shoots, 7 edits, 5 marketing pushes).",54,usd,cost,linear,docs/archive/economy/economy.md:L195
+"- 3: $54–78 (16 shoots, 7 edits, 5 marketing pushes).",78,usd,cost,linear,docs/archive/economy/economy.md:L195
+"- 3: $54–78 (16 shoots, 7 edits, 5 marketing pushes).",16,usd,cost,linear,docs/archive/economy/economy.md:L195
+"- 3: $54–78 (16 shoots, 7 edits, 5 marketing pushes).",7,,requirement,linear,docs/archive/economy/economy.md:L195
+"- 3: $54–78 (16 shoots, 7 edits, 5 marketing pushes).",5,count,requirement,linear,docs/archive/economy/economy.md:L195
+"- 4: $80–108 (24 shoots, 11 edits, 9 marketing).",4,,requirement,linear,docs/archive/economy/economy.md:L196
+"- 4: $80–108 (24 shoots, 11 edits, 9 marketing).",80,usd,cost,linear,docs/archive/economy/economy.md:L196
+"- 4: $80–108 (24 shoots, 11 edits, 9 marketing).",108,usd,cost,linear,docs/archive/economy/economy.md:L196
+"- 4: $80–108 (24 shoots, 11 edits, 9 marketing).",24,usd,cost,linear,docs/archive/economy/economy.md:L196
+"- 4: $80–108 (24 shoots, 11 edits, 9 marketing).",11,,requirement,linear,docs/archive/economy/economy.md:L196
+"- 4: $80–108 (24 shoots, 11 edits, 9 marketing).",9,count,requirement,linear,docs/archive/economy/economy.md:L196
+"- 5: $112–150 (36 shoots, 16 edits, 14 marketing).",5,,requirement,linear,docs/archive/economy/economy.md:L197
+"- 5: $112–150 (36 shoots, 16 edits, 14 marketing).",112,usd,cost,linear,docs/archive/economy/economy.md:L197
+"- 5: $112–150 (36 shoots, 16 edits, 14 marketing).",150,usd,cost,linear,docs/archive/economy/economy.md:L197
+"- 5: $112–150 (36 shoots, 16 edits, 14 marketing).",36,usd,cost,linear,docs/archive/economy/economy.md:L197
+"- 5: $112–150 (36 shoots, 16 edits, 14 marketing).",16,,requirement,linear,docs/archive/economy/economy.md:L197
+"- 5: $112–150 (36 shoots, 16 edits, 14 marketing).",14,count,requirement,linear,docs/archive/economy/economy.md:L197
+"- **Actions:** Plan Shoot (3.5h + $22), Batch Edit (2h + $14), Run Promo (2h + $16).",3.5,,other,linear,docs/archive/economy/economy.md:L198
+"- **Actions:** Plan Shoot (3.5h + $22), Batch Edit (2h + $14), Run Promo (2h + $16).",22,usd,cost,linear,docs/archive/economy/economy.md:L198
+"- **Actions:** Plan Shoot (3.5h + $22), Batch Edit (2h + $14), Run Promo (2h + $16).",2,,other,linear,docs/archive/economy/economy.md:L198
+"- **Actions:** Plan Shoot (3.5h + $22), Batch Edit (2h + $14), Run Promo (2h + $16).",14,usd,cost,linear,docs/archive/economy/economy.md:L198
+"- **Actions:** Plan Shoot (3.5h + $22), Batch Edit (2h + $14), Run Promo (2h + $16).",16,usd,cost,linear,docs/archive/economy/economy.md:L198
+"- **Setup:** 6 days × 4h, $720. Maintenance: 1.1h, $12.",6,days,time,linear,docs/archive/economy/economy.md:L202
+"- **Setup:** 6 days × 4h, $720. Maintenance: 1.1h, $12.",4,,time,linear,docs/archive/economy/economy.md:L202
+"- **Setup:** 6 days × 4h, $720. Maintenance: 1.1h, $12.",720,usd,time,linear,docs/archive/economy/economy.md:L202
+"- **Setup:** 6 days × 4h, $720. Maintenance: 1.1h, $12.",1.1,,time,linear,docs/archive/economy/economy.md:L202
+"- **Setup:** 6 days × 4h, $720. Maintenance: 1.1h, $12.",12,usd,time,linear,docs/archive/economy/economy.md:L202
+- **Requirements:** Complete `ecomPlaybook` track; own ≥2 blogs and ≥1 e-book (experience).,2,,other,linear,docs/archive/economy/economy.md:L203
+- **Requirements:** Complete `ecomPlaybook` track; own ≥2 blogs and ≥1 e-book (experience).,1,,other,linear,docs/archive/economy/economy.md:L203
+- 0: $12–20.,0,,other,linear,docs/archive/economy/economy.md:L205
+- 0: $12–20.,12,usd,cost,linear,docs/archive/economy/economy.md:L205
+- 0: $12–20.,20,usd,cost,linear,docs/archive/economy/economy.md:L205
+- 1: $24–38 (4 research runs).,1,,other,linear,docs/archive/economy/economy.md:L206
+- 1: $24–38 (4 research runs).,24,usd,cost,linear,docs/archive/economy/economy.md:L206
+- 1: $24–38 (4 research runs).,38,usd,cost,linear,docs/archive/economy/economy.md:L206
+- 1: $24–38 (4 research runs).,4,usd,cost,linear,docs/archive/economy/economy.md:L206
+"- 2: $44–62 (11 research, 5 listings).",2,,requirement,linear,docs/archive/economy/economy.md:L207
+"- 2: $44–62 (11 research, 5 listings).",44,usd,cost,linear,docs/archive/economy/economy.md:L207
+"- 2: $44–62 (11 research, 5 listings).",62,usd,cost,linear,docs/archive/economy/economy.md:L207
+"- 2: $44–62 (11 research, 5 listings).",11,usd,cost,linear,docs/archive/economy/economy.md:L207
+"- 2: $44–62 (11 research, 5 listings).",5,count,requirement,linear,docs/archive/economy/economy.md:L207
+"- 3: $68–92 (18 research, 8 listings, 7 ads).",3,,requirement,linear,docs/archive/economy/economy.md:L208
+"- 3: $68–92 (18 research, 8 listings, 7 ads).",68,usd,cost,linear,docs/archive/economy/economy.md:L208
+"- 3: $68–92 (18 research, 8 listings, 7 ads).",92,usd,cost,linear,docs/archive/economy/economy.md:L208
+"- 3: $68–92 (18 research, 8 listings, 7 ads).",18,usd,cost,linear,docs/archive/economy/economy.md:L208
+"- 3: $68–92 (18 research, 8 listings, 7 ads).",8,count,requirement,linear,docs/archive/economy/economy.md:L208
+"- 3: $68–92 (18 research, 8 listings, 7 ads).",7,count,requirement,linear,docs/archive/economy/economy.md:L208
+"- 4: $95–128 (26 research, 12 listings, 10 ads).",4,,requirement,linear,docs/archive/economy/economy.md:L209
+"- 4: $95–128 (26 research, 12 listings, 10 ads).",95,usd,cost,linear,docs/archive/economy/economy.md:L209
+"- 4: $95–128 (26 research, 12 listings, 10 ads).",128,usd,cost,linear,docs/archive/economy/economy.md:L209
+"- 4: $95–128 (26 research, 12 listings, 10 ads).",26,usd,cost,linear,docs/archive/economy/economy.md:L209
+"- 4: $95–128 (26 research, 12 listings, 10 ads).",12,count,requirement,linear,docs/archive/economy/economy.md:L209
+"- 4: $95–128 (26 research, 12 listings, 10 ads).",10,count,requirement,linear,docs/archive/economy/economy.md:L209
+"- 5: $130–176 (38 research, 18 listings, 16 ads).",5,,requirement,linear,docs/archive/economy/economy.md:L210
+"- 5: $130–176 (38 research, 18 listings, 16 ads).",130,usd,cost,linear,docs/archive/economy/economy.md:L210
+"- 5: $130–176 (38 research, 18 listings, 16 ads).",176,usd,cost,linear,docs/archive/economy/economy.md:L210
+"- 5: $130–176 (38 research, 18 listings, 16 ads).",38,usd,cost,linear,docs/archive/economy/economy.md:L210
+"- 5: $130–176 (38 research, 18 listings, 16 ads).",18,count,requirement,linear,docs/archive/economy/economy.md:L210
+"- 5: $130–176 (38 research, 18 listings, 16 ads).",16,count,requirement,linear,docs/archive/economy/economy.md:L210
+"- **Actions:** Research Product (3h), Optimize Listing (1.8h + $28), Experiment With Ads (2.2h + $34).",3,,requirement,linear,docs/archive/economy/economy.md:L211
+"- **Actions:** Research Product (3h), Optimize Listing (1.8h + $28), Experiment With Ads (2.2h + $34).",1.8,,requirement,linear,docs/archive/economy/economy.md:L211
+"- **Actions:** Research Product (3h), Optimize Listing (1.8h + $28), Experiment With Ads (2.2h + $34).",28,usd,cost,linear,docs/archive/economy/economy.md:L211
+"- **Actions:** Research Product (3h), Optimize Listing (1.8h + $28), Experiment With Ads (2.2h + $34).",2.2,xp,xp,linear,docs/archive/economy/economy.md:L211
+"- **Actions:** Research Product (3h), Optimize Listing (1.8h + $28), Experiment With Ads (2.2h + $34).",34,usd,cost,linear,docs/archive/economy/economy.md:L211
+"- **Setup:** 8 days × 4h, $960. Maintenance: 2.2h, $24.",8,days,time,linear,docs/archive/economy/economy.md:L215
+"- **Setup:** 8 days × 4h, $960. Maintenance: 2.2h, $24.",4,,time,linear,docs/archive/economy/economy.md:L215
+"- **Setup:** 8 days × 4h, $960. Maintenance: 2.2h, $24.",960,usd,time,linear,docs/archive/economy/economy.md:L215
+"- **Setup:** 8 days × 4h, $960. Maintenance: 2.2h, $24.",2.2,,time,linear,docs/archive/economy/economy.md:L215
+"- **Setup:** 8 days × 4h, $960. Maintenance: 2.2h, $24.",24,usd,time,linear,docs/archive/economy/economy.md:L215
+"- **Requirements:** Complete `automationCourse`, own `serverCluster` equipment, and have ≥1 Dropshipping & ≥1 E-book active instances.",1,,other,linear,docs/archive/economy/economy.md:L216
+- 0: $20–32.,0,,other,linear,docs/archive/economy/economy.md:L218
+- 0: $20–32.,20,usd,cost,linear,docs/archive/economy/economy.md:L218
+- 0: $20–32.,32,usd,cost,linear,docs/archive/economy/economy.md:L218
+- 1: $32–48 (4 features).,1,,requirement,linear,docs/archive/economy/economy.md:L219
+- 1: $32–48 (4 features).,32,usd,cost,linear,docs/archive/economy/economy.md:L219
+- 1: $32–48 (4 features).,48,usd,cost,linear,docs/archive/economy/economy.md:L219
+- 1: $32–48 (4 features).,4,usd,cost,linear,docs/archive/economy/economy.md:L219
+"- 2: $54–74 (12 features, 5 stability).",2,,requirement,linear,docs/archive/economy/economy.md:L220
+"- 2: $54–74 (12 features, 5 stability).",54,usd,cost,linear,docs/archive/economy/economy.md:L220
+"- 2: $54–74 (12 features, 5 stability).",74,usd,cost,linear,docs/archive/economy/economy.md:L220
+"- 2: $54–74 (12 features, 5 stability).",12,usd,cost,linear,docs/archive/economy/economy.md:L220
+"- 2: $54–74 (12 features, 5 stability).",5,count,requirement,linear,docs/archive/economy/economy.md:L220
+"- 3: $84–120 (24 features, 8 stability, 6 marketing).",3,,requirement,linear,docs/archive/economy/economy.md:L221
+"- 3: $84–120 (24 features, 8 stability, 6 marketing).",84,usd,cost,linear,docs/archive/economy/economy.md:L221
+"- 3: $84–120 (24 features, 8 stability, 6 marketing).",120,usd,cost,linear,docs/archive/economy/economy.md:L221
+"- 3: $84–120 (24 features, 8 stability, 6 marketing).",24,usd,cost,linear,docs/archive/economy/economy.md:L221
+"- 3: $84–120 (24 features, 8 stability, 6 marketing).",8,count,requirement,linear,docs/archive/economy/economy.md:L221
+"- 3: $84–120 (24 features, 8 stability, 6 marketing).",6,count,requirement,linear,docs/archive/economy/economy.md:L221
+"- 4: $120–168 (34 features, 12 stability, 10 marketing, 4 edge).",4,,requirement,linear,docs/archive/economy/economy.md:L222
+"- 4: $120–168 (34 features, 12 stability, 10 marketing, 4 edge).",120,usd,cost,linear,docs/archive/economy/economy.md:L222
+"- 4: $120–168 (34 features, 12 stability, 10 marketing, 4 edge).",168,usd,cost,linear,docs/archive/economy/economy.md:L222
+"- 4: $120–168 (34 features, 12 stability, 10 marketing, 4 edge).",34,usd,cost,linear,docs/archive/economy/economy.md:L222
+"- 4: $120–168 (34 features, 12 stability, 10 marketing, 4 edge).",12,count,requirement,linear,docs/archive/economy/economy.md:L222
+"- 4: $120–168 (34 features, 12 stability, 10 marketing, 4 edge).",10,count,requirement,linear,docs/archive/economy/economy.md:L222
+"- 4: $120–168 (34 features, 12 stability, 10 marketing, 4 edge).",4,count,requirement,linear,docs/archive/economy/economy.md:L222
+"- 5: $168–220 (48 features, 18 stability, 15 marketing, 8 edge).",5,,requirement,linear,docs/archive/economy/economy.md:L223
+"- 5: $168–220 (48 features, 18 stability, 15 marketing, 8 edge).",168,usd,cost,linear,docs/archive/economy/economy.md:L223
+"- 5: $168–220 (48 features, 18 stability, 15 marketing, 8 edge).",220,usd,cost,linear,docs/archive/economy/economy.md:L223
+"- 5: $168–220 (48 features, 18 stability, 15 marketing, 8 edge).",48,usd,cost,linear,docs/archive/economy/economy.md:L223
+"- 5: $168–220 (48 features, 18 stability, 15 marketing, 8 edge).",18,count,requirement,linear,docs/archive/economy/economy.md:L223
+"- 5: $168–220 (48 features, 18 stability, 15 marketing, 8 edge).",15,count,requirement,linear,docs/archive/economy/economy.md:L223
+"- 5: $168–220 (48 features, 18 stability, 15 marketing, 8 edge).",8,count,requirement,linear,docs/archive/economy/economy.md:L223
+"- **Actions:** Ship Feature (3.2h + $28), Improve Stability (2.5h + $36), Launch Campaign (2.5h + $44), Deploy Edge Nodes (3h + $64, requires `serverEdge`).",3.2,,requirement,linear,docs/archive/economy/economy.md:L224
+"- **Actions:** Ship Feature (3.2h + $28), Improve Stability (2.5h + $36), Launch Campaign (2.5h + $44), Deploy Edge Nodes (3h + $64, requires `serverEdge`).",28,usd,cost,linear,docs/archive/economy/economy.md:L224
+"- **Actions:** Ship Feature (3.2h + $28), Improve Stability (2.5h + $36), Launch Campaign (2.5h + $44), Deploy Edge Nodes (3h + $64, requires `serverEdge`).",2.5,,requirement,linear,docs/archive/economy/economy.md:L224
+"- **Actions:** Ship Feature (3.2h + $28), Improve Stability (2.5h + $36), Launch Campaign (2.5h + $44), Deploy Edge Nodes (3h + $64, requires `serverEdge`).",36,usd,cost,linear,docs/archive/economy/economy.md:L224
+"- **Actions:** Ship Feature (3.2h + $28), Improve Stability (2.5h + $36), Launch Campaign (2.5h + $44), Deploy Edge Nodes (3h + $64, requires `serverEdge`).",44,usd,cost,linear,docs/archive/economy/economy.md:L224
+"- **Actions:** Ship Feature (3.2h + $28), Improve Stability (2.5h + $36), Launch Campaign (2.5h + $44), Deploy Edge Nodes (3h + $64, requires `serverEdge`).",3,,requirement,linear,docs/archive/economy/economy.md:L224
+"- **Actions:** Ship Feature (3.2h + $28), Improve Stability (2.5h + $36), Launch Campaign (2.5h + $44), Deploy Edge Nodes (3h + $64, requires `serverEdge`).",64,usd,cost,linear,docs/archive/economy/economy.md:L224
+- **Turbo Coffee (`coffee`):** Repeatable boost costing $40 that grants +1 hour for the current day; usage per day capped at `COFFEE_LIMIT = 3`. UI disables when limit hit or no time remains.,40,usd,time,linear,docs/archive/economy/economy.md:L236
+- **Turbo Coffee (`coffee`):** Repeatable boost costing $40 that grants +1 hour for the current day; usage per day capped at `COFFEE_LIMIT = 3`. UI disables when limit hit or no time remains.,1,hours,time,linear,docs/archive/economy/economy.md:L236
+- **Turbo Coffee (`coffee`):** Repeatable boost costing $40 that grants +1 hour for the current day; usage per day capped at `COFFEE_LIMIT = 3`. UI disables when limit hit or no time remains.,3,,time,cap,docs/archive/economy/economy.md:L236
+| studio | $220 | Exclusive `house:lighting` slot | `maint_time_mult: 0.9` for photo/video asset maintenance actions (unlock Stock Photo).,220,usd,cost,linear,docs/archive/economy/economy.md:L242
+| studio | $220 | Exclusive `house:lighting` slot | `maint_time_mult: 0.9` for photo/video asset maintenance actions (unlock Stock Photo).,0.9,,time,linear,docs/archive/economy/economy.md:L242
+"| studioExpansion | $540 | Requires `studio`; exclusive `house:studio` | `setup_time_mult: 0.85`, `payout_mult: 1.15`, `quality_progress_mult: 2` for photo/video assets and photo hustles.",540,usd,cost,linear,docs/archive/economy/economy.md:L243
+"| studioExpansion | $540 | Requires `studio`; exclusive `house:studio` | `setup_time_mult: 0.85`, `payout_mult: 1.15`, `quality_progress_mult: 2` for photo/video assets and photo hustles.",0.85,,time,linear,docs/archive/economy/economy.md:L243
+"| studioExpansion | $540 | Requires `studio`; exclusive `house:studio` | `setup_time_mult: 0.85`, `payout_mult: 1.15`, `quality_progress_mult: 2` for photo/video assets and photo hustles.",1.15,,time,linear,docs/archive/economy/economy.md:L243
+"| studioExpansion | $540 | Requires `studio`; exclusive `house:studio` | `setup_time_mult: 0.85`, `payout_mult: 1.15`, `quality_progress_mult: 2` for photo/video assets and photo hustles.",2,,income,linear,docs/archive/economy/economy.md:L243
+| assistant | $0 | Repeatable | Managed via `assistantHooks`; adds hire/fire controls (see Assistants). |,0,usd,cost,linear,docs/archive/economy/economy.md:L251
+| serverRack | $650 | None | `setup_time_mult: 0.95` for software/tech assets & hustles (setup actions). |,650,usd,time,linear,docs/archive/economy/economy.md:L252
+| serverRack | $650 | None | `setup_time_mult: 0.95` for software/tech assets & hustles (setup actions). |,0.95,,time,linear,docs/archive/economy/economy.md:L252
+"| fulfillmentAutomation | $780 | Active dropshipping ≥2, completed `ecomPlaybook` | Dropshipping `payout_mult: 1.25`, `quality_progress_mult: 2`. |",780,usd,cost,linear,docs/archive/economy/economy.md:L253
+"| fulfillmentAutomation | $780 | Active dropshipping ≥2, completed `ecomPlaybook` | Dropshipping `payout_mult: 1.25`, `quality_progress_mult: 2`. |",2,,other,linear,docs/archive/economy/economy.md:L253
+"| fulfillmentAutomation | $780 | Active dropshipping ≥2, completed `ecomPlaybook` | Dropshipping `payout_mult: 1.25`, `quality_progress_mult: 2`. |",1.25,,income,linear,docs/archive/economy/economy.md:L253
+"| fulfillmentAutomation | $780 | Active dropshipping ≥2, completed `ecomPlaybook` | Dropshipping `payout_mult: 1.25`, `quality_progress_mult: 2`. |",2,,income,linear,docs/archive/economy/economy.md:L253
+"| serverCluster | $1150 | Requires `serverRack` | SaaS `payout_mult: 1.2`, `quality_progress_mult: 1.5`. |",1150,usd,cost,linear,docs/archive/economy/economy.md:L254
+"| serverCluster | $1150 | Requires `serverRack` | SaaS `payout_mult: 1.2`, `quality_progress_mult: 1.5`. |",1.2,,income,linear,docs/archive/economy/economy.md:L254
+"| serverCluster | $1150 | Requires `serverRack` | SaaS `payout_mult: 1.2`, `quality_progress_mult: 1.5`. |",1.5,,income,linear,docs/archive/economy/economy.md:L254
+"| globalSupplyMesh | $1150 | `fulfillmentAutomation`, active dropshipping ≥3, completed `photoLibrary` | Dropshipping `payout_mult: 1.3`, `quality_progress_mult: 1.5`, `setup_time_mult: 0.92`; applies to commerce/photo hustles. |",1150,usd,cost,linear,docs/archive/economy/economy.md:L255
+"| globalSupplyMesh | $1150 | `fulfillmentAutomation`, active dropshipping ≥3, completed `photoLibrary` | Dropshipping `payout_mult: 1.3`, `quality_progress_mult: 1.5`, `setup_time_mult: 0.92`; applies to commerce/photo hustles. |",3,,other,linear,docs/archive/economy/economy.md:L255
+"| globalSupplyMesh | $1150 | `fulfillmentAutomation`, active dropshipping ≥3, completed `photoLibrary` | Dropshipping `payout_mult: 1.3`, `quality_progress_mult: 1.5`, `setup_time_mult: 0.92`; applies to commerce/photo hustles. |",1.3,,income,linear,docs/archive/economy/economy.md:L255
+"| globalSupplyMesh | $1150 | `fulfillmentAutomation`, active dropshipping ≥3, completed `photoLibrary` | Dropshipping `payout_mult: 1.3`, `quality_progress_mult: 1.5`, `setup_time_mult: 0.92`; applies to commerce/photo hustles. |",1.5,,time,linear,docs/archive/economy/economy.md:L255
+"| globalSupplyMesh | $1150 | `fulfillmentAutomation`, active dropshipping ≥3, completed `photoLibrary` | Dropshipping `payout_mult: 1.3`, `quality_progress_mult: 1.5`, `setup_time_mult: 0.92`; applies to commerce/photo hustles. |",0.92,,time,linear,docs/archive/economy/economy.md:L255
+"| serverEdge | $1450 | Requires `serverCluster` | SaaS `payout_mult: 1.35`, `quality_progress_mult: 2`, `maint_time_mult: 0.85`. |",1450,usd,cost,linear,docs/archive/economy/economy.md:L256
+"| serverEdge | $1450 | Requires `serverCluster` | SaaS `payout_mult: 1.35`, `quality_progress_mult: 2`, `maint_time_mult: 0.85`. |",1.35,,income,linear,docs/archive/economy/economy.md:L256
+"| serverEdge | $1450 | Requires `serverCluster` | SaaS `payout_mult: 1.35`, `quality_progress_mult: 2`, `maint_time_mult: 0.85`. |",2,,time,linear,docs/archive/economy/economy.md:L256
+"| serverEdge | $1450 | Requires `serverCluster` | SaaS `payout_mult: 1.35`, `quality_progress_mult: 2`, `maint_time_mult: 0.85`. |",0.85,,time,linear,docs/archive/economy/economy.md:L256
+"| whiteLabelAlliance | $1500 | `globalSupplyMesh`, active dropshipping ≥4, completed `ecomPlaybook` & `photoLibrary` | Dropshipping & Stock Photos `payout_mult: 1.35`, `quality_progress_mult: 4/3`. |",1.333333333,,income,linear,docs/archive/economy/economy.md:L257
+"| whiteLabelAlliance | $1500 | `globalSupplyMesh`, active dropshipping ≥4, completed `ecomPlaybook` & `photoLibrary` | Dropshipping & Stock Photos `payout_mult: 1.35`, `quality_progress_mult: 4/3`. |",1500,usd,cost,linear,docs/archive/economy/economy.md:L257
+"| whiteLabelAlliance | $1500 | `globalSupplyMesh`, active dropshipping ≥4, completed `ecomPlaybook` & `photoLibrary` | Dropshipping & Stock Photos `payout_mult: 1.35`, `quality_progress_mult: 4/3`. |",4,,other,linear,docs/archive/economy/economy.md:L257
+"| whiteLabelAlliance | $1500 | `globalSupplyMesh`, active dropshipping ≥4, completed `ecomPlaybook` & `photoLibrary` | Dropshipping & Stock Photos `payout_mult: 1.35`, `quality_progress_mult: 4/3`. |",1.35,,income,linear,docs/archive/economy/economy.md:L257
+| creatorPhone | $140 | None | `setup_time_mult: 0.95` for live/field hustles and video assets. |,140,usd,time,linear,docs/archive/economy/economy.md:L267
+| creatorPhone | $140 | None | `setup_time_mult: 0.95` for live/field hustles and video assets. |,0.95,,time,linear,docs/archive/economy/economy.md:L267
+"| creatorPhonePro | $360 | creatorPhone | `setup_time_mult: 0.85`, `payout_mult: 1.05` for same targets. |",360,usd,time,linear,docs/archive/economy/economy.md:L268
+"| creatorPhonePro | $360 | creatorPhone | `setup_time_mult: 0.85`, `payout_mult: 1.05` for same targets. |",0.85,,time,linear,docs/archive/economy/economy.md:L268
+"| creatorPhonePro | $360 | creatorPhone | `setup_time_mult: 0.85`, `payout_mult: 1.05` for same targets. |",1.05,,time,linear,docs/archive/economy/economy.md:L268
+"| creatorPhoneUltra | $720 | creatorPhonePro | `setup_time_mult: 0.8`, `payout_mult: 1.08`. |",720,usd,time,linear,docs/archive/economy/economy.md:L269
+"| creatorPhoneUltra | $720 | creatorPhonePro | `setup_time_mult: 0.8`, `payout_mult: 1.08`. |",0.8,,time,linear,docs/archive/economy/economy.md:L269
+"| creatorPhoneUltra | $720 | creatorPhonePro | `setup_time_mult: 0.8`, `payout_mult: 1.08`. |",1.08,,time,linear,docs/archive/economy/economy.md:L269
+| studioLaptop | $280 | None | `setup_time_mult: 0.92` for desktop_work assets/hustles. |,280,usd,time,linear,docs/archive/economy/economy.md:L275
+| studioLaptop | $280 | None | `setup_time_mult: 0.92` for desktop_work assets/hustles. |,0.92,,time,linear,docs/archive/economy/economy.md:L275
+"| editingWorkstation | $640 | studioLaptop | `setup_time_mult: 0.85`, `maint_time_mult: 0.9` for desktop_work/video assets. |",640,usd,time,linear,docs/archive/economy/economy.md:L276
+"| editingWorkstation | $640 | studioLaptop | `setup_time_mult: 0.85`, `maint_time_mult: 0.9` for desktop_work/video assets. |",0.85,,time,linear,docs/archive/economy/economy.md:L276
+"| editingWorkstation | $640 | studioLaptop | `setup_time_mult: 0.85`, `maint_time_mult: 0.9` for desktop_work/video assets. |",0.9,,time,linear,docs/archive/economy/economy.md:L276
+"| quantumRig | $1280 | editingWorkstation | `payout_mult: 1.12`, `maint_time_mult: 0.85` for desktop_work/software/video assets. |",1280,usd,cost,linear,docs/archive/economy/economy.md:L277
+"| quantumRig | $1280 | editingWorkstation | `payout_mult: 1.12`, `maint_time_mult: 0.85` for desktop_work/software/video assets. |",1.12,,time,linear,docs/archive/economy/economy.md:L277
+"| quantumRig | $1280 | editingWorkstation | `payout_mult: 1.12`, `maint_time_mult: 0.85` for desktop_work/software/video assets. |",0.85,,time,linear,docs/archive/economy/economy.md:L277
+| monitorHub | $180 | None | Provides 2 monitor slots; `setup_time_mult: 0.95` desktop_work setup. |,180,usd,cost,linear,docs/archive/economy/economy.md:L283
+| monitorHub | $180 | None | Provides 2 monitor slots; `setup_time_mult: 0.95` desktop_work setup. |,2,,time,linear,docs/archive/economy/economy.md:L283
+| monitorHub | $180 | None | Provides 2 monitor slots; `setup_time_mult: 0.95` desktop_work setup. |,0.95,,time,linear,docs/archive/economy/economy.md:L283
+"| dualMonitorArray | $240 | monitorHub, consumes 1 slot | `quality_progress_mult: 1.2` for desktop_work/video assets. |",240,usd,cost,linear,docs/archive/economy/economy.md:L284
+"| dualMonitorArray | $240 | monitorHub, consumes 1 slot | `quality_progress_mult: 1.2` for desktop_work/video assets. |",1,,income,linear,docs/archive/economy/economy.md:L284
+"| dualMonitorArray | $240 | monitorHub, consumes 1 slot | `quality_progress_mult: 1.2` for desktop_work/video assets. |",1.2,,income,linear,docs/archive/economy/economy.md:L284
+"| colorGradingDisplay | $380 | dualMonitorArray, consumes 1 slot | `quality_progress_mult: 1.3` for video/photo assets. |",380,usd,cost,linear,docs/archive/economy/economy.md:L285
+"| colorGradingDisplay | $380 | dualMonitorArray, consumes 1 slot | `quality_progress_mult: 1.3` for video/photo assets. |",1,,income,linear,docs/archive/economy/economy.md:L285
+"| colorGradingDisplay | $380 | dualMonitorArray, consumes 1 slot | `quality_progress_mult: 1.3` for video/photo assets. |",1.3,,income,linear,docs/archive/economy/economy.md:L285
+| camera | $200 | None | Unlocks vlog/stock photo assets; `setup_time_mult: 0.9` for photo/video setups. |,200,usd,cost,linear,docs/archive/economy/economy.md:L291
+| camera | $200 | None | Unlocks vlog/stock photo assets; `setup_time_mult: 0.9` for photo/video setups. |,0.9,,time,linear,docs/archive/economy/economy.md:L291
+"| cameraPro | $480 | camera | `setup_time_mult: 0.85`, `maint_time_mult: 0.85`, `payout_mult: 1.25`, `quality_progress_mult: 2` for photo/video assets and actions. |",480,usd,time,linear,docs/archive/economy/economy.md:L292
+"| cameraPro | $480 | camera | `setup_time_mult: 0.85`, `maint_time_mult: 0.85`, `payout_mult: 1.25`, `quality_progress_mult: 2` for photo/video assets and actions. |",0.85,,time,linear,docs/archive/economy/economy.md:L292
+"| cameraPro | $480 | camera | `setup_time_mult: 0.85`, `maint_time_mult: 0.85`, `payout_mult: 1.25`, `quality_progress_mult: 2` for photo/video assets and actions. |",1.25,,time,linear,docs/archive/economy/economy.md:L292
+"| cameraPro | $480 | camera | `setup_time_mult: 0.85`, `maint_time_mult: 0.85`, `payout_mult: 1.25`, `quality_progress_mult: 2` for photo/video assets and actions. |",2,,income,linear,docs/archive/economy/economy.md:L292
+Single upgrade: `audioSuite` costs $420 and multiplies quality progress by 1.4 for audio/video assets.,420,usd,cost,linear,docs/archive/economy/economy.md:L296
+Single upgrade: `audioSuite` costs $420 and multiplies quality progress by 1.4 for audio/video assets.,1.4,,other,linear,docs/archive/economy/economy.md:L296
+- `ergonomicRefit` costs $180 and multiplies desktop_work maintenance time by 0.95.,180,usd,cost,linear,docs/archive/economy/economy.md:L300
+- `ergonomicRefit` costs $180 and multiplies desktop_work maintenance time by 0.95.,0.95,,time,linear,docs/archive/economy/economy.md:L300
+- `fiberInternet` costs $260 and multiplies maintenance time by 0.9 for video/software assets and live/software hustles.,260,usd,time,linear,docs/archive/economy/economy.md:L301
+- `fiberInternet` costs $260 and multiplies maintenance time by 0.9 for video/software assets and live/software hustles.,0.9,,time,linear,docs/archive/economy/economy.md:L301
+- `backupPowerArray` costs $260 and multiplies maintenance time by 0.95 for desktop_work/video assets.,260,usd,time,linear,docs/archive/economy/economy.md:L302
+- `backupPowerArray` costs $260 and multiplies maintenance time by 0.95 for desktop_work/video assets.,0.95,,time,linear,docs/archive/economy/economy.md:L302
+- `scratchDriveArray` costs $320 and multiplies maintenance time by 0.9 for video/photo/software assets.,320,usd,time,linear,docs/archive/economy/economy.md:L303
+- `scratchDriveArray` costs $320 and multiplies maintenance time by 0.9 for video/photo/software assets.,0.9,,time,linear,docs/archive/economy/economy.md:L303
+"| editorialPipeline | $360 | Course upgrade, active blog, completed Outline Mastery | `setup_time_mult: 0.88`, `payout_mult: 1.2`, `quality_progress_mult: 1.5` for writing/content assets and writing hustles. |",360,usd,cost,linear,docs/archive/economy/economy.md:L309
+"| editorialPipeline | $360 | Course upgrade, active blog, completed Outline Mastery | `setup_time_mult: 0.88`, `payout_mult: 1.2`, `quality_progress_mult: 1.5` for writing/content assets and writing hustles. |",0.88,,time,linear,docs/archive/economy/economy.md:L309
+"| editorialPipeline | $360 | Course upgrade, active blog, completed Outline Mastery | `setup_time_mult: 0.88`, `payout_mult: 1.2`, `quality_progress_mult: 1.5` for writing/content assets and writing hustles. |",1.2,,time,linear,docs/archive/economy/economy.md:L309
+"| editorialPipeline | $360 | Course upgrade, active blog, completed Outline Mastery | `setup_time_mult: 0.88`, `payout_mult: 1.2`, `quality_progress_mult: 1.5` for writing/content assets and writing hustles. |",1.5,,income,linear,docs/archive/economy/economy.md:L309
+"| syndicationSuite | $720 | editorialPipeline, active blog & e-book, completed Brand Voice Lab | `maint_time_mult: 0.9`, `payout_mult: 1.25`, `quality_progress_mult: 4/3` for writing/content/video assets and writing/marketing hustles. |",1.333333333,,income,linear,docs/archive/economy/economy.md:L310
+"| syndicationSuite | $720 | editorialPipeline, active blog & e-book, completed Brand Voice Lab | `maint_time_mult: 0.9`, `payout_mult: 1.25`, `quality_progress_mult: 4/3` for writing/content/video assets and writing/marketing hustles. |",720,usd,cost,linear,docs/archive/economy/economy.md:L310
+"| syndicationSuite | $720 | editorialPipeline, active blog & e-book, completed Brand Voice Lab | `maint_time_mult: 0.9`, `payout_mult: 1.25`, `quality_progress_mult: 4/3` for writing/content/video assets and writing/marketing hustles. |",0.9,,time,linear,docs/archive/economy/economy.md:L310
+"| syndicationSuite | $720 | editorialPipeline, active blog & e-book, completed Brand Voice Lab | `maint_time_mult: 0.9`, `payout_mult: 1.25`, `quality_progress_mult: 4/3` for writing/content/video assets and writing/marketing hustles. |",1.25,,time,linear,docs/archive/economy/economy.md:L310
+"| immersiveStoryWorlds | $1080 | syndicationSuite, active blog/e-book/vlog, completed Outline Mastery & Brand Voice Lab | `payout_mult: 1.12`, `setup_time_mult: 0.85`, `quality_progress_mult: 2` for writing/video/photo assets. |",1080,usd,cost,linear,docs/archive/economy/economy.md:L311
+"| immersiveStoryWorlds | $1080 | syndicationSuite, active blog/e-book/vlog, completed Outline Mastery & Brand Voice Lab | `payout_mult: 1.12`, `setup_time_mult: 0.85`, `quality_progress_mult: 2` for writing/video/photo assets. |",1.12,,time,linear,docs/archive/economy/economy.md:L311
+"| immersiveStoryWorlds | $1080 | syndicationSuite, active blog/e-book/vlog, completed Outline Mastery & Brand Voice Lab | `payout_mult: 1.12`, `setup_time_mult: 0.85`, `quality_progress_mult: 2` for writing/video/photo assets. |",0.85,,time,linear,docs/archive/economy/economy.md:L311
+"| immersiveStoryWorlds | $1080 | syndicationSuite, active blog/e-book/vlog, completed Outline Mastery & Brand Voice Lab | `payout_mult: 1.12`, `setup_time_mult: 0.85`, `quality_progress_mult: 2` for writing/video/photo assets. |",2,,income,linear,docs/archive/economy/economy.md:L311
+"| course | $260 | Active blog | `payout_mult: 1.5`, `quality_progress_mult: 2` for blog assets. |",260,usd,cost,linear,docs/archive/economy/economy.md:L312
+"| course | $260 | Active blog | `payout_mult: 1.5`, `quality_progress_mult: 2` for blog assets. |",1.5,,income,linear,docs/archive/economy/economy.md:L312
+"| course | $260 | Active blog | `payout_mult: 1.5`, `quality_progress_mult: 2` for blog assets. |",2,,income,linear,docs/archive/economy/economy.md:L312
+"- Hustle education bonuses stack additively (multipliers add to 1, flats add outright) before upgrade multipliers; card details include unlocked bonus descriptions drawn from the same data set.",1,,other,linear,docs/archive/economy/economy.md:L320
 """phase"": ""Phase 1"",",1,,other,linear,docs/normalized_economy.json:L3
 """base_income"": 30,",30,,income,linear,docs/normalized_economy.json:L13
 """variance"": 0.2,",0.2,,income,linear,docs/normalized_economy.json:L14

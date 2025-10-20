@@ -3,6 +3,10 @@
 ## Game Concept
 Online Hustle Simulator is a browser-based incremental game about orchestrating your side-hustle empire one in-world day at a time. Each morning you receive a fresh stack of hours, decide how to divide them between quick gigs, study tracks, and asset upkeep, then close the day to trigger payouts. The loop rewards planning, lighthearted experimentation, and a healthy obsession with passive income spreadsheets.
 
+## Handbook Starting Points
+- **Economy numbers:** `docs/economy-quickref.md` surfaces the cash, time, assistant, and asset levers designers tweak daily.
+- **Feature map:** `docs/features/overview.md` links directly to the runtime modules for each major system, with QA flows in `docs/features/playtest-scripts.md`.
+
 ## Gameplay Loop & Systems
 - **Daily Time Budget** – Every in-game day begins with 14 base hours (plus permanent bonuses). Hustles, asset setup, and upkeep can still reserve time automatically, while study tracks now queue manual focus blocks that you log when you actually sit down to learn. Assistants can be hired (up to four) for +2 hours each, but payroll hits every morning; you can always fire them if cash or time dips too low. Manage the crew from DownWork’s new Hire people tab, and turbo coffee grants up to three one-hour boosts per day.
 - **Audience Visit Simulation** – Blog assets now tick up daily visits as you spend hours, mirroring the passive income math. Hourly progress fills a daily counter, day close rolls the total into lifetime reach, and the system is ready for future audience-driven assets.
@@ -121,8 +125,7 @@ Each asset supports multiple instances, tracks setup progress, and rolls a daily
 ## Economy Balancing Workbench
 - Explore early-game economy tweaks with the Streamlit dashboard in `tools/balancingWorkbench/`. Install dependencies with
   `pip install -r tools/balancingWorkbench/requirements.txt` and launch via `streamlit run tools/balancingWorkbench/app.py`.
-- Adjust sliders to test new multipliers; export refreshed plots into `docs/economy_sim_report_assets` using the built-in
-  snapshot button before updating `docs/normalized_economy.json`.
+- Adjust sliders to test new multipliers; stash any heavy exports under `docs/archive/economy_sim_report_assets/` (or a local scratch space) before updating `docs/normalized_economy.json`.
 
 ## Developer State Explorer
 - Append `?view=developer` (or `?ui=developer`) to the game URL to load a dedicated developer dashboard.
@@ -159,4 +162,4 @@ Each asset supports multiple instances, tracks setup progress, and rolls a daily
 - **Adding Upgrades** – Update `UPGRADES` in `src/game/upgrades.js` and ensure new upgrade IDs are handled in requirement checks.
 - After modifying content arrays, run through a manual day cycle: start builds, end the day, confirm log messaging, and verify save/load behaviour.
 
-For design context and tuning notes, see `docs/features/day-driven-assets.md`. Recent gameplay adjustments are tracked in `docs/changelog.md`.
+For design context and tuning notes, start with `docs/features/overview.md` and `docs/economy-quickref.md`. Recent gameplay adjustments are tracked in `docs/changelog.md`.

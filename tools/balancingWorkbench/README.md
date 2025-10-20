@@ -10,7 +10,7 @@ lets designers explore how tweaks to core levers ripple through the early-game e
   passive blog, freelance writing, and survey sprints.
 - Matplotlib visualizations highlight daily cashflow, education return-on-investment, and a sensitivity curve for the selected
   multiplier.
-- A one-click snapshot button exports PNG copies of every chart into `docs/economy_sim_report_assets` for documentation.
+- A one-click snapshot button exports PNG copies of every chart into `docs/archive/economy_sim_report_assets/` for documentation.
 
 ## Getting Started
 
@@ -34,9 +34,8 @@ lets designers explore how tweaks to core levers ripple through the early-game e
 ## Committing New Targets
 
 - When a tuning session lands on a set of multipliers you want to ship, update the corresponding entries in
-  `docs/normalized_economy.json` and rerun `npm run rebuild-economy-docs` to refresh the spec.
-- Drop the generated PNGs from `docs/economy_sim_report_assets` into your design review notes (see `docs/economy_sim_report.md`
-  for context).
-- Record the decision in a `docs/features/` design note and add an entry to `docs/changelog.md` summarizing the gameplay impact.
+  `docs/normalized_economy.json` and refresh the relevant rows in `docs/economy-quickref.md`.
+- Drop the generated PNGs from `docs/archive/economy_sim_report_assets/` into your design review notes.
+- Capture the final call in `docs/changelog.md` so the team can trace balancing history.
 
 Happy balancing! Keep the tone upbeat and players will feel the uplift in every milestone.

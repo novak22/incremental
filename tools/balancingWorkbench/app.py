@@ -22,7 +22,7 @@ if str(ROOT) not in sys.path:
 from scripts import economy_simulations as sim
 from scripts.economy_simulations import SimulationConfig, compute_education_roi, summarize_asset_plan
 DATA_PATH = ROOT / "docs" / "normalized_economy.json"
-OUTPUT_DIR = ROOT / "docs" / "economy_sim_report_assets"
+OUTPUT_DIR = ROOT / "docs" / "archive" / "economy_sim_report_assets"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 
@@ -332,7 +332,7 @@ def main() -> None:
                 "sensitivity": sensitivity_buffer,
             },
         )
-        st.success("Saved current plots to docs/economy_sim_report_assets")
+        st.success("Saved current plots to docs/archive/economy_sim_report_assets")
 
     st.markdown("---")
     st.markdown(
@@ -340,9 +340,8 @@ def main() -> None:
         **Next Steps**
 
         - When you settle on a tuning target, record the final multipliers above.
-        - Update `docs/normalized_economy.json` with the new values, rerun `npm run rebuild-economy-docs`,
-          and refresh `docs/economy_sim_report.md` assets.
-        - Capture the generated PNGs from this workbench in design reviews.
+        - Update `docs/normalized_economy.json` with the new values and revise `docs/economy-quickref.md` where those knobs surface.
+        - Capture the generated PNGs from this workbench in design reviews (they live in `docs/archive/economy_sim_report_assets/`).
         """
     )
 

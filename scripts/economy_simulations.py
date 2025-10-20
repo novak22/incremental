@@ -11,7 +11,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 DATA_PATH = Path('docs/normalized_economy.json')
-OUTPUT_DIR = Path('docs/economy_sim_report_assets')
+OUTPUT_DIR = Path('docs/archive/economy_sim_report_assets')
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 STARTING_CASH = 45
