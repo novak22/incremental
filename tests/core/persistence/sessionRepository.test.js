@@ -3,6 +3,12 @@ import assert from 'node:assert/strict';
 
 import { SessionRepository } from '../../../src/core/persistence/sessionRepository.js';
 
+const silentLogger = { error: () => {} };
+
+function createRepository(options = {}) {
+  return new SessionRepository({ logger: silentLogger, ...options });
+}
+
 function createMockStorage(initial = {}) {
   const values = new Map(Object.entries(initial));
   return {
@@ -25,7 +31,7 @@ test('ensureSession migrates legacy snapshot data into the default slot', () => 
     sessionMetadata: { branch: 'exp-a' }
   });
   const storage = createMockStorage({ 'sim-key': legacySnapshot });
-  const repository = new SessionRepository({ storageKey: 'sim-key', storage });
+  const repository = createRepository({ storageKey: 'sim-key', storage });
 
   const session = repository.ensureSession();
 
@@ -60,7 +66,7 @@ test('deleteSession removes the snapshot and activates the next available slot',
     'sim:session:beta': JSON.stringify({ foo: 'b' })
   });
 
-  const repository = new SessionRepository({ storageKey: 'sim', storage });
+  const repository = createRepository({ storageKey: 'sim', storage });
   const result = repository.deleteSession('alpha');
 
   assert.equal(result.removed?.id, 'alpha');
@@ -82,7 +88,7 @@ test('setActiveSession merges updates into an existing slot and marks it active'
     }
   };
   const storage = createMockStorage({ 'sim:sessions': JSON.stringify(index) });
-  const repository = new SessionRepository({ storageKey: 'sim', storage });
+  const repository = createRepository({ storageKey: 'sim', storage });
 
   const updated = repository.setActiveSession({
     id: 'beta',

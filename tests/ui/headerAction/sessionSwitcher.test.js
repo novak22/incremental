@@ -43,7 +43,8 @@ function setupSessionSwitcher({
     onExportSession,
     onImportSession,
     alert: safeAlert,
-    now
+    now,
+    logger: { error: () => {} }
   });
 }
 

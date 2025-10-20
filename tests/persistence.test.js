@@ -13,6 +13,12 @@ import {
   tryCatch
 } from '../src/core/persistence/result.js';
 
+const silentLogger = { error: () => {} };
+
+function createSessionRepository(options = {}) {
+  return new SessionRepository({ logger: silentLogger, ...options });
+}
+
 function createPersistence({ storage, migrations = [] } = {}) {
   let state;
   const nowValue = 123456789;
@@ -229,7 +235,7 @@ test('legacy session migration retries when snapshot copy fails', () => {
     }
   };
 
-  const repository = new SessionRepository({ storageKey, storage });
+  const repository = createSessionRepository({ storageKey, storage });
 
   const firstIndex = repository.getIndex();
   assert.equal(firstIndex.version, 0);
@@ -271,7 +277,7 @@ test('updateSession survives index refresh failures', () => {
     }
   };
 
-  const repository = new SessionRepository({ storageKey, storage });
+  const repository = createSessionRepository({ storageKey, storage });
   const session = repository.createSession({ id: 'alpha', name: 'Alpha Hustle' });
 
   storage.failReads = true;

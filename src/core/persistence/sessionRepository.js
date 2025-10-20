@@ -36,17 +36,18 @@ function markMigrationAborted(index) {
   }
 }
 
-function safeParseJSON(raw) {
+function safeParseJSON(raw, logger) {
   if (!raw) return null;
   try {
     return JSON.parse(raw);
   } catch (error) {
-    console?.error?.('Failed to parse JSON value', error);
+    logger?.error?.('Failed to parse JSON value', error);
     return null;
   }
 }
 
 function migrateLegacySingleSlotIndex(index, context = {}) {
+  const logger = context.logger;
   const working = context.clone?.(index) ?? { ...index };
   const sessions = isObject(working.sessions) ? working.sessions : {};
   working.sessions = sessions;
@@ -65,7 +66,7 @@ function migrateLegacySingleSlotIndex(index, context = {}) {
   try {
     legacyRaw = storage.getItem(baseStorageKey);
   } catch (error) {
-    console?.error?.('Failed to inspect legacy session storage', error);
+    logger?.error?.('Failed to inspect legacy session storage', error);
     markMigrationAborted(working);
     return working;
   }
@@ -74,7 +75,7 @@ function migrateLegacySingleSlotIndex(index, context = {}) {
     return working;
   }
 
-  const snapshot = safeParseJSON(legacyRaw);
+  const snapshot = safeParseJSON(legacyRaw, logger);
   const sessionId =
     typeof context.defaultSessionId === 'function'
       ? context.defaultSessionId()
@@ -117,14 +118,14 @@ function migrateLegacySingleSlotIndex(index, context = {}) {
     try {
       storage.setItem(storageKey, legacyRaw);
     } catch (error) {
-      console?.error?.('Failed to migrate legacy session snapshot', error);
+      logger?.error?.('Failed to migrate legacy session snapshot', error);
       markMigrationAborted(working);
       return working;
     }
     try {
       storage.removeItem(baseStorageKey);
     } catch (error) {
-      console?.error?.('Failed to remove legacy session snapshot', error);
+      logger?.error?.('Failed to remove legacy session snapshot', error);
     }
   }
 
@@ -137,13 +138,19 @@ function migrateLegacySingleSlotIndex(index, context = {}) {
 const DEFAULT_INDEX_MIGRATIONS = [migrateLegacySingleSlotIndex];
 
 export class SessionRepository {
-  constructor({ storageKey, storage = globalThis?.localStorage, indexMigrations = DEFAULT_INDEX_MIGRATIONS } = {}) {
+  constructor({
+    storageKey,
+    storage = globalThis?.localStorage,
+    indexMigrations = DEFAULT_INDEX_MIGRATIONS,
+    logger = console
+  } = {}) {
     this.baseStorageKey = storageKey;
     this.storage = storage;
     this.indexStorageKey = storageKey ? `${storageKey}:sessions` : undefined;
     this.indexCache = null;
     this.indexCacheRaw = null;
     this.indexMigrationRunner = new StateMigrationRunner({ migrations: indexMigrations });
+    this.logger = logger ?? console;
   }
 
   get storageKey() {
@@ -171,7 +178,7 @@ export class SessionRepository {
       try {
         return cryptoObj.randomUUID();
       } catch (error) {
-        console?.error?.('Failed to generate session id via randomUUID', error);
+        this.logger?.error?.('Failed to generate session id via randomUUID', error);
       }
     }
     return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
@@ -220,7 +227,8 @@ export class SessionRepository {
       createSessionStorageKey: id => this.createSessionStorageKey(id),
       buildSession: descriptor => this.buildSession(descriptor),
       createEmptyIndex: () => this.createEmptyIndex(),
-      clone: value => this.cloneIndex(value)
+      clone: value => this.cloneIndex(value),
+      logger: this.logger
     };
     const migrated = this.indexMigrationRunner.run(baseline, context);
     const migratedSerialized = JSON.stringify(migrated);
@@ -265,7 +273,7 @@ export class SessionRepository {
       try {
         rawValue = this.storage.getItem(this.indexStorageKey);
       } catch (error) {
-        console?.error?.('Failed to read session index', error);
+        this.logger?.error?.('Failed to read session index', error);
         return { index: this.createEmptyIndex(), raw: null };
       }
     }
@@ -273,7 +281,7 @@ export class SessionRepository {
     let index = this.createEmptyIndex();
 
     if (rawValue) {
-      const parsed = safeParseJSON(rawValue);
+      const parsed = safeParseJSON(rawValue, this.logger);
       if (isObject(parsed)) {
         const sessions = isObject(parsed.sessions) ? parsed.sessions : {};
         const sanitizedSessions = {};
@@ -314,7 +322,7 @@ export class SessionRepository {
       this.storage.setItem(this.indexStorageKey, serialized);
       return serialized;
     } catch (error) {
-      console?.error?.('Failed to persist session index', error);
+      this.logger?.error?.('Failed to persist session index', error);
       return null;
     }
   }
@@ -347,7 +355,7 @@ export class SessionRepository {
           this.indexCacheRaw = normalizedRaw ?? raw;
         }
       } catch (error) {
-        console?.error?.('Failed to refresh session index', error);
+        this.logger?.error?.('Failed to refresh session index', error);
         this.indexCacheRaw = undefined;
       }
     }
@@ -405,7 +413,7 @@ export class SessionRepository {
       const updated = this.updateSession(session.id, { storageKey: this.baseStorageKey });
       return updated ?? session;
     } catch (error) {
-      console?.error?.('Failed to inspect legacy session snapshot', error);
+      this.logger?.error?.('Failed to inspect legacy session snapshot', error);
       return session;
     }
   }
@@ -470,7 +478,7 @@ export class SessionRepository {
       }
       return this.baseStorageKey;
     } catch (error) {
-      console?.error?.('Failed to read legacy session snapshot', error);
+      this.logger?.error?.('Failed to read legacy session snapshot', error);
       return this.createSessionStorageKey(this.defaultSessionId());
     }
   }
@@ -585,7 +593,7 @@ export class SessionRepository {
       try {
         this.storage?.removeItem?.(session.storageKey);
       } catch (error) {
-        console?.error?.('Failed to remove session snapshot', error);
+        this.logger?.error?.('Failed to remove session snapshot', error);
       }
     }
     const nextSession = this.ensureSession();

@@ -18,7 +18,8 @@ const state = {
   alert: message =>
     typeof window !== 'undefined' && typeof window.alert === 'function'
       ? window.alert(message)
-      : null
+      : null,
+  logger: console
 };
 
 function getElements() {
@@ -149,7 +150,7 @@ function showAlert(message) {
     try {
       alertFn(message);
     } catch (error) {
-      console?.error?.('Failed to display alert message', error);
+      state.logger?.error?.('Failed to display alert message', error);
     }
   }
 }
@@ -173,7 +174,7 @@ function downloadSessionPayload(payload, sessionName) {
   try {
     serialized = JSON.stringify(payload, null, 2);
   } catch (error) {
-    console?.error?.('Failed to serialize session export', error);
+    state.logger?.error?.('Failed to serialize session export', error);
     showAlert('Could not prepare that export. Please try again.');
     return;
   }
@@ -394,7 +395,7 @@ function runAction(fn, { closeAfter = false } = {}) {
   try {
     result = fn();
   } catch (error) {
-    console?.error?.('Failed to run session action', error);
+    state.logger?.error?.('Failed to run session action', error);
     state.isProcessing = false;
     return;
   }
@@ -408,7 +409,7 @@ function runAction(fn, { closeAfter = false } = {}) {
         render();
       })
       .catch(error => {
-        console?.error?.('Failed to complete session action', error);
+        state.logger?.error?.('Failed to complete session action', error);
       })
       .finally(() => {
         state.isProcessing = false;
@@ -471,7 +472,7 @@ async function exportSessionPayload(activeSession) {
     try {
       await maybeAwait(state.onSaveSession());
     } catch (error) {
-      console?.error?.('Failed to save session prior to export', error);
+      state.logger?.error?.('Failed to save session prior to export', error);
     }
   }
 
@@ -484,7 +485,7 @@ async function exportSessionPayload(activeSession) {
   try {
     payload = await state.onExportSession({ id: activeSession.id });
   } catch (error) {
-    console?.error?.('Failed to export session', error);
+    state.logger?.error?.('Failed to export session', error);
     showAlert('Export stumbled. Give it another shot in a moment.');
     throw error;
   }
@@ -513,7 +514,7 @@ async function readImportFile(file) {
   try {
     contents = await file.text();
   } catch (error) {
-    console?.error?.('Failed to read import file', error);
+    state.logger?.error?.('Failed to read import file', error);
     showAlert('We couldn’t read that file. Please try again.');
     return null;
   }
@@ -526,7 +527,7 @@ async function readImportFile(file) {
   try {
     return JSON.parse(contents);
   } catch (error) {
-    console?.error?.('Failed to parse import file', error);
+    state.logger?.error?.('Failed to parse import file', error);
     showAlert('That file didn’t look like a Hustle save.');
     return null;
   }
@@ -545,7 +546,7 @@ async function importSessionPayload(payload) {
   try {
     return await state.onImportSession({ data: payload, source: 'file' });
   } catch (error) {
-    console?.error?.('Failed to import session payload', error);
+    state.logger?.error?.('Failed to import session payload', error);
     showAlert('Import stumbled. Double-check the file and try again.');
     throw error;
   }
@@ -585,7 +586,7 @@ function handleActivateSession(sessionId) {
     try {
       state.onSaveSession();
     } catch (error) {
-      console?.error?.('Failed to save active session before switching', error);
+      state.logger?.error?.('Failed to save active session before switching', error);
     }
   }
   runAction(() => state.onActivateSession?.({ id: sessionId }), { closeAfter: true });
@@ -727,7 +728,8 @@ export function initSessionSwitcher({
   onSaveSession,
   onExportSession,
   onImportSession,
-  alert
+  alert,
+  logger
 } = {}) {
   state.storage = storage ?? null;
   state.document = rootDocument ?? state.document;
@@ -741,6 +743,7 @@ export function initSessionSwitcher({
   state.onExportSession = typeof onExportSession === 'function' ? onExportSession : null;
   state.onImportSession = typeof onImportSession === 'function' ? onImportSession : null;
   state.alert = typeof alert === 'function' ? alert : state.alert;
+  state.logger = logger ?? state.logger ?? console;
 
   bindElementListeners();
   bindGlobalListeners();
