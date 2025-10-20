@@ -9,15 +9,26 @@
 - **UI Tone**: Write UI copy that is upbeat, encouraging, and lightly whimsical. Favor concise instructions and tooltips that celebrate progress.
 - **CSS & HTML**: Maintain semantic markup and class names that describe purpose rather than presentation.
 
-## Documentation of Features
-- For every new feature, create or update a design note in `docs/features/` detailing goals, player impact, and any tuning parameters.
-- Add a concise bullet to `docs/changelog.md` for gameplay adjustments (drop deeper context in `docs/archive/changelog-legacy.md` if absolutely necessary).
+## Documentation & Knowledge Management
+- Favor the slim handbook: start with the curated index in `docs/docs-inventory.md` and update the existing handbook page that covers your change. Only add a brand new page when a system launches or player onboarding would otherwise be unclear.
+- Reserve `docs/features/` notes for substantial, multi-stage features; cross-link them from the handbook instead of duplicating content.
+- Keep new write-ups concise so the living handbook stays under the 20 % footprint goal. Trim or refactor older sections while you work; if content is no longer active guidance, compress it or move it to the archive (see below).
+- When player-facing behavior shifts, record it in the lightweight format described in `docs/changelog.md`. Use short, dated bullet lists; move long-form background material into the archive instead of expanding the main changelog.
+- Routine maintenance, copy tweaks, or purely technical refactors generally do **not** need handbook edits—update the changelog only if the player experience changes.
+
+### Archiving & Legacy Notes
+- Retire superseded material by moving the file under `docs/archive/` and adding an `archive` row in `docs/docs-inventory.md` that points to the new location.
+- When archiving, leave a brief pointer in the original handbook section (or remove the reference entirely if it is no longer relevant) so readers are not sent to stale instructions.
+- For generated artifacts (economy charts, spreadsheets, etc.), store them under the relevant `docs/archive/<topic>/` folder and link back from the changelog entry that announced the change.
 
 ## README Expectations
 - Whenever gameplay systems change (e.g., resource flow, progression pacing, prestige mechanics), update the `README.md` with an overview of the new system and instructions on how to experience it in-game.
 
-## Manual Testing Requirements
-- Before committing, run through the current build in a desktop browser and validate the primary gameplay loop (resource collection, upgrades, progression triggers). Document any manual test steps and outcomes in commit messages or PR descriptions.
+## Verification & Automation
+- Run `npm test` locally before committing; it executes the Node test suite (including the economy and UI model checks).
+- When your change touches the core loop or economy math, add targeted runs such as `npm test -- tests/gameLifecycle.test.js tests/economyMath.test.js` to confirm the hot paths stay green.
+- For UI wiring or integration updates, run `npm test -- tests/ui/update.integration.test.js` to cover the smoke flow without opening a browser.
+- Document any additional ad-hoc validation (for example, CSV regenerations or manual sanity checks) in the pull request description instead of relying on a browser pass.
 
 ## Repository Structure
 - Place reference material and design documents in `docs/`.
