@@ -2,7 +2,7 @@ import { structuredClone } from '../../helpers.js';
 import { getHustleDefinition } from '../registry.js';
 import { createRegistrySliceManager } from './factory.js';
 
-const { ensureSlice, getSliceState } = createRegistrySliceManager({
+const { ensureSlice } = createRegistrySliceManager({
   sliceKey: 'hustles',
   registryKey: 'hustles',
   definitionLookup: getHustleDefinition,
@@ -22,5 +22,5 @@ const { ensureSlice, getSliceState } = createRegistrySliceManager({
   }
 });
 
-export { ensureSlice, getSliceState };
+export { ensureSlice };
 

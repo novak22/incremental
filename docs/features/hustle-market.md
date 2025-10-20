@@ -41,7 +41,7 @@
 ## Persistence Helpers
 - `ensureHustleMarketState` guarantees the `state.hustleMarket` slice exists with `{ lastRolledAt, lastRolledOnDay, offers: [], accepted: [] }`.
 - Invalid timestamps or negative days clamp to safe defaults while malformed offers are sanitized (ensuring template/variant ids and day windows are valid).
-- `createDefaultHustleMarketState`, `normalizeHustleMarketOffer`, `cloneHustleMarketState`, and `clearHustleMarketState` live alongside the ensure helper for future orchestration tools. Accepted offers are normalized into `accepted` entries so expired claims are pruned automatically and the corresponding offers are marked as `claimed`.
+- `createDefaultHustleMarketState` and `normalizeHustleMarketOffer` live alongside the ensure helper for future orchestration tools. Accepted offers are normalized into `accepted` entries so expired claims are pruned automatically and the corresponding offers are marked as `claimed`.
 
 ## Acceptance Flow
 - `acceptHustleOffer(offerId, { state })` reads the offer metadata, accepts an action instance through `acceptActionInstance`, marks the offer as claimed, and records an accepted entry with `acceptedOnDay`, `deadlineDay`, required hours, and payout schedule.
