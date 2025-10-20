@@ -1,5 +1,5 @@
 import { getElement } from '../../elements/registry.js';
-import todoWidget from './widgets/todoWidget.js';
+import layoutManager from './widgets/layoutManager.js';
 
 const state = {
   primaryButton: null,
@@ -7,15 +7,39 @@ const state = {
   primaryButtonMinWidth: null
 };
 
+function getTodoWidget() {
+  const controller = layoutManager.getWidgetController('todo');
+  return controller || null;
+}
+
 function resolveButtons() {
   const nodes = getElement('headerActionButtons') || {};
   state.primaryButton = nodes.endDayButton || state.primaryButton;
   return state;
 }
 
+function resolveTodoState() {
+  const todoWidget = getTodoWidget();
+  if (!todoWidget) {
+    return {
+      hasTasks: false,
+      nextTask: null,
+      controller: null
+    };
+  }
+
+  const hasTasks = typeof todoWidget.hasPendingTasks === 'function' ? todoWidget.hasPendingTasks() : false;
+  const nextTask = hasTasks && typeof todoWidget.peekNextTask === 'function'
+    ? todoWidget.peekNextTask()
+    : null;
+
+  return { hasTasks, nextTask, controller: todoWidget };
+}
+
 function handlePrimaryClick(event) {
   event.preventDefault();
-  const executed = todoWidget.runNextTask();
+  const controller = getTodoWidget();
+  const executed = typeof controller?.runNextTask === 'function' ? controller.runNextTask() : false;
   if (executed) {
     return;
   }
@@ -45,8 +69,7 @@ function renderAction(model) {
   const button = state.primaryButton;
   if (!button) return;
 
-  const hasTasks = todoWidget.hasPendingTasks();
-  const nextTask = todoWidget.peekNextTask();
+  const { hasTasks, nextTask } = resolveTodoState();
   const label = hasTasks ? 'Next Task' : 'Next Day';
   const title = hasTasks
     ? (nextTask?.title ? `Run next: ${nextTask.title}` : 'Run the next queued task for today.')

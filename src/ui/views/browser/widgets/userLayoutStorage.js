@@ -1,4 +1,5 @@
 const STORAGE_KEY = 'browser.widgets.layout';
+const DEFAULT_LAYOUT_ID = 'default';
 
 function getStorage() {
   if (typeof window === 'undefined') {
@@ -11,10 +12,53 @@ function getStorage() {
   }
 }
 
-function loadLayoutOrder(storageKey = STORAGE_KEY) {
+function normalizeLayoutIdentifier(identifier) {
+  if (!identifier) {
+    return {
+      id: DEFAULT_LAYOUT_ID,
+      storageKey: STORAGE_KEY
+    };
+  }
+
+  if (typeof identifier === 'string') {
+    const key = identifier.trim();
+    return {
+      id: DEFAULT_LAYOUT_ID,
+      storageKey: key || STORAGE_KEY
+    };
+  }
+
+  if (typeof identifier === 'object') {
+    const layoutId = typeof identifier.id === 'string' ? identifier.id.trim() : '';
+    const storageKey =
+      typeof identifier.storageKey === 'string' && identifier.storageKey.trim()
+        ? identifier.storageKey.trim()
+        : STORAGE_KEY;
+    return {
+      id: layoutId || DEFAULT_LAYOUT_ID,
+      storageKey
+    };
+  }
+
+  return {
+    id: DEFAULT_LAYOUT_ID,
+    storageKey: STORAGE_KEY
+  };
+}
+
+function resolveStorageKey(identifier) {
+  const normalized = normalizeLayoutIdentifier(identifier);
+  if (normalized.id === DEFAULT_LAYOUT_ID) {
+    return normalized.storageKey;
+  }
+  return `${normalized.storageKey}.${normalized.id}`;
+}
+
+function loadLayoutOrder(layoutIdentifier) {
   const storage = getStorage();
   if (!storage) return [];
   try {
+    const storageKey = resolveStorageKey(layoutIdentifier);
     const stored = JSON.parse(storage.getItem(storageKey));
     if (Array.isArray(stored)) {
       return stored.filter(id => typeof id === 'string' && id);
@@ -25,10 +69,11 @@ function loadLayoutOrder(storageKey = STORAGE_KEY) {
   return [];
 }
 
-function persistLayoutOrder(order = [], storageKey = STORAGE_KEY) {
+function persistLayoutOrder(order = [], layoutIdentifier) {
   const storage = getStorage();
   if (!storage) return;
   try {
+    const storageKey = resolveStorageKey(layoutIdentifier);
     if (Array.isArray(order) && order.length) {
       storage.setItem(storageKey, JSON.stringify(order));
     } else {
@@ -65,7 +110,10 @@ function getOrderedDefinitions(definitions = [], storedOrder = []) {
 
 export {
   STORAGE_KEY,
+  DEFAULT_LAYOUT_ID,
   getStorage,
+  normalizeLayoutIdentifier,
+  resolveStorageKey,
   loadLayoutOrder,
   persistLayoutOrder,
   getOrderedWidgetIds,
@@ -74,7 +122,10 @@ export {
 
 export default {
   STORAGE_KEY,
+  DEFAULT_LAYOUT_ID,
   getStorage,
+  normalizeLayoutIdentifier,
+  resolveStorageKey,
   loadLayoutOrder,
   persistLayoutOrder,
   getOrderedWidgetIds,

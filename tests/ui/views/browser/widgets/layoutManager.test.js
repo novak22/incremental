@@ -12,7 +12,7 @@ import {
 const ORIGINAL_WINDOW = globalThis.window;
 const ORIGINAL_DOCUMENT = globalThis.document;
 
-function setupDom(widgetIds = ['todo', 'apps', 'bank']) {
+function setupDom(widgetIds = ['todo', 'apps', 'bank'], managerOptions = {}) {
   const templateHtml = widgetIds
     .map(
       id => `
@@ -49,7 +49,8 @@ function setupDom(widgetIds = ['todo', 'apps', 'bank']) {
   registryState.record = { ...baseRecord };
 
   const manager = createLayoutManager({
-    resolveMountRecord: () => registryState.record
+    resolveMountRecord: () => registryState.record,
+    ...managerOptions
   });
 
   registryState.record = { ...baseRecord, layoutManager: manager };
@@ -83,22 +84,25 @@ test('renderLayout mounts controllers for registry definitions', async () => {
   const { dom, container, manager } = setupDom();
 
   const mountLog = [];
-  const controllers = new Map();
+  const factoryCalls = new Map();
 
   const registerStub = id => {
-    const controller = {
-      mounted: false,
-      mount: ({ container: mountContainer }) => {
-        controller.mounted = true;
-        mountLog.push({ id, container: mountContainer });
-      },
-      isMounted: () => controller.mounted
-    };
-    controllers.set(id, controller);
     registerWidget({
       id,
       title: id,
-      factory: () => controller,
+      factory: () => {
+        const count = (factoryCalls.get(id) || 0) + 1;
+        factoryCalls.set(id, count);
+        const controller = {
+          mounted: false,
+          mount: ({ container: mountContainer }) => {
+            controller.mounted = true;
+            mountLog.push({ id, container: mountContainer });
+          },
+          isMounted: () => controller.mounted
+        };
+        return controller;
+      },
       featureFlags: []
     });
   };
@@ -122,6 +126,11 @@ test('renderLayout mounts controllers for registry definitions', async () => {
     // Second render should reuse existing controllers without remounting.
     manager.renderLayout();
     assert.equal(mountLog.length, 3, 'controllers should not remount when already mounted');
+    assert.deepEqual(
+      Object.fromEntries(factoryCalls.entries()),
+      { todo: 1, apps: 1, bank: 1 },
+      'each widget should instantiate only once per host'
+    );
   } finally {
     teardownDom(dom, manager);
   }
@@ -131,21 +140,26 @@ test('setLayoutOrder persists sanitized ordering and rerenders the container', a
   const { dom, container, manager } = setupDom();
 
   const mountCounts = new Map();
+  const factoryCalls = new Map();
 
   const registerStub = id => {
-    const controller = {
-      mounted: false,
-      mount: ({ container: mountContainer }) => {
-        controller.mounted = true;
-        mountCounts.set(id, (mountCounts.get(id) || 0) + 1);
-        controller.container = mountContainer;
-      },
-      isMounted: () => controller.mounted
-    };
     registerWidget({
       id,
       title: id,
-      factory: () => controller,
+      factory: () => {
+        const count = (factoryCalls.get(id) || 0) + 1;
+        factoryCalls.set(id, count);
+        const controller = {
+          mounted: false,
+          mount: ({ container: mountContainer }) => {
+            controller.mounted = true;
+            mountCounts.set(id, (mountCounts.get(id) || 0) + 1);
+            controller.container = mountContainer;
+          },
+          isMounted: () => controller.mounted
+        };
+        return controller;
+      },
       featureFlags: []
     });
   };
@@ -181,6 +195,59 @@ test('setLayoutOrder persists sanitized ordering and rerenders the container', a
         bank: 1
       },
       'controllers should mount only once even after reordering'
+    );
+    assert.deepEqual(
+      Object.fromEntries(factoryCalls.entries()),
+      {
+        todo: 1,
+        apps: 1,
+        bank: 1
+      },
+      'factories should only run once for each widget controller instance'
+    );
+  } finally {
+    teardownDom(dom, manager);
+  }
+});
+
+test('layout manager namespaces storage by layout identifier', async () => {
+  const layoutId = 'evening';
+  const storageKey = `browser.widgets.layout.${layoutId}`;
+  const { dom, container, manager } = setupDom(['todo', 'apps', 'bank'], {
+    storageKey: 'browser.widgets.layout',
+    layoutId
+  });
+
+  const registerStub = id => {
+    registerWidget({
+      id,
+      title: id,
+      factory: () => ({
+        mount: () => {},
+        isMounted: () => true
+      }),
+      featureFlags: []
+    });
+  };
+
+  resetWidgetRegistry();
+  ['todo', 'apps', 'bank'].forEach(registerStub);
+
+  try {
+    dom.window.localStorage.setItem(storageKey, JSON.stringify(['apps', 'bank', 'todo']));
+
+    const order = manager.renderLayout();
+    assert.deepEqual(order, ['apps', 'bank', 'todo']);
+    assert.deepEqual(getRenderedOrder(container), ['apps', 'bank', 'todo']);
+
+    manager.setLayoutOrder(['todo']);
+    const stored = JSON.parse(dom.window.localStorage.getItem(storageKey));
+    assert.deepEqual(stored, ['todo', 'apps', 'bank']);
+
+    assert.equal(
+      dom.window.localStorage.getItem('browser.widgets.layout'),
+      null,
+      'default layout key should remain untouched when using namespaced identifiers'
     );
   } finally {
     teardownDom(dom, manager);

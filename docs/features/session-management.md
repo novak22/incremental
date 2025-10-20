@@ -27,9 +27,16 @@
   }
   ```
 - Each session entry records its `storageKey`, allowing the default slot to keep using the legacy `online-hustle-sim-v2` blob when present.
+- On initialization the repository migrates any pre-session single-slot save stored at `online-hustle-sim-v2` into the default session, copying the snapshot to `online-hustle-sim-v2:session:default`, preserving `lastSaved`, and deleting the stale root key to avoid duplicates. The migration is versioned so future session index changes can build on the same runner.
 - `StatePersistence` now resolves the snapshot key via the session repository before every load/save and updates `lastSaved` metadata after successful writes.
 - `createStorage` wraps the repository helpers so switching the active session automatically replays the existing persistence pipeline (`loadState`, migrations, default seeding, etc.).
 - Tests cover creating a second session, swapping back to the primary slot, and pruning extra saves to ensure the index stays tidy.
+
+## Browser Session Switcher
+- The browser chrome now includes a "Active session" pill next to the End Day button. It surfaces the slot name, the most recent save timestamp, and opens a management panel on click.
+- The session panel lists every slot with quick actions to activate, rename, or delete entries. Destructive steps (delete/reset) prompt for confirmation before clearing progress.
+- Starting a new session or resetting the active slot routes through the persistence helpers so the fresh state loads instantly and all UI subscriptions are rehydrated.
+- A "Start new session" shortcut spins up an empty slot and switches focus immediately, while "Reset current session" wipes the active slot’s snapshot but keeps its name for rapid iteration.
 
 ## Follow-Up Ideas
 - Surface the session list in the developer HUD with quick actions to clone or archive a slot.

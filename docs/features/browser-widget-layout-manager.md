@@ -15,13 +15,14 @@ Allow the browser home screen to assemble its widget grid dynamically so new wid
 4. Mount or re-mount each widget controller with the fresh container node so render calls see the latest DOM.
 
 ## Persistence Notes
-- Orders are stored under the `browser.widgets.layout` key; empty layouts clear the entry instead of leaving stale arrays behind.
+- Orders are stored under `browser.widgets.layout` for the default layout and `browser.widgets.layout.<layoutId>` when hosts opt into named layouts. Empty layouts clear their corresponding entry instead of leaving stale arrays behind.
 - Sanitization filters unknown widget IDs and appends any new registry entries so the layout stays complete even after updates.
 - `setLayoutOrder` re-renders the layout immediately, making it safe to call after drag interactions or scripted swaps.
 
 ## Implementation Details
 - `src/ui/views/browser/widgets/layoutManager.js` exposes a `createLayoutManager` factory so each widget host can keep isolated controller maps, layout order, and mount bookkeeping. The module still exports a default instance that proxies to the homepage host for legacy callers.
 - `src/ui/views/browser/widgets/userLayoutStorage.js` mirrors the lightweight storage helpers used by the apps widget and wraps all ordering logic.
+- Layout identifiers default to `default`, but hosts can provide `{ id, storageKey }` tuples so separate layouts map to their own storage entries while reusing the shared helpers.
 - `index.html` now exposes widget markup as `<template>` nodes, keeping the live container empty until the manager activates.
 - Tests use `jsdom` to provide real template fragments so the manager can exercise its cloning logic during unit runs.
 

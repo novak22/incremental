@@ -95,6 +95,22 @@ const resolvers = {
     homeButton: root.getElementById('browser-home-button'),
     endDayButton: root.getElementById('browser-session-button')
   }),
+  sessionSwitcher: root => {
+    const container = root.getElementById('browser-session-switcher');
+    if (!container) return null;
+    return {
+      container,
+      summaryButton: container.querySelector('[data-session-summary]'),
+      name: container.querySelector('[data-session-name]'),
+      timestamp: container.querySelector('[data-session-timestamp]'),
+      panel: container.querySelector('[data-session-panel]'),
+      list: container.querySelector('[data-session-list]'),
+      empty: container.querySelector('[data-session-empty]'),
+      createButton: container.querySelector('[data-session-create]'),
+      resetButton: container.querySelector('[data-session-reset]'),
+      closeButton: container.querySelector('[data-session-close]')
+    };
+  },
   browserNotifications: root => {
     const container = resolveNotificationContainer(root);
     if (!container) return null;
