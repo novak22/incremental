@@ -22,6 +22,14 @@ export default function renderQualityPanel({ instance, formatRange }) {
   const seoGrade = instance?.seo?.grade || 'F';
   const backlinkScore = Math.max(1, Math.min(5, Math.round(Number(instance?.backlinks?.score) || 1)));
   const backlinkCount = Math.max(0, Math.round(Number(instance?.backlinks?.count) || 0));
+  const projectedDailyVisits = Math.max(
+    0,
+    Math.round(Number(instance?.visits?.projectedPerDay) || 0)
+  );
+  const currentDailyVisits = Math.max(
+    0,
+    Math.round(Number(instance?.visits?.today) || 0)
+  );
   const backlinkNext = Number.isFinite(Number(instance?.backlinks?.nextTarget))
     ? Math.max(0, Math.round(Number(instance.backlinks.nextTarget)))
     : null;
@@ -43,6 +51,14 @@ export default function renderQualityPanel({ instance, formatRange }) {
     {
       label: 'Backlink rank',
       value: backlinkDetails
+    },
+    {
+      label: 'Daily visits target',
+      value: `${projectedDailyVisits.toLocaleString()} / day`
+    },
+    {
+      label: 'Visits logged today',
+      value: `${currentDailyVisits.toLocaleString()} so far`
     }
   ];
   entries.forEach(entry => {
