@@ -35,6 +35,3 @@ export const ACTIONS = [...INSTANT_ACTIONS, ...STUDY_ACTIONS];
 
 export { INSTANT_ACTIONS, STUDY_ACTIONS };
 
-export function getActionDefinitions() {
-  return ACTIONS;
-}

@@ -52,8 +52,3 @@ export function getQualityActionAvailability(definition, instance, action, state
   return evaluateActionAvailability(action, context);
 }
 
-export default {
-  createActionContext,
-  evaluateActionAvailability,
-  getQualityActionAvailability
-};

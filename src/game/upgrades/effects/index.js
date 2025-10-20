@@ -2,7 +2,7 @@ import { getState, getUpgradeState } from '../../../core/state.js';
 import { getUpgradeDefinition } from '../../../core/state/registry.js';
 import { getUpgradeQuantity } from './apply.js';
 
-export { collectEffectSources, getAssetEffectMultiplier, getHustleEffectMultiplier, getUpgradeQuantity } from './apply.js';
+export { collectEffectSources, getAssetEffectMultiplier, getHustleEffectMultiplier } from './apply.js';
 
 function adjustLedgerEntry(target, provides = 0, consumes = 0) {
   target.provided = (target.provided || 0) + provides;

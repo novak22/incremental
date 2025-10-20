@@ -124,15 +124,3 @@ export function getQualityLevelSummary(definition) {
   }));
 }
 
-export default {
-  calculateEligibleQualityLevel,
-  ensureInstanceQuality,
-  getInstanceQualityRange,
-  getNextQualityLevel,
-  getOverallQualityRange,
-  getQualityConfig,
-  getQualityLevel,
-  getQualityLevelSummary,
-  getSortedLevels,
-  getHighestQualityLevel
-};

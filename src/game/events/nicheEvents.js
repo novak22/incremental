@@ -82,8 +82,3 @@ export function createNicheEvents({ clampChance, buildEventFromBlueprint, hasEve
   };
 }
 
-export function getNicheEventsForState(state, nicheId) {
-  return getNicheEvents(state, nicheId);
-}
-
-export { getNicheEvents };

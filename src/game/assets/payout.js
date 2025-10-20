@@ -8,7 +8,7 @@ import { applyIncomeEvents, maybeTriggerAssetEvents } from '../events/index.js';
 import {
   getInstanceQualityRange,
   getOverallQualityRange
-} from './quality.js';
+} from './quality/levels.js';
 
 export function getDailyIncomeRange(definition) {
   return getOverallQualityRange(definition);

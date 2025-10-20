@@ -117,6 +117,3 @@ export function createAssetEvents({ clampChance, buildEventFromBlueprint }) {
   };
 }
 
-export function getAssetEventsForState(state, assetId, instanceId) {
-  return getAssetEvents(state, assetId, instanceId);
-}

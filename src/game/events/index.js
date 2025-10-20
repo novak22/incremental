@@ -6,14 +6,14 @@ import { createAssetEvents } from './assetEvents.js';
 import { createNicheEvents } from './nicheEvents.js';
 import { logAssetEventEnd, logNicheEventEnd } from './logging.js';
 
-export function clampChance(value) {
+function clampChance(value) {
   const numeric = Number(value);
   if (!Number.isFinite(numeric) || numeric <= 0) return 0;
   if (numeric >= 1) return 1;
   return numeric;
 }
 
-export function buildEventFromBlueprint({ state, blueprint, target, context, day }) {
+function buildEventFromBlueprint({ state, blueprint, target, context, day }) {
   const labelFactory = blueprint.label;
   const label = typeof labelFactory === 'function' ? labelFactory(context) : labelFactory || 'Event';
   const durationRaw = typeof blueprint.duration === 'function' ? blueprint.duration(context) : blueprint.duration;
@@ -163,7 +163,6 @@ export function advanceEventsAfterDay(day) {
 export {
   getAssetEvents,
   getNicheEvents,
-  hasEventWithTone,
   maybeSpawnNicheEvents,
   maybeTriggerAssetEvents,
   triggerQualityActionEvents

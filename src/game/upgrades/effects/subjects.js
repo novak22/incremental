@@ -11,7 +11,7 @@ function hasIntersection(a = [], b = []) {
   return b.some(value => set.has(value));
 }
 
-export function normalizeTarget(target) {
+function normalizeTarget(target) {
   if (!target || typeof target !== 'object') {
     return createEmptyScope();
   }

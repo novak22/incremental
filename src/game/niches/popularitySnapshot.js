@@ -17,13 +17,13 @@ function roundMultiplier(value) {
   return Math.max(0, Math.round(numeric * 100) / 100);
 }
 
-export function clampScore(value) {
+function clampScore(value) {
   const numeric = Number(value);
   if (!Number.isFinite(numeric)) return null;
   return Math.max(0, Math.min(100, Math.round(numeric)));
 }
 
-export function describePopularity(score) {
+function describePopularity(score) {
   const numeric = Number(score);
   const target = Number.isFinite(numeric) ? numeric : NEUTRAL_SCORE;
   const band = POPULARITY_BANDS.find(entry => target >= entry.min) || POPULARITY_BANDS.at(-1);
@@ -114,4 +114,3 @@ export function computePopularitySnapshot({ multiplier, existing }) {
   };
 }
 
-export { POPULARITY_BANDS, NEUTRAL_SCORE };

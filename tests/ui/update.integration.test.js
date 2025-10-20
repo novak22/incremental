@@ -908,7 +908,7 @@ test('quality actions immediately refresh dashboard recommendations and header p
   const invalidation = await import('../../src/core/events/invalidationBus.js');
   const todoStateModule = await import('../../src/ui/views/browser/widgets/todoState.js');
   const todoWidgetModule = await import('../../src/ui/views/browser/widgets/todoWidget.js');
-  const qualityModule = await import('../../src/game/assets/quality.js');
+  const { performQualityAction } = await import('../../src/game/assets/quality/actions.js');
 
   const browserView = browserViewModule.default;
   const originalView = viewManager.getActiveView();
@@ -964,7 +964,7 @@ test('quality actions immediately refresh dashboard recommendations and header p
   assert.match(initialTask.meta || '', /to go/i, 'expected header to surface quality progress');
   assert.equal(headerButton.dataset.actionId, initialTask.id, 'expected header button to point at the next quality task');
 
-  qualityModule.performQualityAction(definition.id, instance.id, 'writePost');
+  performQualityAction(definition.id, instance.id, 'writePost');
 
   const refreshedEntry = findQualityEntry();
   assert.ok(refreshedEntry, 'expected quality recommendation to persist after running the action');

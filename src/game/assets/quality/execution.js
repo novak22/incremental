@@ -287,9 +287,3 @@ export function updateProgressAndLevel({
   return { qualityUpdated: true, quality };
 }
 
-export default {
-  applyCosts,
-  logCompletion,
-  updateProgressAndLevel,
-  validateReadiness
-};

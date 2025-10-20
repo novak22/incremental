@@ -2,7 +2,7 @@ import { formatHours, formatMoney } from '../../../../core/helpers.js';
 import { summarizeAssetRequirements } from '../../../requirements.js';
 import { describeInstantHustleEducationBonuses } from '../../../educationEffects.js';
 
-export function formatHourDetail(hours, effective) {
+function formatHourDetail(hours, effective) {
   if (!hours) return '⏳ Time: <strong>Instant</strong>';
   const base = formatHours(hours);
   if (Number.isFinite(Number(effective)) && Math.abs(effective - hours) > 0.01) {
@@ -11,12 +11,12 @@ export function formatHourDetail(hours, effective) {
   return `⏳ Time: <strong>${base}</strong>`;
 }
 
-export function formatCostDetail(cost) {
+function formatCostDetail(cost) {
   if (!cost) return null;
   return `💵 Cost: <strong>$${formatMoney(cost)}</strong>`;
 }
 
-export function formatPayoutDetail(payout) {
+function formatPayoutDetail(payout) {
   if (!payout || !payout.amount) return null;
   const base = `💰 Payout: <strong>$${formatMoney(payout.amount)}</strong>`;
   if (payout.delaySeconds) {

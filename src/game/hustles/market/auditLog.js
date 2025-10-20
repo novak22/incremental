@@ -115,12 +115,4 @@ function attachAuditDebugTools({ getState, getMarketAvailableOffers }) {
   };
 }
 
-const auditLog = {
-  attachAuditDebugTools,
-  getMarketRollAuditLog,
-  recordMarketRollAudit
-};
-
 export { attachAuditDebugTools, getMarketRollAuditLog, recordMarketRollAudit };
-
-export default auditLog;
