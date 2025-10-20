@@ -251,3 +251,41 @@ test('legacy session migration retries when snapshot copy fails', () => {
   assert.ok(store.has(indexKey));
 });
 
+test('updateSession survives index refresh failures', () => {
+  const storageKey = 'session-refresh';
+  const indexKey = `${storageKey}:sessions`;
+  const store = new Map();
+  const storage = {
+    failReads: false,
+    getItem(key) {
+      if (this.failReads && key === indexKey) {
+        throw new Error('simulated read failure');
+      }
+      return store.has(key) ? store.get(key) : null;
+    },
+    setItem(key, value) {
+      store.set(key, value);
+    },
+    removeItem(key) {
+      store.delete(key);
+    }
+  };
+
+  const repository = new SessionRepository({ storageKey, storage });
+  const session = repository.createSession({ id: 'alpha', name: 'Alpha Hustle' });
+
+  storage.failReads = true;
+
+  const updated = repository.updateSession(session.id, { lastSaved: 2468 });
+
+  assert.ok(updated);
+  assert.equal(updated.id, session.id);
+  assert.equal(updated.lastSaved, 2468);
+
+  storage.failReads = false;
+
+  const fetched = repository.getSession(session.id);
+  assert.ok(fetched);
+  assert.equal(fetched.lastSaved, 2468);
+});
+
