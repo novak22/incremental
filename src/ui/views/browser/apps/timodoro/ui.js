@@ -322,8 +322,14 @@ function createLayout(model = {}, options = {}) {
     emptyMessage: model.todoEmptyMessage
   });
 
+  const pendingEntries = Array.isArray(todoGroups?.normalizedEntries)
+    ? todoGroups.normalizedEntries
+    : Array.isArray(todoGroups?.grouping?.entries)
+      ? todoGroups.grouping.entries.filter(Boolean)
+      : [];
+
   fragment.appendChild(createTimelineCard(model, {
-    pendingEntries: todoGroups?.grouping?.entries || [],
+    pendingEntries,
     onRun: options.onRun
   }));
 

@@ -55,7 +55,7 @@ function createContext(document) {
 }
 
 test('buildTodoGroups normalizes queue entries via shared builder', () => {
-  const { items } = buildTodoGroups([
+  const { items, normalizedEntries } = buildTodoGroups([
     {
       id: 'test-hustle',
       focusCategory: 'hustle',
@@ -70,6 +70,12 @@ test('buildTodoGroups normalizes queue entries via shared builder', () => {
   const detail = hustleItems[0]?.detail || '';
   assert.ok(detail.includes('$150'), 'detail surfaces payout text');
   assert.ok(detail.includes('2h'), 'detail includes normalized duration');
+
+  assert.equal(normalizedEntries.length, 1, 'normalized entries list mirrors pending queue');
+  assert.ok(
+    normalizedEntries[0]?.durationText?.includes('2h'),
+    'normalized entries reuse shared duration label'
+  );
 });
 
 test('timodoro component renders layout and populates lists', t => {
@@ -89,7 +95,8 @@ test('timodoro component renders layout and populates lists', t => {
         durationHours: 2,
         meta: 'Client work',
         moneyCost: 120,
-        focusCategory: 'hustle'
+        focusCategory: 'hustle',
+        onClick: () => ({ success: true })
       },
       {
         title: 'Research module',
@@ -155,6 +162,20 @@ test('timodoro component renders layout and populates lists', t => {
   ];
   assert.equal(studyItems.length, 1, 'study bucket renders education entry');
   assert.equal(studyItems[0].querySelector('.timodoro-list__name')?.textContent, 'Research module');
+
+  const timeline = mount.querySelector('[data-role="timodoro-timeline"]');
+  assert.ok(timeline, 'timeline mount renders in the card');
+  const futureBlock = timeline?.querySelector('.todo-timeline__block.is-future');
+  assert.ok(futureBlock, 'timeline renders pending queue entry');
+  assert.equal(
+    futureBlock?.querySelector('.todo-timeline__block-title')?.textContent,
+    'Draft pitch deck',
+    'timeline block reuses normalized queue title'
+  );
+  assert.ok(
+    futureBlock?.querySelector('.todo-timeline__block-meta')?.textContent.includes('2h focus'),
+    'timeline block meta includes normalized duration text'
+  );
 
   const upgradeEmpty = mount
     .querySelector('[data-role="timodoro-todo-upgrade"] .timodoro-list__empty');

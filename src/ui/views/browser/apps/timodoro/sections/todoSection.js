@@ -93,6 +93,11 @@ function createFocusHero(entry = {}) {
 export function buildTodoGroups(entries = [], options = {}) {
   const grouping = buildTodoGrouping(entries, options);
   const groupedEntries = grouping.groups || {};
+  const normalizedEntries = Array.isArray(grouping.entries)
+    ? grouping.entries
+        .map(entry => buildQueueEntryModel(entry))
+        .filter(Boolean)
+    : [];
   const itemsByKey = TASK_GROUP_CONFIGS.reduce((map, config) => {
     const bucketEntries = (groupedEntries[config.key] || []).filter(Boolean);
     map[config.key] = bucketEntries.map((entry, index) => {
@@ -150,7 +155,8 @@ export function buildTodoGroups(entries = [], options = {}) {
   return {
     items: itemsByKey,
     grouping,
-    nextEntry: nextEntryModel
+    nextEntry: nextEntryModel,
+    normalizedEntries
   };
 }
 
