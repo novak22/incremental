@@ -162,4 +162,4 @@ Each asset supports multiple instances, tracks setup progress, and rolls a daily
 - **Adding Upgrades** – Update `UPGRADES` in `src/game/upgrades.js` and ensure new upgrade IDs are handled in requirement checks.
 - After modifying content arrays, run through a manual day cycle: start builds, end the day, confirm log messaging, and verify save/load behaviour.
 
-For design context and tuning notes, start with `docs/features/overview.md` and `docs/economy-quickref.md`. Recent gameplay adjustments are tracked in `docs/changelog.md`.
+For design context and tuning notes, start with `docs/features/overview.md` and `docs/economy-quickref.md`. Recent gameplay highlights live in the short-form `docs/changelog.md`, with the full archive preserved at `docs/archive/changelog-legacy.md`.
