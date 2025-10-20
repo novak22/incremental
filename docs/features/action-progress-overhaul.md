@@ -14,3 +14,4 @@
 - `acceptActionInstance` seeds a `progress` object with fields for `type`, `completion`, `hoursPerDay`, `daysRequired`, and `deadlineDay` when available.
 - `advanceActionInstance` and `resetActionInstance` update normalized daily logs, recompute totals, and optionally trigger completion.
 - State normalization now ensures persisted action instances retain consistent progress metadata across loads.
+- The former barrel file `src/game/actions/progress.js` has been removed; progress helpers now live in `src/game/actions/progress/instances.js`, while template utilities remain in `src/game/actions/progress/templates.js` for direct consumption.
