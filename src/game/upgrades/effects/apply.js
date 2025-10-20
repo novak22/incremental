@@ -4,7 +4,7 @@ import {
   getHustleDefinition,
   getUpgradeDefinition
 } from '../../../core/state/registry.js';
-import normalizedEconomy from '../../../../docs/normalized_economy.json' with { type: 'json' };
+import normalizedEconomy from '../../data/normalizedEconomy.js';
 import { applyModifiers } from '../../data/economyMath.js';
 import { parseModifierTarget } from './parsers.js';
 import { actionMatches, prepareSubject, subjectMatches } from './subjects.js';

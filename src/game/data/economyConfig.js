@@ -1,4 +1,4 @@
-import normalizedEconomy from '../../../docs/normalized_economy.json' with { type: 'json' };
+import normalizedEconomy from './normalizedEconomy.js';
 import { getHustleMarketConfig } from './hustleMarketConfig.js';
 
 const MINUTES_PER_HOUR = 60;
