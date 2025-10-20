@@ -306,9 +306,51 @@ function createLayoutManager({
     }
   }
 
-  function resolveLayoutOrder(definitions) {
+  function readTemplateWidgetIds(record) {
+    const templates = listTemplates(record);
+    if (!templates.length) {
+      return [];
+    }
+    const ids = [];
+    for (const template of templates) {
+      const datasetId = typeof template?.dataset?.widgetTemplate === 'string'
+        ? template.dataset.widgetTemplate.trim()
+        : '';
+      const attributeId = typeof template?.getAttribute === 'function'
+        ? template.getAttribute('data-widget-template')?.trim()
+        : '';
+      const id = datasetId || attributeId || '';
+      if (id) {
+        ids.push(id);
+      }
+    }
+    return ids;
+  }
+
+  function deriveAvailableWidgetIds(definitions, record) {
+    const definitionIds = definitions
+      .map(definition => definition?.id)
+      .filter(Boolean);
+    if (!definitionIds.length) {
+      return [];
+    }
+    const templateIds = readTemplateWidgetIds(record).filter(id => definitionIds.includes(id));
+    const ordered = [];
+    const seen = new Set();
+    const append = id => {
+      if (!seen.has(id)) {
+        seen.add(id);
+        ordered.push(id);
+      }
+    };
+    templateIds.forEach(append);
+    definitionIds.forEach(append);
+    return ordered;
+  }
+
+  function resolveLayoutOrder(definitions, record) {
     const storedOrder = loadOrder(getLayoutIdentifier());
-    const availableIds = definitions.map(definition => definition.id);
+    const availableIds = deriveAvailableWidgetIds(definitions, record);
     return getOrderedWidgetIds(availableIds, storedOrder);
   }
 
@@ -319,7 +361,7 @@ function createLayoutManager({
 
     const ownerDocument = container.ownerDocument || (typeof document !== 'undefined' ? document : null);
     const existingNodes = collectExistingNodes(container);
-    const nextOrder = resolveLayoutOrder(definitions);
+    const nextOrder = resolveLayoutOrder(definitions, record);
     const fragment = ownerDocument?.createDocumentFragment ? ownerDocument.createDocumentFragment() : null;
     const nodesForMount = new Map();
 
@@ -404,14 +446,16 @@ function createLayoutManager({
   function getLayoutOrder() {
     if (!currentLayoutOrder.length) {
       const definitions = getDefinitions();
-      return resolveLayoutOrder(definitions);
+      const record = resolveMountRecord();
+      return resolveLayoutOrder(definitions, record);
     }
     return currentLayoutOrder.slice();
   }
 
   function setLayoutOrder(order = []) {
     const definitions = getDefinitions();
-    const availableIds = definitions.map(definition => definition.id);
+    const record = resolveMountRecord();
+    const availableIds = deriveAvailableWidgetIds(definitions, record);
     const normalized = getOrderedWidgetIds(availableIds, Array.isArray(order) ? order : []);
     persistOrder(normalized, getLayoutIdentifier());
     currentLayoutOrder = normalized.slice();
