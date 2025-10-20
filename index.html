@@ -184,6 +184,17 @@
 
     <nav id="browser-tab-bar" class="browser-tabs" aria-label="Open workspaces">
       <ul id="browser-tab-list" class="browser-tabs__list" role="tablist"></ul>
+      <div class="browser-tabs__sidebar" data-role="browser-tabs-sidebar">
+        <button
+          type="button"
+          class="browser-home__reorder-toggle browser-button browser-button--text"
+          data-role="widget-reorder-toggle"
+          aria-pressed="false"
+          title="Shuffle the home widgets to suit your flow"
+        >
+          Reorder widgets
+        </button>
+      </div>
     </nav>
 
     <div class="browser-stage">
@@ -197,17 +208,6 @@
           <main class="browser-main" aria-live="polite">
             <section id="browser-home" class="browser-home" aria-labelledby="browser-widget-todo-heading">
               <div class="browser-home__widgets" role="list">
-                <div class="browser-home__actions">
-                  <button
-                    type="button"
-                    class="browser-home__reorder-toggle browser-button browser-button--text"
-                    data-role="widget-reorder-toggle"
-                    aria-pressed="false"
-                    title="Shuffle the home widgets to suit your flow"
-                  >
-                    Reorder widgets
-                  </button>
-                </div>
                 <template data-widget-template="apps">
                   <section
                     class="browser-widget apps-widget"

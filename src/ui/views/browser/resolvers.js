@@ -173,10 +173,25 @@ const resolvers = {
     };
   },
   themeToggle: root => root.getElementById('browser-theme-toggle'),
-  browserTabs: root => ({
-    container: root.getElementById('browser-tab-bar'),
-    list: root.getElementById('browser-tab-list')
-  }),
+  browserTabs: root => {
+    const container = root.getElementById('browser-tab-bar');
+    if (!container) {
+      return {
+        container: null,
+        list: null,
+        sidebar: null,
+        reorderToggle: null
+      };
+    }
+    const sidebar = container.querySelector('[data-role="browser-tabs-sidebar"]');
+    const reorderToggle = sidebar?.querySelector('[data-role="widget-reorder-toggle"]') || null;
+    return {
+      container,
+      list: root.getElementById('browser-tab-list'),
+      sidebar,
+      reorderToggle
+    };
+  },
   launchStage: root => root.getElementById('browser-launch-stage'),
   workspaceHost: root => root.getElementById('browser-workspaces'),
   headerActionButtons: root => ({

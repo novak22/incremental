@@ -15,13 +15,6 @@
   margin: 0;
 }
 
-.browser-home__actions {
-  width: 100%;
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 0.25rem;
-}
-
 .browser-home__reorder-toggle {
   font-weight: 600;
   gap: 0.35rem;

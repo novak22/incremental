@@ -15,22 +15,45 @@ function resolveContainer() {
   return record?.container || null;
 }
 
+function isElement(node) {
+  return Boolean(node && typeof node === 'object' && node.nodeType === 1);
+}
+
 function ensureToggle(container) {
-  if (!container) return null;
-  const existing = container.querySelector('[data-role="widget-reorder-toggle"]');
-  if (existing) {
+  const tabsRecord = getElement('browserTabs') || {};
+  let host = tabsRecord.sidebar || tabsRecord.container?.querySelector?.('[data-role="browser-tabs-sidebar"]');
+  let existing = tabsRecord.reorderToggle;
+  if (!isElement(existing) && host?.querySelector) {
+    existing = host.querySelector('[data-role="widget-reorder-toggle"]');
+  }
+  if (isElement(existing)) {
+    tabsRecord.reorderToggle = existing;
+    if (isElement(host)) {
+      tabsRecord.sidebar = host;
+    }
     return existing;
   }
-  const ownerDocument = container.ownerDocument || (typeof document !== 'undefined' ? document : null);
+
+  const ownerDocument =
+    (isElement(host) ? host.ownerDocument : null) ||
+    (isElement(tabsRecord.container) ? tabsRecord.container.ownerDocument : null) ||
+    container?.ownerDocument ||
+    (typeof document !== 'undefined' ? document : null);
   if (!ownerDocument) {
     return null;
   }
-  let actions = container.querySelector('.browser-home__actions');
-  if (!actions) {
-    actions = ownerDocument.createElement('div');
-    actions.className = 'browser-home__actions';
-    container.prepend(actions);
+
+  if (!host && isElement(tabsRecord.container)) {
+    host = ownerDocument.createElement('div');
+    host.className = 'browser-tabs__sidebar';
+    host.setAttribute('data-role', 'browser-tabs-sidebar');
+    tabsRecord.container.appendChild(host);
   }
+
+  if (!isElement(host)) {
+    return null;
+  }
+
   const button = ownerDocument.createElement('button');
   button.type = 'button';
   button.className = 'browser-home__reorder-toggle browser-button browser-button--text';
@@ -38,7 +61,11 @@ function ensureToggle(container) {
   button.setAttribute('aria-pressed', 'false');
   button.title = 'Shuffle the home widgets to suit your flow';
   button.textContent = 'Reorder widgets';
-  actions.appendChild(button);
+  host.appendChild(button);
+
+  tabsRecord.sidebar = host;
+  tabsRecord.reorderToggle = button;
+
   return button;
 }
 
@@ -195,6 +222,20 @@ function createWidgetReorderController({
     applyMode(!isActive);
   }
 
+  function handleVisibilityChange(event) {
+    const detail = event?.detail;
+    if (!detail || typeof detail.visible !== 'boolean') {
+      return;
+    }
+    const visible = Boolean(detail.visible);
+    if (!visible) {
+      applyMode(false);
+    }
+    if (toggle) {
+      toggle.tabIndex = visible ? 0 : -1;
+    }
+  }
+
   function handleKeyDown(event) {
     if (!isActive || !container) return;
     const handle = event?.target?.closest?.('[data-widget-handle]');
@@ -258,6 +299,7 @@ function createWidgetReorderController({
     });
 
     addListener(toggle, 'click', handleToggle);
+    addListener(toggle, 'browser:reorder-visibility', handleVisibilityChange);
     addListener(container, 'dragstart', dragHandlers.handleDragStart);
     addListener(container, 'dragenter', dragHandlers.handleDragEnter);
     addListener(container, 'dragover', dragHandlers.handleDragOver);

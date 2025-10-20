@@ -63,9 +63,18 @@ a {
   gap: 0.4rem;
   padding: 0;
   margin: 0;
-  width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
   overflow-x: auto;
   scrollbar-width: thin;
+}
+
+.browser-tabs__sidebar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-left: auto;
 }
 
 .browser-tab {

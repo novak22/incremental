@@ -43,8 +43,9 @@ function setupDom(widgetIds = ['todo', 'apps', 'bank']) {
       <!doctype html>
       <html>
         <body>
-          <div class="browser-home__widgets" role="list">
-            <div class="browser-home__actions">
+          <nav id="browser-tab-bar" class="browser-tabs" aria-label="Open workspaces">
+            <ul id="browser-tab-list" class="browser-tabs__list" role="tablist"></ul>
+            <div class="browser-tabs__sidebar" data-role="browser-tabs-sidebar">
               <button
                 type="button"
                 class="browser-home__reorder-toggle browser-button browser-button--text"
@@ -55,6 +56,8 @@ function setupDom(widgetIds = ['todo', 'apps', 'bank']) {
                 Reorder widgets
               </button>
             </div>
+          </nav>
+          <div class="browser-home__widgets" role="list">
             ${templates}
           </div>
         </body>
@@ -79,7 +82,18 @@ function setupDom(widgetIds = ['todo', 'apps', 'bank']) {
   registryState.record = { ...baseRecord, layoutManager: manager };
 
   initElementRegistry(dom.window.document, {
-    homepageWidgets: () => registryState.record
+    homepageWidgets: () => registryState.record,
+    browserTabs: root => {
+      const container = root.getElementById('browser-tab-bar');
+      const sidebar = container?.querySelector('[data-role="browser-tabs-sidebar"]') || null;
+      const reorderToggle = sidebar?.querySelector('[data-role="widget-reorder-toggle"]') || null;
+      return {
+        container,
+        list: root.getElementById('browser-tab-list'),
+        sidebar,
+        reorderToggle
+      };
+    }
   });
 
   globalThis.window = dom.window;
@@ -131,7 +145,7 @@ test('keyboard reordering updates layout order and persists the new lineup', asy
     });
     assert.equal(controller.init(), true, 'controller should initialize successfully');
 
-    const toggle = container.querySelector('[data-role="widget-reorder-toggle"]');
+    const toggle = dom.window.document.querySelector('[data-role="widget-reorder-toggle"]');
     toggle.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
 
     const handle = container.querySelector('[data-widget="todo"] [data-widget-handle]');
@@ -182,11 +196,53 @@ test('reorder mode leaves other widget interactions untouched', async () => {
     button.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
     assert.equal(clickCount, 1, 'click interactions should work before enabling reorder mode');
 
-    const toggle = container.querySelector('[data-role="widget-reorder-toggle"]');
+    const toggle = dom.window.document.querySelector('[data-role="widget-reorder-toggle"]');
     toggle.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
 
     button.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
     assert.equal(clickCount, 2, 'click interactions should still work while reorder mode is active');
+
+    controller.destroy();
+  } finally {
+    teardownDom(dom, manager);
+  }
+});
+
+test('reorder mode deactivates when the toggle is hidden', async () => {
+  const { dom, container, manager } = setupDom();
+  registerTestWidgets();
+
+  try {
+    manager.renderLayout();
+
+    const controller = createWidgetReorderController({
+      layoutResolver: () => manager,
+      containerResolver: () => container
+    });
+    controller.init();
+
+    const toggle = dom.window.document.querySelector('[data-role="widget-reorder-toggle"]');
+    toggle.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
+
+    assert.equal(
+      container.classList.contains('browser-home__widgets--reordering'),
+      true,
+      'widgets should enter reorder mode after activating the toggle'
+    );
+
+    const visibilityEvent = new dom.window.CustomEvent('browser:reorder-visibility', {
+      bubbles: false,
+      detail: { visible: false }
+    });
+    toggle.dispatchEvent(visibilityEvent);
+
+    assert.equal(
+      container.classList.contains('browser-home__widgets--reordering'),
+      false,
+      'widgets should exit reorder mode when the toggle is hidden'
+    );
+    assert.equal(toggle.getAttribute('aria-pressed'), 'false', 'toggle should reset aria-pressed when hidden');
+    assert.equal(toggle.tabIndex, -1, 'toggle should be removed from the tab order when hidden');
 
     controller.destroy();
   } finally {
