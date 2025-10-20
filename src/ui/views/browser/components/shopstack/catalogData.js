@@ -1,6 +1,7 @@
 import { ensureArray } from '../../../../../core/helpers.js';
 
 export const EXCLUDED_UPGRADES = new Set([
+  'assistant',
   'fulfillmentAutomation',
   'globalSupplyMesh',
   'whiteLabelAlliance'

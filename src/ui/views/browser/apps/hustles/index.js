@@ -3,6 +3,15 @@ import { getPageByType } from '../pageLookup.js';
 import { formatRoi } from '../../components/widgets.js';
 import { createOfferList } from './offers.js';
 import { createCommitmentList } from './commitments.js';
+import {
+  ASSISTANT_CONFIG,
+  getAssistantCount,
+  getAssistantDailyCost,
+  canHireAssistant,
+  hireAssistant,
+  canFireAssistant,
+  fireAssistant
+} from '../../../../../game/assistant.js';
 
 const CATEGORY_ORDER = ['writing', 'community', 'research', 'ops'];
 
@@ -22,7 +31,156 @@ const QUICK_FILTERS = [
   { id: 'expiringSoon', label: '🕒 Expiring soon' }
 ];
 
+const APP_VIEWS = [
+  { id: 'gigs', label: 'Find gigs', icon: '🗂️' },
+  { id: 'hire', label: 'Hire people', icon: '🤝' }
+];
+
 const boardStateMap = new WeakMap();
+const appStateMap = new WeakMap();
+
+function getAppState(app) {
+  if (!appStateMap.has(app)) {
+    appStateMap.set(app, {
+      activeView: 'gigs',
+      buttons: new Map(),
+      panels: new Map(),
+      metaElements: new Map()
+    });
+  }
+  return appStateMap.get(app);
+}
+
+function updateTabMeta(state, viewId, text) {
+  if (!state) return;
+  const meta = state.metaElements.get(viewId);
+  if (!meta) return;
+  const normalized = String(text || '').trim();
+  if (normalized) {
+    meta.textContent = normalized;
+    meta.hidden = false;
+  } else {
+    meta.textContent = '';
+    meta.hidden = true;
+  }
+}
+
+function setActiveView(app, viewId) {
+  if (!app) return;
+  const state = getAppState(app);
+  let targetId = viewId;
+  if (!state.panels.has(targetId)) {
+    if (state.panels.has(state.activeView)) {
+      targetId = state.activeView;
+    } else if (state.panels.size > 0) {
+      targetId = state.panels.keys().next().value;
+    } else {
+      targetId = 'gigs';
+    }
+  }
+  state.activeView = targetId;
+  state.buttons.forEach((button, id) => {
+    if (!button) return;
+    const isActive = id === state.activeView;
+    button.classList.toggle('is-active', isActive);
+    button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+  });
+  state.panels.forEach((panel, id) => {
+    if (!panel) return;
+    const isActive = id === state.activeView;
+    panel.classList.toggle('is-active', isActive);
+    panel.hidden = !isActive;
+  });
+  app.dataset.activeView = state.activeView;
+}
+
+function ensureDownworkApp(body) {
+  if (!body) return null;
+  let app = body.querySelector('[data-role="downwork-app"]');
+  let nav = null;
+  let content = null;
+
+  if (!app) {
+    app = document.createElement('div');
+    app.className = 'downwork-app';
+    app.dataset.role = 'downwork-app';
+
+    nav = document.createElement('div');
+    nav.className = 'downwork-app__nav';
+    nav.dataset.role = 'downwork-nav';
+
+    content = document.createElement('div');
+    content.className = 'downwork-app__content';
+
+    app.append(nav, content);
+    body.appendChild(app);
+  } else {
+    nav = app.querySelector('[data-role="downwork-nav"]');
+    content = app.querySelector('.downwork-app__content');
+  }
+
+  const state = getAppState(app);
+
+  APP_VIEWS.forEach(view => {
+    if (!state.buttons.has(view.id)) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'downwork-app__tab';
+      button.dataset.view = view.id;
+      button.setAttribute('aria-pressed', 'false');
+
+      if (view.icon) {
+        const icon = document.createElement('span');
+        icon.className = 'downwork-app__tab-icon';
+        icon.textContent = view.icon;
+        button.appendChild(icon);
+      }
+
+      const label = document.createElement('span');
+      label.className = 'downwork-app__tab-label';
+      label.textContent = view.label;
+      button.appendChild(label);
+
+      const meta = document.createElement('span');
+      meta.className = 'downwork-app__tab-meta';
+      meta.hidden = true;
+      button.appendChild(meta);
+
+      button.addEventListener('click', () => {
+        setActiveView(app, view.id);
+      });
+
+      nav?.appendChild(button);
+      state.buttons.set(view.id, button);
+      state.metaElements.set(view.id, meta);
+    }
+
+    if (!state.panels.has(view.id)) {
+      const panel = document.createElement('div');
+      panel.className = `downwork-panel downwork-panel--${view.id}`;
+      panel.dataset.view = view.id;
+      panel.hidden = view.id !== state.activeView;
+      panel.classList.toggle('is-active', view.id === state.activeView);
+      content?.appendChild(panel);
+      state.panels.set(view.id, panel);
+    } else {
+      const panel = state.panels.get(view.id);
+      if (panel && !panel.isConnected) {
+        content?.appendChild(panel);
+      }
+    }
+  });
+
+  setActiveView(app, state.activeView);
+
+  return {
+    app,
+    nav,
+    boardPanel: state.panels.get('gigs') || null,
+    hirePanel: state.panels.get('hire') || null,
+    state
+  };
+}
 
 function resolveCategoryKey(value = '') {
   if (typeof value !== 'string') return '';
@@ -154,6 +312,244 @@ function formatPayoutLabel(value) {
   }
   const safeValue = Math.max(0, value);
   return `$${formatMoney(safeValue)}`;
+}
+
+function describeBoardNavSummary({ availableCount = 0, upcomingCount = 0, commitmentCount = 0 } = {}) {
+  const parts = [];
+  if (availableCount > 0) {
+    parts.push(`${availableCount} ready`);
+  }
+  if (commitmentCount > 0) {
+    parts.push(`${commitmentCount} active`);
+  }
+  if (!parts.length && upcomingCount > 0) {
+    parts.push(`${upcomingCount} queued`);
+  }
+  return parts.join(' • ');
+}
+
+function describeHireNavSummary() {
+  const count = Math.max(0, Number(getAssistantCount()) || 0);
+  const maxAssistants = Math.max(0, Number(ASSISTANT_CONFIG.maxAssistants) || 0);
+  if (maxAssistants > 0) {
+    if (count >= maxAssistants) {
+      return `Team full (${count}/${maxAssistants})`;
+    }
+    if (count > 0) {
+      return `${count}/${maxAssistants} on staff`;
+    }
+    return `${maxAssistants} slots open`;
+  }
+  if (count > 0) {
+    return `${count} on staff`;
+  }
+  const hoursPerAssistant = Math.max(0, Number(ASSISTANT_CONFIG.hoursPerAssistant) || 0);
+  if (hoursPerAssistant > 0) {
+    return `+${formatHours(hoursPerAssistant)}/day ready`;
+  }
+  return '';
+}
+
+function createHireStat(label, value) {
+  const stat = document.createElement('div');
+  stat.className = 'downwork-hiring-card__stat';
+
+  const labelEl = document.createElement('span');
+  labelEl.className = 'downwork-hiring-card__stat-label';
+  labelEl.textContent = label;
+
+  const valueEl = document.createElement('span');
+  valueEl.className = 'downwork-hiring-card__stat-value';
+  valueEl.textContent = value;
+
+  stat.append(labelEl, valueEl);
+  return stat;
+}
+
+function createBenefitItem(text) {
+  const item = document.createElement('li');
+  item.className = 'downwork-hiring-card__benefit';
+  item.textContent = text;
+  return item;
+}
+
+function renderHirePanel(panel, { onStateChange } = {}) {
+  if (!panel) return;
+
+  const assistantCount = Math.max(0, Number(getAssistantCount()) || 0);
+  const maxAssistants = Math.max(0, Number(ASSISTANT_CONFIG.maxAssistants) || 0);
+  const hoursPerAssistant = Math.max(0, Number(ASSISTANT_CONFIG.hoursPerAssistant) || 0);
+  const hourlyRate = Math.max(0, Number(ASSISTANT_CONFIG.hourlyRate) || 0);
+  const hiringCost = Math.max(0, Number(ASSISTANT_CONFIG.hiringCost) || 0);
+  const totalHours = Math.max(0, assistantCount * hoursPerAssistant);
+  const dailyCost = Math.max(0, Number(getAssistantDailyCost()) || 0);
+  const hourlyTeamCost = Math.max(0, hourlyRate * assistantCount);
+  const slotsRemaining = maxAssistants > 0 ? Math.max(0, maxAssistants - assistantCount) : 0;
+
+  panel.innerHTML = '';
+
+  const refresh = () => {
+    renderHirePanel(panel, { onStateChange });
+    onStateChange?.();
+  };
+
+  const layout = document.createElement('div');
+  layout.className = 'downwork-hiring';
+  panel.appendChild(layout);
+
+  const teamSection = document.createElement('section');
+  teamSection.className = 'downwork-hiring__section';
+  layout.appendChild(teamSection);
+
+  const teamHeading = document.createElement('h2');
+  teamHeading.className = 'downwork-hiring__title';
+  teamHeading.textContent = 'Team roster';
+  teamSection.appendChild(teamHeading);
+
+  const teamCard = document.createElement('article');
+  teamCard.className = 'browser-card browser-card--action downwork-hiring-card';
+  teamSection.appendChild(teamCard);
+
+  const teamHeader = document.createElement('header');
+  teamHeader.className = 'browser-card__header downwork-hiring-card__header';
+  teamCard.appendChild(teamHeader);
+
+  const teamIcon = document.createElement('span');
+  teamIcon.className = 'downwork-hiring-card__icon';
+  teamIcon.textContent = '🤖';
+  teamHeader.appendChild(teamIcon);
+
+  const teamTitle = document.createElement('h3');
+  teamTitle.className = 'browser-card__title';
+  teamTitle.textContent = 'Virtual assistant crew';
+  teamHeader.appendChild(teamTitle);
+
+  const teamSummary = document.createElement('p');
+  teamSummary.className = 'browser-card__summary downwork-hiring-card__summary';
+  teamSummary.textContent =
+    assistantCount > 0
+      ? `Your crew covers ${formatHours(totalHours)} of upkeep every day.`
+      : `No assistants yet — hire one to add +${formatHours(hoursPerAssistant)} daily focus hours.`;
+  teamCard.appendChild(teamSummary);
+
+  const stats = document.createElement('div');
+  stats.className = 'downwork-hiring-card__stats';
+  stats.append(
+    createHireStat('Team size', maxAssistants > 0 ? `${assistantCount} / ${maxAssistants}` : String(assistantCount)),
+    createHireStat(
+      'Focus coverage',
+      assistantCount > 0 ? `${formatHours(totalHours)} per day` : '0h per day'
+    ),
+    createHireStat(
+      'Payroll',
+      assistantCount > 0
+        ? `$${formatMoney(dailyCost)} daily • $${formatMoney(hourlyTeamCost)}/hr`
+        : `$${formatMoney(hourlyRate)}/hr teammate`
+    )
+  );
+  teamCard.appendChild(stats);
+
+  const teamActions = document.createElement('div');
+  teamActions.className = 'browser-card__actions downwork-hiring-card__actions';
+  teamCard.appendChild(teamActions);
+
+  const fireButton = document.createElement('button');
+  fireButton.type = 'button';
+  fireButton.className = 'browser-card__button downwork-hiring-card__button';
+  if (assistantCount > 1) {
+    fireButton.textContent = 'Let one go';
+  } else if (assistantCount === 1) {
+    fireButton.textContent = 'Let assistant go';
+  } else {
+    fireButton.textContent = 'No assistants to release';
+  }
+  fireButton.disabled = !canFireAssistant();
+  fireButton.addEventListener('click', () => {
+    fireAssistant();
+    refresh();
+  });
+  teamActions.appendChild(fireButton);
+
+  const capacityNote = document.createElement('p');
+  capacityNote.className = 'downwork-hiring-card__meta';
+  if (maxAssistants > 0) {
+    capacityNote.textContent =
+      slotsRemaining > 0
+        ? `${slotsRemaining} open slot${slotsRemaining === 1 ? '' : 's'} remain.`
+        : 'Team is at full capacity.';
+  } else {
+    capacityNote.textContent = 'Team size currently has no cap.';
+  }
+  teamCard.appendChild(capacityNote);
+
+  const talentSection = document.createElement('section');
+  talentSection.className = 'downwork-hiring__section';
+  layout.appendChild(talentSection);
+
+  const talentHeading = document.createElement('h2');
+  talentHeading.className = 'downwork-hiring__title';
+  talentHeading.textContent = 'Available talent';
+  talentSection.appendChild(talentHeading);
+
+  const talentCard = document.createElement('article');
+  talentCard.className = 'browser-card browser-card--action downwork-hiring-card';
+  talentSection.appendChild(talentCard);
+
+  const talentHeader = document.createElement('header');
+  talentHeader.className = 'browser-card__header downwork-hiring-card__header';
+  talentCard.appendChild(talentHeader);
+
+  const talentIcon = document.createElement('span');
+  talentIcon.className = 'downwork-hiring-card__icon';
+  talentIcon.textContent = '🧰';
+  talentHeader.appendChild(talentIcon);
+
+  const talentTitle = document.createElement('h3');
+  talentTitle.className = 'browser-card__title';
+  talentTitle.textContent = 'Virtual Assistant';
+  talentHeader.appendChild(talentTitle);
+
+  const talentSummary = document.createElement('p');
+  talentSummary.className = 'browser-card__summary downwork-hiring-card__summary';
+  talentSummary.textContent =
+    'Onboard cheerful ops support to manage inboxes, schedules, and research sprints.';
+  talentCard.appendChild(talentSummary);
+
+  const benefits = document.createElement('ul');
+  benefits.className = 'downwork-hiring-card__benefits';
+  benefits.append(
+    createBenefitItem(`+${formatHours(hoursPerAssistant)} focus hours covered each day`),
+    createBenefitItem(`$${formatMoney(hourlyRate)}/hr ongoing payroll`),
+    createBenefitItem(`$${formatMoney(hiringCost)} onboarding cost`)
+  );
+  talentCard.appendChild(benefits);
+
+  const hireActions = document.createElement('div');
+  hireActions.className = 'browser-card__actions downwork-hiring-card__actions';
+  talentCard.appendChild(hireActions);
+
+  const hireButton = document.createElement('button');
+  hireButton.type = 'button';
+  hireButton.className = 'browser-card__button browser-card__button--primary downwork-hiring-card__button';
+  hireButton.textContent = `Hire for $${formatMoney(hiringCost)}`;
+  hireButton.disabled = !canHireAssistant();
+  hireButton.addEventListener('click', () => {
+    hireAssistant();
+    refresh();
+  });
+  hireActions.appendChild(hireButton);
+
+  const hireMeta = document.createElement('p');
+  hireMeta.className = 'downwork-hiring-card__meta';
+  if (maxAssistants > 0) {
+    hireMeta.textContent =
+      slotsRemaining > 0
+        ? `${slotsRemaining} of ${maxAssistants} slots open.`
+        : 'Team is full — release someone to hire again.';
+  } else {
+    hireMeta.textContent = 'Hire as budget allows — no cap listed yet.';
+  }
+  talentCard.appendChild(hireMeta);
 }
 
 function updateDeltaElement(element, value, formatter = value => String(value)) {
@@ -542,13 +938,16 @@ export default function renderHustles(context = {}, definitions = [], models = [
   const page = getPageByType('hustles');
   if (!page) return null;
 
-  const refs = context.ensurePageContent?.(page, ({ body }) => {
-    ensureBoard(body);
-  });
+  const refs = context.ensurePageContent?.(page, () => {});
 
   if (!refs) return null;
 
-  const board = ensureBoard(refs.body);
+  const { boardPanel, hirePanel, state: appState } = ensureDownworkApp(refs.body) || {};
+  if (!boardPanel || !hirePanel) {
+    return null;
+  }
+
+  const board = ensureBoard(boardPanel);
   if (!board) return null;
 
   const list = board.querySelector('[data-role="browser-hustle-list"]');
@@ -712,6 +1111,12 @@ export default function renderHustles(context = {}, definitions = [], models = [
     empty.className = 'browser-empty';
     empty.textContent = 'Queue an action to see it spotlighted here.';
     list.appendChild(empty);
+    updateTabMeta(appState, 'gigs', describeBoardNavSummary({ availableCount, upcomingCount, commitmentCount }));
+    const updateHireMeta = () => {
+      updateTabMeta(appState, 'hire', describeHireNavSummary());
+    };
+    renderHirePanel(hirePanel, { onStateChange: updateHireMeta });
+    updateHireMeta();
     const meta = describeMetaSummary({ availableCount, upcomingCount, commitmentCount });
     return {
       id: page.id,
@@ -865,6 +1270,14 @@ export default function renderHustles(context = {}, definitions = [], models = [
   updateTabSelection();
   updateFilterSelection();
   renderActiveCategory();
+
+  updateTabMeta(appState, 'gigs', describeBoardNavSummary({ availableCount, upcomingCount, commitmentCount }));
+
+  const updateHireMeta = () => {
+    updateTabMeta(appState, 'hire', describeHireNavSummary());
+  };
+  renderHirePanel(hirePanel, { onStateChange: updateHireMeta });
+  updateHireMeta();
 
   const meta = describeMetaSummary({ availableCount, upcomingCount, commitmentCount });
 
