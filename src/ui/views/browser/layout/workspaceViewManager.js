@@ -7,6 +7,10 @@ export function createWorkspaceViewManager({
   dom,
   pageResolver
 }) {
+  function isElement(node) {
+    return Boolean(node && typeof node === 'object' && node.nodeType === 1);
+  }
+
   const {
     openTab,
     closeTab,
@@ -73,6 +77,29 @@ export function createWorkspaceViewManager({
       homepageContent.classList.toggle('is-active', isHome);
     }
 
+    const browserTabs = getElement('browserTabs');
+    const reorderToggle = browserTabs?.reorderToggle;
+    if (isElement(reorderToggle)) {
+      reorderToggle.hidden = !isHome;
+      const CustomEventCtor =
+        reorderToggle.ownerDocument?.defaultView?.CustomEvent || globalThis.CustomEvent;
+      if (typeof CustomEventCtor === 'function') {
+        reorderToggle.dispatchEvent(
+          new CustomEventCtor('browser:reorder-visibility', {
+            bubbles: false,
+            detail: { visible: isHome }
+          })
+        );
+      } else if (reorderToggle.ownerDocument?.createEvent) {
+        const fallbackEvent = reorderToggle.ownerDocument.createEvent('CustomEvent');
+        fallbackEvent.initCustomEvent('browser:reorder-visibility', false, false, { visible: isHome });
+        reorderToggle.dispatchEvent(fallbackEvent);
+      }
+    }
+    if (isElement(browserTabs?.sidebar)) {
+      browserTabs.sidebar.hidden = !isHome;
+    }
+
     if (workspaceHost) {
       workspaceHost.querySelectorAll('[data-browser-page]').forEach(section => {
         const active = section.dataset.browserPage === pageId;
@@ -95,7 +122,7 @@ export function createWorkspaceViewManager({
     if (homepage) {
       homepage
         .querySelectorAll('[data-role="browser-app-launcher"]').forEach(node => {
-          if (node instanceof HTMLElement) {
+          if (isElement(node)) {
             containers.push(node);
           }
         });
@@ -105,7 +132,7 @@ export function createWorkspaceViewManager({
 
     containers.forEach(container => {
       container.querySelectorAll('[data-site-target]').forEach(control => {
-        if (!(control instanceof HTMLElement)) {
+        if (!isElement(control)) {
           return;
         }
         const isActive = control.dataset.siteTarget === pageId;
