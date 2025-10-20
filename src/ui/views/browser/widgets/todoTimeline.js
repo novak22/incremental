@@ -280,7 +280,23 @@ function attachTicker(container, line) {
   };
 
   update();
+
+  const userAgent = typeof window !== 'undefined' ? window?.navigator?.userAgent : '';
+  const runningInJsdom = typeof userAgent === 'string' && userAgent.toLowerCase().includes('jsdom');
+
+  if (runningInJsdom) {
+    tickerRegistry.set(container, {
+      id: null,
+      clear: () => {}
+    });
+    return;
+  }
   const id = window.setInterval(update, UPDATE_INTERVAL_MS);
+
+  if (id && typeof id.unref === 'function') {
+    id.unref();
+  }
+
   tickerRegistry.set(container, {
     id,
     clear: () => window.clearInterval(id)
