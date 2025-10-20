@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import normalizedEconomy from '../docs/normalized_economy.json' with { type: 'json' };
+import normalizedEconomy from '../src/game/data/normalizedEconomy.js';
 import { assets, hustles, upgrades } from '../src/game/data/economyConfig.js';
 
 const minutesToHours = minutes => minutes / 60;
