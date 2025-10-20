@@ -139,13 +139,11 @@ test('todo widget logging to zero hours ends the day automatically', async () =>
   todoWidget.init({
     container: todoContainer,
     list: document.getElementById('browser-widget-todo-list'),
-    done: document.getElementById('browser-widget-todo-done'),
     note: document.getElementById('browser-widget-todo-note'),
     endDayButton: document.getElementById('browser-widget-todo-end'),
     focusGroup: todoContainer.querySelector('[data-focus-group]'),
     focusButtons: todoContainer.querySelectorAll('[data-focus]'),
     listWrapper: todoContainer.querySelector('.todo-widget__list-wrapper'),
-    doneHeading: document.getElementById('browser-widget-todo-done-heading'),
     availableValue: document.getElementById('browser-widget-todo-available'),
     spentValue: document.getElementById('browser-widget-todo-spent')
   });

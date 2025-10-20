@@ -35,9 +35,6 @@ function createTodoWidgetController() {
       if (elements?.list) {
         elements.list.innerHTML = '';
       }
-      if (elements?.done) {
-        elements.done.innerHTML = '';
-      }
       if (elements?.note) {
         elements.note.textContent = DEFAULT_TODO_EMPTY_MESSAGE;
       }
@@ -223,7 +220,6 @@ function createTodoWidgetController() {
 
     todoState.setPendingEntries(grouping.entries);
 
-    const completedEntries = todoState.getCompletedEntries();
     todoDom.renderHours(elements, viewModel, formatHours);
     const emptyMessage = grouping.emptyMessage || DEFAULT_TODO_EMPTY_MESSAGE;
     todoDom.updateNote(elements?.note, { ...viewModel, emptyMessage }, grouping.totalPending);
@@ -233,8 +229,6 @@ function createTodoWidgetController() {
     } else {
       todoDom.renderPending(elements?.list, grouping.entries, viewModel, handleCompletion);
     }
-
-    todoDom.renderCompleted(elements?.done, elements?.doneHeading, completedEntries, formatDuration);
   }
 
   function hasPendingTasks() {
