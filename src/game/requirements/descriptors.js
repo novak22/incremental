@@ -1,10 +1,38 @@
 import { countActiveAssetInstances, getState } from '../../core/state.js';
+import { DEFAULT_DAY_HOURS } from '../../core/constants.js';
 import { getAssetDefinition, getUpgradeDefinition } from '../../core/state/registry.js';
 import { formatHours, toNumber } from '../../core/helpers.js';
 import { KNOWLEDGE_TRACKS } from './knowledgeTracks.js';
 import { getDefinitionRequirements } from './definitionRequirements.js';
 import { getKnowledgeProgress } from './knowledgeProgress.js';
 import { isEquipmentUnlocked, isRequirementMet } from './checks.js';
+import { estimateManualMaintenanceReserve } from './maintenanceReserve.js';
+
+function computeDailyBufferHours(state = getState()) {
+  const baseHours = Number(state?.baseTime);
+  const resolvedBase = Number.isFinite(baseHours) && baseHours > 0 ? baseHours : DEFAULT_DAY_HOURS;
+  return Math.max(2, Math.round(resolvedBase * 0.25));
+}
+
+function buildStudyScheduleDetails({ track, progress, state = getState() }) {
+  const hoursPerDay = Math.max(
+    0,
+    Number(track?.hoursPerDay) || Number(progress?.hoursPerDay) || 0
+  );
+  const manualReserveHours = estimateManualMaintenanceReserve(state);
+  const bufferHours = computeDailyBufferHours(state);
+  const availableFocusHours = Math.max(
+    0,
+    Number(state?.timeLeft || 0) - manualReserveHours - bufferHours
+  );
+
+  return {
+    hoursPerDay,
+    manualReserveHours,
+    bufferHours,
+    availableFocusHours
+  };
+}
 
 export function buildAssetRequirementDescriptor(requirement, state = getState(), typeOverride) {
   if (!requirement || !requirement.assetId) {
@@ -69,12 +97,28 @@ export function describeRequirement(requirement, state = getState()) {
     const detail = track
       ? `${progress.daysCompleted}/${track.days} days, ${formatHours(hoursPerDay)}/day`
       : 'Progress tracked';
+    const schedule = buildStudyScheduleDetails({ track, progress, state });
+    const detailSegments = [`${icon} <strong>${label}</strong> (${detail})`];
+    if (schedule.hoursPerDay > 0) {
+      detailSegments.push(`${formatHours(schedule.hoursPerDay)}/day study`);
+    }
+    const reserveSegments = [];
+    if (schedule.manualReserveHours > 0) {
+      reserveSegments.push(`${formatHours(schedule.manualReserveHours)} upkeep reserve`);
+    }
+    if (schedule.bufferHours > 0) {
+      reserveSegments.push(`${formatHours(schedule.bufferHours)} daily buffer`);
+    }
+    if (reserveSegments.length) {
+      detailSegments.push(`Reserve ${reserveSegments.join(' + ')}`);
+    }
     return {
       type: 'knowledge',
       status,
       icon,
       label,
-      detail: `${icon} <strong>${label}</strong> (${detail})`
+      detail: detailSegments.join(' • '),
+      schedule
     };
   }
 
@@ -160,6 +204,7 @@ export function listAssetRequirementDescriptors(definitionOrId, state = getState
       case 'knowledge': {
         const track = KNOWLEDGE_TRACKS[req.id];
         const progress = getKnowledgeProgress(req.id, state);
+        const schedule = buildStudyScheduleDetails({ track, progress, state });
         return {
           type: 'knowledge',
           id: req.id,
@@ -169,7 +214,8 @@ export function listAssetRequirementDescriptors(definitionOrId, state = getState
             daysCompleted: progress.daysCompleted,
             totalDays: track?.days ?? 0,
             studiedToday: Boolean(progress.studiedToday)
-          }
+          },
+          schedule
         };
       }
       case 'experience': {

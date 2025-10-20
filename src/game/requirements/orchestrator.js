@@ -1,10 +1,31 @@
-import { formatList } from '../../core/helpers.js';
+import { formatHours, formatList } from '../../core/helpers.js';
+import { DEFAULT_DAY_HOURS } from '../../core/constants.js';
 import { markDirty } from '../../core/events/invalidationBus.js';
 import { spendMoney as spendMoneyDefault } from '../currency.js';
 import { recordCostContribution as recordCostContributionDefault } from '../metrics.js';
 import { createStudyEnrollment } from './orchestrator/studyEnrollment.js';
 import { createMarketSeatManager } from './orchestrator/marketSeats.js';
 import { createTuitionLogging } from './orchestrator/tuitionLogging.js';
+import { estimateManualMaintenanceReserve } from './maintenanceReserve.js';
+
+const STUDY_BUFFER_RATIO = 0.25;
+const STUDY_BUFFER_FLOOR_HOURS = 2;
+
+function computeDailyStudyBuffer(state) {
+  const baseHours = Number(state?.baseTime);
+  const resolvedBase = Number.isFinite(baseHours) && baseHours > 0 ? baseHours : DEFAULT_DAY_HOURS;
+  return Math.max(STUDY_BUFFER_FLOOR_HOURS, Math.round(resolvedBase * STUDY_BUFFER_RATIO));
+}
+
+function resolveManualReserve(state) {
+  const manualReserve = estimateManualMaintenanceReserve(state);
+  const bufferHours = computeDailyStudyBuffer(state);
+  const availableHours = Math.max(
+    0,
+    Number(state?.timeLeft || 0) - manualReserve - bufferHours
+  );
+  return { manualReserve, bufferHours, availableHours };
+}
 export const STUDY_DIRTY_SECTIONS = Object.freeze(['cards', 'dashboard', 'player']);
 
 export function createRequirementsOrchestrator({
@@ -104,7 +125,10 @@ export function createRequirementsOrchestrator({
 
     const celebrated = [];
     const awaiting = [];
+    const blockedByTime = [];
     let dirty = false;
+    const { manualReserve, bufferHours, availableHours } = resolveManualReserve(state);
+    let remainingHours = availableHours;
 
     for (const track of tracks) {
       const { progress, studiedToday } = evaluateStudyProgress(track, state);
@@ -122,8 +146,20 @@ export function createRequirementsOrchestrator({
 
       if (nextStudied) {
         celebrated.push(track.name);
-      } else if (!triggeredByEnrollment) {
-        awaiting.push(track.name);
+      } else {
+        const hoursPerDay = Math.max(0, Number(track.hoursPerDay) || Number(progress.hoursPerDay) || 0);
+        if (hoursPerDay > 0 && remainingHours < hoursPerDay) {
+          const shortfall = Math.max(0, hoursPerDay - remainingHours);
+          blockedByTime.push({ track, shortfall });
+          remainingHours = 0;
+        } else {
+          if (hoursPerDay > 0) {
+            remainingHours = Math.max(0, remainingHours - hoursPerDay);
+          }
+          if (!triggeredByEnrollment) {
+            awaiting.push(track.name);
+          }
+        }
       }
     }
 
@@ -133,6 +169,24 @@ export function createRequirementsOrchestrator({
 
     if (!triggeredByEnrollment && awaiting.length) {
       addLog(`${formatList(awaiting)} still need study hours logged today.`, 'warning');
+    }
+
+    if (blockedByTime.length) {
+      const names = blockedByTime.map(entry => entry.track.name);
+      const totalShortfall = blockedByTime.reduce((total, entry) => total + entry.shortfall, 0);
+      const reserveSegments = [];
+      if (manualReserve > 0) {
+        reserveSegments.push(`${formatHours(manualReserve)} upkeep`);
+      }
+      if (bufferHours > 0) {
+        reserveSegments.push(`${formatHours(bufferHours)} buffer`);
+      }
+      const reserveSummary = reserveSegments.length ? reserveSegments.join(' + ') : formatHours(bufferHours);
+      const shortfallLabel = formatHours(totalShortfall);
+      addLog(
+        `No focus left for ${formatList(names)} after reserving ${reserveSummary}. Free up ${shortfallLabel} to log study hours.`,
+        'warning'
+      );
     }
 
     if (dirty) {
