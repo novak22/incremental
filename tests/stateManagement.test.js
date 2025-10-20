@@ -56,7 +56,22 @@ test('normalizeAssetState enforces instance defaults and clamps values', () => {
         totalIncome: undefined,
         setupFundedToday: 'yes',
         maintenanceFundedToday: 'no',
-        createdOnDay: -10
+        createdOnDay: -10,
+        metrics: {
+          seoScore: '75',
+          backlinks: '2',
+          dailyViews: -12,
+          lifetimeViews: '100.4',
+          lastViewBreakdown: {
+            total: -50,
+            entries: [
+              {
+                label: 'spam referrals',
+                amount: -20
+              }
+            ]
+          }
+        }
       }
     ]
   });
@@ -71,6 +86,9 @@ test('normalizeAssetState enforces instance defaults and clamps values', () => {
   assert.equal(normalized.lastIncome, 0);
   assert.equal(normalized.totalIncome, 0);
   assert.equal(normalized.createdOnDay, 1, 'created day defaults to current day');
+  assert.equal(normalized.metrics.dailyViews, 0);
+  assert.equal(normalized.metrics.lifetimeViews, 100);
+  assert.equal(normalized.metrics.lastViewBreakdown, null);
 });
 
 test('normalizeAssetState respects provided state context for createdOnDay', () => {

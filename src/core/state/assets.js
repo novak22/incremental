@@ -19,6 +19,61 @@ function normalizeBacklinkCount(value) {
   return Math.round(clamped);
 }
 
+function normalizeViewCount(value) {
+  const clamped = clamp(value, { min: 0 });
+  return Math.round(clamped);
+}
+
+function normalizeViewBreakdown(rawBreakdown, fallbackTotal = 0) {
+  if (!rawBreakdown || typeof rawBreakdown !== 'object') {
+    return null;
+  }
+
+  const entries = Array.isArray(rawBreakdown.entries)
+    ? rawBreakdown.entries
+        .map(entry => {
+          if (!entry || typeof entry !== 'object') return null;
+          const label = String(entry.label || '').trim();
+          if (!label) return null;
+          const viewsValue = entry.views ?? entry.amount;
+          const views = normalizeViewCount(viewsValue);
+          if (views <= 0) return null;
+          const percent = Number(entry.percent);
+          return {
+            id: entry.id || null,
+            label,
+            views,
+            amount: views,
+            type: entry.type || 'segment',
+            percent: Number.isFinite(percent) ? percent : null
+          };
+        })
+        .filter(Boolean)
+    : [];
+
+  const totalValue =
+    rawBreakdown.total != null
+      ? rawBreakdown.total
+      : entries.reduce((sum, entry) => sum + (Number(entry.views) || 0), 0);
+  const total = normalizeViewCount(totalValue);
+
+  if (entries.length === 0 && total === 0) {
+    const fallback = normalizeViewCount(fallbackTotal);
+    if (fallback === 0) {
+      return null;
+    }
+    return {
+      total: fallback,
+      entries: []
+    };
+  }
+
+  return {
+    total,
+    entries
+  };
+}
+
 function normalizeMetrics(rawMetrics = {}) {
   const metrics = typeof rawMetrics === 'object' && rawMetrics !== null ? { ...rawMetrics } : {};
   if (!Number.isFinite(Number(metrics.seoScore))) {
@@ -29,6 +84,15 @@ function normalizeMetrics(rawMetrics = {}) {
     metrics.backlinks = 0;
   }
   metrics.backlinks = normalizeBacklinkCount(metrics.backlinks);
+  if (!Number.isFinite(Number(metrics.dailyViews))) {
+    metrics.dailyViews = 0;
+  }
+  metrics.dailyViews = normalizeViewCount(metrics.dailyViews);
+  if (!Number.isFinite(Number(metrics.lifetimeViews))) {
+    metrics.lifetimeViews = 0;
+  }
+  metrics.lifetimeViews = normalizeViewCount(metrics.lifetimeViews);
+  metrics.lastViewBreakdown = normalizeViewBreakdown(metrics.lastViewBreakdown, metrics.dailyViews);
   return metrics;
 }
 
@@ -165,7 +229,10 @@ export function createAssetInstance(definition, overrides = {}, context = {}) {
     nicheId: null,
     metrics: {
       seoScore: 30,
-      backlinks: 0
+      backlinks: 0,
+      dailyViews: 0,
+      lifetimeViews: 0,
+      lastViewBreakdown: null
     }
   };
   const merged = { ...baseInstance, ...structuredClone(overrides) };
