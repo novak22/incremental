@@ -157,7 +157,8 @@ function createLayoutManager({
   getRegistryVersion = getWidgetRegistryVersion,
   loadOrder = loadLayoutOrder,
   persistOrder = persistLayoutOrder,
-  storageKey
+  storageKey,
+  layoutId = 'default'
 } = {}) {
   const widgetControllers = new Map();
   const widgetMounts = new Map();
@@ -165,6 +166,14 @@ function createLayoutManager({
   let knownRegistryVersion = -1;
   let activeContainer = null;
   let currentLayoutOrder = [];
+  let activeLayoutId = typeof layoutId === 'string' && layoutId.trim() ? layoutId.trim() : 'default';
+
+  function getLayoutIdentifier() {
+    return {
+      id: activeLayoutId,
+      storageKey
+    };
+  }
 
   function mountWidgetController(id, controller, container) {
     if (!controller || !container) {
@@ -298,7 +307,7 @@ function createLayoutManager({
   }
 
   function resolveLayoutOrder(definitions) {
-    const storedOrder = loadOrder(storageKey);
+    const storedOrder = loadOrder(getLayoutIdentifier());
     const availableIds = definitions.map(definition => definition.id);
     return getOrderedWidgetIds(availableIds, storedOrder);
   }
@@ -404,7 +413,7 @@ function createLayoutManager({
     const definitions = getDefinitions();
     const availableIds = definitions.map(definition => definition.id);
     const normalized = getOrderedWidgetIds(availableIds, Array.isArray(order) ? order : []);
-    persistOrder(normalized, storageKey);
+    persistOrder(normalized, getLayoutIdentifier());
     currentLayoutOrder = normalized.slice();
     renderLayout({ container: activeContainer });
     return currentLayoutOrder.slice();
