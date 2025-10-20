@@ -218,9 +218,9 @@ export function formatBlogpressInstance(definition, instance, index, state, shar
     count: backlinksCount,
     currentScore: backlinkSummary.score
   });
-  const projectedDailyVisits = Math.max(
+  const lifetimeVisits = Math.max(
     0,
-    Math.round(Number(instance?.metrics?.currentDailyVisitTarget) || 0)
+    Math.round(Number(instance?.metrics?.lifetimeViews) || 0)
   );
   const currentDailyVisits = Math.max(
     0,
@@ -264,7 +264,7 @@ export function formatBlogpressInstance(definition, instance, index, state, shar
       nextTarget: nextBacklinkTarget
     },
     visits: {
-      projectedPerDay: projectedDailyVisits,
+      lifetime: lifetimeVisits,
       today: currentDailyVisits
     },
     definition,

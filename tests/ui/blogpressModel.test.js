@@ -20,7 +20,7 @@ function createState() {
             totalIncome: 140,
             pendingIncome: 12,
             maintenanceFundedToday: true,
-            metrics: { seoScore: 88, backlinks: 6 },
+            metrics: { seoScore: 88, backlinks: 6, lifetimeViews: 4200, dailyViews: 180 },
             quality: { level: 1, progress: { posts: 3, seo: 1 } },
             nicheId: 'healthWellness',
             lastIncomeBreakdown: {
@@ -124,6 +124,8 @@ test('formatBlogpressModel returns formatted instances and summary', () => {
   assert.equal(active.seo?.grade, 'B');
   assert.equal(active.backlinks?.count, 6);
   assert.equal(active.backlinks?.score, 4);
+  assert.equal(active.visits?.lifetime, 4200);
+  assert.equal(active.visits?.today, 180);
 
   const setup = instances.find(entry => entry.id === 'blog-2');
   assert.ok(setup, 'expected setup blog instance');

@@ -22,9 +22,9 @@ export default function renderQualityPanel({ instance, formatRange }) {
   const seoGrade = instance?.seo?.grade || 'F';
   const backlinkScore = Math.max(1, Math.min(5, Math.round(Number(instance?.backlinks?.score) || 1)));
   const backlinkCount = Math.max(0, Math.round(Number(instance?.backlinks?.count) || 0));
-  const projectedDailyVisits = Math.max(
+  const lifetimeVisits = Math.max(
     0,
-    Math.round(Number(instance?.visits?.projectedPerDay) || 0)
+    Math.round(Number(instance?.visits?.lifetime) || 0)
   );
   const currentDailyVisits = Math.max(
     0,
@@ -53,8 +53,8 @@ export default function renderQualityPanel({ instance, formatRange }) {
       value: backlinkDetails
     },
     {
-      label: 'Daily visits target',
-      value: `${projectedDailyVisits.toLocaleString()} / day`
+      label: 'Lifetime visits logged',
+      value: `${lifetimeVisits.toLocaleString()} total`
     },
     {
       label: 'Visits logged today',
