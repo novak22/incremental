@@ -174,3 +174,42 @@ test('session repository APIs create, switch, and delete slots', () => {
   assert.equal(fallback.id, primarySession.id, 'fallback to primary after deletion');
   assert.equal(storageModule.listSessions().length, 1, 'only primary session remains');
 });
+
+test('exportSession returns a serialized snapshot for the active slot', () => {
+  const loadResult = loadState();
+  assert.equal(loadResult.returning, false);
+  const state = getState();
+  state.money = 1337;
+  saveState();
+
+  const exported = storageModule.exportSession();
+  assert.ok(exported, 'expected export payload');
+  assert.equal(exported.type, 'online-hustle-sim/session');
+  assert.equal(exported.session.id, storageModule.getActiveSession().id);
+  assert.equal(exported.snapshot.money, 1337);
+  assert.equal(exported.snapshot.lastSaved, exported.session.lastSaved);
+});
+
+test('importSession loads the provided snapshot into a new slot', () => {
+  loadState();
+  const baseSessions = storageModule.listSessions().length;
+
+  const exported = storageModule.exportSession();
+  exported.session.name = 'Imported Adventure';
+  exported.snapshot.money = 4242;
+
+  const result = storageModule.importSession(exported);
+  assert.ok(result?.session, 'expected imported session metadata');
+  assert.ok(result?.loadResult, 'expected a load result after import');
+  assert.equal(storageModule.listSessions().length, baseSessions + 1, 'adds a new session slot');
+  assert.equal(storageModule.getActiveSession().name, 'Imported Adventure');
+  assert.equal(getState().money, 4242, 'imported snapshot should apply to active state');
+});
+
+test('importSession rejects invalid payloads', () => {
+  loadState();
+  const before = storageModule.listSessions().length;
+  const result = storageModule.importSession({ bogus: true });
+  assert.equal(result, null, 'invalid payload should not import');
+  assert.equal(storageModule.listSessions().length, before, 'session roster remains unchanged');
+});

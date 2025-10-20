@@ -10,9 +10,15 @@ const state = {
   onRenameSession: null,
   onResetActiveSession: null,
   onSaveSession: null,
+  onExportSession: null,
+  onImportSession: null,
   isOpen: false,
   listenersBound: false,
-  isProcessing: false
+  isProcessing: false,
+  alert: message =>
+    typeof window !== 'undefined' && typeof window.alert === 'function'
+      ? window.alert(message)
+      : null
 };
 
 function getElements() {
@@ -99,6 +105,93 @@ function normalizeSessions() {
     : null;
 
   return { active: activeEntry, sessions };
+}
+
+function getUrlApi() {
+  const view = state.document?.defaultView;
+  if (view?.URL) {
+    return view.URL;
+  }
+  if (typeof URL !== 'undefined') {
+    return URL;
+  }
+  return null;
+}
+
+function sanitizeFilenamePart(value) {
+  if (!value || typeof value !== 'string') {
+    return 'session';
+  }
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return 'session';
+  }
+  return trimmed.replace(/[^a-z0-9-]+/gi, '-').replace(/-{2,}/g, '-').replace(/^-|-$/g, '').toLowerCase() || 'session';
+}
+
+function buildExportFilename(name, timestamp = state.now()) {
+  const safeName = sanitizeFilenamePart(name);
+  const date = new Date(timestamp);
+  const isoStamp = Number.isFinite(date.getTime())
+    ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(
+        date.getDate()
+      ).padStart(2, '0')}_${String(date.getHours()).padStart(2, '0')}-${String(
+        date.getMinutes()
+      ).padStart(2, '0')}`
+    : 'export';
+  return `${safeName}-${isoStamp}.json`;
+}
+
+function showAlert(message) {
+  if (!message) return;
+  const alertFn = state.alert;
+  if (typeof alertFn === 'function') {
+    try {
+      alertFn(message);
+    } catch (error) {
+      console?.error?.('Failed to display alert message', error);
+    }
+  }
+}
+
+async function maybeAwait(result) {
+  if (result && typeof result.then === 'function') {
+    return result;
+  }
+  return null;
+}
+
+function downloadSessionPayload(payload, sessionName) {
+  if (!payload) return;
+  const doc = state.document;
+  const urlApi = getUrlApi();
+  if (!doc?.createElement || !doc.body || !urlApi?.createObjectURL) {
+    showAlert('Download is unavailable in this environment.');
+    return;
+  }
+  let serialized = null;
+  try {
+    serialized = JSON.stringify(payload, null, 2);
+  } catch (error) {
+    console?.error?.('Failed to serialize session export', error);
+    showAlert('Could not prepare that export. Please try again.');
+    return;
+  }
+  const blob = new Blob([serialized], { type: 'application/json' });
+  const href = urlApi.createObjectURL(blob);
+  const link = doc.createElement('a');
+  if (!link) {
+    urlApi.revokeObjectURL?.(href);
+    showAlert('Download is unavailable right now.');
+    return;
+  }
+  link.href = href;
+  link.download = buildExportFilename(sessionName, state.now());
+  link.dataset.sessionDownload = 'true';
+  doc.body.appendChild(link);
+  link.click();
+  link.remove();
+  urlApi.revokeObjectURL?.(href);
 }
 
 function renderSummary(model) {
@@ -368,6 +461,96 @@ function handleResetSession() {
   runAction(() => state.onResetActiveSession?.(), { closeAfter: true });
 }
 
+async function exportSessionPayload(activeSession) {
+  if (!activeSession) {
+    showAlert('Save a session before exporting so we have something to share.');
+    return null;
+  }
+
+  if (typeof state.onSaveSession === 'function') {
+    try {
+      await maybeAwait(state.onSaveSession());
+    } catch (error) {
+      console?.error?.('Failed to save session prior to export', error);
+    }
+  }
+
+  if (typeof state.onExportSession !== 'function') {
+    showAlert('Exports are unavailable right now.');
+    return null;
+  }
+
+  let payload = null;
+  try {
+    payload = await state.onExportSession({ id: activeSession.id });
+  } catch (error) {
+    console?.error?.('Failed to export session', error);
+    showAlert('Export stumbled. Give it another shot in a moment.');
+    throw error;
+  }
+
+  if (!payload) {
+    showAlert('No save data found yet. Try saving once and retry.');
+    return null;
+  }
+
+  downloadSessionPayload(payload, activeSession.name);
+  return payload;
+}
+
+async function readImportFile(file) {
+  if (!file) {
+    showAlert('Pick a save file to import first.');
+    return null;
+  }
+
+  if (typeof file.text !== 'function') {
+    showAlert('This browser cannot read that file.');
+    return null;
+  }
+
+  let contents = '';
+  try {
+    contents = await file.text();
+  } catch (error) {
+    console?.error?.('Failed to read import file', error);
+    showAlert('We couldn’t read that file. Please try again.');
+    return null;
+  }
+
+  if (!contents) {
+    showAlert('That file looked empty. Double-check and try again.');
+    return null;
+  }
+
+  try {
+    return JSON.parse(contents);
+  } catch (error) {
+    console?.error?.('Failed to parse import file', error);
+    showAlert('That file didn’t look like a Hustle save.');
+    return null;
+  }
+}
+
+async function importSessionPayload(payload) {
+  if (!payload) {
+    return null;
+  }
+
+  if (typeof state.onImportSession !== 'function') {
+    showAlert('Imports are unavailable right now.');
+    return null;
+  }
+
+  try {
+    return await state.onImportSession({ data: payload, source: 'file' });
+  } catch (error) {
+    console?.error?.('Failed to import session payload', error);
+    showAlert('Import stumbled. Double-check the file and try again.');
+    throw error;
+  }
+}
+
 function handleRenameSession(sessionId) {
   if (!sessionId) return;
   const model = normalizeSessions();
@@ -408,6 +591,33 @@ function handleActivateSession(sessionId) {
   runAction(() => state.onActivateSession?.({ id: sessionId }), { closeAfter: true });
 }
 
+function handleExportSessionClick(event) {
+  event.preventDefault();
+  const model = normalizeSessions();
+  runAction(() => exportSessionPayload(model.active));
+}
+
+async function handleImportInputChange(event) {
+  const input = event.currentTarget;
+  const fileList = input?.files;
+  const file = fileList && fileList.length ? fileList[0] : null;
+  const payload = await readImportFile(file);
+  if (input) {
+    input.value = '';
+  }
+  if (!payload) {
+    return;
+  }
+  runAction(() => importSessionPayload(payload), { closeAfter: true });
+}
+
+function handleImportButtonClick(event) {
+  event.preventDefault();
+  const elements = getElements();
+  const input = elements?.importInput;
+  input?.click?.();
+}
+
 function handlePanelClick(event) {
   const actionTarget = event.target.closest?.('[data-session-action]');
   if (!actionTarget) {
@@ -438,6 +648,9 @@ function bindElementListeners() {
   const createButton = elements?.createButton;
   const resetButton = elements?.resetButton;
   const closeButton = elements?.closeButton;
+  const exportButton = elements?.exportButton;
+  const importButton = elements?.importButton;
+  const importInput = elements?.importInput;
 
   if (summary && summary.dataset.sessionSwitcherBound !== 'true') {
     summary.addEventListener('click', handleSummaryClick);
@@ -472,6 +685,21 @@ function bindElementListeners() {
     });
     closeButton.dataset.sessionSwitcherBound = 'true';
   }
+
+  if (exportButton && exportButton.dataset.sessionSwitcherBound !== 'true') {
+    exportButton.addEventListener('click', handleExportSessionClick);
+    exportButton.dataset.sessionSwitcherBound = 'true';
+  }
+
+  if (importButton && importButton.dataset.sessionSwitcherBound !== 'true') {
+    importButton.addEventListener('click', handleImportButtonClick);
+    importButton.dataset.sessionSwitcherBound = 'true';
+  }
+
+  if (importInput && importInput.dataset.sessionSwitcherBound !== 'true') {
+    importInput.addEventListener('change', handleImportInputChange);
+    importInput.dataset.sessionSwitcherBound = 'true';
+  }
 }
 
 function bindGlobalListeners() {
@@ -496,7 +724,10 @@ export function initSessionSwitcher({
   onDeleteSession,
   onRenameSession,
   onResetActiveSession,
-  onSaveSession
+  onSaveSession,
+  onExportSession,
+  onImportSession,
+  alert
 } = {}) {
   state.storage = storage ?? null;
   state.document = rootDocument ?? state.document;
@@ -507,6 +738,9 @@ export function initSessionSwitcher({
   state.onRenameSession = typeof onRenameSession === 'function' ? onRenameSession : null;
   state.onResetActiveSession = typeof onResetActiveSession === 'function' ? onResetActiveSession : null;
   state.onSaveSession = typeof onSaveSession === 'function' ? onSaveSession : null;
+  state.onExportSession = typeof onExportSession === 'function' ? onExportSession : null;
+  state.onImportSession = typeof onImportSession === 'function' ? onImportSession : null;
+  state.alert = typeof alert === 'function' ? alert : state.alert;
 
   bindElementListeners();
   bindGlobalListeners();

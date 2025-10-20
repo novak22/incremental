@@ -215,6 +215,33 @@
   padding-inline: 0.55rem;
 }
 
+.browser-session-switcher__tools {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.4);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.browser-session-switcher__tools-note {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--browser-subtle);
+}
+
+.browser-session-switcher__tools-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.browser-session-switcher__tools-actions .browser-button--text {
+  font-size: 0.85rem;
+  padding-inline: 0.55rem;
+}
+
 .browser-session-switcher.is-open .browser-session-switcher__summary {
   border-color: var(--browser-accent);
   box-shadow: 0 12px 28px rgba(37, 99, 235, 0.2);
