@@ -202,7 +202,7 @@ function getCategorySortIndex(key = '') {
 function getBoardState(board) {
   if (!boardStateMap.has(board)) {
     boardStateMap.set(board, {
-      activeCategory: null,
+      activeCategories: new Set(),
       activeFilters: new Set(),
       summary: {
         focusHours: 0,
@@ -278,9 +278,9 @@ function ensureBoard(body) {
     })
   );
 
-  const tabs = document.createElement('div');
-  tabs.className = 'downwork-board__tabs';
-  tabs.dataset.role = 'downwork-tabs';
+  const categories = document.createElement('div');
+  categories.className = 'downwork-board__categories';
+  categories.dataset.role = 'downwork-categories';
 
   const filters = document.createElement('div');
   filters.className = 'downwork-board__filters';
@@ -294,7 +294,7 @@ function ensureBoard(body) {
   toastHost.className = 'downwork-board__toasts';
   toastHost.dataset.role = 'downwork-toast-host';
 
-  board.append(summary, tabs, filters, grid, toastHost);
+  board.append(summary, categories, filters, grid, toastHost);
   body.appendChild(board);
   return board;
 }
@@ -669,16 +669,13 @@ function resolveFocusHoursLeft(context = {}, models = []) {
 
 const DEFAULT_COPY = {
   ready: {
-    title: 'Ready to accept',
-    description: 'Step 1 • Accept: Claim this contract and move it into your active worklist.'
+    title: 'Open offers'
   },
   upcoming: {
-    title: 'Queued for later',
-    description: "These leads unlock with tomorrow's refresh. Prep so you can accept quickly."
+    title: 'Opening soon'
   },
   commitments: {
-    title: 'In progress',
-    description: 'Step 2 • Work: Log hours until everything is complete.'
+    title: 'In progress'
   }
 };
 
@@ -727,10 +724,10 @@ export function describeMetaSummary({ availableCount, upcomingCount, commitmentC
   }
 
   if (parts.length === 0) {
-    return 'No actions ready yet — accept your next contract to kick things off.';
+    return 'No jobs available right now — check back soon for fresh leads.';
   }
 
-  return `Keep the loop rolling — accept → work → complete. ${parts.join(' • ')}`;
+  return `Marketplace snapshot — ${parts.join(' • ')}`;
 }
 
 export function createHustleCard({
@@ -951,10 +948,10 @@ export default function renderHustles(context = {}, definitions = [], models = [
   if (!board) return null;
 
   const list = board.querySelector('[data-role="browser-hustle-list"]');
-  const tabsContainer = board.querySelector('[data-role="downwork-tabs"]');
+  const categoriesContainer = board.querySelector('[data-role="downwork-categories"]');
   const filtersContainer = board.querySelector('[data-role="downwork-filters"]');
 
-  if (!list || !tabsContainer || !filtersContainer) {
+  if (!list || !categoriesContainer || !filtersContainer) {
     return null;
   }
 
@@ -1056,7 +1053,7 @@ export default function renderHustles(context = {}, definitions = [], models = [
     allCards.push(card);
   });
 
-  tabsContainer.innerHTML = '';
+  categoriesContainer.innerHTML = '';
   filtersContainer.innerHTML = '';
   list.innerHTML = '';
 
@@ -1105,11 +1102,11 @@ export default function renderHustles(context = {}, definitions = [], models = [
   );
 
   if (!sortedCategories.length) {
-    boardState.activeCategory = null;
+    boardState.activeCategories.clear();
     boardState.activeFilters.clear();
     const empty = document.createElement('p');
     empty.className = 'browser-empty';
-    empty.textContent = 'Queue an action to see it spotlighted here.';
+    empty.textContent = 'No jobs available right now. Check back soon!';
     list.appendChild(empty);
     updateTabMeta(appState, 'gigs', describeBoardNavSummary({ availableCount, upcomingCount, commitmentCount }));
     const updateHireMeta = () => {
@@ -1124,30 +1121,59 @@ export default function renderHustles(context = {}, definitions = [], models = [
     };
   }
 
-  if (!boardState.activeCategory || !cardsByCategory.has(boardState.activeCategory)) {
-    boardState.activeCategory = sortedCategories[0];
+  const validActiveCategories = new Set(
+    [...boardState.activeCategories].filter(key => cardsByCategory.has(key))
+  );
+
+  if (!validActiveCategories.size) {
+    sortedCategories.forEach(key => {
+      validActiveCategories.add(key);
+    });
   }
 
-  const tabButtons = new Map();
+  boardState.activeCategories = validActiveCategories;
+
+  const totalCategories = sortedCategories.length;
+  const categoryButtons = new Map();
   sortedCategories.forEach(categoryKey => {
     const config = categoryMetadata.get(categoryKey) || DEFAULT_CATEGORY_CONFIG;
     const button = document.createElement('button');
     button.type = 'button';
-    button.className = 'downwork-tab';
+    button.className = 'downwork-filter downwork-filter--category';
     button.dataset.categoryKey = categoryKey;
-    button.setAttribute('aria-pressed', 'false');
 
-    const icon = document.createElement('span');
-    icon.className = 'downwork-tab__icon';
-    icon.textContent = config.icon || '💼';
+    const labelParts = [];
+    if (config.icon) {
+      labelParts.push(config.icon);
+    }
+    labelParts.push(config.label);
+    button.textContent = labelParts.join(' ');
 
-    const label = document.createElement('span');
-    label.className = 'downwork-tab__label';
-    label.textContent = config.label;
+    const isActive = boardState.activeCategories.has(categoryKey);
+    button.classList.toggle('is-active', isActive);
+    button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
 
-    button.append(icon, label);
-    tabsContainer.appendChild(button);
-    tabButtons.set(categoryKey, button);
+    button.addEventListener('click', () => {
+      const { activeCategories } = boardState;
+      const isSelected = activeCategories.has(categoryKey);
+      const hasAll = activeCategories.size === totalCategories;
+
+      if (isSelected && hasAll) {
+        boardState.activeCategories = new Set([categoryKey]);
+      } else if (isSelected && activeCategories.size > 1) {
+        activeCategories.delete(categoryKey);
+      } else if (isSelected) {
+        boardState.activeCategories = new Set(sortedCategories);
+      } else {
+        activeCategories.add(categoryKey);
+      }
+
+      updateCategorySelection();
+      renderGrid();
+    });
+
+    categoriesContainer.appendChild(button);
+    categoryButtons.set(categoryKey, button);
   });
 
   const filterButtons = new Map();
@@ -1168,7 +1194,7 @@ export default function renderHustles(context = {}, definitions = [], models = [
         boardState.activeFilters.add(filter.id);
       }
       updateFilterSelection();
-      renderActiveCategory();
+      renderGrid();
     });
 
     filtersContainer.appendChild(button);
@@ -1218,37 +1244,48 @@ export default function renderHustles(context = {}, definitions = [], models = [
     return cards.filter(card => predicates.every(predicate => predicate(card)));
   }
 
-  function updateTabSelection() {
-    tabButtons.forEach((button, key) => {
-      const isActive = key === boardState.activeCategory;
+  function updateCategorySelection() {
+    const activeCategories = boardState.activeCategories;
+    categoryButtons.forEach((button, key) => {
+      const isActive = activeCategories.has(key);
       button.classList.toggle('is-active', isActive);
       button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
     });
-    board.dataset.activeCategory = boardState.activeCategory || '';
+    const hasFocusedSelection = activeCategories.size > 0 && activeCategories.size < totalCategories;
+    if (hasFocusedSelection) {
+      board.dataset.categoryFilter = 'focused';
+    } else {
+      delete board.dataset.categoryFilter;
+    }
   }
 
   function updateFilterSelection() {
+    const hasFilters = boardState.activeFilters.size > 0;
     filterButtons.forEach((button, id) => {
       const isActive = boardState.activeFilters.has(id);
       button.classList.toggle('is-active', isActive);
       button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
     });
-    board.classList.toggle('is-filtered', boardState.activeFilters.size > 0);
+    board.classList.toggle('is-filtered', hasFilters);
+    list.classList.toggle('is-filtered', hasFilters);
   }
 
-  function renderActiveCategory() {
+  function renderGrid() {
     list.innerHTML = '';
-    const activeKey = boardState.activeCategory;
-    const cards = cardsByCategory.get(activeKey) || [];
-    const filtered = applyActiveFilters(cards);
-    list.classList.toggle('is-filtered', boardState.activeFilters.size > 0);
+    const categorySelection = boardState.activeCategories.size
+      ? boardState.activeCategories
+      : new Set(sortedCategories);
+    const visibleCards = allCards.filter(card => categorySelection.has(card.dataset.category));
+    const filtered = applyActiveFilters(visibleCards);
+    const hasFilters = boardState.activeFilters.size > 0;
+    list.classList.toggle('is-filtered', hasFilters);
 
     if (!filtered.length) {
       const empty = document.createElement('p');
       empty.className = 'browser-empty browser-empty--compact';
-      empty.textContent = boardState.activeFilters.size
-        ? 'No gigs match these filters yet. Clear a filter to see more leads.'
-        : 'Queue an action to see it spotlighted here.';
+      empty.textContent = hasFilters
+        ? 'No jobs match these filters yet. Adjust filters to see more gigs.'
+        : 'No jobs available in this selection.';
       list.appendChild(empty);
       return;
     }
@@ -1258,18 +1295,9 @@ export default function renderHustles(context = {}, definitions = [], models = [
     });
   }
 
-  tabButtons.forEach((button, key) => {
-    button.addEventListener('click', () => {
-      if (boardState.activeCategory === key) return;
-      boardState.activeCategory = key;
-      updateTabSelection();
-      renderActiveCategory();
-    });
-  });
-
-  updateTabSelection();
+  updateCategorySelection();
   updateFilterSelection();
-  renderActiveCategory();
+  renderGrid();
 
   updateTabMeta(appState, 'gigs', describeBoardNavSummary({ availableCount, upcomingCount, commitmentCount }));
 

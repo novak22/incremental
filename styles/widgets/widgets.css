@@ -138,6 +138,7 @@
   display: grid;
   gap: 1.35rem;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-auto-rows: 1fr;
 }
 
 .downwork-app {
@@ -227,7 +228,7 @@
   box-shadow: var(--browser-shadow-soft);
 }
 
-.downwork-board[data-active-category] .downwork-board__summary {
+.downwork-board[data-category-filter] .downwork-board__summary {
   border-color: rgba(37, 99, 235, 0.28);
 }
 
@@ -270,47 +271,26 @@
   color: var(--browser-danger);
 }
 
-.downwork-board__tabs {
+.downwork-board__categories {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.65rem;
-}
-
-.downwork-tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.55rem 0.9rem;
-  border-radius: var(--browser-radius-pill);
-  border: 1px solid var(--browser-panel-border);
-  background: var(--browser-panel);
-  color: var(--browser-muted);
-  font: inherit;
-  cursor: pointer;
-  transition: background 140ms ease, border-color 140ms ease, color 140ms ease, box-shadow 140ms ease;
-}
-
-.downwork-tab:hover {
-  color: var(--browser-text);
-  border-color: rgba(37, 99, 235, 0.25);
-}
-
-.downwork-tab.is-active {
-  color: var(--browser-text);
-  border-color: var(--browser-accent);
-  background: rgba(37, 99, 235, 0.12);
-  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.24);
-}
-
-.downwork-tab__icon {
-  font-size: 1.3rem;
-  line-height: 1;
+  gap: 0.5rem;
 }
 
 .downwork-board__filters {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+}
+
+.downwork-filter--category {
+  font-weight: 600;
+  color: var(--browser-muted);
+  padding: 0.45rem 0.85rem;
+}
+
+.downwork-filter--category.is-active {
+  color: var(--browser-text);
 }
 
 .downwork-filter {
@@ -536,6 +516,7 @@
   border: 1px solid var(--browser-panel-border);
   background: var(--browser-panel);
   box-shadow: var(--browser-shadow-card);
+  height: 100%;
 }
 
 .browser-card__header {

@@ -84,7 +84,7 @@ test('renderHustles highlights accept CTA and upcoming list', () => {
 
   try {
     const result = renderHustles(context, definitions, models);
-    assert.ok(result?.meta.includes('Keep the loop rolling — accept → work → complete.'));
+    assert.ok(result?.meta.includes('Marketplace snapshot —'));
 
     const summaryStats = document.querySelectorAll('.downwork-summary__stat');
     assert.equal(summaryStats.length, 3, 'expected three summary stats to render');
@@ -92,12 +92,12 @@ test('renderHustles highlights accept CTA and upcoming list', () => {
     assert.equal(document.querySelector('[data-role="downwork-accepted-value"]')?.textContent, '0');
     assert.equal(document.querySelector('[data-role="downwork-payout-value"]')?.textContent, '$50');
 
-    const tabs = document.querySelectorAll('.downwork-tab');
-    assert.equal(tabs.length, 1, 'expected single hustle category tab');
-    assert.ok(tabs[0].textContent.includes('Daily Hustles'));
+    const categories = document.querySelectorAll('.downwork-filter--category');
+    assert.ok(categories.length >= 1, 'expected at least one category filter');
+    assert.ok(categories[0].textContent.includes('Daily Hustles'));
 
-    const filters = document.querySelectorAll('.downwork-filter');
-    assert.equal(filters.length, 4, 'expected quick filter pills');
+    const filters = document.querySelectorAll('.downwork-filter[data-filter-id]');
+    assert.equal(filters.length, 4, 'expected quick filter chips');
 
     const button = document.querySelector('.browser-card__actions .browser-card__button--primary');
     assert.ok(button, 'expected primary accept CTA');
@@ -108,7 +108,7 @@ test('renderHustles highlights accept CTA and upcoming list', () => {
     assert.equal(readyOfferButton.textContent, 'Accept & Queue');
 
     const upcomingHeader = [...document.querySelectorAll('.browser-card__section-title')]
-      .find(node => node.textContent === 'Queued for later');
+      .find(node => node.textContent === 'Opening soon');
     assert.ok(upcomingHeader, 'expected upcoming section to render');
 
     const upcomingItem = document.querySelector('.hustle-card__offer.is-upcoming .browser-card__button');
@@ -306,14 +306,14 @@ test('renderHustles hides categories without unlocked offers', () => {
 
   try {
     const result = renderHustles(context, definitions, models);
-    assert.equal(result?.meta, 'No actions ready yet — accept your next contract to kick things off.');
+    assert.equal(result?.meta, 'No jobs available right now — check back soon for fresh leads.');
 
     const cards = document.querySelectorAll('.browser-card.browser-card--hustle');
     assert.equal(cards.length, 0, 'expected no hustle categories to render');
 
     const emptyMessage = document.querySelector('.browser-empty');
     assert.ok(emptyMessage, 'expected empty state when no unlocked actions exist');
-    assert.equal(emptyMessage.textContent, 'Queue an action to see it spotlighted here.');
+    assert.equal(emptyMessage.textContent, 'No jobs available right now. Check back soon!');
   } finally {
     dom.window.close();
     delete globalThis.window;
@@ -370,7 +370,7 @@ test('renderHustles falls back to empty-state language when no offers exist', ()
 
   try {
     const result = renderHustles(context, definitions, models);
-    assert.equal(result?.meta, 'No actions ready yet — accept your next contract to kick things off.');
+    assert.equal(result?.meta, 'No jobs available right now — check back soon for fresh leads.');
 
     const button = document.querySelector('.browser-card__actions .browser-card__button');
     assert.ok(button, 'expected fallback button');

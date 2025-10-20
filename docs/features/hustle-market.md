@@ -65,12 +65,12 @@
 
 ## UI Surface Updates
 - Hustle browser cards now list active commitments beneath each template, including payout callouts, logged-hours meters, and deadline countdown bars so you can triage multi-day gigs at a glance.
-- Market offers render in the same cards as variant rows: ready offers headline a "Ready to accept" list with a matching accept CTA, while upcoming variants land in a dedicated "Coming tomorrow" queue with unlock timers.
+- Market offers render in the same cards as variant rows: open offers headline an "Open offers" list with a matching accept CTA, while upcoming variants land in a dedicated "Opening soon" queue with unlock timers.
 - The finance dashboard separates hustle commitments from fresh offers, highlighting urgent deadlines with warning tones and mirroring the same progress meters for consistency.
 - Hustle browser cards now offer a manual "Roll a fresh offer" button when a template has no active variants so players can nudge the market without relying on legacy instant runs.
 - When manual rerolls are disabled (and no offers exist), hustle cards swap the queue button for a cheerful "Check back tomorrow" hint instead of falling back to hidden instant actions.
 - Celebratory copy now leads the experience—"Fresh hustles just landed!"—whenever offers, upcoming slots, or commitments exist, only falling back to the quiet reroll language when the market is truly empty.
-- DownWork's browser view now opens with a sticky capacity header (focus hours, accepted gigs, and potential payout), lane tabs for each hustle category, and quick filter pills (high payout, short tasks, skill XP, expiring soon) so players can plan their queue like a productivity board instead of scrolling a horizontal feed.
+- DownWork's browser view now opens with a sticky capacity header (focus hours, accepted gigs, and potential payout), marketplace-style category chips, and quick filter pills (high payout, short tasks, skill XP, expiring soon) so players can scan a unified grid of hustle cards without juggling lane columns.
 - Dashboard quick actions surface active offers only. When the market is empty they present a "Check back tomorrow" guidance tile instead of invoking hidden instant-action fallbacks.
 - Dashboard and browser surfaces group offers by template/variant, note multi-day commitments, and call out seat policies so limited cohorts feel tangible while category filters keep the grid organized.
 - `createInstantHustle` exposes a `getPrimaryOfferAction()` helper (also mirrored on `definition.action.resolvePrimaryAction`) so tests and tooling can grab the current market offer or trigger a manual reroll, while production cards and quick actions rely exclusively on accepting offers from the market.
