@@ -69,16 +69,8 @@ function isOfferActiveOnOrAfterDay(offer, day) {
   return offer.expiresOnDay >= parsedDay;
 }
 
-const offerLifecycle = {
-  createOfferFromVariant,
-  isOfferActiveOnOrAfterDay,
-  OFFER_EXPIRY_GRACE_DAYS
-};
-
 export {
   createOfferFromVariant,
   isOfferActiveOnOrAfterDay,
   OFFER_EXPIRY_GRACE_DAYS
 };
-
-export default offerLifecycle;

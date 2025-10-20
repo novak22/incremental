@@ -1,8 +1,6 @@
 import { clampMarketDaySpan, clampMarketPositiveInteger, cloneMarketMetadata } from './normalizers.js';
 import { resolveHustleMetadata } from './metadata.js';
 
-export { finalizeMetadata } from './metadata.js';
-
 export function buildBaseMetadata({ hoursRequired, payoutAmount, progressLabel, hoursPerDay, daysRequired }) {
   const baseMetadata = {};
 

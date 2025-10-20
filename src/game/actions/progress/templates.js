@@ -9,7 +9,7 @@ export function roundHours(value) {
   return Math.round(number * factor) / factor;
 }
 
-export function ensureProgressTemplate(definition) {
+function ensureProgressTemplate(definition) {
   if (!definition?.progress || typeof definition.progress !== 'object') {
     return {};
   }
@@ -24,7 +24,7 @@ export function resolveProgressField(value, fallback) {
   return fallback;
 }
 
-export function resolveProgressString(...values) {
+function resolveProgressString(...values) {
   for (const value of values) {
     if (typeof value === 'string' && value.trim()) {
       return value.trim();

@@ -29,7 +29,7 @@ export const KNOWLEDGE_HUSTLES = STUDY_ACTIONS;
 
 const HUSTLE_ACTION_CATEGORY = 'hustle';
 
-export { ACTIONS, INSTANT_ACTIONS, STUDY_ACTIONS };
+export { ACTIONS };
 export { rollDailyOffers, getAvailableOffers, getClaimedOffers, getMarketRollAuditLog };
 
 export * from './hustles/helpers.js';

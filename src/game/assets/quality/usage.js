@@ -1,13 +1,13 @@
 const DEFAULT_DAILY_LIMIT = 1;
 
-export function ensureUsageMap(instance) {
+function ensureUsageMap(instance) {
   if (!instance.dailyUsage || typeof instance.dailyUsage !== 'object') {
     instance.dailyUsage = {};
   }
   return instance.dailyUsage;
 }
 
-export function getDailyLimit(action) {
+function getDailyLimit(action) {
   const limit = Number(action?.dailyLimit);
   if (!Number.isFinite(limit) || limit <= 0) {
     return DEFAULT_DAILY_LIMIT;
@@ -15,7 +15,7 @@ export function getDailyLimit(action) {
   return Math.max(DEFAULT_DAILY_LIMIT, Math.floor(limit));
 }
 
-export function getUsageCount(instance, actionId) {
+function getUsageCount(instance, actionId) {
   if (!instance?.dailyUsage) return 0;
   const value = Number(instance.dailyUsage[actionId]);
   if (!Number.isFinite(value)) return 0;
@@ -41,10 +41,3 @@ export function trackUsage(instance, action) {
   map[action.id] = Math.min(dailyLimit, current + 1);
 }
 
-export default {
-  ensureUsageMap,
-  getDailyLimit,
-  getUsageCount,
-  getUsageStatus,
-  trackUsage
-};

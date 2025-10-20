@@ -10,7 +10,7 @@ import {
 
 const FALLBACK_PAYOUT_SCHEDULE = 'onCompletion';
 
-export function finalizeMetadata(metadata, { fallbackSchedule = FALLBACK_PAYOUT_SCHEDULE } = {}) {
+function finalizeMetadata(metadata, { fallbackSchedule = FALLBACK_PAYOUT_SCHEDULE } = {}) {
   const working = structuredClone(metadata);
 
   if (working.hoursPerDay == null) {
@@ -216,5 +216,3 @@ export function resolveHustleMetadata({
 
   return finalizeMetadata(metadata, { fallbackSchedule });
 }
-
-export { FALLBACK_PAYOUT_SCHEDULE };

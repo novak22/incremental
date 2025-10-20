@@ -54,7 +54,7 @@ const instantiateMarket = (definition, base = {}) => {
   };
 };
 
-export const MARKET_DEFINITIONS = {
+const MARKET_DEFINITIONS = {
   audiobookNarration,
   audienceCall,
   bundlePush,

@@ -82,20 +82,12 @@ export function getHustles() {
   return getRegistry().hustles;
 }
 
-export function getActions() {
-  return getRegistry().actions;
-}
-
 export function getAssets() {
   return getRegistry().assets;
 }
 
 export function getUpgrades() {
   return getRegistry().upgrades;
-}
-
-export function getHustleDefinition(id) {
-  return getActionDefinition(id);
 }
 
 export function getActionDefinition(id) {

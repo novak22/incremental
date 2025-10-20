@@ -118,18 +118,7 @@ function selectVariantFromPool(variants, rng = Math.random) {
   return variants[variants.length - 1];
 }
 
-const variantSelection = {
-  buildVariantPool,
-  buildVariantTemplate,
-  normalizeVariant,
-  selectVariantFromPool
-};
-
 export {
   buildVariantPool,
-  buildVariantTemplate,
-  normalizeVariant,
   selectVariantFromPool
 };
-
-export default variantSelection;

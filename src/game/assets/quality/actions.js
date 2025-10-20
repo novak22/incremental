@@ -89,12 +89,3 @@ export function getQualityActionUsage(definition, instance, action) {
   return getUsageStatus(instance, action);
 }
 
-export default {
-  canPerformQualityAction,
-  getQualityActionAvailability,
-  getQualityActionUsage,
-  getQualityActions,
-  getQualityTracks,
-  performQualityAction,
-  runQualityAction
-};

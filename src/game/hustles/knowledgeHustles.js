@@ -82,7 +82,3 @@ export function createKnowledgeHustles() {
   });
 }
 
-export default {
-  createKnowledgeHustles,
-  buildTrackViewModel
-};

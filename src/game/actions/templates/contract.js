@@ -360,6 +360,3 @@ export function createStudyTemplate(definition, options = {}) {
   });
 }
 
-export function mergeContractProgress(progress, defaults) {
-  return mergeProgress(progress, defaults);
-}
