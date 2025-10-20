@@ -199,17 +199,89 @@ function getCategorySortIndex(key = '') {
   return index === -1 ? CATEGORY_ORDER.length : index;
 }
 
+function formatTagLabel(raw = '') {
+  if (!raw) return '';
+  return raw
+    .replace(/[_\-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/\b\w/g, char => char.toUpperCase());
+}
+
+function resolveTagEntries(model = {}, definition = {}) {
+  const sources = [];
+  if (Array.isArray(model.tags)) sources.push(...model.tags);
+  if (Array.isArray(definition.tags)) sources.push(...definition.tags);
+
+  const unique = new Map();
+
+  sources.forEach(entry => {
+    if (!entry) return;
+    let id = '';
+    let label = '';
+
+    if (typeof entry === 'string') {
+      id = entry.trim().toLowerCase().replace(/\s+/g, '-');
+      label = formatTagLabel(entry);
+    } else if (typeof entry === 'object') {
+      const rawId = typeof entry.id === 'string' && entry.id.trim().length > 0
+        ? entry.id.trim()
+        : typeof entry.value === 'string' && entry.value.trim().length > 0
+          ? entry.value.trim()
+          : typeof entry.label === 'string'
+            ? entry.label.trim()
+            : '';
+      id = rawId.toLowerCase().replace(/\s+/g, '-');
+      const rawLabel = typeof entry.label === 'string' && entry.label.trim().length > 0
+        ? entry.label.trim()
+        : rawId;
+      label = formatTagLabel(rawLabel);
+    }
+
+    if (!id) return;
+    if (!label) {
+      label = formatTagLabel(id);
+    }
+
+    if (!unique.has(id)) {
+      unique.set(id, label);
+    }
+  });
+
+  return Array.from(unique.entries()).map(([id, label]) => ({ id, label }));
+}
+
+function createFilterRow(labelText = '') {
+  const row = document.createElement('div');
+  row.className = 'downwork-filter-row';
+
+  if (labelText) {
+    const label = document.createElement('span');
+    label.className = 'downwork-filter-row__label';
+    label.textContent = labelText;
+    row.appendChild(label);
+  }
+
+  const chips = document.createElement('div');
+  chips.className = 'downwork-filter-row__chips';
+  row.appendChild(chips);
+
+  return { row, chips };
+}
+
 function getBoardState(board) {
   if (!boardStateMap.has(board)) {
     boardStateMap.set(board, {
       activeCategory: null,
       activeFilters: new Set(),
+      activeTags: new Set(),
       summary: {
         focusHours: 0,
         acceptedCount: 0,
         potentialPayout: 0
       },
       elements: {},
+      availableTags: new Map(),
       thresholds: {
         payoutHigh: 0,
         shortTask: 0,
@@ -287,7 +359,7 @@ function ensureBoard(body) {
   filters.dataset.role = 'downwork-filters';
 
   const grid = document.createElement('div');
-  grid.className = 'browser-card-grid downwork-board__grid';
+  grid.className = 'downwork-board__list';
   grid.dataset.role = 'browser-hustle-list';
 
   const toastHost = document.createElement('div');
@@ -669,16 +741,13 @@ function resolveFocusHoursLeft(context = {}, models = []) {
 
 const DEFAULT_COPY = {
   ready: {
-    title: 'Ready to accept',
-    description: 'Step 1 • Accept: Claim this contract and move it into your active worklist.'
+    title: 'Open contracts'
   },
   upcoming: {
-    title: 'Queued for later',
-    description: "These leads unlock with tomorrow's refresh. Prep so you can accept quickly."
+    title: 'Opening soon'
   },
   commitments: {
-    title: 'In progress',
-    description: 'Step 2 • Work: Log hours until everything is complete.'
+    title: 'In progress'
   }
 };
 
@@ -848,6 +917,24 @@ export function createHustleCard({
       list.appendChild(item);
     });
     card.appendChild(list);
+  }
+
+  const tagEntries = resolveTagEntries(model, definition);
+  card.dataset.tagList = JSON.stringify(tagEntries);
+  card.dataset.tags = tagEntries.map(entry => entry.id).join(' ');
+
+  if (tagEntries.length > 0) {
+    const tagList = document.createElement('ul');
+    tagList.className = 'downwork-card__tags';
+    tagEntries.forEach(entry => {
+      if (!entry) return;
+      const item = document.createElement('li');
+      item.className = 'downwork-card__tag';
+      item.dataset.tagId = entry.id;
+      item.textContent = entry.label;
+      tagList.appendChild(item);
+    });
+    card.appendChild(tagList);
   }
 
   const hasSkillBadge = badges.some(badge => typeof badge === 'string' && /xp/i.test(badge));
@@ -1084,6 +1171,34 @@ export default function renderHustles(context = {}, definitions = [], models = [
     expiringSoon: Number.isFinite(minExpiry) ? Math.min(2, Math.max(0, minExpiry)) : 2
   };
 
+  const tagMeta = new Map();
+  allCards.forEach(card => {
+    let entries = [];
+    try {
+      entries = JSON.parse(card.dataset.tagList || '[]');
+    } catch (error) {
+      entries = [];
+    }
+    const seen = new Set();
+    entries.forEach(entry => {
+      const id = typeof entry?.id === 'string' ? entry.id : '';
+      if (!id || seen.has(id)) return;
+      seen.add(id);
+      const label = typeof entry?.label === 'string' && entry.label.trim().length > 0
+        ? entry.label
+        : formatTagLabel(id);
+      if (!tagMeta.has(id)) {
+        tagMeta.set(id, { id, label, count: 0 });
+      }
+      const meta = tagMeta.get(id);
+      meta.count += 1;
+    });
+  });
+  boardState.availableTags = tagMeta;
+  boardState.activeTags = new Set(
+    [...boardState.activeTags].filter(id => tagMeta.has(id))
+  );
+
   const focusHoursLeft = resolveFocusHoursLeft(context, models);
   updateSummaryDisplay(boardState, {
     focusHours: focusHoursLeft,
@@ -1107,6 +1222,7 @@ export default function renderHustles(context = {}, definitions = [], models = [
   if (!sortedCategories.length) {
     boardState.activeCategory = null;
     boardState.activeFilters.clear();
+    boardState.activeTags.clear();
     const empty = document.createElement('p');
     empty.className = 'browser-empty';
     empty.textContent = 'Queue an action to see it spotlighted here.';
@@ -1151,29 +1267,78 @@ export default function renderHustles(context = {}, definitions = [], models = [
   });
 
   const filterButtons = new Map();
-  QUICK_FILTERS.forEach(filter => {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'downwork-filter';
-    button.dataset.filterId = filter.id;
-    button.textContent = filter.label;
-    const isActive = boardState.activeFilters.has(filter.id);
-    button.classList.toggle('is-active', isActive);
-    button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+  if (QUICK_FILTERS.length) {
+    const { row, chips } = createFilterRow('Quick filters');
+    filtersContainer.appendChild(row);
+    QUICK_FILTERS.forEach(filter => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'downwork-filter';
+      button.dataset.filterId = filter.id;
+      button.textContent = filter.label;
+      const isActive = boardState.activeFilters.has(filter.id);
+      button.classList.toggle('is-active', isActive);
+      button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
 
-    button.addEventListener('click', () => {
-      if (boardState.activeFilters.has(filter.id)) {
-        boardState.activeFilters.delete(filter.id);
-      } else {
-        boardState.activeFilters.add(filter.id);
-      }
-      updateFilterSelection();
-      renderActiveCategory();
+      button.addEventListener('click', () => {
+        if (boardState.activeFilters.has(filter.id)) {
+          boardState.activeFilters.delete(filter.id);
+        } else {
+          boardState.activeFilters.add(filter.id);
+        }
+        updateFilterSelection();
+        renderActiveCategory();
+      });
+
+      chips.appendChild(button);
+      filterButtons.set(filter.id, button);
     });
+  }
 
-    filtersContainer.appendChild(button);
-    filterButtons.set(filter.id, button);
+  const tagButtons = new Map();
+  const tagEntries = Array.from(tagMeta.values()).sort((a, b) => {
+    if (b.count !== a.count) return b.count - a.count;
+    return a.label.localeCompare(b.label);
   });
+
+  if (tagEntries.length) {
+    const { row, chips } = createFilterRow('Tags');
+    filtersContainer.appendChild(row);
+
+    tagEntries.forEach(entry => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'downwork-filter downwork-filter--tag';
+      button.dataset.tagId = entry.id;
+
+      const labelSpan = document.createElement('span');
+      labelSpan.className = 'downwork-filter__label';
+      labelSpan.textContent = entry.label;
+      button.appendChild(labelSpan);
+
+      const countBadge = document.createElement('span');
+      countBadge.className = 'downwork-filter__count';
+      countBadge.textContent = String(entry.count);
+      button.appendChild(countBadge);
+
+      const isActive = boardState.activeTags.has(entry.id);
+      button.classList.toggle('is-active', isActive);
+      button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+
+      button.addEventListener('click', () => {
+        if (boardState.activeTags.has(entry.id)) {
+          boardState.activeTags.delete(entry.id);
+        } else {
+          boardState.activeTags.add(entry.id);
+        }
+        updateFilterSelection();
+        renderActiveCategory();
+      });
+
+      chips.appendChild(button);
+      tagButtons.set(entry.id, button);
+    });
+  }
 
   const filterPredicates = {
     highPayout: card => {
@@ -1205,17 +1370,30 @@ export default function renderHustles(context = {}, definitions = [], models = [
     }
   };
 
-  function applyActiveFilters(cards = []) {
-    if (!boardState.activeFilters.size) {
-      return cards.slice();
+  function cardMatchesActiveTags(card) {
+    if (!boardState.activeTags.size) {
+      return true;
     }
+    const raw = (card.dataset.tags || '').trim();
+    if (!raw) return false;
+    const tags = raw.split(/\s+/).filter(Boolean);
+    if (!tags.length) return false;
+    return [...boardState.activeTags].every(tag => tags.includes(tag));
+  }
+
+  function applyActiveFilters(cards = []) {
     const predicates = [...boardState.activeFilters]
       .map(id => filterPredicates[id])
       .filter(Boolean);
-    if (!predicates.length) {
+    if (!predicates.length && !boardState.activeTags.size) {
       return cards.slice();
     }
-    return cards.filter(card => predicates.every(predicate => predicate(card)));
+    return cards.filter(card => {
+      if (predicates.length && !predicates.every(predicate => predicate(card))) {
+        return false;
+      }
+      return cardMatchesActiveTags(card);
+    });
   }
 
   function updateTabSelection() {
@@ -1227,13 +1405,32 @@ export default function renderHustles(context = {}, definitions = [], models = [
     board.dataset.activeCategory = boardState.activeCategory || '';
   }
 
-  function updateFilterSelection() {
+  function hasActiveFilters() {
+    return boardState.activeFilters.size > 0 || boardState.activeTags.size > 0;
+  }
+
+  function updateQuickFilterSelection() {
     filterButtons.forEach((button, id) => {
       const isActive = boardState.activeFilters.has(id);
       button.classList.toggle('is-active', isActive);
       button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
     });
-    board.classList.toggle('is-filtered', boardState.activeFilters.size > 0);
+  }
+
+  function updateTagFilterSelection() {
+    tagButtons.forEach((button, id) => {
+      const isActive = boardState.activeTags.has(id);
+      button.classList.toggle('is-active', isActive);
+      button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    });
+  }
+
+  function updateFilterSelection() {
+    updateQuickFilterSelection();
+    updateTagFilterSelection();
+    const filtered = hasActiveFilters();
+    board.classList.toggle('is-filtered', filtered);
+    list.classList.toggle('is-filtered', filtered);
   }
 
   function renderActiveCategory() {
@@ -1241,13 +1438,14 @@ export default function renderHustles(context = {}, definitions = [], models = [
     const activeKey = boardState.activeCategory;
     const cards = cardsByCategory.get(activeKey) || [];
     const filtered = applyActiveFilters(cards);
-    list.classList.toggle('is-filtered', boardState.activeFilters.size > 0);
+    const isFiltered = hasActiveFilters();
+    list.classList.toggle('is-filtered', isFiltered);
 
     if (!filtered.length) {
       const empty = document.createElement('p');
       empty.className = 'browser-empty browser-empty--compact';
-      empty.textContent = boardState.activeFilters.size
-        ? 'No gigs match these filters yet. Clear a filter to see more leads.'
+      empty.textContent = isFiltered
+        ? 'No gigs match these filters yet. Adjust or clear a filter to see more leads.'
         : 'Queue an action to see it spotlighted here.';
       list.appendChild(empty);
       return;

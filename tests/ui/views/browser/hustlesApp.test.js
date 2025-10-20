@@ -37,6 +37,7 @@ test('renderHustles highlights accept CTA and upcoming list', () => {
       name: 'Priority Hustle',
       description: 'Lock this contract now.',
       badges: ['2h time', '$50 payout'],
+      tags: ['writing', 'remote'],
       metrics: {
         time: { value: 2, label: '2h' },
         payout: { value: 50, label: '$50' },
@@ -96,8 +97,11 @@ test('renderHustles highlights accept CTA and upcoming list', () => {
     assert.equal(tabs.length, 1, 'expected single hustle category tab');
     assert.ok(tabs[0].textContent.includes('Daily Hustles'));
 
-    const filters = document.querySelectorAll('.downwork-filter');
+    const filters = document.querySelectorAll('button[data-filter-id]');
     assert.equal(filters.length, 4, 'expected quick filter pills');
+
+    const tagFilters = document.querySelectorAll('button[data-tag-id]');
+    assert.ok(tagFilters.length > 0, 'expected tag filter pills to render');
 
     const button = document.querySelector('.browser-card__actions .browser-card__button--primary');
     assert.ok(button, 'expected primary accept CTA');
@@ -108,7 +112,7 @@ test('renderHustles highlights accept CTA and upcoming list', () => {
     assert.equal(readyOfferButton.textContent, 'Accept & Queue');
 
     const upcomingHeader = [...document.querySelectorAll('.browser-card__section-title')]
-      .find(node => node.textContent === 'Queued for later');
+      .find(node => node.textContent === 'Opening soon');
     assert.ok(upcomingHeader, 'expected upcoming section to render');
 
     const upcomingItem = document.querySelector('.hustle-card__offer.is-upcoming .browser-card__button');

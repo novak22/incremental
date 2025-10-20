@@ -309,6 +309,31 @@
 
 .downwork-board__filters {
   display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.downwork-board__list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.downwork-filter-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.downwork-filter-row__label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--browser-subtle);
+}
+
+.downwork-filter-row__chips {
+  display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
 }
@@ -337,6 +362,29 @@
   border-color: var(--browser-accent);
   background: rgba(37, 99, 235, 0.12);
   box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.18);
+}
+
+.downwork-filter--tag {
+  background: rgba(37, 99, 235, 0.08);
+  border-color: rgba(37, 99, 235, 0.16);
+  color: var(--browser-text);
+}
+
+.downwork-filter__label {
+  font-weight: 600;
+}
+
+.downwork-filter__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: var(--browser-radius-pill);
+  background: var(--browser-panel);
+  color: var(--browser-subtle);
+  font-size: 0.75rem;
+  font-weight: 600;
 }
 
 .downwork-hiring {
@@ -451,13 +499,17 @@
 }
 
 .downwork-card {
+  position: relative;
   transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+  border-left: 4px solid transparent;
+  padding-left: 1.6rem;
 }
 
 .downwork-card:hover {
   transform: translateY(-4px);
   box-shadow: var(--browser-shadow-soft);
-  border-color: rgba(37, 99, 235, 0.35);
+  border-color: rgba(37, 99, 235, 0.3);
+  border-left-color: var(--browser-accent);
 }
 
 .downwork-card__header {
@@ -494,6 +546,28 @@
 .downwork-card__metric--roi {
   color: var(--browser-accent);
   background: rgba(37, 99, 235, 0.12);
+}
+
+.downwork-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.downwork-card__tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--browser-radius-pill);
+  background: rgba(37, 99, 235, 0.14);
+  color: var(--browser-accent);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: capitalize;
 }
 
 .downwork-board__toasts {
