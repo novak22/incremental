@@ -4,6 +4,7 @@ This index replaces the long-form briefs. Jump straight to the active modules, a
 
 ## Economy & Progression Systems
 - **Passive assets** – Definitions and lifecycle logic live in `src/game/assets/definitions/` and `src/game/assets/lifecycle.js`.
+- **Traffic simulation** – `src/game/assets/visitsCalculator.js` mirrors the payout engine for visit projections, while `src/game/assets/visits.js` advances daily counters.
 - **Hustle market** – Contract variants and rerolling logic sit in `src/game/hustles/definitions/instantHustles.js` and `src/game/hustles/market.js`.
 - **Study tracks & education bonuses** – Scheduling lives in `src/game/requirements/orchestrator.js`; bonuses are defined in `src/game/educationEffects.js` and `src/game/requirements/data/knowledgeTracks.js`.
 - **Assistant staffing** – Economy settings come from `src/game/data/economyConfig.js`; runtime helpers are in `src/game/assistant.js`.

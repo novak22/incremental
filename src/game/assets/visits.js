@@ -1,10 +1,9 @@
 import { DEFAULT_DAY_HOURS } from '../../core/constants.js';
 import { getState } from '../../core/state.js';
 import { getAssetDefinition } from '../../core/state/registry.js';
-import { projectIncomeFromBase } from './payout.js';
+import projectVisitsFromBase, { VISITS_PER_DOLLAR } from './visitsCalculator.js';
 import { getInstanceQualityRange } from './quality/levels.js';
 
-const VISITS_PER_DOLLAR = 100;
 const SUPPORTED_ASSETS = new Set(['blog']);
 
 function shouldSimulateVisits(definition, instance) {
@@ -30,39 +29,35 @@ function buildVisitSnapshot({ definition, assetState, instance }) {
   if (baseAmount <= 0) {
     return { visitsPerDay: 0, breakdown: null };
   }
-  const income = projectIncomeFromBase(definition, assetState, instance, baseAmount);
-  const payout = Number(income?.payoutRounded) || 0;
-  if (payout <= 0) {
+  const projection = projectVisitsFromBase({
+    definition,
+    assetState,
+    instance,
+    baseAmount
+  });
+  const visitsPerDay = Number(projection?.visitsPerDay) || 0;
+  if (visitsPerDay <= 0) {
     return { visitsPerDay: 0, breakdown: null };
   }
-  const visitsPerDay = payout * VISITS_PER_DOLLAR;
-  const entries = Array.isArray(income?.finalEntries)
-    ? income.finalEntries.map(entry => {
-        const amount = Math.max(0, Math.round(Number(entry?.amount) || 0)) * VISITS_PER_DOLLAR;
-        return {
-          id: entry?.id || null,
-          label: entry?.label || 'Traffic',
-          amount,
-          views: amount,
-          type: entry?.type || 'segment',
-          percent: Number.isFinite(Number(entry?.percent)) ? Number(entry.percent) : null
-        };
-      })
+  const breakdownEntries = Array.isArray(projection?.breakdown?.entries)
+    ? projection.breakdown.entries.map(entry => ({
+        ...entry,
+        views: Number.isFinite(Number(entry?.visits))
+          ? Math.max(0, Math.round(Number(entry.visits)))
+          : Math.max(0, Math.round(Number(entry?.amount) || 0))
+      }))
     : [];
 
-  const totalFromEntries = entries.reduce((sum, entry) => sum + (Number(entry.amount) || 0), 0);
-  const diff = visitsPerDay - totalFromEntries;
-  if (diff !== 0 && entries.length) {
-    entries[entries.length - 1].amount += diff;
-    entries[entries.length - 1].views += diff;
-  }
-
+  const breakdownTotal = Number(projection?.breakdown?.total) || visitsPerDay;
   return {
     visitsPerDay,
-    breakdown: {
-      total: visitsPerDay,
-      entries
-    }
+    breakdown:
+      breakdownEntries.length || breakdownTotal > 0
+        ? {
+            total: Math.max(0, Math.round(breakdownTotal)),
+            entries: breakdownEntries
+          }
+        : null
   };
 }
 
