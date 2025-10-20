@@ -97,6 +97,7 @@ Each asset supports multiple instances, tracks setup progress, and rolls a daily
 
 ### Persistence & Offline Behaviour
 - **Autosave** – State saves every few seconds to `localStorage` with a session index (`online-hustle-sim-v2:sessions`) and per-slot snapshot keys.
+- **Session Slots** – The browser session switcher autosaves your current run before activating another slot, keeps the freshest save pinned to the header pill, and always falls back to a ready-to-play session after deletions or resets.
 - **Multiple Sessions** – Developers can spin up additional save slots via the storage context to try balance changes without overwriting a primary run.
 - **Offline Reminder** – The clock pauses while you are away; advance in-game days to keep assets earning.
 

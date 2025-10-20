@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Persistence/UI: Switching slots now autosaves the outgoing session, refreshes the header pill instantly, and ensures deleting a slot falls back to the next available save so the roster never goes blank mid-play.
 - UI: Browser chrome now features an "Active session" switcher with quick create/switch/reset flows wired to the new persistence slots, including confirmations for destructive actions and automatic UI refreshes after loads.
 - Persistence: Save data now lives in session-aware slots with helpers to list, create, rename, switch, and delete runs without overwriting legacy saves.
 - Persistence: Legacy single-slot saves now migrate into the session index on first load, versioning the index and pruning the old `online-hustle-sim-v2` blob to prevent duplicate snapshots.

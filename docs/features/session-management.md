@@ -32,6 +32,11 @@
 - `createStorage` wraps the repository helpers so switching the active session automatically replays the existing persistence pipeline (`loadState`, migrations, default seeding, etc.).
 - Tests cover creating a second session, swapping back to the primary slot, and pruning extra saves to ensure the index stays tidy.
 
+### Save Slot Guardrails
+- The session switcher now calls `saveState()` before applying `setActiveSession` so the outgoing slot always lands the latest progress on disk.
+- Repository helpers backfill an active slot when the index is empty, migrating legacy single-slot saves or spinning up a fresh default session on demand.
+- Deleting a slot routes through the repository to remove its snapshot and immediately focus whichever session `ensureSession()` returns next.
+
 ## Browser Session Switcher
 - The browser chrome now includes a "Active session" pill next to the End Day button. It surfaces the slot name, the most recent save timestamp, and opens a management panel on click.
 - The session panel lists every slot with quick actions to activate, rename, or delete entries. Destructive steps (delete/reset) prompt for confirmation before clearing progress.
