@@ -10,7 +10,6 @@ const { getAssetDefinition } = registryModule;
 const { createAssetInstance } = assetStateModule;
 
 const { buildAssetAction, calculateAssetSalePrice, sellAssetInstance } = await import('../src/game/assets/actions.js');
-const { formatMaintenanceSummary, maintenanceDetail } = await import('../src/game/assets/maintenance.js');
 const { rollDailyIncome, getDailyIncomeRange } = await import('../src/game/assets/payout.js');
 
 const resetState = () => harness.resetState();
@@ -36,21 +35,6 @@ test('asset launch actions respect resource gating and trigger setup', () => {
   const assetState = getAssetState('blog');
   assert.equal(assetState.instances.length, 1);
   assert.equal(assetState.instances[0].setupFundedToday, true);
-});
-
-test('maintenance helpers summarize daily upkeep nicely', () => {
-  const definition = {
-    maintenance: { hours: 1.5, cost: 42 }
-  };
-
-  const summary = formatMaintenanceSummary(definition);
-  assert.equal(summary.hours, 1.5);
-  assert.equal(summary.cost, 42);
-  assert.deepEqual(summary.parts, ['1.5h/day', '$42/day']);
-  assert.equal(summary.text, '1.5h/day • $42/day');
-  assert.equal(summary.detailText, '1.5h/day + $42/day');
-  assert.equal(summary.hasUpkeep, true);
-  assert.match(maintenanceDetail(definition), /1.5h\/day \+ \$42\/day/);
 });
 
 test('payout rolling records breakdowns and stays within expected range', () => {

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { formatMaintenanceSummary } from '../../src/game/assets/maintenance.js';
+import { formatMaintenanceSummary, maintenanceDetail } from '../../src/game/assets/maintenance.js';
 
 test('formatMaintenanceSummary returns readable text for upkeep values', () => {
   const definition = { maintenance: { hours: 1.5, cost: 12 } };
@@ -13,6 +13,7 @@ test('formatMaintenanceSummary returns readable text for upkeep values', () => {
   assert.equal(summary.text, '1.5h/day • $12/day');
   assert.equal(summary.detailText, '1.5h/day + $12/day');
   assert.equal(summary.hasUpkeep, true);
+  assert.match(maintenanceDetail(definition), /1.5h\/day \+ \$12\/day/);
 });
 
 test('formatMaintenanceSummary indicates when upkeep is not required', () => {
@@ -25,4 +26,5 @@ test('formatMaintenanceSummary indicates when upkeep is not required', () => {
   assert.equal(summary.text, '');
   assert.equal(summary.detailText, '');
   assert.equal(summary.hasUpkeep, false);
+  assert.equal(maintenanceDetail(definition), '🛠 Maintenance: <strong>None</strong>');
 });
