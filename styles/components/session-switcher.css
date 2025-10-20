@@ -61,10 +61,14 @@
   border-radius: 1.1rem;
   box-shadow: 0 18px 48px rgba(15, 23, 42, 0.26);
   padding: 1rem 1.05rem;
-  display: flex;
+  display: none;
   flex-direction: column;
   gap: 0.85rem;
   z-index: 20;
+}
+
+.browser-session-switcher.is-open .browser-session-switcher__panel {
+  display: flex;
 }
 
 .browser-session-switcher__header {

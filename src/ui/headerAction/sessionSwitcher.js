@@ -510,6 +510,7 @@ export function initSessionSwitcher({
 
   bindElementListeners();
   bindGlobalListeners();
+  closePanel();
   render();
 
   return {
