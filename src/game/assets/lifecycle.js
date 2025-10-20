@@ -15,6 +15,7 @@ import {
 } from '../metrics.js';
 import { getAssetEffectMultiplier } from '../upgrades/effects/index.js';
 import { formatEducationBonusSummary } from '../educationEffects.js';
+import { finalizeDailyVisitProgress, resetVisitTracking } from './visits.js';
 
 export function allocateAssetMaintenance() {
   const state = getState();
@@ -205,6 +206,7 @@ export function closeOutDay() {
         }
         instance.setupFundedToday = false;
         instance.dailyUsage = {};
+        resetVisitTracking(instance);
         return;
       }
 
@@ -227,6 +229,7 @@ export function closeOutDay() {
         }
         instance.maintenanceFundedToday = false;
         instance.dailyUsage = {};
+        finalizeDailyVisitProgress(instance);
       }
     });
   }

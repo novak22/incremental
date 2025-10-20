@@ -10,21 +10,22 @@ import {
   getOverallQualityRange
 } from './quality/levels.js';
 
-export function getDailyIncomeRange(definition) {
-  return getOverallQualityRange(definition);
-}
+function resolveIncomeFromBase({
+  definition,
+  assetState,
+  instance,
+  baseAmount,
+  triggerEvents = true,
+  updateInstance = false
+}) {
+  const numericBase = Math.max(0, Math.round(Number(baseAmount) || 0));
 
-export function rollDailyIncome(definition, assetState, instance) {
-  const { min, max } = getInstanceQualityRange(definition, instance);
-  const roll = min + Math.random() * Math.max(0, max - min);
-  const baseAmount = Math.max(0, Math.round(roll));
-
-  let finalAmount = baseAmount;
+  let finalAmount = numericBase;
   const contributions = [
     {
       id: 'base',
       label: 'Base quality payout',
-      amount: baseAmount,
+      amount: numericBase,
       type: 'base',
       percent: null
     }
@@ -37,7 +38,7 @@ export function rollDailyIncome(definition, assetState, instance) {
       definition,
       assetState,
       instance,
-      baseAmount,
+      baseAmount: numericBase,
       recordModifier(label, amount, meta = {}) {
         if (!label) return;
         const numericAmount = Number(amount);
@@ -52,7 +53,7 @@ export function rollDailyIncome(definition, assetState, instance) {
       }
     };
 
-    const rawResult = modifier(baseAmount, context);
+    const rawResult = modifier(numericBase, context);
     if (rawResult && typeof rawResult === 'object' && !Number.isFinite(Number(rawResult))) {
       if (Number.isFinite(Number(rawResult.amount))) {
         finalAmount = Number(rawResult.amount);
@@ -86,16 +87,18 @@ export function rollDailyIncome(definition, assetState, instance) {
     });
   }
 
-  const instanceIndex = Array.isArray(assetState?.instances)
-    ? assetState.instances.indexOf(instance)
-    : -1;
-  maybeTriggerAssetEvents({
-    definition,
-    assetState,
-    instance,
-    instanceIndex,
-    trigger: 'payout'
-  });
+  if (triggerEvents) {
+    const instanceIndex = Array.isArray(assetState?.instances)
+      ? assetState.instances.indexOf(instance)
+      : -1;
+    maybeTriggerAssetEvents({
+      definition,
+      assetState,
+      instance,
+      instanceIndex,
+      trigger: 'payout'
+    });
+  }
 
   const nicheEffect = getInstanceNicheEffect(instance);
   if (nicheEffect) {
@@ -233,7 +236,7 @@ export function rollDailyIncome(definition, assetState, instance) {
 
   const finalEntries = [...baseEntries, ...roundedUpgradeEntries];
 
-  if (instance) {
+  if (updateInstance && instance) {
     instance.lastIncomeBreakdown = {
       total: payoutRounded,
       entries: finalEntries
@@ -245,12 +248,46 @@ export function rollDailyIncome(definition, assetState, instance) {
     }
   }
 
-  return payoutRounded;
+  return {
+    baseAmount: numericBase,
+    payoutRounded,
+    finalEntries,
+    educationResult
+  };
+}
+
+export function getDailyIncomeRange(definition) {
+  return getOverallQualityRange(definition);
+}
+
+export function rollDailyIncome(definition, assetState, instance) {
+  const { min, max } = getInstanceQualityRange(definition, instance);
+  const roll = min + Math.random() * Math.max(0, max - min);
+  const result = resolveIncomeFromBase({
+    definition,
+    assetState,
+    instance,
+    baseAmount: roll,
+    triggerEvents: true,
+    updateInstance: true
+  });
+  return result.payoutRounded;
 }
 
 export function getIncomeRangeForDisplay(assetId) {
   const definition = getAssetDefinition(assetId);
   if (!definition) return { min: 0, max: 0 };
   return getDailyIncomeRange(definition);
+}
+
+export function projectIncomeFromBase(definition, assetState, instance, baseAmount) {
+  return resolveIncomeFromBase({
+    definition,
+    assetState,
+    instance,
+    baseAmount,
+    triggerEvents: false,
+    updateInstance: false
+  });
 }
 

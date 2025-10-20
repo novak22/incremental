@@ -13,6 +13,7 @@ import { archiveNicheAnalytics } from './analytics/niches.js';
 import { syncNicheTrendSnapshots } from './events/syncNicheTrendSnapshots.js';
 import { ensureDailyOffersForDay } from './hustles.js';
 import { getRegistrySnapshot } from '../core/state/registry.js';
+import { accumulateAssetVisits } from './assets/visits.js';
 
 function flushUiWithFallback(fallbackToFull = false) {
   const flushed = flushDirty();
@@ -29,6 +30,12 @@ function flushUiWithFallback(fallbackToFull = false) {
 export function endDay(auto = false) {
   const state = getState();
   if (!state) return;
+
+  const remainingHours = Number(state.timeLeft) || 0;
+  if (remainingHours > 0) {
+    accumulateAssetVisits(remainingHours);
+    state.timeLeft = 0;
+  }
 
   closeOutDay();
   advanceEventsAfterDay(state.day);

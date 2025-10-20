@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Simulation: Blog assets now accumulate daily visit totals alongside payouts, updating hourly progress and rolling finished days into lifetime reach without touching cash flow.
 - UI/Persistence: The session switcher now exports the active slot to a JSON download and can import shared saves into a fresh slot right from the dropdown, perfect for handing QA or balancing runs around the studio.
 - Persistence/UI: Switching slots now autosaves the outgoing session, refreshes the header pill instantly, and ensures deleting a slot falls back to the next available save so the roster never goes blank mid-play.
 - UI: Browser chrome now features an "Active session" switcher with quick create/switch/reset flows wired to the new persistence slots, including confirmations for destructive actions and automatic UI refreshes after loads.
