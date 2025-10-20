@@ -14,6 +14,7 @@ import createViewportManager from './layout/viewportManager.js';
 import createWorkspaceViewManager from './layout/workspaceViewManager.js';
 import createTabSessionController from './layout/tabSessionController.js';
 import createNavigationEventsController from './layout/navigationEventsController.js';
+import createWidgetReorderController from './widgets/widgetReorderController.js';
 
 const navigationController = createNavigationController({ homepageId: HOMEPAGE_ID });
 const viewportManager = createViewportManager();
@@ -62,11 +63,14 @@ const navigationEventsController = createNavigationEventsController({
   }
 });
 
+const widgetReorderController = createWidgetReorderController();
+
 const layoutPresenter = {
   initControls() {
     tabSessionController.init();
     navigationEventsController.init();
     initThemeControls();
+    widgetReorderController.init();
   },
   applyFilters: workspaceManager.applyFilters
 };
