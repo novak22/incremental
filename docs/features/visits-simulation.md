@@ -10,6 +10,7 @@ The visits system models audience traffic for assets using the same economic plu
 
 ## Player Impact
 - BlogPress dashboards can surface daily visit progress that climbs in real time while upkeep is funded.
+- BlogPress performance panels now highlight the projected daily visit target alongside the visitors tallied so far today.
 - End-of-day recaps now have matching visit totals, reinforcing how maintenance hours translate into reach.
 - Lifetime visit counters unlock future tuning levers (ad tiers, sponsorship gates) without rebalancing payouts.
 
@@ -21,5 +22,5 @@ The visits system models audience traffic for assets using the same economic plu
 
 ## Future Work
 - Extend the simulator to other audience-facing assets (vlogs, SaaS) once their visit formulas are defined.
-- Surface visit breakdowns inside BlogPress detail panels alongside the existing payout history.
+- Surface richer visit breakdowns inside BlogPress detail panels alongside the existing payout history.
 - Attach milestone perks or upgrade requirements to lifetime visit thresholds once balancing data is available.

@@ -218,6 +218,14 @@ export function formatBlogpressInstance(definition, instance, index, state, shar
     count: backlinksCount,
     currentScore: backlinkSummary.score
   });
+  const projectedDailyVisits = Math.max(
+    0,
+    Math.round(Number(instance?.metrics?.currentDailyVisitTarget) || 0)
+  );
+  const currentDailyVisits = Math.max(
+    0,
+    Math.round(Number(instance?.metrics?.dailyViews) || 0)
+  );
 
   return {
     id: instance.id,
@@ -254,6 +262,10 @@ export function formatBlogpressInstance(definition, instance, index, state, shar
       count: backlinksCount,
       score: backlinkSummary.score,
       nextTarget: nextBacklinkTarget
+    },
+    visits: {
+      projectedPerDay: projectedDailyVisits,
+      today: currentDailyVisits
     },
     definition,
     instance
