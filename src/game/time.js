@@ -1,5 +1,6 @@
 import { getState } from '../core/state.js';
 import { markDirty } from '../core/events/invalidationBus.js';
+import { accumulateAssetVisits } from './assets/visits.js';
 
 const TIME_UI_SECTIONS = ['dashboard', 'player', 'skillsWidget', 'headerAction'];
 
@@ -13,6 +14,7 @@ export function spendTime(hours) {
   const state = getState();
   if (!state) return;
   state.timeLeft -= hours;
+  accumulateAssetVisits(hours);
   markDirty(TIME_UI_SECTIONS);
 }
 

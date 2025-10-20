@@ -247,6 +247,21 @@ function ensureAssetTrafficMetrics(snapshot) {
         metricsChanged = true;
       }
 
+      if (!Number.isFinite(Number(patchedMetrics.dailyVisitProgress))) {
+        patchedMetrics.dailyVisitProgress = 0;
+        metricsChanged = true;
+      }
+
+      if (!Number.isFinite(Number(patchedMetrics.currentDailyVisitTarget))) {
+        patchedMetrics.currentDailyVisitTarget = 0;
+        metricsChanged = true;
+      }
+
+      if (patchedMetrics.currentVisitBreakdown === undefined) {
+        patchedMetrics.currentVisitBreakdown = null;
+        metricsChanged = true;
+      }
+
       if (!metricsChanged) {
         return instance;
       }

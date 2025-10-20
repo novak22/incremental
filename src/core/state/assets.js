@@ -93,6 +93,12 @@ function normalizeMetrics(rawMetrics = {}) {
   }
   metrics.lifetimeViews = normalizeViewCount(metrics.lifetimeViews);
   metrics.lastViewBreakdown = normalizeViewBreakdown(metrics.lastViewBreakdown, metrics.dailyViews);
+  const dailyVisitProgress = Number(metrics.dailyVisitProgress);
+  metrics.dailyVisitProgress = Number.isFinite(dailyVisitProgress) ? Math.max(0, dailyVisitProgress) : 0;
+  const currentVisitTarget = Number(metrics.currentDailyVisitTarget);
+  metrics.currentDailyVisitTarget = Number.isFinite(currentVisitTarget) ? Math.max(0, currentVisitTarget) : 0;
+  const fallbackViews = Math.round(metrics.dailyVisitProgress || metrics.dailyViews || 0);
+  metrics.currentVisitBreakdown = normalizeViewBreakdown(metrics.currentVisitBreakdown, fallbackViews);
   return metrics;
 }
 
@@ -232,7 +238,10 @@ export function createAssetInstance(definition, overrides = {}, context = {}) {
       backlinks: 0,
       dailyViews: 0,
       lifetimeViews: 0,
-      lastViewBreakdown: null
+      lastViewBreakdown: null,
+      dailyVisitProgress: 0,
+      currentDailyVisitTarget: 0,
+      currentVisitBreakdown: null
     }
   };
   const merged = { ...baseInstance, ...structuredClone(overrides) };
