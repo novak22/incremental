@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- UI: Browser chrome now features an "Active session" switcher with quick create/switch/reset flows wired to the new persistence slots, including confirmations for destructive actions and automatic UI refreshes after loads.
 - Persistence: Save data now lives in session-aware slots with helpers to list, create, rename, switch, and delete runs without overwriting legacy saves.
 - Persistence: Legacy single-slot saves now migrate into the session index on first load, versioning the index and pruning the old `online-hustle-sim-v2` blob to prevent duplicate snapshots.
 - UI: Browser home widgets now populate via a layout manager that clones page templates, mounts controllers on demand, and honors saved widget order from local storage.

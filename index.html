@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="styles/components/buttons.css" />
   <link rel="stylesheet" href="styles/components/layout.css" />
   <link rel="stylesheet" href="styles/components/notifications.css" />
+  <link rel="stylesheet" href="styles/components/session-switcher.css" />
   <!-- Home widgets -->
   <link rel="stylesheet" href="styles/widgets/widgets.css" />
   <link rel="stylesheet" href="styles/widgets/home.css" />
@@ -123,6 +124,58 @@
               id="browser-notifications-list"
               class="browser-notifications__list"
             ></ul>
+          </div>
+        </div>
+        <div
+          id="browser-session-switcher"
+          class="browser-session-switcher"
+          data-role="session-switcher"
+        >
+          <button
+            type="button"
+            class="browser-session-switcher__summary"
+            data-session-summary
+            aria-haspopup="true"
+            aria-expanded="false"
+            title="Switch active session"
+          >
+            <span class="browser-session-switcher__label">Active session</span>
+            <span class="browser-session-switcher__name" data-session-name>Main Hustle</span>
+            <span class="browser-session-switcher__timestamp" data-session-timestamp>Saved moments ago</span>
+          </button>
+          <div
+            class="browser-session-switcher__panel"
+            data-session-panel
+            role="dialog"
+            aria-label="Session manager"
+            hidden
+          >
+            <div class="browser-session-switcher__header">
+              <p class="browser-session-switcher__title">Save slots</p>
+              <button
+                type="button"
+                class="browser-session-switcher__close"
+                data-session-close
+                aria-label="Close session manager"
+              >
+                ×
+              </button>
+            </div>
+            <p class="browser-session-switcher__blurb">
+              Hop between runs or start a fresh experiment.
+            </p>
+            <ul class="browser-session-switcher__list" data-session-list></ul>
+            <p class="browser-session-switcher__empty" data-session-empty hidden>
+              No alternate sessions yet. Spin up a new slot to try bold ideas!
+            </p>
+            <div class="browser-session-switcher__actions">
+              <button type="button" class="browser-button browser-button--text" data-session-create>
+                Start new session
+              </button>
+              <button type="button" class="browser-button browser-button--text" data-session-reset>
+                Reset current session
+              </button>
+            </div>
           </div>
         </div>
         <button id="browser-session-button" class="browser-button browser-button--primary" type="button">End Day</button>
