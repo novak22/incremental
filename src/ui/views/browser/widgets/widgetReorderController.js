@@ -236,6 +236,10 @@ function createWidgetReorderController({
   }
 
   function init() {
+    if (container || toggle || dragHandlers || teardown.length) {
+      destroy();
+    }
+
     container = containerResolver?.() || null;
     layoutManager = layoutResolver?.() || null;
     if (!container || !layoutManager) {
