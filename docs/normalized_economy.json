@@ -1,7 +1,7 @@
 {
   "metadata": {
     "phase": "Phase 1",
-    "description": "Canonical normalized dataset derived from docs/economy.md",
+    "description": "Canonical normalized dataset derived from docs/archive/economy/economy.md",
     "units": {
       "time": "minutes",
       "currency": "USD"
