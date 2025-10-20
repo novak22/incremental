@@ -36,6 +36,6 @@ lets designers explore how tweaks to core levers ripple through the early-game e
 - When a tuning session lands on a set of multipliers you want to ship, update the corresponding entries in
   `docs/normalized_economy.json` and refresh the relevant rows in `docs/economy-quickref.md`.
 - Drop the generated PNGs from `docs/archive/economy_sim_report_assets/` into your design review notes.
-- Capture the final call in `docs/changelog.md` so the team can trace balancing history.
+- Capture the final call with a concise bullet in `docs/changelog.md` and push deeper notes to `docs/archive/changelog-legacy.md` if stakeholders need the blow-by-blow.
 
 Happy balancing! Keep the tone upbeat and players will feel the uplift in every milestone.

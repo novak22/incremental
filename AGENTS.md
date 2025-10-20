@@ -11,7 +11,7 @@
 
 ## Documentation of Features
 - For every new feature, create or update a design note in `docs/features/` detailing goals, player impact, and any tuning parameters.
-- Include a changelog entry in `docs/changelog.md` summarizing gameplay adjustments.
+- Add a concise bullet to `docs/changelog.md` for gameplay adjustments (drop deeper context in `docs/archive/changelog-legacy.md` if absolutely necessary).
 
 ## README Expectations
 - Whenever gameplay systems change (e.g., resource flow, progression pacing, prestige mechanics), update the `README.md` with an overview of the new system and instructions on how to experience it in-game.
