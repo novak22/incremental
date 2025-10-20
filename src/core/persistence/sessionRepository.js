@@ -16,6 +16,26 @@ function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
+function markMigrationAborted(index) {
+  if (!isObject(index)) {
+    return;
+  }
+  const previousVersion = Number.isInteger(index.version) ? index.version : 0;
+  try {
+    Object.defineProperty(index, '__skipVersionUpdate', {
+      value: true,
+      configurable: true
+    });
+    Object.defineProperty(index, '__previousVersion', {
+      value: previousVersion,
+      configurable: true
+    });
+  } catch (error) {
+    index.__skipVersionUpdate = true;
+    index.__previousVersion = previousVersion;
+  }
+}
+
 function safeParseJSON(raw) {
   if (!raw) return null;
   try {
@@ -46,6 +66,7 @@ function migrateLegacySingleSlotIndex(index, context = {}) {
     legacyRaw = storage.getItem(baseStorageKey);
   } catch (error) {
     console?.error?.('Failed to inspect legacy session storage', error);
+    markMigrationAborted(working);
     return working;
   }
 
@@ -97,6 +118,7 @@ function migrateLegacySingleSlotIndex(index, context = {}) {
       storage.setItem(storageKey, legacyRaw);
     } catch (error) {
       console?.error?.('Failed to migrate legacy session snapshot', error);
+      markMigrationAborted(working);
       return working;
     }
     try {
@@ -207,6 +229,22 @@ export class SessionRepository {
 
   ensureIndexVersion(index) {
     const target = this.indexMigrationRunner?.version ?? 0;
+    if (!isObject(index)) {
+      return index;
+    }
+
+    if (index.__skipVersionUpdate) {
+      const previousVersion = Number.isInteger(index.__previousVersion)
+        ? index.__previousVersion
+        : Number.isInteger(index.version)
+        ? index.version
+        : 0;
+      delete index.__skipVersionUpdate;
+      delete index.__previousVersion;
+      index.version = previousVersion;
+      return index;
+    }
+
     const current = Number.isInteger(index.version) ? index.version : 0;
     if (current < target) {
       index.version = target;
