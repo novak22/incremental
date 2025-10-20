@@ -76,8 +76,8 @@ function createWidgetDragHandlers({
       event?.preventDefault?.();
       return;
     }
-    const handle = event?.target?.closest?.('[data-widget-handle]');
     const widget = event?.target?.closest?.('[data-widget]');
+    const handle = widget?.querySelector?.('[data-widget-handle]');
     const container = getContainerNode();
     if (!handle || !widget || !container?.contains(widget)) {
       event?.preventDefault?.();
