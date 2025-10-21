@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { formatBlogpressModel } from '../../src/ui/blogpress/blogModel.js';
+import { buildBlogpressModel } from '../../src/ui/cards/model/blogpress.js';
+import { buildDefaultState, initializeState, getState } from '../../src/core/state.js';
 import blogDefinition from '../../src/game/assets/definitions/blog.js';
 import { ensureRegistryReady } from '../../src/game/registryBootstrap.js';
 
@@ -139,4 +141,47 @@ test('formatBlogpressModel returns formatted instances and summary', () => {
   const nicheIds = nicheOptions.map(option => option.id);
   assert.ok(nicheIds.includes('healthWellness'));
   assert.ok(nicheIds.includes('personalFinance'));
+});
+
+test('buildBlogpressModel surfaces upgrades with snapshots and details', () => {
+  ensureRegistryReady();
+  const baseline = buildDefaultState();
+  baseline.day = 8;
+  baseline.timeLeft = 10;
+  baseline.money = 500;
+  baseline.assets.blog = { instances: [] };
+  baseline.skills.writing.xp = 120;
+  initializeState(baseline);
+  const state = getState();
+
+  let purchased = false;
+  const upgradeDefinitions = [
+    {
+      id: 'blogpressAutomationSuite',
+      name: 'Automation Suite',
+      cost: 240,
+      placements: ['blogpress'],
+      boosts: 'Auto-schedules recurring drafts.',
+      tag: { label: 'Workflow' },
+      action: { onClick: () => { purchased = true; } },
+      details: ['Adds queue controls to every blog dashboard.']
+    },
+    {
+      id: 'shopilyOnly',
+      name: 'Shopily Upgrade',
+      cost: 300,
+      placements: ['shopily']
+    }
+  ];
+  const model = buildBlogpressModel([blogDefinition], upgradeDefinitions, state);
+
+  assert.equal(model.upgrades.length, 1, 'expected only blogpress upgrades to surface');
+  const [upgrade] = model.upgrades;
+  assert.equal(upgrade.id, 'blogpressAutomationSuite');
+  assert.equal(upgrade.snapshot.ready, true);
+  assert.deepEqual(upgrade.details, ['Adds queue controls to every blog dashboard.']);
+  assert.equal(upgrade.status, 'Ready to launch');
+  upgrade.action?.onClick?.();
+  assert.equal(purchased, true, 'upgrade action should remain wired');
+  assert.ok(!('upgrades' in (model.pricing || {})), 'pricing payload should no longer duplicate upgrade listings');
 });
