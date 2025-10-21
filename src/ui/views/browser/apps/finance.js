@@ -136,7 +136,7 @@ function renderFinancePerformance(entries = []) {
 
   function updateSortButtons() {
     Array.from(header.children).forEach(node => {
-      if (!(node instanceof Element) || node.tagName !== 'BUTTON') return;
+      if (!node || typeof node.tagName !== 'string' || node.tagName !== 'BUTTON') return;
       const { key } = node.dataset;
       const isActive = key === sortKey;
       node.dataset.active = isActive ? 'true' : 'false';
