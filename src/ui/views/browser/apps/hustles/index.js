@@ -1,8 +1,6 @@
 import { formatHours, formatMoney } from '../../../../../core/helpers.js';
 import { getPageByType } from '../pageLookup.js';
 import { formatRoi } from '../../components/widgets.js';
-import { createOfferList } from './offers.js';
-import { createCommitmentList } from './commitments.js';
 import {
   ASSISTANT_CONFIG,
   getAssistantCount,
@@ -199,58 +197,6 @@ function getCategorySortIndex(key = '') {
   return index === -1 ? CATEGORY_ORDER.length : index;
 }
 
-function formatTagLabel(raw = '') {
-  if (!raw) return '';
-  return raw
-    .replace(/[_\-]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .replace(/\b\w/g, char => char.toUpperCase());
-}
-
-function resolveTagEntries(model = {}, definition = {}) {
-  const sources = [];
-  if (Array.isArray(model.tags)) sources.push(...model.tags);
-  if (Array.isArray(definition.tags)) sources.push(...definition.tags);
-
-  const unique = new Map();
-
-  sources.forEach(entry => {
-    if (!entry) return;
-    let id = '';
-    let label = '';
-
-    if (typeof entry === 'string') {
-      id = entry.trim().toLowerCase().replace(/\s+/g, '-');
-      label = formatTagLabel(entry);
-    } else if (typeof entry === 'object') {
-      const rawId = typeof entry.id === 'string' && entry.id.trim().length > 0
-        ? entry.id.trim()
-        : typeof entry.value === 'string' && entry.value.trim().length > 0
-          ? entry.value.trim()
-          : typeof entry.label === 'string'
-            ? entry.label.trim()
-            : '';
-      id = rawId.toLowerCase().replace(/\s+/g, '-');
-      const rawLabel = typeof entry.label === 'string' && entry.label.trim().length > 0
-        ? entry.label.trim()
-        : rawId;
-      label = formatTagLabel(rawLabel);
-    }
-
-    if (!id) return;
-    if (!label) {
-      label = formatTagLabel(id);
-    }
-
-    if (!unique.has(id)) {
-      unique.set(id, label);
-    }
-  });
-
-  return Array.from(unique.entries()).map(([id, label]) => ({ id, label }));
-}
-
 function createFilterRow(labelText = '') {
   const row = document.createElement('div');
   row.className = 'downwork-filter-row';
@@ -272,7 +218,6 @@ function createFilterRow(labelText = '') {
 function getBoardState(board) {
   if (!boardStateMap.has(board)) {
     boardStateMap.set(board, {
-      activeCategory: null,
       activeFilters: new Set(),
       activeCategoryFilters: new Set(),
       summary: {
@@ -350,10 +295,6 @@ function ensureBoard(body) {
     })
   );
 
-  const tabs = document.createElement('div');
-  tabs.className = 'downwork-board__tabs';
-  tabs.dataset.role = 'downwork-tabs';
-
   const filters = document.createElement('div');
   filters.className = 'downwork-board__filters';
   filters.dataset.role = 'downwork-filters';
@@ -366,7 +307,7 @@ function ensureBoard(body) {
   toastHost.className = 'downwork-board__toasts';
   toastHost.dataset.role = 'downwork-toast-host';
 
-  board.append(summary, tabs, filters, grid, toastHost);
+  board.append(summary, filters, grid, toastHost);
   body.appendChild(board);
   return board;
 }
@@ -739,47 +680,6 @@ function resolveFocusHoursLeft(context = {}, models = []) {
   return Math.max(0, fallback);
 }
 
-const DEFAULT_COPY = {
-  ready: {
-    title: 'Open contracts'
-  },
-  upcoming: {
-    title: 'Opening soon'
-  },
-  commitments: {
-    title: 'In progress'
-  }
-};
-
-function mergeCopy(base = {}, overrides = {}) {
-  return {
-    ready: { ...DEFAULT_COPY.ready, ...base.ready, ...overrides.ready },
-    upcoming: { ...DEFAULT_COPY.upcoming, ...base.upcoming, ...overrides.upcoming },
-    commitments: { ...DEFAULT_COPY.commitments, ...base.commitments, ...overrides.commitments }
-  };
-}
-
-function createCardSection(copy = {}) {
-  const section = document.createElement('section');
-  section.className = 'browser-card__section';
-
-  if (copy.title) {
-    const heading = document.createElement('h3');
-    heading.className = 'browser-card__section-title';
-    heading.textContent = copy.title;
-    section.appendChild(heading);
-  }
-
-  if (copy.description) {
-    const note = document.createElement('p');
-    note.className = 'browser-card__section-note';
-    note.textContent = copy.description;
-    section.appendChild(note);
-  }
-
-  return section;
-}
-
 export function describeMetaSummary({ availableCount, upcomingCount, commitmentCount }) {
   const parts = [];
 
@@ -805,17 +705,15 @@ export function describeMetaSummary({ availableCount, upcomingCount, commitmentC
 export function createHustleCard({
   definition = {},
   model = {},
-  copy: copyOverrides = {},
   descriptors: descriptorOverrides = {},
   categoryIcon = '💼',
+  categoryLabel = 'Daily Hustles',
   onOfferAccept
 } = {}) {
   const descriptorBundle = {
     ...(typeof model.descriptors === 'object' && model.descriptors !== null ? model.descriptors : {}),
     ...(typeof descriptorOverrides === 'object' && descriptorOverrides !== null ? descriptorOverrides : {})
   };
-
-  const copy = mergeCopy(descriptorBundle.copy, copyOverrides);
 
   const rawOffers = Array.isArray(model.offers) ? model.offers : [];
   const rawUpcoming = Array.isArray(model.upcoming) ? model.upcoming : [];
@@ -862,157 +760,99 @@ export function createHustleCard({
   card.dataset.actionCategory = categoryKey;
 
   const header = document.createElement('header');
-  header.className = 'browser-card__header downwork-card__header';
-  const icon = document.createElement('span');
-  icon.className = 'downwork-card__icon';
-  icon.textContent = descriptorBundle.icon || categoryIcon || '💼';
-  header.appendChild(icon);
+  header.className = 'downwork-card__header';
+
+  const categoryPill = document.createElement('span');
+  categoryPill.className = 'downwork-card__category';
+  const categoryIconEl = document.createElement('span');
+  categoryIconEl.className = 'downwork-card__category-icon';
+  categoryIconEl.textContent = descriptorBundle.icon || categoryIcon || '💼';
+  categoryPill.appendChild(categoryIconEl);
+  const categoryLabelEl = document.createElement('span');
+  categoryLabelEl.className = 'downwork-card__category-label';
+  categoryLabelEl.textContent = categoryLabel;
+  categoryPill.appendChild(categoryLabelEl);
+  header.appendChild(categoryPill);
+
   const title = document.createElement('h2');
-  title.className = 'browser-card__title';
+  title.className = 'downwork-card__title';
   title.textContent = hustleLabel;
   header.appendChild(title);
+
   card.appendChild(header);
-
-  const metricsRow = document.createElement('div');
-  metricsRow.className = 'downwork-card__metrics';
-
-  const timeChip = document.createElement('span');
-  timeChip.className = 'downwork-card__metric';
-  timeChip.textContent = `⏱️ ${model.metrics?.time?.label || formatHours(Math.max(0, timeValue))}`;
-  metricsRow.appendChild(timeChip);
-
-  const payoutLabel = model.metrics?.payout?.label
-    || (cardPayoutValue > 0 ? `$${formatMoney(cardPayoutValue)}` : 'Varies');
-  const payoutChip = document.createElement('span');
-  payoutChip.className = 'downwork-card__metric';
-  payoutChip.textContent = `💵 ${payoutLabel}`;
-  metricsRow.appendChild(payoutChip);
-
-  if (roiValue > 0) {
-    const roiChip = document.createElement('span');
-    roiChip.className = 'downwork-card__metric downwork-card__metric--roi';
-    roiChip.textContent = `📈 ROI ${formatRoi(roiValue)}`;
-    metricsRow.appendChild(roiChip);
-    if (cardPayoutValue > 0 && timeValue > 0) {
-      const tooltip = `ROI ${formatRoi(roiValue)} • $${formatMoney(cardPayoutValue)} ÷ ${formatHours(Math.max(0, timeValue))}`;
-      metricsRow.title = tooltip;
-      card.title = tooltip;
-    }
-  }
-
-  card.appendChild(metricsRow);
 
   if (model.description) {
     const summary = document.createElement('p');
-    summary.className = 'browser-card__summary';
+    summary.className = 'downwork-card__description';
     summary.textContent = model.description;
     card.appendChild(summary);
   }
 
+  const detailRow = document.createElement('div');
+  detailRow.className = 'downwork-card__details';
+
+  const timeLabel = model.metrics?.time?.label || formatHours(Math.max(0, timeValue));
+  if (timeLabel) {
+    const timeDetail = document.createElement('span');
+    timeDetail.className = 'downwork-card__detail';
+    timeDetail.textContent = `⏱️ ${timeLabel}`;
+    detailRow.appendChild(timeDetail);
+  }
+
+  const payoutLabel = model.metrics?.payout?.label
+    || (cardPayoutValue > 0 ? `$${formatMoney(cardPayoutValue)}` : 'Varies');
+  if (payoutLabel) {
+    const payoutDetail = document.createElement('span');
+    payoutDetail.className = 'downwork-card__detail';
+    payoutDetail.textContent = `💵 ${payoutLabel}`;
+    detailRow.appendChild(payoutDetail);
+  }
+
+  if (roiValue > 0) {
+    const roiDetail = document.createElement('span');
+    roiDetail.className = 'downwork-card__detail';
+    roiDetail.textContent = `📈 ROI ${formatRoi(roiValue)}`;
+    detailRow.appendChild(roiDetail);
+    if (cardPayoutValue > 0 && timeValue > 0) {
+      const tooltip = `ROI ${formatRoi(roiValue)} • $${formatMoney(cardPayoutValue)} ÷ ${formatHours(Math.max(0, timeValue))}`;
+      detailRow.title = tooltip;
+      card.title = tooltip;
+    }
+  }
+
+  if (detailRow.childElementCount > 0) {
+    card.appendChild(detailRow);
+  }
+
   const badges = Array.isArray(model.badges) ? model.badges : [];
-  if (badges.length > 0) {
-    const list = document.createElement('ul');
-    list.className = 'browser-card__badges';
-    badges.forEach(entry => {
-      if (!entry) return;
-      const item = document.createElement('li');
-      item.className = 'browser-card__badge';
-      item.textContent = entry;
-      list.appendChild(item);
-    });
-    card.appendChild(list);
-  }
-
-  const tagEntries = resolveTagEntries(model, definition);
-  card.dataset.tagList = JSON.stringify(tagEntries);
-  card.dataset.tags = tagEntries.map(entry => entry.id).join(' ');
-
-  if (tagEntries.length > 0) {
-    const tagList = document.createElement('ul');
-    tagList.className = 'downwork-card__tags';
-    tagEntries.forEach(entry => {
-      if (!entry) return;
-      const item = document.createElement('li');
-      item.className = 'downwork-card__tag';
-      item.dataset.tagId = entry.id;
-      item.textContent = entry.label;
-      tagList.appendChild(item);
-    });
-    card.appendChild(tagList);
-  }
-
   const hasSkillBadge = badges.some(badge => typeof badge === 'string' && /xp/i.test(badge));
   const hasSkillTag = typeof model.tag?.label === 'string' && /skill/i.test(model.tag.label);
   card.dataset.skillXp = hasSkillBadge || hasSkillTag ? 'true' : 'false';
 
-  const meta = document.createElement('p');
-  meta.className = 'browser-card__meta';
-  meta.textContent = model.requirements?.summary || 'No requirements';
-  card.appendChild(meta);
-
-  if (model.seat?.summary) {
-    const seat = document.createElement('p');
-    seat.className = 'browser-card__note';
-    seat.textContent = model.seat.summary;
-    card.appendChild(seat);
-  }
-
-  if (model.limit?.summary) {
-    const limit = document.createElement('p');
-    limit.className = 'browser-card__note';
-    limit.textContent = model.limit.summary;
-    card.appendChild(limit);
-  }
-
   if (model.action?.label) {
     const actions = document.createElement('div');
-    actions.className = 'browser-card__actions';
+    actions.className = 'downwork-card__actions';
 
     const queueButton = document.createElement('button');
     queueButton.type = 'button';
-    const variantName = model.action.className === 'secondary' ? 'secondary' : 'primary';
-    queueButton.className = `browser-card__button browser-card__button--${variantName}`;
+    queueButton.className = 'browser-card__button downwork-card__button';
     queueButton.textContent = model.action.label || 'Accept & Queue';
     queueButton.disabled = Boolean(model.action.disabled);
 
     if (typeof model.action?.onClick === 'function') {
       queueButton.addEventListener('click', () => {
         if (queueButton.disabled) return;
+        if (typeof onOfferAccept === 'function') {
+          const payoutValue = Number.isFinite(cardPayoutValue) ? cardPayoutValue : 0;
+          const focusValue = Number.isFinite(timeValue) ? timeValue : 0;
+          onOfferAccept({ payout: payoutValue, focusHours: focusValue });
+        }
         model.action.onClick();
       });
     }
 
     actions.appendChild(queueButton);
-
-    if (model.action?.guidance) {
-      const note = document.createElement('p');
-      note.className = 'browser-card__note';
-      note.textContent = model.action.guidance;
-      actions.appendChild(note);
-    }
-
     card.appendChild(actions);
-  }
-
-  if (hasCommitments) {
-    const commitmentsSection = createCardSection(copy.commitments);
-    const list = createCommitmentList(model.commitments);
-    commitmentsSection.appendChild(list);
-    card.appendChild(commitmentsSection);
-  }
-
-  if (visibleOffers.length) {
-    const offersSection = createCardSection(copy.ready);
-    const list = createOfferList(visibleOffers, { onAccept: onOfferAccept, model });
-    offersSection.appendChild(list);
-    card.appendChild(offersSection);
-  }
-
-  if (visibleUpcoming.length) {
-    const upcomingSection = createCardSection(copy.upcoming);
-    const list = createOfferList(visibleUpcoming, { upcoming: true, onAccept: onOfferAccept, model });
-    upcomingSection.appendChild(list);
-    card.appendChild(upcomingSection);
   }
 
   const expiresCandidates = [...visibleOffers, ...visibleUpcoming]
@@ -1042,10 +882,9 @@ export default function renderHustles(context = {}, definitions = [], models = [
   if (!board) return null;
 
   const list = board.querySelector('[data-role="browser-hustle-list"]');
-  const tabsContainer = board.querySelector('[data-role="downwork-tabs"]');
   const filtersContainer = board.querySelector('[data-role="downwork-filters"]');
 
-  if (!list || !tabsContainer || !filtersContainer) {
+  if (!list || !filtersContainer) {
     return null;
   }
 
@@ -1068,8 +907,6 @@ export default function renderHustles(context = {}, definitions = [], models = [
   let upcomingCount = 0;
   let potentialPayout = 0;
 
-  const cardsByCategory = new Map();
-  const categoryMetadata = new Map();
   const allCards = [];
 
   const handleOfferAccepted = ({ payout = 0, focusHours = 0 } = {}) => {
@@ -1125,12 +962,12 @@ export default function renderHustles(context = {}, definitions = [], models = [
 
     const categoryKey = resolveCategoryKey(model.actionCategory || model.filters?.category || '');
     const categoryConfig = resolveCategoryConfig(categoryKey);
-    categoryMetadata.set(categoryKey, categoryConfig);
 
     const card = createHustleCard({
       definition,
       model,
       categoryIcon: categoryConfig.icon,
+      categoryLabel: categoryConfig.label,
       onOfferAccept: handleOfferAccepted
     });
 
@@ -1140,16 +977,31 @@ export default function renderHustles(context = {}, definitions = [], models = [
 
     card.dataset.categoryLabel = categoryConfig.label;
 
-    if (!cardsByCategory.has(categoryKey)) {
-      cardsByCategory.set(categoryKey, []);
-    }
-    cardsByCategory.get(categoryKey).push(card);
     allCards.push(card);
   });
 
-  tabsContainer.innerHTML = '';
   filtersContainer.innerHTML = '';
   list.innerHTML = '';
+
+  if (!allCards.length) {
+    boardState.activeFilters.clear();
+    boardState.activeCategoryFilters.clear();
+    const empty = document.createElement('p');
+    empty.className = 'browser-empty';
+    empty.textContent = 'Queue an action to see it spotlighted here.';
+    list.appendChild(empty);
+    updateTabMeta(appState, 'gigs', describeBoardNavSummary({ availableCount, upcomingCount, commitmentCount }));
+    const updateHireMeta = () => {
+      updateTabMeta(appState, 'hire', describeHireNavSummary());
+    };
+    renderHirePanel(hirePanel, { onStateChange: updateHireMeta });
+    updateHireMeta();
+    const meta = describeMetaSummary({ availableCount, upcomingCount, commitmentCount });
+    return {
+      id: page.id,
+      meta
+    };
+  }
 
   const payoutValues = allCards
     .map(card => Number(card.dataset.payout))
@@ -1202,64 +1054,30 @@ export default function renderHustles(context = {}, definitions = [], models = [
     potentialPayout
   });
 
-  const sortedCategories = Array.from(cardsByCategory.keys()).sort((a, b) => {
-    const orderDiff = getCategorySortIndex(a) - getCategorySortIndex(b);
-    if (orderDiff !== 0) return orderDiff;
-    const labelA = (categoryMetadata.get(a)?.label || '').toLowerCase();
-    const labelB = (categoryMetadata.get(b)?.label || '').toLowerCase();
-    return labelA.localeCompare(labelB);
-  });
-
   const validFilters = new Set(QUICK_FILTERS.map(filter => filter.id));
   boardState.activeFilters = new Set(
     [...boardState.activeFilters].filter(id => validFilters.has(id))
   );
 
-  if (!sortedCategories.length) {
-    boardState.activeCategory = null;
-    boardState.activeFilters.clear();
-    boardState.activeCategoryFilters.clear();
-    const empty = document.createElement('p');
-    empty.className = 'browser-empty';
-    empty.textContent = 'Queue an action to see it spotlighted here.';
-    list.appendChild(empty);
-    updateTabMeta(appState, 'gigs', describeBoardNavSummary({ availableCount, upcomingCount, commitmentCount }));
-    const updateHireMeta = () => {
-      updateTabMeta(appState, 'hire', describeHireNavSummary());
-    };
-    renderHirePanel(hirePanel, { onStateChange: updateHireMeta });
-    updateHireMeta();
-    const meta = describeMetaSummary({ availableCount, upcomingCount, commitmentCount });
-    return {
-      id: page.id,
-      meta
-    };
-  }
-
-  if (!boardState.activeCategory || !cardsByCategory.has(boardState.activeCategory)) {
-    boardState.activeCategory = sortedCategories[0];
-  }
-
-  const tabButtons = new Map();
-  sortedCategories.forEach(categoryKey => {
-    const config = categoryMetadata.get(categoryKey) || DEFAULT_CATEGORY_CONFIG;
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'downwork-tab';
-    button.dataset.categoryKey = categoryKey;
-    button.setAttribute('aria-pressed', 'false');
-
-    const icon = document.createElement('span');
-    icon.className = 'downwork-tab__icon';
-    icon.textContent = config.icon || '💼';
-
-    const label = document.createElement('span');
-    label.className = 'downwork-tab__label';
-    label.textContent = config.label;
-
-    button.append(icon, label);
-    tabsContainer.appendChild(button);
-    tabButtons.set(categoryKey, button);
+  const sortedCards = allCards.slice().sort((a, b) => {
+    const categoryA = a.dataset.category || '';
+    const categoryB = b.dataset.category || '';
+    const categoryDiff = getCategorySortIndex(categoryA) - getCategorySortIndex(categoryB);
+    if (categoryDiff !== 0) return categoryDiff;
+    const availableA = a.dataset.available === 'true' ? 1 : 0;
+    const availableB = b.dataset.available === 'true' ? 1 : 0;
+    if (availableA !== availableB) return availableB - availableA;
+    const payoutA = Number(a.dataset.payout);
+    const payoutB = Number(b.dataset.payout);
+    if (Number.isFinite(payoutA) && Number.isFinite(payoutB) && payoutA !== payoutB) {
+      return payoutB - payoutA;
+    }
+    const labelA = (a.dataset.hustleLabel || '').toLowerCase();
+    const labelB = (b.dataset.hustleLabel || '').toLowerCase();
+    if (labelA && labelB) {
+      return labelA.localeCompare(labelB);
+    }
+    return 0;
   });
 
   const filterButtons = new Map();
@@ -1283,7 +1101,7 @@ export default function renderHustles(context = {}, definitions = [], models = [
           boardState.activeFilters.add(filter.id);
         }
         updateFilterSelection();
-        renderActiveCategory();
+        renderCardGrid();
       });
 
       chips.appendChild(button);
@@ -1334,7 +1152,7 @@ export default function renderHustles(context = {}, definitions = [], models = [
           boardState.activeCategoryFilters.add(entry.id);
         }
         updateFilterSelection();
-        renderActiveCategory();
+        renderCardGrid();
       });
 
       chips.appendChild(button);
@@ -1396,15 +1214,6 @@ export default function renderHustles(context = {}, definitions = [], models = [
     });
   }
 
-  function updateTabSelection() {
-    tabButtons.forEach((button, key) => {
-      const isActive = key === boardState.activeCategory;
-      button.classList.toggle('is-active', isActive);
-      button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
-    });
-    board.dataset.activeCategory = boardState.activeCategory || '';
-  }
-
   function hasActiveFilters() {
     return boardState.activeFilters.size > 0 || boardState.activeCategoryFilters.size > 0;
   }
@@ -1433,11 +1242,9 @@ export default function renderHustles(context = {}, definitions = [], models = [
     list.classList.toggle('is-filtered', filtered);
   }
 
-  function renderActiveCategory() {
+  function renderCardGrid() {
     list.innerHTML = '';
-    const activeKey = boardState.activeCategory;
-    const cards = cardsByCategory.get(activeKey) || [];
-    const filtered = applyActiveFilters(cards);
+    const filtered = applyActiveFilters(sortedCards);
     const isFiltered = hasActiveFilters();
     list.classList.toggle('is-filtered', isFiltered);
 
@@ -1455,19 +1262,8 @@ export default function renderHustles(context = {}, definitions = [], models = [
       list.appendChild(card);
     });
   }
-
-  tabButtons.forEach((button, key) => {
-    button.addEventListener('click', () => {
-      if (boardState.activeCategory === key) return;
-      boardState.activeCategory = key;
-      updateTabSelection();
-      renderActiveCategory();
-    });
-  });
-
-  updateTabSelection();
   updateFilterSelection();
-  renderActiveCategory();
+  renderCardGrid();
 
   updateTabMeta(appState, 'gigs', describeBoardNavSummary({ availableCount, upcomingCount, commitmentCount }));
 
