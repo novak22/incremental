@@ -13,8 +13,7 @@ function setupDom() {
 
 function mockSessionState({
   quickFilters = [],
-  categoryFilters = [],
-  activeCategory = null
+  categoryFilters = []
 } = {}) {
   const previousState = defaultStateManager.state;
   const originalGetUpgradeState = defaultStateManager.getUpgradeState;
@@ -32,8 +31,7 @@ function mockSessionState({
       config: {
         downwork: {
           quickFilters: [...quickFilters],
-          categoryFilters: [...categoryFilters],
-          activeCategory
+          categoryFilters: [...categoryFilters]
         }
       }
     }
@@ -144,9 +142,16 @@ test('renderHustles highlights accept CTA and upcoming list', () => {
     assert.equal(document.querySelector('[data-role="downwork-accepted-value"]')?.textContent, '0');
     assert.equal(document.querySelector('[data-role="downwork-payout-value"]')?.textContent, '$50');
 
-    const tabs = document.querySelectorAll('.downwork-tab');
-    assert.equal(tabs.length, 1, 'expected single hustle category tab');
-    assert.ok(tabs[0].textContent.includes('Daily Hustles'));
+    const header = document.querySelector('[data-role="downwork-header"]');
+    assert.ok(header, 'expected unified hustle header to render');
+
+    const marketplace = document.querySelector('.downwork-board__marketplace');
+    assert.ok(marketplace, 'expected flattened marketplace list to render');
+    assert.equal(
+      document.querySelectorAll('.downwork-tab').length,
+      0,
+      'expected category tabs to be removed'
+    );
 
     const filters = document.querySelectorAll('button[data-filter-id]');
     assert.equal(filters.length, 4, 'expected quick filter pills');

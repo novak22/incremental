@@ -77,8 +77,8 @@ function ensureDownworkSessionConfig() {
   if (!Array.isArray(downwork.categoryFilters)) {
     downwork.categoryFilters = [];
   }
-  if (downwork.activeCategory != null && typeof downwork.activeCategory !== 'string') {
-    downwork.activeCategory = null;
+  if ('activeCategory' in downwork) {
+    delete downwork.activeCategory;
   }
 
   return downwork;
@@ -519,7 +519,6 @@ function createFilterRow(labelText = '') {
 function getBoardState(board) {
   if (!boardStateMap.has(board)) {
     boardStateMap.set(board, {
-      activeCategory: null,
       activeFilters: new Set(),
       activeCategoryFilters: new Set(),
       summary: {
@@ -597,23 +596,24 @@ function ensureBoard(body) {
     })
   );
 
-  const tabs = document.createElement('div');
-  tabs.className = 'downwork-board__tabs';
-  tabs.dataset.role = 'downwork-tabs';
+  const header = document.createElement('div');
+  header.className = 'downwork-board__header';
+  header.dataset.role = 'downwork-header';
 
   const filters = document.createElement('div');
   filters.className = 'downwork-board__filters';
   filters.dataset.role = 'downwork-filters';
+  header.appendChild(filters);
 
-  const grid = document.createElement('div');
-  grid.className = 'downwork-board__list';
-  grid.dataset.role = 'browser-hustle-list';
+  const marketplace = document.createElement('div');
+  marketplace.className = 'downwork-board__marketplace downwork-board__list';
+  marketplace.dataset.role = 'browser-hustle-list';
 
   const toastHost = document.createElement('div');
   toastHost.className = 'downwork-board__toasts';
   toastHost.dataset.role = 'downwork-toast-host';
 
-  board.append(summary, tabs, filters, grid, toastHost);
+  board.append(summary, header, marketplace, toastHost);
   body.appendChild(board);
   return board;
 }
@@ -1331,10 +1331,9 @@ export default function renderHustles(context = {}, definitions = [], models = [
   if (!board) return null;
 
   const list = board.querySelector('[data-role="browser-hustle-list"]');
-  const tabsContainer = board.querySelector('[data-role="downwork-tabs"]');
   const filtersContainer = board.querySelector('[data-role="downwork-filters"]');
 
-  if (!list || !tabsContainer || !filtersContainer) {
+  if (!list || !filtersContainer) {
     return null;
   }
 
@@ -1358,13 +1357,6 @@ export default function renderHustles(context = {}, definitions = [], models = [
 
     const savedCategoryFilters = normalizeFilterIds(sessionConfig.categoryFilters);
     boardState.activeCategoryFilters = new Set(savedCategoryFilters);
-
-    if (typeof sessionConfig.activeCategory === 'string') {
-      const normalizedCategory = resolveCategoryKey(sessionConfig.activeCategory);
-      if (normalizedCategory) {
-        boardState.activeCategory = normalizedCategory;
-      }
-    }
   }
 
   const persistFilterState = () => {
@@ -1389,8 +1381,6 @@ export default function renderHustles(context = {}, definitions = [], models = [
 
     sessionConfig.quickFilters = quickFilters;
     sessionConfig.categoryFilters = categoryFilters;
-    const normalizedCategory = resolveCategoryKey(boardState.activeCategory || '');
-    sessionConfig.activeCategory = normalizedCategory || null;
   };
 
   const handleOfferAccepted = ({ payout = 0, focusHours = 0 } = {}) => {
@@ -1414,7 +1404,6 @@ export default function renderHustles(context = {}, definitions = [], models = [
   const {
     entries: offerEntries,
     summary: { availableCount, upcomingCount, commitmentCount, potentialPayout },
-    categoryMetadata,
     hustleFilterMeta
   } = buildOfferEntries(definitions, models, { onOfferAccept: handleOfferAccepted });
 
@@ -1429,7 +1418,6 @@ export default function renderHustles(context = {}, definitions = [], models = [
     })
     .filter(Boolean);
 
-  tabsContainer.innerHTML = '';
   filtersContainer.innerHTML = '';
   list.innerHTML = '';
 
@@ -1469,77 +1457,12 @@ export default function renderHustles(context = {}, definitions = [], models = [
     potentialPayout
   });
 
-  const categoriesWithCards = new Map();
-  offerCards.forEach(({ entry }) => {
-    const key = entry.categoryKey || '';
-    if (!categoriesWithCards.has(key)) {
-      categoriesWithCards.set(key, 0);
-    }
-    categoriesWithCards.set(key, categoriesWithCards.get(key) + 1);
-  });
-
   const validFilters = new Set(QUICK_FILTERS.map(filter => filter.id));
   boardState.activeFilters = new Set(
     [...boardState.activeFilters].filter(id => validFilters.has(id))
   );
 
-  const sortedCategories = Array.from(categoriesWithCards.keys()).sort((a, b) => {
-    const orderDiff = getCategorySortIndex(a) - getCategorySortIndex(b);
-    if (orderDiff !== 0) return orderDiff;
-    const labelA = (categoryMetadata.get(a)?.label || '').toLowerCase();
-    const labelB = (categoryMetadata.get(b)?.label || '').toLowerCase();
-    return labelA.localeCompare(labelB);
-  });
-
-  if (!sortedCategories.length) {
-    boardState.activeCategory = null;
-    boardState.activeFilters.clear();
-    boardState.activeCategoryFilters.clear();
-    persistFilterState();
-    const empty = document.createElement('p');
-    empty.className = 'browser-empty';
-    empty.textContent = 'Queue an action to see it spotlighted here.';
-    list.appendChild(empty);
-    updateTabMeta(appState, 'gigs', describeBoardNavSummary({ availableCount, upcomingCount, commitmentCount }));
-    const updateHireMeta = () => {
-      updateTabMeta(appState, 'hire', describeHireNavSummary());
-    };
-    renderHirePanel(hirePanel, { onStateChange: updateHireMeta });
-    updateHireMeta();
-    const meta = describeMetaSummary({ availableCount, upcomingCount, commitmentCount });
-    return {
-      id: page.id,
-      meta
-    };
-  }
-
-  if (!boardState.activeCategory || !categoriesWithCards.has(boardState.activeCategory)) {
-    boardState.activeCategory = sortedCategories[0];
-  }
-
   persistFilterState();
-
-  const tabButtons = new Map();
-  sortedCategories.forEach(categoryKey => {
-    const config = categoryMetadata.get(categoryKey) || DEFAULT_CATEGORY_CONFIG;
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'downwork-tab';
-    button.dataset.categoryKey = categoryKey;
-    button.setAttribute('aria-pressed', 'false');
-
-    const icon = document.createElement('span');
-    icon.className = 'downwork-tab__icon';
-    icon.textContent = config.icon || '💼';
-
-    const label = document.createElement('span');
-    label.className = 'downwork-tab__label';
-    label.textContent = config.label;
-
-    button.append(icon, label);
-    tabsContainer.appendChild(button);
-    tabButtons.set(categoryKey, button);
-  });
 
   const filterButtons = new Map();
   if (QUICK_FILTERS.length) {
@@ -1562,7 +1485,7 @@ export default function renderHustles(context = {}, definitions = [], models = [
           boardState.activeFilters.add(filter.id);
         }
         updateFilterSelection();
-        renderActiveCategory();
+        renderMarketplace();
         persistFilterState();
       });
 
@@ -1571,7 +1494,6 @@ export default function renderHustles(context = {}, definitions = [], models = [
     });
   }
 
-  const categoryFilterButtons = new Map();
   const categoryFilterEntries = Array.from(boardState.availableCategoryFilters.values())
     .map(entry => ({
       id: entry.id,
@@ -1614,12 +1536,11 @@ export default function renderHustles(context = {}, definitions = [], models = [
           boardState.activeCategoryFilters.add(entry.id);
         }
         updateFilterSelection();
-        renderActiveCategory();
+        renderMarketplace();
         persistFilterState();
       });
 
       chips.appendChild(button);
-      categoryFilterButtons.set(entry.id, button);
     });
   }
 
@@ -1677,15 +1598,6 @@ export default function renderHustles(context = {}, definitions = [], models = [
     });
   }
 
-  function updateTabSelection() {
-    tabButtons.forEach((button, key) => {
-      const isActive = key === boardState.activeCategory;
-      button.classList.toggle('is-active', isActive);
-      button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
-    });
-    board.dataset.activeCategory = boardState.activeCategory || '';
-  }
-
   function hasActiveFilters() {
     return boardState.activeFilters.size > 0 || boardState.activeCategoryFilters.size > 0;
   }
@@ -1699,7 +1611,9 @@ export default function renderHustles(context = {}, definitions = [], models = [
   }
 
   function updateCategoryFilterSelection() {
-    categoryFilterButtons.forEach((button, id) => {
+    const buttons = filtersContainer.querySelectorAll('[data-category-id]');
+    buttons.forEach(button => {
+      const id = button.dataset.categoryId || '';
       const isActive = boardState.activeCategoryFilters.has(id);
       button.classList.toggle('is-active', isActive);
       button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
@@ -1714,44 +1628,29 @@ export default function renderHustles(context = {}, definitions = [], models = [
     list.classList.toggle('is-filtered', filtered);
   }
 
-  function renderActiveCategory() {
+  function renderMarketplace() {
     list.innerHTML = '';
-    const activeKey = boardState.activeCategory;
-    const cards = offerCards
-      .filter(({ entry }) => entry.categoryKey === activeKey)
-      .map(({ element }) => element);
-    const filtered = applyActiveFilters(cards);
-    const isFiltered = hasActiveFilters();
-    list.classList.toggle('is-filtered', isFiltered);
+    const cards = offerCards.map(({ element }) => element);
+    const filteredCards = applyActiveFilters(cards);
+    const filtered = hasActiveFilters();
 
-    if (!filtered.length) {
+    if (!filteredCards.length) {
       const empty = document.createElement('p');
       empty.className = 'browser-empty browser-empty--compact';
-      empty.textContent = isFiltered
+      empty.textContent = filtered
         ? 'No gigs match these filters yet. Adjust or clear a filter to see more leads.'
         : 'Queue an action to see it spotlighted here.';
       list.appendChild(empty);
       return;
     }
 
-    filtered.forEach(card => {
+    filteredCards.forEach(card => {
       list.appendChild(card);
     });
   }
 
-  tabButtons.forEach((button, key) => {
-    button.addEventListener('click', () => {
-      if (boardState.activeCategory === key) return;
-      boardState.activeCategory = key;
-      updateTabSelection();
-      renderActiveCategory();
-      persistFilterState();
-    });
-  });
-
-  updateTabSelection();
   updateFilterSelection();
-  renderActiveCategory();
+  renderMarketplace();
 
   updateTabMeta(appState, 'gigs', describeBoardNavSummary({ availableCount, upcomingCount, commitmentCount }));
 
