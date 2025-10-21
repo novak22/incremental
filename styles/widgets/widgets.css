@@ -319,6 +319,18 @@
   gap: 1.25rem;
 }
 
+.downwork-board__header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.downwork-board__marketplace {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
 .downwork-filter-row {
   display: flex;
   flex-direction: column;
