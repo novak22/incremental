@@ -104,6 +104,13 @@ class StateManager {
     target.skills = normalizeSkillState(target.skills);
     target.character = normalizeCharacterState(target.character);
 
+    if (!target.session || typeof target.session !== 'object') {
+      target.session = {};
+    }
+    if (!target.session.config || typeof target.session.config !== 'object') {
+      target.session.config = {};
+    }
+
     this.ensureDailyMetrics(target);
     this.ensureMetricsHistory(target);
     ensureNicheStateShape(target, { fallbackDay: target.day || 1 });
@@ -154,6 +161,9 @@ class StateManager {
         history: []
       },
       log: [],
+      session: {
+        config: {}
+      },
       lastSaved: Date.now(),
       actionMarket,
       hustleMarket
