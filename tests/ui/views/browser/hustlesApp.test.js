@@ -315,6 +315,7 @@ test('renderHustles renders unified offer feed with metrics, CTA wiring, and fil
     assert.ok(shortTaskFilter.classList.contains('is-active'));
     assert.equal(shortTaskFilter.getAttribute('aria-pressed'), 'true');
     assert.ok(board.classList.contains('is-filtered'));
+    assert.ok(list.classList.contains('is-filtered'));
     assert.equal(list.querySelectorAll('.downwork-card').length, 1, 'expected quick filter to narrow results');
 
     const highPayoutFilter = document.querySelector('button[data-filter-id="highPayout"]');
@@ -330,6 +331,7 @@ test('renderHustles renders unified offer feed with metrics, CTA wiring, and fil
     shortTaskFilter.click();
     assert.equal(list.querySelectorAll('.downwork-card').length, 3, 'expected cards to return after clearing filters');
     assert.ok(!board.classList.contains('is-filtered'));
+    assert.ok(!list.classList.contains('is-filtered'));
   } finally {
     dom.window.close();
     delete globalThis.window;
