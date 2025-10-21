@@ -5,6 +5,9 @@ const syndicationSuiteConfig = upgradeConfigs.syndicationSuite; // Spec: docs/no
 const immersiveStoryWorldsConfig = upgradeConfigs.immersiveStoryWorlds; // Spec: docs/normalized_economy.json → upgrades.immersiveStoryWorlds
 const courseConfig = upgradeConfigs.course; // Spec: docs/normalized_economy.json → upgrades.course
 
+const BLOGPRESS_ONLY_PLACEMENTS = Object.freeze(['blogpress']);
+const CROSS_MEDIA_WORKFLOW_PLACEMENTS = Object.freeze(['blogpress', 'digishelf', 'videotube']);
+
 const workflow = [
   {
     id: 'editorialPipeline',
@@ -13,7 +16,7 @@ const workflow = [
     description: 'Stand up pro-grade editorial calendars so every blog post ships polished and on schedule.',
     category: 'tech',
     family: 'workflow',
-    placements: ['blogpress'],
+    placements: BLOGPRESS_ONLY_PLACEMENTS,
     cost: editorialPipelineConfig.cost, // Spec: docs/normalized_economy.json → upgrades.editorialPipeline.setup_cost
     requires: [
       'course',
@@ -68,7 +71,7 @@ const workflow = [
     description: 'Spin up partner feeds, guest slots, and cross-promotions to syndicate your best work everywhere.',
     category: 'tech',
     family: 'workflow',
-    placements: ['blogpress', 'digishelf', 'videotube'],
+    placements: CROSS_MEDIA_WORKFLOW_PLACEMENTS,
     cost: syndicationSuiteConfig.cost, // Spec: docs/normalized_economy.json → upgrades.syndicationSuite.setup_cost
     requires: [
       'editorialPipeline',
@@ -134,7 +137,7 @@ const workflow = [
     description: 'Blend blogs, books, and vlogs into one living universe with AR teasers and fan quests.',
     category: 'tech',
     family: 'workflow',
-    placements: ['blogpress', 'digishelf', 'videotube'],
+    placements: CROSS_MEDIA_WORKFLOW_PLACEMENTS,
     cost: immersiveStoryWorldsConfig.cost, // Spec: docs/normalized_economy.json → upgrades.immersiveStoryWorlds.setup_cost
     requires: [
       'syndicationSuite',
@@ -205,7 +208,7 @@ const workflow = [
     description: 'Unlocks smarter blogging tools, boosting blog income by +50%.',
     category: 'tech',
     family: 'workflow',
-    placements: ['blogpress'],
+    placements: BLOGPRESS_ONLY_PLACEMENTS,
     cost: courseConfig.cost, // Spec: docs/normalized_economy.json → upgrades.course.setup_cost
     requires: [
       {
