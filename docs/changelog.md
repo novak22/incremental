@@ -8,14 +8,14 @@ This log highlights player-visible milestones. For exhaustive historical notes, 
 - Reference follow-up work with GitHub issues or pull requests only (for example, `[PR #456](https://github.com/<org>/<repo>/pull/456)`); skip commit links and essay-length commentary.
 
 ## Unreleased
-- DownWork now remembers quick and category filters per session, keeping your scouting view consistent between visits.
+- DownWork now centers gigs in a unified marketplace feed and only keeps your quick filters between visits, giving category chips a fresh reset each time.
 - VideoTube studio adds upgrade and pricing tabs with grouped gear highlights, niche intel, and purchase hooks.
 - BlogPress workspace adds a dedicated Upgrades tab that reuses the blueprint boosters list with purchase actions wired in.
 
 ## 2025-10-21 – Session Slot & Hustle Refresh
 - Introduced multi-session save slots with import/export, autosave safeguards, and gentle recovery flows.
 - Added a browser session switcher plus reorderable home widgets to keep dashboards aligned with active runs.
-- Refined DownWork with full-width responsive lanes, hustle category filters, and a hiring tab for assistant management.
+- Refined DownWork with a full-width contract board, hustle category filters, and a hiring tab for assistant management.
 - Expanded the hustle market with fallback job scouting, a Virtual Assistant gig, and expiry grace periods that steady contract supply.
 - Elevated BlogPress and Timodoro surfaces with SEO/backlink metrics, daily timelines, and focus-first dashboards.
 

@@ -19,6 +19,6 @@ This index replaces the long-form briefs. Jump straight to the active modules, a
 - **Dashboard widgets** – Widget presenters are in `src/ui/dashboard/` and `src/ui/cards/`, with shared styles in `styles/widgets/`.
 - **Action cards & quick actions** – Card factories are built in `src/ui/cards/` and `src/game/actions.js`; quick action helpers live in `src/ui/headerAction/`.
 - **Diagnostics tooling** – Player overviews, skill inspectors, and logs live in `src/ui/player/`, `src/ui/skillsWidget/`, and `src/ui/log/`.
-- **DownWork filter persistence** – Quick filter pills mirror the active save via `state.session.config.downwork`, with UI wiring in `src/ui/views/browser/apps/hustles/index.js`.
+- **DownWork marketplace view** – The unified gig feed lives in `src/ui/views/browser/apps/hustles/index.js`, which mirrors quick filter pills to `state.session.config.downwork` so only those toggles persist between visits.
 
 If a new feature needs a deep dive, open a short proposal in the repo or wiki and link back here.
