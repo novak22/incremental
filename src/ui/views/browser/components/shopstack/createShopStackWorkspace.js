@@ -19,6 +19,7 @@ import { deriveShopStackPath } from './routes.js';
 import renderCatalogView from './views/catalogView.js';
 import renderPurchasesView from './views/purchasesView.js';
 import renderPricingView from './views/pricingView.js';
+import { renderWorkspaceLinkList } from './workspaceLinks.js';
 
 function describeOverviewSummary(model = {}, definitionMap = new Map()) {
   const overview = computeCatalogOverview(collectCatalogItems(model, definitionMap));
@@ -43,7 +44,20 @@ function deriveWorkspaceSummary(model = {}, definitionMap = new Map()) {
   if (purchased > 0) {
     return { meta: `${purchased} owned` };
   }
-  return { meta: 'Browse premium upgrades' };
+  return { meta: 'Browse cross-hustle upgrades' };
+}
+
+function renderShopStackSubtitle(pageMeta) {
+  const fragment = document.createDocumentFragment();
+  if (pageMeta?.tagline) {
+    fragment.append(`${pageMeta.tagline} `);
+  } else {
+    fragment.append('Browse cross-hustle upgrades, compare bonuses, and plan the next spike. ');
+  }
+  fragment.append('Service-specific perks now live in ');
+  fragment.appendChild(renderWorkspaceLinkList());
+  fragment.append(' — hop into those workspaces when you need tailored gear.');
+  return fragment;
 }
 
 function createCatalogHandlers({ presenter, definitionMap }) {
@@ -109,7 +123,7 @@ const shopStackWorkspaceRegistration = registerAssetWorkspace({
     return {
       className: 'shopstack__header',
       title: pageMeta.headline || 'ShopStack Platform',
-      subtitle: pageMeta.tagline || 'Browse upgrades, compare bonuses, and fuel your next spike.',
+      subtitle: () => renderShopStackSubtitle(pageMeta),
       meta: describeOverviewSummary(model, activeDefinitionMap),
       theme: {
         header: 'shopstack__header',

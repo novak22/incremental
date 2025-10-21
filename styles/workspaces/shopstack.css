@@ -43,6 +43,17 @@
   font-size: 0.98rem;
 }
 
+.shopstack__workspace-link {
+  color: var(--browser-accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.shopstack__workspace-link:hover,
+.shopstack__workspace-link:focus {
+  text-decoration: underline;
+}
+
 .shopstack-summary {
   margin: 0;
   color: var(--browser-muted);
@@ -453,6 +464,13 @@
   border-radius: var(--browser-radius-md);
   color: var(--browser-muted);
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.shopstack-empty p {
+  margin: 0;
 }
 
 .shopstack-purchases {

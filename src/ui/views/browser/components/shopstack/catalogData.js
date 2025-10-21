@@ -1,11 +1,27 @@
 import { ensureArray } from '../../../../../core/helpers.js';
 
-function isPlacementEnabled(definition, placement = 'general') {
+const SHOPSTACK_PLACEMENT = 'shopstack';
+
+function normalizePlacement(value, fallback = SHOPSTACK_PLACEMENT) {
+  const normalized = String(value || fallback || '').trim().toLowerCase();
+  if (!normalized && fallback) {
+    return fallback;
+  }
+  if (normalized === 'general') {
+    return SHOPSTACK_PLACEMENT;
+  }
+  return normalized || fallback;
+}
+
+function isPlacementEnabled(definition, placement = SHOPSTACK_PLACEMENT) {
+  const requestedPlacement = normalizePlacement(placement);
   const placements = ensureArray(definition?.placements)
-    .map(entry => String(entry || '').trim())
+    .map(entry => normalizePlacement(entry, null))
     .filter(Boolean);
-  const normalized = placements.length ? placements : ['general'];
-  return normalized.includes(String(placement || 'general'));
+  if (!placements.length) {
+    return true;
+  }
+  return placements.includes(requestedPlacement);
 }
 
 export function createDefinitionMap(definitions = []) {
@@ -16,7 +32,7 @@ export function createDefinitionMap(definitions = []) {
 }
 
 export function collectCatalogItems(model = {}, definitionMap = new Map(), options = {}) {
-  const { placement = 'general' } = options;
+  const { placement = SHOPSTACK_PLACEMENT } = options;
   const items = [];
   const categories = ensureArray(model.categories);
   categories.forEach(category => {

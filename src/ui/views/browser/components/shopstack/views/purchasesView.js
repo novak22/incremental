@@ -5,6 +5,7 @@ import {
   stripHtml
 } from '../detail/index.js';
 import { collectCatalogItems } from '../catalogData.js';
+import { renderWorkspaceLinkList } from '../workspaceLinks.js';
 
 function isRepeatableOwned(definition, upgradeState = {}) {
   if (!definition?.repeatable) return false;
@@ -55,7 +56,13 @@ export default function renderPurchasesView({ model, definitionMap }) {
   if (!purchases.length) {
     const empty = document.createElement('div');
     empty.className = 'shopstack-empty';
-    empty.textContent = 'No upgrades owned yet. Grab a boost from the catalog to see it listed here.';
+    const heading = document.createElement('p');
+    heading.textContent = 'No cross-hustle upgrades owned yet.';
+    const note = document.createElement('p');
+    note.append('Browse this catalog for empire-wide boosts or hop into ');
+    note.appendChild(renderWorkspaceLinkList({ ids: ['downwork', 'shopily', 'blogpress'] }));
+    note.append(' when you need service-specific perks.');
+    empty.append(heading, note);
     section.appendChild(empty);
     return section;
   }
