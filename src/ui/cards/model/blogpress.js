@@ -7,6 +7,21 @@ import { buildSkillLock } from './skillLocks.js';
 import { filterUpgradeDefinitions, getUpgradeSnapshot, describeUpgradeStatus } from './upgrades.js';
 import { formatBlogpressModel, buildBlogpressPricing } from '../../blogpress/model/shared.js';
 
+function collectUpgradeDetails(definition) {
+  return ensureArray(definition?.details)
+    .map(detail => {
+      if (typeof detail === 'function') {
+        try {
+          return detail(definition);
+        } catch (error) {
+          return '';
+        }
+      }
+      return detail;
+    })
+    .filter(entry => entry != null && entry !== '');
+}
+
 function clampNumber(value) {
   const number = Number(value);
   return Number.isFinite(number) ? number : 0;
@@ -26,13 +41,14 @@ function buildBlogpressUpgrades(upgradeDefinitions = [], state) {
       effects: definition.effects || {},
       action: definition.action || null,
       definition,
+      details: collectUpgradeDetails(definition),
       snapshot,
       status: describeUpgradeStatus(snapshot)
     };
   });
 }
 
-function buildBlogpressModel(assetDefinitions = [], upgradeDefinitions = [], state = getState()) {
+export function buildBlogpressModel(assetDefinitions = [], upgradeDefinitions = [], state = getState()) {
   const definition = ensureArray(assetDefinitions).find(entry => entry?.id === 'blog') || null;
   if (!definition) {
     return {
@@ -60,7 +76,7 @@ function buildBlogpressModel(assetDefinitions = [], upgradeDefinitions = [], sta
 
   const { summary, instances, nicheOptions } = formatBlogpressModel({ definition, state });
   const upgrades = buildBlogpressUpgrades(upgradeDefinitions, state);
-  const pricing = buildBlogpressPricing(definition, upgradeDefinitions, { nicheOptions });
+  const pricing = buildBlogpressPricing(definition, { nicheOptions });
   const availability = describeAssetLaunchAvailability(definition, state);
   const launchAction = definition.action || null;
   const launch = launchAction

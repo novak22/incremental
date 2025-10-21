@@ -4,7 +4,8 @@ export default function renderPricingCards(options = {}) {
   const {
     pricing = [],
     formatters = {},
-    onSelectPlan = () => {}
+    onSelectPlan = () => {},
+    emptyMessage = 'Plans unlock once you launch your first digital asset.'
   } = options;
 
   const formatCurrency = formatters.formatCurrency || (value => String(value ?? ''));
@@ -25,7 +26,16 @@ export default function renderPricingCards(options = {}) {
   const grid = document.createElement('div');
   grid.className = 'digishelf-pricing__grid';
 
-  ensureArray(pricing).forEach(plan => {
+  const plans = ensureArray(pricing);
+  if (!plans.length) {
+    const empty = document.createElement('p');
+    empty.className = 'digishelf-empty';
+    empty.textContent = emptyMessage;
+    section.append(intro, empty);
+    return section;
+  }
+
+  plans.forEach(plan => {
     const card = document.createElement('article');
     card.className = 'digishelf-plan';
     const title = document.createElement('h3');

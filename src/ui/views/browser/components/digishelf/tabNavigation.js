@@ -1,7 +1,8 @@
 import { createNavTabs } from '../common/navBuilders.js';
-import { VIEW_EBOOKS, VIEW_STOCK, VIEW_PRICING } from './state.js';
+import { VIEW_EBOOKS, VIEW_STOCK, VIEW_UPGRADES, normalizeView } from './state.js';
 
 export default function renderTabNavigation(state, onSelect = () => {}) {
+  const activeView = normalizeView(state?.view);
   return createNavTabs({
     navClassName: 'digishelf-tabs',
     buttonClassName: 'digishelf-tab',
@@ -12,17 +13,17 @@ export default function renderTabNavigation(state, onSelect = () => {}) {
       {
         label: 'E-Books',
         view: VIEW_EBOOKS,
-        isActive: state?.view === VIEW_EBOOKS
+        isActive: activeView === VIEW_EBOOKS
       },
       {
         label: 'Stock Photos',
         view: VIEW_STOCK,
-        isActive: state?.view === VIEW_STOCK
+        isActive: activeView === VIEW_STOCK
       },
       {
-        label: 'Pricing & Plans',
-        view: VIEW_PRICING,
-        isActive: state?.view === VIEW_PRICING
+        label: 'Upgrades & Plans',
+        view: VIEW_UPGRADES,
+        isActive: activeView === VIEW_UPGRADES
       }
     ]
   });

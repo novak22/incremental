@@ -1,4 +1,4 @@
-import { formatHours, formatMoney } from '../../../../core/helpers.js';
+import { ensureArray, formatHours, formatMoney } from '../../../../core/helpers.js';
 import { getState } from '../../../../core/state.js';
 import { selectBlogpressNiche } from '../../../cards/model/index.js';
 import { performQualityAction } from '../../../../game/assets/index.js';
@@ -26,15 +26,18 @@ import renderActionPanel from './blogpress/views/renderActionPanel.js';
 import renderActivityPanel from './blogpress/views/renderActivityPanel.js';
 import renderPricingView from './blogpress/views/pricingView.js';
 import renderBlueprintsView from './blogpress/views/blueprintsView.js';
+import renderUpgradesView from './blogpress/views/upgradesView.js';
 
 const VIEW_HOME = 'home';
 const VIEW_DETAIL = 'detail';
 const VIEW_PRICING = 'pricing';
+const VIEW_UPGRADES = 'upgrades';
 const VIEW_BLUEPRINTS = 'blueprints';
 
 const INITIAL_STATE = {
   view: VIEW_HOME,
-  selectedBlogId: null
+  selectedBlogId: null,
+  selectedUpgradeId: null
 };
 
 const {
@@ -127,6 +130,30 @@ function ensureSelectedBlog(state = {}, model = {}) {
   draftState.selectedBlogId = resolved?.id ?? null;
 }
 
+function ensureSelectedUpgrade(state = {}, model = {}) {
+  const upgrades = ensureArray(model.upgrades);
+  if (!upgrades.length) {
+    state.selectedUpgradeId = null;
+    return;
+  }
+  const selected = upgrades.find(entry => entry.id === state.selectedUpgradeId);
+  const ready = upgrades.find(entry => entry.snapshot?.ready);
+  state.selectedUpgradeId = (selected || ready || upgrades[0]).id;
+}
+
+function ensureSelection(state = {}, model = {}) {
+  ensureSelectedBlog(state, model);
+  ensureSelectedUpgrade(state, model);
+}
+
+function getSelectedUpgrade(state = {}, model = {}) {
+  const upgrades = ensureArray(model.upgrades);
+  if (!upgrades.length) {
+    return null;
+  }
+  return upgrades.find(entry => entry.id === state.selectedUpgradeId) || null;
+}
+
 function handleQuickAction(instanceId, actionId) {
   if (!instanceId || !actionId) return;
   performQualityAction('blog', instanceId, actionId);
@@ -185,6 +212,8 @@ function renderHeader(model, state = INITIAL_STATE) {
 
   const activeCount = model.summary?.active || 0;
   const setupCount = model.summary?.setup || 0;
+  const readyUpgrades = ensureArray(model.upgrades).filter(upgrade => upgrade?.snapshot?.ready).length;
+
   const nav = createNavTabs({
     navClassName: 'blogpress-tabs',
     buttonClassName: 'blogpress-tab',
@@ -198,6 +227,12 @@ function renderHeader(model, state = INITIAL_STATE) {
         view: VIEW_HOME,
         badge: activeCount || null,
         isActive: state.view === VIEW_HOME || state.view === VIEW_DETAIL
+      },
+      {
+        label: 'Upgrades',
+        view: VIEW_UPGRADES,
+        badge: readyUpgrades || null,
+        isActive: state.view === VIEW_UPGRADES
       },
       {
         label: 'Pricing',
@@ -248,7 +283,20 @@ function renderViews(model, state = INITIAL_STATE) {
       return renderPricingView({
         pricing: model.pricing,
         formatters,
-        formatRange
+        formatRange,
+        handlers: {
+          onShowUpgrades: () => setView(VIEW_UPGRADES)
+        }
+      });
+    case VIEW_UPGRADES:
+      return renderUpgradesView({
+        model,
+        state,
+        formatters,
+        handlers: {
+          onSelectUpgrade: upgradeId => setSelectedUpgrade(upgradeId)
+        },
+        selectors: { getSelectedUpgrade }
       });
     case VIEW_BLUEPRINTS:
       return renderBlueprintsView({
@@ -314,6 +362,8 @@ function deriveWorkspacePath(state = {}) {
   switch (state.view) {
     case VIEW_PRICING:
       return 'pricing';
+    case VIEW_UPGRADES:
+      return 'upgrades';
     case VIEW_BLUEPRINTS:
       return 'blueprints';
     case VIEW_DETAIL:
@@ -344,7 +394,7 @@ const renderLocked = createWorkspaceLockRenderer({
 const presenter = createTabbedWorkspacePresenter({
   className: 'blogpress',
   state: { ...INITIAL_STATE },
-  ensureSelection: ensureSelectedBlog,
+  ensureSelection,
   renderLocked,
   renderHeader,
   renderViews,
@@ -367,12 +417,25 @@ function prepareModelForRender(model = {}) {
   };
 }
 
+function setSelectedUpgrade(upgradeId) {
+  presenter.updateState(currentState => {
+    const next = { ...currentState };
+    next.selectedUpgradeId = upgradeId || null;
+    next.view = VIEW_UPGRADES;
+    return next;
+  });
+  presenter.render(presenter.getModel());
+}
+
 function setView(view, options = {}) {
   presenter.updateState(currentState => {
     const next = { ...currentState };
     const nextView = view || VIEW_HOME;
     if (nextView === VIEW_DETAIL && options.blogId) {
       next.selectedBlogId = options.blogId;
+    }
+    if (nextView === VIEW_UPGRADES && options.upgradeId) {
+      next.selectedUpgradeId = options.upgradeId;
     }
     next.view = nextView;
     return next;

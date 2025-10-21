@@ -19,7 +19,6 @@ import {
   buildActionSnapshot
 } from '../../cards/model/sharedQuality.js';
 import { getAssetEvents, getNicheEvents } from '../../../game/events/index.js';
-import { filterUpgradeDefinitions } from '../../cards/model/upgrades.js';
 
 const DEFAULT_MILESTONE_COPY = {
   maxedSummary: 'Maxed out — future milestones queued for future builds.',
@@ -340,17 +339,7 @@ export function formatBlogpressModel({ definition, state = getState() } = {}) {
   };
 }
 
-function extractRelevantUpgrades(upgrades = []) {
-  return filterUpgradeDefinitions(upgrades, 'blogpress').map(upgrade => ({
-    id: upgrade.id,
-    name: upgrade.name,
-    cost: Math.max(0, clampNumber(upgrade.cost)),
-    description: upgrade.boosts || upgrade.description || '',
-    type: upgrade.tag?.label || 'Upgrade'
-  }));
-}
-
-export function buildBlogpressPricing(definition, upgrades = [], { nicheOptions = [] } = {}) {
+export function buildBlogpressPricing(definition, { nicheOptions = [] } = {}) {
   if (!definition) {
     return null;
   }
@@ -373,7 +362,6 @@ export function buildBlogpressPricing(definition, upgrades = [], { nicheOptions 
     time: Math.max(0, clampNumber(action.time)),
     cost: Math.max(0, clampNumber(action.cost))
   }));
-  const upgradesList = extractRelevantUpgrades(upgrades);
   const sortedNicheOptions = ensureArray(nicheOptions)
     .slice()
     .sort((a, b) => (b.score || 0) - (a.score || 0));
@@ -383,7 +371,6 @@ export function buildBlogpressPricing(definition, upgrades = [], { nicheOptions 
     maintenance,
     levels,
     actions,
-    upgrades: upgradesList,
     topNiches: sortedNicheOptions.slice(0, 3),
     nicheCount: sortedNicheOptions.length
   };
