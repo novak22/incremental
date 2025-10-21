@@ -235,8 +235,14 @@
   box-shadow: var(--browser-shadow-soft);
 }
 
-.downwork-board[data-active-category] .downwork-board__summary {
+.downwork-board.is-filtered .downwork-board__summary {
   border-color: rgba(37, 99, 235, 0.28);
+  box-shadow: var(--browser-shadow-soft), 0 0 0 1px rgba(37, 99, 235, 0.22);
+}
+
+.downwork-marketplace__list.is-filtered {
+  border-radius: var(--browser-radius-lg);
+  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.22);
 }
 
 @media (max-width: 768px) {
