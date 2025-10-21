@@ -1,10 +1,20 @@
+import { appendContent } from '../../common/domHelpers.js';
+import { renderWorkspaceLinkList } from '../workspaceLinks.js';
+
 export default function renderPricingView() {
   const container = document.createElement('section');
   container.className = 'shopstack-pricing';
 
   const intro = document.createElement('div');
   intro.className = 'shopstack-pricing__intro';
-  intro.innerHTML = '<h3>How checkout works</h3><p>ShopStack pulls live pricing, requirements, and effects from the core upgrade systems. Buying an item deducts cash instantly and applies the bonus without extra clicks.</p>';
+  const heading = document.createElement('h3');
+  heading.textContent = 'How checkout works';
+  const blurb = document.createElement('p');
+  blurb.append('ShopStack pulls live pricing, requirements, and effects from the core upgrade systems. Buying an item deducts cash instantly and applies the bonus without extra clicks. ');
+  blurb.append('Need niche-specific perks? Hop into ');
+  blurb.appendChild(renderWorkspaceLinkList());
+  blurb.append(' to browse their dedicated tabs.');
+  intro.append(heading, blurb);
 
   const faqList = document.createElement('dl');
   faqList.className = 'shopstack-pricing__faq';
@@ -24,6 +34,16 @@ export default function renderPricingView() {
       question: 'Do assistants and boosts show ongoing costs?',
       answer:
         'Yes! Owned upgrades appear in the My Purchases tab with payroll, upkeep, or daily limits highlighted so you know what to fund tomorrow.'
+    },
+    {
+      question: 'Where did service-specific upgrades move?',
+      answer: () => {
+        const fragment = document.createDocumentFragment();
+        fragment.append('They now live directly inside each workspace. Jump into ');
+        fragment.appendChild(renderWorkspaceLinkList());
+        fragment.append(' to see their focused catalogs.');
+        return fragment;
+      }
     }
   ];
 
@@ -31,7 +51,7 @@ export default function renderPricingView() {
     const term = document.createElement('dt');
     term.textContent = entry.question;
     const definition = document.createElement('dd');
-    definition.textContent = entry.answer;
+    appendContent(definition, entry.answer);
     faqList.append(term, definition);
   });
 
