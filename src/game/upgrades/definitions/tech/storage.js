@@ -10,6 +10,7 @@ const storage = [
     description: 'High-speed NVMe array that turns renders and transfers into blink-and-done tasks.',
     category: 'tech',
     family: 'storage',
+    placements: ['general', 'digishelf', 'serverhub', 'videotube'],
     cost: scratchDriveArrayConfig.cost, // Spec: docs/normalized_economy.json → upgrades.scratchDriveArray.setup_cost
     effects: { maint_time_mult: 0.9 },
     affects: {

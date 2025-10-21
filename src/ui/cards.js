@@ -41,7 +41,7 @@ function synthesizeModels(baseModels = {}, registries = {}, force = false) {
     generated = true;
   }
   if (force || typeof models.upgrades !== 'object' || models.upgrades === null) {
-    models.upgrades = buildUpgradeModels(registries.upgrades);
+    models.upgrades = buildUpgradeModels(registries.upgrades, { placement: 'general' });
     generated = true;
   }
   if (typeof models.finance !== 'object' || models.finance === null) {

@@ -32,7 +32,7 @@ function registerDefaultCardBuilders() {
   );
   registerModelBuilder(
     'upgrades',
-    registries => buildUpgradeModels(registries.upgrades),
+    registries => buildUpgradeModels(registries.upgrades, { placement: 'general' }),
     { isDefault: true }
   );
   registerModelBuilder(

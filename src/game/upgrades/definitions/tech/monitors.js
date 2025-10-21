@@ -12,6 +12,7 @@ const monitors = [
     description: 'Dock station that powers two 4K monitors with one cable and instant switching.',
     category: 'tech',
     family: 'monitor_hub',
+    placements: ['general', 'blogpress'],
     cost: monitorHubConfig.cost, // Spec: docs/normalized_economy.json → upgrades.monitorHub.setup_cost
     provides: { monitor: 2 },
     effects: { setup_time_mult: 0.95 },
@@ -30,6 +31,7 @@ const monitors = [
     description: 'Mount two ultra-thin displays for editing, dashboards, and reference boards.',
     category: 'tech',
     family: 'monitor',
+    placements: ['general', 'blogpress', 'videotube'],
     cost: dualMonitorArrayConfig.cost, // Spec: docs/normalized_economy.json → upgrades.dualMonitorArray.setup_cost
     requires: dualMonitorArrayConfig.requires, // Spec: docs/normalized_economy.json → upgrades.dualMonitorArray.requirements
     consumes: { monitor: 1 },
@@ -49,6 +51,7 @@ const monitors = [
     description: 'Reference-grade display for colorists and photo editors who need true-to-life hues.',
     category: 'tech',
     family: 'monitor',
+    placements: ['general', 'digishelf', 'videotube'],
     cost: colorGradingDisplayConfig.cost, // Spec: docs/normalized_economy.json → upgrades.colorGradingDisplay.setup_cost
     requires: colorGradingDisplayConfig.requires, // Spec: docs/normalized_economy.json → upgrades.colorGradingDisplay.requirements
     consumes: { monitor: 1 },

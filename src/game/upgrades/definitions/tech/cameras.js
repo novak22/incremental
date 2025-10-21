@@ -12,6 +12,7 @@ const cameras = [
     category: 'tech',
     family: 'camera',
     exclusivityGroup: 'tech:camera',
+    placements: ['general', 'digishelf', 'videotube'],
     cost: cameraConfig.cost, // Spec: docs/normalized_economy.json → upgrades.camera.setup_cost
     unlocks: 'Weekly Vlog Channel & Stock Photo Galleries',
     skills: [ 'visual' ],
@@ -36,6 +37,7 @@ const cameras = [
     category: 'tech',
     family: 'camera',
     exclusivityGroup: 'tech:camera',
+    placements: ['general', 'digishelf', 'videotube'],
     cost: cameraProConfig.cost, // Spec: docs/normalized_economy.json → upgrades.cameraPro.setup_cost
     requires: cameraProConfig.requires, // Spec: docs/normalized_economy.json → upgrades.cameraPro.requirements
     boosts: 'Boosts vlog payouts and doubles quality progress',

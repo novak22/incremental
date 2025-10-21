@@ -10,6 +10,7 @@ const network = [
     description: 'Symmetrical gigabit connection with service-level guarantees for uploads.',
     category: 'tech',
     family: 'internet',
+    placements: ['general', 'serverhub', 'videotube'],
     cost: fiberInternetConfig.cost, // Spec: docs/normalized_economy.json → upgrades.fiberInternet.setup_cost
     effects: { maint_time_mult: 0.9 },
     affects: {

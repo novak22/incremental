@@ -12,7 +12,7 @@ import {
   getQualityTracks
 } from '../../../game/assets/quality/actions.js';
 import { getNextQualityLevel } from '../../../game/assets/quality/levels.js';
-import { getUpgradeSnapshot, describeUpgradeStatus } from './upgrades.js';
+import { filterUpgradeDefinitions, getUpgradeSnapshot, describeUpgradeStatus } from './upgrades.js';
 import { registerModelBuilder } from '../modelBuilderRegistry.js';
 import { buildSkillLock } from './skillLocks.js';
 import {
@@ -115,33 +115,24 @@ function buildActionSnapshot(definition, instance, action, state) {
   };
 }
 
-function extractRelevantUpgrades(upgrades = [], state) {
-  return ensureArray(upgrades)
-    .filter(upgrade => {
-      const affects = upgrade?.affects?.assets;
-      if (!affects) return false;
-      const ids = ensureArray(affects.ids);
-      if (ids.includes('dropshipping')) return true;
-      const tags = ensureArray(affects.tags);
-      return tags.includes('commerce') || tags.includes('ecommerce');
-    })
-    .map(upgrade => {
-      const snapshot = getUpgradeSnapshot(upgrade, state);
-      return {
-        id: upgrade.id,
-        name: upgrade.name,
-        cost: Math.max(0, clampNumber(upgrade.cost)),
-        description: upgrade.boosts || upgrade.description || '',
-        tag: upgrade.tag || null,
-        affects: upgrade.affects || {},
-        effects: upgrade.effects || {},
-        action: upgrade.action || null,
-        definition: upgrade,
-        boosts: upgrade.boosts || '',
-        snapshot,
-        status: describeUpgradeStatus(snapshot)
-      };
-    });
+function buildShopilyUpgrades(upgrades = [], state) {
+  return filterUpgradeDefinitions(upgrades, 'shopily').map(definition => {
+    const snapshot = getUpgradeSnapshot(definition, state);
+    return {
+      id: definition.id,
+      name: definition.name,
+      cost: Math.max(0, clampNumber(definition.cost)),
+      description: definition.boosts || definition.description || '',
+      tag: definition.tag || null,
+      affects: definition.affects || {},
+      effects: definition.effects || {},
+      action: definition.action || null,
+      definition,
+      boosts: definition.boosts || '',
+      snapshot,
+      status: describeUpgradeStatus(snapshot)
+    };
+  });
 }
 
 function buildShopInstances(definition, state) {
@@ -273,7 +264,7 @@ function buildShopilyModel(assetDefinitions = [], upgradeDefinitions = [], state
   const summary = buildSummary(instances);
   const metrics = buildMetrics(instances, definition);
   const pricing = buildPricing(definition, state);
-  const upgrades = extractRelevantUpgrades(upgradeDefinitions, state);
+  const upgrades = buildShopilyUpgrades(upgradeDefinitions, state);
   const launch = createLaunchDescriptor(definition, state, {
     fallbackLabel: 'Launch Dropshipping Store'
   });

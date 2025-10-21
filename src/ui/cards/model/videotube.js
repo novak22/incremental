@@ -17,6 +17,7 @@ import {
   buildActionSnapshot,
   buildMilestoneProgress
 } from './sharedQuality.js';
+import { filterUpgradeDefinitions, getUpgradeSnapshot, describeUpgradeStatus } from './upgrades.js';
 import {
   calculateAveragePayout,
   describeInstanceStatus,
@@ -221,7 +222,27 @@ function startVideoInstance(definition, options = {}, state = getState()) {
   return newInstance.id;
 }
 
-function buildVideoTubeModel(assetDefinitions = [], state = getState()) {
+function buildVideoTubeUpgrades(upgradeDefinitions = [], state) {
+  return filterUpgradeDefinitions(upgradeDefinitions, 'videotube').map(definition => {
+    const snapshot = getUpgradeSnapshot(definition, state);
+    return {
+      id: definition.id,
+      name: definition.name,
+      cost: Math.max(0, clampNumber(definition.cost)),
+      description: definition.boosts || definition.description || '',
+      tag: definition.tag || null,
+      affects: definition.affects || {},
+      effects: definition.effects || {},
+      action: definition.action || null,
+      definition,
+      boosts: definition.boosts || '',
+      snapshot,
+      status: describeUpgradeStatus(snapshot)
+    };
+  });
+}
+
+function buildVideoTubeModel(assetDefinitions = [], upgradeDefinitions = [], state = getState()) {
   const definition = ensureArray(assetDefinitions).find(entry => entry?.id === 'vlog') || null;
   if (!definition) {
     return {
@@ -230,7 +251,8 @@ function buildVideoTubeModel(assetDefinitions = [], state = getState()) {
       summary: { total: 0, active: 0, setup: 0, meta: 'VideoTube locked' },
       stats: { lifetime: 0, daily: 0, active: 0, averageQuality: 0, milestonePercent: 0 },
       analytics: { videos: [], niches: [] },
-      launch: null
+      launch: null,
+      upgrades: []
     };
   }
 
@@ -243,7 +265,8 @@ function buildVideoTubeModel(assetDefinitions = [], state = getState()) {
       stats: { lifetime: 0, daily: 0, active: 0, averageQuality: 0, milestonePercent: 0 },
       analytics: { videos: [], niches: [] },
       launch: null,
-      lock
+      lock,
+      upgrades: []
     };
   }
 
@@ -258,6 +281,7 @@ function buildVideoTubeModel(assetDefinitions = [], state = getState()) {
   const defaultName = `Video #${instances.length + 1}`;
   const nicheOptions = mapNicheOptions(definition, state, { includeDelta: true });
   const maintenance = formatMaintenanceSummary(definition);
+  const upgrades = buildVideoTubeUpgrades(upgradeDefinitions, state);
 
   const launch = launchAction
     ? {
@@ -289,7 +313,8 @@ function buildVideoTubeModel(assetDefinitions = [], state = getState()) {
     summary,
     stats,
     analytics,
-    launch
+    launch,
+    upgrades
   };
 }
 
@@ -300,5 +325,5 @@ export function selectNiche(assetId, instanceId, nicheId) {
 registerModelBuilder(
   'videotube',
   (registries = {}, context = {}) =>
-    buildVideoTubeModel(registries.assets ?? [], context.state)
+    buildVideoTubeModel(registries.assets ?? [], registries.upgrades ?? [], context.state)
 );

@@ -15,6 +15,7 @@ const infra = [
     description: 'Scale your admin squad. Each hire adds hours at a lean $8/hr upkeep.',
     category: 'infra',
     family: 'automation',
+    placements: ['timodoro', 'hustles'],
     defaultState: { count: 0 },
     repeatable: true,
     actionClassName: 'secondary',
@@ -27,6 +28,7 @@ const infra = [
     description: 'Spin up a reliable rack with monitoring so prototypes stay online.',
     category: 'infra',
     family: 'cloud_compute',
+    placements: ['serverhub'],
     cost: serverRackConfig.cost, // Spec: docs/normalized_economy.json → upgrades.serverRack.setup_cost
     unlocks: 'Stable environments for advanced products',
     effects: { setup_time_mult: 0.95 },
@@ -55,6 +57,7 @@ const infra = [
     description: 'Tie together your winning storefronts with automated pick, pack, and ship magic.',
     category: 'infra',
     family: 'automation',
+    placements: ['shopily'],
     cost: fulfillmentAutomationConfig.cost, // Spec: docs/normalized_economy.json → upgrades.fulfillmentAutomation.setup_cost
     requires: [
       { type: 'asset', id: 'dropshipping', count: 2, active: true },
@@ -91,6 +94,7 @@ const infra = [
     description: 'Deploy auto-scaling containers and CI pipelines so your SaaS survives launch day.',
     category: 'infra',
     family: 'cloud_compute',
+    placements: ['serverhub'],
     cost: serverClusterConfig.cost, // Spec: docs/normalized_economy.json → upgrades.serverCluster.setup_cost
     requires: serverClusterConfig.requires, // Spec: docs/normalized_economy.json → upgrades.serverCluster.requirements
     unlocks: 'SaaS deployments',
@@ -119,6 +123,7 @@ const infra = [
     description: 'Forge data-sharing deals with worldwide 3PL partners so inventory never sleeps.',
     category: 'infra',
     family: 'automation',
+    placements: ['shopily'],
     cost: globalSupplyMeshConfig.cost, // Spec: docs/normalized_economy.json → upgrades.globalSupplyMesh.setup_cost
     requires: [
       'fulfillmentAutomation',
@@ -164,6 +169,7 @@ const infra = [
     description: 'Distribute workloads across edge nodes for instant response times and uptime bragging rights.',
     category: 'infra',
     family: 'edge_network',
+    placements: ['serverhub'],
     cost: serverEdgeConfig.cost, // Spec: docs/normalized_economy.json → upgrades.serverEdge.setup_cost
     requires: serverEdgeConfig.requires, // Spec: docs/normalized_economy.json → upgrades.serverEdge.requirements
     boosts: 'SaaS payouts + stability progress surges',
@@ -197,6 +203,7 @@ const infra = [
     description: 'Partner with boutique studios to bundle your galleries with each storefront launch.',
     category: 'infra',
     family: 'commerce_network',
+    placements: ['shopily', 'digishelf'],
     cost: whiteLabelAllianceConfig.cost, // Spec: docs/normalized_economy.json → upgrades.whiteLabelAlliance.setup_cost
     requires: [
       'globalSupplyMesh',

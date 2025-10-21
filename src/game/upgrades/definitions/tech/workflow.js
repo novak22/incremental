@@ -13,6 +13,7 @@ const workflow = [
     description: 'Stand up pro-grade editorial calendars so every blog post ships polished and on schedule.',
     category: 'tech',
     family: 'workflow',
+    placements: ['general', 'blogpress'],
     cost: editorialPipelineConfig.cost, // Spec: docs/normalized_economy.json → upgrades.editorialPipeline.setup_cost
     requires: [
       'course',
@@ -67,6 +68,7 @@ const workflow = [
     description: 'Spin up partner feeds, guest slots, and cross-promotions to syndicate your best work everywhere.',
     category: 'tech',
     family: 'workflow',
+    placements: ['general', 'blogpress', 'digishelf', 'videotube'],
     cost: syndicationSuiteConfig.cost, // Spec: docs/normalized_economy.json → upgrades.syndicationSuite.setup_cost
     requires: [
       'editorialPipeline',
@@ -132,6 +134,7 @@ const workflow = [
     description: 'Blend blogs, books, and vlogs into one living universe with AR teasers and fan quests.',
     category: 'tech',
     family: 'workflow',
+    placements: ['general', 'blogpress', 'digishelf', 'videotube'],
     cost: immersiveStoryWorldsConfig.cost, // Spec: docs/normalized_economy.json → upgrades.immersiveStoryWorlds.setup_cost
     requires: [
       'syndicationSuite',
@@ -202,6 +205,7 @@ const workflow = [
     description: 'Unlocks smarter blogging tools, boosting blog income by +50%.',
     category: 'tech',
     family: 'workflow',
+    placements: ['general', 'blogpress'],
     cost: courseConfig.cost, // Spec: docs/normalized_economy.json → upgrades.course.setup_cost
     requires: [
       {

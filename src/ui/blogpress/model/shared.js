@@ -19,6 +19,7 @@ import {
   buildActionSnapshot
 } from '../../cards/model/sharedQuality.js';
 import { getAssetEvents, getNicheEvents } from '../../../game/events/index.js';
+import { filterUpgradeDefinitions } from '../../cards/model/upgrades.js';
 
 const DEFAULT_MILESTONE_COPY = {
   maxedSummary: 'Maxed out — future milestones queued for future builds.',
@@ -340,22 +341,13 @@ export function formatBlogpressModel({ definition, state = getState() } = {}) {
 }
 
 function extractRelevantUpgrades(upgrades = []) {
-  return ensureArray(upgrades)
-    .filter(upgrade => {
-      const affects = upgrade?.affects?.assets;
-      if (!affects) return false;
-      const ids = ensureArray(affects.ids);
-      if (ids.includes('blog')) return true;
-      const tags = ensureArray(affects.tags);
-      return tags.includes('writing') || tags.includes('content');
-    })
-    .map(upgrade => ({
-      id: upgrade.id,
-      name: upgrade.name,
-      cost: Math.max(0, clampNumber(upgrade.cost)),
-      description: upgrade.boosts || upgrade.description || '',
-      type: upgrade.tag?.label || 'Upgrade'
-    }));
+  return filterUpgradeDefinitions(upgrades, 'blogpress').map(upgrade => ({
+    id: upgrade.id,
+    name: upgrade.name,
+    cost: Math.max(0, clampNumber(upgrade.cost)),
+    description: upgrade.boosts || upgrade.description || '',
+    type: upgrade.tag?.label || 'Upgrade'
+  }));
 }
 
 export function buildBlogpressPricing(definition, upgrades = [], { nicheOptions = [] } = {}) {
