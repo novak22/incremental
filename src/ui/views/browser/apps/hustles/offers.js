@@ -23,7 +23,7 @@ function resolvePayout(offer = {}, model = {}) {
 
 export function createOfferItem(offer = {}, { upcoming = false, onAccept, model } = {}) {
   const item = document.createElement('li');
-  item.className = 'browser-card__list-item hustle-card__offer';
+  item.className = 'browser-card__list-item hustle-card__offer downwork-marketplace__offer';
 
   if (!offer.ready || upcoming) {
     item.classList.add('is-upcoming');
@@ -118,7 +118,7 @@ export function createOfferItem(offer = {}, { upcoming = false, onAccept, model 
 export function createOfferList(offers = [], options = {}) {
   const { upcoming = false } = options;
   const list = document.createElement('ul');
-  list.className = 'browser-card__list';
+  list.className = 'browser-card__list downwork-marketplace__offer-list';
 
   offers.filter(Boolean).forEach(offer => {
     const item = createOfferItem(offer, options);

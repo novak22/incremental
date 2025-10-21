@@ -140,14 +140,25 @@ test('renderHustles highlights accept CTA and upcoming list', () => {
 
     const header = document.querySelector('[data-role="downwork-header"]');
     assert.ok(header, 'expected unified hustle header to render');
+    assert.ok(
+      header?.classList.contains('downwork-marketplace__header'),
+      'expected header to use marketplace styling class'
+    );
 
     const marketplace = document.querySelector('.downwork-board__marketplace');
     assert.ok(marketplace, 'expected flattened marketplace list to render');
+    assert.ok(
+      marketplace?.classList.contains('downwork-marketplace__list'),
+      'expected marketplace grid helper class'
+    );
     assert.equal(
       document.querySelectorAll('.downwork-tab').length,
       0,
       'expected category tabs to be removed'
     );
+
+    const filterShell = document.querySelector('.downwork-marketplace__filters');
+    assert.ok(filterShell, 'expected filter grid wrapper');
 
     const filters = document.querySelectorAll('button[data-filter-id]');
     assert.equal(filters.length, 4, 'expected quick filter pills');
@@ -161,6 +172,13 @@ test('renderHustles highlights accept CTA and upcoming list', () => {
     const button = document.querySelector('.browser-card__actions .browser-card__button--primary');
     assert.ok(button, 'expected primary accept CTA');
     assert.equal(button.textContent, 'Accept Ready Offer');
+
+    const offerList = document.querySelector('.downwork-marketplace__offer-list');
+    assert.ok(offerList, 'expected offer list to use marketplace helper class');
+    assert.ok(
+      document.querySelector('.downwork-marketplace__offer'),
+      'expected marketplace list items to carry helper class'
+    );
 
     const readyOfferButton = document.querySelector('.hustle-card__offer .browser-card__button');
     assert.ok(readyOfferButton, 'expected ready offer button to render');

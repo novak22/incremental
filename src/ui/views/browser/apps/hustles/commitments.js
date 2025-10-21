@@ -30,7 +30,7 @@ export function describeCommitmentMeta(commitment = {}) {
 
 export function createCommitmentItem(commitment = {}) {
   const item = document.createElement('li');
-  item.className = 'browser-card__list-item hustle-card__commitment';
+  item.className = 'browser-card__list-item hustle-card__commitment downwork-marketplace__offer';
 
   const progress = commitment.progress || commitment;
   applyDeadlineTone(item, progress);
@@ -77,7 +77,7 @@ export function createCommitmentItem(commitment = {}) {
 
 export function createCommitmentList(commitments = []) {
   const list = document.createElement('ul');
-  list.className = 'browser-card__list';
+  list.className = 'browser-card__list downwork-marketplace__offer-list';
 
   commitments.filter(Boolean).forEach(commitment => {
     const item = createCommitmentItem(commitment);

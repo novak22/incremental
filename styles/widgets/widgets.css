@@ -211,6 +211,14 @@
   flex-direction: column;
   gap: 1.35rem;
   position: relative;
+  min-width: 0;
+}
+
+.downwork-marketplace {
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+  position: relative;
 }
 
 .downwork-board__summary {
@@ -270,41 +278,29 @@
   color: var(--browser-danger);
 }
 
-.downwork-board__tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.65rem;
-}
 
-.downwork-tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.55rem 0.9rem;
-  border-radius: var(--browser-radius-pill);
+.downwork-marketplace__header {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.1rem 1.35rem;
+  border-radius: var(--browser-radius-lg);
   border: 1px solid var(--browser-panel-border);
   background: var(--browser-panel);
-  color: var(--browser-muted);
-  font: inherit;
-  cursor: pointer;
-  transition: background 140ms ease, border-color 140ms ease, color 140ms ease, box-shadow 140ms ease;
+  box-shadow: var(--browser-shadow-soft);
 }
 
-.downwork-tab:hover {
-  color: var(--browser-text);
-  border-color: rgba(37, 99, 235, 0.25);
+.downwork-marketplace__header > * {
+  margin: 0;
 }
 
-.downwork-tab.is-active {
-  color: var(--browser-text);
-  border-color: var(--browser-accent);
-  background: rgba(37, 99, 235, 0.12);
-  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.24);
-}
-
-.downwork-tab__icon {
-  font-size: 1.3rem;
-  line-height: 1;
+@media (min-width: 960px) {
+  .downwork-marketplace__header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+  }
 }
 
 .downwork-board__filters {
@@ -325,16 +321,51 @@
   gap: 0.9rem;
 }
 
+.downwork-marketplace__filters {
+  display: grid;
+  gap: 1rem;
+  width: 100%;
+}
+
+@media (min-width: 720px) {
+  .downwork-marketplace__filters {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+
+  .downwork-marketplace__filter-row {
+    grid-template-columns: 160px minmax(0, 1fr);
+  }
+}
+
 .downwork-board__marketplace {
   display: grid;
   gap: 1.25rem;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
 
+.downwork-marketplace__list {
+  display: grid;
+  gap: 1.4rem;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  align-items: stretch;
+}
+
+@media (max-width: 1160px) {
+  .downwork-marketplace__list {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .downwork-marketplace__list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .downwork-filter-row {
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
+  gap: 0.4rem;
 }
 
 .downwork-filter-row__label {
@@ -353,33 +384,35 @@
 .downwork-filter {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
-  padding: 0.35rem 0.75rem;
+  gap: 0.35rem;
+  padding: 0.42rem 0.85rem;
   border-radius: var(--browser-radius-pill);
-  border: 1px solid var(--browser-panel-border);
+  border: 1px solid rgba(148, 163, 184, 0.28);
   background: var(--browser-panel);
-  color: var(--browser-subtle);
+  color: var(--browser-muted);
   font-size: 0.85rem;
+  font-weight: 500;
+  line-height: 1.2;
   cursor: pointer;
-  transition: background 140ms ease, border-color 140ms ease, color 140ms ease, box-shadow 140ms ease;
+  transition: color 140ms ease, border-color 140ms ease, background-color 140ms ease, box-shadow 140ms ease;
 }
 
 .downwork-filter:hover {
   color: var(--browser-text);
-  border-color: rgba(37, 99, 235, 0.2);
+  border-color: rgba(37, 99, 235, 0.32);
+  background: var(--browser-panel-elevated);
 }
 
 .downwork-filter.is-active {
   color: var(--browser-text);
   border-color: var(--browser-accent);
-  background: rgba(37, 99, 235, 0.12);
-  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.18);
+  background: rgba(37, 99, 235, 0.15);
+  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.22);
 }
 
-.downwork-filter--tag,
-.downwork-filter--category {
+.downwork-filter--tag {
   background: rgba(37, 99, 235, 0.08);
-  border-color: rgba(37, 99, 235, 0.16);
+  border-color: rgba(37, 99, 235, 0.2);
   color: var(--browser-text);
 }
 
@@ -398,6 +431,42 @@
   color: var(--browser-subtle);
   font-size: 0.75rem;
   font-weight: 600;
+}
+
+.downwork-marketplace__filter {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.downwork-marketplace__filter--quick {
+  color: var(--browser-subtle);
+}
+
+.downwork-marketplace__filter--category {
+  background: rgba(37, 99, 235, 0.1);
+  border-color: rgba(37, 99, 235, 0.26);
+  color: var(--browser-text);
+}
+
+.downwork-marketplace__filter--category .downwork-filter__count {
+  background: var(--browser-panel);
+  color: var(--browser-accent);
+}
+
+.downwork-marketplace__filter-row {
+  display: grid;
+  gap: 0.4rem 0.75rem;
+  align-items: center;
+}
+
+.downwork-marketplace__filter-label {
+  margin: 0;
+}
+
+.downwork-marketplace__filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .downwork-hiring {
@@ -513,59 +582,77 @@
 
 .downwork-card {
   position: relative;
-  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
-  border-left: 4px solid transparent;
-  padding-left: 1.6rem;
+  gap: 1.05rem;
+  padding: 1.55rem 1.65rem 1.6rem 1.85rem;
+  border-left: 3px solid transparent;
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease, background-color 160ms ease;
 }
 
-.downwork-card:hover {
-  transform: translateY(-4px);
+@media (max-width: 640px) {
+  .downwork-card {
+    padding: 1.4rem 1.5rem 1.5rem 1.7rem;
+  }
+}
+
+.downwork-card:hover,
+.downwork-card:focus-within {
+  transform: translateY(-3px);
   box-shadow: var(--browser-shadow-soft);
-  border-color: rgba(37, 99, 235, 0.3);
+  border-color: rgba(37, 99, 235, 0.28);
   border-left-color: var(--browser-accent);
+  background: var(--browser-panel-elevated);
 }
 
 .downwork-card__header {
-  align-items: center;
-  gap: 0.75rem;
+  align-items: flex-start;
+  gap: 0.85rem;
 }
 
 .downwork-card__icon {
-  font-size: 1.5rem;
+  font-size: 1.6rem;
   line-height: 1;
 }
 
 .downwork-card__metrics {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  align-items: center;
-  margin-top: 0.15rem;
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  align-items: stretch;
+  margin-top: 0.1rem;
   cursor: help;
+}
+
+@media (max-width: 720px) {
+  .downwork-card__metrics {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  }
 }
 
 .downwork-card__metric {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
-  padding: 0.3rem 0.65rem;
+  gap: 0.35rem;
+  padding: 0.45rem 0.8rem;
   border-radius: var(--browser-radius-pill);
+  border: 1px solid rgba(148, 163, 184, 0.26);
   background: var(--browser-panel-elevated);
-  color: var(--browser-muted);
+  color: var(--browser-text);
   font-size: 0.85rem;
-  font-weight: 500;
+  font-weight: 600;
+  line-height: 1.2;
 }
 
 .downwork-card__metric--roi {
   color: var(--browser-accent);
-  background: rgba(37, 99, 235, 0.12);
+  border-color: transparent;
+  background: rgba(37, 99, 235, 0.16);
 }
 
 .downwork-card__tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.35rem;
-  margin: 0;
+  gap: 0.4rem;
+  margin: 0.25rem 0 0;
   padding: 0;
   list-style: none;
 }
@@ -573,8 +660,8 @@
 .downwork-card__tag {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.25rem 0.65rem;
+  gap: 0.3rem;
+  padding: 0.28rem 0.7rem;
   border-radius: var(--browser-radius-pill);
   background: rgba(37, 99, 235, 0.14);
   color: var(--browser-accent);
@@ -759,17 +846,6 @@
   list-style: none;
 }
 
-.downwork-card .browser-card__list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 0.85rem;
-  align-items: stretch;
-}
-
-.downwork-card .browser-card__list-item {
-  height: 100%;
-}
-
 .browser-card__list-item {
   display: flex;
   flex-direction: column;
@@ -779,6 +855,27 @@
   border: 1px solid var(--browser-panel-border);
   background: var(--browser-panel-elevated);
   transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.downwork-marketplace__offer-list {
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  align-items: stretch;
+}
+
+@media (max-width: 720px) {
+  .downwork-marketplace__offer-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.downwork-marketplace__offer {
+  height: 100%;
+}
+
+.downwork-marketplace__offer .browser-card__actions {
+  margin-top: auto;
 }
 
 .browser-card__list-item.is-warning {
