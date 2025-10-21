@@ -40,15 +40,28 @@ function buildVisitSnapshot({ definition, assetState, instance }) {
     return { visitsPerDay: 0, breakdown: null };
   }
   const breakdownEntries = Array.isArray(projection?.breakdown?.entries)
-    ? projection.breakdown.entries.map(entry => ({
-        ...entry,
-        views: Number.isFinite(Number(entry?.visits))
-          ? Math.max(0, Math.round(Number(entry.visits)))
-          : Math.max(0, Math.round(Number(entry?.amount) || 0))
-      }))
+    ? projection.breakdown.entries.map(entry => {
+        const visits = Math.max(
+          0,
+          Math.round(
+            Number.isFinite(Number(entry?.visits))
+              ? Number(entry.visits)
+              : Number(entry?.amount) || 0
+          )
+        );
+        return {
+          ...entry,
+          amount: visits,
+          visits,
+          views: visits
+        };
+      })
     : [];
 
-  const breakdownTotal = Number(projection?.breakdown?.total) || visitsPerDay;
+  const breakdownTotalSource = Number.isFinite(Number(projection?.breakdown?.total))
+    ? Number(projection.breakdown.total)
+    : breakdownEntries.reduce((sum, entry) => sum + (Number(entry?.views) || 0), 0);
+  const breakdownTotal = Math.max(0, Math.round(breakdownTotalSource || 0));
   return {
     visitsPerDay,
     breakdown:
