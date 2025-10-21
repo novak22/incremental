@@ -588,70 +588,126 @@
 
 .downwork-card {
   position: relative;
-  gap: 1.05rem;
-  padding: 1.55rem 1.65rem 1.6rem 1.85rem;
+  gap: 1.15rem;
+  padding: 1.6rem 1.7rem 1.7rem 1.85rem;
   border-left: 3px solid transparent;
   transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease, background-color 160ms ease;
 }
 
 @media (max-width: 640px) {
   .downwork-card {
-    padding: 1.4rem 1.5rem 1.5rem 1.7rem;
+    padding: 1.45rem 1.55rem 1.6rem 1.7rem;
   }
 }
 
 .downwork-card:hover,
 .downwork-card:focus-within {
-  transform: translateY(-3px);
+  transform: translateY(-2px);
   box-shadow: var(--browser-shadow-soft);
-  border-color: rgba(37, 99, 235, 0.28);
+  border-color: rgba(37, 99, 235, 0.2);
   border-left-color: var(--browser-accent);
   background: var(--browser-panel-elevated);
 }
 
 .downwork-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.downwork-card__heading {
+  display: flex;
   align-items: flex-start;
   gap: 0.85rem;
+  min-width: 0;
 }
 
 .downwork-card__icon {
-  font-size: 1.6rem;
+  flex-shrink: 0;
+  font-size: 1.4rem;
   line-height: 1;
 }
 
-.downwork-card__metrics {
-  display: grid;
-  gap: 0.6rem;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  align-items: stretch;
-  margin-top: 0.1rem;
-  cursor: help;
+.downwork-card__title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
 }
 
-@media (max-width: 720px) {
-  .downwork-card__metrics {
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  }
-}
-
-.downwork-card__metric {
+.downwork-card__category {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.45rem 0.8rem;
+  align-self: flex-start;
+  padding: 0.25rem 0.6rem;
   border-radius: var(--browser-radius-pill);
-  border: 1px solid rgba(148, 163, 184, 0.26);
-  background: var(--browser-panel-elevated);
-  color: var(--browser-text);
-  font-size: 0.85rem;
+  background: rgba(37, 99, 235, 0.08);
+  color: var(--browser-accent);
+  font-size: 0.72rem;
   font-weight: 600;
-  line-height: 1.2;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
-.downwork-card__metric--roi {
-  color: var(--browser-accent);
-  border-color: transparent;
-  background: rgba(37, 99, 235, 0.16);
+.downwork-card__title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--browser-text);
+}
+
+.downwork-card__reward {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  align-items: flex-end;
+  min-width: 0;
+}
+
+.downwork-card__payout-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--browser-subtle);
+}
+
+.downwork-card__payout-value {
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--browser-text);
+}
+
+.downwork-card__meta-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.downwork-card__meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--browser-radius-pill);
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  background: var(--browser-panel-elevated);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--browser-text);
+}
+
+.downwork-card__meta-icon {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.downwork-card__meta-text {
+  white-space: nowrap;
 }
 
 .downwork-card__tags {

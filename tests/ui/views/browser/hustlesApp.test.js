@@ -245,7 +245,16 @@ test('renderHustles renders unified offer feed with metrics, CTA wiring, and fil
     assert.equal(primaryCard.dataset.time, '2');
     assert.equal(primaryCard.dataset.payout, '50');
     assert.equal(primaryCard.dataset.roi, '25');
-    assert.ok(primaryCard.querySelector('.downwork-card__metrics').textContent.includes('📈 ROI $25 / h'));
+    const categoryTag = primaryCard.querySelector('.downwork-card__category');
+    assert.ok(categoryTag, 'expected category pill in header');
+    assert.equal(categoryTag.textContent, 'Freelance Grind');
+    const payoutValue = primaryCard.querySelector('.downwork-card__payout-value');
+    assert.ok(payoutValue, 'expected payout value in header');
+    assert.equal(payoutValue.textContent, '$50');
+    const metaLine = primaryCard.querySelector('.downwork-card__meta-line');
+    assert.ok(metaLine, 'expected metadata row');
+    assert.ok(metaLine.textContent.includes('ROI $25 / h'));
+    assert.ok(metaLine.textContent.includes('2h focus'));
     const primarySummary = primaryCard.querySelector('.browser-card__summary');
     assert.ok(primarySummary, 'expected primary card to include summary copy');
     assert.equal(primarySummary.textContent, 'Lock this contract now.');

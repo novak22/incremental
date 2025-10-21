@@ -1,4 +1,4 @@
-import { formatHours, formatMoney } from '../../../../../core/helpers.js';
+import { formatDays, formatHours, formatMoney } from '../../../../../core/helpers.js';
 import { getState } from '../../../../../core/state.js';
 import { getPageByType } from '../pageLookup.js';
 import { formatRoi } from '../../components/widgets.js';
@@ -297,6 +297,63 @@ function resolveTagEntries(model = {}, definition = {}) {
   });
 
   return Array.from(unique.entries()).map(([id, label]) => ({ id, label }));
+}
+
+function formatDayCount(days) {
+  const numeric = Number(days);
+  if (!Number.isFinite(numeric) || numeric <= 0) {
+    return '';
+  }
+  return formatDays(numeric);
+}
+
+function formatDailyHours(hours) {
+  const numeric = Number(hours);
+  if (!Number.isFinite(numeric) || numeric <= 0) {
+    return '';
+  }
+  return `${formatHours(numeric)}/day`;
+}
+
+function formatCompletionLabel(value) {
+  if (!value) return '';
+  const normalized = String(value).trim();
+  if (!normalized) return '';
+  return `${normalized.charAt(0).toUpperCase()}${normalized.slice(1)} completion`;
+}
+
+function formatExpiryLabel(days) {
+  const numeric = Number(days);
+  if (!Number.isFinite(numeric) || numeric < 0) {
+    return '';
+  }
+  if (numeric === 0) {
+    return 'Expires today';
+  }
+  if (numeric === 1) {
+    return 'Expires in 1 day';
+  }
+  return `Expires in ${Math.round(numeric)} days`;
+}
+
+function appendMetaItem(list, { icon, label }) {
+  if (!list || !label) return;
+  const item = document.createElement('li');
+  item.className = 'downwork-card__meta-item';
+
+  if (icon) {
+    const iconEl = document.createElement('span');
+    iconEl.className = 'downwork-card__meta-icon';
+    iconEl.textContent = icon;
+    item.appendChild(iconEl);
+  }
+
+  const text = document.createElement('span');
+  text.className = 'downwork-card__meta-text';
+  text.textContent = label;
+  item.appendChild(text);
+
+  list.appendChild(item);
 }
 
 function buildOfferEntries(definitions = [], models = [], { onOfferAccept } = {}) {
@@ -1178,61 +1235,113 @@ export function createOfferCard(entry = {}) {
     expiryCandidates.push(Number(offer.expiresIn));
   }
 
+  const categoryLabel = categoryConfig?.label || DEFAULT_CATEGORY_CONFIG.label;
+
   const header = document.createElement('header');
   header.className = 'browser-card__header downwork-card__header';
+
+  const heading = document.createElement('div');
+  heading.className = 'downwork-card__heading';
 
   const icon = document.createElement('span');
   icon.className = 'downwork-card__icon';
   icon.textContent = descriptorBundle.icon || categoryConfig.icon || '💼';
-  header.appendChild(icon);
+  heading.appendChild(icon);
+
+  const titleGroup = document.createElement('div');
+  titleGroup.className = 'downwork-card__title-group';
+
+  const categoryTag = document.createElement('span');
+  categoryTag.className = 'downwork-card__category';
+  categoryTag.textContent = categoryLabel;
+  titleGroup.appendChild(categoryTag);
 
   const title = document.createElement('h2');
-  title.className = 'browser-card__title';
+  title.className = 'browser-card__title downwork-card__title';
   title.textContent = hustleLabel;
-  header.appendChild(title);
+  titleGroup.appendChild(title);
 
+  heading.appendChild(titleGroup);
+  header.appendChild(heading);
+
+  const reward = document.createElement('div');
+  reward.className = 'downwork-card__reward';
+
+  const payoutLabelEl = document.createElement('span');
+  payoutLabelEl.className = 'downwork-card__payout-label';
+  payoutLabelEl.textContent = 'Payout';
+  reward.appendChild(payoutLabelEl);
+
+  const payoutDisplay = safePayout > 0
+    ? `$${formatMoney(safePayout)}`
+    : model.metrics?.payout?.label || 'Varies';
+  const payoutValueEl = document.createElement('span');
+  payoutValueEl.className = 'downwork-card__payout-value';
+  payoutValueEl.textContent = payoutDisplay;
+  reward.appendChild(payoutValueEl);
+
+  header.appendChild(reward);
   card.appendChild(header);
 
-  const metricsRow = document.createElement('div');
-  metricsRow.className = 'downwork-card__metrics';
+  const progressDescriptor = typeof descriptorBundle.progress === 'object' && descriptorBundle.progress !== null
+    ? descriptorBundle.progress
+    : {};
+  const timeDescriptor = typeof descriptorBundle.time === 'object' && descriptorBundle.time !== null
+    ? descriptorBundle.time
+    : {};
 
-  const timeChip = document.createElement('span');
-  timeChip.className = 'downwork-card__metric';
-  const timeLabel = model.metrics?.time?.label || formatHours(Math.max(0, safeTime));
-  timeChip.textContent = `⏱️ ${timeLabel}`;
-  metricsRow.appendChild(timeChip);
+  const timeLabel = model.metrics?.time?.label || (safeTime > 0 ? `${formatHours(Math.max(0, safeTime))} focus` : '');
+  const dailyHoursLabel = formatDailyHours(progressDescriptor.hoursPerDay ?? timeDescriptor.hoursPerDay);
+  const durationLabel = formatDayCount(progressDescriptor.daysRequired ?? timeDescriptor.daysRequired);
+  const completionMode = progressDescriptor.completionMode || progressDescriptor.completion;
+  const completionLabel = formatCompletionLabel(completionMode);
 
-  const payoutLabel = model.metrics?.payout?.label
-    || (safePayout > 0 ? `$${formatMoney(safePayout)}` : 'Varies');
-  const payoutChip = document.createElement('span');
-  payoutChip.className = 'downwork-card__metric';
-  payoutChip.textContent = `💵 ${payoutLabel}`;
-  metricsRow.appendChild(payoutChip);
-
+  const metaItems = [];
+  if (timeLabel) {
+    metaItems.push({ icon: '⏱', label: timeLabel });
+  }
   if (safeRoi > 0) {
-    const roiChip = document.createElement('span');
-    roiChip.className = 'downwork-card__metric downwork-card__metric--roi';
-    roiChip.textContent = `📈 ROI ${formatRoi(safeRoi)}`;
-    metricsRow.appendChild(roiChip);
-    if (safePayout > 0 && safeTime > 0) {
-      const tooltip = `ROI ${formatRoi(safeRoi)} • $${formatMoney(safePayout)} ÷ ${formatHours(Math.max(0, safeTime))}`;
-      metricsRow.title = tooltip;
-      card.title = tooltip;
-    }
+    metaItems.push({ icon: '📈', label: `ROI ${formatRoi(safeRoi)}` });
+  }
+  if (dailyHoursLabel) {
+    metaItems.push({ icon: '🕘', label: `Daily ${dailyHoursLabel}` });
+  }
+  if (durationLabel) {
+    metaItems.push({ icon: '🗓', label: `Duration ${durationLabel}` });
+  }
+  if (completionLabel) {
+    metaItems.push({ icon: '✅', label: completionLabel });
   }
 
-  card.appendChild(metricsRow);
+  let expiryLabel = '';
 
   const shouldShowDetails = isPrimary || status === 'placeholder';
 
+  const metaLine = document.createElement('ul');
+  metaLine.className = 'downwork-card__meta-line';
+
+  const metaLabels = [];
+  metaItems.forEach(item => {
+    appendMetaItem(metaLine, item);
+    metaLabels.push(item.label);
+  });
+
+  const appendMetaLine = () => {
+    if (!metaLine.childElementCount || metaLine.isConnected) return;
+    card.appendChild(metaLine);
+  };
+
+  const badges = Array.isArray(model.badges) ? model.badges : [];
   if (shouldShowDetails && model.description) {
     const summary = document.createElement('p');
     summary.className = 'browser-card__summary';
     summary.textContent = model.description;
     card.appendChild(summary);
+    appendMetaLine();
+  } else {
+    appendMetaLine();
   }
 
-  const badges = Array.isArray(model.badges) ? model.badges : [];
   if (shouldShowDetails && badges.length > 0) {
     const list = document.createElement('ul');
     list.className = 'browser-card__badges';
@@ -1244,6 +1353,10 @@ export function createOfferCard(entry = {}) {
       list.appendChild(item);
     });
     card.appendChild(list);
+  }
+
+  if (!metaLine.isConnected) {
+    appendMetaLine();
   }
 
   const tagEntries = resolveTagEntries(model, definition);
@@ -1357,7 +1470,26 @@ export function createOfferCard(entry = {}) {
   });
 
   if (expiryCandidates.length) {
-    card.dataset.expiresIn = String(Math.min(...expiryCandidates));
+    const earliestExpiry = Math.min(...expiryCandidates);
+    card.dataset.expiresIn = String(earliestExpiry);
+    expiryLabel = formatExpiryLabel(earliestExpiry);
+  }
+
+  if (expiryLabel) {
+    appendMetaItem(metaLine, { icon: '⌛', label: expiryLabel });
+    metaLabels.push(expiryLabel);
+  }
+
+  if (metaLabels.length) {
+    const tooltipParts = [];
+    if (safePayout > 0) {
+      tooltipParts.push(`$${formatMoney(safePayout)} payout`);
+    }
+    if (safeTime > 0) {
+      tooltipParts.push(`${formatHours(Math.max(0, safeTime))} focus`);
+    }
+    tooltipParts.push(...metaLabels);
+    card.title = tooltipParts.join(' • ');
   }
 
   return card;
