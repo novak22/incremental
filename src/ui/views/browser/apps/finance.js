@@ -1,4 +1,3 @@
-import { formatHours, formatMoney } from '../../../../core/helpers.js';
 import { getPageByType } from './pageLookup.js';
 import renderFinanceHeader from './finance/header.js';
 import renderFinanceLedger, { createBankSection } from './finance/ledger.js';
@@ -174,126 +173,6 @@ function renderFinancePerformance(entries = []) {
   return section;
 }
 
-function renderFinanceOpportunities(model = {}) {
-  const { section, body } = createBankSection(
-    'Investments & Liabilities',
-    'Snapshot of queued assets, upgrades, and hustles.'
-  );
-
-  const assetEntries = Array.isArray(model.assets) ? model.assets.slice(0, 4) : [];
-  const upgradeEntries = Array.isArray(model.upgrades) ? model.upgrades.slice(0, 4) : [];
-  const hustleEntries = Array.isArray(model.hustles) ? model.hustles.slice(0, 4) : [];
-
-  const matrix = document.createElement('div');
-  matrix.className = 'bankapp-matrix';
-
-  function createListItem(primary, value, note) {
-    const item = document.createElement('li');
-    item.className = 'bankapp-matrix__item';
-
-    const label = document.createElement('span');
-    label.className = 'bankapp-matrix__label';
-    label.textContent = primary;
-
-    const amount = document.createElement('span');
-    amount.className = 'bankapp-matrix__value';
-    amount.textContent = value;
-
-    item.append(label, amount);
-
-    if (note) {
-      const noteNode = document.createElement('span');
-      noteNode.className = 'bankapp-matrix__note';
-      noteNode.textContent = note;
-      item.appendChild(noteNode);
-    }
-
-    return item;
-  }
-
-  function renderColumn(title, entries, builder) {
-    const column = document.createElement('section');
-    column.className = 'bankapp-matrix__column';
-
-    const heading = document.createElement('h3');
-    heading.textContent = title;
-    column.appendChild(heading);
-
-    const list = document.createElement('ul');
-    list.className = 'bankapp-matrix__list';
-
-    if (!entries.length) {
-      const empty = document.createElement('li');
-      empty.className = 'bankapp-matrix__item bankapp-matrix__item--empty';
-      empty.textContent = 'Nothing queued yet.';
-      list.appendChild(empty);
-    } else {
-      entries.forEach(entry => {
-        const { primary, value, note } = builder(entry);
-        list.appendChild(createListItem(primary, value, note));
-      });
-    }
-
-    column.appendChild(list);
-    matrix.appendChild(column);
-  }
-
-  renderColumn('Assets', assetEntries, entry => {
-    const setup = entry.setup
-      ? `${entry.setup.days || 0}d · ${formatHours(entry.setup.hoursPerDay || 0)}/day`
-      : null;
-    const payout = entry.payoutRange
-      ? `Est. $${formatMoney(entry.payoutRange.min || 0)}–$${formatMoney(entry.payoutRange.max || 0)}/day`
-      : null;
-    const readiness = entry.ready ? 'Ready to launch' : 'Prereqs pending';
-    const noteParts = [readiness, payout, setup].filter(Boolean).slice(0, 2);
-    return {
-      primary: entry.name || 'Asset',
-      value: formatCurrency(entry.cost || 0),
-      note: noteParts.join(' · ')
-    };
-  });
-
-  renderColumn('Upgrades', upgradeEntries, entry => {
-    let status = 'Requirements pending';
-    if (entry.purchased) {
-      status = 'Owned';
-    } else if (entry.ready) {
-      status = 'Affordable now';
-    } else if (!entry.affordable) {
-      status = 'Save to unlock';
-    }
-    return {
-      primary: entry.name || 'Upgrade',
-      value: formatCurrency(entry.cost || 0),
-      note: status
-    };
-  });
-
-  renderColumn('Hustles', hustleEntries, entry => {
-    const payout = Number(entry.payout) || 0;
-    const time = Number(entry.time) || 0;
-    const hourly = time > 0 ? `${formatMoney(Math.round((payout / time) * 100) / 100)} $/h` : '';
-    const status = entry.status === 'available'
-      ? 'Available now'
-      : entry.status === 'upcoming'
-        ? (entry.availableInDays === 0
-          ? 'Unlocks today'
-          : `Opens in ${entry.availableInDays}d`)
-        : (entry.type === 'commitment' ? 'Active commitment' : entry.status || 'Queued');
-    const noteParts = [status, hourly].filter(Boolean);
-    return {
-      primary: entry.name || 'Hustle',
-      value: formatCurrency(payout),
-      note: noteParts.join(' · ')
-    };
-  });
-
-  body.appendChild(matrix);
-  return section;
-}
-
-
 export default function renderFinance(context = {}, registries = {}, models = {}) {
   const page = getPageByType('finance');
   if (!page) return null;
@@ -326,7 +205,6 @@ export default function renderFinance(context = {}, registries = {}, models = {}
   container.appendChild(renderFinanceLedger(model.ledger || {}));
   container.appendChild(renderFinanceObligations(model.obligations || {}, model.pendingIncome || []));
   container.appendChild(renderFinancePerformance(model.assetPerformance || []));
-  container.appendChild(renderFinanceOpportunities(model.opportunities || {}));
   container.appendChild(renderFinanceEducation(model.education || []));
   container.appendChild(renderFinanceHistory(model.history || []));
   container.appendChild(renderFinanceActivity(model.activity || []));

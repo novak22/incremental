@@ -1,7 +1,7 @@
 import { getAssetState, getState } from '../../../../core/state.js';
 import { formatMoney } from '../../../../core/helpers.js';
 import { computeDailySummary } from '../../../../game/summary.js';
-import { getAssets, getHustles, getUpgrades } from '../../../../game/registryService.js';
+import { getAssets } from '../../../../game/registryService.js';
 import { calculateAssetSalePrice } from '../../../../game/assets/actions.js';
 import { instanceLabel } from '../../../../game/assets/details.js';
 import { getKnowledgeProgress } from '../../../../game/requirements.js';
@@ -9,12 +9,6 @@ import { buildSkillRewards, resolveTrack } from '../education.js';
 import { buildPulseSummary, computeTopEarner } from './pulse.js';
 import { buildInflowLedger, buildOutflowLedger } from './ledger.js';
 import { buildObligations } from './obligations.js';
-import {
-  buildAssetOpportunities,
-  buildUpgradeOpportunities,
-  buildHustleOpportunities,
-  buildOpportunitySummary
-} from './opportunities.js';
 import { ensureArray, toCurrency } from './utils.js';
 
 function buildPendingIncome(assetDefinitions = [], state, services = {}) {
@@ -208,17 +202,11 @@ function buildFinanceModel(registries = {}, helpers = {}, injected = {}) {
     getState: getStateFn = getState,
     computeDailySummary: computeDailySummaryFn = computeDailySummary,
     getAssets: getAssetsFn = getAssets,
-    getUpgrades: getUpgradesFn = getUpgrades,
-    getHustles: getHustlesFn = getHustles,
     buildPulseSummary: buildPulseSummaryFn = buildPulseSummary,
     computeTopEarner: computeTopEarnerFn = computeTopEarner,
     buildInflowLedger: buildInflowLedgerFn = buildInflowLedger,
     buildOutflowLedger: buildOutflowLedgerFn = buildOutflowLedger,
     buildObligations: buildObligationsFn = buildObligations,
-    buildAssetOpportunities: buildAssetOpportunitiesFn = buildAssetOpportunities,
-    buildUpgradeOpportunities: buildUpgradeOpportunitiesFn = buildUpgradeOpportunities,
-    buildHustleOpportunities: buildHustleOpportunitiesFn = buildHustleOpportunities,
-    buildOpportunitySummary: buildOpportunitySummaryFn = buildOpportunitySummary,
     buildPendingIncome: buildPendingIncomeFn = buildPendingIncome,
     buildAssetPerformance: buildAssetPerformanceFn = buildAssetPerformance,
     buildEducationInvestments: buildEducationInvestmentsFn = buildEducationInvestmentsForBank,
@@ -235,7 +223,6 @@ function buildFinanceModel(registries = {}, helpers = {}, injected = {}) {
       obligations: { entries: [], quick: null },
       pendingIncome: [],
       assetPerformance: [],
-      opportunities: buildOpportunitySummaryFn([], [], []),
       education: [],
       summary: null,
       history: [],
@@ -245,8 +232,6 @@ function buildFinanceModel(registries = {}, helpers = {}, injected = {}) {
 
   const summary = computeDailySummaryFn(state);
   const assetDefinitions = Array.isArray(registries?.assets) ? registries.assets : getAssetsFn();
-  const upgradeDefinitions = Array.isArray(registries?.upgrades) ? registries.upgrades : getUpgradesFn();
-  const hustleDefinitions = Array.isArray(registries?.hustles) ? registries.hustles : getHustlesFn();
   const educationDefinitions = Array.isArray(registries?.education) ? registries.education : [];
 
   const inflows = buildInflowLedgerFn(summary);
@@ -254,11 +239,6 @@ function buildFinanceModel(registries = {}, helpers = {}, injected = {}) {
   const obligations = buildObligationsFn(state, assetDefinitions, educationDefinitions, helpers);
   const pendingIncome = buildPendingIncomeFn(assetDefinitions, state, helpers);
   const assetPerformance = buildAssetPerformanceFn(assetDefinitions, state, helpers);
-  const opportunities = buildOpportunitySummaryFn(
-    buildAssetOpportunitiesFn(assetDefinitions, state, helpers),
-    buildUpgradeOpportunitiesFn(upgradeDefinitions, state, helpers),
-    buildHustleOpportunitiesFn(hustleDefinitions, state, helpers)
-  );
   const educationInvestments = buildEducationInvestmentsFn(educationDefinitions, state, helpers);
   const pulse = buildPulseSummaryFn(summary);
   const topEarner = computeTopEarnerFn(summary);
@@ -290,7 +270,6 @@ function buildFinanceModel(registries = {}, helpers = {}, injected = {}) {
     obligations,
     pendingIncome,
     assetPerformance,
-    opportunities,
     education: educationInvestments,
     summary: { meta },
     history: buildCashHistoryFn(state),
