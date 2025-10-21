@@ -601,19 +601,28 @@ function buildOfferEntries(definitions = [], models = [], { onOfferAccept } = {}
   };
 }
 
-function createFilterRow(labelText = '') {
+function createFilterRow(labelText = '', { inline = false } = {}) {
   const row = document.createElement('div');
   row.className = 'downwork-filter-row downwork-marketplace__filter-row';
+  if (inline) {
+    row.classList.add('downwork-filter-row--inline');
+  }
 
   if (labelText) {
     const label = document.createElement('span');
     label.className = 'downwork-filter-row__label downwork-marketplace__filter-label';
     label.textContent = labelText;
+    if (inline) {
+      label.classList.add('downwork-filter-row__label--inline');
+    }
     row.appendChild(label);
   }
 
   const chips = document.createElement('div');
   chips.className = 'downwork-filter-row__chips downwork-marketplace__filter-chips';
+  if (inline) {
+    chips.classList.add('downwork-filter-row__chips--inline');
+  }
   row.appendChild(chips);
 
   return { row, chips };
@@ -636,6 +645,7 @@ function getBoardState(board) {
         shortTask: 0,
         expiringSoon: Infinity
       },
+      moreFiltersOpen: false,
       toastTimeout: null
     });
   }
@@ -1650,10 +1660,15 @@ export default function renderHustles(context = {}, definitions = [], models = [
 
   persistFilterState();
 
+  const filterToolbar = document.createElement('div');
+  filterToolbar.className = 'downwork-filter-toolbar';
+  filtersContainer.appendChild(filterToolbar);
+
   const filterButtons = new Map();
   if (QUICK_FILTERS.length) {
-    const { row, chips } = createFilterRow('Quick filters');
-    filtersContainer.appendChild(row);
+    const { row, chips } = createFilterRow('Quick filters', { inline: true });
+    row.classList.add('downwork-filter-toolbar__group', 'downwork-filter-toolbar__group--quick');
+    filterToolbar.appendChild(row);
     QUICK_FILTERS.forEach(filter => {
       const button = document.createElement('button');
       button.type = 'button';
@@ -1691,9 +1706,53 @@ export default function renderHustles(context = {}, definitions = [], models = [
       return a.label.localeCompare(b.label);
     });
 
+  let moreFilters = {
+    toggle: null,
+    panel: null,
+    meta: null,
+    open: Boolean(boardState.moreFiltersOpen)
+  };
+
   if (categoryFilterEntries.length) {
-    const { row, chips } = createFilterRow('Hustle types');
-    filtersContainer.appendChild(row);
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'downwork-filter-more__toggle';
+    toggle.setAttribute('aria-expanded', 'false');
+    toggle.setAttribute('aria-controls', 'downwork-more-filters');
+
+    const toggleLabel = document.createElement('span');
+    toggleLabel.className = 'downwork-filter-more__label';
+    toggleLabel.textContent = 'More filters';
+    toggle.appendChild(toggleLabel);
+
+    const toggleMeta = document.createElement('span');
+    toggleMeta.className = 'downwork-filter-more__meta';
+    toggleMeta.hidden = true;
+    toggle.appendChild(toggleMeta);
+
+    const toggleIcon = document.createElement('span');
+    toggleIcon.className = 'downwork-filter-more__icon';
+    toggleIcon.textContent = '▾';
+    toggle.appendChild(toggleIcon);
+
+    filterToolbar.appendChild(toggle);
+
+    const panel = document.createElement('div');
+    panel.className = 'downwork-filter-more__panel';
+    panel.id = 'downwork-more-filters';
+    panel.hidden = true;
+    filtersContainer.appendChild(panel);
+
+    moreFilters = {
+      toggle,
+      panel,
+      meta: toggleMeta,
+      open: Boolean(boardState.moreFiltersOpen)
+    };
+
+    const { row, chips } = createFilterRow('Hustle types', { inline: true });
+    row.classList.add('downwork-filter-more__group');
+    panel.appendChild(row);
 
     categoryFilterEntries.forEach(entry => {
       const button = document.createElement('button');
@@ -1721,6 +1780,7 @@ export default function renderHustles(context = {}, definitions = [], models = [
           boardState.activeCategoryFilters.delete(entry.id);
         } else {
           boardState.activeCategoryFilters.add(entry.id);
+          setMoreFiltersOpen(true);
         }
         updateFilterSelection();
         renderMarketplace();
@@ -1729,7 +1789,47 @@ export default function renderHustles(context = {}, definitions = [], models = [
 
       chips.appendChild(button);
     });
+
+    toggle.addEventListener('click', () => {
+      setMoreFiltersOpen(!moreFilters.open);
+    });
   }
+
+  function setMoreFiltersOpen(open) {
+    if (!moreFilters.toggle || !moreFilters.panel) {
+      boardState.moreFiltersOpen = false;
+      moreFilters.open = false;
+      return;
+    }
+    const next = Boolean(open);
+    moreFilters.open = next;
+    boardState.moreFiltersOpen = next;
+    moreFilters.panel.hidden = !next;
+    moreFilters.toggle.setAttribute('aria-expanded', next ? 'true' : 'false');
+    moreFilters.toggle.classList.toggle('is-open', next);
+  }
+
+  function updateMoreFiltersMeta() {
+    if (!moreFilters.meta) return;
+    const count = boardState.activeCategoryFilters.size;
+    if (count > 0) {
+      moreFilters.meta.textContent = `${count} active`;
+      moreFilters.meta.hidden = false;
+    } else {
+      moreFilters.meta.textContent = '';
+      moreFilters.meta.hidden = true;
+    }
+    if (moreFilters.toggle) {
+      moreFilters.toggle.classList.toggle('has-active', count > 0);
+    }
+  }
+
+  setMoreFiltersOpen(moreFilters.open);
+  updateMoreFiltersMeta();
+
+  boardState.elements.moreFiltersToggle = moreFilters.toggle;
+  boardState.elements.moreFiltersMeta = moreFilters.meta;
+  boardState.elements.moreFiltersPanel = moreFilters.panel;
 
   const filterPredicates = {
     highPayout: card => {
@@ -1810,6 +1910,7 @@ export default function renderHustles(context = {}, definitions = [], models = [
   function updateFilterSelection() {
     updateQuickFilterSelection();
     updateCategoryFilterSelection();
+    updateMoreFiltersMeta();
     const filtered = hasActiveFilters();
     board.classList.toggle('is-filtered', filtered);
     list.classList.toggle('is-filtered', filtered);
