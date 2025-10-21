@@ -26,6 +26,7 @@ import {
   mapNicheOptions,
   buildDefaultSummary
 } from './sharedAssetInstances.js';
+import { formatLabelFromKey } from '../utils.js';
 
 function formatCurrency(amount) {
   return `$${formatMoney(Math.max(0, Math.round(Number(amount) || 0)))}`;
@@ -35,6 +36,113 @@ function computeRoi(lifetimeIncome, lifetimeSpend) {
   const spend = Math.max(0, clampNumber(lifetimeSpend));
   if (spend <= 0) return null;
   return (income - spend) / spend;
+}
+
+const VIDEO_UPGRADE_FAMILY_ORDER = [
+  'camera',
+  'audio',
+  'lighting',
+  'studio',
+  'phone',
+  'pc',
+  'monitor',
+  'storage',
+  'workflow',
+  'internet',
+  'power_backup',
+  'general'
+];
+
+const VIDEO_UPGRADE_FAMILY_COPY = {
+  camera: {
+    title: 'Camera rigs',
+    note: 'Sharpen every frame with cinema-ready lenses and stabilised mounts.',
+    icon: '🎥'
+  },
+  audio: {
+    title: 'Audio suite',
+    note: 'Treat the studio for buttery vocals, crisp foley, and mix-ready masters.',
+    icon: '🎙️'
+  },
+  lighting: {
+    title: 'Lighting & mood',
+    note: 'Dial in flattering lighting, diffusers, and on-set ambience.',
+    icon: '💡'
+  },
+  studio: {
+    title: 'Stage expansions',
+    note: 'Expand sets, prop storage, and modular stages for versatile shoots.',
+    icon: '🏗️'
+  },
+  phone: {
+    title: 'Creator phones',
+    note: 'Capture field footage and behind-the-scenes clips without missing a beat.',
+    icon: '📱'
+  },
+  pc: {
+    title: 'Editing bays',
+    note: 'Workstations that chew through renders and marathon edit sessions.',
+    icon: '🖥️'
+  },
+  monitor: {
+    title: 'Color bays',
+    note: 'Precision displays and arrays that make grading and review effortless.',
+    icon: '🖼️'
+  },
+  storage: {
+    title: 'Storage & scratch',
+    note: 'High-speed arrays to safeguard footage and keep cache renders instant.',
+    icon: '💾'
+  },
+  workflow: {
+    title: 'Workflow suites',
+    note: 'Automation and cross-channel rituals to keep every drop in sync.',
+    icon: '🧠'
+  },
+  internet: {
+    title: 'Bandwidth boosts',
+    note: 'Fiber-fast plans to keep livestreams and uploads smooth.',
+    icon: '🌐'
+  },
+  power_backup: {
+    title: 'Power & uptime',
+    note: 'Backups and surge protection to keep the studio humming.',
+    icon: '🔋'
+  },
+  general: {
+    title: 'Studio boosts',
+    note: 'Miscellaneous treats that keep creators energised and efficient.',
+    icon: '✨'
+  }
+};
+
+const FEATURED_UPGRADE_FAMILIES = ['camera', 'audio', 'phone', 'storage'];
+
+function describeVideoUpgradeOverview({ total, purchased, ready }) {
+  if (!total) {
+    return 'Studio upgrades unlock as your VideoTube channel grows.';
+  }
+  if (total === purchased) {
+    return 'Every studio upgrade is owned — enjoy the glow up!';
+  }
+  if (ready > 0) {
+    return ready === 1
+      ? 'One upgrade is ready to install today.'
+      : `${ready} upgrades are ready to install today.`;
+  }
+  return 'Keep stacking cash or clearing prerequisites to reveal your next gear boost.';
+}
+
+function getFamilyCopy(id) {
+  if (VIDEO_UPGRADE_FAMILY_COPY[id]) {
+    return VIDEO_UPGRADE_FAMILY_COPY[id];
+  }
+  const title = formatLabelFromKey(id, 'Studio boosts');
+  return {
+    title,
+    note: 'Targeted boosts ready to power up your production pipeline.',
+    icon: '✨'
+  };
 }
 
 function buildVideoInstances(definition, state) {
@@ -223,13 +331,36 @@ function startVideoInstance(definition, options = {}, state = getState()) {
 }
 
 function buildVideoTubeUpgrades(upgradeDefinitions = [], state) {
-  return filterUpgradeDefinitions(upgradeDefinitions, 'videotube').map(definition => {
+  const definitions = filterUpgradeDefinitions(upgradeDefinitions, 'videotube');
+  const stats = { total: 0, purchased: 0, ready: 0 };
+  const groupsMap = new Map();
+  const items = [];
+
+  const ensureGroup = familyId => {
+    const key = familyId || 'general';
+    if (!groupsMap.has(key)) {
+      const copy = getFamilyCopy(key);
+      groupsMap.set(key, {
+        id: key,
+        title: copy.title,
+        note: copy.note,
+        icon: copy.icon,
+        upgrades: [],
+        ready: 0,
+        owned: 0,
+        total: 0
+      });
+    }
+    return groupsMap.get(key);
+  };
+
+  definitions.forEach(definition => {
     const snapshot = getUpgradeSnapshot(definition, state);
-    return {
+    const upgrade = {
       id: definition.id,
       name: definition.name,
       cost: Math.max(0, clampNumber(definition.cost)),
-      description: definition.boosts || definition.description || '',
+      description: definition.description || '',
       tag: definition.tag || null,
       affects: definition.affects || {},
       effects: definition.effects || {},
@@ -237,9 +368,151 @@ function buildVideoTubeUpgrades(upgradeDefinitions = [], state) {
       definition,
       boosts: definition.boosts || '',
       snapshot,
-      status: describeUpgradeStatus(snapshot)
+      status: describeUpgradeStatus(snapshot),
+      family: definition.family || 'general'
     };
+
+    stats.total += 1;
+    if (snapshot.purchased) stats.purchased += 1;
+    if (snapshot.ready) stats.ready += 1;
+
+    const group = ensureGroup(upgrade.family);
+    group.upgrades.push(upgrade);
+    group.total += 1;
+    if (snapshot.ready) group.ready += 1;
+    if (snapshot.purchased) group.owned += 1;
+
+    items.push(upgrade);
   });
+
+  const availableFamilies = Array.from(groupsMap.keys());
+  const orderedFamilies = [
+    ...VIDEO_UPGRADE_FAMILY_ORDER,
+    ...availableFamilies.filter(id => !VIDEO_UPGRADE_FAMILY_ORDER.includes(id))
+  ];
+  const seen = new Set();
+  const groups = orderedFamilies
+    .filter(id => {
+      if (seen.has(id)) return false;
+      if (!groupsMap.has(id)) return false;
+      seen.add(id);
+      return true;
+    })
+    .map(id => {
+      const entry = groupsMap.get(id);
+      const upgrades = entry.upgrades
+        .slice()
+        .sort((a, b) => {
+          const costDiff = (a.cost || 0) - (b.cost || 0);
+          if (costDiff !== 0) return costDiff;
+          return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+        });
+      return {
+        id: entry.id,
+        title: entry.title,
+        note: entry.note,
+        icon: entry.icon,
+        upgrades,
+        ready: entry.ready,
+        owned: entry.owned,
+        total: entry.total
+      };
+    });
+
+  const overview = {
+    ...stats,
+    note: describeVideoUpgradeOverview(stats)
+  };
+
+  if (!groups.length) {
+    return { groups: [], overview, items: [] };
+  }
+
+  return { groups, overview, items };
+}
+
+function buildVideoUpgradeHighlights(upgradeData = {}) {
+  const groups = ensureArray(upgradeData.groups);
+  if (!groups.length) {
+    return [];
+  }
+  const highlights = [];
+  FEATURED_UPGRADE_FAMILIES.forEach(familyId => {
+    const group = groups.find(entry => entry.id === familyId);
+    if (!group) return;
+    const upgrade = ensureArray(group.upgrades).find(entry => !entry.snapshot?.purchased) || group.upgrades[0];
+    if (!upgrade) return;
+    highlights.push({
+      id: upgrade.id,
+      name: upgrade.name,
+      description: upgrade.boosts || upgrade.description || '',
+      cost: upgrade.cost,
+      familyId: group.id,
+      familyTitle: group.title,
+      status: upgrade.status,
+      snapshot: upgrade.snapshot
+    });
+  });
+  return highlights;
+}
+
+function buildVideoTubePricing(definition, upgradeData = {}, { nicheOptions = [] } = {}) {
+  if (!definition) {
+    return null;
+  }
+
+  const setup = {
+    cost: Math.max(0, clampNumber(definition?.setup?.cost)),
+    days: Math.max(0, clampNumber(definition?.setup?.days)),
+    hoursPerDay: Math.max(0, clampNumber(definition?.setup?.hoursPerDay))
+  };
+
+  const maintenance = formatMaintenanceSummary(definition);
+  const quality = definition?.quality || {};
+  const levels = ensureArray(quality.levels)
+    .map(level => ({
+      level: clampNumber(level.level),
+      name: level.name || `Quality ${level.level}`,
+      description: level.description || '',
+      income: {
+        min: Math.max(0, clampNumber(level.income?.min ?? level.income?.low)),
+        max: Math.max(0, clampNumber(level.income?.max ?? level.income?.high ?? level.income?.min))
+      }
+    }))
+    .sort((a, b) => (a.level || 0) - (b.level || 0));
+
+  const actions = ensureArray(quality.actions).map(action => ({
+    id: action.id,
+    label: action.label || 'Quality action',
+    time: Math.max(0, clampNumber(action.time)),
+    cost: Math.max(0, clampNumber(action.cost))
+  }));
+
+  const sortedNiches = ensureArray(nicheOptions)
+    .slice()
+    .sort((a, b) => (b.score || 0) - (a.score || 0));
+
+  const gearHighlights = buildVideoUpgradeHighlights(upgradeData);
+
+  return {
+    summary: quality.summary || 'Map out quality tiers, action costs, and niche intel before filming.',
+    setup,
+    maintenance,
+    levels,
+    actions,
+    gearHighlights,
+    topNiches: sortedNiches.slice(0, 3),
+    nicheCount: sortedNiches.length
+  };
+}
+
+function createEmptyUpgradeData() {
+  const stats = { total: 0, purchased: 0, ready: 0 };
+  return {
+    groups: [],
+    items: [],
+    overview: { ...stats, note: describeVideoUpgradeOverview(stats) }
+  };
 }
 
 function buildVideoTubeModel(assetDefinitions = [], upgradeDefinitions = [], state = getState()) {
@@ -252,7 +525,8 @@ function buildVideoTubeModel(assetDefinitions = [], upgradeDefinitions = [], sta
       stats: { lifetime: 0, daily: 0, active: 0, averageQuality: 0, milestonePercent: 0 },
       analytics: { videos: [], niches: [] },
       launch: null,
-      upgrades: []
+      upgrades: createEmptyUpgradeData(),
+      pricing: null
     };
   }
 
@@ -266,7 +540,8 @@ function buildVideoTubeModel(assetDefinitions = [], upgradeDefinitions = [], sta
       analytics: { videos: [], niches: [] },
       launch: null,
       lock,
-      upgrades: []
+      upgrades: createEmptyUpgradeData(),
+      pricing: null
     };
   }
 
@@ -282,6 +557,7 @@ function buildVideoTubeModel(assetDefinitions = [], upgradeDefinitions = [], sta
   const nicheOptions = mapNicheOptions(definition, state, { includeDelta: true });
   const maintenance = formatMaintenanceSummary(definition);
   const upgrades = buildVideoTubeUpgrades(upgradeDefinitions, state);
+  const pricing = buildVideoTubePricing(definition, upgrades, { nicheOptions });
 
   const launch = launchAction
     ? {
@@ -314,7 +590,8 @@ function buildVideoTubeModel(assetDefinitions = [], upgradeDefinitions = [], sta
     stats,
     analytics,
     launch,
-    upgrades
+    upgrades,
+    pricing
   };
 }
 

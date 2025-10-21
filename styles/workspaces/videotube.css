@@ -521,3 +521,240 @@
 :root[data-browser-theme="night"] .videotube-panel {
   background: rgba(19, 26, 40, 0.85);
 }
+
+.videotube-upgrades__intro {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.videotube-upgrades__meta,
+.videotube-upgrades__note,
+.videotube-upgrades__summary {
+  margin: 0;
+  color: var(--browser-text-subtle);
+  font-size: 0.85rem;
+}
+
+.videotube-upgrades__grid {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.videotube-upgrades__group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.videotube-upgrades__group-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.videotube-upgrades__icon {
+  font-size: 1.5rem;
+}
+
+.videotube-upgrades__heading {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.videotube-upgrades__title {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.videotube-upgrades__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.videotube-upgrade {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1rem;
+  border-radius: 1rem;
+  background: var(--browser-surface-muted);
+  border: 1px solid transparent;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.videotube-upgrade:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0.6rem 1.2rem rgba(15, 23, 42, 0.12);
+}
+
+.videotube-upgrade[data-status='ready'] {
+  border-color: var(--browser-primary-surface);
+  box-shadow: 0 0.75rem 1.5rem rgba(73, 94, 255, 0.15);
+}
+
+.videotube-upgrade[data-status='owned'] {
+  opacity: 0.9;
+}
+
+.videotube-upgrade__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.videotube-upgrade__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.videotube-upgrade__badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(73, 94, 255, 0.15);
+  color: var(--browser-primary-text);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.videotube-upgrade__description,
+.videotube-upgrade__effect,
+.videotube-upgrade__status {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--browser-text-subtle);
+}
+
+.videotube-upgrade__effect {
+  font-weight: 600;
+  color: var(--browser-text-strong);
+}
+
+.videotube-upgrade__meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+}
+
+.videotube-upgrade__price {
+  font-weight: 700;
+  color: var(--browser-text-strong);
+}
+
+.videotube-upgrade__button {
+  align-self: flex-start;
+}
+
+.videotube-pricing__intro {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.videotube-pricing__summary,
+.videotube-pricing__meta {
+  margin: 0;
+  color: var(--browser-text-subtle);
+  font-size: 0.9rem;
+}
+
+.videotube-pricing__grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.videotube-plan {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.videotube-plan__title {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.videotube-plan__income {
+  margin: 0;
+  font-weight: 600;
+  color: var(--browser-text-strong);
+}
+
+.videotube-plan__summary {
+  margin: 0;
+  color: var(--browser-text-subtle);
+  font-size: 0.9rem;
+}
+
+.videotube-pricing__section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.videotube-pricing__empty {
+  margin: 0;
+  color: var(--browser-text-subtle);
+  font-size: 0.9rem;
+}
+
+.videotube-pricing__actions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.videotube-pricing__action {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.9rem;
+}
+
+.videotube-pricing__action-label {
+  font-weight: 600;
+}
+
+.videotube-pricing__action-value {
+  color: var(--browser-text-subtle);
+}
+
+.videotube-pricing__gear {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.videotube-pricing__gear-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.85rem;
+}
+
+.videotube-pricing__gear-label {
+  font-weight: 600;
+}
+
+.videotube-pricing__gear-value {
+  color: var(--browser-text-subtle);
+}
+
+.videotube-pricing__niches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
