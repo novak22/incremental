@@ -4,12 +4,14 @@ export default function renderPricingView(options = {}) {
   const {
     pricing = {},
     formatters = {},
-    formatRange = () => 'No payout yet'
+    formatRange = () => 'No payout yet',
+    handlers = {}
   } = options;
 
   const formatCurrency = formatters.formatCurrency || (value => String(value ?? ''));
   const formatHours = formatters.formatHours || (value => String(value ?? ''));
   const formatMoney = formatters.formatMoney || (value => String(value ?? ''));
+  const onShowUpgrades = handlers.onShowUpgrades;
 
   const container = document.createElement('section');
   container.className = 'blogpress-view blogpress-view--pricing';
@@ -88,30 +90,17 @@ export default function renderPricingView(options = {}) {
   upgradeBlock.className = 'blogpress-pricing__section';
   const upgradeTitle = document.createElement('h3');
   upgradeTitle.textContent = 'Upgrade boosts';
-  upgradeBlock.appendChild(upgradeTitle);
-  const upgradeList = document.createElement('ul');
-  upgradeList.className = 'blogpress-list';
-  const upgrades = ensureArray(pricing.upgrades);
-  if (upgrades.length) {
-    upgrades.forEach(upgrade => {
-      const item = document.createElement('li');
-      item.className = 'blogpress-list__item';
-      const label = document.createElement('span');
-      label.className = 'blogpress-list__label';
-      label.textContent = upgrade.name;
-      const value = document.createElement('span');
-      value.className = 'blogpress-list__value';
-      value.textContent = `${formatCurrency(upgrade.cost)} • ${upgrade.description}`;
-      item.append(label, value);
-      upgradeList.appendChild(item);
-    });
-  } else {
-    const item = document.createElement('li');
-    item.className = 'blogpress-list__item';
-    item.textContent = 'Upgrades unlock once your first blog goes live.';
-    upgradeList.appendChild(item);
+  const upgradeNote = document.createElement('p');
+  upgradeNote.textContent = 'Browse the Upgrades tab once your first blog is live to install workflow and SEO boosts.';
+  upgradeBlock.append(upgradeTitle, upgradeNote);
+  if (typeof onShowUpgrades === 'function') {
+    const upgradeButton = document.createElement('button');
+    upgradeButton.type = 'button';
+    upgradeButton.className = 'blogpress-button blogpress-button--ghost';
+    upgradeButton.textContent = 'Open Upgrades tab';
+    upgradeButton.addEventListener('click', () => onShowUpgrades());
+    upgradeBlock.appendChild(upgradeButton);
   }
-  upgradeBlock.appendChild(upgradeList);
   container.appendChild(upgradeBlock);
 
   return container;

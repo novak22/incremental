@@ -9,6 +9,7 @@ This log highlights player-visible milestones. For exhaustive historical notes, 
 
 ## Unreleased
 - DownWork now remembers quick and category filters per session, keeping your scouting view consistent between visits.
+- BlogPress workspace adds a dedicated Upgrades tab that reuses the blueprint boosters list with purchase actions wired in.
 
 ## 2025-10-21 – Session Slot & Hustle Refresh
 - Introduced multi-session save slots with import/export, autosave safeguards, and gentle recovery flows.
