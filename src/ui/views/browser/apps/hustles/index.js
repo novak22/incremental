@@ -74,11 +74,22 @@ function ensureDownworkSessionConfig() {
   if (!Array.isArray(downwork.quickFilters)) {
     downwork.quickFilters = [];
   }
-  if (!Array.isArray(downwork.categoryFilters)) {
-    downwork.categoryFilters = [];
+  if ('categoryFilters' in downwork) {
+    delete downwork.categoryFilters;
   }
   if ('activeCategory' in downwork) {
     delete downwork.activeCategory;
+  }
+  if ('sortKey' in downwork && typeof downwork.sortKey !== 'string') {
+    delete downwork.sortKey;
+  }
+  if (typeof downwork.sortKey === 'string') {
+    const normalizedSortKey = downwork.sortKey.trim();
+    if (normalizedSortKey) {
+      downwork.sortKey = normalizedSortKey;
+    } else {
+      delete downwork.sortKey;
+    }
   }
 
   return downwork;
@@ -1354,9 +1365,12 @@ export default function renderHustles(context = {}, definitions = [], models = [
   if (sessionConfig) {
     const savedQuickFilters = normalizeFilterIds(sessionConfig.quickFilters);
     boardState.activeFilters = new Set(savedQuickFilters);
-
-    const savedCategoryFilters = normalizeFilterIds(sessionConfig.categoryFilters);
-    boardState.activeCategoryFilters = new Set(savedCategoryFilters);
+    if ('categoryFilters' in sessionConfig) {
+      delete sessionConfig.categoryFilters;
+    }
+    if ('activeCategory' in sessionConfig) {
+      delete sessionConfig.activeCategory;
+    }
   }
 
   const persistFilterState = () => {
@@ -1374,13 +1388,13 @@ export default function renderHustles(context = {}, definitions = [], models = [
         return a.localeCompare(b);
       });
 
-    const categoryFilters = Array.from(boardState.activeCategoryFilters || [])
-      .map(id => (typeof id === 'string' ? id.trim() : ''))
-      .filter(Boolean)
-      .sort();
-
     sessionConfig.quickFilters = quickFilters;
-    sessionConfig.categoryFilters = categoryFilters;
+    if ('categoryFilters' in sessionConfig) {
+      delete sessionConfig.categoryFilters;
+    }
+    if ('activeCategory' in sessionConfig) {
+      delete sessionConfig.activeCategory;
+    }
   };
 
   const handleOfferAccepted = ({ payout = 0, focusHours = 0 } = {}) => {

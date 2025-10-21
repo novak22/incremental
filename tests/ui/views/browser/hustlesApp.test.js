@@ -11,10 +11,7 @@ function setupDom() {
   return dom;
 }
 
-function mockSessionState({
-  quickFilters = [],
-  categoryFilters = []
-} = {}) {
+function mockSessionState({ quickFilters = [] } = {}) {
   const previousState = defaultStateManager.state;
   const originalGetUpgradeState = defaultStateManager.getUpgradeState;
 
@@ -30,8 +27,7 @@ function mockSessionState({
     session: {
       config: {
         downwork: {
-          quickFilters: [...quickFilters],
-          categoryFilters: [...categoryFilters]
+          quickFilters: [...quickFilters]
         }
       }
     }
@@ -304,8 +300,8 @@ test('renderHustles syncs quick filter state with session config', () => {
   const state = getState();
   state.session.config.downwork = {
     quickFilters: ['shortTasks'],
-    categoryFilters: [],
-    activeCategory: null
+    categoryFilters: ['legacy-lane'],
+    activeCategory: 'writing'
   };
 
   const context = {
@@ -365,6 +361,10 @@ test('renderHustles syncs quick filter state with session config', () => {
 
   try {
     renderHustles(context, definitions, models);
+    let config = getState().session.config.downwork;
+    assert.deepEqual(config.quickFilters, ['shortTasks']);
+    assert.ok(!('categoryFilters' in config), 'expected legacy category filters to be removed');
+    assert.ok(!('activeCategory' in config), 'expected legacy active category to be removed');
     const savedFilter = document.querySelector('button[data-filter-id="shortTasks"]');
     assert.ok(savedFilter?.classList.contains('is-active'), 'saved quick filter should start active');
 
@@ -372,12 +372,16 @@ test('renderHustles syncs quick filter state with session config', () => {
     assert.ok(payoutFilter, 'expected high payout quick filter');
     payoutFilter.click();
 
-    let config = getState().session.config.downwork;
+    config = getState().session.config.downwork;
     assert.deepEqual(config.quickFilters, ['highPayout', 'shortTasks']);
+    assert.ok(!('categoryFilters' in config));
+    assert.ok(!('activeCategory' in config));
 
     savedFilter.click();
     config = getState().session.config.downwork;
     assert.deepEqual(config.quickFilters, ['highPayout']);
+    assert.ok(!('categoryFilters' in config));
+    assert.ok(!('activeCategory' in config));
   } finally {
     dom.window.close();
     delete globalThis.window;
