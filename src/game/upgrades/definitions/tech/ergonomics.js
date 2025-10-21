@@ -10,6 +10,7 @@ const ergonomics = [
     description: 'Sit-stand desk, supportive chair, and smart lighting for marathon editing sessions.',
     category: 'tech',
     family: 'ergonomics',
+    placements: ['general', 'blogpress'],
     cost: ergonomicRefitConfig.cost, // Spec: docs/normalized_economy.json → upgrades.ergonomicRefit.setup_cost
     effects: { maint_time_mult: 0.95 },
     affects: {

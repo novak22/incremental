@@ -5,7 +5,7 @@ import {
   assignInstanceToNiche
 } from '../../../game/assets/niches.js';
 import { registerModelBuilder } from '../modelBuilderRegistry.js';
-import { getUpgradeSnapshot, describeUpgradeStatus } from './upgrades.js';
+import { filterUpgradeDefinitions, getUpgradeSnapshot, describeUpgradeStatus } from './upgrades.js';
 import { buildSkillLock } from './skillLocks.js';
 import {
   clampNumber,
@@ -17,31 +17,22 @@ import {
 } from './sharedAssetInstances.js';
 import createAssetInstanceSnapshots from './createAssetInstanceSnapshots.js';
 
-function extractRelevantUpgrades(upgrades = [], state) {
-  return ensureArray(upgrades)
-    .filter(upgrade => {
-      const affects = upgrade?.affects?.assets;
-      if (!affects) return false;
-      const ids = ensureArray(affects.ids);
-      if (ids.includes('saas')) return true;
-      const tags = ensureArray(affects.tags);
-      return tags.includes('software') || tags.includes('tech');
-    })
-    .map(upgrade => {
-      const snapshot = getUpgradeSnapshot(upgrade, state);
-      return {
-        id: upgrade.id,
-        name: upgrade.name,
-        cost: Math.max(0, clampNumber(upgrade.cost)),
-        description: upgrade.boosts || upgrade.description || '',
-        tag: upgrade.tag || null,
-        affects: upgrade.affects || {},
-        effects: upgrade.effects || {},
-        action: upgrade.action || null,
-        snapshot,
-        status: describeUpgradeStatus(snapshot)
-      };
-    });
+function buildServerHubUpgrades(upgrades = [], state) {
+  return filterUpgradeDefinitions(upgrades, 'serverhub').map(definition => {
+    const snapshot = getUpgradeSnapshot(definition, state);
+    return {
+      id: definition.id,
+      name: definition.name,
+      cost: Math.max(0, clampNumber(definition.cost)),
+      description: definition.boosts || definition.description || '',
+      tag: definition.tag || null,
+      affects: definition.affects || {},
+      effects: definition.effects || {},
+      action: definition.action || null,
+      snapshot,
+      status: describeUpgradeStatus(snapshot)
+    };
+  });
 }
 
 function buildInstances(definition, state) {
@@ -193,7 +184,7 @@ function buildServerHubModel(assetDefinitions = [], upgradeDefinitions = [], sta
   const launch = createLaunchDescriptor(saasDefinition, state, {
     fallbackLabel: `Deploy ${saasDefinition.singular || saasDefinition.name || 'app'}`
   });
-  const upgrades = extractRelevantUpgrades(upgradeDefinitions, state);
+  const upgrades = buildServerHubUpgrades(upgradeDefinitions, state);
   const pricing = buildPricingPlans(saasDefinition);
 
   return {

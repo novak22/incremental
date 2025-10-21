@@ -324,7 +324,8 @@ test('buildUpgradeModels groups families in sorted order', () => {
       category: 'tech',
       family: 'camera',
       cost: 120,
-      action: { label: 'Install' }
+      action: { label: 'Install' },
+      placements: ['general']
     },
     {
       id: 'tech-automation',
@@ -332,7 +333,8 @@ test('buildUpgradeModels groups families in sorted order', () => {
       category: 'tech',
       family: 'automation',
       cost: 200,
-      action: { label: 'Install' }
+      action: { label: 'Install' },
+      placements: ['general']
     },
     {
       id: 'house-studio',
@@ -340,7 +342,8 @@ test('buildUpgradeModels groups families in sorted order', () => {
       category: 'house',
       family: 'lighting',
       cost: 80,
-      action: { label: 'Install' }
+      action: { label: 'Install' },
+      placements: ['general']
     },
     {
       id: 'extra-alchemy',
@@ -348,7 +351,8 @@ test('buildUpgradeModels groups families in sorted order', () => {
       category: 'alchemy',
       family: 'zeta',
       cost: 50,
-      action: { label: 'Install' }
+      action: { label: 'Install' },
+      placements: ['general']
     }
   ];
 
@@ -359,7 +363,7 @@ test('buildUpgradeModels groups families in sorted order', () => {
     }
   };
 
-  const models = buildUpgradeModels(upgrades, { getState: () => state });
+  const models = buildUpgradeModels(upgrades, { getState: () => state, placement: 'general' });
   assert.ok(Array.isArray(models.categories));
   assert.equal(models.categories[0].id, 'tech', 'tech lane should render first');
   const techFamilies = models.categories[0].families.map(family => family.id);
@@ -374,6 +378,41 @@ test('buildUpgradeModels groups families in sorted order', () => {
     .definitions.find(def => def.id === 'tech-camera');
   assert.ok(cameraUpgrade.snapshot.purchased, 'purchased upgrade reflected in snapshot');
   assert.equal(cameraUpgrade.filters.family, 'camera');
+});
+
+test('buildUpgradeModels filters definitions by placement', () => {
+  const upgrades = [
+    {
+      id: 'general-upgrade',
+      name: 'General Boost',
+      category: 'tech',
+      family: 'camera',
+      cost: 100,
+      placements: ['general']
+    },
+    {
+      id: 'shop-upgrade',
+      name: 'Shop Boost',
+      category: 'tech',
+      family: 'automation',
+      cost: 150,
+      placements: ['shopily']
+    }
+  ];
+
+  const state = { money: 0, upgrades: {} };
+
+  const general = buildUpgradeModels(upgrades, { getState: () => state, placement: 'general' });
+  const generalIds = general.categories.flatMap(category =>
+    category.families.flatMap(family => family.definitions.map(definition => definition.id))
+  );
+  assert.deepEqual(generalIds, ['general-upgrade']);
+
+  const shopily = buildUpgradeModels(upgrades, { getState: () => state, placement: 'shopily' });
+  const shopIds = shopily.categories.flatMap(category =>
+    category.families.flatMap(family => family.definitions.map(definition => definition.id))
+  );
+  assert.deepEqual(shopIds, ['shop-upgrade']);
 });
 
 test('buildEducationModels summarises study queue totals', () => {

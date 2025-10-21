@@ -12,6 +12,7 @@ const house = [
     category: 'house',
     family: 'lighting',
     exclusivityGroup: 'house:lighting',
+    placements: ['general', 'digishelf', 'videotube'],
     cost: studioConfig.cost, // Spec: docs/normalized_economy.json → upgrades.studio.setup_cost
     unlocks: 'Stock Photo Galleries',
     skills: [ 'visual' ],
@@ -35,6 +36,7 @@ const house = [
     category: 'house',
     family: 'studio',
     exclusivityGroup: 'house:studio',
+    placements: ['general', 'digishelf', 'videotube'],
     cost: studioExpansionConfig.cost, // Spec: docs/normalized_economy.json → upgrades.studioExpansion.setup_cost
     requires: studioExpansionConfig.requires, // Spec: docs/normalized_economy.json → upgrades.studioExpansion.requirements
     boosts: 'Stock photo payouts + faster shoot progress',

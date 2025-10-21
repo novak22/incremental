@@ -3,6 +3,7 @@ import { getState } from '../../../core/state.js';
 import { assignInstanceToNiche } from '../../../game/assets/niches.js';
 import { registerModelBuilder } from '../modelBuilderRegistry.js';
 import { buildSkillLock } from './skillLocks.js';
+import { filterUpgradeDefinitions, getUpgradeSnapshot, describeUpgradeStatus } from './upgrades.js';
 import {
   getDigishelfQuickActionIds,
   buildDigishelfCollection,
@@ -11,7 +12,32 @@ import {
   getDigishelfPlanCopy
 } from '../../digishelf/model/shared.js';
 
-function buildDigishelfModel(assetDefinitions = [], state = getState()) {
+function clampNumber(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : 0;
+}
+
+function buildDigishelfUpgrades(upgradeDefinitions = [], state) {
+  return filterUpgradeDefinitions(upgradeDefinitions, 'digishelf').map(definition => {
+    const snapshot = getUpgradeSnapshot(definition, state);
+    return {
+      id: definition.id,
+      name: definition.name,
+      cost: Math.max(0, clampNumber(definition.cost)),
+      description: definition.boosts || definition.description || '',
+      tag: definition.tag || null,
+      affects: definition.affects || {},
+      effects: definition.effects || {},
+      action: definition.action || null,
+      definition,
+      boosts: definition.boosts || '',
+      snapshot,
+      status: describeUpgradeStatus(snapshot)
+    };
+  });
+}
+
+function buildDigishelfModel(assetDefinitions = [], upgradeDefinitions = [], state = getState()) {
   const definitionMap = new Map(ensureArray(assetDefinitions).map(definition => [definition?.id, definition]));
   const ebookDefinition = definitionMap.get('ebook') || null;
   const stockDefinition = definitionMap.get('stockPhotos') || null;
@@ -39,7 +65,8 @@ function buildDigishelfModel(assetDefinitions = [], state = getState()) {
       },
       pricing: [],
       summary: { meta, totalActive: 0 },
-      lock
+      lock,
+      upgrades: []
     };
   }
 
@@ -52,6 +79,7 @@ function buildDigishelfModel(assetDefinitions = [], state = getState()) {
   const overview = buildDigishelfOverview(ebook.summary, stock.summary, ebook.instances, stock.instances);
   const { meta: summaryMeta, totalActive } = describeDigishelfSummary(overview);
   const pricing = [ebook.plan, stock.plan].filter(Boolean);
+  const upgrades = buildDigishelfUpgrades(upgradeDefinitions, state);
 
   return {
     ebook,
@@ -64,7 +92,8 @@ function buildDigishelfModel(assetDefinitions = [], state = getState()) {
     summary: {
       meta: summaryMeta,
       totalActive
-    }
+    },
+    upgrades
   };
 }
 
@@ -77,5 +106,5 @@ export function selectDigishelfNiche(assetId, instanceId, nicheId) {
 }
 
 registerModelBuilder('digishelf', (registries = {}, context = {}) =>
-  buildDigishelfModel(registries.assets ?? [], context.state)
+  buildDigishelfModel(registries.assets ?? [], registries.upgrades ?? [], context.state)
 );

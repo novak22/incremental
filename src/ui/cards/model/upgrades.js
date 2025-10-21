@@ -1,3 +1,4 @@
+import { ensureArray } from '../../../core/helpers.js';
 import { getState } from '../../../core/state.js';
 import { formatLabelFromKey } from '../utils.js';
 
@@ -110,6 +111,16 @@ const UPGRADE_FAMILY_COPY = {
   }
 };
 
+function getPlacements(definition) {
+  const placements = ensureArray(definition?.placements).map(entry => String(entry || '').trim()).filter(Boolean);
+  return placements.length ? placements : ['general'];
+}
+
+export function filterUpgradeDefinitions(definitions = [], placement = 'general') {
+  const target = String(placement || 'general');
+  return ensureArray(definitions).filter(definition => getPlacements(definition).includes(target));
+}
+
 function getUpgradeCategory(definition) {
   return definition?.category || 'misc';
 }
@@ -215,10 +226,11 @@ export function describeUpgradeStatus({ purchased, ready, affordable, disabled }
   return 'Progress for this soon';
 }
 
-function buildUpgradeModels(definitions = [], helpers = {}) {
-  const { getState: getStateFn = getState } = helpers;
+function buildUpgradeModels(definitions = [], options = {}) {
+  const { getState: getStateFn = getState, placement = 'general' } = options;
+  const filteredDefinitions = filterUpgradeDefinitions(definitions, placement);
   const state = getStateFn();
-  const categories = buildUpgradeCategories(definitions).map(category => ({
+  const categories = buildUpgradeCategories(filteredDefinitions).map(category => ({
     ...category,
     families: category.families.map(family => ({
       ...family,
@@ -247,7 +259,7 @@ function buildUpgradeModels(definitions = [], helpers = {}) {
     }))
   }));
 
-  const stats = definitions.reduce(
+  const stats = filteredDefinitions.reduce(
     (acc, definition) => {
       const snapshot = getUpgradeSnapshot(definition, state);
       if (snapshot.purchased) acc.purchased += 1;

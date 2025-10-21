@@ -134,7 +134,8 @@ test('ui builders consume processed registry definitions from the service', t =>
   );
 
   const upgradeModels = buildUpgradeModels(upgrades, {
-    getState: () => ({ upgrades: {} })
+    getState: () => ({ upgrades: {} }),
+    placement: 'general'
   });
   const firstCategory = upgradeModels.categories[0];
   assert.ok(firstCategory, 'upgrade categories should be generated');

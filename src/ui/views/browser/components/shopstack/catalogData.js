@@ -1,11 +1,12 @@
 import { ensureArray } from '../../../../../core/helpers.js';
 
-export const EXCLUDED_UPGRADES = new Set([
-  'assistant',
-  'fulfillmentAutomation',
-  'globalSupplyMesh',
-  'whiteLabelAlliance'
-]);
+function isPlacementEnabled(definition, placement = 'general') {
+  const placements = ensureArray(definition?.placements)
+    .map(entry => String(entry || '').trim())
+    .filter(Boolean);
+  const normalized = placements.length ? placements : ['general'];
+  return normalized.includes(String(placement || 'general'));
+}
 
 export function createDefinitionMap(definitions = []) {
   const entries = ensureArray(definitions)
@@ -14,7 +15,8 @@ export function createDefinitionMap(definitions = []) {
   return new Map(entries);
 }
 
-export function collectCatalogItems(model = {}, definitionMap = new Map()) {
+export function collectCatalogItems(model = {}, definitionMap = new Map(), options = {}) {
+  const { placement = 'general' } = options;
   const items = [];
   const categories = ensureArray(model.categories);
   categories.forEach(category => {
@@ -23,11 +25,11 @@ export function collectCatalogItems(model = {}, definitionMap = new Map()) {
       ensureArray(family.definitions).forEach(entry => {
         const catalogEntry = entry?.model ?? entry;
         const id = catalogEntry?.id;
-        if (!id || EXCLUDED_UPGRADES.has(id)) {
+        if (!id) {
           return;
         }
         const definition = definitionMap.get(id);
-        if (!definition) {
+        if (!definition || !isPlacementEnabled(definition, placement)) {
           return;
         }
         items.push({
@@ -83,7 +85,6 @@ export function computeCatalogOverview(items = []) {
 }
 
 export default {
-  EXCLUDED_UPGRADES,
   createDefinitionMap,
   collectCatalogItems,
   filterCatalogItems,
