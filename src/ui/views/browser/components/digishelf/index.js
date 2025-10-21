@@ -11,8 +11,9 @@ import { getWorkspaceLockTheme } from '../common/workspaceLockThemes.js';
 import {
   VIEW_EBOOKS,
   VIEW_STOCK,
-  VIEW_PRICING,
+  VIEW_UPGRADES,
   initialState,
+  normalizeView,
   ensureSelection,
   reduceSetView,
   reduceOpenLaunch,
@@ -26,7 +27,7 @@ import renderHero from './hero.js';
 import renderTabNavigation from './tabNavigation.js';
 import renderInventoryTable from './inventoryTable.js';
 import renderDetailPane from './detailPane.js';
-import renderPricingCards from './pricingCards.js';
+import renderUpgradesView from './views/upgradesView.js';
 
 const {
   theme: DIGISHELF_LOCK_THEME,
@@ -91,14 +92,6 @@ function renderHeader(model, state) {
   return fragment;
 }
 
-function renderPricingView(model) {
-  return renderPricingCards({
-    pricing: model.pricing,
-    formatters: { formatCurrency, formatHours, formatMoney },
-    onSelectPlan: handlePlanSelect
-  });
-}
-
 function renderCollectionsView(model, state = initialState) {
   const wrapper = document.createElement('div');
   wrapper.className = 'digishelf-grid';
@@ -141,17 +134,27 @@ function renderCollectionsView(model, state = initialState) {
 }
 
 function renderViews(model, state = initialState) {
-  if (state.view === VIEW_PRICING) {
-    return renderPricingView(model);
+  const view = normalizeView(state.view);
+  if (view === VIEW_UPGRADES) {
+    return renderUpgradesView({
+      model,
+      formatters: { formatCurrency, formatHours, formatMoney },
+      handlers: {
+        onSelectPlan: handlePlanSelect,
+        onPurchaseUpgrade: handleUpgradePurchase
+      }
+    });
   }
-  return renderCollectionsView(model, state);
+  const nextState = { ...state, view };
+  return renderCollectionsView(model, nextState);
 }
 
 function syncNavigation({ mount, state }) {
   if (!mount) return;
+  const activeView = normalizeView(state?.view);
   mount.querySelectorAll('.digishelf-tab').forEach(tab => {
-    const view = tab.dataset.view;
-    const isActive = view === state?.view;
+    const view = normalizeView(tab.dataset.view);
+    const isActive = view === activeView;
     tab.classList.toggle('is-active', isActive);
     tab.setAttribute('aria-pressed', String(Boolean(isActive)));
   });
@@ -210,6 +213,11 @@ function handlePlanSelect(planId) {
     const targetView = planId === 'stockPhotos' ? VIEW_STOCK : VIEW_EBOOKS;
     return reduceSetView(next, model, targetView);
   });
+  presenter.render(model);
+}
+
+function handleUpgradePurchase() {
+  const model = presenter.getModel();
   presenter.render(model);
 }
 
