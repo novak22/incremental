@@ -4,7 +4,7 @@ import { mapDetailSidebar } from './apps/detailSidebar.js';
 
 const KPI_THEME = {
   container: 'asset-kpis serverhub-kpis',
-  grid: 'asset-kpis__grid',
+  grid: 'asset-kpis__grid serverhub-kpis__grid',
   card: 'asset-kpi serverhub-kpi',
   label: 'asset-kpi__label serverhub-kpi__label',
   value: 'asset-kpi__value serverhub-kpi__value',
