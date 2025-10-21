@@ -75,7 +75,8 @@ function buildAssetPerformance(assetDefinitions = [], state, services = {}) {
         average,
         latest,
         upkeep,
-        saleValue
+        saleValue,
+        daysActive
       });
     });
   });

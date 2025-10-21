@@ -3,20 +3,23 @@ import { renderSummaryCards, renderSummaryFootnote } from './summaryCards.js';
 
 export default function renderFinanceHeader(model = {}) {
   const container = document.createElement('section');
-  container.className = 'bankapp__header';
+  container.className = 'bankapp__header bankapp-section bankapp-section--summary';
 
-  const summary = renderSummaryCards(model);
-  container.appendChild(summary);
+  const summaryStrip = renderSummaryCards(model);
+  container.appendChild(summaryStrip);
 
-  const footnote = renderSummaryFootnote(model);
-  if (footnote) {
-    container.appendChild(footnote);
+  const notes = renderSummaryFootnote(model);
+  if (notes) {
+    container.appendChild(notes);
   }
+
+  const secondary = document.createElement('div');
+  secondary.className = 'bankapp-header__meta';
 
   const pulseEntries = Array.isArray(model.pulse) ? model.pulse : [];
   if (pulseEntries.length) {
     const pulse = document.createElement('div');
-    pulse.className = 'bankapp-pulse';
+    pulse.className = 'bankapp-pulse bankapp-header__pulse';
 
     pulseEntries.forEach(entry => {
       const item = document.createElement('span');
@@ -36,12 +39,12 @@ export default function renderFinanceHeader(model = {}) {
       pulse.appendChild(item);
     });
 
-    container.appendChild(pulse);
+    secondary.appendChild(pulse);
   }
 
   if (model.quickObligation) {
     const pill = document.createElement('div');
-    pill.className = 'bankapp-pill';
+    pill.className = 'bankapp-pill bankapp-header__pill';
 
     const label = document.createElement('span');
     label.className = 'bankapp-pill__label';
@@ -56,12 +59,12 @@ export default function renderFinanceHeader(model = {}) {
     note.textContent = model.quickObligation.note || '';
 
     pill.append(label, value, note);
-    container.appendChild(pill);
+    secondary.appendChild(pill);
   }
 
   if (model.topEarner) {
     const badge = document.createElement('div');
-    badge.className = 'bankapp-badge';
+    badge.className = 'bankapp-badge bankapp-header__badge';
 
     const icon = document.createElement('span');
     icon.className = 'bankapp-badge__icon';
@@ -80,7 +83,11 @@ export default function renderFinanceHeader(model = {}) {
 
     body.append(title, value);
     badge.append(icon, body);
-    container.appendChild(badge);
+    secondary.appendChild(badge);
+  }
+
+  if (secondary.childNodes.length) {
+    container.appendChild(secondary);
   }
 
   return container;

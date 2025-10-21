@@ -6,74 +6,10 @@ import renderFinanceActivity from './finance/activity.js';
 import renderFinanceEducation from './finance/education.js';
 import renderFinanceHistory from './finance/history.js';
 import renderFinanceObligations from './finance/obligations.js';
-import { formatCurrency } from '../utils/financeFormatting.js';
-import {
-  createCommitmentTimeline,
-  applyDeadlineTone,
-  describeDeadlineLabel
-} from '../components/commitmentMeters.js';
-
-function renderFinancePendingIncome(entries = []) {
-  const { section, body } = createBankSection('In-Flight Earnings', 'Assets with payouts pending the next day rollover.');
-  const list = Array.isArray(entries) ? entries : [];
-
-  if (!list.length) {
-    const empty = document.createElement('p');
-    empty.className = 'bankapp-empty';
-    empty.textContent = 'No pending payouts. Every asset has settled for today.';
-    body.appendChild(empty);
-    return section;
-  }
-
-  const grid = document.createElement('div');
-  grid.className = 'bankapp-pending';
-
-  list.forEach(entry => {
-    const card = document.createElement('article');
-    card.className = 'bankapp-card bankapp-card--pending';
-    const header = document.createElement('div');
-    header.className = 'bankapp-card__header';
-    const title = document.createElement('h3');
-    title.textContent = entry.label || entry.assetName || 'Asset';
-    const amount = document.createElement('span');
-    amount.className = 'bankapp-card__amount';
-    amount.textContent = formatCurrency(entry.amount || 0);
-    header.append(title, amount);
-    card.appendChild(header);
-
-    if (entry.assetName) {
-      const note = document.createElement('p');
-      note.className = 'bankapp-card__note';
-      note.textContent = entry.assetName;
-      card.appendChild(note);
-    }
-
-    if (entry.breakdown?.length) {
-      const listEl = document.createElement('ul');
-      listEl.className = 'bankapp-card__list';
-      entry.breakdown.forEach(item => {
-        if (!item || !item.amount) return;
-        const row = document.createElement('li');
-        row.className = 'bankapp-card__list-item';
-        const label = document.createElement('span');
-        label.textContent = item.label || 'Breakdown';
-        const value = document.createElement('span');
-        value.textContent = formatCurrency(item.amount || 0);
-        row.append(label, value);
-        listEl.appendChild(row);
-      });
-      card.appendChild(listEl);
-    }
-
-    grid.appendChild(card);
-  });
-
-  body.appendChild(grid);
-  return section;
-}
+import { formatCurrency, formatSignedCurrency } from '../utils/financeFormatting.js';
 
 function renderFinancePerformance(entries = []) {
-  const { section, body } = createBankSection('Asset Performance Table', 'Active instances ranked by average daily return.');
+  const { section, body } = createBankSection('Asset Performance', 'Sort assets by ROI, cost, or time active.');
   const list = Array.isArray(entries) ? entries : [];
 
   if (!list.length) {
@@ -84,199 +20,276 @@ function renderFinancePerformance(entries = []) {
     return section;
   }
 
-  const table = document.createElement('table');
-  table.className = 'bankapp-table';
-
-  const thead = document.createElement('thead');
-  const headRow = document.createElement('tr');
-  ['Asset', 'Avg / day', 'Latest yield', 'Upkeep', 'Resale value'].forEach(label => {
-    const th = document.createElement('th');
-    th.textContent = label;
-    headRow.appendChild(th);
+  const enriched = list.map(entry => {
+    const label = entry.label || entry.assetName || 'Asset';
+    const cost = Math.max(0, Number(entry.upkeep) || 0);
+    const earnings = Math.max(0, Number(entry.average) || 0);
+    const daysActive = Math.max(0, Number(entry.daysActive) || 0);
+    const roiValue = cost > 0 ? (earnings - cost) / Math.max(cost, 0.0001) : earnings > 0 ? Number.POSITIVE_INFINITY : 0;
+    const roiLabel = Number.isFinite(roiValue)
+      ? `${roiValue >= 0 ? '+' : ''}${(Math.round(roiValue * 1000) / 10).toFixed(1)}%`
+      : '∞';
+    const net = earnings - cost;
+    return {
+      ...entry,
+      label,
+      cost,
+      earnings,
+      daysActive,
+      roiValue,
+      roiLabel,
+      net
+    };
   });
-  thead.appendChild(headRow);
-  table.appendChild(thead);
 
-  const tbody = document.createElement('tbody');
-  list.forEach(entry => {
-    const row = document.createElement('tr');
-    const name = document.createElement('td');
-    name.textContent = entry.label || entry.assetName || 'Asset';
-    const average = document.createElement('td');
-    average.textContent = formatCurrency(entry.average || 0);
-    const latest = document.createElement('td');
-    latest.textContent = formatCurrency(entry.latest || 0);
-    const upkeep = document.createElement('td');
-    upkeep.textContent = formatCurrency(entry.upkeep || 0);
-    const sale = document.createElement('td');
-    sale.textContent = formatCurrency(entry.saleValue || 0);
-    row.append(name, average, latest, upkeep, sale);
-    tbody.appendChild(row);
+  const columns = [
+    { key: 'label', label: 'Asset', type: 'text' },
+    { key: 'cost', label: 'Cost', type: 'number' },
+    { key: 'earnings', label: 'Earnings', type: 'number' },
+    { key: 'roiValue', label: 'ROI', type: 'number' },
+    { key: 'daysActive', label: 'Days Active', type: 'number' }
+  ];
+
+  let sortKey = 'roiValue';
+  let sortDirection = 'desc';
+
+  const grid = document.createElement('div');
+  grid.className = 'bankapp-grid';
+
+  const header = document.createElement('div');
+  header.className = 'bankapp-grid__header';
+  grid.appendChild(header);
+
+  const rowsContainer = document.createElement('div');
+  rowsContainer.className = 'bankapp-grid__body';
+  grid.appendChild(rowsContainer);
+
+  function compareEntries(a, b, column) {
+    const direction = sortDirection === 'asc' ? 1 : -1;
+    if (column.type === 'text') {
+      const aLabel = String(a[column.key] || '').toLowerCase();
+      const bLabel = String(b[column.key] || '').toLowerCase();
+      return direction * aLabel.localeCompare(bLabel);
+    }
+    const aValue = Number(a[column.key]);
+    const bValue = Number(b[column.key]);
+    const aFinite = Number.isFinite(aValue);
+    const bFinite = Number.isFinite(bValue);
+    if (!aFinite || !bFinite) {
+      if (!aFinite && !bFinite) return 0;
+      if (!aFinite) return sortDirection === 'desc' ? -1 : 1;
+      if (!bFinite) return sortDirection === 'desc' ? 1 : -1;
+    }
+    return direction * (aValue - bValue);
+  }
+
+  function renderRows() {
+    rowsContainer.innerHTML = '';
+    const column = columns.find(col => col.key === sortKey) || columns[0];
+    const sorted = enriched.slice().sort((a, b) => compareEntries(a, b, column));
+
+    sorted.forEach((entry, index) => {
+      const row = document.createElement('details');
+      row.className = 'bankapp-grid__row';
+      if (index === 0) {
+        row.classList.add('is-leading');
+      }
+      if (!entry.earnings) {
+        row.classList.add('is-idle');
+      }
+
+      const summary = document.createElement('summary');
+      summary.className = 'bankapp-grid__summary';
+
+      const cells = [
+        { className: 'bankapp-grid__cell bankapp-grid__cell--asset', text: entry.label },
+        { className: 'bankapp-grid__cell', text: formatCurrency(entry.cost) },
+        { className: 'bankapp-grid__cell', text: formatCurrency(entry.earnings) },
+        { className: 'bankapp-grid__cell bankapp-grid__cell--roi', text: entry.roiLabel },
+        { className: 'bankapp-grid__cell', text: entry.daysActive ? `${entry.daysActive}` : '—' }
+      ];
+
+      cells.forEach(cell => {
+        const span = document.createElement('span');
+        span.className = cell.className;
+        span.textContent = cell.text;
+        summary.appendChild(span);
+      });
+
+      row.appendChild(summary);
+
+      const detail = document.createElement('div');
+      detail.className = 'bankapp-grid__details';
+      const info = [
+        entry.assetName && entry.assetName !== entry.label ? entry.assetName : null,
+        `Latest ${formatCurrency(entry.latest || 0)}`,
+        `Net ${formatSignedCurrency(entry.net || 0)}`,
+        `Upkeep ${formatCurrency(entry.upkeep || 0)}`,
+        `Resale ${formatCurrency(entry.saleValue || 0)}`
+      ].filter(Boolean);
+      detail.textContent = info.join(' · ');
+      row.appendChild(detail);
+
+      rowsContainer.appendChild(row);
+    });
+  }
+
+  function updateSortButtons() {
+    Array.from(header.children).forEach(node => {
+      if (!(node instanceof Element) || node.tagName !== 'BUTTON') return;
+      const { key } = node.dataset;
+      const isActive = key === sortKey;
+      node.dataset.active = isActive ? 'true' : 'false';
+      if (isActive) {
+        node.dataset.direction = sortDirection;
+      } else {
+        node.removeAttribute('data-direction');
+      }
+    });
+  }
+
+  columns.forEach(column => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'bankapp-grid__sort';
+    button.textContent = column.label;
+    button.dataset.key = column.key;
+    button.addEventListener('click', () => {
+      if (sortKey === column.key) {
+        sortDirection = sortDirection === 'desc' ? 'asc' : 'desc';
+      } else {
+        sortKey = column.key;
+        sortDirection = column.type === 'text' ? 'asc' : 'desc';
+      }
+      updateSortButtons();
+      renderRows();
+    });
+    header.appendChild(button);
   });
-  table.appendChild(tbody);
 
-  body.appendChild(table);
+  updateSortButtons();
+  renderRows();
+
+  body.appendChild(grid);
   return section;
 }
 
 function renderFinanceOpportunities(model = {}) {
-  const { section, body } = createBankSection('Investments & Opportunity Costs', 'Line up future launches, upgrades, and hustles.');
-
-  const container = document.createElement('div');
-  container.className = 'bankapp-opportunities';
+  const { section, body } = createBankSection(
+    'Investments & Liabilities',
+    'Snapshot of queued assets, upgrades, and hustles.'
+  );
 
   const assetEntries = Array.isArray(model.assets) ? model.assets.slice(0, 4) : [];
   const upgradeEntries = Array.isArray(model.upgrades) ? model.upgrades.slice(0, 4) : [];
   const hustleEntries = Array.isArray(model.hustles) ? model.hustles.slice(0, 4) : [];
 
-  function createOpportunityBlock(title, entries, renderItem) {
-    const block = document.createElement('article');
-    block.className = 'bankapp-opportunities__block';
-    const heading = document.createElement('h3');
-    heading.textContent = title;
-    block.appendChild(heading);
-    if (!entries.length) {
-      const empty = document.createElement('p');
-      empty.className = 'bankapp-empty';
-      empty.textContent = 'Nothing queued yet.';
-      block.appendChild(empty);
-      return block;
+  const matrix = document.createElement('div');
+  matrix.className = 'bankapp-matrix';
+
+  function createListItem(primary, value, note) {
+    const item = document.createElement('li');
+    item.className = 'bankapp-matrix__item';
+
+    const label = document.createElement('span');
+    label.className = 'bankapp-matrix__label';
+    label.textContent = primary;
+
+    const amount = document.createElement('span');
+    amount.className = 'bankapp-matrix__value';
+    amount.textContent = value;
+
+    item.append(label, amount);
+
+    if (note) {
+      const noteNode = document.createElement('span');
+      noteNode.className = 'bankapp-matrix__note';
+      noteNode.textContent = note;
+      item.appendChild(noteNode);
     }
-    const list = document.createElement('ul');
-    list.className = 'bankapp-opportunities__list';
-    entries.forEach(entry => {
-      const item = document.createElement('li');
-      item.className = 'bankapp-opportunities__item';
-      renderItem(entry, item);
-      list.appendChild(item);
-    });
-    block.appendChild(list);
-    return block;
+
+    return item;
   }
 
-  container.append(
-    createOpportunityBlock('Assets', assetEntries, (entry, node) => {
-      const name = document.createElement('span');
-      name.className = 'bankapp-opportunities__name';
-      name.textContent = entry.name || 'Asset';
-      const cost = document.createElement('span');
-      cost.className = 'bankapp-opportunities__value';
-      cost.textContent = formatCurrency(entry.cost || 0);
-      const note = document.createElement('span');
-      note.className = 'bankapp-opportunities__note';
-      const ready = entry.ready ? 'Ready to launch' : 'Prereqs pending';
-      const payout = entry.payoutRange
-        ? `Est. $${formatMoney(entry.payoutRange.min || 0)}–$${formatMoney(entry.payoutRange.max || 0)} / day`
-        : '';
-      const setup = entry.setup
-        ? `${entry.setup.days || 0} day${entry.setup.days === 1 ? '' : 's'} • ${formatHours(entry.setup.hoursPerDay || 0)}/day`
-        : '';
-      note.textContent = [ready, payout, setup].filter(Boolean).join(' • ');
-      node.append(name, cost, note);
-    }),
-    createOpportunityBlock('Upgrades', upgradeEntries, (entry, node) => {
-      const name = document.createElement('span');
-      name.className = 'bankapp-opportunities__name';
-      name.textContent = entry.name || 'Upgrade';
-      const cost = document.createElement('span');
-      cost.className = 'bankapp-opportunities__value';
-      cost.textContent = formatCurrency(entry.cost || 0);
-      const status = document.createElement('span');
-      status.className = 'bankapp-opportunities__note';
-      if (entry.purchased) {
-        status.textContent = 'Owned';
-      } else if (entry.ready) {
-        status.textContent = 'Affordable now';
-      } else if (!entry.affordable) {
-        status.textContent = 'Save up to unlock';
-      } else {
-        status.textContent = 'Requirements pending';
-      }
-      node.append(name, cost, status);
-    }),
-    createOpportunityBlock('Hustles', hustleEntries, (entry, node) => {
-      node.classList.add('bankapp-opportunity', `bankapp-opportunity--${entry.type || 'offer'}`);
-      node.dataset.hustleStatus = entry.status || '';
+  function renderColumn(title, entries, builder) {
+    const column = document.createElement('section');
+    column.className = 'bankapp-matrix__column';
 
-      const header = document.createElement('div');
-      header.className = 'bankapp-opportunity__header';
+    const heading = document.createElement('h3');
+    heading.textContent = title;
+    column.appendChild(heading);
 
-      const name = document.createElement('span');
-      name.className = 'bankapp-opportunities__name';
-      name.textContent = entry.name || 'Hustle';
-      header.appendChild(name);
+    const list = document.createElement('ul');
+    list.className = 'bankapp-matrix__list';
 
-      const status = document.createElement('span');
-      status.className = 'bankapp-opportunity__status';
-      if (entry.type === 'commitment') {
-        status.textContent = entry.status === 'pending' ? 'Starts soon' : 'Active commitment';
-      } else if (entry.status === 'available') {
-        status.textContent = 'Available now';
-      } else if (entry.status === 'upcoming') {
-        status.textContent = entry.availableInDays === 0
-          ? 'Unlocking today'
-          : `Opens in ${entry.availableInDays} day${entry.availableInDays === 1 ? '' : 's'}`;
-      } else {
-        status.textContent = entry.status || 'Market offer';
-      }
-      header.appendChild(status);
-      node.appendChild(header);
+    if (!entries.length) {
+      const empty = document.createElement('li');
+      empty.className = 'bankapp-matrix__item bankapp-matrix__item--empty';
+      empty.textContent = 'Nothing queued yet.';
+      list.appendChild(empty);
+    } else {
+      entries.forEach(entry => {
+        const { primary, value, note } = builder(entry);
+        list.appendChild(createListItem(primary, value, note));
+      });
+    }
 
-      const metrics = document.createElement('p');
-      metrics.className = 'bankapp-opportunities__value';
-      const payout = Number(entry.payout) || 0;
-      const time = Number(entry.time) || 0;
-      const roiValue = time > 0 ? payout / Math.max(time, 0.0001) : payout;
-      const payoutLabel = formatCurrency(payout);
-      metrics.textContent = `${payoutLabel} • ${formatHours(time)} • ${formatMoney(Math.round(roiValue * 100) / 100)} $/h`;
-      node.appendChild(metrics);
+    column.appendChild(list);
+    matrix.appendChild(column);
+  }
 
-      const note = document.createElement('p');
-      note.className = 'bankapp-opportunities__note';
+  renderColumn('Assets', assetEntries, entry => {
+    const setup = entry.setup
+      ? `${entry.setup.days || 0}d · ${formatHours(entry.setup.hoursPerDay || 0)}/day`
+      : null;
+    const payout = entry.payoutRange
+      ? `Est. $${formatMoney(entry.payoutRange.min || 0)}–$${formatMoney(entry.payoutRange.max || 0)}/day`
+      : null;
+    const readiness = entry.ready ? 'Ready to launch' : 'Prereqs pending';
+    const noteParts = [readiness, payout, setup].filter(Boolean).slice(0, 2);
+    return {
+      primary: entry.name || 'Asset',
+      value: formatCurrency(entry.cost || 0),
+      note: noteParts.join(' · ')
+    };
+  });
 
-      if (entry.type === 'commitment') {
-        const deadlineLabel = describeDeadlineLabel(entry.progress || entry);
-        const detailParts = [entry.meta || '', deadlineLabel].filter(Boolean);
-        note.textContent = detailParts.length ? detailParts.join(' • ') : 'Log hours from the Todo widget to progress.';
-        node.appendChild(note);
+  renderColumn('Upgrades', upgradeEntries, entry => {
+    let status = 'Requirements pending';
+    if (entry.purchased) {
+      status = 'Owned';
+    } else if (entry.ready) {
+      status = 'Affordable now';
+    } else if (!entry.affordable) {
+      status = 'Save to unlock';
+    }
+    return {
+      primary: entry.name || 'Upgrade',
+      value: formatCurrency(entry.cost || 0),
+      note: status
+    };
+  });
 
-        const timeline = createCommitmentTimeline(entry.progress || entry);
-        if (timeline) {
-          applyDeadlineTone(node, entry.progress || entry);
-          node.appendChild(timeline);
-        }
-      } else {
-        const requirements = entry.requirements || [];
-        const unmet = requirements.filter(req => !req.met).map(req => req.label);
-        const statusNotes = [];
-        if (entry.status === 'available') {
-          statusNotes.push('Ready to accept in the Hustles workspace.');
-        } else if (entry.status === 'upcoming') {
-          statusNotes.push(entry.availableInDays === 0
-            ? 'Unlocks later today.'
-            : `Unlocks in ${entry.availableInDays} day${entry.availableInDays === 1 ? '' : 's'}.`);
-        }
-        if (entry.remainingDays != null) {
-          statusNotes.push(`${entry.remainingDays} day${entry.remainingDays === 1 ? '' : 's'} on the table.`);
-          const remaining = Number(entry.remainingDays);
-          if (Number.isFinite(remaining)) {
-            if (remaining <= 1) {
-              node.classList.add('is-critical');
-            } else if (remaining <= 3) {
-              node.classList.add('is-warning');
-            }
-          }
-        }
-        if (unmet.length) {
-          statusNotes.push(`Needs: ${unmet.join(', ')}`);
-        }
-        note.textContent = statusNotes.length ? statusNotes.join(' ') : 'All requirements met. Lock it in!';
-        node.appendChild(note);
-      }
-    })
-  );
+  renderColumn('Hustles', hustleEntries, entry => {
+    const payout = Number(entry.payout) || 0;
+    const time = Number(entry.time) || 0;
+    const hourly = time > 0 ? `${formatMoney(Math.round((payout / time) * 100) / 100)} $/h` : '';
+    const status = entry.status === 'available'
+      ? 'Available now'
+      : entry.status === 'upcoming'
+        ? (entry.availableInDays === 0
+          ? 'Unlocks today'
+          : `Opens in ${entry.availableInDays}d`)
+        : (entry.type === 'commitment' ? 'Active commitment' : entry.status || 'Queued');
+    const noteParts = [status, hourly].filter(Boolean);
+    return {
+      primary: entry.name || 'Hustle',
+      value: formatCurrency(payout),
+      note: noteParts.join(' · ')
+    };
+  });
 
-  body.appendChild(container);
+  body.appendChild(matrix);
   return section;
 }
 
@@ -304,11 +317,14 @@ export default function renderFinance(context = {}, registries = {}, models = {}
   container.className = 'bankapp';
 
   if (model.header) {
-    container.appendChild(renderFinanceHeader(model.header));
+    const headerModel = {
+      ...model.header,
+      metaSummary: model.summary?.meta || ''
+    };
+    container.appendChild(renderFinanceHeader(headerModel));
   }
   container.appendChild(renderFinanceLedger(model.ledger || {}));
-  container.appendChild(renderFinanceObligations(model.obligations || {}));
-  container.appendChild(renderFinancePendingIncome(model.pendingIncome || []));
+  container.appendChild(renderFinanceObligations(model.obligations || {}, model.pendingIncome || []));
   container.appendChild(renderFinancePerformance(model.assetPerformance || []));
   container.appendChild(renderFinanceOpportunities(model.opportunities || {}));
   container.appendChild(renderFinanceEducation(model.education || []));
