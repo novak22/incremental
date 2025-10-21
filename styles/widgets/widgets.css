@@ -1802,68 +1802,6 @@
   color: var(--browser-subtle);
 }
 
-.bankapp-matrix {
-  display: grid;
-  gap: 0.9rem;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-}
-
-.bankapp-matrix__column {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.bankapp-matrix__column h3 {
-  margin: 0;
-  font-size: 1rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--browser-subtle);
-}
-
-.bankapp-matrix__list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-}
-
-.bankapp-matrix__item {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: baseline;
-  gap: 0.4rem;
-  padding: 0.6rem 0.75rem;
-  border: 1px solid var(--browser-panel-border);
-  border-radius: 10px;
-  background: var(--browser-panel-elevated);
-  font-size: 0.92rem;
-}
-
-.bankapp-matrix__item--empty {
-  justify-content: center;
-  color: var(--browser-muted);
-  font-style: italic;
-}
-
-.bankapp-matrix__label {
-  font-weight: 600;
-}
-
-.bankapp-matrix__value {
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-
-.bankapp-matrix__note {
-  grid-column: 1 / -1;
-  font-size: 0.78rem;
-  color: var(--browser-muted);
-}
-
 .bankapp-education__summary {
   display: flex;
   flex-direction: column;
