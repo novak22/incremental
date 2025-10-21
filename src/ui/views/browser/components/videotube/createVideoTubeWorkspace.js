@@ -14,14 +14,22 @@ import { createDashboardView } from './views/dashboardView.js';
 import { createDetailView } from './views/detailView.js';
 import { createCreateView } from './views/createView.js';
 import { createAnalyticsView } from './views/analyticsView.js';
+import { createUpgradesView } from './views/upgradesView.js';
+import { createPricingView } from './views/pricingView.js';
 
 const VIEW_DASHBOARD = 'dashboard';
 const VIEW_DETAIL = 'detail';
 const VIEW_CREATE = 'create';
 const VIEW_ANALYTICS = 'analytics';
+const VIEW_UPGRADES = 'upgrades';
+const VIEW_PRICING = 'pricing';
 
 function derivePath(state = {}) {
   switch (state.view) {
+    case VIEW_UPGRADES:
+      return 'upgrades';
+    case VIEW_PRICING:
+      return 'pricing';
     case VIEW_ANALYTICS:
       return 'analytics';
     case VIEW_DETAIL: {
@@ -46,6 +54,9 @@ const formatPercent = value =>
   });
 const formatNetCurrency = value =>
   baseFormatNetCurrency(value, { precision: 'integer', zeroDisplay: '$0' });
+
+const renderUpgradesView = createUpgradesView({ formatCurrency });
+const renderPricingView = createPricingView({ formatCurrency, formatHours });
 
 function ensureSelectedVideo(state = {}, model = {}) {
   const instances = Array.isArray(model.instances) ? model.instances : [];
@@ -149,6 +160,20 @@ const videoTubeWorkspaceRegistration = registerAssetWorkspace({
       id: VIEW_ANALYTICS,
       label: 'Channel Analytics',
       createView: () => createAnalyticsView({ formatCurrency })
+    },
+    {
+      id: VIEW_UPGRADES,
+      label: 'Studio Upgrades',
+      badge: ({ model }) => {
+        const ready = Number(model.upgrades?.overview?.ready || 0);
+        return ready > 0 ? ready : null;
+      },
+      render: context => renderUpgradesView(context)
+    },
+    {
+      id: VIEW_PRICING,
+      label: 'Pricing Guide',
+      render: context => renderPricingView(context)
     }
   ]
 });

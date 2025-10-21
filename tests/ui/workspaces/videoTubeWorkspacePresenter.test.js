@@ -7,6 +7,7 @@ test('createVideoTubeWorkspace wires table selection and actions', async t => {
   const qualityCalls = [];
   const renameCalls = [];
   const nicheCalls = [];
+  const upgradeCalls = [];
 
   const presenter = createVideoTubeWorkspace({
     performQualityAction: (...args) => {
@@ -93,7 +94,60 @@ test('createVideoTubeWorkspace wires table selection and actions', async t => {
         qualityLevel: 1,
         milestone: { percent: 0.1, summary: 'Pre-production' }
       }
-    ]
+    ],
+    upgrades: {
+      groups: [
+        {
+          id: 'camera',
+          title: 'Camera rigs',
+          note: 'Dial in your hero shots.',
+          icon: '🎥',
+          upgrades: [
+            {
+              id: 'cameraPro',
+              name: 'Cinema Camera Upgrade',
+              description: 'Stabilised mounts, premium glass, and cinematic flair.',
+              cost: 1200,
+              tag: { label: 'Gear' },
+              boosts: 'Boosts vlog payouts and doubles quality progress',
+              effects: { payout_mult: 1.25 },
+              snapshot: { ready: true, affordable: true, purchased: false },
+              status: 'Ready to launch',
+              action: {
+                onClick: () => {
+                  upgradeCalls.push('cameraPro');
+                }
+              }
+            }
+          ],
+          ready: 1,
+          owned: 0,
+          total: 1
+        }
+      ],
+      overview: { total: 1, purchased: 0, ready: 1, note: 'One upgrade is ready to install today.' }
+    },
+    pricing: {
+      summary: 'Quality levels unlock brighter sponsors and bonus payouts.',
+      setup: { cost: 120, days: 3, hoursPerDay: 4 },
+      maintenance: { hasUpkeep: true, text: '$40/day • 2h/day' },
+      levels: [
+        { level: 0, name: 'Camera Shy', description: 'Testing the waters with early uploads.', income: { min: 40, max: 80 } },
+        { level: 3, name: 'Algorithm Darling', description: 'Trending launches and sponsor suites.', income: { min: 220, max: 360 } }
+      ],
+      actions: [
+        { id: 'shootEpisode', label: 'Film Episode', time: 5, cost: 0 },
+        { id: 'polishEdit', label: 'Polish Edit', time: 2.5, cost: 24 }
+      ],
+      gearHighlights: [
+        { id: 'cameraPro', name: 'Cinema Camera Upgrade', familyTitle: 'Camera rigs', cost: 1200 }
+      ],
+      topNiches: [
+        { id: 'tech', name: 'Tech Gurus', label: 'Hot', summary: 'Gadgets trending' },
+        { id: 'food', name: 'Foodies', label: 'Steady', summary: 'Comfort food favorites' }
+      ],
+      nicheCount: 4
+    }
   };
 
   const mount = dom.window.document.getElementById('mount');
@@ -112,10 +166,10 @@ test('createVideoTubeWorkspace wires table selection and actions', async t => {
   );
 
   const navButtons = [...mount.querySelectorAll('.videotube-tab')];
-  assert.equal(navButtons.length, 3, 'nav renders dashboard, detail, and analytics views');
+  assert.equal(navButtons.length, 5, 'nav renders dashboard, detail, analytics, upgrades, and pricing views');
   assert.deepEqual(
     navButtons.map(button => button.dataset.view),
-    ['dashboard', 'detail', 'analytics'],
+    ['dashboard', 'detail', 'analytics', 'upgrades', 'pricing'],
     'nav buttons should advertise matching view ids'
   );
 
@@ -166,4 +220,22 @@ test('createVideoTubeWorkspace wires table selection and actions', async t => {
   nicheSelect.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
   assert.equal(nicheCalls.length, 1, 'niche selection notifies cards model');
   assert.deepEqual(nicheCalls[0], ['vlog', 'vid-1', 'tech']);
+
+  presenter.setView('upgrades');
+  const upgradesView = mount.querySelector('.videotube-view--upgrades');
+  assert.ok(upgradesView, 'upgrades view renders after switching tabs');
+  const installButton = upgradesView.querySelector('.videotube-upgrade__button');
+  assert.ok(installButton, 'upgrade install button renders');
+  installButton.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
+  assert.equal(upgradeCalls.length, 1, 'upgrade purchase triggers upgrade action');
+  assert.equal(upgradeCalls[0], 'cameraPro');
+
+  presenter.setView('pricing');
+  const pricingView = mount.querySelector('.videotube-view--pricing');
+  assert.ok(pricingView, 'pricing view renders after switching tabs');
+  const planCards = pricingView.querySelectorAll('.videotube-plan');
+  assert.ok(planCards.length >= 2, 'pricing view lists quality tier cards');
+  const actionMeta = pricingView.querySelector('.videotube-pricing__action-value');
+  assert.ok(actionMeta, 'pricing view shows quality action details');
+  assert.match(actionMeta.textContent, /\$|Instant|h/, 'action meta includes formatted time or cost details');
 });
