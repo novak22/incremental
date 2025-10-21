@@ -10,7 +10,7 @@ const power = [
     description: 'Battery backups and surge protection that keep the studio live during outages.',
     category: 'tech',
     family: 'power_backup',
-    placements: ['general', 'blogpress', 'videotube'],
+    placements: ['general'],
     cost: backupPowerArrayConfig.cost, // Spec: docs/normalized_economy.json → upgrades.backupPowerArray.setup_cost
     effects: { maint_time_mult: 0.95 },
     affects: {

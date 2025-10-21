@@ -144,7 +144,7 @@ export function createUpgradesView({ formatCurrency = value => String(value ?? '
     const blurb = document.createElement('p');
     blurb.className = 'videotube-upgrades__summary';
     blurb.textContent = model.upgrades?.overview?.note
-      || 'Unlock new gear to keep episodes bright, crisp, and bingeable.';
+      || 'Unlock new services to keep episodes bright, crisp, and bingeable.';
     const counts = document.createElement('p');
     counts.className = 'videotube-upgrades__meta';
     counts.textContent = formatOverviewCounts(model.upgrades?.overview);
@@ -181,7 +181,7 @@ export function createUpgradesView({ formatCurrency = value => String(value ?? '
       name.textContent = group.title || 'Upgrade group';
       const note = document.createElement('p');
       note.className = 'videotube-upgrades__note';
-      note.textContent = group.note || 'Gear that keeps creators in flow.';
+      note.textContent = group.note || 'Studio boosts that keep creators in flow.';
       heading.append(name, note);
       header.appendChild(heading);
 

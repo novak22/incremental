@@ -10,7 +10,7 @@ const audio = [
     description: 'Treat the studio with acoustic foam, preamps, and mastering plug-ins.',
     category: 'tech',
     family: 'audio',
-    placements: ['general', 'videotube'],
+    placements: ['general'],
     cost: audioSuiteConfig.cost, // Spec: docs/normalized_economy.json → upgrades.audioSuite.setup_cost
     effects: { quality_progress_mult: 1.4 },
     affects: {

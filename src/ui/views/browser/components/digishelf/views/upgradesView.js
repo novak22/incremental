@@ -126,7 +126,7 @@ export default function renderUpgradesView(options = {}) {
 
   const intro = document.createElement('div');
   intro.className = 'digishelf-upgrade-view__intro';
-  intro.innerHTML = '<h2>Creative toolkit upgrades</h2><p>Outfit your shelves with studio gear, rigs, and automation boosts that keep production flowing.</p>';
+  intro.innerHTML = '<h2>Creative toolkit upgrades</h2><p>Line your shelves with digital services, automation perks, and creative boosts that keep production flowing.</p>';
   wrapper.appendChild(intro);
 
   wrapper.appendChild(
@@ -155,7 +155,7 @@ export default function renderUpgradesView(options = {}) {
   if (!totalCount) {
     summary.textContent = 'No DigiShelf upgrades unlocked yet. Launch a resource to reveal new studio boosts.';
   } else if (ownedCount === 0) {
-    summary.textContent = 'No upgrades installed yet. Save up and grab gear when you see the Ready badge.';
+    summary.textContent = 'No upgrades installed yet. Save up and activate boosts when you see the Ready badge.';
   } else if (ownedCount === totalCount) {
     summary.textContent = 'Every upgrade is live! Keep stacking cash for the next content drop.';
   } else {
@@ -169,7 +169,7 @@ export default function renderUpgradesView(options = {}) {
   if (!totalCount) {
     const empty = document.createElement('p');
     empty.className = 'digishelf-empty';
-    empty.textContent = 'No DigiShelf upgrades unlocked yet. Publish more resources to reveal gear, storage, and automation.';
+    empty.textContent = 'No DigiShelf upgrades unlocked yet. Publish more resources to reveal new services and automation.';
     list.appendChild(empty);
   } else {
     upgrades.forEach(upgrade => {

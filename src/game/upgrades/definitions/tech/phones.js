@@ -13,7 +13,7 @@ const phones = [
     category: 'tech',
     family: 'phone',
     exclusivityGroup: 'tech:phone',
-    placements: ['general', 'videotube'],
+    placements: ['general'],
     cost: creatorPhoneConfig.cost, // Spec: docs/normalized_economy.json → upgrades.creatorPhone.setup_cost
     effects: { setup_time_mult: 0.95 },
     affects: {
@@ -33,7 +33,7 @@ const phones = [
     category: 'tech',
     family: 'phone',
     exclusivityGroup: 'tech:phone',
-    placements: ['general', 'videotube'],
+    placements: ['general'],
     cost: creatorPhoneProConfig.cost, // Spec: docs/normalized_economy.json → upgrades.creatorPhonePro.setup_cost
     requires: creatorPhoneProConfig.requires, // Spec: docs/normalized_economy.json → upgrades.creatorPhonePro.requirements
     effects: { setup_time_mult: 0.85, payout_mult: 1.05 },
@@ -56,7 +56,7 @@ const phones = [
     category: 'tech',
     family: 'phone',
     exclusivityGroup: 'tech:phone',
-    placements: ['general', 'videotube'],
+    placements: ['general'],
     cost: creatorPhoneUltraConfig.cost, // Spec: docs/normalized_economy.json → upgrades.creatorPhoneUltra.setup_cost
     requires: creatorPhoneUltraConfig.requires, // Spec: docs/normalized_economy.json → upgrades.creatorPhoneUltra.requirements
     effects: { setup_time_mult: 0.8, payout_mult: 1.08 },

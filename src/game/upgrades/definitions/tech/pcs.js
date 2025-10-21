@@ -13,7 +13,7 @@ const pcs = [
     category: 'tech',
     family: 'pc',
     exclusivityGroup: 'tech:pc',
-    placements: ['general', 'blogpress', 'videotube'],
+    placements: ['general'],
     cost: studioLaptopConfig.cost, // Spec: docs/normalized_economy.json → upgrades.studioLaptop.setup_cost
     effects: { setup_time_mult: 0.92 },
     affects: {
@@ -33,7 +33,7 @@ const pcs = [
     category: 'tech',
     family: 'pc',
     exclusivityGroup: 'tech:pc',
-    placements: ['general', 'blogpress', 'videotube'],
+    placements: ['general'],
     cost: editingWorkstationConfig.cost, // Spec: docs/normalized_economy.json → upgrades.editingWorkstation.setup_cost
     requires: editingWorkstationConfig.requires, // Spec: docs/normalized_economy.json → upgrades.editingWorkstation.requirements
     effects: { setup_time_mult: 0.85, maint_time_mult: 0.9 },
@@ -55,7 +55,7 @@ const pcs = [
     category: 'tech',
     family: 'pc',
     exclusivityGroup: 'tech:pc',
-    placements: ['general', 'blogpress', 'serverhub', 'videotube'],
+    placements: ['general'],
     cost: quantumRigConfig.cost, // Spec: docs/normalized_economy.json → upgrades.quantumRig.setup_cost
     requires: quantumRigConfig.requires, // Spec: docs/normalized_economy.json → upgrades.quantumRig.requirements
     effects: { payout_mult: 1.12, maint_time_mult: 0.85 },

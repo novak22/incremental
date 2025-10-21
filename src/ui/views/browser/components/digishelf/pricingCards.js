@@ -69,10 +69,10 @@ export default function renderPricingCards(options = {}) {
     const education = ensureArray(plan.education).length
       ? `Requires courses: ${plan.education.join(', ')}`
       : 'No courses required';
-    const equipment = ensureArray(plan.equipment).length
-      ? `Gear: ${plan.equipment.join(', ')}`
-      : 'Starter gear only';
-    requirements.textContent = `${education} • ${equipment}`;
+    const toolkit = ensureArray(plan.equipment).length
+      ? `Toolkit: ${plan.equipment.join(', ')}`
+      : 'No extra tools required';
+    requirements.textContent = `${education} • ${toolkit}`;
 
     const cta = document.createElement('button');
     cta.type = 'button';

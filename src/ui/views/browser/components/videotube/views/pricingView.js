@@ -55,7 +55,7 @@ function buildGearList(gear = [], formatCurrency) {
   if (!gear.length) {
     const empty = document.createElement('p');
     empty.className = 'videotube-pricing__empty';
-    empty.textContent = 'Gear highlights unlock once you uncover more studio upgrades.';
+    empty.textContent = 'Upgrade highlights unlock once you uncover more studio boosts.';
     return empty;
   }
   const list = document.createElement('ul');
@@ -65,7 +65,7 @@ function buildGearList(gear = [], formatCurrency) {
     item.className = 'videotube-pricing__gear-item';
     const label = document.createElement('span');
     label.className = 'videotube-pricing__gear-label';
-    label.textContent = `${entry.familyTitle || 'Gear'} — ${entry.name}`;
+    label.textContent = `${entry.familyTitle || 'Upgrade'} — ${entry.name}`;
     const value = document.createElement('span');
     value.className = 'videotube-pricing__gear-value';
     value.textContent = formatCurrency(entry.cost || 0);
@@ -149,7 +149,7 @@ export function createPricingView({ formatCurrency = value => String(value ?? ''
     const gearSection = document.createElement('article');
     gearSection.className = 'videotube-panel videotube-pricing__section';
     const gearTitle = document.createElement('h3');
-    gearTitle.textContent = 'Gear highlights';
+    gearTitle.textContent = 'Upgrade highlights';
     gearSection.appendChild(gearTitle);
     gearSection.appendChild(buildGearList(ensureArray(pricing.gearHighlights), formatCurrency));
     container.appendChild(gearSection);
