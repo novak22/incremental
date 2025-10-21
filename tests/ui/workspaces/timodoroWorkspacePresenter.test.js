@@ -72,7 +72,7 @@ test('buildTodoGroups normalizes queue entries via shared builder', () => {
   assert.ok(detail.includes('2h'), 'detail includes normalized duration');
 });
 
-test('timodoro component renders layout and populates lists', t => {
+test('timodoro component renders flow workspace and pulse stack', t => {
   const dom = withDom(t);
   const { document } = dom.window;
 
@@ -105,7 +105,7 @@ test('timodoro component renders layout and populates lists', t => {
       }
     ],
     todoEmptyMessage: 'Queue a hustle or upgrade to add new tasks.',
-    todoHoursAvailable: 2,
+    todoHoursAvailable: 4,
     completedGroups: {
       hustles: [{ name: 'Logo sprint', detail: '2h logged' }],
       education: [],
@@ -122,88 +122,93 @@ test('timodoro component renders layout and populates lists', t => {
     ],
     hoursAvailableLabel: '4h',
     hoursSpentLabel: '2h',
-    recurringEmpty: 'No upkeep logged yet. Assistants will report here.'
+    recurringEmpty: 'No upkeep logged yet. Assistants will report here.',
+    totalWins: 1,
+    focusStreakDays: 3
   };
 
   const summary = timodoroApp.render(viewModel, { mount });
 
   assert.equal(summary.meta, viewModel.meta, 'render returns view model meta');
-  assert.equal(mount.className, 'timodoro', 'mount receives root class');
+  assert.equal(mount.className, 'timodoro timodoro--flow', 'mount receives flow root classes');
 
-  const activeTodoPanel = mount.querySelector('[data-tab="todo"]');
-  const tabs = [...(activeTodoPanel?.querySelectorAll('.timodoro-tabs__button') ?? [])];
-  assert.equal(tabs.length, 2, 'two navigation tabs rendered in active panel');
-  assert.ok(tabs[0].classList.contains('is-active'), 'TODO tab active by default');
+  const timeline = mount.querySelector('.timodoro-canvas');
+  assert.ok(timeline, 'timeline canvas rendered');
+  const capsules = [...mount.querySelectorAll('.timodoro-capsule')];
+  assert.ok(capsules.length >= 1, 'timeline capsules rendered');
 
-  const todoItems = [
-    ...mount.querySelectorAll('[data-role="timodoro-todo-hustle"] .timodoro-list__item')
+  const flowGroups = [...mount.querySelectorAll('.timodoro-flow__group')]
+    .map(group => group.dataset.group);
+  assert.deepEqual(flowGroups, ['hustle', 'upgrade', 'study', 'other'], 'focus lanes rendered');
+
+  const hustleItems = [
+    ...mount.querySelectorAll('[data-group="hustle"] .timodoro-flow-item')
   ];
-  assert.equal(todoItems.length, 1, 'todo tab renders active backlog');
-  assert.equal(todoItems[0].querySelector('.timodoro-list__name')?.textContent, 'Draft pitch deck');
+  assert.equal(hustleItems.length, 1, 'hustle lane renders available work');
   assert.equal(
-    todoItems.find(item => item.querySelector('.timodoro-list__name')?.textContent === 'Overbooked sprint'),
-    undefined,
-    'filters out tasks exceeding available focus hours'
+    hustleItems[0].querySelector('.timodoro-flow-item__name')?.textContent,
+    'Draft pitch deck'
   );
   assert.ok(
-    todoItems[0].querySelector('.timodoro-list__meta')?.textContent.includes('Cost $120'),
-    'todo item includes cost detail'
+    hustleItems[0].querySelector('.timodoro-flow-item__detail')?.textContent.includes('Cost $120'),
+    'hustle detail includes cost meta'
   );
 
   const studyItems = [
-    ...mount.querySelectorAll('[data-role="timodoro-todo-study"] .timodoro-list__item')
+    ...mount.querySelectorAll('[data-group="study"] .timodoro-flow-item')
   ];
-  assert.equal(studyItems.length, 1, 'study bucket renders education entry');
-  assert.equal(studyItems[0].querySelector('.timodoro-list__name')?.textContent, 'Research module');
+  assert.equal(studyItems.length, 1, 'study lane renders education entry');
+  assert.equal(
+    studyItems[0].querySelector('.timodoro-flow-item__name')?.textContent,
+    'Research module'
+  );
+
+  const filtered = mount
+    .querySelector('[data-group="hustle"]')
+    ?.textContent.includes('Overbooked sprint');
+  assert.equal(filtered, false, 'filters out tasks exceeding available focus hours');
 
   const upgradeEmpty = mount
-    .querySelector('[data-role="timodoro-todo-upgrade"] .timodoro-list__empty');
+    .querySelector('[data-group="upgrade"] .timodoro-flow__empty');
   assert.ok(upgradeEmpty, 'upgrade lane renders empty state');
   assert.equal(upgradeEmpty.textContent, 'Queue an upgrade to keep momentum.');
 
-  tabs[1].click();
+  const celebration = mount.querySelector('.timodoro-workspace__celebration');
+  assert.ok(celebration, 'workspace celebrates logged wins');
+  assert.ok(/Nice run/i.test(celebration.textContent));
 
-  const available = mount.querySelector('[data-role="timodoro-hours-available"]');
-  const spent = mount.querySelector('[data-role="timodoro-hours-spent"]');
-  assert.equal(available?.textContent, '4h', 'available hours should update');
-  assert.equal(spent?.textContent, '2h', 'spent hours should update');
+  const fuelGauge = mount
+    .querySelector('[data-role="timodoro-fuel-gauge"] .timodoro-gauge__value');
+  assert.equal(fuelGauge?.textContent, '4h', 'fuel gauge reflects hours available');
 
-  const todoPanel = mount.querySelector('[data-tab="todo"]');
-  const donePanel = mount.querySelector('[data-tab="done"]');
-  assert.equal(todoPanel?.hidden, true, 'todo tab hides when done selected');
-  assert.equal(donePanel?.hidden, false, 'done tab becomes visible after selecting it');
+  const focusGauge = mount
+    .querySelector('[data-role="timodoro-focus-gauge"] .timodoro-gauge__value');
+  assert.equal(focusGauge?.textContent, '2h', 'focus gauge reflects hours spent');
 
-  const hustleItems = [
-    ...mount.querySelectorAll('[data-role="timodoro-completed-hustles"] .timodoro-list__item')
-  ];
-  assert.equal(hustleItems.length, 1, 'hustle list renders completed task');
-  assert.equal(hustleItems[0].querySelector('.timodoro-list__name')?.textContent, 'Logo sprint');
+  const sentiment = mount.querySelector('.timodoro-pulse-panel__sentiment');
+  assert.ok(sentiment, 'sentiment line rendered');
+  assert.ok(sentiment.textContent.length > 0, 'sentiment communicates streak context');
 
-  const educationEmpty = mount
-    .querySelector('[data-role="timodoro-completed-education"] .timodoro-list__empty');
-  assert.ok(educationEmpty, 'education bucket renders empty state');
-  assert.equal(educationEmpty.textContent, 'No study blocks logged yet.');
-
-  const recurringEmpty = mount.querySelector('[data-role="timodoro-recurring"] .timodoro-list__empty');
-  assert.ok(recurringEmpty, 'recurring list renders empty state');
-  assert.equal(recurringEmpty.textContent, 'No upkeep logged yet. Assistants will report here.');
-
-  const summaryItems = [
-    ...mount.querySelectorAll('[data-role="timodoro-stats"] .timodoro-stats__item')
-  ];
-  assert.equal(summaryItems.length, 1, 'summary list renders stats entries');
-  assert.equal(summaryItems[0].querySelector('.timodoro-stats__label')?.textContent, 'Hours logged');
+  const reflection = mount.querySelector('.timodoro-reflection__copy');
+  assert.ok(reflection, 'reflection prompt rendered');
+  assert.ok(reflection.textContent.includes('emoji'), 'reflection copy encourages journaling');
 });
 
-test('timodoro tabs follow workspace navigation path updates', async t => {
+test('timeline merges completed history with queued focus', t => {
   const dom = withDom(t);
-  const context = createContext(dom.window.document);
+  const { document } = dom.window;
+
+  const mount = document.createElement('div');
+  mount.dataset.role = 'timodoro-root';
+  document.body.appendChild(mount);
 
   const viewModel = {
     meta: 'Focus mode ready',
-    todoEntries: [],
+    todoEntries: [
+      { title: 'Next sprint', durationHours: 1, durationText: '1h focus', focusCategory: 'hustle' }
+    ],
     completedGroups: {
-      hustles: [],
+      hustles: [{ name: 'Morning warm-up', detail: '1h logged' }],
       education: [],
       upkeep: [],
       upgrades: []
@@ -211,41 +216,27 @@ test('timodoro tabs follow workspace navigation path updates', async t => {
     recurringEntries: [],
     summaryEntries: [],
     breakdownEntries: [],
-    hoursAvailableLabel: '0h',
-    hoursSpentLabel: '0h'
+    hoursAvailableLabel: '1h',
+    hoursSpentLabel: '1h',
+    timelineCompletedEntries: [
+      {
+        id: 'completed-1',
+        title: 'Morning warm-up',
+        durationHours: 1,
+        durationText: '1h',
+        completedAt: Date.now() - 30 * 60 * 1000,
+        focusCategory: 'hustle'
+      }
+    ]
   };
 
-  renderTimodoro(context, [], { timodoro: viewModel });
+  timodoroApp.render(viewModel, { mount });
 
-  const mount = dom.window.document.querySelector('[data-role="timodoro-root"]');
-  assert.ok(mount, 'mount should be available after render');
-
-  const pageElement = mount?.closest('[data-browser-page]');
-  assert.ok(pageElement, 'page element should wrap mount');
-
-  const todoPanel = mount?.querySelector('[data-tab="todo"]');
-  const donePanel = mount?.querySelector('[data-tab="done"]');
-
-  assert.equal(todoPanel?.hidden, false, 'todo panel visible by default');
-  assert.equal(donePanel?.hidden, true, 'done panel hidden by default');
-
-  pageElement.dataset.browserPath = 'done';
-  await new Promise(resolve => setTimeout(resolve, 0));
-
-  assert.equal(todoPanel?.hidden, true, 'todo panel hides after switching to done');
-  assert.equal(donePanel?.hidden, false, 'done panel shows after switching to done');
-
-  pageElement.dataset.browserPath = 'todo';
-  await new Promise(resolve => setTimeout(resolve, 0));
-
-  assert.equal(todoPanel?.hidden, false, 'todo panel reappears when switching back');
-  assert.equal(donePanel?.hidden, true, 'done panel hides when switching back to todo');
-
-  pageElement.dataset.browserPath = 'mystery';
-  await new Promise(resolve => setTimeout(resolve, 0));
-
-  assert.equal(todoPanel?.hidden, false, 'unknown path defaults to todo panel');
-  assert.equal(donePanel?.hidden, true, 'done panel hides for unknown path');
+  const capsules = [...mount.querySelectorAll('.timodoro-capsule')];
+  assert.equal(capsules.length, 2, 'timeline merges completed and upcoming capsules');
+  const statuses = capsules.map(capsule => capsule.dataset.status);
+  assert.ok(statuses.includes('completed'), 'includes completed capsule');
+  assert.ok(statuses.includes('active') || statuses.includes('upcoming'), 'includes upcoming capsule');
 });
 
 test('renderTimodoro returns page summary using workspace renderer', t => {
@@ -267,10 +258,11 @@ test('renderTimodoro returns page summary using workspace renderer', t => {
   assert.ok(summary, 'summary is returned');
   assert.equal(summary.id, 'timodoro', 'summary includes timodoro page id');
   assert.equal(summary.meta, 'Focus mode ready', 'meta comes from provided view model');
+  assert.equal(summary.urlPath, 'flow', 'workspace encodes single flow route');
 
   const mount = dom.window.document.querySelector('[data-role="timodoro-root"]');
   assert.ok(mount, 'workspace mount is created');
-  assert.equal(mount.className, 'timodoro', 'workspace renderer assigns root class');
+  assert.equal(mount.className, 'timodoro timodoro--flow', 'workspace renderer assigns flow classes');
 });
 
 test('buildTimodoroViewModel composes summary, recurring, and meta data', () => {

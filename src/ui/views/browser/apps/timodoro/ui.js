@@ -1,319 +1,363 @@
-import { appendContent } from '../../components/common/domHelpers.js';
-import { getWorkspacePath } from '../../layout/workspaces.js';
-import { createCard } from './components/card.js';
-import { createCompletedSection } from './sections/completedSection.js';
-import { buildTimelineModel, renderTimeline, teardownTimeline } from '../../widgets/todoTimeline.js';
-import { buildTodoGroups, createTodoCard } from './sections/todoSection.js';
-import { createRecurringCard } from './sections/recurringSection.js';
-import { createSummaryColumn } from './sections/summarySection.js';
+import { buildQueueEntryModel } from '../../../../actions/models.js';
+import { createDailyPulsePanel } from './sections/summarySection.js';
+import { createFocusWorkspace, buildTodoGroups } from './sections/todoSection.js';
 
-const tabObserverMap = new WeakMap();
+const animationLoopMap = new WeakMap();
+const DAY_IN_MS = 24 * 60 * 60 * 1000;
+const TOTAL_MINUTES = 24 * 60;
 
-const TAB_CONFIGS = [
-  { key: 'todo', label: 'ToDo', buttonId: 'timodoro-tab-todo', panelId: 'timodoro-tabpanel-todo' },
-  { key: 'done', label: 'Done', buttonId: 'timodoro-tab-done', panelId: 'timodoro-tabpanel-done' }
-];
-
-const DEFAULT_TAB_KEY = TAB_CONFIGS[0].key;
-
-function getTabConfig(key) {
-  return TAB_CONFIGS.find(config => config.key === key) || null;
-}
-
-function normalizeTabKey(key) {
-  const config = getTabConfig(key);
-  return config ? config.key : DEFAULT_TAB_KEY;
-}
-
-function deriveTabFromPath(path = '') {
-  if (!path) {
-    return DEFAULT_TAB_KEY;
-  }
-  const [segment] = String(path)
-    .split('/')
-    .filter(Boolean);
-  return normalizeTabKey(segment);
-}
-
-function buildTabPath(key) {
-  return normalizeTabKey(key);
-}
-
-function syncTabFromPath(tabs, path) {
-  if (!tabs || typeof tabs.activate !== 'function') {
+function stopAnalogLoop(target) {
+  if (!target) {
     return;
   }
-  const nextTab = deriveTabFromPath(path);
-  tabs.activate(nextTab, { notify: false });
+  const cancel = animationLoopMap.get(target);
+  if (typeof cancel === 'function') {
+    cancel();
+  }
+  animationLoopMap.delete(target);
 }
 
-function observePagePath(mount, tabs) {
-  if (!mount || !tabs || typeof MutationObserver !== 'function') {
-    return;
-  }
+function formatTimeLabelFromMinutes(minutes) {
+  const total = Math.max(0, Math.round(minutes));
+  const hours24 = Math.floor(total / 60);
+  const mins = total % 60;
+  const suffix = hours24 >= 12 ? 'PM' : 'AM';
+  const hours12 = ((hours24 + 11) % 12) + 1;
+  return `${hours12}:${mins.toString().padStart(2, '0')} ${suffix}`;
+}
 
-  const existing = tabObserverMap.get(mount);
-  if (existing) {
-    existing.disconnect?.();
-    tabObserverMap.delete(mount);
+function toTimestamp(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) {
+    return null;
   }
-
-  const pageElement = mount.closest('[data-browser-page]');
-  if (!pageElement) {
-    return;
+  if (numeric > 1e12) {
+    return numeric;
   }
+  if (numeric > 1e9) {
+    return Math.round(numeric * 1000);
+  }
+  return null;
+}
 
-  const observer = new MutationObserver(mutations => {
-    for (const mutation of mutations) {
-      if (mutation.type === 'attributes' && mutation.attributeName === 'data-browser-path') {
-        syncTabFromPath(tabs, pageElement.dataset.browserPath || '');
+function normalizeDurationMinutes(entry, fallbackMinutes = 30) {
+  const durationHours = Number(entry?.durationHours);
+  if (Number.isFinite(durationHours) && durationHours > 0) {
+    return Math.max(fallbackMinutes, Math.round(durationHours * 60));
+  }
+  if (typeof entry?.durationText === 'string') {
+    const match = entry.durationText.match(/(\d+(?:\.\d+)?)\s*h/);
+    if (match) {
+      const hours = Number(match[1]);
+      if (Number.isFinite(hours) && hours > 0) {
+        return Math.max(fallbackMinutes, Math.round(hours * 60));
       }
     }
-  });
-
-  try {
-    observer.observe(pageElement, { attributes: true, attributeFilter: ['data-browser-path'] });
-    tabObserverMap.set(mount, observer);
-  } catch (error) {
-    observer.disconnect();
-    return;
   }
-
-  syncTabFromPath(tabs, pageElement.dataset.browserPath || '');
+  return fallbackMinutes;
 }
 
-function createTodoPanel(model = {}, config = TAB_CONFIGS[0], options = {}) {
-  const { navigation, labelId, todoGroups } = options;
-  const panel = document.createElement('div');
-  panel.className = 'timodoro-tabs__panel';
-  panel.dataset.tab = config.key;
-  panel.id = config.panelId;
-  panel.hidden = true;
-  panel.setAttribute('aria-hidden', 'true');
-  panel.setAttribute('role', 'tabpanel');
-  panel.setAttribute('aria-labelledby', labelId || config.buttonId);
+function buildTimelineData(model = {}, todoGroups = {}) {
+  const now = new Date();
+  const startOfDay = new Date(now);
+  startOfDay.setHours(0, 0, 0, 0);
+  const startMs = startOfDay.getTime();
+  const endMs = startMs + DAY_IN_MS;
 
-  panel.appendChild(createTodoCard(model, { navigation, todoGroups }));
-  return panel;
-}
+  const capsules = [];
 
-function createDonePanel(model = {}, config = TAB_CONFIGS[1], options = {}) {
-  const { navigation, labelId } = options;
-  const panel = document.createElement('div');
-  panel.className = 'timodoro-tabs__panel';
-  panel.dataset.tab = config.key;
-  panel.id = config.panelId;
-  panel.hidden = true;
-  panel.setAttribute('aria-hidden', 'true');
-  panel.setAttribute('role', 'tabpanel');
-  panel.setAttribute('aria-labelledby', labelId || config.buttonId);
-
-  const taskCard = createCard({
-    title: 'Wins logged',
-    summary: 'Celebrate freshly cleared focus blocks.',
-    headerClass: navigation ? 'browser-card__header--stacked' : undefined,
-    headerContent: navigation || null
-  });
-  taskCard.appendChild(createCompletedSection(model.completedGroups));
-
-  panel.append(taskCard, createRecurringCard(model));
-  return panel;
-}
-
-function createTimelineCard(model = {}, options = {}) {
-  const { pendingEntries = [], onRun } = options;
-  const card = createCard({
-    title: 'Daily timeline',
-    summary: 'Map today’s hustle arc from warm-up to wrap-up.'
-  });
-  card.classList.add('timodoro-timeline-card');
-
-  const container = document.createElement('div');
-  container.className = 'todo-widget__timeline';
-  container.dataset.role = 'timodoro-timeline';
-  container.setAttribute('aria-label', 'Daily flow timeline');
-
-  const timelineModel = buildTimelineModel({
-    viewModel: { hoursSpent: model?.hoursSpent },
-    pendingEntries,
-    completedEntries: Array.isArray(model?.timelineCompletedEntries)
-      ? model.timelineCompletedEntries
-      : [],
-    now: new Date()
-  });
-
-  const runHandler = typeof onRun === 'function'
-    ? onRun
-    : entry => {
-        if (entry && typeof entry.onClick === 'function') {
-          entry.onClick();
-        }
-      };
-
-  renderTimeline(container, timelineModel, {
-    onRun: runHandler
-  });
-
-  card.appendChild(container);
-  return card;
-}
-
-function createTabButton(config, onSelect, options = {}) {
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.className = 'timodoro-tabs__button';
-  const buttonId = options.id || config.buttonId;
-  if (buttonId) {
-    button.id = buttonId;
-  }
-  button.setAttribute('role', 'tab');
-  button.setAttribute('aria-controls', config.panelId);
-  button.setAttribute('aria-selected', 'false');
-  button.tabIndex = -1;
-  appendContent(button, config.label);
-  button.addEventListener('click', () => onSelect(config.key));
-  return button;
-}
-
-function createTabs(model = {}, options = {}) {
-  const { initialTab = DEFAULT_TAB_KEY, onSelect, todoGroups } = options;
-
-  const wrapper = document.createElement('section');
-  wrapper.className = 'timodoro-tabs';
-
-  const panels = document.createElement('div');
-  panels.className = 'timodoro-tabs__panels';
-
-  const panelRefs = new Map();
-  const navigationSets = [];
-
-  let currentTab = null;
-  let activateTab;
-
-  const notifySelect = key => {
-    if (typeof onSelect === 'function') {
-      onSelect(key);
+  const completed = Array.isArray(model?.timelineCompletedEntries)
+    ? [...model.timelineCompletedEntries]
+    : [];
+  completed.sort((a, b) => {
+    const timeA = Number(a?.completedAt);
+    const timeB = Number(b?.completedAt);
+    if (Number.isFinite(timeA) && Number.isFinite(timeB)) {
+      return timeA - timeB;
     }
-  };
+    if (Number.isFinite(timeA)) return -1;
+    if (Number.isFinite(timeB)) return 1;
+    return 0;
+  });
 
-  const registerNavigation = buttons => {
-    if (buttons instanceof Map) {
-      navigationSets.push(buttons);
-    }
-  };
+  let pointerMs = startMs;
 
-  const setButtonState = (button, active) => {
-    if (!button) {
+  completed.forEach(entry => {
+    if (!entry) {
       return;
     }
-    button.classList.toggle('is-active', active);
-    button.setAttribute('aria-selected', active ? 'true' : 'false');
-    button.tabIndex = active ? 0 : -1;
-  };
+    const durationMinutes = normalizeDurationMinutes(entry, 25);
+    let end = toTimestamp(entry.completedAt);
+    if (!Number.isFinite(end)) {
+      end = pointerMs + durationMinutes * 60 * 1000;
+    }
+    let start = end - durationMinutes * 60 * 1000;
+    if (!Number.isFinite(start)) {
+      start = pointerMs;
+    }
+    start = Math.max(start, startMs);
+    end = Math.min(Math.max(end, start + 15 * 60 * 1000), endMs);
+    pointerMs = Math.max(pointerMs, end);
 
-  const updateNavigationState = targetKey => {
-    navigationSets.forEach(buttons => {
-      buttons.forEach((button, tabKey) => {
-        setButtonState(button, tabKey === targetKey);
-      });
+    const startMinutes = Math.max(0, Math.round((start - startMs) / 60000));
+    const endMinutes = Math.max(startMinutes + 15, Math.round((end - startMs) / 60000));
+
+    capsules.push({
+      id: entry.id || `completed:${capsules.length}`,
+      title: entry.title || 'Completed focus block',
+      status: 'completed',
+      startMinutes,
+      endMinutes,
+      durationMinutes,
+      entry
     });
-  };
-
-  const handleButtonSelect = key => {
-    if (typeof activateTab === 'function') {
-      activateTab(key);
-    }
-  };
-
-  const buildButtonId = (config, suffix) => {
-    if (!config || !config.buttonId) {
-      return config?.buttonId;
-    }
-    return suffix ? `${config.buttonId}-${suffix}` : config.buttonId;
-  };
-
-  const buildNavigation = (idSuffix, extraClassName) => {
-    const nav = document.createElement('div');
-    nav.className = ['timodoro-tabs__nav', extraClassName].filter(Boolean).join(' ');
-    nav.setAttribute('role', 'tablist');
-
-    const buttons = new Map();
-
-    TAB_CONFIGS.forEach(config => {
-      const buttonId = buildButtonId(config, idSuffix);
-      const button = createTabButton(config, handleButtonSelect, { id: buttonId });
-      buttons.set(config.key, button);
-      nav.appendChild(button);
-    });
-
-    registerNavigation(buttons);
-
-    return { nav, buttons };
-  };
-
-  activateTab = (key, { notify = true } = {}) => {
-    const targetKey = normalizeTabKey(key);
-    if (currentTab === targetKey && notify) {
-      notifySelect(targetKey);
-      return currentTab;
-    }
-
-    updateNavigationState(targetKey);
-
-    panelRefs.forEach((panel, tabKey) => {
-      const active = tabKey === targetKey;
-      if (panel) {
-        panel.hidden = !active;
-        panel.setAttribute('aria-hidden', active ? 'false' : 'true');
-      }
-    });
-
-    currentTab = targetKey;
-    if (notify) {
-      notifySelect(targetKey);
-    }
-
-    return currentTab;
-  };
-
-  TAB_CONFIGS.forEach(config => {
-    const idSuffix = config.key;
-    const { nav } = buildNavigation(idSuffix, 'timodoro-tabs__nav--inline');
-    const panelOptions = {
-      navigation: nav,
-      labelId: buildButtonId(config, idSuffix),
-      todoGroups
-    };
-    const panel = config.key === 'done'
-      ? createDonePanel(model, config, panelOptions)
-      : createTodoPanel(model, config, panelOptions);
-    panelRefs.set(config.key, panel);
-    panels.appendChild(panel);
   });
 
-  wrapper.appendChild(panels);
+  const pendingEntries = Array.isArray(todoGroups?.grouping?.entries)
+    ? todoGroups.grouping.entries.map(entry => buildQueueEntryModel(entry))
+    : [];
 
-  activateTab(initialTab, { notify: false });
+  let projectedStartMs = Math.max(pointerMs, now.getTime());
+
+  pendingEntries.forEach((entry, index) => {
+    if (!entry) {
+      return;
+    }
+    const durationMinutes = normalizeDurationMinutes(entry, 30);
+    const start = Math.min(Math.max(projectedStartMs, startMs), endMs - 15 * 60 * 1000);
+    const end = Math.min(start + durationMinutes * 60 * 1000, endMs);
+    projectedStartMs = end;
+
+    const startMinutes = Math.max(0, Math.round((start - startMs) / 60000));
+    const endMinutes = Math.max(startMinutes + 15, Math.round((end - startMs) / 60000));
+
+    capsules.push({
+      id: entry.id || `pending:${index}`,
+      title: entry.title || 'Upcoming focus',
+      status: index === 0 ? 'active' : 'upcoming',
+      startMinutes,
+      endMinutes,
+      durationMinutes,
+      entry
+    });
+  });
 
   return {
-    root: wrapper,
-    activate: (key, options) => activateTab(key, options),
-    getActive: () => currentTab
+    capsules,
+    startMs,
+    endMs
   };
 }
 
-function createTaskColumn(model = {}, options = {}) {
-  const column = document.createElement('div');
-  column.className = 'timodoro__column timodoro__column--tasks';
+function updateCapsulePosition(element, data) {
+  if (!element || !data) {
+    return;
+  }
+  const spanMinutes = Math.max(1, data.endMinutes - data.startMinutes);
+  const startPercent = (data.startMinutes / TOTAL_MINUTES) * 100;
+  const spanPercent = (spanMinutes / TOTAL_MINUTES) * 100;
+  element.style.setProperty('--start-percent', startPercent.toFixed(3));
+  element.style.setProperty('--span-percent', spanPercent.toFixed(3));
 
-  const tabs = createTabs(model, options);
-  column.appendChild(tabs.root);
-
-  return { column, tabs };
+  const startLabel = formatTimeLabelFromMinutes(data.startMinutes);
+  const endLabel = formatTimeLabelFromMinutes(data.endMinutes);
+  const timeLabel = element.querySelector?.('.timodoro-capsule__time');
+  if (timeLabel) {
+    timeLabel.textContent = `${startLabel} — ${endLabel}`;
+  }
+  element.dataset.startLabel = startLabel;
+  element.dataset.endLabel = endLabel;
 }
 
-function createLayout(model = {}, options = {}) {
-  const fragment = document.createDocumentFragment();
+function enableDrag(element, data, context) {
+  if (!element || !data || !context) {
+    return;
+  }
+
+  element.addEventListener('pointerdown', event => {
+    if (event.button !== 0 || data.status === 'completed') {
+      return;
+    }
+    const ribbonRect = context.ribbon.getBoundingClientRect();
+    if (!ribbonRect || ribbonRect.width <= 0) {
+      return;
+    }
+    event.preventDefault();
+    element.setPointerCapture(event.pointerId);
+
+    const initialStart = data.startMinutes;
+    const startX = event.clientX;
+
+    const handleMove = moveEvent => {
+      const deltaX = moveEvent.clientX - startX;
+      const deltaMinutes = (deltaX / ribbonRect.width) * TOTAL_MINUTES;
+      let nextStart = initialStart + deltaMinutes;
+      nextStart = Math.round(nextStart / 30) * 30;
+      nextStart = Math.min(Math.max(nextStart, 0), TOTAL_MINUTES - Math.max(30, data.durationMinutes));
+      data.startMinutes = nextStart;
+      data.endMinutes = nextStart + Math.max(30, data.durationMinutes);
+      updateCapsulePosition(element, data);
+    };
+
+    const handleUp = upEvent => {
+      element.releasePointerCapture(event.pointerId);
+      element.removeEventListener('pointermove', handleMove);
+      element.removeEventListener('pointerup', handleUp);
+      element.removeEventListener('pointercancel', handleUp);
+    };
+
+    element.addEventListener('pointermove', handleMove);
+    element.addEventListener('pointerup', handleUp);
+    element.addEventListener('pointercancel', handleUp);
+  });
+}
+
+function createCapsuleElement(data, context) {
+  const capsule = document.createElement('button');
+  capsule.type = 'button';
+  capsule.className = 'timodoro-capsule';
+  capsule.dataset.status = data.status;
+  capsule.setAttribute('aria-label', `${data.title} (${formatTimeLabelFromMinutes(data.startMinutes)} to ${formatTimeLabelFromMinutes(data.endMinutes)})`);
+
+  const time = document.createElement('span');
+  time.className = 'timodoro-capsule__time';
+  time.textContent = `${formatTimeLabelFromMinutes(data.startMinutes)} — ${formatTimeLabelFromMinutes(data.endMinutes)}`;
+
+  const title = document.createElement('span');
+  title.className = 'timodoro-capsule__title';
+  title.textContent = data.title;
+
+  capsule.append(time, title);
+
+  if (data.entry && typeof data.entry.onClick === 'function') {
+    capsule.addEventListener('click', event => {
+      event.preventDefault();
+      data.entry.onClick?.();
+    });
+  } else {
+    capsule.disabled = data.status === 'completed';
+  }
+
+  updateCapsulePosition(capsule, data);
+  enableDrag(capsule, data, context);
+
+  return capsule;
+}
+
+function createTemporalCanvas(model = {}, todoGroups = {}, options = {}) {
+  const { capsules, startMs, endMs } = buildTimelineData(model, todoGroups);
+
+  const canvas = document.createElement('section');
+  canvas.className = 'timodoro-canvas';
+  canvas.setAttribute('aria-label', 'Temporal focus canvas');
+
+  const ribbonWrapper = document.createElement('div');
+  ribbonWrapper.className = 'timodoro-canvas__ribbon-wrapper';
+
+  const ribbon = document.createElement('div');
+  ribbon.className = 'timodoro-canvas__ribbon';
+  ribbonWrapper.appendChild(ribbon);
+
+  const capsuleData = [];
+
+  capsules.forEach(capsule => {
+    const element = createCapsuleElement(capsule, { ribbon });
+    ribbon.appendChild(element);
+    capsuleData.push({ ...capsule, element });
+  });
+
+  const nowMarker = document.createElement('div');
+  nowMarker.className = 'timodoro-canvas__now';
+  nowMarker.setAttribute('aria-hidden', 'true');
+
+  canvas.append(ribbonWrapper, nowMarker);
+
+  return {
+    element: canvas,
+    context: {
+      container: canvas,
+      ribbon,
+      nowMarker,
+      capsules: capsuleData,
+      startMs,
+      endMs
+    }
+  };
+}
+
+function updateDayProgress(root) {
+  if (!root) {
+    return;
+  }
+  const now = Date.now();
+  const start = new Date(now);
+  start.setHours(0, 0, 0, 0);
+  const progress = (now - start.getTime()) / DAY_IN_MS;
+  root.style.setProperty('--day-progress', Math.min(1, Math.max(0, progress)).toFixed(4));
+}
+
+function updateTimelineNow(context) {
+  if (!context) {
+    return;
+  }
+  const now = Date.now();
+  const progress = (now - context.startMs) / (context.endMs - context.startMs);
+  const clamped = Math.min(1, Math.max(0, progress));
+  context.container.style.setProperty('--now-progress', clamped.toFixed(4));
+
+  context.capsules.forEach(capsule => {
+    if (!capsule?.element) {
+      return;
+    }
+    const startRatio = capsule.startMinutes / TOTAL_MINUTES;
+    const endRatio = capsule.endMinutes / TOTAL_MINUTES;
+    const isActive = clamped >= startRatio && clamped <= endRatio && capsule.status !== 'completed';
+    capsule.element.classList.toggle('is-active', isActive);
+  });
+}
+
+function startAnalogLoop(target, timelineContext) {
+  if (!target) {
+    return;
+  }
+  stopAnalogLoop(target);
+
+  updateDayProgress(target);
+  updateTimelineNow(timelineContext);
+
+  if (typeof window === 'undefined' || typeof window.requestAnimationFrame !== 'function') {
+    return;
+  }
+
+  let frameId = null;
+
+  const step = () => {
+    updateDayProgress(target);
+    updateTimelineNow(timelineContext);
+    frameId = window.requestAnimationFrame(step);
+  };
+
+  frameId = window.requestAnimationFrame(step);
+  animationLoopMap.set(target, () => {
+    if (frameId != null) {
+      window.cancelAnimationFrame(frameId);
+    }
+  });
+}
+
+function render(model = {}, context = {}) {
+  const { mount } = context;
+  const summary = { meta: model?.meta || 'Productivity ready', urlPath: 'flow' };
+
+  if (!mount) {
+    return summary;
+  }
+
+  stopAnalogLoop(mount);
+
+  mount.innerHTML = '';
+  mount.className = 'timodoro timodoro--flow';
+  mount.dataset.role = mount.dataset.role || 'timodoro-root';
 
   const entries = Array.isArray(model.todoEntries) ? model.todoEntries : [];
   const todoGroups = buildTodoGroups(entries, {
@@ -322,69 +366,22 @@ function createLayout(model = {}, options = {}) {
     emptyMessage: model.todoEmptyMessage
   });
 
-  fragment.appendChild(createTimelineCard(model, {
-    pendingEntries: todoGroups?.grouping?.entries || [],
-    onRun: options.onRun
-  }));
+  const { workspace } = createFocusWorkspace(model, { todoGroups });
+  const { element: canvas, context: timelineContext } = createTemporalCanvas(model, todoGroups);
+  const pulsePanel = createDailyPulsePanel(model);
 
-  const grid = document.createElement('div');
-  grid.className = 'timodoro__grid';
+  const body = document.createElement('div');
+  body.className = 'timodoro__body';
 
-  const { column, tabs } = createTaskColumn(model, { ...options, todoGroups });
+  const mainColumn = document.createElement('div');
+  mainColumn.className = 'timodoro__main';
+  mainColumn.appendChild(workspace);
 
-  grid.append(column, createSummaryColumn(model));
-  fragment.appendChild(grid);
+  body.append(mainColumn, pulsePanel);
 
-  return { fragment, tabs, todoGroups };
-}
+  mount.append(canvas, body);
 
-function render(model = {}, context = {}) {
-  const { mount, page, onRouteChange } = context;
-  const summary = { meta: model?.meta || 'Productivity ready' };
-
-  const resolveInitialTab = () => {
-    if (!page || typeof getWorkspacePath !== 'function') {
-      return DEFAULT_TAB_KEY;
-    }
-    try {
-      const path = getWorkspacePath(page.id);
-      return deriveTabFromPath(path);
-    } catch (error) {
-      return DEFAULT_TAB_KEY;
-    }
-  };
-
-  const initialTab = resolveInitialTab();
-
-  if (!mount) {
-    summary.urlPath = buildTabPath(initialTab);
-    return summary;
-  }
-
-  const previousTimeline = mount.querySelector?.('[data-role="timodoro-timeline"]');
-  if (previousTimeline) {
-    teardownTimeline(previousTimeline);
-  }
-
-  mount.innerHTML = '';
-  mount.className = 'timodoro';
-  mount.dataset.role = mount.dataset.role || 'timodoro-root';
-
-  const { fragment, tabs } = createLayout(model, {
-    initialTab,
-    onSelect: key => {
-      if (typeof onRouteChange === 'function') {
-        onRouteChange(buildTabPath(key));
-      }
-    }
-  });
-
-  mount.appendChild(fragment);
-
-  const activeTab = tabs.getActive?.() || initialTab;
-  summary.urlPath = buildTabPath(activeTab);
-
-  observePagePath(mount, tabs);
+  startAnalogLoop(mount, timelineContext);
 
   return summary;
 }

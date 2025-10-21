@@ -280,6 +280,17 @@ export function buildTimodoroViewModel(state = {}, summary = {}, todoModel = {})
     completedEntries: recordedTimelineEntries
   });
 
+  const totalWins = Object.values(completedGroups || {}).reduce((total, group) => {
+    if (!Array.isArray(group)) {
+      return total;
+    }
+    return total + group.length;
+  }, 0);
+
+  const hoursAvailableNumeric = Number.isFinite(queueMetrics?.hoursAvailable)
+    ? Math.max(0, queueMetrics.hoursAvailable)
+    : Math.max(0, Number(state?.timeLeft) || 0);
+
   return {
     completedGroups,
     recurringEntries,
@@ -290,9 +301,13 @@ export function buildTimodoroViewModel(state = {}, summary = {}, todoModel = {})
     todoHoursAvailable,
     todoMoneyAvailable,
     hoursSpent,
+    hoursAvailable: hoursAvailableNumeric,
     hoursAvailableLabel: availableLabel,
     hoursSpentLabel: spentLabel,
     focusStreakLabel,
+    focusStreakDays: streakDays,
+    timeCap,
+    totalWins,
     meta,
     timelineCompletedEntries
   };
