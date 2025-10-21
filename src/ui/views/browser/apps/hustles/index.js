@@ -1076,7 +1076,8 @@ export function createOfferCard(entry = {}) {
     metrics = {},
     expiresIn,
     showCommitments = true,
-    showAction = true
+    showAction = true,
+    isPrimary = false
   } = entry;
 
   const descriptorBundle = {
@@ -1183,7 +1184,9 @@ export function createOfferCard(entry = {}) {
 
   card.appendChild(metricsRow);
 
-  if (model.description) {
+  const shouldShowDetails = isPrimary || status === 'placeholder';
+
+  if (shouldShowDetails && model.description) {
     const summary = document.createElement('p');
     summary.className = 'browser-card__summary';
     summary.textContent = model.description;
@@ -1191,7 +1194,7 @@ export function createOfferCard(entry = {}) {
   }
 
   const badges = Array.isArray(model.badges) ? model.badges : [];
-  if (badges.length > 0) {
+  if (shouldShowDetails && badges.length > 0) {
     const list = document.createElement('ul');
     list.className = 'browser-card__badges';
     badges.forEach(entry => {
@@ -1208,7 +1211,7 @@ export function createOfferCard(entry = {}) {
   card.dataset.tagList = JSON.stringify(tagEntries);
   card.dataset.tags = tagEntries.map(entry => entry.id).join(' ');
 
-  if (tagEntries.length > 0) {
+  if (shouldShowDetails && tagEntries.length > 0) {
     const tagList = document.createElement('ul');
     tagList.className = 'downwork-card__tags';
     tagEntries.forEach(entry => {
@@ -1226,23 +1229,25 @@ export function createOfferCard(entry = {}) {
   const hasSkillTag = typeof model.tag?.label === 'string' && /skill/i.test(model.tag.label);
   card.dataset.skillXp = hasSkillBadge || hasSkillTag ? 'true' : 'false';
 
-  const meta = document.createElement('p');
-  meta.className = 'browser-card__meta';
-  meta.textContent = model.requirements?.summary || 'No requirements';
-  card.appendChild(meta);
+  if (shouldShowDetails) {
+    const meta = document.createElement('p');
+    meta.className = 'browser-card__meta';
+    meta.textContent = model.requirements?.summary || 'No requirements';
+    card.appendChild(meta);
 
-  if (model.seat?.summary) {
-    const seat = document.createElement('p');
-    seat.className = 'browser-card__note';
-    seat.textContent = model.seat.summary;
-    card.appendChild(seat);
-  }
+    if (model.seat?.summary) {
+      const seat = document.createElement('p');
+      seat.className = 'browser-card__note';
+      seat.textContent = model.seat.summary;
+      card.appendChild(seat);
+    }
 
-  if (model.limit?.summary) {
-    const limit = document.createElement('p');
-    limit.className = 'browser-card__note';
-    limit.textContent = model.limit.summary;
-    card.appendChild(limit);
+    if (model.limit?.summary) {
+      const limit = document.createElement('p');
+      limit.className = 'browser-card__note';
+      limit.textContent = model.limit.summary;
+      card.appendChild(limit);
+    }
   }
 
   if (showAction !== false && model.action?.label) {

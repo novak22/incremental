@@ -241,14 +241,44 @@ test('renderHustles renders unified offer feed with metrics, CTA wiring, and fil
     assert.equal(primaryCard.dataset.payout, '50');
     assert.equal(primaryCard.dataset.roi, '25');
     assert.ok(primaryCard.querySelector('.downwork-card__metrics').textContent.includes('📈 ROI $25 / h'));
+    const primarySummary = primaryCard.querySelector('.browser-card__summary');
+    assert.ok(primarySummary, 'expected primary card to include summary copy');
+    assert.equal(primarySummary.textContent, 'Lock this contract now.');
+    assert.equal(primaryCard.querySelectorAll('.browser-card__badge').length, 2, 'expected primary card badges');
+    assert.equal(primaryCard.querySelectorAll('.downwork-card__tag').length, 2, 'expected primary card tags');
+    assert.equal(primaryCard.querySelector('.browser-card__meta')?.textContent, 'No requirements');
 
     const secondaryCard = cards[1];
     assert.equal(secondaryCard.dataset.time, '3');
     assert.equal(secondaryCard.dataset.payout, '80');
+    assert.equal(
+      secondaryCard.querySelector('.browser-card__summary'),
+      null,
+      'expected secondary card to omit repeated summary copy'
+    );
+    assert.equal(
+      secondaryCard.querySelector('.browser-card__badges'),
+      null,
+      'expected secondary card to hide badges'
+    );
+    assert.equal(
+      secondaryCard.querySelector('.downwork-card__tags'),
+      null,
+      'expected secondary card to hide tag list'
+    );
+    assert.equal(
+      secondaryCard.querySelector('.browser-card__meta'),
+      null,
+      'expected secondary card to hide requirements summary'
+    );
 
     const upcomingCard = cards[2];
     assert.equal(upcomingCard.dataset.available, 'false');
     assert.equal(upcomingCard.dataset.hustle, 'slow-burn');
+    assert.ok(
+      upcomingCard.querySelector('.browser-card__summary'),
+      'expected upcoming primary card to keep descriptive summary'
+    );
     assert.ok(
       [...upcomingCard.querySelectorAll('.browser-card__section-title')]
         .some(node => node.textContent === 'Opening soon'),
