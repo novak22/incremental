@@ -296,6 +296,208 @@ function resolveTagEntries(model = {}, definition = {}) {
   return Array.from(unique.entries()).map(([id, label]) => ({ id, label }));
 }
 
+function buildOfferEntries(definitions = [], models = [], { onOfferAccept } = {}) {
+  const modelMap = new Map(models.map(model => [model?.id, model]));
+  const entries = [];
+  const categoryMetadata = new Map();
+  const hustleFilterMeta = new Map();
+  const summary = {
+    availableCount: 0,
+    upcomingCount: 0,
+    commitmentCount: 0,
+    potentialPayout: 0
+  };
+
+  definitions.forEach((definition, definitionIndex) => {
+    const model = modelMap.get(definition?.id);
+    if (!model) return;
+
+    const rawOffers = Array.isArray(model.offers) ? model.offers : [];
+    const rawUpcoming = Array.isArray(model.upcoming) ? model.upcoming : [];
+    const visibleOffers = rawOffers.filter(offer => !offer?.locked);
+    const visibleUpcoming = rawUpcoming.filter(offer => !offer?.locked);
+    const commitments = Array.isArray(model.commitments) ? model.commitments : [];
+
+    const hasAnySource = rawOffers.length > 0 || rawUpcoming.length > 0;
+    const hasUnlockedContent = visibleOffers.length > 0 || visibleUpcoming.length > 0;
+
+    const categoryKey = resolveCategoryKey(model.actionCategory || model.filters?.category || '');
+    const categoryConfig = resolveCategoryConfig(categoryKey);
+    categoryMetadata.set(categoryKey, categoryConfig);
+
+    summary.availableCount += visibleOffers.length;
+    summary.upcomingCount += visibleUpcoming.length;
+    summary.commitmentCount += commitments.length;
+
+    const readyPayouts = visibleOffers
+      .map(offer => Number(offer?.payout))
+      .filter(value => Number.isFinite(value) && value > 0);
+
+    if (readyPayouts.length > 0) {
+      summary.potentialPayout += readyPayouts.reduce((sum, value) => sum + Math.max(0, value), 0);
+    } else if (Number.isFinite(model.metrics?.payout?.value)) {
+      summary.potentialPayout += Math.max(0, Number(model.metrics.payout.value));
+    }
+
+    if (!hasUnlockedContent && hasAnySource && !commitments.length) {
+      return;
+    }
+
+    const hustleId = model.id || definition.id || '';
+    const hustleLabel = model.name || definition.name || 'Contract';
+
+    const baseMetrics = {
+      timeValue: Number(model.metrics?.time?.value ?? 0),
+      payoutValue: Number(model.metrics?.payout?.value ?? 0),
+      roiValue: Number(model.metrics?.roi ?? 0)
+    };
+
+    const descriptorOverrides = typeof definition?.descriptors === 'object' && definition.descriptors !== null
+      ? definition.descriptors
+      : {};
+    const copyOverrides = typeof definition?.copy === 'object' && definition.copy !== null
+      ? definition.copy
+      : {};
+
+    const startIndex = entries.length;
+
+    if (visibleOffers.length > 0) {
+      visibleOffers.forEach((offer, offerIndex) => {
+        entries.push({
+          definition,
+          model,
+          descriptorOverrides,
+          copyOverrides,
+          categoryKey,
+          categoryConfig,
+          hustleId,
+          hustleLabel,
+          search: model.filters?.search || '',
+          limitRemaining: model.filters?.limitRemaining,
+          commitments,
+          status: 'ready',
+          offer,
+          metrics: baseMetrics,
+          expiresIn: Number.isFinite(offer?.expiresIn) ? offer.expiresIn : undefined,
+          onAccept: onOfferAccept,
+          upcomingOffers: [],
+          showCommitments: false,
+          showAction: false,
+          isPrimary: false,
+          hustleIndex: definitionIndex,
+          offerIndex
+        });
+      });
+    } else if (visibleUpcoming.length > 0) {
+      visibleUpcoming.forEach((offer, offerIndex) => {
+        entries.push({
+          definition,
+          model,
+          descriptorOverrides,
+          copyOverrides,
+          categoryKey,
+          categoryConfig,
+          hustleId,
+          hustleLabel,
+          search: model.filters?.search || '',
+          limitRemaining: model.filters?.limitRemaining,
+          commitments,
+          status: 'upcoming',
+          offer,
+          metrics: baseMetrics,
+          expiresIn: Number.isFinite(offer?.expiresIn) ? offer.expiresIn : undefined,
+          onAccept: onOfferAccept,
+          upcomingOffers: [],
+          showCommitments: false,
+          showAction: false,
+          isPrimary: false,
+          hustleIndex: definitionIndex,
+          offerIndex
+        });
+      });
+    } else if (commitments.length || model.action || model.description) {
+      entries.push({
+        definition,
+        model,
+        descriptorOverrides,
+        copyOverrides,
+        categoryKey,
+        categoryConfig,
+        hustleId,
+        hustleLabel,
+        search: model.filters?.search || '',
+        limitRemaining: model.filters?.limitRemaining,
+        commitments,
+        status: 'placeholder',
+        offer: null,
+        metrics: baseMetrics,
+        expiresIn: undefined,
+        onAccept: onOfferAccept,
+        upcomingOffers: [],
+        showCommitments: false,
+        showAction: false,
+        isPrimary: false,
+        hustleIndex: definitionIndex,
+        offerIndex: 0
+      });
+    }
+
+    const createdEntries = entries.slice(startIndex);
+    if (!createdEntries.length) {
+      return;
+    }
+
+    createdEntries.forEach((entry, index) => {
+      entry.isPrimary = index === 0;
+      entry.showCommitments = index === 0 || entry.status === 'placeholder';
+      entry.showAction = index === 0 || entry.status === 'placeholder';
+      if (entry.status === 'ready') {
+        entry.upcomingOffers = index === 0 ? visibleUpcoming : [];
+      } else if (entry.status === 'upcoming') {
+        entry.upcomingOffers = index === 0
+          ? visibleUpcoming.filter(offer => offer !== entry.offer)
+          : [];
+      } else {
+        entry.upcomingOffers = [];
+      }
+    });
+
+    let filterEntry = hustleFilterMeta.get(hustleId);
+    if (!filterEntry) {
+      filterEntry = { id: hustleId, label: hustleLabel, ready: 0, cards: 0 };
+      hustleFilterMeta.set(hustleId, filterEntry);
+    }
+
+    createdEntries.forEach(entry => {
+      filterEntry.cards += 1;
+      if (entry.status === 'ready') {
+        filterEntry.ready += 1;
+      }
+    });
+  });
+
+  entries.sort((a, b) => {
+    const categoryDiff = getCategorySortIndex(a.categoryKey) - getCategorySortIndex(b.categoryKey);
+    if (categoryDiff !== 0) return categoryDiff;
+    if (a.hustleIndex !== b.hustleIndex) return a.hustleIndex - b.hustleIndex;
+    const weight = status => {
+      if (status === 'ready') return 0;
+      if (status === 'upcoming') return 1;
+      return 2;
+    };
+    const statusDiff = weight(a.status) - weight(b.status);
+    if (statusDiff !== 0) return statusDiff;
+    return a.offerIndex - b.offerIndex;
+  });
+
+  return {
+    entries,
+    summary,
+    categoryMetadata,
+    hustleFilterMeta
+  };
+}
+
 function createFilterRow(labelText = '') {
   const row = document.createElement('div');
   row.className = 'downwork-filter-row';
@@ -847,14 +1049,29 @@ export function describeMetaSummary({ availableCount, upcomingCount, commitmentC
   return `Keep the loop rolling — accept → work → complete. ${parts.join(' • ')}`;
 }
 
-export function createHustleCard({
-  definition = {},
-  model = {},
-  copy: copyOverrides = {},
-  descriptors: descriptorOverrides = {},
-  categoryIcon = '💼',
-  onOfferAccept
-} = {}) {
+export function createOfferCard(entry = {}) {
+  const {
+    definition = {},
+    model = {},
+    descriptorOverrides = {},
+    copyOverrides = {},
+    categoryConfig = DEFAULT_CATEGORY_CONFIG,
+    categoryKey = '',
+    hustleId = '',
+    hustleLabel = 'Contract',
+    search = '',
+    limitRemaining,
+    commitments = [],
+    status = 'ready',
+    offer = null,
+    upcomingOffers = [],
+    onAccept,
+    metrics = {},
+    expiresIn,
+    showCommitments = true,
+    showAction = true
+  } = entry;
+
   const descriptorBundle = {
     ...(typeof model.descriptors === 'object' && model.descriptors !== null ? model.descriptors : {}),
     ...(typeof descriptorOverrides === 'object' && descriptorOverrides !== null ? descriptorOverrides : {})
@@ -862,60 +1079,71 @@ export function createHustleCard({
 
   const copy = mergeCopy(descriptorBundle.copy, copyOverrides);
 
-  const rawOffers = Array.isArray(model.offers) ? model.offers : [];
-  const rawUpcoming = Array.isArray(model.upcoming) ? model.upcoming : [];
-  const visibleOffers = rawOffers.filter(offer => !offer?.locked);
-  const visibleUpcoming = rawUpcoming.filter(offer => !offer?.locked);
-  const hasCommitments = Array.isArray(model.commitments) && model.commitments.length > 0;
-
-  const hasAnySource = rawOffers.length > 0 || rawUpcoming.length > 0;
-  const hasUnlockedContent = visibleOffers.length > 0 || visibleUpcoming.length > 0;
-
-  if (!hasUnlockedContent && hasAnySource && !hasCommitments) {
-    return null;
-  }
-
   const card = document.createElement('article');
   card.className = 'browser-card browser-card--action browser-card--hustle downwork-card';
-  const hustleId = model.id || definition.id || '';
   card.dataset.action = hustleId;
   card.dataset.hustle = hustleId;
-  card.dataset.search = model.filters?.search || '';
-  const hustleLabel = model.name || definition.name || 'Contract';
   card.dataset.hustleLabel = hustleLabel;
-  const timeValue = Number(model.metrics?.time?.value ?? 0);
-  const payoutMetricValue = Number(model.metrics?.payout?.value ?? 0);
-  const roiValue = Number(model.metrics?.roi ?? 0);
-  const payoutCandidates = visibleOffers
-    .map(offer => Number(offer?.payout))
-    .filter(value => Number.isFinite(value) && value > 0);
-  const cardPayoutValue = payoutCandidates.length
-    ? Math.max(...payoutCandidates)
-    : payoutMetricValue;
-  card.dataset.time = String(timeValue);
-  card.dataset.payout = String(cardPayoutValue);
-  card.dataset.roi = String(roiValue);
-  card.dataset.available = visibleOffers.length > 0 ? 'true' : 'false';
-  card.dataset.readyOfferCount = String(Math.max(0, visibleOffers.length));
-
-  if (model.filters?.limitRemaining !== null && model.filters?.limitRemaining !== undefined) {
-    card.dataset.limitRemaining = String(model.filters.limitRemaining);
-  }
-
-  const categoryKey = resolveCategoryKey(model.actionCategory || model.filters?.category || '');
+  card.dataset.search = search;
   card.dataset.category = categoryKey;
   card.dataset.actionCategory = categoryKey;
+  card.dataset.categoryLabel = categoryConfig?.label || DEFAULT_CATEGORY_CONFIG.label;
+
+  if (limitRemaining !== null && limitRemaining !== undefined) {
+    card.dataset.limitRemaining = String(limitRemaining);
+  }
+
+  const fallbackTime = Number(model.metrics?.time?.value ?? 0);
+  const fallbackPayout = Number(model.metrics?.payout?.value ?? 0);
+  const fallbackRoi = Number(model.metrics?.roi ?? 0);
+
+  const baseTime = Number.isFinite(Number(metrics?.timeValue))
+    ? Number(metrics.timeValue)
+    : fallbackTime;
+  const basePayout = Number.isFinite(Number(metrics?.payoutValue))
+    ? Number(metrics.payoutValue)
+    : fallbackPayout;
+  const baseRoi = Number.isFinite(Number(metrics?.roiValue))
+    ? Number(metrics.roiValue)
+    : fallbackRoi;
+
+  const offerTime = Number(offer?.hoursRequired);
+  const resolvedTime = Number.isFinite(offerTime) ? offerTime : baseTime;
+  const offerPayout = Number(offer?.payout);
+  const resolvedPayout = Number.isFinite(offerPayout) && offerPayout > 0 ? offerPayout : basePayout;
+  const resolvedRoi = baseRoi > 0 ? baseRoi : fallbackRoi;
+
+  const safeTime = Number.isFinite(resolvedTime) ? resolvedTime : 0;
+  const safePayout = Number.isFinite(resolvedPayout) ? Math.max(0, resolvedPayout) : 0;
+  const safeRoi = Number.isFinite(resolvedRoi) ? Math.max(0, resolvedRoi) : 0;
+
+  card.dataset.time = String(Math.max(0, safeTime));
+  card.dataset.payout = String(Math.max(0, safePayout));
+  card.dataset.roi = String(Math.max(0, safeRoi));
+  card.dataset.available = status === 'ready' ? 'true' : 'false';
+  card.dataset.readyOfferCount = status === 'ready' ? '1' : '0';
+
+  const expiryCandidates = [];
+  if (Number.isFinite(expiresIn)) {
+    expiryCandidates.push(Number(expiresIn));
+  }
+  if (Number.isFinite(offer?.expiresIn)) {
+    expiryCandidates.push(Number(offer.expiresIn));
+  }
 
   const header = document.createElement('header');
   header.className = 'browser-card__header downwork-card__header';
+
   const icon = document.createElement('span');
   icon.className = 'downwork-card__icon';
-  icon.textContent = descriptorBundle.icon || categoryIcon || '💼';
+  icon.textContent = descriptorBundle.icon || categoryConfig.icon || '💼';
   header.appendChild(icon);
+
   const title = document.createElement('h2');
   title.className = 'browser-card__title';
   title.textContent = hustleLabel;
   header.appendChild(title);
+
   card.appendChild(header);
 
   const metricsRow = document.createElement('div');
@@ -923,23 +1151,24 @@ export function createHustleCard({
 
   const timeChip = document.createElement('span');
   timeChip.className = 'downwork-card__metric';
-  timeChip.textContent = `⏱️ ${model.metrics?.time?.label || formatHours(Math.max(0, timeValue))}`;
+  const timeLabel = model.metrics?.time?.label || formatHours(Math.max(0, safeTime));
+  timeChip.textContent = `⏱️ ${timeLabel}`;
   metricsRow.appendChild(timeChip);
 
   const payoutLabel = model.metrics?.payout?.label
-    || (cardPayoutValue > 0 ? `$${formatMoney(cardPayoutValue)}` : 'Varies');
+    || (safePayout > 0 ? `$${formatMoney(safePayout)}` : 'Varies');
   const payoutChip = document.createElement('span');
   payoutChip.className = 'downwork-card__metric';
   payoutChip.textContent = `💵 ${payoutLabel}`;
   metricsRow.appendChild(payoutChip);
 
-  if (roiValue > 0) {
+  if (safeRoi > 0) {
     const roiChip = document.createElement('span');
     roiChip.className = 'downwork-card__metric downwork-card__metric--roi';
-    roiChip.textContent = `📈 ROI ${formatRoi(roiValue)}`;
+    roiChip.textContent = `📈 ROI ${formatRoi(safeRoi)}`;
     metricsRow.appendChild(roiChip);
-    if (cardPayoutValue > 0 && timeValue > 0) {
-      const tooltip = `ROI ${formatRoi(roiValue)} • $${formatMoney(cardPayoutValue)} ÷ ${formatHours(Math.max(0, timeValue))}`;
+    if (safePayout > 0 && safeTime > 0) {
+      const tooltip = `ROI ${formatRoi(safeRoi)} • $${formatMoney(safePayout)} ÷ ${formatHours(Math.max(0, safeTime))}`;
       metricsRow.title = tooltip;
       card.title = tooltip;
     }
@@ -1009,7 +1238,7 @@ export function createHustleCard({
     card.appendChild(limit);
   }
 
-  if (model.action?.label) {
+  if (showAction !== false && model.action?.label) {
     const actions = document.createElement('div');
     actions.className = 'browser-card__actions';
 
@@ -1039,36 +1268,51 @@ export function createHustleCard({
     card.appendChild(actions);
   }
 
-  if (hasCommitments) {
+  if (showCommitments !== false && Array.isArray(commitments) && commitments.length > 0) {
     const commitmentsSection = createCardSection(copy.commitments);
-    const list = createCommitmentList(model.commitments);
+    const list = createCommitmentList(commitments);
     commitmentsSection.appendChild(list);
     card.appendChild(commitmentsSection);
   }
 
-  if (visibleOffers.length) {
-    const offersSection = createCardSection(copy.ready);
-    const list = createOfferList(visibleOffers, { onAccept: onOfferAccept, model });
-    offersSection.appendChild(list);
-    card.appendChild(offersSection);
+  if (offer) {
+    const primarySection = createCardSection(status === 'ready' ? copy.ready : copy.upcoming);
+    const offerOptions = { model, onAccept };
+    if (status !== 'ready') {
+      offerOptions.upcoming = true;
+    }
+    const primaryList = createOfferList([offer], offerOptions);
+    primarySection.appendChild(primaryList);
+    card.appendChild(primarySection);
   }
 
-  if (visibleUpcoming.length) {
+  const additionalUpcoming = Array.isArray(upcomingOffers) ? upcomingOffers.filter(Boolean) : [];
+  if (additionalUpcoming.length) {
     const upcomingSection = createCardSection(copy.upcoming);
-    const list = createOfferList(visibleUpcoming, { upcoming: true, onAccept: onOfferAccept, model });
-    upcomingSection.appendChild(list);
+    const upcomingList = createOfferList(additionalUpcoming, {
+      upcoming: true,
+      model,
+      onAccept
+    });
+    upcomingSection.appendChild(upcomingList);
     card.appendChild(upcomingSection);
   }
 
-  const expiresCandidates = [...visibleOffers, ...visibleUpcoming]
-    .map(offer => Number(offer?.expiresIn))
-    .filter(value => Number.isFinite(value));
-  if (expiresCandidates.length) {
-    card.dataset.expiresIn = String(Math.min(...expiresCandidates));
+  additionalUpcoming.forEach(item => {
+    const expires = Number(item?.expiresIn);
+    if (Number.isFinite(expires)) {
+      expiryCandidates.push(expires);
+    }
+  });
+
+  if (expiryCandidates.length) {
+    card.dataset.expiresIn = String(Math.min(...expiryCandidates));
   }
 
   return card;
 }
+
+export const createHustleCard = createOfferCard;
 
 export default function renderHustles(context = {}, definitions = [], models = []) {
   const page = getPageByType('hustles');
@@ -1149,16 +1393,6 @@ export default function renderHustles(context = {}, definitions = [], models = [
     sessionConfig.activeCategory = normalizedCategory || null;
   };
 
-  const modelMap = new Map(models.map(model => [model?.id, model]));
-  let availableCount = 0;
-  let commitmentCount = 0;
-  let upcomingCount = 0;
-  let potentialPayout = 0;
-
-  const cardsByCategory = new Map();
-  const categoryMetadata = new Map();
-  const allCards = [];
-
   const handleOfferAccepted = ({ payout = 0, focusHours = 0 } = {}) => {
     const payoutValue = Number.isFinite(payout) ? payout : 0;
     const focusValue = Number.isFinite(focusHours) ? focusHours : 0;
@@ -1177,75 +1411,36 @@ export default function renderHustles(context = {}, definitions = [], models = [
     });
   };
 
-  definitions.forEach(definition => {
-    const model = modelMap.get(definition.id);
-    if (!model) return;
+  const {
+    entries: offerEntries,
+    summary: { availableCount, upcomingCount, commitmentCount, potentialPayout },
+    categoryMetadata,
+    hustleFilterMeta
+  } = buildOfferEntries(definitions, models, { onOfferAccept: handleOfferAccepted });
 
-    const readyOffers = Array.isArray(model.offers)
-      ? model.offers.filter(offer => !offer?.locked)
-      : [];
-    const upcomingOffers = Array.isArray(model.upcoming)
-      ? model.upcoming.filter(offer => !offer?.locked)
-      : [];
-
-    if (readyOffers.length > 0) {
-      availableCount += 1;
-    }
-
-    if (Array.isArray(model.commitments)) {
-      commitmentCount += model.commitments.length;
-    }
-
-    if (upcomingOffers.length > 0) {
-      upcomingCount += upcomingOffers.length;
-    }
-
-    const readyPayoutTotal = readyOffers.reduce((sum, offer) => {
-      const payout = Number(offer?.payout);
-      return sum + (Number.isFinite(payout) ? Math.max(0, payout) : 0);
-    }, 0);
-    if (readyPayoutTotal > 0) {
-      potentialPayout += readyPayoutTotal;
-    } else if (Number.isFinite(model.metrics?.payout?.value)) {
-      potentialPayout += Math.max(0, Number(model.metrics.payout.value));
-    }
-
-    const categoryKey = resolveCategoryKey(model.actionCategory || model.filters?.category || '');
-    const categoryConfig = resolveCategoryConfig(categoryKey);
-    categoryMetadata.set(categoryKey, categoryConfig);
-
-    const card = createHustleCard({
-      definition,
-      model,
-      categoryIcon: categoryConfig.icon,
-      onOfferAccept: handleOfferAccepted
-    });
-
-    if (!card) {
-      return;
-    }
-
-    card.dataset.categoryLabel = categoryConfig.label;
-
-    if (!cardsByCategory.has(categoryKey)) {
-      cardsByCategory.set(categoryKey, []);
-    }
-    cardsByCategory.get(categoryKey).push(card);
-    allCards.push(card);
-  });
+  const offerCards = offerEntries
+    .map(entry => {
+      const card = createOfferCard(entry);
+      if (!card) {
+        return null;
+      }
+      card.dataset.categoryLabel = entry.categoryConfig?.label || DEFAULT_CATEGORY_CONFIG.label;
+      return { entry, element: card };
+    })
+    .filter(Boolean);
 
   tabsContainer.innerHTML = '';
   filtersContainer.innerHTML = '';
   list.innerHTML = '';
 
-  const payoutValues = allCards
-    .map(card => Number(card.dataset.payout))
+  const payoutValues = offerCards
+    .map(({ element }) => Number(element.dataset.payout))
     .filter(value => Number.isFinite(value) && value > 0);
-  const timeValues = allCards
-    .map(card => Number(card.dataset.time))
+  const timeValues = offerCards
+    .map(({ element }) => Number(element.dataset.time))
     .filter(value => Number.isFinite(value) && value > 0);
-  const expiringValues = allCards
-    .map(card => Number(card.dataset.expiresIn))
+  const expiringValues = offerCards
+    .map(({ element }) => Number(element.dataset.expiresIn))
     .filter(value => Number.isFinite(value) && value >= 0);
 
   const avgPayout = payoutValues.length
@@ -1262,24 +1457,9 @@ export default function renderHustles(context = {}, definitions = [], models = [
     expiringSoon: Number.isFinite(minExpiry) ? Math.min(2, Math.max(0, minExpiry)) : 2
   };
 
-  const categoryFilterMeta = new Map();
-  allCards.forEach(card => {
-    const id = (card.dataset.hustle || '').trim();
-    const label = (card.dataset.hustleLabel || '').trim();
-    if (!id || !label) return;
-    if (!categoryFilterMeta.has(id)) {
-      categoryFilterMeta.set(id, { id, label, ready: 0, cards: 0 });
-    }
-    const meta = categoryFilterMeta.get(id);
-    const readyCount = Number(card.dataset.readyOfferCount);
-    if (Number.isFinite(readyCount) && readyCount > 0) {
-      meta.ready += readyCount;
-    }
-    meta.cards += 1;
-  });
-  boardState.availableCategoryFilters = categoryFilterMeta;
+  boardState.availableCategoryFilters = hustleFilterMeta;
   boardState.activeCategoryFilters = new Set(
-    [...boardState.activeCategoryFilters].filter(id => categoryFilterMeta.has(id))
+    [...boardState.activeCategoryFilters].filter(id => hustleFilterMeta.has(id))
   );
 
   const focusHoursLeft = resolveFocusHoursLeft(context, models);
@@ -1289,18 +1469,27 @@ export default function renderHustles(context = {}, definitions = [], models = [
     potentialPayout
   });
 
-  const sortedCategories = Array.from(cardsByCategory.keys()).sort((a, b) => {
-    const orderDiff = getCategorySortIndex(a) - getCategorySortIndex(b);
-    if (orderDiff !== 0) return orderDiff;
-    const labelA = (categoryMetadata.get(a)?.label || '').toLowerCase();
-    const labelB = (categoryMetadata.get(b)?.label || '').toLowerCase();
-    return labelA.localeCompare(labelB);
+  const categoriesWithCards = new Map();
+  offerCards.forEach(({ entry }) => {
+    const key = entry.categoryKey || '';
+    if (!categoriesWithCards.has(key)) {
+      categoriesWithCards.set(key, 0);
+    }
+    categoriesWithCards.set(key, categoriesWithCards.get(key) + 1);
   });
 
   const validFilters = new Set(QUICK_FILTERS.map(filter => filter.id));
   boardState.activeFilters = new Set(
     [...boardState.activeFilters].filter(id => validFilters.has(id))
   );
+
+  const sortedCategories = Array.from(categoriesWithCards.keys()).sort((a, b) => {
+    const orderDiff = getCategorySortIndex(a) - getCategorySortIndex(b);
+    if (orderDiff !== 0) return orderDiff;
+    const labelA = (categoryMetadata.get(a)?.label || '').toLowerCase();
+    const labelB = (categoryMetadata.get(b)?.label || '').toLowerCase();
+    return labelA.localeCompare(labelB);
+  });
 
   if (!sortedCategories.length) {
     boardState.activeCategory = null;
@@ -1324,7 +1513,7 @@ export default function renderHustles(context = {}, definitions = [], models = [
     };
   }
 
-  if (!boardState.activeCategory || !cardsByCategory.has(boardState.activeCategory)) {
+  if (!boardState.activeCategory || !categoriesWithCards.has(boardState.activeCategory)) {
     boardState.activeCategory = sortedCategories[0];
   }
 
@@ -1528,7 +1717,9 @@ export default function renderHustles(context = {}, definitions = [], models = [
   function renderActiveCategory() {
     list.innerHTML = '';
     const activeKey = boardState.activeCategory;
-    const cards = cardsByCategory.get(activeKey) || [];
+    const cards = offerCards
+      .filter(({ entry }) => entry.categoryKey === activeKey)
+      .map(({ element }) => element);
     const filtered = applyActiveFilters(cards);
     const isFiltered = hasActiveFilters();
     list.classList.toggle('is-filtered', isFiltered);
