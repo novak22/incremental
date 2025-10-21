@@ -395,10 +395,6 @@ function ensureBoard(body) {
     })
   );
 
-  const tabs = document.createElement('div');
-  tabs.className = 'downwork-board__tabs';
-  tabs.dataset.role = 'downwork-tabs';
-
   const filters = document.createElement('div');
   filters.className = 'downwork-board__filters';
   filters.dataset.role = 'downwork-filters';
@@ -411,7 +407,7 @@ function ensureBoard(body) {
   toastHost.className = 'downwork-board__toasts';
   toastHost.dataset.role = 'downwork-toast-host';
 
-  board.append(summary, tabs, filters, grid, toastHost);
+  board.append(summary, filters, grid, toastHost);
   body.appendChild(board);
   return board;
 }
@@ -853,6 +849,7 @@ export function createHustleCard({
   copy: copyOverrides = {},
   descriptors: descriptorOverrides = {},
   categoryIcon = '💼',
+  categoryLabel = '',
   onOfferAccept
 } = {}) {
   const descriptorBundle = {
@@ -906,17 +903,61 @@ export function createHustleCard({
   card.dataset.category = categoryKey;
   card.dataset.actionCategory = categoryKey;
 
+  const payoutLabel = model.metrics?.payout?.label
+    || (cardPayoutValue > 0 ? `$${formatMoney(cardPayoutValue)}` : 'Varies');
+
   const header = document.createElement('header');
   header.className = 'browser-card__header downwork-card__header';
+
+  const titleGroup = document.createElement('div');
+  titleGroup.className = 'downwork-card__title-group';
+
   const icon = document.createElement('span');
   icon.className = 'downwork-card__icon';
   icon.textContent = descriptorBundle.icon || categoryIcon || '💼';
-  header.appendChild(icon);
+  titleGroup.appendChild(icon);
+
+  const titleBlock = document.createElement('div');
+  titleBlock.className = 'downwork-card__title-block';
+
   const title = document.createElement('h2');
   title.className = 'browser-card__title';
   title.textContent = hustleLabel;
-  header.appendChild(title);
+  titleBlock.appendChild(title);
+
+  if (categoryLabel) {
+    const categoryPill = document.createElement('span');
+    categoryPill.className = 'downwork-card__category';
+    categoryPill.textContent = categoryLabel;
+    titleBlock.appendChild(categoryPill);
+  }
+
+  titleGroup.appendChild(titleBlock);
+  header.appendChild(titleGroup);
+
+  const headline = document.createElement('div');
+  headline.className = 'downwork-card__headline';
+
+  const payoutCaption = document.createElement('span');
+  payoutCaption.className = 'downwork-card__headline-label';
+  payoutCaption.textContent = 'Payout';
+  headline.appendChild(payoutCaption);
+
+  const payoutHighlight = document.createElement('span');
+  payoutHighlight.className = 'downwork-card__payout';
+  payoutHighlight.textContent = payoutLabel;
+  headline.appendChild(payoutHighlight);
+
+  header.appendChild(headline);
   card.appendChild(header);
+
+  const expiresCandidates = [...visibleOffers, ...visibleUpcoming]
+    .map(offer => Number(offer?.expiresIn))
+    .filter(value => Number.isFinite(value));
+  const soonestExpiry = expiresCandidates.length ? Math.min(...expiresCandidates) : null;
+  if (Number.isFinite(soonestExpiry)) {
+    card.dataset.expiresIn = String(soonestExpiry);
+  }
 
   const metricsRow = document.createElement('div');
   metricsRow.className = 'downwork-card__metrics';
@@ -926,8 +967,6 @@ export function createHustleCard({
   timeChip.textContent = `⏱️ ${model.metrics?.time?.label || formatHours(Math.max(0, timeValue))}`;
   metricsRow.appendChild(timeChip);
 
-  const payoutLabel = model.metrics?.payout?.label
-    || (cardPayoutValue > 0 ? `$${formatMoney(cardPayoutValue)}` : 'Varies');
   const payoutChip = document.createElement('span');
   payoutChip.className = 'downwork-card__metric';
   payoutChip.textContent = `💵 ${payoutLabel}`;
@@ -943,6 +982,18 @@ export function createHustleCard({
       metricsRow.title = tooltip;
       card.title = tooltip;
     }
+  }
+
+  if (Number.isFinite(soonestExpiry)) {
+    const expiryChip = document.createElement('span');
+    expiryChip.className = 'downwork-card__metric downwork-card__metric--expiry';
+    let expiryLabel = '⏳ Expires today';
+    if (soonestExpiry > 0) {
+      const dayLabel = soonestExpiry === 1 ? '1 day left' : `${soonestExpiry} days left`;
+      expiryLabel = `⏳ ${dayLabel}`;
+    }
+    expiryChip.textContent = expiryLabel;
+    metricsRow.appendChild(expiryChip);
   }
 
   card.appendChild(metricsRow);
@@ -1060,13 +1111,6 @@ export function createHustleCard({
     card.appendChild(upcomingSection);
   }
 
-  const expiresCandidates = [...visibleOffers, ...visibleUpcoming]
-    .map(offer => Number(offer?.expiresIn))
-    .filter(value => Number.isFinite(value));
-  if (expiresCandidates.length) {
-    card.dataset.expiresIn = String(Math.min(...expiresCandidates));
-  }
-
   return card;
 }
 
@@ -1087,10 +1131,9 @@ export default function renderHustles(context = {}, definitions = [], models = [
   if (!board) return null;
 
   const list = board.querySelector('[data-role="browser-hustle-list"]');
-  const tabsContainer = board.querySelector('[data-role="downwork-tabs"]');
   const filtersContainer = board.querySelector('[data-role="downwork-filters"]');
 
-  if (!list || !tabsContainer || !filtersContainer) {
+  if (!list || !filtersContainer) {
     return null;
   }
 
@@ -1114,13 +1157,6 @@ export default function renderHustles(context = {}, definitions = [], models = [
 
     const savedCategoryFilters = normalizeFilterIds(sessionConfig.categoryFilters);
     boardState.activeCategoryFilters = new Set(savedCategoryFilters);
-
-    if (typeof sessionConfig.activeCategory === 'string') {
-      const normalizedCategory = resolveCategoryKey(sessionConfig.activeCategory);
-      if (normalizedCategory) {
-        boardState.activeCategory = normalizedCategory;
-      }
-    }
   }
 
   const persistFilterState = () => {
@@ -1145,8 +1181,7 @@ export default function renderHustles(context = {}, definitions = [], models = [
 
     sessionConfig.quickFilters = quickFilters;
     sessionConfig.categoryFilters = categoryFilters;
-    const normalizedCategory = resolveCategoryKey(boardState.activeCategory || '');
-    sessionConfig.activeCategory = normalizedCategory || null;
+    sessionConfig.activeCategory = null;
   };
 
   const modelMap = new Map(models.map(model => [model?.id, model]));
@@ -1218,6 +1253,7 @@ export default function renderHustles(context = {}, definitions = [], models = [
       definition,
       model,
       categoryIcon: categoryConfig.icon,
+      categoryLabel: categoryConfig.label,
       onOfferAccept: handleOfferAccepted
     });
 
@@ -1234,7 +1270,6 @@ export default function renderHustles(context = {}, definitions = [], models = [
     allCards.push(card);
   });
 
-  tabsContainer.innerHTML = '';
   filtersContainer.innerHTML = '';
   list.innerHTML = '';
 
@@ -1297,13 +1332,19 @@ export default function renderHustles(context = {}, definitions = [], models = [
     return labelA.localeCompare(labelB);
   });
 
+  const orderedCards = sortedCategories.reduce((acc, categoryKey) => {
+    const entries = cardsByCategory.get(categoryKey) || [];
+    return acc.concat(entries);
+  }, []);
+
   const validFilters = new Set(QUICK_FILTERS.map(filter => filter.id));
   boardState.activeFilters = new Set(
     [...boardState.activeFilters].filter(id => validFilters.has(id))
   );
 
-  if (!sortedCategories.length) {
-    boardState.activeCategory = null;
+  boardState.activeCategory = null;
+
+  if (!orderedCards.length) {
     boardState.activeFilters.clear();
     boardState.activeCategoryFilters.clear();
     persistFilterState();
@@ -1324,33 +1365,7 @@ export default function renderHustles(context = {}, definitions = [], models = [
     };
   }
 
-  if (!boardState.activeCategory || !cardsByCategory.has(boardState.activeCategory)) {
-    boardState.activeCategory = sortedCategories[0];
-  }
-
   persistFilterState();
-
-  const tabButtons = new Map();
-  sortedCategories.forEach(categoryKey => {
-    const config = categoryMetadata.get(categoryKey) || DEFAULT_CATEGORY_CONFIG;
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'downwork-tab';
-    button.dataset.categoryKey = categoryKey;
-    button.setAttribute('aria-pressed', 'false');
-
-    const icon = document.createElement('span');
-    icon.className = 'downwork-tab__icon';
-    icon.textContent = config.icon || '💼';
-
-    const label = document.createElement('span');
-    label.className = 'downwork-tab__label';
-    label.textContent = config.label;
-
-    button.append(icon, label);
-    tabsContainer.appendChild(button);
-    tabButtons.set(categoryKey, button);
-  });
 
   const filterButtons = new Map();
   if (QUICK_FILTERS.length) {
@@ -1373,8 +1388,8 @@ export default function renderHustles(context = {}, definitions = [], models = [
           boardState.activeFilters.add(filter.id);
         }
         updateFilterSelection();
-        renderActiveCategory();
         persistFilterState();
+        renderCardFeed();
       });
 
       chips.appendChild(button);
@@ -1425,8 +1440,8 @@ export default function renderHustles(context = {}, definitions = [], models = [
           boardState.activeCategoryFilters.add(entry.id);
         }
         updateFilterSelection();
-        renderActiveCategory();
         persistFilterState();
+        renderCardFeed();
       });
 
       chips.appendChild(button);
@@ -1473,7 +1488,7 @@ export default function renderHustles(context = {}, definitions = [], models = [
     return boardState.activeCategoryFilters.has(id);
   }
 
-  function applyActiveFilters(cards = []) {
+  function applyActiveFilters(cards = orderedCards) {
     const predicates = [...boardState.activeFilters]
       .map(id => filterPredicates[id])
       .filter(Boolean);
@@ -1486,15 +1501,6 @@ export default function renderHustles(context = {}, definitions = [], models = [
       }
       return cardMatchesActiveCategoryFilters(card);
     });
-  }
-
-  function updateTabSelection() {
-    tabButtons.forEach((button, key) => {
-      const isActive = key === boardState.activeCategory;
-      button.classList.toggle('is-active', isActive);
-      button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
-    });
-    board.dataset.activeCategory = boardState.activeCategory || '';
   }
 
   function hasActiveFilters() {
@@ -1525,11 +1531,9 @@ export default function renderHustles(context = {}, definitions = [], models = [
     list.classList.toggle('is-filtered', filtered);
   }
 
-  function renderActiveCategory() {
+  function renderCardFeed() {
     list.innerHTML = '';
-    const activeKey = boardState.activeCategory;
-    const cards = cardsByCategory.get(activeKey) || [];
-    const filtered = applyActiveFilters(cards);
+    const filtered = applyActiveFilters();
     const isFiltered = hasActiveFilters();
     list.classList.toggle('is-filtered', isFiltered);
 
@@ -1548,19 +1552,8 @@ export default function renderHustles(context = {}, definitions = [], models = [
     });
   }
 
-  tabButtons.forEach((button, key) => {
-    button.addEventListener('click', () => {
-      if (boardState.activeCategory === key) return;
-      boardState.activeCategory = key;
-      updateTabSelection();
-      renderActiveCategory();
-      persistFilterState();
-    });
-  });
-
-  updateTabSelection();
   updateFilterSelection();
-  renderActiveCategory();
+  renderCardFeed();
 
   updateTabMeta(appState, 'gigs', describeBoardNavSummary({ availableCount, upcomingCount, commitmentCount }));
 

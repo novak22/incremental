@@ -144,9 +144,16 @@ test('renderHustles highlights accept CTA and upcoming list', () => {
     assert.equal(document.querySelector('[data-role="downwork-accepted-value"]')?.textContent, '0');
     assert.equal(document.querySelector('[data-role="downwork-payout-value"]')?.textContent, '$50');
 
-    const tabs = document.querySelectorAll('.downwork-tab');
-    assert.equal(tabs.length, 1, 'expected single hustle category tab');
-    assert.ok(tabs[0].textContent.includes('Daily Hustles'));
+    const cards = document.querySelectorAll('.downwork-card');
+    assert.equal(cards.length, 1, 'expected single hustle card rendered');
+
+    const categoryBadge = cards[0].querySelector('.downwork-card__category');
+    assert.ok(categoryBadge, 'expected category badge to render');
+    assert.ok(categoryBadge.textContent.includes('Daily Hustles'));
+
+    const payoutHeadline = cards[0].querySelector('.downwork-card__payout');
+    assert.ok(payoutHeadline, 'expected payout headline to render');
+    assert.equal(payoutHeadline.textContent, '$50');
 
     const filters = document.querySelectorAll('button[data-filter-id]');
     assert.equal(filters.length, 4, 'expected quick filter pills');
