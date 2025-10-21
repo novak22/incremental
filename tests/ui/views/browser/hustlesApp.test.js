@@ -417,6 +417,109 @@ test('renderHustles omits locked offers from DownWork feed', () => {
   }
 });
 
+test('renderHustles renders multiple upcoming-only offers without duplication', () => {
+  const dom = setupDom();
+  const context = {
+    ensurePageContent: (_page, builder) => {
+      const body = document.createElement('div');
+      builder({ body });
+      document.body.appendChild(body);
+      return { body };
+    }
+  };
+
+  const upcomingOffers = [
+    {
+      id: 'upcoming-alpha',
+      label: 'Alpha Contract',
+      description: 'First to unlock.',
+      meta: 'Opens tomorrow',
+      payout: 40,
+      ready: false,
+      availableIn: 1,
+      expiresIn: 3
+    },
+    {
+      id: 'upcoming-beta',
+      label: 'Beta Contract',
+      description: 'Queue this next.',
+      meta: 'Opens in two days',
+      payout: 55,
+      ready: false,
+      availableIn: 2,
+      expiresIn: 4
+    },
+    {
+      id: 'upcoming-gamma',
+      label: 'Gamma Contract',
+      description: 'Warm the leads.',
+      meta: 'Opens in three days',
+      payout: 65,
+      ready: false,
+      availableIn: 3,
+      expiresIn: 5
+    }
+  ];
+
+  const definitions = [
+    {
+      id: 'upcoming-only',
+      name: 'Upcoming Only Hustle',
+      description: 'Plan ahead while slots unlock.',
+      action: { label: 'Check back soon', className: 'secondary', disabled: true }
+    }
+  ];
+
+  const models = [
+    {
+      id: 'upcoming-only',
+      name: 'Upcoming Only Hustle',
+      description: 'Plan ahead while slots unlock.',
+      badges: [],
+      metrics: {
+        time: { value: 2, label: '2h focus' },
+        payout: { value: 60, label: '$60 payout' },
+        roi: 30
+      },
+      requirements: { summary: 'No requirements', items: [] },
+      action: {
+        label: 'Check back soon',
+        className: 'secondary',
+        disabled: true
+      },
+      available: false,
+      offers: [],
+      upcoming: upcomingOffers,
+      commitments: [],
+      filters: { available: false, category: 'ops' }
+    }
+  ];
+
+  try {
+    renderHustles(context, definitions, models);
+
+    const list = document.querySelector('[data-role="browser-hustle-list"]');
+    const cards = list ? [...list.querySelectorAll('.downwork-card')] : [];
+    assert.equal(cards.length, upcomingOffers.length, 'expected one card per upcoming offer');
+
+    upcomingOffers.forEach(offer => {
+      const occurrences = [...document.querySelectorAll('.hustle-card__title')]
+        .filter(node => node.textContent.trim() === offer.label).length;
+      assert.equal(occurrences, 1, `expected ${offer.label} to appear once`);
+    });
+
+    cards.forEach(card => {
+      const upcomingHeadings = [...card.querySelectorAll('.browser-card__section-title')]
+        .filter(node => node.textContent === 'Opening soon');
+      assert.equal(upcomingHeadings.length, 1, 'expected a single upcoming section per card');
+    });
+  } finally {
+    dom.window.close();
+    delete globalThis.window;
+    delete globalThis.document;
+  }
+});
+
 test('renderHustles syncs quick filter state with session config', () => {
   const dom = setupDom();
   const restoreState = mockSessionState({
