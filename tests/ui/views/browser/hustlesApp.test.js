@@ -236,7 +236,12 @@ test('renderHustles renders unified offer feed with metrics, CTA wiring, and fil
       'expected multiple offers from the same hustle to render separately'
     );
 
-    const primaryCard = cards[0];
+    const primaryCard = cards.find(card =>
+      card.dataset.hustle === 'priority-hustle' &&
+      card.dataset.available === 'true' &&
+      card.querySelector('.browser-card__summary')
+    );
+    assert.ok(primaryCard, 'expected primary ready card for priority hustle');
     assert.equal(primaryCard.dataset.time, '2');
     assert.equal(primaryCard.dataset.payout, '50');
     assert.equal(primaryCard.dataset.roi, '25');
@@ -248,7 +253,12 @@ test('renderHustles renders unified offer feed with metrics, CTA wiring, and fil
     assert.equal(primaryCard.querySelectorAll('.downwork-card__tag').length, 2, 'expected primary card tags');
     assert.equal(primaryCard.querySelector('.browser-card__meta')?.textContent, 'No requirements');
 
-    const secondaryCard = cards[1];
+    const secondaryCard = cards.find(card =>
+      card.dataset.hustle === 'priority-hustle' &&
+      card.dataset.available === 'true' &&
+      !card.querySelector('.browser-card__summary')
+    );
+    assert.ok(secondaryCard, 'expected secondary ready card for priority hustle');
     assert.equal(secondaryCard.dataset.time, '3');
     assert.equal(secondaryCard.dataset.payout, '80');
     assert.equal(
@@ -272,7 +282,10 @@ test('renderHustles renders unified offer feed with metrics, CTA wiring, and fil
       'expected secondary card to hide requirements summary'
     );
 
-    const upcomingCard = cards[2];
+    const upcomingCard = cards.find(card =>
+      card.dataset.hustle === 'slow-burn' && card.dataset.available === 'false'
+    );
+    assert.ok(upcomingCard, 'expected upcoming hustle card to be present');
     assert.equal(upcomingCard.dataset.available, 'false');
     assert.equal(upcomingCard.dataset.hustle, 'slow-burn');
     assert.ok(

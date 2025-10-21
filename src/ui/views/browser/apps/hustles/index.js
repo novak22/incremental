@@ -14,8 +14,6 @@ import {
   fireAssistant
 } from '../../../../../game/assistant.js';
 
-const CATEGORY_ORDER = ['writing', 'community', 'research', 'ops'];
-
 const CATEGORY_CONFIG = {
   writing: { id: 'freelance', label: 'Freelance Grind', icon: '✍️' },
   community: { id: 'audience', label: 'Creator Lane', icon: '📣' },
@@ -249,12 +247,6 @@ function resolveCategoryConfig(key = '') {
   return CATEGORY_CONFIG[normalized] || DEFAULT_CATEGORY_CONFIG;
 }
 
-function getCategorySortIndex(key = '') {
-  const normalized = resolveCategoryKey(key);
-  const index = CATEGORY_ORDER.indexOf(normalized);
-  return index === -1 ? CATEGORY_ORDER.length : index;
-}
-
 function formatTagLabel(raw = '') {
   if (!raw) return '';
   return raw
@@ -483,17 +475,64 @@ function buildOfferEntries(definitions = [], models = [], { onOfferAccept } = {}
     });
   });
 
+  const statusWeight = status => {
+    if (status === 'ready') return 0;
+    if (status === 'upcoming') return 1;
+    return 2;
+  };
+
+  const getPayoutSortValue = entry => {
+    const candidates = [
+      Number(entry.offer?.payout),
+      Number(entry.metrics?.payoutValue),
+      Number(entry.model?.metrics?.payout?.value)
+    ];
+    for (const value of candidates) {
+      if (Number.isFinite(value)) {
+        return Math.max(0, value);
+      }
+    }
+    return 0;
+  };
+
+  const getTimeSortValue = entry => {
+    const candidates = [
+      Number(entry.offer?.hoursRequired),
+      Number(entry.metrics?.timeValue),
+      Number(entry.model?.metrics?.time?.value)
+    ];
+    for (const value of candidates) {
+      if (Number.isFinite(value)) {
+        return Math.max(0, value);
+      }
+    }
+    return Number.MAX_SAFE_INTEGER;
+  };
+
+  const getLabelSortValue = entry => {
+    const candidates = [entry.hustleLabel, entry.model?.name, entry.definition?.name, ''];
+    const label = candidates.find(value => typeof value === 'string' && value.trim().length > 0) || '';
+    return label.toLowerCase();
+  };
+
   entries.sort((a, b) => {
-    const categoryDiff = getCategorySortIndex(a.categoryKey) - getCategorySortIndex(b.categoryKey);
-    if (categoryDiff !== 0) return categoryDiff;
-    if (a.hustleIndex !== b.hustleIndex) return a.hustleIndex - b.hustleIndex;
-    const weight = status => {
-      if (status === 'ready') return 0;
-      if (status === 'upcoming') return 1;
-      return 2;
-    };
-    const statusDiff = weight(a.status) - weight(b.status);
+    const statusDiff = statusWeight(a.status) - statusWeight(b.status);
     if (statusDiff !== 0) return statusDiff;
+
+    if (a.hustleId === b.hustleId && a.isPrimary !== b.isPrimary) {
+      return a.isPrimary ? -1 : 1;
+    }
+
+    const payoutDiff = getPayoutSortValue(b) - getPayoutSortValue(a);
+    if (payoutDiff !== 0) return payoutDiff;
+
+    const timeDiff = getTimeSortValue(a) - getTimeSortValue(b);
+    if (timeDiff !== 0) return timeDiff;
+
+    const labelDiff = getLabelSortValue(a).localeCompare(getLabelSortValue(b), 'en', { sensitivity: 'base' });
+    if (labelDiff !== 0) return labelDiff;
+
+    if (a.hustleIndex !== b.hustleIndex) return a.hustleIndex - b.hustleIndex;
     return a.offerIndex - b.offerIndex;
   });
 
