@@ -464,10 +464,6 @@ function buildOfferEntries(definitions = [], models = [], { onOfferAccept } = {}
       entry.showAction = index === 0 || entry.status === 'placeholder';
       if (entry.status === 'ready') {
         entry.upcomingOffers = index === 0 ? visibleUpcoming : [];
-      } else if (entry.status === 'upcoming') {
-        entry.upcomingOffers = index === 0
-          ? visibleUpcoming.filter(offer => offer !== entry.offer)
-          : [];
       } else {
         entry.upcomingOffers = [];
       }
@@ -1298,7 +1294,7 @@ export function createOfferCard(entry = {}) {
   }
 
   const additionalUpcoming = Array.isArray(upcomingOffers) ? upcomingOffers.filter(Boolean) : [];
-  if (additionalUpcoming.length) {
+  if (additionalUpcoming.length && status === 'ready') {
     const upcomingSection = createCardSection(copy.upcoming);
     const upcomingList = createOfferList(additionalUpcoming, {
       upcoming: true,
