@@ -1,4 +1,5 @@
 import { formatHours, formatMoney } from '../../../../../core/helpers.js';
+import { getState } from '../../../../../core/state.js';
 import { getPageByType } from '../pageLookup.js';
 import { formatRoi } from '../../components/widgets.js';
 import { createOfferList } from './offers.js';
@@ -31,6 +32,8 @@ const QUICK_FILTERS = [
   { id: 'expiringSoon', label: '🕒 Expiring soon' }
 ];
 
+const QUICK_FILTER_ORDER = new Map(QUICK_FILTERS.map((filter, index) => [filter.id, index]));
+
 const APP_VIEWS = [
   { id: 'gigs', label: 'Find gigs', icon: '🗂️' },
   { id: 'hire', label: 'Hire people', icon: '🤝' }
@@ -38,6 +41,48 @@ const APP_VIEWS = [
 
 const boardStateMap = new WeakMap();
 const appStateMap = new WeakMap();
+
+function normalizeFilterIds(values) {
+  if (!Array.isArray(values)) {
+    return [];
+  }
+  return values
+    .map(value => (typeof value === 'string' ? value.trim() : ''))
+    .filter(Boolean);
+}
+
+function ensureDownworkSessionConfig() {
+  const state = getState();
+  if (!state || typeof state !== 'object') {
+    return null;
+  }
+
+  if (!state.session || typeof state.session !== 'object') {
+    state.session = {};
+  }
+
+  if (!state.session.config || typeof state.session.config !== 'object') {
+    state.session.config = {};
+  }
+
+  const config = state.session.config;
+  if (!config.downwork || typeof config.downwork !== 'object') {
+    config.downwork = {};
+  }
+
+  const downwork = config.downwork;
+  if (!Array.isArray(downwork.quickFilters)) {
+    downwork.quickFilters = [];
+  }
+  if (!Array.isArray(downwork.categoryFilters)) {
+    downwork.categoryFilters = [];
+  }
+  if (downwork.activeCategory != null && typeof downwork.activeCategory !== 'string') {
+    downwork.activeCategory = null;
+  }
+
+  return downwork;
+}
 
 function getAppState(app) {
   if (!appStateMap.has(app)) {
@@ -1062,6 +1107,48 @@ export default function renderHustles(context = {}, definitions = [], models = [
     grid: list
   };
 
+  const sessionConfig = ensureDownworkSessionConfig();
+  if (sessionConfig) {
+    const savedQuickFilters = normalizeFilterIds(sessionConfig.quickFilters);
+    boardState.activeFilters = new Set(savedQuickFilters);
+
+    const savedCategoryFilters = normalizeFilterIds(sessionConfig.categoryFilters);
+    boardState.activeCategoryFilters = new Set(savedCategoryFilters);
+
+    if (typeof sessionConfig.activeCategory === 'string') {
+      const normalizedCategory = resolveCategoryKey(sessionConfig.activeCategory);
+      if (normalizedCategory) {
+        boardState.activeCategory = normalizedCategory;
+      }
+    }
+  }
+
+  const persistFilterState = () => {
+    if (!sessionConfig) return;
+
+    const quickFilters = Array.from(boardState.activeFilters || [])
+      .map(id => (typeof id === 'string' ? id.trim() : ''))
+      .filter(Boolean)
+      .sort((a, b) => {
+        const orderA = QUICK_FILTER_ORDER.get(a) ?? Number.MAX_SAFE_INTEGER;
+        const orderB = QUICK_FILTER_ORDER.get(b) ?? Number.MAX_SAFE_INTEGER;
+        if (orderA !== orderB) {
+          return orderA - orderB;
+        }
+        return a.localeCompare(b);
+      });
+
+    const categoryFilters = Array.from(boardState.activeCategoryFilters || [])
+      .map(id => (typeof id === 'string' ? id.trim() : ''))
+      .filter(Boolean)
+      .sort();
+
+    sessionConfig.quickFilters = quickFilters;
+    sessionConfig.categoryFilters = categoryFilters;
+    const normalizedCategory = resolveCategoryKey(boardState.activeCategory || '');
+    sessionConfig.activeCategory = normalizedCategory || null;
+  };
+
   const modelMap = new Map(models.map(model => [model?.id, model]));
   let availableCount = 0;
   let commitmentCount = 0;
@@ -1219,6 +1306,7 @@ export default function renderHustles(context = {}, definitions = [], models = [
     boardState.activeCategory = null;
     boardState.activeFilters.clear();
     boardState.activeCategoryFilters.clear();
+    persistFilterState();
     const empty = document.createElement('p');
     empty.className = 'browser-empty';
     empty.textContent = 'Queue an action to see it spotlighted here.';
@@ -1239,6 +1327,8 @@ export default function renderHustles(context = {}, definitions = [], models = [
   if (!boardState.activeCategory || !cardsByCategory.has(boardState.activeCategory)) {
     boardState.activeCategory = sortedCategories[0];
   }
+
+  persistFilterState();
 
   const tabButtons = new Map();
   sortedCategories.forEach(categoryKey => {
@@ -1284,6 +1374,7 @@ export default function renderHustles(context = {}, definitions = [], models = [
         }
         updateFilterSelection();
         renderActiveCategory();
+        persistFilterState();
       });
 
       chips.appendChild(button);
@@ -1335,6 +1426,7 @@ export default function renderHustles(context = {}, definitions = [], models = [
         }
         updateFilterSelection();
         renderActiveCategory();
+        persistFilterState();
       });
 
       chips.appendChild(button);
@@ -1462,6 +1554,7 @@ export default function renderHustles(context = {}, definitions = [], models = [
       boardState.activeCategory = key;
       updateTabSelection();
       renderActiveCategory();
+      persistFilterState();
     });
   });
 

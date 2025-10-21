@@ -8,7 +8,7 @@ This log highlights player-visible milestones. For exhaustive historical notes, 
 - Reference follow-up work with GitHub issues or pull requests only (for example, `[PR #456](https://github.com/<org>/<repo>/pull/456)`); skip commit links and essay-length commentary.
 
 ## Unreleased
-- Placeholder for the next release.
+- DownWork now remembers quick and category filters per session, keeping your scouting view consistent between visits.
 
 ## 2025-10-21 – Session Slot & Hustle Refresh
 - Introduced multi-session save slots with import/export, autosave safeguards, and gentle recovery flows.

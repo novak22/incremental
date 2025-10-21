@@ -2,12 +2,63 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { JSDOM } from 'jsdom';
 import renderHustles from '../../../../src/ui/views/browser/apps/hustles.js';
+import { getState, defaultStateManager } from '../../../../src/core/state.js';
 
 function setupDom() {
   const dom = new JSDOM('<main id="app-root"></main>');
   globalThis.window = dom.window;
   globalThis.document = dom.window.document;
   return dom;
+}
+
+function mockSessionState({
+  quickFilters = [],
+  categoryFilters = [],
+  activeCategory = null
+} = {}) {
+  const previousState = defaultStateManager.state;
+  const originalGetUpgradeState = defaultStateManager.getUpgradeState;
+
+  const mockState = {
+    money: 0,
+    timeLeft: 0,
+    baseTime: 0,
+    bonusTime: 0,
+    day: 1,
+    upgrades: {
+      assistant: { count: 0 }
+    },
+    session: {
+      config: {
+        downwork: {
+          quickFilters: [...quickFilters],
+          categoryFilters: [...categoryFilters],
+          activeCategory
+        }
+      }
+    }
+  };
+
+  defaultStateManager.state = mockState;
+  defaultStateManager.getUpgradeState = function mockGetUpgradeState(
+    id,
+    target = this.state
+  ) {
+    const resolvedState = target || this.state || {};
+    const upgrades =
+      resolvedState && typeof resolvedState.upgrades === 'object'
+        ? resolvedState.upgrades
+        : {};
+    if (!id) {
+      return upgrades || {};
+    }
+    return upgrades[id] || {};
+  };
+
+  return () => {
+    defaultStateManager.state = previousState;
+    defaultStateManager.getUpgradeState = originalGetUpgradeState;
+  };
 }
 
 test('renderHustles highlights accept CTA and upcoming list', () => {
@@ -239,6 +290,94 @@ test('renderHustles omits locked offers from DownWork feed', () => {
     dom.window.close();
     delete globalThis.window;
     delete globalThis.document;
+  }
+});
+
+test('renderHustles syncs quick filter state with session config', () => {
+  const dom = setupDom();
+  const restoreState = mockSessionState({ quickFilters: ['shortTasks'] });
+  const state = getState();
+  state.session.config.downwork = {
+    quickFilters: ['shortTasks'],
+    categoryFilters: [],
+    activeCategory: null
+  };
+
+  const context = {
+    ensurePageContent: (_page, builder) => {
+      const body = document.createElement('div');
+      builder({ body });
+      document.body.appendChild(body);
+      return { body };
+    }
+  };
+
+  const definitions = [
+    {
+      id: 'session-filter',
+      name: 'Session Filter Hustle',
+      description: 'Persists quick filters.',
+      action: { label: 'Accept offer', disabled: false }
+    }
+  ];
+
+  const models = [
+    {
+      id: 'session-filter',
+      name: 'Session Filter Hustle',
+      description: 'Persists quick filters.',
+      badges: [],
+      metrics: {
+        time: { value: 1, label: '1h' },
+        payout: { value: 20, label: '$20' },
+        roi: 20
+      },
+      requirements: { summary: 'No requirements', items: [] },
+      action: {
+        label: 'Accept offer',
+        disabled: false,
+        onClick: () => {}
+      },
+      available: true,
+      offers: [
+        {
+          id: 'offer-ready',
+          label: 'Ready Offer',
+          description: 'Open now',
+          meta: 'Available now • 1h focus',
+          payout: 20,
+          ready: true,
+          availableIn: 0,
+          expiresIn: 1,
+          onAccept: () => {}
+        }
+      ],
+      upcoming: [],
+      commitments: [],
+      filters: { available: true }
+    }
+  ];
+
+  try {
+    renderHustles(context, definitions, models);
+    const savedFilter = document.querySelector('button[data-filter-id="shortTasks"]');
+    assert.ok(savedFilter?.classList.contains('is-active'), 'saved quick filter should start active');
+
+    const payoutFilter = document.querySelector('button[data-filter-id="highPayout"]');
+    assert.ok(payoutFilter, 'expected high payout quick filter');
+    payoutFilter.click();
+
+    let config = getState().session.config.downwork;
+    assert.deepEqual(config.quickFilters, ['highPayout', 'shortTasks']);
+
+    savedFilter.click();
+    config = getState().session.config.downwork;
+    assert.deepEqual(config.quickFilters, ['highPayout']);
+  } finally {
+    dom.window.close();
+    delete globalThis.window;
+    delete globalThis.document;
+    restoreState();
   }
 });
 
