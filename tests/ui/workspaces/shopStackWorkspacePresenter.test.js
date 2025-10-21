@@ -8,7 +8,11 @@ import {
   VIEW_PRICING,
   reduceSearch
 } from '../../../src/ui/views/browser/components/shopstack/state.js';
-import { createDefinitionMap } from '../../../src/ui/views/browser/components/shopstack/catalogData.js';
+import {
+  createDefinitionMap,
+  collectCatalogItems
+} from '../../../src/ui/views/browser/components/shopstack/catalogData.js';
+import { UPGRADE_DEFINITIONS } from '../../../src/game/upgrades/definitions/index.js';
 
 function setupDomEnvironment(t) {
   const dom = new JSDOM('<div id="root"></div>');
@@ -150,6 +154,41 @@ function createMultiCategoryDefinitions(events) {
   ];
 }
 
+function createWorkflowCatalogModel() {
+  const createEntry = id => ({
+    id,
+    name: id,
+    snapshot: { ready: true },
+    filters: { search: id }
+  });
+
+  return {
+    categories: [
+      {
+        id: 'tech',
+        copy: { label: 'Tech' },
+        families: [
+          {
+            id: 'workflow',
+            copy: { label: 'Workflow' },
+            definitions: [
+              createEntry('course'),
+              createEntry('editorialPipeline'),
+              createEntry('syndicationSuite'),
+              createEntry('immersiveStoryWorlds')
+            ]
+          },
+          {
+            id: 'gear',
+            copy: { label: 'Gear' },
+            definitions: [createEntry('creatorPhone')]
+          }
+        ]
+      }
+    ]
+  };
+}
+
 test('createShopStackWorkspacePresenter renders catalog interactions and tabs', async t => {
   const { dom, mount } = setupDomEnvironment(t);
   const events = [];
@@ -237,4 +276,37 @@ test('shopstack catalog buttons trigger rerenders for selection changes', async 
   const filteredCards = [...mount.querySelectorAll('.shopstack-card')];
   assert.equal(filteredCards.length, 1);
   assert.equal(filteredCards[0].dataset.upgrade, 'supportBeacon');
+});
+
+test('shopstack catalog excludes workspace-specific workflow upgrades', () => {
+  const definitionMap = createDefinitionMap(UPGRADE_DEFINITIONS);
+  const model = createWorkflowCatalogModel();
+
+  const collectIdsFor = placement =>
+    collectCatalogItems(model, definitionMap, { placement }).map(item => item.model.id);
+
+  const shopstackIds = collectIdsFor('shopstack');
+  assert.ok(shopstackIds.includes('creatorPhone'), 'general tech upgrades should still appear in ShopStack');
+  ['course', 'editorialPipeline', 'syndicationSuite', 'immersiveStoryWorlds'].forEach(id => {
+    assert.ok(!shopstackIds.includes(id), `${id} should be filtered from ShopStack`);
+  });
+
+  const blogpressIds = collectIdsFor('blogpress');
+  ['course', 'editorialPipeline', 'syndicationSuite', 'immersiveStoryWorlds'].forEach(id => {
+    assert.ok(blogpressIds.includes(id), `${id} should appear on BlogPress`);
+  });
+
+  const digishelfIds = collectIdsFor('digishelf');
+  assert.ok(!digishelfIds.includes('course'), 'Course should be BlogPress-exclusive');
+  assert.ok(!digishelfIds.includes('editorialPipeline'), 'Editorial pipeline should be BlogPress-only');
+  ['syndicationSuite', 'immersiveStoryWorlds'].forEach(id => {
+    assert.ok(digishelfIds.includes(id), `${id} should appear on DigiShelf`);
+  });
+
+  const videotubeIds = collectIdsFor('videotube');
+  assert.ok(!videotubeIds.includes('course'), 'Course should be BlogPress-exclusive');
+  assert.ok(!videotubeIds.includes('editorialPipeline'), 'Editorial pipeline should be BlogPress-only');
+  ['syndicationSuite', 'immersiveStoryWorlds'].forEach(id => {
+    assert.ok(videotubeIds.includes(id), `${id} should appear on VideoTube`);
+  });
 });
