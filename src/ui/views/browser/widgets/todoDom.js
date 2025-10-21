@@ -33,14 +33,6 @@ function prepareElements(widgetElements = {}) {
     elements.list = select(['#browser-widget-todo-list', '.todo-widget__list']);
   }
 
-  if (!elements.done) {
-    elements.done = select(['#browser-widget-todo-done', '.todo-widget__done-list']);
-  }
-
-  if (!elements.doneHeading) {
-    elements.doneHeading = select(['#browser-widget-todo-done-heading', '.todo-widget__done h3']);
-  }
-
   if (!elements.note) {
     elements.note = select(['#browser-widget-todo-note', '.todo-widget__intro p']);
   }
@@ -77,10 +69,6 @@ function prepareElements(widgetElements = {}) {
     }
   } else {
     elements.focusButtons = [];
-  }
-
-  if (elements.doneHeading) {
-    elements.doneHeading.hidden = true;
   }
 
   return elements;
@@ -291,50 +279,11 @@ function renderEmptyState(list, message, onEndDay) {
   list.appendChild(empty);
 }
 
-function renderCompleted(list, heading, entries = [], formatDuration) {
-  if (!list) return;
-
-  const sorted = [...entries].sort((a, b) => b.completedAt - a.completedAt);
-  list.innerHTML = '';
-
-  if (heading) {
-    heading.hidden = sorted.length === 0;
-  }
-
-  if (!sorted.length) {
-    const placeholder = document.createElement('li');
-    placeholder.className = 'todo-widget__empty';
-    placeholder.textContent = 'Nothing checked off yet.';
-    list.appendChild(placeholder);
-    return;
-  }
-
-  sorted.forEach(entry => {
-    const item = document.createElement('li');
-    item.className = 'todo-widget__done-item';
-
-    const title = document.createElement('span');
-    title.className = 'todo-widget__done-title';
-    title.textContent = entry.title;
-
-    const meta = document.createElement('span');
-    meta.className = 'todo-widget__done-meta';
-    const label = entry.durationText
-      || (typeof formatDuration === 'function' ? formatDuration(entry.durationHours) : '0h');
-    const countLabel = entry.count && entry.count > 1 ? ` ×${entry.count}` : '';
-    meta.textContent = `(${label}${countLabel})`;
-
-    item.append(title, meta);
-    list.appendChild(item);
-  });
-}
-
 export {
   applyScrollerLimit,
   bindEndDay,
   bindFocusControls,
   prepareElements,
-  renderCompleted,
   renderEmptyState,
   renderHours,
   renderPending,
@@ -347,7 +296,6 @@ export default {
   bindEndDay,
   bindFocusControls,
   prepareElements,
-  renderCompleted,
   renderEmptyState,
   renderHours,
   renderPending,
