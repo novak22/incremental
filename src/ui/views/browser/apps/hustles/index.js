@@ -511,17 +511,17 @@ function buildOfferEntries(definitions = [], models = [], { onOfferAccept } = {}
 
 function createFilterRow(labelText = '') {
   const row = document.createElement('div');
-  row.className = 'downwork-filter-row';
+  row.className = 'downwork-filter-row downwork-marketplace__filter-row';
 
   if (labelText) {
     const label = document.createElement('span');
-    label.className = 'downwork-filter-row__label';
+    label.className = 'downwork-filter-row__label downwork-marketplace__filter-label';
     label.textContent = labelText;
     row.appendChild(label);
   }
 
   const chips = document.createElement('div');
-  chips.className = 'downwork-filter-row__chips';
+  chips.className = 'downwork-filter-row__chips downwork-marketplace__filter-chips';
   row.appendChild(chips);
 
   return { row, chips };
@@ -586,7 +586,7 @@ function ensureBoard(body) {
   }
 
   board = document.createElement('div');
-  board.className = 'downwork-board';
+  board.className = 'downwork-board downwork-marketplace';
   board.dataset.role = 'downwork-board';
 
   const summary = document.createElement('header');
@@ -608,16 +608,16 @@ function ensureBoard(body) {
   );
 
   const header = document.createElement('div');
-  header.className = 'downwork-board__header';
+  header.className = 'downwork-board__header downwork-marketplace__header';
   header.dataset.role = 'downwork-header';
 
   const filters = document.createElement('div');
-  filters.className = 'downwork-board__filters';
+  filters.className = 'downwork-board__filters downwork-marketplace__filters';
   filters.dataset.role = 'downwork-filters';
   header.appendChild(filters);
 
   const marketplace = document.createElement('div');
-  marketplace.className = 'downwork-board__marketplace downwork-board__list';
+  marketplace.className = 'downwork-board__marketplace downwork-board__list downwork-marketplace__list';
   marketplace.dataset.role = 'browser-hustle-list';
 
   const toastHost = document.createElement('div');
@@ -1485,7 +1485,7 @@ export default function renderHustles(context = {}, definitions = [], models = [
     QUICK_FILTERS.forEach(filter => {
       const button = document.createElement('button');
       button.type = 'button';
-      button.className = 'downwork-filter';
+      button.className = 'downwork-filter downwork-marketplace__filter downwork-marketplace__filter--quick';
       button.dataset.filterId = filter.id;
       button.textContent = filter.label;
       const isActive = boardState.activeFilters.has(filter.id);
@@ -1526,7 +1526,8 @@ export default function renderHustles(context = {}, definitions = [], models = [
     categoryFilterEntries.forEach(entry => {
       const button = document.createElement('button');
       button.type = 'button';
-      button.className = 'downwork-filter downwork-filter--category';
+      button.className =
+        'downwork-filter downwork-marketplace__filter downwork-marketplace__filter--category';
       button.dataset.categoryId = entry.id;
 
       const labelSpan = document.createElement('span');
