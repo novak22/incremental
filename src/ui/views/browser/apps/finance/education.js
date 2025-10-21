@@ -1,60 +1,66 @@
-import { formatHours } from '../../../../../core/helpers.js';
 import { createBankSection } from './ledger.js';
 import { formatCurrency } from '../../utils/financeFormatting.js';
+
+function describeStudyMessage(entries = []) {
+  const activeCount = entries.length;
+  if (!activeCount) {
+    return {
+      summary: 'Study commitments: 0 active · $0 due. You have unused study capacity today.',
+      detail: null
+    };
+  }
+
+  const totalDue = entries.reduce((sum, entry) => sum + (Number(entry.tuition) || 0), 0);
+  const pending = entries.filter(entry => !entry.studiedToday).length;
+  const soonest = entries.reduce((lowest, entry) => {
+    const remaining = Number(entry.remainingDays);
+    if (!Number.isFinite(remaining)) return lowest;
+    if (lowest == null) return remaining;
+    return Math.min(lowest, remaining);
+  }, null);
+
+  const summary = `Study commitments: ${activeCount} active · ${formatCurrency(totalDue)} due.`;
+  let detail = '';
+  if (pending === 0) {
+    detail = 'All study sessions logged today.';
+  } else {
+    detail = pending === activeCount
+      ? 'You still have study time open today.'
+      : `${pending} course${pending === 1 ? '' : 's'} still need study time.`;
+  }
+  if (Number.isFinite(soonest) && soonest >= 0) {
+    const timeline = soonest === 0
+      ? 'One course wraps today.'
+      : `Soonest completion in ${soonest} day${soonest === 1 ? '' : 's'}.`;
+    detail = `${detail} ${timeline}`.trim();
+  }
+
+  return { summary, detail: detail.trim() || null };
+}
 
 export default function renderFinanceEducation(entries = []) {
   const { section, body } = createBankSection(
     'Education Investments',
-    'Courses in progress with tuition already committed.'
+    'Keep tuition on radar while tracking study momentum.'
   );
   const list = Array.isArray(entries) ? entries : [];
 
-  if (!list.length) {
-    const empty = document.createElement('p');
-    empty.className = 'bankapp-empty';
-    empty.textContent = 'No active courses. Enroll in a study track to plan tuition.';
-    body.appendChild(empty);
-    return section;
+  const card = document.createElement('article');
+  card.className = 'bankapp-education__summary';
+
+  const { summary, detail } = describeStudyMessage(list);
+  const summaryLine = document.createElement('p');
+  summaryLine.className = 'bankapp-education__primary';
+  summaryLine.textContent = summary;
+  card.appendChild(summaryLine);
+
+  if (detail) {
+    const detailLine = document.createElement('p');
+    detailLine.className = 'bankapp-education__detail';
+    detailLine.textContent = detail;
+    card.appendChild(detailLine);
   }
 
-  const grid = document.createElement('div');
-  grid.className = 'bankapp-education';
-
-  list.forEach(entry => {
-    const card = document.createElement('article');
-    card.className = 'bankapp-card bankapp-card--education';
-    const header = document.createElement('div');
-    header.className = 'bankapp-card__header';
-    const title = document.createElement('h3');
-    title.textContent = entry.name || 'Course';
-    const tuition = document.createElement('span');
-    tuition.className = 'bankapp-card__amount';
-    tuition.textContent = entry.tuition > 0 ? formatCurrency(entry.tuition) : 'Free';
-    header.append(title, tuition);
-    card.appendChild(header);
-
-    const note = document.createElement('p');
-    note.className = 'bankapp-card__note';
-    note.textContent = `${entry.remainingDays} day${entry.remainingDays === 1 ? '' : 's'} left • ${formatHours(entry.hoursPerDay || 0)}/day`;
-    card.appendChild(note);
-
-    if (entry.bonus) {
-      const bonus = document.createElement('p');
-      bonus.className = 'bankapp-card__note bankapp-card__note--muted';
-      bonus.textContent = entry.bonus;
-      card.appendChild(bonus);
-    }
-
-    const status = document.createElement('p');
-    status.className = 'bankapp-card__status';
-    status.textContent = entry.studiedToday
-      ? 'Today’s study scheduled'
-      : 'Waiting for today’s study slot';
-    card.appendChild(status);
-
-    grid.appendChild(card);
-  });
-
-  body.appendChild(grid);
+  body.appendChild(card);
   return section;
 }

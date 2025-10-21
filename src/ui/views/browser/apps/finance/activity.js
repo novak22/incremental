@@ -1,12 +1,22 @@
 import { createBankSection } from './ledger.js';
 
+const ACTIVITY_ICON = {
+  positive: '⬆️',
+  negative: '⬇️',
+  neutral: '•'
+};
+
+function resolveIcon(tone) {
+  return ACTIVITY_ICON[tone] || ACTIVITY_ICON.neutral;
+}
+
 export default function renderFinanceActivity(entries = []) {
   const { section, body } = createBankSection(
     'Recent Activity Log',
     'Latest timeline pulled from the shared activity feed.'
   );
 
-  const activity = Array.isArray(entries) ? entries.slice(0, 10) : [];
+  const activity = Array.isArray(entries) ? entries.slice(0, 5) : [];
   if (!activity.length) {
     const empty = document.createElement('p');
     empty.className = 'bankapp-empty';
@@ -24,6 +34,11 @@ export default function renderFinanceActivity(entries = []) {
     if (entry?.tone) {
       item.dataset.tone = entry.tone;
     }
+
+    const icon = document.createElement('span');
+    icon.className = 'bankapp-activity__icon';
+    icon.textContent = resolveIcon(entry?.tone);
+    item.appendChild(icon);
 
     const message = document.createElement('span');
     message.className = 'bankapp-activity__message';
@@ -46,5 +61,14 @@ export default function renderFinanceActivity(entries = []) {
   });
 
   body.appendChild(list);
+
+  const more = document.createElement('div');
+  more.className = 'bankapp-activity__more';
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.textContent = 'Load more';
+  more.appendChild(button);
+  body.appendChild(more);
+
   return section;
 }

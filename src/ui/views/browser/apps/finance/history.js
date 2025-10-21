@@ -1,10 +1,27 @@
 import { createBankSection } from './ledger.js';
 import { formatCurrency, formatSignedCurrency } from '../../utils/financeFormatting.js';
 
+function buildContext(entry) {
+  if (entry?.summary) {
+    return entry.summary;
+  }
+  const incomeTop = entry?.ledger?.payouts?.[0];
+  const spendTop = entry?.ledger?.costs?.[0];
+  const details = [];
+  if (incomeTop) {
+    details.push(`${incomeTop.label || 'Income'} ${formatSignedCurrency(incomeTop.amount || 0)}`);
+  }
+  if (spendTop) {
+    const spendAmount = spendTop.amount ? -spendTop.amount : 0;
+    details.push(`${spendTop.label || 'Spend'} ${formatSignedCurrency(spendAmount)}`);
+  }
+  return details.length ? details.join(' · ') : 'Cashflow steady without standout spikes.';
+}
+
 export default function renderFinanceHistory(history = []) {
   const { section, body } = createBankSection(
     'Cashflow History',
-    'Seven-day snapshots captured at day end.'
+    'Quick timeline of recent daily totals.'
   );
 
   const entries = Array.isArray(history) ? history.slice(0, 7) : [];
@@ -16,73 +33,56 @@ export default function renderFinanceHistory(history = []) {
     return section;
   }
 
-  const list = document.createElement('ol');
-  list.className = 'bankapp-history';
+  const list = document.createElement('ul');
+  list.className = 'bankapp-timeline';
 
   entries.forEach(entry => {
     const item = document.createElement('li');
-    item.className = 'bankapp-history__item';
+    item.className = 'bankapp-timeline__item';
     if (entry?.tone) {
       item.dataset.tone = entry.tone;
     }
 
+    const marker = document.createElement('span');
+    marker.className = 'bankapp-timeline__marker';
+    item.appendChild(marker);
+
     const header = document.createElement('div');
-    header.className = 'bankapp-history__header';
+    header.className = 'bankapp-timeline__header';
+
     const label = document.createElement('span');
-    label.className = 'bankapp-history__label';
+    label.className = 'bankapp-timeline__label';
     label.textContent = entry?.label || 'Day';
     header.appendChild(label);
 
     if (Number.isFinite(entry?.recordedAt)) {
       const time = document.createElement('time');
-      time.className = 'bankapp-history__time';
       const stamp = new Date(entry.recordedAt);
+      time.className = 'bankapp-timeline__time';
       time.dateTime = stamp.toISOString();
-      time.textContent = stamp.toLocaleString(undefined, {
+      time.textContent = stamp.toLocaleDateString(undefined, {
         month: 'short',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit'
+        day: 'numeric'
       });
       header.appendChild(time);
     }
 
-    const totals = document.createElement('div');
-    totals.className = 'bankapp-history__totals';
     const net = document.createElement('span');
-    net.className = 'bankapp-history__net';
+    net.className = 'bankapp-timeline__net';
     net.textContent = formatSignedCurrency(entry?.totals?.net || 0);
-    totals.appendChild(net);
+    header.appendChild(net);
 
-    const split = document.createElement('span');
-    split.className = 'bankapp-history__split';
+    item.appendChild(header);
+
+    const detail = document.createElement('p');
+    detail.className = 'bankapp-timeline__detail';
     const income = Number(entry?.totals?.income || 0);
     const spend = Number(entry?.totals?.spend || 0);
-    split.textContent = `${formatCurrency(income)} • ${formatCurrency(spend > 0 ? -spend : 0)}`;
-    totals.appendChild(split);
+    const totals = `${formatCurrency(income)} earned · ${formatCurrency(spend > 0 ? spend : 0)} spent`;
+    const context = buildContext(entry);
+    detail.textContent = `${totals} — ${context}`;
+    item.appendChild(detail);
 
-    const highlights = document.createElement('p');
-    highlights.className = 'bankapp-history__highlights';
-    const incomeTop = entry?.ledger?.payouts?.[0];
-    const spendTop = entry?.ledger?.costs?.[0];
-    const details = [];
-    if (incomeTop) {
-      details.push(
-        `${incomeTop.label || 'Income'} ${formatSignedCurrency(incomeTop.amount || 0)}`
-      );
-    }
-    if (spendTop) {
-      details.push(
-        `${spendTop.label || 'Spend'} ${formatSignedCurrency(
-          spendTop.amount ? -spendTop.amount : 0
-        )}`
-      );
-    }
-    highlights.textContent = details.length
-      ? details.join(' • ')
-      : 'Cashflow steady without standout spikes.';
-
-    item.append(header, totals, highlights);
     list.appendChild(item);
   });
 
