@@ -116,42 +116,66 @@
   box-shadow: var(--browser-shadow-focus);
 }
 
-.serverhub-kpis,
-.serverhub-kpis__grid,
-.serverhub-view--apps .asset-kpis {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
+.serverhub-kpis {
+  display: flex;
+  align-items: stretch;
+  padding: 0.5rem 0.85rem;
+  border: 1px solid var(--browser-panel-border);
+  border-radius: var(--browser-radius-lg);
+  background: var(--browser-panel);
+  box-shadow: none;
+}
+
+.serverhub-kpis__grid {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: stretch;
+  overflow-x: auto;
+  gap: 0;
 }
 
 .serverhub-kpi {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  background: var(--browser-panel);
-  border: 1px solid var(--browser-panel-border);
-  border-radius: var(--browser-radius-md);
-  box-shadow: var(--browser-shadow-soft);
-  padding: 1rem 1.2rem;
+  display: grid;
+  gap: 0.25rem;
+  flex: 1 1 0;
+  min-width: 9rem;
+  padding: 0.25rem 0.5rem;
+  background: transparent;
+  border: none;
+  border-radius: var(--browser-radius-sm);
+  box-shadow: none;
+}
+
+.serverhub-kpi + .serverhub-kpi {
+  margin-left: 0.75rem;
+  padding-left: 0.75rem;
+  border-left: 1px solid var(--browser-panel-border);
 }
 
 .serverhub-kpi__label {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--browser-subtle);
+  color: var(--browser-muted);
 }
 
 .serverhub-kpi__value {
   margin: 0;
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-size: 1.1rem;
+  font-weight: 600;
   color: var(--browser-text);
 }
 
 .serverhub-kpi__note {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: 0.75rem;
+  color: var(--browser-muted);
+}
+
+.serverhub-kpis__empty {
+  margin: 0;
+  width: 100%;
+  text-align: center;
   color: var(--browser-muted);
 }
 
