@@ -186,6 +186,23 @@ export function getDigishelfPlanCopy(assetId) {
   return PLAN_COPY[assetId] || null;
 }
 
+export function collectDigishelfUpgradeDetails(definition) {
+  return ensureArray(definition?.details)
+    .map(detail => {
+      if (typeof detail === 'function') {
+        try {
+          return detail(definition);
+        } catch (error) {
+          return '';
+        }
+      }
+      return detail;
+    })
+    .map(entry => typeof entry === 'string' ? entry.trim() : '')
+    .filter(Boolean)
+    .filter((entry, index, array) => array.indexOf(entry) === index);
+}
+
 export default {
   getDigishelfQuickActionIds,
   buildDigishelfInstances,
@@ -193,5 +210,6 @@ export default {
   buildDigishelfCollection,
   buildDigishelfOverview,
   describeDigishelfSummary,
-  getDigishelfPlanCopy
+  getDigishelfPlanCopy,
+  collectDigishelfUpgradeDetails
 };

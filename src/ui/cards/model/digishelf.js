@@ -9,7 +9,8 @@ import {
   buildDigishelfCollection,
   buildDigishelfOverview,
   describeDigishelfSummary,
-  getDigishelfPlanCopy
+  getDigishelfPlanCopy,
+  collectDigishelfUpgradeDetails
 } from '../../digishelf/model/shared.js';
 
 function clampNumber(value) {
@@ -17,9 +18,31 @@ function clampNumber(value) {
   return Number.isFinite(number) ? number : 0;
 }
 
+function resolveUpgradeAction(definition) {
+  if (!definition?.action) {
+    return null;
+  }
+  const { action } = definition;
+  const label = typeof action.label === 'function'
+    ? action.label()
+    : action.label || 'Purchase upgrade';
+  const disabled = typeof action.disabled === 'function'
+    ? Boolean(action.disabled())
+    : Boolean(action.disabled);
+  const onClick = typeof action.onClick === 'function'
+    ? () => action.onClick()
+    : null;
+  return {
+    label,
+    disabled,
+    onClick
+  };
+}
+
 function buildDigishelfUpgrades(upgradeDefinitions = [], state) {
   return filterUpgradeDefinitions(upgradeDefinitions, 'digishelf').map(definition => {
     const snapshot = getUpgradeSnapshot(definition, state);
+    const action = resolveUpgradeAction(definition);
     return {
       id: definition.id,
       name: definition.name,
@@ -28,9 +51,10 @@ function buildDigishelfUpgrades(upgradeDefinitions = [], state) {
       tag: definition.tag || null,
       affects: definition.affects || {},
       effects: definition.effects || {},
-      action: definition.action || null,
+      action,
       definition,
       boosts: definition.boosts || '',
+      details: collectDigishelfUpgradeDetails(definition),
       snapshot,
       status: describeUpgradeStatus(snapshot)
     };
