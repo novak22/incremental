@@ -8,6 +8,21 @@ export function createNavigationEventsController({
 }) {
   const { homepageId, findPageById, findPageBySlug } = pageResolver;
   const { buildWorkspaceUrl } = dom;
+  const WORKSPACE_NAVIGATION_EVENT = 'browser:navigate';
+  let navigationEventDocument = null;
+
+  function navigateToSite(targetId, { focus = true, recordHistory = true } = {}) {
+    const normalizedTarget = targetId || homepageId;
+    if (normalizedTarget === homepageId) {
+      workspaceManager.setActivePage(homepageId, {
+        focus,
+        recordHistory,
+        ensureTab: false
+      });
+    } else {
+      workspaceManager.openWorkspace(normalizedTarget, { focus, recordHistory });
+    }
+  }
 
   function handleSiteClick(event) {
     const control = event.target.closest('[data-site-target]');
@@ -16,15 +31,21 @@ export function createNavigationEventsController({
     }
     event.preventDefault();
     const target = control.dataset.siteTarget || homepageId;
-    if (target === homepageId) {
-      workspaceManager.setActivePage(homepageId, {
-        focus: true,
-        recordHistory: true,
-        ensureTab: false
-      });
-    } else {
-      workspaceManager.openWorkspace(target, { focus: true, recordHistory: true });
+    navigateToSite(target, { focus: true, recordHistory: true });
+  }
+
+  function handleNavigationEvent(event) {
+    const detail = event?.detail || {};
+    const target = detail.targetId || detail.target || detail.id || detail;
+    if (!target) {
+      return;
     }
+    if (typeof event.preventDefault === 'function') {
+      event.preventDefault();
+    }
+    const focus = detail.focus !== false;
+    const recordHistory = detail.recordHistory !== false;
+    navigateToSite(target, { focus, recordHistory });
   }
 
   function init() {
@@ -93,11 +114,27 @@ export function createNavigationEventsController({
       homepage.addEventListener('click', handleSiteClick);
     }
 
+    bindNavigationEventListener(homepage);
+
     workspaceManager.setActivePage(navigationController.getCurrentPage(), {
       recordHistory: false,
       ensureTab: false
     });
     navigationController.updateButtons(workspaceManager.getNavigationRefs());
+  }
+
+  function bindNavigationEventListener(homepageElement) {
+    if (navigationEventDocument) {
+      return;
+    }
+    const navDocument = homepageElement?.ownerDocument ||
+      dom.getHomepageElement()?.ownerDocument ||
+      (typeof document !== 'undefined' ? document : null);
+    if (!navDocument) {
+      return;
+    }
+    navDocument.addEventListener(WORKSPACE_NAVIGATION_EVENT, handleNavigationEvent);
+    navigationEventDocument = navDocument;
   }
 
   return {
