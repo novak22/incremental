@@ -1,7 +1,7 @@
 import knowledgeTrackData from './requirements/data/knowledgeTracks.js';
 import { formatMoney, toNumber } from '../core/helpers.js';
 import { getState } from '../core/state.js';
-import { getKnowledgeProgress } from './requirements.js';
+import { getKnowledgeProgress } from './requirements/knowledgeProgress.js';
 
 var KNOWLEDGE_TRACKS = null;
 

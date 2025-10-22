@@ -1,26 +1,34 @@
 import { formatMoney, structuredClone } from '../../../core/helpers.js';
-import {
-  ensureDailyOffersForDay,
-  getAvailableOffers,
-  getClaimedOffers,
-  acceptHustleOffer,
-  releaseClaimedHustleOffer
-} from '../../hustles.js';
+
+let hustleMarketApi = null;
+
+export function registerHustleMarketApi(api) {
+  hustleMarketApi = api;
+}
 
 function sortByAvailableDay(a, b) {
   return (a.availableOnDay || Infinity) - (b.availableOnDay || Infinity);
 }
 
 export function createMarketSeatManager({ getState, addLog }) {
+  const requireApi = () => {
+    if (!hustleMarketApi) {
+      throw new Error('Hustle market API not registered.');
+    }
+    return hustleMarketApi;
+  };
+
   function claimSeat({ track, tuition, currentDay, definitionId }) {
     const state = getState();
     if (!state) {
       return { success: false, reason: 'missing_state' };
     }
 
-    ensureDailyOffersForDay({ state });
+    const api = requireApi();
 
-    const offers = getAvailableOffers(state, { includeUpcoming: true }).filter(offer => {
+    api.ensureDailyOffersForDay({ state });
+
+    const offers = api.getAvailableOffers(state, { includeUpcoming: true }).filter(offer => {
       return offer.definitionId === definitionId && offer.claimed !== true;
     });
 
@@ -71,7 +79,7 @@ export function createMarketSeatManager({ getState, addLog }) {
       orchestratorHandlesMessaging: true
     };
 
-    const accepted = acceptHustleOffer({
+    const accepted = api.acceptHustleOffer({
       ...availableOffer,
       metadata
     }, { state });
@@ -121,12 +129,14 @@ export function createMarketSeatManager({ getState, addLog }) {
       return { released: 0 };
     }
 
-    const claimedStudyOffers = getClaimedOffers(state, { includeExpired: true })
+    const api = requireApi();
+
+    const claimedStudyOffers = api.getClaimedOffers(state, { includeExpired: true })
       .filter(entry => entry?.metadata?.studyTrackId === trackId);
 
     let released = 0;
     for (const offer of claimedStudyOffers) {
-      releaseClaimedHustleOffer({ offerId: offer.offerId, acceptedId: offer.id }, { state });
+      api.releaseClaimedHustleOffer({ offerId: offer.offerId, acceptedId: offer.id }, { state });
       released += 1;
     }
 

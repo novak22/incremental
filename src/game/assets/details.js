@@ -4,6 +4,8 @@ import { getDailyIncomeRange } from './payout.js';
 import { getQualityTracks } from './quality/actions.js';
 import { getQualityLevelSummary } from './quality/levels.js';
 
+export { instanceLabel } from './instanceLabel.js';
+
 export function ownedDetail(definition) {
   const assetState = getAssetState(definition.id);
   const total = assetState.instances.length;
@@ -50,25 +52,6 @@ export function latestYieldDetail(definition) {
   const average =
     active.reduce((sum, instance) => sum + (Number(instance.lastIncome) || 0), 0) / active.length;
   return `📊 Latest Yield: <strong>$${formatMoney(Math.round(average))}</strong> avg per active instance`;
-}
-
-export function instanceLabel(definition, index, options = {}) {
-  const base = definition?.singular || definition?.name || 'Asset';
-  const normalizedIndex = Number.isFinite(index) && index >= 0 ? Math.floor(index) : 0;
-
-  let targetInstance = options?.instance || null;
-  if (!targetInstance && definition?.id) {
-    const assetState = getAssetState(definition.id);
-    const instances = Array.isArray(assetState?.instances) ? assetState.instances : [];
-    targetInstance = instances[normalizedIndex] || null;
-  }
-
-  const customName = typeof targetInstance?.customName === 'string' ? targetInstance.customName.trim() : '';
-  if (customName) {
-    return customName;
-  }
-
-  return `${base} #${normalizedIndex + 1}`;
 }
 
 export function qualitySummaryDetail(definition) {

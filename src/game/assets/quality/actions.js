@@ -1,7 +1,6 @@
 import { getState } from '../../../core/state.js';
 import { getAssetDefinition } from '../../../core/state/registry.js';
 import { executeAction } from '../../actions.js';
-import { checkDayEnd } from '../../lifecycle.js';
 import { markDirty } from '../../../core/events/invalidationBus.js';
 import { getQualityConfig } from './levels.js';
 import { getUsageStatus } from './usage.js';
@@ -37,7 +36,6 @@ export function performQualityAction(assetId, instanceId, actionId) {
       markDirty(['cards', 'dashboard', 'headerAction']);
     }
   });
-  checkDayEnd();
 }
 
 export function canPerformQualityAction(definition, instance, action, state = getState()) {

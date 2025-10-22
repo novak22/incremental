@@ -1,7 +1,6 @@
 import { getState, getAssetState } from '../../core/state.js';
 import { ensureEventState, findEvents } from '../../core/state/events.js';
 import { ASSET_EVENT_BLUEPRINTS } from './config.js';
-import { logAssetEventStart } from './logging.js';
 
 function getAssetEvents(state, assetId, instanceId) {
   if (!assetId || !instanceId) return [];
@@ -19,7 +18,11 @@ function hasEventWithTone(events, tone, templateId) {
   return events.some(event => event.tone === tone || (templateId && event.templateId === templateId));
 }
 
-export function createAssetEvents({ clampChance, buildEventFromBlueprint }) {
+export function createAssetEvents({
+  clampChance,
+  buildEventFromBlueprint,
+  logAssetEventStart = () => {}
+}) {
   function maybeTriggerAssetEvents({
     definition,
     assetState,
@@ -77,7 +80,9 @@ export function createAssetEvents({ clampChance, buildEventFromBlueprint }) {
       if (event) {
         created.push(event);
         existing.push(event);
-        logAssetEventStart({ event, blueprint, definition, instanceIndex });
+        if (typeof logAssetEventStart === 'function') {
+          logAssetEventStart({ event, blueprint, definition, instanceIndex });
+        }
         break;
       }
     }

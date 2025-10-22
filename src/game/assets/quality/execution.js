@@ -16,7 +16,7 @@ import {
 } from './levels.js';
 import { getUsageStatus, trackUsage } from './usage.js';
 import { createActionContext, evaluateActionAvailability } from './availability.js';
-import { instanceLabel } from '../details.js';
+import { instanceLabel } from '../instanceLabel.js';
 
 function getActionLabel(definition, assetState, instance) {
   const index = assetState.instances.indexOf(instance);

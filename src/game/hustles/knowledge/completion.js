@@ -1,5 +1,5 @@
 import { getState } from '../../../core/state.js';
-import { getKnowledgeProgress } from '../../requirements.js';
+import { getKnowledgeProgress } from '../../requirements/knowledgeProgress.js';
 import { KNOWLEDGE_REWARDS } from '../../requirements/knowledgeTracks.js';
 import { awardSkillProgress } from '../../skills/index.js';
 import { announceStudyCompletion, markStudySectionsDirty } from './logging.js';

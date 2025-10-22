@@ -1,12 +1,15 @@
-import { getState } from '../../core/state.js';
+import { getState, getUpgradeState } from '../../core/state.js';
 import { getAssetDefinition } from '../../core/state/registry.js';
-import { ASSISTANT_CONFIG, getAssistantCount } from '../assistant.js';
+import { ASSISTANT_CONFIG } from '../assistant/config.js';
 
 export function estimateManualMaintenanceReserve(state = getState()) {
   if (!state) return 0;
   const assets = state.assets || {};
   let upkeepDemand = 0;
-  let assistantHoursRemaining = getAssistantCount(state) * ASSISTANT_CONFIG.hoursPerAssistant;
+  const assistantUpgrade = getUpgradeState('assistant', state);
+  const assistantCountRaw = Number(assistantUpgrade?.count) || 0;
+  const assistantCount = Math.max(0, Math.min(ASSISTANT_CONFIG.maxAssistants, assistantCountRaw));
+  let assistantHoursRemaining = assistantCount * ASSISTANT_CONFIG.hoursPerAssistant;
 
   for (const [assetId, assetState] of Object.entries(assets)) {
     if (!assetState?.instances?.length) continue;

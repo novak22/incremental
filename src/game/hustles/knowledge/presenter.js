@@ -1,6 +1,6 @@
 import { formatMoney } from '../../../core/helpers.js';
 import { getState } from '../../../core/state.js';
-import { getKnowledgeProgress } from '../../requirements.js';
+import { getKnowledgeProgress } from '../../requirements/knowledgeProgress.js';
 import { resolveMarketSnapshot } from './offers.js';
 
 export function buildTrackViewModel(

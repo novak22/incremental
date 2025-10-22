@@ -14,6 +14,7 @@ import { syncNicheTrendSnapshots } from './events/syncNicheTrendSnapshots.js';
 import { ensureDailyOffersForDay } from './hustles.js';
 import { getRegistrySnapshot } from '../core/state/registry.js';
 import { accumulateAssetVisits } from './assets/visits.js';
+import { registerDayEndChecker } from './time/dayEndScheduler.js';
 
 function flushUiWithFallback(fallbackToFull = false) {
   const flushed = flushDirty();
@@ -97,3 +98,5 @@ export function checkDayEnd() {
     setTimeout(() => endDay(true), 400);
   }
 }
+
+registerDayEndChecker(() => checkDayEnd());

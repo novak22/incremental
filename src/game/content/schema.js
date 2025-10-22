@@ -4,9 +4,9 @@ import { getAssetState, getState, getUpgradeState } from '../../core/state.js';
 import { getAssetDefinition, getUpgradeDefinition } from '../../core/state/registry.js';
 import { executeAction } from '../actions.js';
 import { spendMoney } from '../currency.js';
-import { checkDayEnd } from '../lifecycle.js';
 import { recordCostContribution } from '../metrics.js';
-import { renderAssetRequirementDetail, updateAssetCardLock } from '../requirements.js';
+import { renderAssetRequirementDetail, updateAssetCardLock } from '../requirements/descriptors.js';
+import { scheduleDayEndCheck } from '../time/dayEndScheduler.js';
 import { awardSkillProgress } from '../skills/index.js';
 import { buildAssetAction } from '../assets/actions.js';
 import { maintenanceDetail } from '../assets/maintenance.js';
@@ -362,7 +362,7 @@ export function createUpgrade(config, hooks = {}) {
         }
         markDirty('cards');
       });
-      checkDayEnd();
+      scheduleDayEndCheck();
     }
   };
 

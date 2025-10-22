@@ -1,5 +1,5 @@
 import { formatHours, formatMoney } from '../../../../core/helpers.js';
-import { summarizeAssetRequirements } from '../../../requirements.js';
+import { summarizeAssetRequirements } from '../../../requirements/descriptors.js';
 import { describeInstantHustleEducationBonuses } from '../../../educationEffects.js';
 
 function formatHourDetail(hours, effective) {

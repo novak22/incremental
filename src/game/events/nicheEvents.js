@@ -1,9 +1,13 @@
 import { getNicheDefinitions } from '../assets/nicheData.js';
 import { NICHE_EVENT_BLUEPRINTS } from './config.js';
-import { logNicheEventStart } from './logging.js';
 import { getNicheEvents } from './getNicheEvents.js';
 
-export function createNicheEvents({ clampChance, buildEventFromBlueprint, hasEventWithTone }) {
+export function createNicheEvents({
+  clampChance,
+  buildEventFromBlueprint,
+  hasEventWithTone,
+  logNicheEventStart = () => {}
+}) {
   function resolveWeight(blueprint, context) {
     if (!blueprint) return 0;
     const chance =
@@ -69,7 +73,9 @@ export function createNicheEvents({ clampChance, buildEventFromBlueprint, hasEve
       });
       if (event) {
         created.push({ event, definition });
-        logNicheEventStart({ event, definition });
+        if (typeof logNicheEventStart === 'function') {
+          logNicheEventStart({ event, definition });
+        }
       }
     }
 

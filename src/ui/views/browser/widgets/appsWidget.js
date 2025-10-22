@@ -2,7 +2,7 @@ import { SERVICE_PAGES } from '../config.js';
 import {
   getLatestServiceSummaries,
   subscribeToServiceSummaries
-} from '../cardsPresenter.js';
+} from '../apps/serviceManager.js';
 import {
   loadSortOrder,
   persistSortOrder,

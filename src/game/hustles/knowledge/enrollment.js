@@ -1,6 +1,6 @@
 import { structuredClone } from '../../../core/helpers.js';
 import { getState } from '../../../core/state.js';
-import { getKnowledgeProgress } from '../../requirements.js';
+import { getKnowledgeProgress } from '../../requirements/knowledgeProgress.js';
 import { settleTuition } from './tuition.js';
 import { announceStudyEnrollment, markStudySectionsDirty } from './logging.js';
 import { clampDay, ensureNestedObject } from './utils.js';
