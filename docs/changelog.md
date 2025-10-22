@@ -11,6 +11,7 @@ This log highlights player-visible milestones. For exhaustive historical notes, 
 - DownWork now centers gigs in a unified marketplace feed and only keeps your quick filters between visits, giving category chips a fresh reset each time.
 - VideoTube studio adds upgrade and pricing tabs with grouped gear highlights, niche intel, and purchase hooks.
 - BlogPress workspace adds a dedicated Upgrades tab that reuses the blueprint boosters list with purchase actions wired in.
+- Archived the retired economy tooling (graph generator, tuning CSV export, and final dataset) under `docs/archive/economy/tooling/` for historical reference.
 
 ## 2025-10-21 – Session Slot & Hustle Refresh
 - Introduced multi-session save slots with import/export, autosave safeguards, and gentle recovery flows.

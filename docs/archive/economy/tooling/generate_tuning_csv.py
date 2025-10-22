@@ -1,11 +1,23 @@
+"""Legacy helper for extracting tuning parameters from archived economy docs."""
+
 import csv
 import re
 from pathlib import Path
 
 
-ROOT = Path(__file__).resolve().parents[1]
+def find_repo_root(path: Path) -> Path:
+    """Walk up from ``path`` until a ``.git`` directory is found."""
+
+    for candidate in path.resolve().parents:
+        if (candidate / ".git").is_dir():
+            return candidate
+    return path.resolve().parent
+
+
+ROOT = find_repo_root(Path(__file__))
 FILES = [
-    ROOT / "docs" / "economy.md",
+    # Historical handbook that originally powered the export before the quickref era.
+    ROOT / "docs" / "archive" / "economy" / "economy.md",
     ROOT / "docs" / "normalized_economy.json",
 ]
 

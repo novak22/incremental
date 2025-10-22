@@ -19,7 +19,10 @@ Tags: **keep** (stays as-is), **compress** (candidate for future trimming), **ar
 | `docs/archive/economy_sim_report_assets/daily_cashflow.svg` | archive | Legacy visualization kept offline. |
 | `docs/archive/economy_sim_report_assets/education_roi.svg` | archive | Legacy visualization kept offline. |
 | `docs/archive/economy/economy_graph.mmd` | archive | Mermaid snapshot of the retired modifier graph. |
-| `docs/archive/economy/generateEconomyGraph.mjs` | archive | Historical generator retained for reference. |
+| `docs/archive/economy/tooling/README.md` | archive | Notes on legacy graph/tuning exporters. |
+| `docs/archive/economy/tooling/generateEconomyGraph.mjs` | archive | Historical generator retained for reference. |
+| `docs/archive/economy/tooling/generate_tuning_csv.py` | archive | Retired CSV exporter for the legacy handbook. |
+| `docs/archive/economy/tooling/tuning_parameters.csv` | archive | Final export from the legacy tuning workflow. |
 
 ## Features & Playtests
 | Path | Tag | Notes |
