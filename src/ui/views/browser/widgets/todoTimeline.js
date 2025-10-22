@@ -95,6 +95,78 @@ function multiplyDuration(entry) {
   return normalizeDuration(entry?.durationHours, MIN_SEGMENT_HOURS) * count;
 }
 
+function getHourFromDate(date) {
+  if (!(date instanceof Date)) {
+    return null;
+  }
+  const timestamp = date.getTime();
+  if (!Number.isFinite(timestamp)) {
+    return null;
+  }
+  return (
+    date.getHours()
+    + date.getMinutes() / 60
+    + date.getSeconds() / 3600
+    + date.getMilliseconds() / 3_600_000
+  );
+}
+
+function parseCompletionDate(rawTimestamp) {
+  if (!rawTimestamp && rawTimestamp !== 0) {
+    return null;
+  }
+  if (rawTimestamp instanceof Date) {
+    return Number.isNaN(rawTimestamp.getTime()) ? null : rawTimestamp;
+  }
+
+  const numeric = Number(rawTimestamp);
+  if (Number.isFinite(numeric)) {
+    if (Math.abs(numeric) >= 1e12) {
+      const date = new Date(numeric);
+      return Number.isNaN(date.getTime()) ? null : date;
+    }
+    if (Math.abs(numeric) >= 1e9) {
+      const date = new Date(numeric * 1000);
+      return Number.isNaN(date.getTime()) ? null : date;
+    }
+  }
+
+  if (typeof rawTimestamp === 'string') {
+    const parsed = new Date(rawTimestamp);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  return null;
+}
+
+function deriveCompletedBounds(entry, duration) {
+  if (!entry || !Number.isFinite(duration) || duration <= 0) {
+    return null;
+  }
+
+  const completionDate = parseCompletionDate(entry.completedAt);
+  const completionHour = completionDate ? getHourFromDate(completionDate) : null;
+  if (!Number.isFinite(completionHour)) {
+    return null;
+  }
+
+  const clampedEnd = clamp(completionHour, DAY_START_HOUR, DAY_END_HOUR);
+  const tentativeStart = completionHour - duration;
+  const clampedStart = clamp(tentativeStart, DAY_START_HOUR, DAY_END_HOUR);
+
+  const startOffset = clamp(clampedStart - DAY_START_HOUR, 0, TOTAL_DAY_HOURS);
+  const endOffset = clamp(clampedEnd - DAY_START_HOUR, 0, TOTAL_DAY_HOURS);
+
+  if (endOffset - startOffset <= 1e-4) {
+    return null;
+  }
+
+  return {
+    start: clampedStart,
+    end: clampedEnd
+  };
+}
+
 function createSegments({ completed = [], pending = [], hoursSpent = null }) {
   const segments = [];
   const normalizedSpent = Number.isFinite(hoursSpent)
@@ -136,8 +208,11 @@ function createSegments({ completed = [], pending = [], hoursSpent = null }) {
     if (segmentDuration <= 0) {
       return;
     }
-    const start = DAY_START_HOUR + consumed;
-    const end = start + segmentDuration;
+    const fallbackStart = DAY_START_HOUR + consumed;
+    const fallbackEnd = fallbackStart + segmentDuration;
+    const derived = deriveCompletedBounds(entry, segmentDuration);
+    const start = derived?.start ?? fallbackStart;
+    const end = derived?.end ?? fallbackEnd;
     consumed += segmentDuration;
     addSegment({
       id: entry.id,
