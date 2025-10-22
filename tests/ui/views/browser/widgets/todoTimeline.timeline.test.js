@@ -83,10 +83,14 @@ describe('timodoro timeline sequencing', () => {
     assert.equal(firstSegment.id, 'contract-a');
     assert.equal(firstSegment.start, DAY_START_HOUR);
     assert.equal(firstSegment.end, DAY_START_HOUR + 1);
+    assert.equal(firstSegment.visualStartPercent, '0%');
+    assert.equal(firstSegment.visualWidthPercent, '6.25%');
 
     assert.equal(secondSegment.id, 'contract-b');
     assert.equal(secondSegment.start, DAY_START_HOUR + 1);
     assert.equal(secondSegment.end, DAY_START_HOUR + 1.5);
+    assert.equal(secondSegment.visualStartPercent, 'calc(6.25% + 1px)');
+    assert.equal(secondSegment.visualWidthPercent, 'calc(3.125% - 1px)');
 
     assert.equal(
       secondSegment.start - DAY_START_HOUR,

@@ -3,6 +3,8 @@ const DAY_END_HOUR = 24;
 const TOTAL_DAY_HOURS = DAY_END_HOUR - DAY_START_HOUR;
 const MIN_SEGMENT_HOURS = 0.25;
 const UPDATE_INTERVAL_MS = 60_000;
+const MIN_SEGMENT_GAP_PX = 1;
+const TOUCH_EPSILON = 1e-6;
 
 const tickerRegistry = new WeakMap();
 
@@ -125,6 +127,14 @@ function compareCompletedEntries(a, b) {
   return 0;
 }
 
+function toPercent(value) {
+  if (!Number.isFinite(value)) {
+    return '0%';
+  }
+  const normalized = Number(value.toFixed(6));
+  return `${normalized}%`;
+}
+
 function createSegments({ completed = [], pending = [], hoursSpent = null }) {
   const segments = [];
   const normalizedSpent = Number.isFinite(hoursSpent)
@@ -143,12 +153,34 @@ function createSegments({ completed = [], pending = [], hoursSpent = null }) {
 
     const widthPercent = (width / TOTAL_DAY_HOURS) * 100;
     const startPercent = (startOffset / TOTAL_DAY_HOURS) * 100;
+    const endPercent = startPercent + widthPercent;
+
+    let visualStartPercent = toPercent(startPercent);
+    let visualWidthPercent = toPercent(widthPercent);
+
+    const previous = segments[segments.length - 1];
+    if (previous) {
+      const previousEndPercent = previous.startPercent + previous.widthPercent;
+      const startsTouching = startPercent <= previousEndPercent + TOUCH_EPSILON;
+      if (startsTouching) {
+        const adjustedStartPercent = Math.max(startPercent, previousEndPercent);
+        const percentSpan = Math.max(endPercent - adjustedStartPercent, 0);
+        const adjustedStartValue = Number(adjustedStartPercent.toFixed(6));
+        const percentSpanValue = Number(percentSpan.toFixed(6));
+        if (percentSpan > 0 && percentSpanValue > 0) {
+          visualStartPercent = `calc(${adjustedStartValue}% + ${MIN_SEGMENT_GAP_PX}px)`;
+          visualWidthPercent = `calc(${percentSpanValue}% - ${MIN_SEGMENT_GAP_PX}px)`;
+        }
+      }
+    }
 
     segments.push({
       ...segment,
       width,
       widthPercent,
-      startPercent
+      startPercent,
+      visualStartPercent,
+      visualWidthPercent
     });
   };
 
@@ -363,8 +395,10 @@ function createBlockNode(segment, options = {}) {
   if (segment.isBuffer || segment.isOpen) {
     block.classList.add('is-placeholder');
   }
-  block.style.setProperty('--todo-timeline-start', `${segment.startPercent}%`);
-  block.style.setProperty('--todo-timeline-width', `${segment.widthPercent}%`);
+  const startValue = segment.visualStartPercent || `${segment.startPercent}%`;
+  const widthValue = segment.visualWidthPercent || `${segment.widthPercent}%`;
+  block.style.setProperty('--todo-timeline-start', startValue);
+  block.style.setProperty('--todo-timeline-width', widthValue);
   block.setAttribute('data-task-type', segment.category);
   block.setAttribute('data-task-state', segment.state);
   const labelParts = [segment.title, segment.meta].filter(Boolean).join(' — ');
