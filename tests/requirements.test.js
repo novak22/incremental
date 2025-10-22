@@ -18,7 +18,12 @@ const { DEFAULT_DAY_HOURS } = constantsModule;
 const { default: tracksDefaultExport, KNOWLEDGE_TRACKS: tracksCatalog, KNOWLEDGE_REWARDS: rewardCatalog } = knowledgeTracksModule;
 const knowledgeTrackData = knowledgeTrackDataModule.default;
 const { estimateManualMaintenanceReserve } = maintenanceModule;
-const { buildAssetRequirementDescriptor } = descriptorsModule;
+const {
+  buildAssetRequirementDescriptor,
+  formatAssetRequirementLabel,
+  renderAssetRequirementDetail,
+  updateAssetCardLock
+} = descriptorsModule;
 const { createRequirementsOrchestrator, STUDY_DIRTY_SECTIONS } = orchestratorModule;
 const { consumeDirty } = invalidationModule;
 const { normalizeActionEntries } = actionsRegistryModule;
@@ -47,9 +52,6 @@ const {
 
 const {
   KNOWLEDGE_TRACKS,
-  formatAssetRequirementLabel,
-  renderAssetRequirementDetail,
-  updateAssetCardLock,
   getKnowledgeProgress,
   advanceKnowledgeTracks,
   allocateDailyStudy,
