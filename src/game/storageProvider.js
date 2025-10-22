@@ -14,16 +14,8 @@ export function setSharedStorage(storage) {
   return sharedStorage;
 }
 
-export function getSharedStorage() {
-  return ensureStorage();
-}
-
 export function getSaveState() {
   const storage = ensureStorage();
   return storage.saveState?.bind?.(storage) ?? null;
 }
 
-export function getLoadState() {
-  const storage = ensureStorage();
-  return storage.loadState?.bind?.(storage) ?? null;
-}
