@@ -300,7 +300,31 @@ function resolveTagEntries(model = {}, definition = {}) {
 }
 
 function buildOfferEntries(definitions = [], models = [], { onOfferAccept } = {}) {
-  const modelMap = new Map(models.map(model => [model?.id, model]));
+  const groupedModels = new Map();
+  (Array.isArray(models) ? models : []).forEach(model => {
+    const definitionId = model?.definitionId || model?.id;
+    if (!definitionId) {
+      return;
+    }
+    if (!groupedModels.has(definitionId)) {
+      groupedModels.set(definitionId, {
+        all: [],
+        ready: [],
+        upcoming: [],
+        placeholders: []
+      });
+    }
+    const bucket = groupedModels.get(definitionId);
+    bucket.all.push(model);
+    if (model?.status === 'ready') {
+      bucket.ready.push(model);
+    } else if (model?.status === 'upcoming') {
+      bucket.upcoming.push(model);
+    } else if (model?.status === 'placeholder') {
+      bucket.placeholders.push(model);
+    }
+  });
+
   const entries = [];
   const categoryMetadata = new Map();
   const hustleFilterMeta = new Map();
@@ -312,19 +336,45 @@ function buildOfferEntries(definitions = [], models = [], { onOfferAccept } = {}
   };
 
   definitions.forEach((definition, definitionIndex) => {
-    const model = modelMap.get(definition?.id);
-    if (!model) return;
+    const group = groupedModels.get(definition?.id);
+    if (!group) return;
 
-    const rawOffers = Array.isArray(model.offers) ? model.offers : [];
-    const rawUpcoming = Array.isArray(model.upcoming) ? model.upcoming : [];
-    const visibleOffers = rawOffers.filter(offer => !offer?.locked);
-    const visibleUpcoming = rawUpcoming.filter(offer => !offer?.locked);
-    const commitments = Array.isArray(model.commitments) ? model.commitments : [];
+    const readyModels = group.ready;
+    const upcomingModels = group.upcoming;
+    const placeholderModels = group.placeholders;
+    const representativeModel = readyModels[0]
+      || upcomingModels[0]
+      || placeholderModels[0]
+      || group.all[0];
+    if (!representativeModel) {
+      return;
+    }
 
-    const hasAnySource = rawOffers.length > 0 || rawUpcoming.length > 0;
+    const visibleOffers = readyModels.filter(model => !model?.offer?.locked);
+    const visibleUpcoming = upcomingModels.filter(model => !model?.offer?.locked);
+
+    const seenCommitments = new Set();
+    const commitments = [];
+    group.all.forEach(model => {
+      const list = Array.isArray(model?.commitments) ? model.commitments : [];
+      list.forEach(commitment => {
+        const key = commitment?.id
+          ? `id:${commitment.id}`
+          : `auto:${commitments.length}:${model?.offerId || model?.id || ''}`;
+        if (seenCommitments.has(key)) {
+          return;
+        }
+        seenCommitments.add(key);
+        commitments.push(commitment);
+      });
+    });
+
+    const hasAnySource = readyModels.length > 0 || upcomingModels.length > 0;
     const hasUnlockedContent = visibleOffers.length > 0 || visibleUpcoming.length > 0;
 
-    const categoryKey = resolveCategoryKey(model.actionCategory || model.filters?.category || '');
+    const categoryKey = resolveCategoryKey(
+      representativeModel.actionCategory || representativeModel.filters?.category || ''
+    );
     const categoryConfig = resolveCategoryConfig(categoryKey);
     categoryMetadata.set(categoryKey, categoryConfig);
 
@@ -333,27 +383,21 @@ function buildOfferEntries(definitions = [], models = [], { onOfferAccept } = {}
     summary.commitmentCount += commitments.length;
 
     const readyPayouts = visibleOffers
-      .map(offer => Number(offer?.payout))
+      .map(model => Number(model?.offer?.payout))
       .filter(value => Number.isFinite(value) && value > 0);
 
     if (readyPayouts.length > 0) {
       summary.potentialPayout += readyPayouts.reduce((sum, value) => sum + Math.max(0, value), 0);
-    } else if (Number.isFinite(model.metrics?.payout?.value)) {
-      summary.potentialPayout += Math.max(0, Number(model.metrics.payout.value));
+    } else if (Number.isFinite(representativeModel.metrics?.payout?.value)) {
+      summary.potentialPayout += Math.max(0, Number(representativeModel.metrics.payout.value));
     }
 
     if (!hasUnlockedContent && hasAnySource && !commitments.length) {
       return;
     }
 
-    const hustleId = model.id || definition.id || '';
-    const hustleLabel = model.name || definition.name || 'Contract';
-
-    const baseMetrics = {
-      timeValue: Number(model.metrics?.time?.value ?? 0),
-      payoutValue: Number(model.metrics?.payout?.value ?? 0),
-      roiValue: Number(model.metrics?.roi ?? 0)
-    };
+    const hustleId = definition.id || representativeModel.definitionId || representativeModel.id || '';
+    const hustleLabel = representativeModel.name || definition.name || 'Contract';
 
     const descriptorOverrides = typeof definition?.descriptors === 'object' && definition.descriptors !== null
       ? definition.descriptors
@@ -365,23 +409,27 @@ function buildOfferEntries(definitions = [], models = [], { onOfferAccept } = {}
     const startIndex = entries.length;
 
     if (visibleOffers.length > 0) {
-      visibleOffers.forEach((offer, offerIndex) => {
+      visibleOffers.forEach((offerModel, offerIndex) => {
         entries.push({
           definition,
-          model,
+          model: offerModel,
           descriptorOverrides,
           copyOverrides,
           categoryKey,
           categoryConfig,
           hustleId,
           hustleLabel,
-          search: model.filters?.search || '',
-          limitRemaining: model.filters?.limitRemaining,
+          search: offerModel?.filters?.search || '',
+          limitRemaining: offerModel?.filters?.limitRemaining,
           commitments,
           status: 'ready',
-          offer,
-          metrics: baseMetrics,
-          expiresIn: Number.isFinite(offer?.expiresIn) ? offer.expiresIn : undefined,
+          offer: offerModel?.offer || null,
+          metrics: {
+            timeValue: Number(offerModel?.metrics?.time?.value ?? 0),
+            payoutValue: Number(offerModel?.metrics?.payout?.value ?? 0),
+            roiValue: Number(offerModel?.metrics?.roi ?? 0)
+          },
+          expiresIn: Number.isFinite(offerModel?.offer?.expiresIn) ? offerModel.offer.expiresIn : undefined,
           onAccept: onOfferAccept,
           upcomingOffers: [],
           showCommitments: false,
@@ -394,23 +442,27 @@ function buildOfferEntries(definitions = [], models = [], { onOfferAccept } = {}
     }
 
     if (visibleUpcoming.length > 0) {
-      visibleUpcoming.forEach((offer, offerIndex) => {
+      visibleUpcoming.forEach((offerModel, offerIndex) => {
         entries.push({
           definition,
-          model,
+          model: offerModel,
           descriptorOverrides,
           copyOverrides,
           categoryKey,
           categoryConfig,
           hustleId,
           hustleLabel,
-          search: model.filters?.search || '',
-          limitRemaining: model.filters?.limitRemaining,
+          search: offerModel?.filters?.search || '',
+          limitRemaining: offerModel?.filters?.limitRemaining,
           commitments,
           status: 'upcoming',
-          offer,
-          metrics: baseMetrics,
-          expiresIn: Number.isFinite(offer?.expiresIn) ? offer.expiresIn : undefined,
+          offer: offerModel?.offer || null,
+          metrics: {
+            timeValue: Number(offerModel?.metrics?.time?.value ?? 0),
+            payoutValue: Number(offerModel?.metrics?.payout?.value ?? 0),
+            roiValue: Number(offerModel?.metrics?.roi ?? 0)
+          },
+          expiresIn: Number.isFinite(offerModel?.offer?.expiresIn) ? offerModel.offer.expiresIn : undefined,
           onAccept: onOfferAccept,
           upcomingOffers: [],
           showCommitments: false,
@@ -420,22 +472,27 @@ function buildOfferEntries(definitions = [], models = [], { onOfferAccept } = {}
           offerIndex
         });
       });
-    } else if (!visibleOffers.length && (commitments.length || model.action || model.description)) {
+    } else if (!visibleOffers.length && (commitments.length || representativeModel.action || representativeModel.description)) {
+      const placeholderModel = placeholderModels[0] || representativeModel;
       entries.push({
         definition,
-        model,
+        model: placeholderModel,
         descriptorOverrides,
         copyOverrides,
         categoryKey,
         categoryConfig,
         hustleId,
         hustleLabel,
-        search: model.filters?.search || '',
-        limitRemaining: model.filters?.limitRemaining,
+        search: placeholderModel?.filters?.search || '',
+        limitRemaining: placeholderModel?.filters?.limitRemaining,
         commitments,
-        status: 'placeholder',
+        status: placeholderModel?.status || 'placeholder',
         offer: null,
-        metrics: baseMetrics,
+        metrics: {
+          timeValue: Number(placeholderModel?.metrics?.time?.value ?? 0),
+          payoutValue: Number(placeholderModel?.metrics?.payout?.value ?? 0),
+          roiValue: Number(placeholderModel?.metrics?.roi ?? 0)
+        },
         expiresIn: undefined,
         onAccept: onOfferAccept,
         upcomingOffers: [],

@@ -58,7 +58,9 @@ test('buildHustleModels mirrors availability filters', () => {
     acceptOffer: () => {}
   });
 
-  const available = models.find(model => model.id === 'hustle-available');
+  const available = models.find(
+    model => model.definitionId === 'hustle-available' && model.offerId === 'offer-available'
+  );
   assert.ok(available, 'expected available hustle model');
   assert.equal(available.available, true);
   assert.equal(available.filters.available, true);
@@ -69,10 +71,11 @@ test('buildHustleModels mirrors availability filters', () => {
   assert.equal(available.filters.templateKind, '');
   assert.equal(available.labels.category, 'Hustle');
 
-  const blocked = models.find(model => model.id === 'hustle-blocked');
+  const blocked = models.find(model => model.definitionId === 'hustle-blocked');
   assert.ok(blocked, 'expected blocked hustle model');
   assert.equal(blocked.available, false);
   assert.equal(blocked.filters.available, false);
+  assert.equal(blocked.status, 'placeholder');
 });
 
 test('buildHustleModels disables accept action when requirements are unmet', () => {
@@ -114,14 +117,12 @@ test('buildHustleModels disables accept action when requirements are unmet', () 
   assert.equal(model.action.label, 'Locked — Locked Hustle');
   assert.equal(model.action.disabled, true);
   assert.ok(/Unlock tip/i.test(model.action.guidance));
-  assert.equal(model.offers.length, 0);
-  const [offer] = model.upcoming;
-  assert.ok(offer, 'expected locked offer to appear in upcoming list');
-  assert.equal(offer.ready, false);
-  assert.equal(offer.locked, true);
-  assert.equal(offer.onAccept, null);
-  assert.ok(/Unlock tip/i.test(offer.meta));
   assert.equal(model.available, false);
+  assert.equal(model.status, 'upcoming');
+  assert.equal(model.offer.ready, false);
+  assert.equal(model.offer.locked, true);
+  assert.equal(model.offer.onAccept, null);
+  assert.ok(/Unlock tip/i.test(model.offer.meta));
 });
 
 test('buildHustleModels prefers accepting ready offers and queues upcoming separately', () => {
@@ -167,13 +168,17 @@ test('buildHustleModels prefers accepting ready offers and queues upcoming separ
     acceptOffer: () => {}
   });
 
-  const [model] = models;
-  assert.equal(model.action.label, 'Accept Ready Offer');
-  assert.equal(model.action.disabled, false);
-  assert.equal(model.action.className, 'primary');
-  assert.match(model.action.guidance, /Step 1 • Accept/i);
-  assert.equal(model.offers.length, 1, 'ready offers should populate the primary list');
-  assert.equal(model.upcoming.length, 1, 'upcoming offers should be tracked separately');
+  const readyModel = models.find(entry => entry.offerId === 'offer-ready');
+  assert.ok(readyModel, 'expected ready offer model');
+  assert.equal(readyModel.action.label, 'Accept Ready Offer');
+  assert.equal(readyModel.action.disabled, false);
+  assert.equal(readyModel.action.className, 'primary');
+  assert.match(readyModel.action.guidance, /Step 1 • Accept/i);
+
+  const upcomingModel = models.find(entry => entry.offerId === 'offer-upcoming');
+  assert.ok(upcomingModel, 'expected upcoming offer model');
+  assert.equal(upcomingModel.status, 'upcoming');
+  assert.equal(upcomingModel.available, false);
 });
 
 test('buildHustleModels surfaces multi-day offers with daily requirements', () => {
@@ -227,14 +232,12 @@ test('buildHustleModels surfaces multi-day offers with daily requirements', () =
 
   assert.equal(models.length, 1);
   const [model] = models;
-  assert.equal(model.offers.length, 1, 'expected multi-day offer to appear');
-  const [entry] = model.offers;
-  assert.equal(entry.hoursPerDay, 3);
-  assert.equal(entry.daysRequired, 4);
-  assert.equal(entry.completionMode, 'manual');
-  assert.equal(entry.progressLabel, 'Ship updates');
-  assert.equal(entry.meta.includes('3h/day for 4 days'), true, 'summary should highlight daily load');
-  assert.equal(entry.meta.includes('Manual completion'), true, 'summary should reflect manual completion rule');
+  assert.equal(model.offer.hoursPerDay, 3);
+  assert.equal(model.offer.daysRequired, 4);
+  assert.equal(model.offer.completionMode, 'manual');
+  assert.equal(model.offer.progressLabel, 'Ship updates');
+  assert.equal(model.offer.meta.includes('3h/day for 4 days'), true, 'summary should highlight daily load');
+  assert.equal(model.offer.meta.includes('Manual completion'), true, 'summary should reflect manual completion rule');
 });
 
 test('buildHustleModels provides guidance when no offers or manual rerolls exist', () => {
@@ -266,7 +269,6 @@ test('buildHustleModels provides guidance when no offers or manual rerolls exist
 
   assert.equal(models.length, 1);
   const [model] = models;
-  assert.equal(model.offers.length, 0);
   assert.equal(model.action.label, 'Check back tomorrow');
   assert.equal(model.action.disabled, true);
   assert.equal(model.action.onClick, null);

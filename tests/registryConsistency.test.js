@@ -118,7 +118,9 @@ test('ui builders consume processed registry definitions from the service', t =>
   const hustleModels = buildHustleModels(actions, {
     getState: () => ({ actions: {}, hustles: {}, daily: {} })
   });
-  assert.equal(hustleModels[0].id, actions[0].id, 'hustle model should reflect service definition id');
+  const hustleModel = hustleModels.find(model => model.definitionId === actions[0].id);
+  assert.ok(hustleModel, 'hustle model should reflect service definition id');
+  assert.equal(hustleModel.name, actions[0].name);
 
   const assetModels = buildAssetModels(assets, {
     getState: () => ({ assets: { demoAsset: { instances: [] } } }),

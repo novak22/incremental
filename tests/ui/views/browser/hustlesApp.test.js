@@ -69,6 +69,166 @@ function mockSessionState(options = {}) {
   };
 }
 
+function createMetrics({ timeValue, timeLabel, payoutValue, payoutLabel, roiValue }) {
+  return {
+    time: { value: timeValue ?? 0, label: timeLabel || '' },
+    payout: { value: payoutValue ?? 0, label: payoutLabel || '' },
+    roi: roiValue ?? 0
+  };
+}
+
+function createRequirements(summary = 'No requirements', items = []) {
+  return { summary, items };
+}
+
+function buildFilters({
+  name = '',
+  description = '',
+  metrics = createMetrics({}),
+  available = false,
+  category = 'hustle',
+  categoryLabel = 'Hustle',
+  limit = null,
+  offerId = null,
+  status = 'upcoming',
+  overrides = {}
+} = {}) {
+  const search = `${name || ''} ${description || ''}`.trim().toLowerCase();
+  return {
+    search,
+    time: metrics.time?.value ?? 0,
+    payout: metrics.payout?.value ?? 0,
+    roi: metrics.roi ?? 0,
+    available: Boolean(available),
+    limitRemaining: limit?.remaining ?? null,
+    tag: '',
+    category,
+    actionCategory: category,
+    categoryLabel,
+    templateKind: '',
+    marketCategory: '',
+    offerId,
+    status,
+    ...overrides
+  };
+}
+
+function createOfferModel({
+  definitionId,
+  offerId,
+  name,
+  description,
+  badges = [],
+  tags = [],
+  category = 'hustle',
+  categoryLabel = 'Hustle',
+  metrics = createMetrics({}),
+  requirements = createRequirements(),
+  action = null,
+  offer = null,
+  available = false,
+  status = 'upcoming',
+  limit = null,
+  commitments = [],
+  filters = {}
+} = {}) {
+  const mergedFilters = buildFilters({
+    name,
+    description,
+    metrics,
+    available,
+    category,
+    categoryLabel,
+    limit,
+    offerId,
+    status,
+    overrides: filters
+  });
+
+  return {
+    id: `${definitionId}:${offerId}`,
+    definitionId,
+    offerId,
+    name,
+    description,
+    badges,
+    tags,
+    tag: null,
+    templateKind: '',
+    actionCategory: category,
+    category,
+    categoryLabel,
+    descriptors: {},
+    labels: { category: categoryLabel },
+    metrics,
+    requirements,
+    limit,
+    action,
+    available: Boolean(available),
+    status,
+    offer,
+    commitments,
+    filters: mergedFilters,
+    seat: null
+  };
+}
+
+function createPlaceholderModel({
+  definitionId,
+  name,
+  description,
+  badges = [],
+  tags = [],
+  category = 'hustle',
+  categoryLabel = 'Hustle',
+  metrics = createMetrics({}),
+  requirements = createRequirements(),
+  action = null,
+  limit = null,
+  commitments = [],
+  filters = {}
+} = {}) {
+  const mergedFilters = buildFilters({
+    name,
+    description,
+    metrics,
+    available: false,
+    category,
+    categoryLabel,
+    limit,
+    offerId: null,
+    status: 'placeholder',
+    overrides: filters
+  });
+
+  return {
+    id: `${definitionId}:placeholder`,
+    definitionId,
+    offerId: null,
+    name,
+    description,
+    badges,
+    tags,
+    tag: null,
+    templateKind: '',
+    actionCategory: category,
+    category,
+    categoryLabel,
+    descriptors: {},
+    labels: { category: categoryLabel },
+    metrics,
+    requirements,
+    limit,
+    action,
+    available: false,
+    status: 'placeholder',
+    offer: null,
+    commitments,
+    filters: mergedFilters,
+    seat: null
+  };
+}
+
 test('renderHustles renders unified offer feed with metrics, CTA wiring, and filters', () => {
   const dom = setupDom();
   const acceptLog = [];
@@ -103,20 +263,34 @@ test('renderHustles renders unified offer feed with metrics, CTA wiring, and fil
     }
   ];
 
+  const priorityMetrics = createMetrics({
+    timeValue: 2,
+    timeLabel: '2h focus',
+    payoutValue: 50,
+    payoutLabel: '$50 payout',
+    roiValue: 25
+  });
+  const slowBurnMetrics = createMetrics({
+    timeValue: 4,
+    timeLabel: '4h focus',
+    payoutValue: 120,
+    payoutLabel: '$120 payout',
+    roiValue: 30
+  });
+  const baseRequirements = createRequirements('No requirements', []);
+
   const models = [
-    {
-      id: 'priority-hustle',
+    createOfferModel({
+      definitionId: 'priority-hustle',
+      offerId: 'offer-ready-primary',
       name: 'Priority Hustle',
       description: 'Lock this contract now.',
       badges: ['Skill XP Bonus', 'Remote-friendly'],
       tags: ['writing', 'remote'],
-      actionCategory: 'writing',
-      metrics: {
-        time: { value: 2, label: '2h focus' },
-        payout: { value: 50, label: '$50 payout' },
-        roi: 25
-      },
-      requirements: { summary: 'No requirements', items: [] },
+      category: 'writing',
+      categoryLabel: 'Writing',
+      metrics: priorityMetrics,
+      requirements: baseRequirements,
       action: {
         label: 'Accept Ready Offer',
         disabled: false,
@@ -124,84 +298,124 @@ test('renderHustles renders unified offer feed with metrics, CTA wiring, and fil
         onClick: () => actionLog.push('model-action'),
         guidance: 'Fresh hustles just landed! Claim your next gig and keep momentum rolling.'
       },
+      offer: {
+        id: 'offer-ready-primary',
+        label: 'Ready Contract A',
+        description: 'Open now',
+        meta: 'Available now • 2h focus',
+        payout: 50,
+        ready: true,
+        availableIn: 0,
+        hoursRequired: 2,
+        expiresIn: 1,
+        acceptLabel: 'Queue this lead',
+        locked: false,
+        onAccept: () => acceptLog.push('offer-ready-primary')
+      },
       available: true,
-      offers: [
-        {
-          id: 'offer-ready-primary',
-          label: 'Ready Contract A',
-          description: 'Open now',
-          meta: 'Available now • 2h focus',
-          payout: 50,
-          ready: true,
-          hoursRequired: 2,
-          expiresIn: 1,
-          acceptLabel: 'Queue this lead',
-          onAccept: () => acceptLog.push('offer-ready-primary')
-        },
-        {
-          id: 'offer-ready-secondary',
-          label: 'Ready Contract B',
-          description: 'Second slot',
-          meta: 'Available now • 3h focus',
-          payout: 80,
-          ready: true,
-          hoursRequired: 3,
-          expiresIn: 2,
-          onAccept: () => acceptLog.push('offer-ready-secondary')
-        }
-      ],
-      upcoming: [
-        {
-          id: 'offer-soon',
-          label: 'Coming Soon',
-          description: 'Opens tomorrow',
-          meta: 'Opens in 2 days',
-          payout: 60,
-          ready: false,
-          availableIn: 2,
-          expiresIn: 3,
-          onAccept: () => acceptLog.push('offer-soon')
-        }
-      ],
-      commitments: [],
-      filters: { available: true, category: 'writing' }
-    },
-    {
-      id: 'slow-burn',
+      status: 'ready'
+    }),
+    createOfferModel({
+      definitionId: 'priority-hustle',
+      offerId: 'offer-ready-secondary',
+      name: 'Priority Hustle',
+      description: 'Lock this contract now.',
+      badges: ['Skill XP Bonus', 'Remote-friendly'],
+      tags: ['writing', 'remote'],
+      category: 'writing',
+      categoryLabel: 'Writing',
+      metrics: priorityMetrics,
+      requirements: baseRequirements,
+      action: {
+        label: 'Accept Ready Offer',
+        disabled: false,
+        className: 'primary',
+        onClick: () => actionLog.push('model-action'),
+        guidance: 'Fresh hustles just landed! Claim your next gig and keep momentum rolling.'
+      },
+      offer: {
+        id: 'offer-ready-secondary',
+        label: 'Ready Contract B',
+        description: 'Second slot',
+        meta: 'Available now • 3h focus',
+        payout: 80,
+        ready: true,
+        availableIn: 0,
+        hoursRequired: 3,
+        expiresIn: 2,
+        locked: false,
+        onAccept: () => acceptLog.push('offer-ready-secondary')
+      },
+      available: true,
+      status: 'ready'
+    }),
+    createOfferModel({
+      definitionId: 'priority-hustle',
+      offerId: 'offer-soon',
+      name: 'Priority Hustle',
+      description: 'Lock this contract now.',
+      badges: ['Skill XP Bonus', 'Remote-friendly'],
+      tags: ['writing', 'remote'],
+      category: 'writing',
+      categoryLabel: 'Writing',
+      metrics: priorityMetrics,
+      requirements: baseRequirements,
+      action: {
+        label: 'Opens in 2 days',
+        disabled: true,
+        className: 'primary',
+        onClick: null,
+        guidance: 'Next wave unlocks tomorrow. Prep now so you\'re ready to accept and start logging progress.'
+      },
+      offer: {
+        id: 'offer-soon',
+        label: 'Coming Soon',
+        description: 'Opens tomorrow',
+        meta: 'Opens in 2 days',
+        payout: 60,
+        ready: false,
+        availableIn: 2,
+        hoursRequired: 2,
+        expiresIn: 3,
+        locked: false,
+        onAccept: () => acceptLog.push('offer-soon')
+      },
+      available: false,
+      status: 'upcoming'
+    }),
+    createOfferModel({
+      definitionId: 'slow-burn',
+      offerId: 'offer-slow',
       name: 'Slow Burn Hustle',
       description: 'Plan ahead for this sprint.',
       badges: [],
-      actionCategory: 'community',
-      metrics: {
-        time: { value: 4, label: '4h focus' },
-        payout: { value: 120, label: '$120 payout' },
-        roi: 30
-      },
-      requirements: { summary: 'Requires level 2', items: [] },
+      category: 'community',
+      categoryLabel: 'Community',
+      metrics: slowBurnMetrics,
+      requirements: createRequirements('Requires level 2', []),
       action: {
-        label: 'Prep outreach',
-        className: 'secondary',
+        label: 'Opens in 1 day',
         disabled: true,
+        className: 'primary',
+        onClick: null,
         guidance: 'Queue another gig to unlock this lane.'
       },
+      offer: {
+        id: 'offer-slow',
+        label: 'Audience Sprint',
+        description: 'Warm up leads',
+        meta: 'Opens tomorrow',
+        payout: 120,
+        ready: false,
+        availableIn: 1,
+        hoursRequired: 4,
+        expiresIn: 4,
+        locked: false,
+        onAccept: () => acceptLog.push('offer-slow')
+      },
       available: false,
-      offers: [],
-      upcoming: [
-        {
-          id: 'offer-slow',
-          label: 'Audience Sprint',
-          description: 'Warm up leads',
-          meta: 'Opens tomorrow',
-          payout: 120,
-          ready: false,
-          availableIn: 1,
-          expiresIn: 4,
-          onAccept: () => acceptLog.push('offer-slow')
-        }
-      ],
-      commitments: [],
-      filters: { available: false, category: 'community' }
-    }
+      status: 'upcoming'
+    })
   ];
 
   try {
@@ -388,74 +602,136 @@ test('renderHustles omits locked offers from DownWork feed', () => {
     }
   ];
 
+  const metrics = createMetrics({
+    timeValue: 1,
+    timeLabel: '1h',
+    payoutValue: 25,
+    payoutLabel: '$25',
+    roiValue: 25
+  });
+  const requirements = createRequirements('No requirements', []);
+
   const models = [
-    {
-      id: 'locked-filter',
+    createOfferModel({
+      definitionId: 'locked-filter',
+      offerId: 'offer-locked',
       name: 'Locked Filter Hustle',
       description: 'Only unlocked offers should appear.',
       badges: [],
-      metrics: {
-        time: { value: 1, label: '1h' },
-        payout: { value: 25, label: '$25' },
-        roi: 25
-      },
-      requirements: { summary: 'No requirements', items: [] },
+      category: 'hustle',
+      categoryLabel: 'Hustle',
+      metrics,
+      requirements,
       action: {
         label: 'Accept Open Offer',
         disabled: false,
         className: 'primary',
         onClick: () => {}
       },
+      offer: {
+        id: 'offer-locked',
+        label: 'Locked Ready Offer',
+        description: 'Hidden because locked.',
+        meta: 'Locked meta',
+        payout: 25,
+        ready: true,
+        availableIn: 0,
+        expiresIn: 2,
+        locked: true
+      },
       available: true,
-      offers: [
-        {
-          id: 'offer-locked',
-          label: 'Locked Ready Offer',
-          description: 'Hidden because locked.',
-          meta: 'Locked meta',
-          payout: 25,
-          ready: true,
-          availableIn: 0,
-          expiresIn: 2,
-          locked: true
-        },
-        {
-          id: 'offer-open',
-          label: 'Open Ready Offer',
-          description: 'Visible offer.',
-          meta: 'Open now',
-          payout: 25,
-          ready: true,
-          availableIn: 0,
-          expiresIn: 2,
-          locked: false
-        }
-      ],
-      upcoming: [
-        {
-          id: 'offer-locked-upcoming',
-          label: 'Locked Upcoming Offer',
-          description: 'Hidden upcoming offer.',
-          meta: 'Locked upcoming',
-          ready: false,
-          availableIn: 2,
-          expiresIn: 3,
-          locked: true
-        },
-        {
-          id: 'offer-open-upcoming',
-          label: 'Open Upcoming Offer',
-          description: 'Visible upcoming offer.',
-          meta: 'Unlocks soon',
-          ready: false,
-          availableIn: 1,
-          expiresIn: 4,
-          locked: false
-        }
-      ],
-      commitments: [],
-      filters: { available: true }
-    }
+      status: 'ready'
+    }),
+    createOfferModel({
+      definitionId: 'locked-filter',
+      offerId: 'offer-open',
+      name: 'Locked Filter Hustle',
+      description: 'Only unlocked offers should appear.',
+      badges: [],
+      category: 'hustle',
+      categoryLabel: 'Hustle',
+      metrics,
+      requirements,
+      action: {
+        label: 'Accept Open Offer',
+        disabled: false,
+        className: 'primary',
+        onClick: () => {}
+      },
+      offer: {
+        id: 'offer-open',
+        label: 'Open Ready Offer',
+        description: 'Visible offer.',
+        meta: 'Open now',
+        payout: 25,
+        ready: true,
+        availableIn: 0,
+        expiresIn: 2,
+        locked: false
+      },
+      available: true,
+      status: 'ready'
+    }),
+    createOfferModel({
+      definitionId: 'locked-filter',
+      offerId: 'offer-locked-upcoming',
+      name: 'Locked Filter Hustle',
+      description: 'Only unlocked offers should appear.',
+      badges: [],
+      category: 'hustle',
+      categoryLabel: 'Hustle',
+      metrics,
+      requirements,
+      action: {
+        label: 'Opens soon',
+        disabled: true,
+        className: 'primary',
+        onClick: null
+      },
+      offer: {
+        id: 'offer-locked-upcoming',
+        label: 'Locked Upcoming Offer',
+        description: 'Hidden upcoming offer.',
+        meta: 'Locked upcoming',
+        payout: 25,
+        ready: false,
+        availableIn: 2,
+        expiresIn: 3,
+        locked: true
+      },
+      available: false,
+      status: 'upcoming'
+    }),
+    createOfferModel({
+      definitionId: 'locked-filter',
+      offerId: 'offer-open-upcoming',
+      name: 'Locked Filter Hustle',
+      description: 'Only unlocked offers should appear.',
+      badges: [],
+      category: 'hustle',
+      categoryLabel: 'Hustle',
+      metrics,
+      requirements,
+      action: {
+        label: 'Opens in 1 day',
+        disabled: true,
+        className: 'primary',
+        onClick: null
+      },
+      offer: {
+        id: 'offer-open-upcoming',
+        label: 'Open Upcoming Offer',
+        description: 'Visible upcoming offer.',
+        meta: 'Unlocks soon',
+        payout: 25,
+        ready: false,
+        availableIn: 1,
+        expiresIn: 4,
+        locked: false
+      },
+      available: false,
+      status: 'upcoming'
+    })
   ];
 
   try {
@@ -531,30 +807,40 @@ test('renderHustles renders multiple upcoming-only offers without duplication', 
     }
   ];
 
-  const models = [
-    {
-      id: 'upcoming-only',
+  const upcomingMetrics = createMetrics({
+    timeValue: 2,
+    timeLabel: '2h focus',
+    payoutValue: 60,
+    payoutLabel: '$60 payout',
+    roiValue: 30
+  });
+  const upcomingRequirements = createRequirements('No requirements', []);
+
+  const models = upcomingOffers.map(offer =>
+    createOfferModel({
+      definitionId: 'upcoming-only',
+      offerId: offer.id,
       name: 'Upcoming Only Hustle',
       description: 'Plan ahead while slots unlock.',
       badges: [],
-      metrics: {
-        time: { value: 2, label: '2h focus' },
-        payout: { value: 60, label: '$60 payout' },
-        roi: 30
-      },
-      requirements: { summary: 'No requirements', items: [] },
+      category: 'ops',
+      categoryLabel: 'Ops',
+      metrics: upcomingMetrics,
+      requirements: upcomingRequirements,
       action: {
-        label: 'Check back soon',
-        className: 'secondary',
-        disabled: true
+        label: offer.availableIn === 1 ? 'Opens in 1 day' : `Opens in ${offer.availableIn} days`,
+        disabled: true,
+        className: 'primary',
+        onClick: null
+      },
+      offer: {
+        ...offer,
+        locked: false
       },
       available: false,
-      offers: [],
-      upcoming: upcomingOffers,
-      commitments: [],
-      filters: { available: false, category: 'ops' }
-    }
-  ];
+      status: 'upcoming'
+    })
+  );
 
   try {
     renderHustles(context, definitions, models);
@@ -703,53 +989,76 @@ test('renderHustles hides categories without unlocked offers', () => {
     }
   ];
 
+  const lockedMetrics = createMetrics({
+    timeValue: 1,
+    timeLabel: '1h',
+    payoutValue: 25,
+    payoutLabel: '$25',
+    roiValue: 25
+  });
+  const lockedRequirements = createRequirements('No requirements', []);
+
   const models = [
-    {
-      id: 'locked-filter',
+    createOfferModel({
+      definitionId: 'locked-filter',
+      offerId: 'offer-locked',
       name: 'Locked Filter Hustle',
       description: 'Only unlocked offers should appear.',
       badges: [],
-      metrics: {
-        time: { value: 1, label: '1h' },
-        payout: { value: 25, label: '$25' },
-        roi: 25
-      },
-      requirements: { summary: 'No requirements', items: [] },
+      category: 'hustle',
+      categoryLabel: 'Hustle',
+      metrics: lockedMetrics,
+      requirements: lockedRequirements,
       action: {
         label: 'Locked — Hidden',
         disabled: true,
         className: 'primary',
         onClick: null
       },
+      offer: {
+        id: 'offer-locked',
+        label: 'Locked Ready Offer',
+        description: 'Hidden because locked.',
+        meta: 'Locked meta',
+        payout: 25,
+        ready: true,
+        availableIn: 0,
+        expiresIn: 2,
+        locked: true
+      },
+      available: true,
+      status: 'ready'
+    }),
+    createOfferModel({
+      definitionId: 'locked-filter',
+      offerId: 'offer-locked-upcoming',
+      name: 'Locked Filter Hustle',
+      description: 'Only unlocked offers should appear.',
+      badges: [],
+      category: 'hustle',
+      categoryLabel: 'Hustle',
+      metrics: lockedMetrics,
+      requirements: lockedRequirements,
+      action: {
+        label: 'Opens soon',
+        disabled: true,
+        className: 'primary',
+        onClick: null
+      },
+      offer: {
+        id: 'offer-locked-upcoming',
+        label: 'Locked Upcoming Offer',
+        description: 'Hidden upcoming offer.',
+        meta: 'Locked upcoming',
+        payout: 25,
+        ready: false,
+        availableIn: 2,
+        expiresIn: 3,
+        locked: true
+      },
       available: false,
-      offers: [
-        {
-          id: 'offer-locked',
-          label: 'Locked Ready Offer',
-          description: 'Hidden because locked.',
-          meta: 'Locked meta',
-          payout: 25,
-          ready: true,
-          availableIn: 0,
-          expiresIn: 2,
-          locked: true
-        }
-      ],
-      upcoming: [
-        {
-          id: 'offer-locked-upcoming',
-          label: 'Locked Upcoming Offer',
-          description: 'Hidden upcoming offer.',
-          meta: 'Locked upcoming',
-          ready: false,
-          availableIn: 2,
-          expiresIn: 3,
-          locked: true
-        }
-      ],
-      commitments: [],
-      filters: { available: false }
-    }
+      status: 'upcoming'
+    })
   ];
 
   try {
