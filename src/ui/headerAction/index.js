@@ -32,6 +32,23 @@ const autoForwardState = {
 let activeRecommendation = null;
 let presenterRef = null;
 let activeViewId = null;
+let primaryActionMode = 'end';
+
+function normalizeActionMode(mode) {
+  if (typeof mode !== 'string') {
+    return null;
+  }
+  const trimmed = mode.trim();
+  if (!trimmed) {
+    return null;
+  }
+  return trimmed.toLowerCase();
+}
+
+function setPrimaryActionMode(mode) {
+  const normalized = normalizeActionMode(mode);
+  primaryActionMode = normalized || 'end';
+}
 
 function refreshPresenterState() {
   const view = getActiveView();
@@ -57,8 +74,11 @@ function getNextMode(current) {
   return AUTO_FORWARD_MODES[nextIndex];
 }
 
-function handlePrimaryAction() {
-  if (activeRecommendation?.onClick) {
+function handlePrimaryAction(options = {}) {
+  const overrideMode = normalizeActionMode(options?.mode);
+  const effectiveMode = overrideMode || primaryActionMode || 'end';
+
+  if (effectiveMode !== 'end' && activeRecommendation?.onClick) {
     activeRecommendation.onClick();
     return;
   }
@@ -110,6 +130,7 @@ export function initHeaderActionControls() {
   if (presenter && presenter !== presenterRef) {
     presenter?.init?.({
       onPrimaryAction: handlePrimaryAction,
+      onPrimaryModeChange: setPrimaryActionMode,
       onAutoForwardToggle: cycleAutoForward
     });
     presenterRef = presenter;
@@ -119,6 +140,7 @@ export function initHeaderActionControls() {
 
 export function renderHeaderAction(model) {
   activeRecommendation = model?.recommendation || null;
+  setPrimaryActionMode(model?.button?.mode);
   const presenter = getPresenter();
   presenter?.renderAction?.(model);
 }
