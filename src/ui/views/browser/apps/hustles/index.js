@@ -300,7 +300,6 @@ function resolveTagEntries(model = {}, definition = {}) {
 }
 
 function buildOfferEntries(definitions = [], models = [], { onOfferAccept } = {}) {
-  const modelMap = new Map(models.map(model => [model?.id, model]));
   const entries = [];
   const categoryMetadata = new Map();
   const hustleFilterMeta = new Map();
@@ -311,49 +310,25 @@ function buildOfferEntries(definitions = [], models = [], { onOfferAccept } = {}
     potentialPayout: 0
   };
 
-  definitions.forEach((definition, definitionIndex) => {
-    const model = modelMap.get(definition?.id);
+  const definitionLookup = new Map();
+  definitions.forEach((definition, index) => {
+    if (!definition || !definition.id) return;
+    if (!definitionLookup.has(definition.id)) {
+      definitionLookup.set(definition.id, { definition, index });
+    }
+  });
+
+  const commitmentTracker = new Set();
+  const payoutTracker = new Map();
+
+  (Array.isArray(models) ? models : []).forEach((model, modelIndex) => {
     if (!model) return;
 
-    const rawOffers = Array.isArray(model.offers) ? model.offers : [];
-    const rawUpcoming = Array.isArray(model.upcoming) ? model.upcoming : [];
-    const visibleOffers = rawOffers.filter(offer => !offer?.locked);
-    const visibleUpcoming = rawUpcoming.filter(offer => !offer?.locked);
-    const commitments = Array.isArray(model.commitments) ? model.commitments : [];
-
-    const hasAnySource = rawOffers.length > 0 || rawUpcoming.length > 0;
-    const hasUnlockedContent = visibleOffers.length > 0 || visibleUpcoming.length > 0;
-
-    const categoryKey = resolveCategoryKey(model.actionCategory || model.filters?.category || '');
-    const categoryConfig = resolveCategoryConfig(categoryKey);
-    categoryMetadata.set(categoryKey, categoryConfig);
-
-    summary.availableCount += visibleOffers.length;
-    summary.upcomingCount += visibleUpcoming.length;
-    summary.commitmentCount += commitments.length;
-
-    const readyPayouts = visibleOffers
-      .map(offer => Number(offer?.payout))
-      .filter(value => Number.isFinite(value) && value > 0);
-
-    if (readyPayouts.length > 0) {
-      summary.potentialPayout += readyPayouts.reduce((sum, value) => sum + Math.max(0, value), 0);
-    } else if (Number.isFinite(model.metrics?.payout?.value)) {
-      summary.potentialPayout += Math.max(0, Number(model.metrics.payout.value));
-    }
-
-    if (!hasUnlockedContent && hasAnySource && !commitments.length) {
-      return;
-    }
-
-    const hustleId = model.id || definition.id || '';
-    const hustleLabel = model.name || definition.name || 'Contract';
-
-    const baseMetrics = {
-      timeValue: Number(model.metrics?.time?.value ?? 0),
-      payoutValue: Number(model.metrics?.payout?.value ?? 0),
-      roiValue: Number(model.metrics?.roi ?? 0)
-    };
+    const identifier = model.definitionId || model.hustleId || model.id || '';
+    const lookup = identifier && definitionLookup.get(identifier);
+    const definition = lookup?.definition || definitions.find(def => def?.id === identifier) || {};
+    const rawIndex = lookup?.index;
+    const safeDefinitionIndex = Number.isInteger(rawIndex) && rawIndex >= 0 ? rawIndex : modelIndex;
 
     const descriptorOverrides = typeof definition?.descriptors === 'object' && definition.descriptors !== null
       ? definition.descriptors
@@ -362,115 +337,95 @@ function buildOfferEntries(definitions = [], models = [], { onOfferAccept } = {}
       ? definition.copy
       : {};
 
-    const startIndex = entries.length;
+    const categoryKey = resolveCategoryKey(model.actionCategory || model.filters?.category || '');
+    const categoryConfig = resolveCategoryConfig(categoryKey);
+    categoryMetadata.set(categoryKey, categoryConfig);
 
-    if (visibleOffers.length > 0) {
-      visibleOffers.forEach((offer, offerIndex) => {
-        entries.push({
-          definition,
-          model,
-          descriptorOverrides,
-          copyOverrides,
-          categoryKey,
-          categoryConfig,
-          hustleId,
-          hustleLabel,
-          search: model.filters?.search || '',
-          limitRemaining: model.filters?.limitRemaining,
-          commitments,
-          status: 'ready',
-          offer,
-          metrics: baseMetrics,
-          expiresIn: Number.isFinite(offer?.expiresIn) ? offer.expiresIn : undefined,
-          onAccept: onOfferAccept,
-          upcomingOffers: [],
-          showCommitments: false,
-          showAction: false,
-          isPrimary: false,
-          hustleIndex: definitionIndex,
-          offerIndex
-        });
-      });
-    }
+    const status = model.status || (model.available ? 'ready' : 'upcoming');
+    const offer = model.offer || null;
 
-    if (visibleUpcoming.length > 0) {
-      visibleUpcoming.forEach((offer, offerIndex) => {
-        entries.push({
-          definition,
-          model,
-          descriptorOverrides,
-          copyOverrides,
-          categoryKey,
-          categoryConfig,
-          hustleId,
-          hustleLabel,
-          search: model.filters?.search || '',
-          limitRemaining: model.filters?.limitRemaining,
-          commitments,
-          status: 'upcoming',
-          offer,
-          metrics: baseMetrics,
-          expiresIn: Number.isFinite(offer?.expiresIn) ? offer.expiresIn : undefined,
-          onAccept: onOfferAccept,
-          upcomingOffers: [],
-          showCommitments: false,
-          showAction: false,
-          isPrimary: false,
-          hustleIndex: definitionIndex,
-          offerIndex
-        });
-      });
-    } else if (!visibleOffers.length && (commitments.length || model.action || model.description)) {
-      entries.push({
-        definition,
-        model,
-        descriptorOverrides,
-        copyOverrides,
-        categoryKey,
-        categoryConfig,
-        hustleId,
-        hustleLabel,
-        search: model.filters?.search || '',
-        limitRemaining: model.filters?.limitRemaining,
-        commitments,
-        status: 'placeholder',
-        offer: null,
-        metrics: baseMetrics,
-        expiresIn: undefined,
-        onAccept: onOfferAccept,
-        upcomingOffers: [],
-        showCommitments: false,
-        showAction: false,
-        isPrimary: false,
-        hustleIndex: definitionIndex,
-        offerIndex: 0
-      });
-    }
-
-    const createdEntries = entries.slice(startIndex);
-    if (!createdEntries.length) {
+    if (offer?.locked) {
       return;
     }
 
-    createdEntries.forEach((entry, index) => {
-      entry.isPrimary = index === 0;
-      entry.showCommitments = index === 0 || entry.status === 'placeholder';
-      entry.showAction = index === 0 || entry.status === 'placeholder';
-      entry.upcomingOffers = [];
-    });
+    const commitments = Array.isArray(model.commitments) ? model.commitments : [];
 
-    let filterEntry = hustleFilterMeta.get(hustleId);
-    if (!filterEntry) {
-      filterEntry = { id: hustleId, label: hustleLabel, ready: 0, cards: 0 };
-      hustleFilterMeta.set(hustleId, filterEntry);
+    const groupId = model.hustleId || model.definitionId || definition?.id || model.id || `model:${modelIndex}`;
+    const hustleLabel = model.hustleLabel || model.name || definition?.name || 'Contract';
+
+    if (!commitmentTracker.has(groupId)) {
+      summary.commitmentCount += commitments.length;
+      commitmentTracker.add(groupId);
     }
 
-    createdEntries.forEach(entry => {
-      filterEntry.cards += 1;
-      if (entry.status === 'ready') {
-        filterEntry.ready += 1;
-      }
-    });
+    const available = status === 'ready' && model.available !== false;
+    if (available) {
+      summary.availableCount += 1;
+    } else if (status === 'upcoming') {
+      summary.upcomingCount += 1;
+    }
+
+    let tracker = payoutTracker.get(groupId);
+    if (!tracker) {
+      const fallback = Number(model.metrics?.payout?.value);
+      tracker = {
+        readyTotal: 0,
+        hasReady: false,
+        fallback: Number.isFinite(fallback) ? Math.max(0, fallback) : 0
+      };
+      payoutTracker.set(groupId, tracker);
+    }
+
+    const offerPayout = Number(offer?.payout);
+    if (available && Number.isFinite(offerPayout) && offerPayout > 0) {
+      tracker.readyTotal += Math.max(0, offerPayout);
+      tracker.hasReady = true;
+    }
+
+    const entry = {
+      definition,
+      model,
+      descriptorOverrides,
+      copyOverrides,
+      categoryKey,
+      categoryConfig,
+      hustleId: groupId,
+      hustleLabel,
+      search: model.filters?.search || '',
+      limitRemaining: model.filters?.limitRemaining ?? null,
+      commitments,
+      status,
+      offer,
+      metrics: {
+        timeValue: Number(model.metrics?.time?.value ?? 0),
+        payoutValue: Number(model.metrics?.payout?.value ?? 0),
+        roiValue: Number(model.metrics?.roi ?? 0)
+      },
+      expiresIn: Number.isFinite(model.expiresIn)
+        ? model.expiresIn
+        : Number.isFinite(offer?.expiresIn)
+          ? offer.expiresIn
+          : undefined,
+      onAccept: onOfferAccept,
+      hustleIndex: safeDefinitionIndex,
+      offerIndex: modelIndex
+    };
+
+    entries.push(entry);
+
+    let filterEntry = hustleFilterMeta.get(groupId);
+    if (!filterEntry) {
+      filterEntry = { id: groupId, label: hustleLabel, ready: 0, cards: 0 };
+      hustleFilterMeta.set(groupId, filterEntry);
+    }
+    filterEntry.cards += 1;
+    if (available) {
+      filterEntry.ready += 1;
+    }
+  });
+
+  payoutTracker.forEach(({ readyTotal, hasReady, fallback }) => {
+    summary.potentialPayout += hasReady ? readyTotal : fallback;
   });
 
   const statusWeight = status => {
@@ -516,10 +471,6 @@ function buildOfferEntries(definitions = [], models = [], { onOfferAccept } = {}
   entries.sort((a, b) => {
     const statusDiff = statusWeight(a.status) - statusWeight(b.status);
     if (statusDiff !== 0) return statusDiff;
-
-    if (a.hustleId === b.hustleId && a.isPrimary !== b.isPrimary) {
-      return a.isPrimary ? -1 : 1;
-    }
 
     const payoutDiff = getPayoutSortValue(b) - getPayoutSortValue(a);
     if (payoutDiff !== 0) return payoutDiff;
@@ -1028,14 +979,22 @@ function resolveFocusHoursLeft(context = {}, models = []) {
     return Math.max(0, resolved);
   }
 
-  const fallback = models.reduce((total, model) => {
+  const commitmentTotals = new Map();
+  (Array.isArray(models) ? models : []).forEach((model, index) => {
+    if (!model) return;
+    const key = model.hustleId || model.definitionId || model.id || `model:${index}`;
+    if (commitmentTotals.has(key)) {
+      return;
+    }
     const commitments = Array.isArray(model.commitments) ? model.commitments : [];
     const hours = commitments.reduce((sum, entry) => {
       const remaining = Number(entry?.progress?.hoursRemaining ?? entry?.hoursRemaining ?? entry?.hoursRequired);
       return sum + (Number.isFinite(remaining) ? Math.max(0, remaining) : 0);
     }, 0);
-    return total + hours;
-  }, 0);
+    commitmentTotals.set(key, hours);
+  });
+
+  const fallback = Array.from(commitmentTotals.values()).reduce((total, value) => total + value, 0);
 
   return Math.max(0, fallback);
 }
@@ -1120,10 +1079,7 @@ export function createOfferCard(entry = {}) {
     offer = null,
     onAccept,
     metrics = {},
-    expiresIn,
-    showCommitments = true,
-    showAction = true,
-    isPrimary = false
+    expiresIn
   } = entry;
 
   const descriptorBundle = {
@@ -1137,7 +1093,6 @@ export function createOfferCard(entry = {}) {
   card.className = 'browser-card browser-card--action browser-card--hustle downwork-card';
   card.dataset.action = hustleId;
   card.dataset.hustle = hustleId;
-  card.dataset.hustleLabel = hustleLabel;
   card.dataset.search = search;
   card.dataset.category = categoryKey;
   card.dataset.actionCategory = categoryKey;
@@ -1175,7 +1130,6 @@ export function createOfferCard(entry = {}) {
   card.dataset.payout = String(Math.max(0, safePayout));
   card.dataset.roi = String(Math.max(0, safeRoi));
   card.dataset.available = status === 'ready' ? 'true' : 'false';
-  card.dataset.readyOfferCount = status === 'ready' ? '1' : '0';
 
   const expiryCandidates = [];
   if (Number.isFinite(expiresIn)) {
@@ -1230,9 +1184,7 @@ export function createOfferCard(entry = {}) {
 
   card.appendChild(metricsRow);
 
-  const shouldShowDetails = isPrimary || status === 'placeholder';
-
-  if (shouldShowDetails && model.description) {
+  if (model.description) {
     const summary = document.createElement('p');
     summary.className = 'browser-card__summary';
     summary.textContent = model.description;
@@ -1240,7 +1192,7 @@ export function createOfferCard(entry = {}) {
   }
 
   const badges = Array.isArray(model.badges) ? model.badges : [];
-  if (shouldShowDetails && badges.length > 0) {
+  if (badges.length > 0) {
     const list = document.createElement('ul');
     list.className = 'browser-card__badges';
     badges.forEach(entry => {
@@ -1257,7 +1209,7 @@ export function createOfferCard(entry = {}) {
   card.dataset.tagList = JSON.stringify(tagEntries);
   card.dataset.tags = tagEntries.map(entry => entry.id).join(' ');
 
-  if (shouldShowDetails && tagEntries.length > 0) {
+  if (tagEntries.length > 0) {
     const tagList = document.createElement('ul');
     tagList.className = 'downwork-card__tags';
     tagEntries.forEach(entry => {
@@ -1275,28 +1227,26 @@ export function createOfferCard(entry = {}) {
   const hasSkillTag = typeof model.tag?.label === 'string' && /skill/i.test(model.tag.label);
   card.dataset.skillXp = hasSkillBadge || hasSkillTag ? 'true' : 'false';
 
-  if (shouldShowDetails) {
-    const meta = document.createElement('p');
-    meta.className = 'browser-card__meta';
-    meta.textContent = model.requirements?.summary || 'No requirements';
-    card.appendChild(meta);
+  const meta = document.createElement('p');
+  meta.className = 'browser-card__meta';
+  meta.textContent = model.requirements?.summary || 'No requirements';
+  card.appendChild(meta);
 
-    if (model.seat?.summary) {
-      const seat = document.createElement('p');
-      seat.className = 'browser-card__note';
-      seat.textContent = model.seat.summary;
-      card.appendChild(seat);
-    }
-
-    if (model.limit?.summary) {
-      const limit = document.createElement('p');
-      limit.className = 'browser-card__note';
-      limit.textContent = model.limit.summary;
-      card.appendChild(limit);
-    }
+  if (model.seat?.summary) {
+    const seat = document.createElement('p');
+    seat.className = 'browser-card__note';
+    seat.textContent = model.seat.summary;
+    card.appendChild(seat);
   }
 
-  if (showAction !== false && model.action?.label) {
+  if (model.limit?.summary) {
+    const limit = document.createElement('p');
+    limit.className = 'browser-card__note';
+    limit.textContent = model.limit.summary;
+    card.appendChild(limit);
+  }
+
+  if (model.action?.label) {
     const actions = document.createElement('div');
     actions.className = 'browser-card__actions';
 
@@ -1326,7 +1276,7 @@ export function createOfferCard(entry = {}) {
     card.appendChild(actions);
   }
 
-  if (showCommitments !== false && Array.isArray(commitments) && commitments.length > 0) {
+  if (Array.isArray(commitments) && commitments.length > 0) {
     const commitmentsSection = createCardSection(copy.commitments);
     const list = createCommitmentList(commitments);
     commitmentsSection.appendChild(list);

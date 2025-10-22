@@ -47,6 +47,191 @@ function buildDescriptorCopy(categoryLabel) {
   };
 }
 
+function cloneDescriptorCopy(copy = {}) {
+  const next = {};
+  Object.entries(copy || {}).forEach(([key, value]) => {
+    if (value && typeof value === 'object') {
+      next[key] = { ...value };
+    } else {
+      next[key] = value;
+    }
+  });
+  return next;
+}
+
+function cloneDescriptors(descriptors = {}) {
+  if (!descriptors || typeof descriptors !== 'object') {
+    return {};
+  }
+  const { copy, ...rest } = descriptors;
+  return {
+    ...rest,
+    copy: cloneDescriptorCopy(copy)
+  };
+}
+
+function cloneRequirementItems(source = {}) {
+  const summary = typeof source.summary === 'string' ? source.summary : '';
+  const items = Array.isArray(source.items)
+    ? source.items.map(item => (item && typeof item === 'object' ? { ...item } : item))
+    : [];
+  return { summary, items };
+}
+
+function cloneCommitment(entry = {}) {
+  if (!entry || typeof entry !== 'object') {
+    return entry;
+  }
+  const cloned = { ...entry };
+  if (entry.progress && typeof entry.progress === 'object') {
+    cloned.progress = { ...entry.progress };
+  }
+  return cloned;
+}
+
+function cloneCommitments(list = []) {
+  return (Array.isArray(list) ? list : []).map(cloneCommitment);
+}
+
+function cloneMetrics(metrics = {}) {
+  if (!metrics || typeof metrics !== 'object') {
+    return {};
+  }
+  const cloned = { ...metrics };
+  if (metrics.time && typeof metrics.time === 'object') {
+    cloned.time = { ...metrics.time };
+  }
+  if (metrics.payout && typeof metrics.payout === 'object') {
+    cloned.payout = { ...metrics.payout };
+  }
+  return cloned;
+}
+
+function cloneLimit(limit) {
+  if (!limit || typeof limit !== 'object') {
+    return limit ?? null;
+  }
+  return { ...limit };
+}
+
+function cloneSeat(seat) {
+  if (!seat || typeof seat !== 'object') {
+    return seat ?? null;
+  }
+  return { ...seat };
+}
+
+function cloneFilters(filters = {}) {
+  return { ...(filters || {}) };
+}
+
+function cloneTags(tags) {
+  if (!Array.isArray(tags)) {
+    return tags;
+  }
+  return tags.map(tag => (tag && typeof tag === 'object' ? { ...tag } : tag));
+}
+
+function cloneBaseModel(base = {}) {
+  return {
+    ...base,
+    descriptors: cloneDescriptors(base.descriptors),
+    requirements: cloneRequirementItems(base.requirements),
+    commitments: cloneCommitments(base.commitments),
+    badges: Array.isArray(base.badges) ? [...base.badges] : [],
+    filters: cloneFilters(base.filters),
+    metrics: cloneMetrics(base.metrics),
+    limit: cloneLimit(base.limit),
+    seat: cloneSeat(base.seat),
+    labels: base.labels && typeof base.labels === 'object' ? { ...base.labels } : base.labels,
+    tags: cloneTags(base.tags)
+  };
+}
+
+function buildOfferActionConfig(offer = {}, {
+  requirementGuidance = '',
+  readyGuidance = '',
+  waitingGuidance = ''
+} = {}) {
+  if (!offer) {
+    return null;
+  }
+  const locked = Boolean(offer.locked);
+  const ready = Boolean(offer.ready) && !locked;
+
+  if (locked) {
+    const lockedLabel = offer.lockedLabel || `Locked — ${offer.label || 'Offer'}`;
+    const guidance = requirementGuidance || offer.unlockHint || '';
+    return {
+      label: lockedLabel,
+      disabled: true,
+      className: 'primary',
+      onClick: null,
+      guidance: guidance || undefined
+    };
+  }
+
+  if (ready) {
+    return {
+      label: `Accept ${offer.label || 'Offer'}`,
+      disabled: false,
+      className: 'primary',
+      onClick: typeof offer.onAccept === 'function' ? offer.onAccept : null,
+      guidance: readyGuidance || undefined
+    };
+  }
+
+  const availableIn = Number.isFinite(offer.availableIn) ? offer.availableIn : null;
+  const daysText = availableIn === 1 ? '1 day' : `${availableIn} days`;
+  return {
+    label: availableIn && availableIn > 0 ? `Opens in ${daysText}` : 'Opens soon',
+    disabled: true,
+    className: 'primary',
+    onClick: null,
+    guidance: waitingGuidance || undefined
+  };
+}
+
+function buildPlaceholderAction({
+  definition = {},
+  state,
+  currentDay,
+  executeActionFn,
+  rollOffers,
+  rerollGuidance,
+  emptyGuidance
+} = {}) {
+  if (typeof rollOffers === 'function') {
+    const rerollLabel = definition.market?.manualRerollLabel || 'Roll a fresh offer';
+    const guidance = definition.market?.manualRerollHelp || rerollGuidance;
+    return {
+      label: rerollLabel,
+      disabled: false,
+      className: 'secondary',
+      onClick: () => {
+        if (typeof executeActionFn === 'function') {
+          executeActionFn(() => {
+            rollOffers({ templates: [definition], day: currentDay, state });
+          });
+        } else {
+          rollOffers({ templates: [definition], day: currentDay, state });
+        }
+      },
+      guidance: guidance || undefined
+    };
+  }
+
+  const emptyLabel = definition.market?.emptyActionLabel || 'Check back tomorrow';
+  const guidance = definition.market?.emptyGuidance || emptyGuidance;
+  return {
+    label: emptyLabel,
+    disabled: true,
+    className: 'secondary',
+    onClick: null,
+    guidance: guidance || undefined
+  };
+}
+
 export default function buildHustleModels(definitions = [], helpers = {}) {
   const {
     getState: getStateFn = getState,
@@ -107,7 +292,10 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
     acceptedByDefinition.get(definitionId).push(entry);
   });
 
-  return definitions.map(definition => {
+  const models = [];
+
+  definitions.forEach(definition => {
+    if (!definition) return;
     const templateOffers = offersByTemplate.get(definition.id) || [];
     const resolvedCategory = (() => {
       const explicit = definition.market?.category;
@@ -226,9 +414,6 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
       };
     });
 
-    const readyOffers = offerEntries.filter(entry => entry.ready);
-    const upcomingOffers = offerEntries.filter(entry => !entry.ready);
-
     const aggregatedSeatPolicy = (() => {
       const activeEntry = offerEntries.find(entry => entry.seatPolicy);
       if (activeEntry?.seatPolicy) {
@@ -310,69 +495,6 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
       });
     });
 
-    const primaryOffer = readyOffers[0] || upcomingOffers[0] || null;
-
-    let actionConfig = null;
-
-    if (primaryOffer) {
-      const locked = Boolean(primaryOffer.locked);
-      const ready = Boolean(primaryOffer.ready) && !locked;
-
-      if (locked) {
-        const lockedLabel = `Locked — ${primaryOffer.label}`;
-        const lockedGuidance = requirementGuidance || primaryOffer.unlockHint || '';
-        actionConfig = {
-          label: lockedLabel,
-          disabled: true,
-          className: 'primary',
-          onClick: null,
-          guidance: lockedGuidance || undefined
-        };
-      } else if (ready) {
-        actionConfig = {
-          label: `Accept ${primaryOffer.label}`,
-          disabled: false,
-          className: 'primary',
-          onClick: primaryOffer.onAccept,
-          guidance: defaultReadyGuidance
-        };
-      } else {
-        const availableIn = Number.isFinite(primaryOffer.availableIn) ? primaryOffer.availableIn : null;
-        const daysText = availableIn === 1 ? '1 day' : `${availableIn} days`;
-        const label = availableIn && availableIn > 0 ? `Opens in ${daysText}` : 'Opens soon';
-        actionConfig = {
-          label,
-          disabled: true,
-          className: 'primary',
-          onClick: null,
-          guidance: defaultWaitingGuidance
-        };
-      }
-    } else if (typeof rollOffers === 'function') {
-      const rerollLabel = definition.market?.manualRerollLabel || 'Roll a fresh offer';
-      const rerollGuidance = definition.market?.manualRerollHelp || defaultRerollGuidance;
-      actionConfig = {
-        label: rerollLabel,
-        disabled: false,
-        className: 'secondary',
-        onClick: () =>
-          executeActionFn(() => {
-            rollOffers({ templates: [definition], day: currentDay, state });
-          }),
-        guidance: rerollGuidance
-      };
-    } else {
-      const emptyLabel = definition.market?.emptyActionLabel || 'Check back tomorrow';
-      const emptyGuidance = definition.market?.emptyGuidance || defaultEmptyGuidance;
-      actionConfig = {
-        label: emptyLabel,
-        disabled: true,
-        className: 'secondary',
-        onClick: null,
-        guidance: emptyGuidance
-      };
-    }
-
     const templateKind = definition.templateKind || definition.type || null;
 
     const badges = [`${formatHoursFn(time)} time`];
@@ -395,17 +517,27 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
     if (resolvedCategoryLabel && resolvedCategoryLabel !== descriptors.categoryLabel) {
       badges.push(`${resolvedCategoryLabel} market`);
     }
-    if (commitments.length) {
-      badges.push(`${commitments.length} in progress`);
-    }
-    if (upcomingOffers.length) {
-      badges.push(`${upcomingOffers.length} queued`);
-    }
 
-    const available = Boolean(readyOffers.length);
+    const baseFilters = {
+      search,
+      time,
+      payout,
+      roi,
+      available: offerEntries.some(entry => entry.ready && !entry.locked),
+      limitRemaining: usage ? usage.remaining : null,
+      tag: definition.tag?.label || '',
+      category: actionCategory || '',
+      actionCategory: actionCategory || '',
+      categoryLabel: descriptors.categoryLabel || '',
+      templateKind: templateKind || '',
+      marketCategory: resolvedCategory || ''
+    };
 
-    return {
+    const baseModel = {
       id: definition.id,
+      definitionId: definition.id,
+      hustleId: definition.id,
+      hustleLabel: definition.name || definition.id,
       name: definition.name || definition.id,
       description: definition.description || '',
       tag: definition.tag || null,
@@ -434,34 +566,80 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
             exhausted: usage.remaining <= 0
           }
         : null,
-      action: requirementGuidance && actionConfig && !actionConfig.guidance
-        ? { ...actionConfig, guidance: requirementGuidance }
-        : actionConfig,
-      available,
-      offers: readyOffers,
-      upcoming: upcomingOffers,
+      action: null,
+      available: baseFilters.available,
+      status: baseFilters.available ? 'ready' : 'upcoming',
+      offer: null,
       commitments,
-      filters: {
-        search,
-        time,
-        payout,
-        roi,
-        available,
-        limitRemaining: usage ? usage.remaining : null,
-        tag: definition.tag?.label || '',
-        category: actionCategory || '',
-        actionCategory: actionCategory || '',
-        categoryLabel: descriptors.categoryLabel || '',
-        templateKind: templateKind || '',
-        marketCategory: resolvedCategory || ''
-      },
+      filters: baseFilters,
       seat: seatSummary
         ? {
             policy: aggregatedSeatPolicy,
             available: aggregatedSeats,
             summary: seatSummary
           }
-        : null
+        : null,
+      expiresIn: null,
+      tags: Array.isArray(definition.tags) ? [...definition.tags] : undefined
     };
+
+    const perOfferModels = offerEntries.map((entry, index) => {
+      const clone = cloneBaseModel(baseModel);
+      clone.id = entry.id || `${definition.id}::${index}`;
+      clone.offerId = entry.id || null;
+      clone.offer = { ...entry };
+      clone.status = entry.ready ? 'ready' : 'upcoming';
+      clone.available = Boolean(entry.ready) && !entry.locked;
+      clone.filters.available = clone.available;
+      clone.action = buildOfferActionConfig(entry, {
+        requirementGuidance,
+        readyGuidance: defaultReadyGuidance,
+        waitingGuidance: defaultWaitingGuidance
+      });
+      if (clone.action && requirementGuidance && !clone.action.guidance) {
+        clone.action = { ...clone.action, guidance: requirementGuidance };
+      }
+      if (entry.seatSummary) {
+        clone.seat = {
+          policy: entry.seatPolicy,
+          available: Number.isFinite(entry.seatsAvailable) ? entry.seatsAvailable : null,
+          summary: entry.seatSummary
+        };
+      }
+      clone.expiresIn = Number.isFinite(entry.expiresIn) ? entry.expiresIn : null;
+      return clone;
+    });
+
+    if (perOfferModels.length > 0) {
+      perOfferModels.forEach(model => {
+        models.push(model);
+      });
+    } else {
+      const placeholderAction = buildPlaceholderAction({
+        definition,
+        state,
+        currentDay,
+        executeActionFn,
+        rollOffers,
+        rerollGuidance: defaultRerollGuidance,
+        emptyGuidance: defaultEmptyGuidance
+      });
+      if (commitments.length || baseModel.description || placeholderAction) {
+        const placeholder = cloneBaseModel(baseModel);
+        placeholder.id = `${definition.id}::placeholder`;
+        placeholder.offer = null;
+        placeholder.status = 'placeholder';
+        placeholder.available = false;
+        placeholder.filters.available = false;
+        placeholder.action = placeholderAction || null;
+        if (placeholder.action && requirementGuidance && !placeholder.action.guidance) {
+          placeholder.action = { ...placeholder.action, guidance: requirementGuidance };
+        }
+        placeholder.expiresIn = null;
+        models.push(placeholder);
+      }
+    }
   });
+
+  return models;
 }

@@ -69,6 +69,140 @@ function mockSessionState(options = {}) {
   };
 }
 
+const DEFAULT_DESCRIPTOR = { category: 'writing', categoryLabel: 'Hustle', copy: {} };
+
+function createOfferModel(options = {}) {
+  const {
+    id,
+    definitionId,
+    hustleId,
+    hustleLabel,
+    name,
+    description,
+    badges,
+    tags,
+    actionCategory,
+    descriptors,
+    metrics,
+    requirements,
+    action,
+    available,
+    status,
+    offer,
+    commitments,
+    filters,
+    limit = null,
+    seat = null,
+    category,
+    categoryLabel,
+    labels,
+    tag = null,
+    templateKind = '',
+    expiresIn
+  } = options;
+
+  const descriptorBundle = descriptors
+    ? {
+        ...descriptors,
+        copy: { ...(descriptors.copy || {}) }
+      }
+    : { ...DEFAULT_DESCRIPTOR, copy: { ...DEFAULT_DESCRIPTOR.copy } };
+
+  const requirementBundle = requirements
+    ? {
+        summary: requirements.summary ?? 'No requirements',
+        items: Array.isArray(requirements.items) ? [...requirements.items] : []
+      }
+    : { summary: 'No requirements', items: [] };
+
+  const metricsBundle = metrics
+    ? {
+        ...metrics,
+        time: metrics.time ? { ...metrics.time } : undefined,
+        payout: metrics.payout ? { ...metrics.payout } : undefined
+      }
+    : {
+        time: { value: 1, label: '1h focus' },
+        payout: { value: 10, label: '$10 payout' },
+        roi: 10
+      };
+
+  const resolvedOffer = offer ? { ...offer } : null;
+  const resolvedDefinitionId = definitionId ?? hustleId ?? id ?? 'hustle';
+  const resolvedHustleId = hustleId ?? resolvedDefinitionId;
+  const resolvedName = name ?? hustleLabel ?? resolvedDefinitionId;
+  const resolvedLabel = hustleLabel ?? resolvedName;
+  const resolvedBadges = Array.isArray(badges) ? [...badges] : [];
+  const resolvedTags = Array.isArray(tags) ? [...tags] : [];
+  const resolvedActionCategory = actionCategory ?? descriptorBundle.category ?? 'writing';
+  const resolvedCategory = category ?? resolvedActionCategory;
+  const resolvedCategoryLabel = categoryLabel ?? descriptorBundle.categoryLabel ?? 'Hustle';
+  const ready = Boolean(resolvedOffer?.ready) && !resolvedOffer?.locked;
+  const resolvedAvailable = typeof available === 'boolean' ? available : ready;
+  const resolvedStatus =
+    status ?? (resolvedOffer ? (resolvedAvailable ? 'ready' : 'upcoming') : 'placeholder');
+  const resolvedLabels = labels ? { ...labels } : { category: resolvedCategoryLabel };
+  const resolvedCommitments = Array.isArray(commitments)
+    ? commitments.map(commitment => ({ ...commitment }))
+    : [];
+  const baseFilters = {
+    search: '',
+    time: metricsBundle?.time?.value ?? (resolvedOffer?.hoursRequired ?? 0),
+    payout: metricsBundle?.payout?.value ?? (resolvedOffer?.payout ?? 0),
+    roi: metricsBundle?.roi ?? 0,
+    available: resolvedAvailable,
+    limitRemaining: null,
+    tag: '',
+    category: resolvedCategory,
+    actionCategory: resolvedActionCategory,
+    categoryLabel: resolvedCategoryLabel,
+    templateKind,
+    marketCategory: resolvedCategory
+  };
+  const resolvedFilters = {
+    ...baseFilters,
+    ...(filters || {})
+  };
+  resolvedFilters.available = resolvedAvailable;
+
+  const resolvedId = id ?? resolvedOffer?.id ?? `${resolvedDefinitionId}-${resolvedStatus}`;
+  const resolvedExpiresIn =
+    expiresIn !== undefined
+      ? expiresIn
+      : Number.isFinite(resolvedOffer?.expiresIn)
+        ? resolvedOffer.expiresIn
+        : null;
+
+  return {
+    id: resolvedId,
+    definitionId: resolvedDefinitionId,
+    hustleId: resolvedHustleId,
+    hustleLabel: resolvedLabel,
+    name: resolvedName,
+    description: description ?? '',
+    badges: resolvedBadges,
+    tags: resolvedTags,
+    actionCategory: resolvedActionCategory,
+    descriptors: descriptorBundle,
+    metrics: metricsBundle,
+    requirements: requirementBundle,
+    action: action ? { ...action } : null,
+    available: resolvedAvailable,
+    status: resolvedStatus,
+    offer: resolvedOffer,
+    commitments: resolvedCommitments,
+    filters: resolvedFilters,
+    limit,
+    seat,
+    category: resolvedCategory,
+    categoryLabel: resolvedCategoryLabel,
+    labels: resolvedLabels,
+    tag,
+    templateKind,
+    expiresIn: resolvedExpiresIn
+  };
+}
+
 test('renderHustles renders unified offer feed with metrics, CTA wiring, and filters', () => {
   const dom = setupDom();
   const acceptLog = [];
@@ -103,20 +237,28 @@ test('renderHustles renders unified offer feed with metrics, CTA wiring, and fil
     }
   ];
 
+  const priorityDescriptors = { category: 'writing', categoryLabel: 'Hustle', copy: {} };
+  const priorityMetrics = {
+    time: { value: 2, label: '2h focus' },
+    payout: { value: 50, label: '$50 payout' },
+    roi: 25
+  };
+  const priorityRequirements = { summary: 'No requirements', items: [] };
+
   const models = [
-    {
-      id: 'priority-hustle',
+    createOfferModel({
+      id: 'offer-ready-primary',
+      definitionId: 'priority-hustle',
+      hustleId: 'priority-hustle',
+      hustleLabel: 'Priority Hustle',
       name: 'Priority Hustle',
       description: 'Lock this contract now.',
       badges: ['Skill XP Bonus', 'Remote-friendly'],
       tags: ['writing', 'remote'],
       actionCategory: 'writing',
-      metrics: {
-        time: { value: 2, label: '2h focus' },
-        payout: { value: 50, label: '$50 payout' },
-        roi: 25
-      },
-      requirements: { summary: 'No requirements', items: [] },
+      descriptors: priorityDescriptors,
+      metrics: priorityMetrics,
+      requirements: priorityRequirements,
       action: {
         label: 'Accept Ready Offer',
         disabled: false,
@@ -125,53 +267,143 @@ test('renderHustles renders unified offer feed with metrics, CTA wiring, and fil
         guidance: 'Fresh hustles just landed! Claim your next gig and keep momentum rolling.'
       },
       available: true,
-      offers: [
-        {
-          id: 'offer-ready-primary',
-          label: 'Ready Contract A',
-          description: 'Open now',
-          meta: 'Available now • 2h focus',
-          payout: 50,
-          ready: true,
-          hoursRequired: 2,
-          expiresIn: 1,
-          acceptLabel: 'Queue this lead',
-          onAccept: () => acceptLog.push('offer-ready-primary')
-        },
-        {
-          id: 'offer-ready-secondary',
-          label: 'Ready Contract B',
-          description: 'Second slot',
-          meta: 'Available now • 3h focus',
-          payout: 80,
-          ready: true,
-          hoursRequired: 3,
-          expiresIn: 2,
-          onAccept: () => acceptLog.push('offer-ready-secondary')
-        }
-      ],
-      upcoming: [
-        {
-          id: 'offer-soon',
-          label: 'Coming Soon',
-          description: 'Opens tomorrow',
-          meta: 'Opens in 2 days',
-          payout: 60,
-          ready: false,
-          availableIn: 2,
-          expiresIn: 3,
-          onAccept: () => acceptLog.push('offer-soon')
-        }
-      ],
-      commitments: [],
-      filters: { available: true, category: 'writing' }
-    },
-    {
-      id: 'slow-burn',
+      status: 'ready',
+      offer: {
+        id: 'offer-ready-primary',
+        label: 'Ready Contract A',
+        description: 'Open now',
+        meta: 'Available now • 2h focus',
+        payout: 50,
+        ready: true,
+        hoursRequired: 2,
+        expiresIn: 1,
+        acceptLabel: 'Queue this lead',
+        onAccept: () => acceptLog.push('offer-ready-primary')
+      },
+      filters: {
+        search: '',
+        time: 2,
+        payout: 50,
+        roi: 25,
+        available: true,
+        limitRemaining: null,
+        tag: '',
+        category: 'writing',
+        actionCategory: 'writing',
+        categoryLabel: 'Hustle',
+        templateKind: '',
+        marketCategory: 'writing'
+      },
+      expiresIn: 1
+    }),
+    createOfferModel({
+      id: 'offer-ready-secondary',
+      definitionId: 'priority-hustle',
+      hustleId: 'priority-hustle',
+      hustleLabel: 'Priority Hustle',
+      name: 'Priority Hustle',
+      description: 'Lock this contract now.',
+      badges: ['Skill XP Bonus', 'Remote-friendly'],
+      tags: ['writing', 'remote'],
+      actionCategory: 'writing',
+      descriptors: priorityDescriptors,
+      metrics: priorityMetrics,
+      requirements: priorityRequirements,
+      action: {
+        label: 'Accept Ready Contract B',
+        disabled: false,
+        className: 'primary',
+        onClick: () => actionLog.push('model-action'),
+        guidance: 'Fresh hustles just landed! Claim your next gig and keep momentum rolling.'
+      },
+      available: true,
+      status: 'ready',
+      offer: {
+        id: 'offer-ready-secondary',
+        label: 'Ready Contract B',
+        description: 'Second slot',
+        meta: 'Available now • 3h focus',
+        payout: 80,
+        ready: true,
+        hoursRequired: 3,
+        expiresIn: 2,
+        onAccept: () => acceptLog.push('offer-ready-secondary')
+      },
+      filters: {
+        search: '',
+        time: 2,
+        payout: 50,
+        roi: 25,
+        available: true,
+        limitRemaining: null,
+        tag: '',
+        category: 'writing',
+        actionCategory: 'writing',
+        categoryLabel: 'Hustle',
+        templateKind: '',
+        marketCategory: 'writing'
+      },
+      expiresIn: 2
+    }),
+    createOfferModel({
+      id: 'offer-soon',
+      definitionId: 'priority-hustle',
+      hustleId: 'priority-hustle',
+      hustleLabel: 'Priority Hustle',
+      name: 'Priority Hustle',
+      description: 'Lock this contract now.',
+      badges: ['Skill XP Bonus', 'Remote-friendly'],
+      tags: ['writing', 'remote'],
+      actionCategory: 'writing',
+      descriptors: priorityDescriptors,
+      metrics: priorityMetrics,
+      requirements: priorityRequirements,
+      action: {
+        label: 'Opens in 2 days',
+        disabled: true,
+        className: 'primary',
+        guidance: 'Next wave unlocks tomorrow. Prep now so you\'re ready to accept and start logging progress.'
+      },
+      available: false,
+      status: 'upcoming',
+      offer: {
+        id: 'offer-soon',
+        label: 'Coming Soon',
+        description: 'Opens tomorrow',
+        meta: 'Opens in 2 days',
+        payout: 60,
+        ready: false,
+        availableIn: 2,
+        expiresIn: 3,
+        onAccept: () => acceptLog.push('offer-soon')
+      },
+      filters: {
+        search: '',
+        time: 2,
+        payout: 50,
+        roi: 25,
+        available: false,
+        limitRemaining: null,
+        tag: '',
+        category: 'writing',
+        actionCategory: 'writing',
+        categoryLabel: 'Hustle',
+        templateKind: '',
+        marketCategory: 'writing'
+      },
+      expiresIn: 3
+    }),
+    createOfferModel({
+      id: 'offer-slow',
+      definitionId: 'slow-burn',
+      hustleId: 'slow-burn',
+      hustleLabel: 'Slow Burn Hustle',
       name: 'Slow Burn Hustle',
       description: 'Plan ahead for this sprint.',
       badges: [],
+      tags: [],
       actionCategory: 'community',
+      descriptors: { category: 'community', categoryLabel: 'Hustle', copy: {} },
       metrics: {
         time: { value: 4, label: '4h focus' },
         payout: { value: 120, label: '$120 payout' },
@@ -179,29 +411,40 @@ test('renderHustles renders unified offer feed with metrics, CTA wiring, and fil
       },
       requirements: { summary: 'Requires level 2', items: [] },
       action: {
-        label: 'Prep outreach',
-        className: 'secondary',
+        label: 'Opens in 1 day',
         disabled: true,
-        guidance: 'Queue another gig to unlock this lane.'
+        className: 'primary',
+        guidance: 'Next wave unlocks tomorrow. Prep now so you\'re ready to accept and start logging progress.'
       },
       available: false,
-      offers: [],
-      upcoming: [
-        {
-          id: 'offer-slow',
-          label: 'Audience Sprint',
-          description: 'Warm up leads',
-          meta: 'Opens tomorrow',
-          payout: 120,
-          ready: false,
-          availableIn: 1,
-          expiresIn: 4,
-          onAccept: () => acceptLog.push('offer-slow')
-        }
-      ],
-      commitments: [],
-      filters: { available: false, category: 'community' }
-    }
+      status: 'upcoming',
+      offer: {
+        id: 'offer-slow',
+        label: 'Audience Sprint',
+        description: 'Warm up leads',
+        meta: 'Opens tomorrow',
+        payout: 120,
+        ready: false,
+        availableIn: 1,
+        expiresIn: 4,
+        onAccept: () => acceptLog.push('offer-slow')
+      },
+      filters: {
+        search: '',
+        time: 4,
+        payout: 120,
+        roi: 30,
+        available: false,
+        limitRemaining: null,
+        tag: '',
+        category: 'community',
+        actionCategory: 'community',
+        categoryLabel: 'Hustle',
+        templateKind: '',
+        marketCategory: 'community'
+      },
+      expiresIn: 4
+    })
   ];
 
   try {
@@ -230,102 +473,65 @@ test('renderHustles renders unified offer feed with metrics, CTA wiring, and fil
     const list = document.querySelector('[data-role="browser-hustle-list"]');
     const cards = [...list.querySelectorAll('.downwork-card')];
     assert.equal(cards.length, 4, 'expected unified feed to render one card per task');
-    assert.equal(
-      cards.filter(card => card.dataset.hustle === 'priority-hustle').length,
-      3,
-      'expected each priority hustle offer to render separately'
-    );
 
-    const primaryCard = cards.find(card =>
-      card.dataset.hustle === 'priority-hustle' &&
-      card.dataset.available === 'true' &&
-      card.querySelector('.browser-card__summary')
-    );
-    assert.ok(primaryCard, 'expected primary ready card for priority hustle');
-    assert.equal(primaryCard.dataset.time, '2');
-    assert.equal(primaryCard.dataset.payout, '50');
-    assert.equal(primaryCard.dataset.roi, '25');
-    assert.ok(primaryCard.querySelector('.downwork-card__metrics').textContent.includes('📈 ROI $25 / h'));
-    const primarySummary = primaryCard.querySelector('.browser-card__summary');
-    assert.ok(primarySummary, 'expected primary card to include summary copy');
-    assert.equal(primarySummary.textContent, 'Lock this contract now.');
-    assert.equal(primaryCard.querySelectorAll('.browser-card__badge').length, 2, 'expected primary card badges');
-    assert.equal(primaryCard.querySelectorAll('.downwork-card__tag').length, 2, 'expected primary card tags');
-    assert.equal(primaryCard.querySelector('.browser-card__meta')?.textContent, 'No requirements');
-    assert.equal(primaryCard.querySelectorAll('.hustle-card__offer').length, 1, 'expected primary card to show one ready offer');
-    assert.equal(
-      primaryCard.querySelectorAll('.hustle-card__offer.is-upcoming').length,
-      0,
-      'expected primary card to omit nested upcoming offers'
-    );
+    const priorityCards = cards.filter(card => card.dataset.hustle === 'priority-hustle');
+    assert.equal(priorityCards.length, 3, 'expected each priority hustle offer to render separately');
 
-    const secondaryCard = cards.find(card =>
-      card.dataset.hustle === 'priority-hustle' &&
-      card.dataset.available === 'true' &&
-      !card.querySelector('.browser-card__summary')
-    );
-    assert.ok(secondaryCard, 'expected secondary ready card for priority hustle');
-    assert.equal(secondaryCard.dataset.time, '3');
-    assert.equal(secondaryCard.dataset.payout, '80');
-    assert.equal(
-      secondaryCard.querySelector('.browser-card__summary'),
-      null,
-      'expected secondary card to omit repeated summary copy'
-    );
-    assert.equal(
-      secondaryCard.querySelector('.browser-card__badges'),
-      null,
-      'expected secondary card to hide badges'
-    );
-    assert.equal(
-      secondaryCard.querySelector('.downwork-card__tags'),
-      null,
-      'expected secondary card to hide tag list'
-    );
-    assert.equal(
-      secondaryCard.querySelector('.browser-card__meta'),
-      null,
-      'expected secondary card to hide requirements summary'
-    );
+    priorityCards.forEach(card => {
+      const summary = card.querySelector('.browser-card__summary');
+      assert.ok(summary, 'expected priority card to include summary copy');
+      assert.equal(summary.textContent, 'Lock this contract now.');
+      assert.equal(card.querySelectorAll('.browser-card__badge').length, 2, 'expected priority card badges');
+      assert.equal(card.querySelectorAll('.downwork-card__tag').length, 2, 'expected priority card tags');
+      assert.equal(card.querySelector('.browser-card__meta')?.textContent, 'No requirements');
+      assert.equal(card.querySelectorAll('.hustle-card__offer').length, 1, 'expected single offer per card');
+    });
 
-    const priorityUpcomingCard = cards.find(card =>
-      card.dataset.hustle === 'priority-hustle' && card.dataset.available === 'false'
+    const readyCards = priorityCards.filter(card => card.dataset.available === 'true');
+    assert.equal(readyCards.length, 2, 'expected two ready cards for priority hustle');
+
+    const primaryReadyCard = readyCards.find(card =>
+      card.querySelector('.browser-card__actions .browser-card__button--primary')?.textContent === 'Accept Ready Offer'
     );
-    assert.ok(priorityUpcomingCard, 'expected upcoming priority hustle card to render separately');
+    assert.ok(primaryReadyCard, 'expected primary ready card for priority hustle');
+    assert.equal(primaryReadyCard.dataset.time, '2');
+    assert.equal(primaryReadyCard.dataset.payout, '50');
+    assert.equal(primaryReadyCard.dataset.roi, '25');
+    assert.ok(primaryReadyCard.querySelector('.downwork-card__metrics').textContent.includes('📈 ROI $25 / h'));
+
+    const secondaryReadyCard = readyCards.find(card => card !== primaryReadyCard);
+    assert.ok(secondaryReadyCard, 'expected secondary ready card for priority hustle');
+    assert.equal(secondaryReadyCard.dataset.time, '3');
+    assert.equal(secondaryReadyCard.querySelector('.browser-card__summary')?.textContent, 'Lock this contract now.');
+    assert.equal(secondaryReadyCard.querySelectorAll('.browser-card__badge').length, 2);
+
+    const upcomingPriorityCard = priorityCards.find(card => card.dataset.available === 'false');
+    assert.ok(upcomingPriorityCard, 'expected upcoming priority hustle card to render separately');
     assert.equal(
-      priorityUpcomingCard.querySelectorAll('.hustle-card__offer').length,
-      1,
-      'expected upcoming card to render a single queued offer'
-    );
-    assert.equal(
-      priorityUpcomingCard.querySelector('.browser-card__section-title')?.textContent,
+      upcomingPriorityCard.querySelector('.browser-card__section-title')?.textContent,
       'Opening soon',
       'expected upcoming card to retain upcoming section heading'
     );
 
-    const upcomingCard = cards.find(card =>
-      card.dataset.hustle === 'slow-burn' && card.dataset.available === 'false'
-    );
-    assert.ok(upcomingCard, 'expected upcoming hustle card to be present');
-    assert.equal(upcomingCard.dataset.available, 'false');
-    assert.equal(upcomingCard.dataset.hustle, 'slow-burn');
+    const slowBurnCard = cards.find(card => card.dataset.hustle === 'slow-burn');
+    assert.ok(slowBurnCard, 'expected upcoming hustle card to be present');
+    assert.equal(slowBurnCard.dataset.available, 'false');
+    assert.equal(slowBurnCard.querySelector('.browser-card__summary')?.textContent, 'Plan ahead for this sprint.');
+    assert.equal(slowBurnCard.querySelectorAll('.browser-card__badge').length, 0, 'expected slow burn badges to be empty');
+    assert.equal(slowBurnCard.querySelector('.browser-card__meta')?.textContent, 'Requires level 2');
     assert.ok(
-      upcomingCard.querySelector('.browser-card__summary'),
-      'expected upcoming primary card to keep descriptive summary'
-    );
-    assert.ok(
-      [...upcomingCard.querySelectorAll('.browser-card__section-title')]
+      [...slowBurnCard.querySelectorAll('.browser-card__section-title')]
         .some(node => node.textContent === 'Opening soon'),
       'expected upcoming card to surface opening soon section'
     );
 
-    const primaryAction = primaryCard.querySelector('.browser-card__actions .browser-card__button--primary');
+    const primaryAction = primaryReadyCard.querySelector('.browser-card__actions .browser-card__button--primary');
     assert.ok(primaryAction, 'expected primary hustle CTA');
     assert.equal(primaryAction.textContent, 'Accept Ready Offer');
     primaryAction.click();
     assert.deepEqual(actionLog, ['model-action']);
 
-    const readyOfferButton = primaryCard.querySelector('.hustle-card__offer:not(.is-upcoming) .browser-card__button');
+    const readyOfferButton = primaryReadyCard.querySelector('.hustle-card__offer:not(.is-upcoming) .browser-card__button');
     assert.ok(readyOfferButton, 'expected ready offer button to render');
     assert.equal(readyOfferButton.textContent, 'Queue this lead');
     readyOfferButton.click();
@@ -388,17 +594,73 @@ test('renderHustles omits locked offers from DownWork feed', () => {
     }
   ];
 
+  const baseDescriptors = { category: 'hustle', categoryLabel: 'Hustle', copy: {} };
+  const baseMetrics = {
+    time: { value: 1, label: '1h' },
+    payout: { value: 25, label: '$25' },
+    roi: 25
+  };
+
   const models = [
-    {
-      id: 'locked-filter',
+    createOfferModel({
+      id: 'offer-locked',
+      definitionId: 'locked-filter',
+      hustleId: 'locked-filter',
+      hustleLabel: 'Locked Filter Hustle',
       name: 'Locked Filter Hustle',
       description: 'Only unlocked offers should appear.',
       badges: [],
-      metrics: {
-        time: { value: 1, label: '1h' },
-        payout: { value: 25, label: '$25' },
-        roi: 25
+      tags: [],
+      actionCategory: 'hustle',
+      descriptors: baseDescriptors,
+      metrics: baseMetrics,
+      requirements: { summary: 'No requirements', items: [] },
+      action: {
+        label: 'Locked — Locked Ready Offer',
+        disabled: true,
+        className: 'primary',
+        onClick: null
       },
+      available: false,
+      status: 'upcoming',
+      offer: {
+        id: 'offer-locked',
+        label: 'Locked Ready Offer',
+        description: 'Hidden because locked.',
+        meta: 'Locked meta',
+        payout: 25,
+        ready: true,
+        locked: true,
+        expiresIn: 2
+      },
+      filters: {
+        search: '',
+        time: 1,
+        payout: 25,
+        roi: 25,
+        available: false,
+        limitRemaining: null,
+        tag: '',
+        category: '',
+        actionCategory: '',
+        categoryLabel: 'Hustle',
+        templateKind: '',
+        marketCategory: ''
+      },
+      expiresIn: 2
+    }),
+    createOfferModel({
+      id: 'offer-open',
+      definitionId: 'locked-filter',
+      hustleId: 'locked-filter',
+      hustleLabel: 'Locked Filter Hustle',
+      name: 'Locked Filter Hustle',
+      description: 'Only unlocked offers should appear.',
+      badges: [],
+      tags: [],
+      actionCategory: 'hustle',
+      descriptors: baseDescriptors,
+      metrics: baseMetrics,
       requirements: { summary: 'No requirements', items: [] },
       action: {
         label: 'Accept Open Offer',
@@ -407,55 +669,130 @@ test('renderHustles omits locked offers from DownWork feed', () => {
         onClick: () => {}
       },
       available: true,
-      offers: [
-        {
-          id: 'offer-locked',
-          label: 'Locked Ready Offer',
-          description: 'Hidden because locked.',
-          meta: 'Locked meta',
-          payout: 25,
-          ready: true,
-          availableIn: 0,
-          expiresIn: 2,
-          locked: true
-        },
-        {
-          id: 'offer-open',
-          label: 'Open Ready Offer',
-          description: 'Visible offer.',
-          meta: 'Open now',
-          payout: 25,
-          ready: true,
-          availableIn: 0,
-          expiresIn: 2,
-          locked: false
-        }
-      ],
-      upcoming: [
-        {
-          id: 'offer-locked-upcoming',
-          label: 'Locked Upcoming Offer',
-          description: 'Hidden upcoming offer.',
-          meta: 'Locked upcoming',
-          ready: false,
-          availableIn: 2,
-          expiresIn: 3,
-          locked: true
-        },
-        {
-          id: 'offer-open-upcoming',
-          label: 'Open Upcoming Offer',
-          description: 'Visible upcoming offer.',
-          meta: 'Unlocks soon',
-          ready: false,
-          availableIn: 1,
-          expiresIn: 4,
-          locked: false
-        }
-      ],
-      commitments: [],
-      filters: { available: true }
-    }
+      status: 'ready',
+      offer: {
+        id: 'offer-open',
+        label: 'Open Ready Offer',
+        description: 'Visible offer.',
+        meta: 'Open now',
+        payout: 25,
+        ready: true,
+        availableIn: 0,
+        expiresIn: 2,
+        locked: false
+      },
+      filters: {
+        search: '',
+        time: 1,
+        payout: 25,
+        roi: 25,
+        available: true,
+        limitRemaining: null,
+        tag: '',
+        category: '',
+        actionCategory: '',
+        categoryLabel: 'Hustle',
+        templateKind: '',
+        marketCategory: ''
+      },
+      expiresIn: 2
+    }),
+    createOfferModel({
+      id: 'offer-locked-upcoming',
+      definitionId: 'locked-filter',
+      hustleId: 'locked-filter',
+      hustleLabel: 'Locked Filter Hustle',
+      name: 'Locked Filter Hustle',
+      description: 'Only unlocked offers should appear.',
+      badges: [],
+      tags: [],
+      actionCategory: 'hustle',
+      descriptors: baseDescriptors,
+      metrics: baseMetrics,
+      requirements: { summary: 'No requirements', items: [] },
+      action: {
+        label: 'Locked — Locked Upcoming Offer',
+        disabled: true,
+        className: 'primary',
+        onClick: null
+      },
+      available: false,
+      status: 'upcoming',
+      offer: {
+        id: 'offer-locked-upcoming',
+        label: 'Locked Upcoming Offer',
+        description: 'Hidden upcoming offer.',
+        meta: 'Locked upcoming',
+        payout: 25,
+        ready: false,
+        availableIn: 2,
+        expiresIn: 3,
+        locked: true
+      },
+      filters: {
+        search: '',
+        time: 1,
+        payout: 25,
+        roi: 25,
+        available: false,
+        limitRemaining: null,
+        tag: '',
+        category: '',
+        actionCategory: '',
+        categoryLabel: 'Hustle',
+        templateKind: '',
+        marketCategory: ''
+      },
+      expiresIn: 3
+    }),
+    createOfferModel({
+      id: 'offer-open-upcoming',
+      definitionId: 'locked-filter',
+      hustleId: 'locked-filter',
+      hustleLabel: 'Locked Filter Hustle',
+      name: 'Locked Filter Hustle',
+      description: 'Only unlocked offers should appear.',
+      badges: [],
+      tags: [],
+      actionCategory: 'hustle',
+      descriptors: baseDescriptors,
+      metrics: baseMetrics,
+      requirements: { summary: 'No requirements', items: [] },
+      action: {
+        label: 'Opens in 1 day',
+        disabled: true,
+        className: 'primary',
+        onClick: null
+      },
+      available: false,
+      status: 'upcoming',
+      offer: {
+        id: 'offer-open-upcoming',
+        label: 'Open Upcoming Offer',
+        description: 'Visible upcoming offer.',
+        meta: 'Opens soon',
+        payout: 25,
+        ready: false,
+        availableIn: 1,
+        expiresIn: 3,
+        locked: false
+      },
+      filters: {
+        search: '',
+        time: 1,
+        payout: 25,
+        roi: 25,
+        available: false,
+        limitRemaining: null,
+        tag: '',
+        category: '',
+        actionCategory: '',
+        categoryLabel: 'Hustle',
+        templateKind: '',
+        marketCategory: ''
+      },
+      expiresIn: 3
+    })
   ];
 
   try {
@@ -531,17 +868,25 @@ test('renderHustles renders multiple upcoming-only offers without duplication', 
     }
   ];
 
-  const models = [
-    {
-      id: 'upcoming-only',
+  const baseMetrics = {
+    time: { value: 2, label: '2h focus' },
+    payout: { value: 60, label: '$60 payout' },
+    roi: 30
+  };
+
+  const models = upcomingOffers.map(offer =>
+    createOfferModel({
+      id: offer.id,
+      definitionId: 'upcoming-only',
+      hustleId: 'upcoming-only',
+      hustleLabel: 'Upcoming Only Hustle',
       name: 'Upcoming Only Hustle',
       description: 'Plan ahead while slots unlock.',
       badges: [],
-      metrics: {
-        time: { value: 2, label: '2h focus' },
-        payout: { value: 60, label: '$60 payout' },
-        roi: 30
-      },
+      tags: [],
+      actionCategory: 'ops',
+      descriptors: { category: 'ops', categoryLabel: 'Hustle', copy: {} },
+      metrics: baseMetrics,
       requirements: { summary: 'No requirements', items: [] },
       action: {
         label: 'Check back soon',
@@ -549,12 +894,26 @@ test('renderHustles renders multiple upcoming-only offers without duplication', 
         disabled: true
       },
       available: false,
-      offers: [],
-      upcoming: upcomingOffers,
-      commitments: [],
-      filters: { available: false, category: 'ops' }
-    }
-  ];
+      status: 'upcoming',
+      offer: {
+        ...offer
+      },
+      filters: {
+        search: '',
+        time: 2,
+        payout: 60,
+        roi: 30,
+        available: false,
+        limitRemaining: null,
+        tag: '',
+        category: 'ops',
+        actionCategory: 'ops',
+        categoryLabel: 'Hustle',
+        templateKind: '',
+        marketCategory: 'ops'
+      }
+    })
+  );
 
   try {
     renderHustles(context, definitions, models);
@@ -613,11 +972,17 @@ test('renderHustles syncs quick filter state with session config', () => {
   ];
 
   const models = [
-    {
-      id: 'session-filter',
+    createOfferModel({
+      id: 'offer-ready',
+      definitionId: 'session-filter',
+      hustleId: 'session-filter',
+      hustleLabel: 'Session Filter Hustle',
       name: 'Session Filter Hustle',
       description: 'Persists quick filters.',
       badges: [],
+      tags: [],
+      actionCategory: 'writing',
+      descriptors: { category: 'writing', categoryLabel: 'Hustle', copy: {} },
       metrics: {
         time: { value: 1, label: '1h' },
         payout: { value: 20, label: '$20' },
@@ -627,26 +992,38 @@ test('renderHustles syncs quick filter state with session config', () => {
       action: {
         label: 'Accept offer',
         disabled: false,
+        className: 'primary',
         onClick: () => {}
       },
       available: true,
-      offers: [
-        {
-          id: 'offer-ready',
-          label: 'Ready Offer',
-          description: 'Open now',
-          meta: 'Available now • 1h focus',
-          payout: 20,
-          ready: true,
-          availableIn: 0,
-          expiresIn: 1,
-          onAccept: () => {}
-        }
-      ],
-      upcoming: [],
-      commitments: [],
-      filters: { available: true }
-    }
+      status: 'ready',
+      offer: {
+        id: 'offer-ready',
+        label: 'Ready Offer',
+        description: 'Open now',
+        meta: 'Available now • 1h focus',
+        payout: 20,
+        ready: true,
+        availableIn: 0,
+        expiresIn: 1,
+        onAccept: () => {}
+      },
+      filters: {
+        search: '',
+        time: 1,
+        payout: 20,
+        roi: 20,
+        available: true,
+        limitRemaining: null,
+        tag: '',
+        category: 'writing',
+        actionCategory: 'writing',
+        categoryLabel: 'Hustle',
+        templateKind: '',
+        marketCategory: 'writing'
+      },
+      expiresIn: 1
+    })
   ];
 
   try {
@@ -704,11 +1081,17 @@ test('renderHustles hides categories without unlocked offers', () => {
   ];
 
   const models = [
-    {
-      id: 'locked-filter',
+    createOfferModel({
+      id: 'offer-locked-ready',
+      definitionId: 'locked-filter',
+      hustleId: 'locked-filter',
+      hustleLabel: 'Locked Filter Hustle',
       name: 'Locked Filter Hustle',
       description: 'Only unlocked offers should appear.',
       badges: [],
+      tags: [],
+      actionCategory: 'hustle',
+      descriptors: { category: 'hustle', categoryLabel: 'Hustle', copy: {} },
       metrics: {
         time: { value: 1, label: '1h' },
         payout: { value: 25, label: '$25' },
@@ -722,34 +1105,86 @@ test('renderHustles hides categories without unlocked offers', () => {
         onClick: null
       },
       available: false,
-      offers: [
-        {
-          id: 'offer-locked',
-          label: 'Locked Ready Offer',
-          description: 'Hidden because locked.',
-          meta: 'Locked meta',
-          payout: 25,
-          ready: true,
-          availableIn: 0,
-          expiresIn: 2,
-          locked: true
-        }
-      ],
-      upcoming: [
-        {
-          id: 'offer-locked-upcoming',
-          label: 'Locked Upcoming Offer',
-          description: 'Hidden upcoming offer.',
-          meta: 'Locked upcoming',
-          ready: false,
-          availableIn: 2,
-          expiresIn: 3,
-          locked: true
-        }
-      ],
-      commitments: [],
-      filters: { available: false }
-    }
+      status: 'upcoming',
+      offer: {
+        id: 'offer-locked-ready',
+        label: 'Locked Ready Offer',
+        description: 'Hidden because locked.',
+        meta: 'Locked meta',
+        payout: 25,
+        ready: true,
+        availableIn: 0,
+        expiresIn: 2,
+        locked: true
+      },
+      filters: {
+        search: '',
+        time: 1,
+        payout: 25,
+        roi: 25,
+        available: false,
+        limitRemaining: null,
+        tag: '',
+        category: '',
+        actionCategory: '',
+        categoryLabel: 'Hustle',
+        templateKind: '',
+        marketCategory: ''
+      },
+      expiresIn: 2
+    }),
+    createOfferModel({
+      id: 'offer-locked-upcoming',
+      definitionId: 'locked-filter',
+      hustleId: 'locked-filter',
+      hustleLabel: 'Locked Filter Hustle',
+      name: 'Locked Filter Hustle',
+      description: 'Only unlocked offers should appear.',
+      badges: [],
+      tags: [],
+      actionCategory: 'hustle',
+      descriptors: { category: 'hustle', categoryLabel: 'Hustle', copy: {} },
+      metrics: {
+        time: { value: 1, label: '1h' },
+        payout: { value: 25, label: '$25' },
+        roi: 25
+      },
+      requirements: { summary: 'No requirements', items: [] },
+      action: {
+        label: 'Locked — Locked Upcoming Offer',
+        disabled: true,
+        className: 'primary',
+        onClick: null
+      },
+      available: false,
+      status: 'upcoming',
+      offer: {
+        id: 'offer-locked-upcoming',
+        label: 'Locked Upcoming Offer',
+        description: 'Hidden upcoming offer.',
+        meta: 'Locked upcoming',
+        payout: 25,
+        ready: false,
+        availableIn: 2,
+        expiresIn: 3,
+        locked: true
+      },
+      filters: {
+        search: '',
+        time: 1,
+        payout: 25,
+        roi: 25,
+        available: false,
+        limitRemaining: null,
+        tag: '',
+        category: '',
+        actionCategory: '',
+        categoryLabel: 'Hustle',
+        templateKind: '',
+        marketCategory: ''
+      },
+      expiresIn: 3
+    })
   ];
 
   try {
@@ -791,11 +1226,17 @@ test('renderHustles falls back to empty-state language when no offers exist', ()
   ];
 
   const models = [
-    {
-      id: 'empty-hustle',
+    createOfferModel({
+      id: 'empty-hustle::placeholder',
+      definitionId: 'empty-hustle',
+      hustleId: 'empty-hustle',
+      hustleLabel: 'Empty Hustle',
       name: 'Empty Hustle',
       description: 'Waiting on the next drop.',
       badges: [],
+      tags: [],
+      actionCategory: 'writing',
+      descriptors: { category: 'writing', categoryLabel: 'Hustle', copy: {} },
       metrics: {
         time: { value: 2, label: '2h' },
         payout: { value: 80, label: '$80' },
@@ -810,11 +1251,23 @@ test('renderHustles falls back to empty-state language when no offers exist', ()
         guidance: 'Fresh leads roll in with tomorrow\'s refresh. Accept the next hustle to keep momentum.'
       },
       available: false,
-      offers: [],
-      upcoming: [],
-      commitments: [],
-      filters: { available: false }
-    }
+      status: 'placeholder',
+      offer: null,
+      filters: {
+        search: '',
+        time: 2,
+        payout: 80,
+        roi: 40,
+        available: false,
+        limitRemaining: null,
+        tag: '',
+        category: 'writing',
+        actionCategory: 'writing',
+        categoryLabel: 'Hustle',
+        templateKind: '',
+        marketCategory: 'writing'
+      }
+    })
   ];
 
   try {
