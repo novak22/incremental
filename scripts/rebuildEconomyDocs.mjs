@@ -6,7 +6,13 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.resolve(__dirname, '..');
 const DATA_PATH = path.resolve(ROOT_DIR, 'docs', 'normalized_economy.json');
-const APPENDIX_PATH = path.resolve(ROOT_DIR, 'docs', 'EconomySpec.appendix.md');
+const APPENDIX_PATH = path.resolve(
+  ROOT_DIR,
+  'docs',
+  'archive',
+  'economy',
+  'EconomySpec.appendix.md',
+);
 
 function formatNumber(value) {
   if (value === null || value === undefined) {
@@ -244,7 +250,8 @@ function buildAppendix(json) {
     '## Modifier Catalog',
     renderTable(['Source', 'Target', 'Type', 'Formula', 'Notes'], modifierRows),
     '',
-    '_Generated from docs/normalized_economy.json._',
+    '_Generated from docs/normalized_economy.json via scripts/rebuildEconomyDocs.mjs.' +
+      ' The script now targets docs/archive/economy/EconomySpec.appendix.md so the archive remains the canonical reference._',
     '',
   ].join('\n');
 }

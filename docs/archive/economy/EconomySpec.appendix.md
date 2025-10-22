@@ -1,6 +1,6 @@
 # Economy Specification Appendix (Auto-generated)
 
-Last generated: 2025-10-07T22:33:41.473Z
+Last generated: 2025-10-22T16:07:50.690Z
 
 ## Asset Summary
 | Asset | Setup Schedule | Setup Cost | Maintenance Time | Maintenance Cost | Base Income | Variance |
@@ -224,5 +224,5 @@ Last generated: 2025-10-07T22:33:41.473Z
 | course | asset:blog.income | multiplier | income * 1.5 | Automation course boosts blog payouts 50%. |
 | course | asset:blog.quality_progress | multiplier | progress * 2 | Automation course doubles blog quality progress. |
 
-_Generated from docs/normalized_economy.json._
+_Generated from docs/normalized_economy.json via scripts/rebuildEconomyDocs.mjs. The script now targets docs/archive/economy/EconomySpec.appendix.md so the archive remains the canonical reference._
 
