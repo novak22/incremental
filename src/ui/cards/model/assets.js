@@ -1,10 +1,10 @@
 import { getAssetState, getState } from '../../../core/state.js';
 import { formatHours, formatMoney } from '../../../core/helpers.js';
 import {
-  assetRequirementsMetById,
   formatAssetRequirementLabel,
   listAssetRequirementDescriptors
-} from '../../../game/requirements.js';
+} from '../../../game/requirements/descriptors.js';
+import { assetRequirementsMetById } from '../../../game/requirements/checks.js';
 import { getAssetEffectMultiplier } from '../../../game/upgrades/effects/index.js';
 import { formatMaintenanceSummary } from '../../../game/assets/maintenance.js';
 import { describeAssetCardSummary } from '../utils.js';
