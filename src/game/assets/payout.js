@@ -29,14 +29,3 @@ export function getIncomeRangeForDisplay(assetId) {
   return getDailyIncomeRange(definition);
 }
 
-export function projectIncomeFromBase(definition, assetState, instance, baseAmount) {
-  return resolveIncomeFromBase({
-    definition,
-    assetState,
-    instance,
-    baseAmount,
-    triggerEvents: false,
-    updateInstance: false
-  });
-}
-
