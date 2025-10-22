@@ -3,6 +3,7 @@ import { createStorage } from './core/storage.js';
 import { defaultStateManager } from './core/state.js';
 import { createCurrencyModule } from './game/currency.js';
 import { createActionExecutor } from './game/actions.js';
+import { setSharedStorage } from './game/storageProvider.js';
 import {
   renderCards,
   updateUI,
@@ -23,6 +24,7 @@ import { ensureDailyOffersForDay } from './game/hustles.js';
 function createAppContext() {
   const stateManager = defaultStateManager;
   const storage = createStorage({ stateManager });
+  setSharedStorage(storage);
   const currency = createCurrencyModule({ stateManager });
   const actions = {
     executeAction: createActionExecutor({

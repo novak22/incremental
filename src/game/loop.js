@@ -1,7 +1,7 @@
 import { AUTOSAVE_INTERVAL_MS } from '../core/constants.js';
-import { saveState } from '../core/storage.js';
 import { ACTIONS } from './hustles.js';
 import { flushDirty, markAllDirty, markDirty } from '../core/events/invalidationBus.js';
+import { getSaveState } from './storageProvider.js';
 
 let lastAutosave = Date.now();
 
@@ -49,14 +49,14 @@ export function runGameLoop() {
   const dirtySections = flushDirty();
   if (!dirtySections) {
     if (now - lastAutosave >= AUTOSAVE_INTERVAL_MS) {
-      saveState();
+      getSaveState()?.();
       lastAutosave = now;
     }
     return;
   }
 
   if (now - lastAutosave >= AUTOSAVE_INTERVAL_MS) {
-    saveState();
+    getSaveState()?.();
     lastAutosave = now;
   }
 }

@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { ensureTestDom } from '../helpers/setupDom.js';
 import { getGameTestHarness } from '../helpers/gameTestHarness.js';
+import { loadState } from '../helpers/storage.js';
 
 const dom = ensureTestDom();
 const { document } = dom.window;
@@ -10,11 +11,9 @@ test('renderCards hydrates browser workspaces with default models', { concurrenc
   ensureTestDom();
   const registryService = await import('../../src/game/registryService.js');
   const updateModule = await import('../../src/ui/update.js');
-  const storageModule = await import('../../src/core/storage.js');
-
   registryService.resetRegistry();
   global.localStorage?.clear?.();
-  storageModule.loadState();
+  loadState();
 
   updateModule.renderCards();
 
