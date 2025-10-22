@@ -1,6 +1,4 @@
 import { renderCardCollections, updateAllCards } from './cards.js';
-import { getState } from '../core/state.js';
-import { computeDailySummary } from '../game/summary.js';
 import { renderDashboard } from './dashboard.js';
 import { getActiveView } from './viewManager.js';
 import cardCollectionService from './cards/collectionService.js';
@@ -17,6 +15,8 @@ import {
 } from '../core/events/invalidationBus.js';
 import { getElement } from './elements/registry.js';
 import { flashValue } from './effects.js';
+import { selectGameState } from './selectors/state.js';
+import { selectDashboardSummary } from './selectors/dashboard.js';
 
 function dispatchCardCollections(mode, activeView = getActiveView()) {
   cardCollectionService.refreshCollections();
@@ -110,7 +110,7 @@ function hasUpdates(flags) {
 }
 
 export function updateUI(options) {
-  const state = getState();
+  const state = selectGameState();
   if (!state) return;
 
   const flags = normalizeOptions(options);
@@ -121,7 +121,7 @@ export function updateUI(options) {
   const activeView = getActiveView();
 
   if (flags.dashboard) {
-    const summary = computeDailySummary(state);
+    const summary = selectDashboardSummary(state);
     if (activeView?.renderDashboard) {
       activeView.renderDashboard(state, summary);
     } else {

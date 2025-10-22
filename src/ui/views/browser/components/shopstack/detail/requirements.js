@@ -1,18 +1,21 @@
-import { ensureArray } from '../../../../../../core/helpers.js';
-import { getAssetState, getUpgradeState } from '../../../../../../core/state.js';
-import { getAssetDefinition } from '../../../../../../core/state/registry.js';
+import { ensureArray } from '../../../../../selectors/collections.js';
+import {
+  selectAssetInstances,
+  selectActiveAssetInstances,
+  selectUpgradeState
+} from '../../../../../selectors/state.js';
+import { selectAssetDefinition } from '../../../../../selectors/registry.js';
 import { formatKeyLabel } from './formatting.js';
 
 export function isRequirementMet(requirement) {
   if (!requirement) return true;
   switch (requirement.type) {
     case 'upgrade':
-      return Boolean(getUpgradeState(requirement.id)?.purchased);
+      return Boolean(selectUpgradeState(requirement.id)?.purchased);
     case 'asset': {
-      const assetState = getAssetState(requirement.id);
-      const instances = Array.isArray(assetState?.instances) ? assetState.instances : [];
+      const instances = selectAssetInstances(requirement.id);
       if (requirement.active) {
-        return instances.filter(instance => instance?.status === 'active').length >= Number(requirement.count || 1);
+        return selectActiveAssetInstances(requirement.id) >= Number(requirement.count || 1);
       }
       return instances.length >= Number(requirement.count || 1);
     }
@@ -33,7 +36,7 @@ export function formatRequirementHtml(requirement, definitionMap = new Map()) {
       return `Requires: <strong>${label}</strong>`;
     }
     case 'asset': {
-      const asset = getAssetDefinition(requirement.id);
+      const asset = selectAssetDefinition(requirement.id);
       const label = asset?.singular || asset?.name || formatKeyLabel(requirement.id);
       const count = Number(requirement.count || 1);
       const adjective = requirement.active ? 'active ' : '';
