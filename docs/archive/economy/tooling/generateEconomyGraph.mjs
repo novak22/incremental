@@ -1,3 +1,4 @@
+// Archived helper: regenerate the retired economy modifier graph for reference only.
 import { promises as fs } from 'fs';
 import path from 'path';
 
