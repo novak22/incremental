@@ -62,7 +62,7 @@ export function buildAssetRequirementDescriptor(requirement, state = getState(),
   };
 }
 
-export function describeRequirement(requirement, state = getState()) {
+function describeRequirement(requirement, state = getState()) {
   if (!requirement) {
     return {
       type: 'unknown',
