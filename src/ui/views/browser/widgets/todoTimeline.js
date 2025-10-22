@@ -90,9 +90,39 @@ function computeHourMarkers(step = 2) {
   return markers;
 }
 
-function multiplyDuration(entry) {
+function resolveCompletedDuration(entry) {
+  const minutes = Number(entry?.durationMinutes);
+  if (Number.isFinite(minutes) && minutes > 0) {
+    return Math.max(0, minutes) / 60;
+  }
   const count = Number.isFinite(entry?.count) && entry.count > 1 ? entry.count : 1;
-  return normalizeDuration(entry?.durationHours, MIN_SEGMENT_HOURS) * count;
+  const baseHours = normalizeDuration(entry?.durationHours, MIN_SEGMENT_HOURS);
+  return baseHours * count;
+}
+
+function compareCompletedEntries(a, b) {
+  const seqA = Number(a?.sequence);
+  const seqB = Number(b?.sequence);
+  if (Number.isFinite(seqA) && Number.isFinite(seqB) && seqA !== seqB) {
+    return seqA - seqB;
+  }
+  if (Number.isFinite(seqA)) return -1;
+  if (Number.isFinite(seqB)) return 1;
+
+  const startA = Number(a?.startedAtHours);
+  const startB = Number(b?.startedAtHours);
+  if (Number.isFinite(startA) && Number.isFinite(startB) && startA !== startB) {
+    return startA - startB;
+  }
+
+  const timeA = Number(a?.completedAt);
+  const timeB = Number(b?.completedAt);
+  if (Number.isFinite(timeA) && Number.isFinite(timeB) && timeA !== timeB) {
+    return timeA - timeB;
+  }
+  if (Number.isFinite(timeA)) return -1;
+  if (Number.isFinite(timeB)) return 1;
+  return 0;
 }
 
 function createSegments({ completed = [], pending = [], hoursSpent = null }) {
@@ -101,7 +131,7 @@ function createSegments({ completed = [], pending = [], hoursSpent = null }) {
     ? clamp(hoursSpent, 0, TOTAL_DAY_HOURS)
     : null;
 
-  let consumed = 0;
+  let consumedHours = 0;
 
   const addSegment = segment => {
     const startOffset = clamp(segment.start - DAY_START_HOUR, 0, TOTAL_DAY_HOURS);
@@ -122,23 +152,43 @@ function createSegments({ completed = [], pending = [], hoursSpent = null }) {
     });
   };
 
-  const effectiveSpent = normalizedSpent ?? completed.reduce((sum, entry) => sum + multiplyDuration(entry), 0);
+  const effectiveSpent = normalizedSpent ?? completed.reduce((sum, entry) => sum + resolveCompletedDuration(entry), 0);
   const spentTarget = clamp(effectiveSpent, 0, TOTAL_DAY_HOURS);
 
-  const sortedCompleted = [...completed].sort((a, b) => (a.completedAt || 0) - (b.completedAt || 0));
+  const sortedCompleted = [...completed].sort(compareCompletedEntries);
   sortedCompleted.forEach(entry => {
-    if (consumed >= spentTarget) {
+    if (consumedHours >= spentTarget) {
       return;
     }
-    const duration = multiplyDuration(entry);
-    const remaining = spentTarget - consumed;
-    const segmentDuration = Math.min(duration, remaining);
+    const duration = resolveCompletedDuration(entry);
+    if (duration <= 0) {
+      return;
+    }
+    const hasExplicitStart = Number.isFinite(entry?.startedAtHours);
+    if (hasExplicitStart) {
+      const desiredStart = clamp(entry.startedAtHours, 0, TOTAL_DAY_HOURS);
+      if (desiredStart > consumedHours) {
+        consumedHours = Math.min(desiredStart, spentTarget);
+      }
+    }
+
+    const remaining = spentTarget - consumedHours;
+    if (remaining <= 0) {
+      return;
+    }
+
+    let segmentDuration = Math.min(duration, remaining);
     if (segmentDuration <= 0) {
       return;
     }
-    const start = DAY_START_HOUR + consumed;
+
+    if (segmentDuration < MIN_SEGMENT_HOURS) {
+      segmentDuration = Math.min(Math.max(segmentDuration, MIN_SEGMENT_HOURS), remaining);
+    }
+
+    const start = DAY_START_HOUR + consumedHours;
     const end = start + segmentDuration;
-    consumed += segmentDuration;
+    consumedHours += segmentDuration;
     addSegment({
       id: entry.id,
       title: entry.title || 'Completed task',
@@ -151,9 +201,9 @@ function createSegments({ completed = [], pending = [], hoursSpent = null }) {
     });
   });
 
-  if (spentTarget - consumed > 0.01) {
-    const fillerDuration = spentTarget - consumed;
-    const start = DAY_START_HOUR + consumed;
+  if (spentTarget - consumedHours > 0.01) {
+    const fillerDuration = spentTarget - consumedHours;
+    const start = DAY_START_HOUR + consumedHours;
     const end = start + fillerDuration;
     addSegment({
       id: 'focus-buffer',
@@ -166,7 +216,7 @@ function createSegments({ completed = [], pending = [], hoursSpent = null }) {
       category: 'other',
       isBuffer: true
     });
-    consumed = spentTarget;
+    consumedHours = spentTarget;
   }
 
   let futurePointer = DAY_START_HOUR + spentTarget;
@@ -425,12 +475,14 @@ function teardownTimeline(container) {
 
 export {
   buildTimelineModel,
+  createSegments,
   renderTimeline,
   teardownTimeline
 };
 
 export default {
   buildTimelineModel,
+  createSegments,
   renderTimeline,
   teardownTimeline
 };

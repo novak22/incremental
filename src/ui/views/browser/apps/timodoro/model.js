@@ -86,51 +86,125 @@ export function buildTimelineCompletedEntries(summary = {}, options = {}) {
     ? options.completedEntries
     : [];
 
-  const recordedTimeline = recordedEntries
-    .filter(entry => {
-      if (!entry) return false;
-      const hours = Math.max(0, Number(entry?.durationHours) || 0);
-      return hours > 0;
-    })
+  const normalizedRecords = recordedEntries
     .map((entry, index) => {
-      const hours = Math.max(0, Number(entry?.durationHours) || 0);
-      const timestamp = Number(entry?.completedAt);
+      if (!entry) {
+        return null;
+      }
+
+      const baseHours = Math.max(0, Number(entry?.durationHours) || 0);
+      const repeatCount = Number.isFinite(entry?.count) && entry.count > 0 ? entry.count : 1;
+      const totalHours = baseHours * repeatCount;
+      if (totalHours <= 0) {
+        return null;
+      }
+
+      const providedMinutes = Number(entry?.durationMinutes);
+      const durationMinutes = Number.isFinite(providedMinutes) && providedMinutes > 0
+        ? providedMinutes
+        : totalHours * 60;
+      const rawSequence = Number(entry?.sequence);
+      const rawStart = Number(entry?.startedAtHours);
       const category = typeof entry?.focusCategory === 'string'
         ? entry.focusCategory.toLowerCase()
         : typeof entry?.category === 'string'
           ? entry.category.toLowerCase()
           : '';
-      const repeatCount = Number.isFinite(entry?.count) && entry.count > 0 ? entry.count : 1;
+      const timestamp = Number(entry?.completedAt);
 
       return {
         id: entry?.id || `completed:${index}`,
         title: entry?.title || 'Completed focus block',
-        durationHours: hours,
-        durationText: entry?.durationText || formatHours(hours),
+        durationHours: baseHours,
+        durationText: entry?.durationText || formatHours(baseHours),
         focusCategory: category || null,
         category,
-        completedAt: Number.isFinite(timestamp) ? timestamp : index,
-        count: repeatCount
+        count: repeatCount,
+        sequence: Number.isFinite(rawSequence) ? rawSequence : null,
+        startedAtHours: Number.isFinite(rawStart) ? Math.max(0, rawStart) : null,
+        durationMinutes,
+        legacyTimestamp: Number.isFinite(timestamp) ? timestamp : index
       };
     })
-    .sort((a, b) => {
-      const timeA = Number(a?.completedAt);
-      const timeB = Number(b?.completedAt);
-      if (Number.isFinite(timeA) && Number.isFinite(timeB)) {
-        if (timeA === timeB) return 0;
+    .filter(Boolean);
+
+  if (normalizedRecords.length > 0) {
+    const sortedRecords = normalizedRecords.sort((a, b) => {
+      const seqA = Number(a.sequence);
+      const seqB = Number(b.sequence);
+      if (Number.isFinite(seqA) && Number.isFinite(seqB) && seqA !== seqB) {
+        return seqA - seqB;
+      }
+      if (Number.isFinite(seqA)) return -1;
+      if (Number.isFinite(seqB)) return 1;
+
+      const startA = Number(a.startedAtHours);
+      const startB = Number(b.startedAtHours);
+      if (Number.isFinite(startA) && Number.isFinite(startB) && startA !== startB) {
+        return startA - startB;
+      }
+
+      const timeA = Number(a.legacyTimestamp);
+      const timeB = Number(b.legacyTimestamp);
+      if (Number.isFinite(timeA) && Number.isFinite(timeB) && timeA !== timeB) {
         return timeA - timeB;
       }
-      if (Number.isFinite(timeA)) return -1;
-      if (Number.isFinite(timeB)) return 1;
+
       return 0;
     });
 
-  if (recordedTimeline.length > 0) {
-    return recordedTimeline;
+    const maxSequence = sortedRecords.reduce((max, entry) => {
+      const value = Number(entry.sequence);
+      if (!Number.isFinite(value)) {
+        return max;
+      }
+      return Math.max(max, value);
+    }, 0);
+
+    let cursor = 0;
+    let fallbackSequence = maxSequence;
+
+    return sortedRecords.map(entry => {
+      let sequence = Number(entry.sequence);
+      if (!Number.isFinite(sequence)) {
+        fallbackSequence += 1;
+        sequence = fallbackSequence;
+      }
+
+      let startHours = Number(entry.startedAtHours);
+      if (!Number.isFinite(startHours)) {
+        startHours = cursor;
+      } else {
+        startHours = Math.max(0, startHours);
+      }
+
+      if (startHours > cursor) {
+        cursor = startHours;
+      } else {
+        startHours = cursor;
+      }
+
+      const minutes = Math.max(0, Number(entry.durationMinutes) || 0);
+      const durationHours = minutes / 60;
+      cursor += durationHours;
+
+      return {
+        id: entry.id,
+        title: entry.title,
+        durationHours: entry.durationHours,
+        durationText: entry.durationText,
+        focusCategory: entry.focusCategory,
+        category: entry.category,
+        count: entry.count,
+        sequence,
+        startedAtHours: startHours,
+        durationMinutes: minutes
+      };
+    });
   }
 
   const entries = Array.isArray(summary?.timeBreakdown) ? summary.timeBreakdown : [];
-  return entries
+  const fallbackEntries = entries
     .slice()
     .reverse()
     .map((entry, index) => {
@@ -152,10 +226,23 @@ export function buildTimelineCompletedEntries(summary = {}, options = {}) {
         durationText: formatHours(hours),
         focusCategory: category || null,
         category,
-        completedAt: index
+        count: 1
       };
     })
     .filter(Boolean);
+
+  let cursor = 0;
+  return fallbackEntries.map((entry, index) => {
+    const startedAtHours = cursor;
+    cursor += entry.durationHours;
+
+    return {
+      ...entry,
+      sequence: index + 1,
+      startedAtHours,
+      durationMinutes: entry.durationHours * 60
+    };
+  });
 }
 
 function countCompletedTasks(completedGroups = {}) {

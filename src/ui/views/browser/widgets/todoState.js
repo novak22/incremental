@@ -6,6 +6,7 @@ let currentDay = null;
 let focusMode = 'balanced';
 let pendingEntries = [];
 let lastModel = null;
+let completionSequence = 0;
 
 function normalizeDay(day) {
   const numeric = Number(day);
@@ -18,6 +19,7 @@ function resetCompletedForDay(day) {
     if (currentDay !== null) {
       completedItems.clear();
       currentDay = null;
+      completionSequence = 0;
     }
     return;
   }
@@ -25,6 +27,7 @@ function resetCompletedForDay(day) {
   if (normalized !== currentDay) {
     completedItems.clear();
     currentDay = normalized;
+    completionSequence = 0;
   }
 }
 
@@ -40,7 +43,18 @@ function seedAutoCompletedEntries(entries = [], formatDuration = hours => format
     const durationHours = Number.isFinite(hours) && hours > 0 ? hours : 0;
     const durationText = entry?.durationText || formatDuration(durationHours);
     const count = Number.isFinite(entry?.count) && entry.count > 0 ? entry.count : 1;
-    const completedAt = existing?.completedAt ?? Date.now();
+    const existingSequence = Number.isFinite(existing?.sequence) ? existing.sequence : null;
+    const providedSequence = Number.isFinite(entry?.sequence) ? entry.sequence : null;
+    let sequence = existingSequence;
+    if (!Number.isFinite(sequence)) {
+      if (Number.isFinite(providedSequence)) {
+        sequence = providedSequence;
+      } else {
+        completionSequence += 1;
+        sequence = completionSequence;
+      }
+    }
+    completionSequence = Math.max(completionSequence, sequence);
     const focusCategory = entry?.focusCategory || entry?.category || existing?.focusCategory || null;
 
     completedItems.set(id, {
@@ -51,7 +65,7 @@ function seedAutoCompletedEntries(entries = [], formatDuration = hours => format
       repeatable: false,
       remainingRuns: null,
       count,
-      completedAt,
+      sequence,
       focusCategory
     });
   });
@@ -119,6 +133,13 @@ function recordCompletion(entry, {
   const count = existing ? (existing.count || 1) + 1 : 1;
   const normalizedDuration = Number.isFinite(durationHours) && durationHours > 0 ? durationHours : 0;
 
+  let sequence = Number.isFinite(existing?.sequence) ? existing.sequence : null;
+  if (!Number.isFinite(sequence)) {
+    completionSequence += 1;
+    sequence = completionSequence;
+  }
+  completionSequence = Math.max(completionSequence, sequence);
+
   const record = {
     id: entry.id,
     title: entry.title,
@@ -127,7 +148,7 @@ function recordCompletion(entry, {
     repeatable,
     remainingRuns,
     count,
-    completedAt: Date.now(),
+    sequence,
     focusCategory: entry.focusCategory || existing?.focusCategory || null
   };
 
