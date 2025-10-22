@@ -190,6 +190,3 @@ export function resetVisitTracking(instance) {
   metrics.currentVisitBreakdown = null;
 }
 
-export const VISIT_CONSTANTS = {
-  VISITS_PER_DOLLAR
-};
