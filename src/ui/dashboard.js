@@ -1,12 +1,12 @@
-import { getState } from '../core/state.js';
-import { buildDashboardViewModel } from './dashboard/model.js';
 import { getActiveView } from './viewManager.js';
+import { selectGameState } from './selectors/state.js';
+import { selectDashboardViewModel } from './selectors/dashboard.js';
 
 export function renderDashboard(state, summary, presenter) {
-  const currentState = state ?? getState();
+  const currentState = state ?? selectGameState();
   if (!currentState) return;
 
-  const viewModel = buildDashboardViewModel(currentState, summary);
+  const viewModel = selectDashboardViewModel(currentState, summary);
   if (!viewModel) return;
 
   const activePresenter = presenter ?? getActiveView()?.presenters?.dashboard;
