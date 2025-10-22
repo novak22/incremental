@@ -1,14 +1,12 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { spawn } from 'child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.resolve(__dirname, '..');
 const DATA_PATH = path.resolve(ROOT_DIR, 'docs', 'normalized_economy.json');
 const APPENDIX_PATH = path.resolve(ROOT_DIR, 'docs', 'EconomySpec.appendix.md');
-const GRAPH_SCRIPT = path.resolve(ROOT_DIR, 'scripts', 'generateEconomyGraph.mjs');
 
 function formatNumber(value) {
   if (value === null || value === undefined) {
@@ -99,23 +97,6 @@ function renderTable(headers, rows) {
   const separatorLine = `| ${headers.map(() => '---').join(' | ')} |`;
   const rowLines = rows.map((row) => `| ${row.map((cell) => escapeCell(cell)).join(' | ')} |`);
   return [headerLine, separatorLine, ...rowLines].join('\n');
-}
-
-async function runGraphGenerator() {
-  await new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [GRAPH_SCRIPT], {
-      cwd: ROOT_DIR,
-      stdio: 'inherit',
-    });
-    child.on('exit', (code) => {
-      if (code === 0) {
-        resolve();
-      } else {
-        reject(new Error(`generateEconomyGraph.mjs exited with code ${code}`));
-      }
-    });
-    child.on('error', reject);
-  });
 }
 
 function buildAppendix(json) {
@@ -271,8 +252,6 @@ function buildAppendix(json) {
 async function main() {
   const raw = await fs.readFile(DATA_PATH, 'utf8');
   const json = JSON.parse(raw);
-
-  await runGraphGenerator();
 
   const appendix = buildAppendix(json);
   await fs.writeFile(APPENDIX_PATH, `${appendix}\n`, 'utf8');

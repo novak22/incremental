@@ -18,6 +18,8 @@ Tags: **keep** (stays as-is), **compress** (candidate for future trimming), **ar
 | `docs/archive/economy_sim_report_assets/cash_vs_time_exponential.svg` | archive | Legacy visualization kept offline. |
 | `docs/archive/economy_sim_report_assets/daily_cashflow.svg` | archive | Legacy visualization kept offline. |
 | `docs/archive/economy_sim_report_assets/education_roi.svg` | archive | Legacy visualization kept offline. |
+| `docs/archive/economy/economy_graph.mmd` | archive | Mermaid snapshot of the retired modifier graph. |
+| `docs/archive/economy/generateEconomyGraph.mjs` | archive | Historical generator retained for reference. |
 
 ## Features & Playtests
 | Path | Tag | Notes |

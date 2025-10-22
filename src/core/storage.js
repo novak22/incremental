@@ -308,8 +308,3 @@ export function createStorage({
   };
 }
 
-export const defaultStorage = createStorage();
-
-export const loadState = (...args) => defaultStorage.loadState(...args);
-export const saveState = (...args) => defaultStorage.saveState(...args);
-

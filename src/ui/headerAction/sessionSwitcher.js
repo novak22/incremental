@@ -755,7 +755,3 @@ export function initSessionSwitcher({
     close: closePanel
   };
 }
-
-export function refreshSessionSwitcher() {
-  render();
-}

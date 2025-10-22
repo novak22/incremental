@@ -1,10 +1,15 @@
-import { ensureArray } from '../../../core/helpers.js';
-import { getAssetState, getState } from '../../../core/state.js';
-import { instanceLabel } from '../../../game/assets/details.js';
-import { formatMaintenanceSummary } from '../../../game/assets/maintenance.js';
-import { getInstanceNicheInfo } from '../../../game/assets/niches.js';
-import { getQualityActions } from '../../../game/assets/quality/actions.js';
-import { getInstanceQualityRange, getQualityLevel } from '../../../game/assets/quality/levels.js';
+import { ensureArray } from '../../selectors/collections.js';
+import { selectAssetState, selectGameState } from '../../selectors/state.js';
+import {
+  selectInstanceLabel,
+  selectMaintenanceSummary,
+  selectInstanceNicheInfo,
+  selectQualityActions,
+  selectQualityRange,
+  selectQualityLevel,
+  selectAssetEvents,
+  selectNicheEvents
+} from '../../selectors/assets.js';
 import {
   calculateAveragePayout,
   describeInstanceStatus,
@@ -18,7 +23,6 @@ import {
   buildMilestoneProgress as createMilestoneProgress,
   buildActionSnapshot
 } from '../../cards/model/sharedQuality.js';
-import { getAssetEvents, getNicheEvents } from '../../../game/events/index.js';
 
 const DEFAULT_MILESTONE_COPY = {
   maxedSummary: 'Maxed out — future milestones queued for future builds.',
@@ -77,7 +81,7 @@ function collectInstanceEvents(definition, instance, state) {
   }
 
   const events = [];
-  const assetEvents = getAssetEvents(state, definition.id, instance.id);
+  const assetEvents = selectAssetEvents(definition.id, instance.id, state);
   assetEvents.forEach(event => {
     const formatted = formatEventSnapshot(event, { source: 'asset' });
     if (formatted) {
@@ -86,7 +90,7 @@ function collectInstanceEvents(definition, instance, state) {
   });
 
   if (instance.nicheId) {
-    const nicheEvents = getNicheEvents(state, instance.nicheId);
+    const nicheEvents = selectNicheEvents(instance.nicheId, state);
     nicheEvents.forEach(event => {
       const formatted = formatEventSnapshot(event, { source: 'niche' });
       if (formatted) {
@@ -190,7 +194,7 @@ export function formatBlogpressInstance(definition, instance, index, state, shar
     buildActionSnapshot(definition, instance, action, state)
   );
   const quickAction = actionSnapshots.find(entry => entry.available) || actionSnapshots[0] || null;
-  const nicheInfo = getInstanceNicheInfo(instance, state);
+  const nicheInfo = selectInstanceNicheInfo(instance, state);
 
   const status = describeInstanceStatus(instance, definition);
   const averagePayout = calculateAveragePayout(instance, state);
@@ -203,8 +207,8 @@ export function formatBlogpressInstance(definition, instance, index, state, shar
     ? Math.max(1, currentDay - createdOnDay + 1)
     : 0;
   const qualityLevel = Math.max(0, clampNumber(instance?.quality?.level));
-  const qualityInfo = getQualityLevel(definition, qualityLevel) || null;
-  const qualityRange = getInstanceQualityRange(definition, instance);
+  const qualityInfo = selectQualityLevel(definition, qualityLevel) || null;
+  const qualityRange = selectQualityRange(definition, instance);
   const milestone = buildMilestoneProgress(definition, instance);
   const payoutBreakdown = buildPayoutBreakdown(instance);
   const events = collectInstanceEvents(definition, instance, state);
@@ -229,7 +233,7 @@ export function formatBlogpressInstance(definition, instance, index, state, shar
 
   return {
     id: instance.id,
-    label: instanceLabel(definition, index),
+    label: selectInstanceLabel(definition, index),
     status,
     latestPayout: Math.max(0, clampNumber(instance.lastIncome)),
     averagePayout,
@@ -273,16 +277,16 @@ export function formatBlogpressInstance(definition, instance, index, state, shar
 }
 
 export function collectBlogpressQuickActions(definition) {
-  return ensureArray(getQualityActions(definition));
+  return ensureArray(selectQualityActions(definition));
 }
 
 export function buildBlogpressInstances({
   definition,
-  state = getState(),
-  assetState = getAssetState('blog', state) || { instances: [] },
+  state = selectGameState(),
+  assetState = selectAssetState('blog', state) || { instances: [] },
   actions = collectBlogpressQuickActions(definition),
   nicheOptions = mapNicheOptions(definition, state),
-  maintenance = formatMaintenanceSummary(definition)
+  maintenance = selectMaintenanceSummary(definition)
 } = {}) {
   const instances = ensureArray(assetState.instances).map((instance, index) =>
     formatBlogpressInstance(definition, instance, index, state, {
@@ -309,7 +313,7 @@ export function buildBlogpressSummary(instances, options = {}) {
   });
 }
 
-export function formatBlogpressModel({ definition, state = getState() } = {}) {
+export function formatBlogpressModel({ definition, state = selectGameState() } = {}) {
   if (!definition) {
     return {
       summary: {
@@ -324,7 +328,7 @@ export function formatBlogpressModel({ definition, state = getState() } = {}) {
     };
   }
 
-  const assetState = getAssetState('blog', state) || { instances: [] };
+  const assetState = selectAssetState('blog', state) || { instances: [] };
   const { instances, nicheOptions } = buildBlogpressInstances({
     definition,
     state,
@@ -345,7 +349,7 @@ export function buildBlogpressPricing(definition, { nicheOptions = [] } = {}) {
   }
 
   const setup = definition?.setup || {};
-  const maintenance = formatMaintenanceSummary(definition);
+  const maintenance = selectMaintenanceSummary(definition);
   const quality = definition?.quality || {};
   const levels = ensureArray(quality.levels).map(level => ({
     level: level.level,
