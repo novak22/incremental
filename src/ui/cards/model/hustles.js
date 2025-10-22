@@ -47,6 +47,277 @@ function buildDescriptorCopy(categoryLabel) {
   };
 }
 
+function cloneDescriptors(descriptors = {}) {
+  if (!descriptors || typeof descriptors !== 'object') {
+    return {};
+  }
+  const { copy, ...rest } = descriptors;
+  const clonedCopy = copy && typeof copy === 'object' ? { ...copy } : {};
+  return { ...rest, copy: clonedCopy };
+}
+
+function buildOfferAction({
+  offer,
+  requirementGuidance,
+  defaultReadyGuidance,
+  defaultWaitingGuidance
+}) {
+  if (!offer) {
+    return null;
+  }
+
+  if (offer.locked) {
+    const lockedLabel = `Locked — ${offer.label}`;
+    const lockedGuidance = requirementGuidance || offer.unlockHint || '';
+    return {
+      label: lockedLabel,
+      disabled: true,
+      className: 'primary',
+      onClick: null,
+      guidance: lockedGuidance || undefined
+    };
+  }
+
+  if (offer.ready) {
+    return {
+      label: `Accept ${offer.label}`,
+      disabled: false,
+      className: 'primary',
+      onClick: offer.onAccept,
+      guidance: defaultReadyGuidance
+    };
+  }
+
+  const availableIn = Number.isFinite(offer?.availableIn) ? offer.availableIn : null;
+  const daysText = availableIn === 1 ? '1 day' : `${availableIn} days`;
+  const label = availableIn && availableIn > 0 ? `Opens in ${daysText}` : 'Opens soon';
+  return {
+    label,
+    disabled: true,
+    className: 'primary',
+    onClick: null,
+    guidance: defaultWaitingGuidance
+  };
+}
+
+function buildPlaceholderAction({
+  definition,
+  requirementGuidance,
+  defaultEmptyGuidance,
+  defaultRerollGuidance,
+  rollOffers,
+  executeActionFn,
+  currentDay,
+  state
+}) {
+  if (typeof rollOffers === 'function') {
+    const rerollLabel = definition.market?.manualRerollLabel || 'Roll a fresh offer';
+    const rerollGuidance = definition.market?.manualRerollHelp || defaultRerollGuidance;
+    return {
+      label: rerollLabel,
+      disabled: false,
+      className: 'secondary',
+      onClick: () =>
+        executeActionFn(() => {
+          rollOffers({ templates: [definition], day: currentDay, state });
+        }),
+      guidance: requirementGuidance || rerollGuidance
+    };
+  }
+
+  const emptyLabel = definition.market?.emptyActionLabel || 'Check back tomorrow';
+  const emptyGuidance = definition.market?.emptyGuidance || defaultEmptyGuidance;
+  return {
+    label: emptyLabel,
+    disabled: true,
+    className: 'secondary',
+    onClick: null,
+    guidance: requirementGuidance || emptyGuidance
+  };
+}
+
+function createOfferModel({
+  definition,
+  offer,
+  descriptors,
+  descriptorCopy,
+  defaultReadyGuidance,
+  defaultWaitingGuidance,
+  baseBadges,
+  metrics,
+  requirements,
+  requirementSummary,
+  requirementGuidance,
+  usage,
+  limitSummary,
+  filters,
+  commitments,
+  actionCategory,
+  templateKind,
+  resolvedCategory,
+  aggregatedSeatPolicy
+}) {
+  if (!offer) {
+    return null;
+  }
+
+  const offerCommitments = commitments.filter(entry => {
+    const offerId = entry?.progress?.offerId || entry?.offerId || null;
+    return offerId && offerId === offer.id;
+  });
+
+  const seatSummary = describeSeatAvailability({
+    seatPolicy: offer.seatPolicy || aggregatedSeatPolicy || null,
+    seatsAvailable: Number.isFinite(offer?.seatsAvailable) ? offer.seatsAvailable : null
+  });
+
+  const offerFilters = {
+    ...filters,
+    available: Boolean(offer.ready),
+    offerId: offer.id,
+    status: offer.ready ? 'ready' : 'upcoming'
+  };
+
+  const offerAction = buildOfferAction({
+    offer,
+    requirementGuidance,
+    defaultReadyGuidance,
+    defaultWaitingGuidance
+  });
+
+  return {
+    id: `${definition.id}:${offer.id}`,
+    definitionId: definition.id,
+    offerId: offer.id,
+    offer,
+    name: definition.name || definition.id,
+    description: definition.description || '',
+    tag: definition.tag || null,
+    templateKind,
+    actionCategory,
+    category: resolvedCategory || '',
+    categoryLabel: descriptors.categoryLabel,
+    descriptors: cloneDescriptors({
+      ...descriptors,
+      copy: {
+        ...descriptorCopy,
+        ...(descriptors.copy || {})
+      }
+    }),
+    labels: {
+      category: descriptors.categoryLabel
+    },
+    metrics,
+    badges: [...baseBadges],
+    requirements: {
+      summary: requirementSummary,
+      items: requirements
+    },
+    limit: usage
+      ? {
+          ...usage,
+          summary: limitSummary,
+          exhausted: usage.remaining <= 0
+        }
+      : null,
+    action: offerAction,
+    available: Boolean(offer.ready),
+    status: offer.ready ? 'ready' : 'upcoming',
+    commitments: offerCommitments,
+    filters: offerFilters,
+    seat: seatSummary
+      ? {
+          policy: offer.seatPolicy || aggregatedSeatPolicy || null,
+          available: Number.isFinite(offer?.seatsAvailable) ? offer.seatsAvailable : null,
+          summary: seatSummary
+        }
+      : null
+  };
+}
+
+function createPlaceholderModel({
+  definition,
+  descriptors,
+  descriptorCopy,
+  defaultEmptyGuidance,
+  defaultRerollGuidance,
+  requirementGuidance,
+  baseBadges,
+  metrics,
+  requirements,
+  requirementSummary,
+  usage,
+  limitSummary,
+  filters,
+  commitments,
+  actionCategory,
+  templateKind,
+  resolvedCategory,
+  rollOffers,
+  executeActionFn,
+  currentDay,
+  state
+}) {
+  const placeholderAction = buildPlaceholderAction({
+    definition,
+    requirementGuidance,
+    defaultEmptyGuidance,
+    defaultRerollGuidance,
+    rollOffers,
+    executeActionFn,
+    currentDay,
+    state
+  });
+
+  return {
+    id: `${definition.id}:placeholder`,
+    definitionId: definition.id,
+    offerId: null,
+    offer: null,
+    name: definition.name || definition.id,
+    description: definition.description || '',
+    tag: definition.tag || null,
+    templateKind,
+    actionCategory,
+    category: resolvedCategory || '',
+    categoryLabel: descriptors.categoryLabel,
+    descriptors: cloneDescriptors({
+      ...descriptors,
+      copy: {
+        ...descriptorCopy,
+        ...(descriptors.copy || {})
+      }
+    }),
+    labels: {
+      category: descriptors.categoryLabel
+    },
+    metrics,
+    badges: [...baseBadges],
+    requirements: {
+      summary: requirementSummary,
+      items: requirements
+    },
+    limit: usage
+      ? {
+          ...usage,
+          summary: limitSummary,
+          exhausted: usage.remaining <= 0
+        }
+      : null,
+    action: placeholderAction,
+    available: false,
+    status: 'placeholder',
+    commitments,
+    filters: {
+      ...filters,
+      available: false,
+      offerId: null,
+      status: 'placeholder'
+    },
+    seat: null
+  };
+}
+
 export default function buildHustleModels(definitions = [], helpers = {}) {
   const {
     getState: getStateFn = getState,
@@ -107,7 +378,9 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
     acceptedByDefinition.get(definitionId).push(entry);
   });
 
-  return definitions.map(definition => {
+  const allModels = [];
+
+  definitions.forEach(definition => {
     const templateOffers = offersByTemplate.get(definition.id) || [];
     const resolvedCategory = (() => {
       const explicit = definition.market?.category;
@@ -226,31 +499,6 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
       };
     });
 
-    const readyOffers = offerEntries.filter(entry => entry.ready);
-    const upcomingOffers = offerEntries.filter(entry => !entry.ready);
-
-    const aggregatedSeatPolicy = (() => {
-      const activeEntry = offerEntries.find(entry => entry.seatPolicy);
-      if (activeEntry?.seatPolicy) {
-        return activeEntry.seatPolicy;
-      }
-      const metaPolicy = definition?.market?.metadata?.seatPolicy;
-      return typeof metaPolicy === 'string' && metaPolicy.trim() ? metaPolicy.trim() : null;
-    })();
-
-    const aggregatedSeats = offerEntries.reduce((total, entry) => {
-      const seats = Number(entry?.seatsAvailable);
-      if (!Number.isFinite(seats) || seats <= 0) {
-        return total;
-      }
-      return total + Math.floor(seats);
-    }, 0);
-
-    const seatSummary = describeSeatAvailability({
-      seatPolicy: aggregatedSeatPolicy,
-      seatsAvailable: Number.isFinite(aggregatedSeats) ? aggregatedSeats : null
-    });
-
     const outstandingForDefinition = commitmentsByDefinition.get(definition.id) || [];
     const commitments = outstandingForDefinition.map(entry => ({
       id: entry.id,
@@ -282,6 +530,8 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
       const remainingDays = Number.isFinite(entry?.deadlineDay)
         ? Math.max(0, Math.floor(entry.deadlineDay) - currentDay + 1)
         : null;
+      const progressOfferId = entry?.offerId || (entry?.instanceId ? `accepted:${entry.instanceId}` : null);
+
       commitments.push({
         id: entry?.id || `accepted:${entry?.offerId}`,
         label: entry?.metadata?.label || definition.name || 'Accepted hustle',
@@ -300,6 +550,7 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
         progress: {
           definitionId: definition.id,
           instanceId,
+          offerId: progressOfferId,
           remainingDays,
           deadlineDay: entry?.deadlineDay ?? null,
           hoursRemaining: Number.isFinite(entry?.hoursRequired) ? entry.hoursRequired : null,
@@ -310,70 +561,22 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
       });
     });
 
-    const primaryOffer = readyOffers[0] || upcomingOffers[0] || null;
-
-    let actionConfig = null;
-
-    if (primaryOffer) {
-      const locked = Boolean(primaryOffer.locked);
-      const ready = Boolean(primaryOffer.ready) && !locked;
-
-      if (locked) {
-        const lockedLabel = `Locked — ${primaryOffer.label}`;
-        const lockedGuidance = requirementGuidance || primaryOffer.unlockHint || '';
-        actionConfig = {
-          label: lockedLabel,
-          disabled: true,
-          className: 'primary',
-          onClick: null,
-          guidance: lockedGuidance || undefined
-        };
-      } else if (ready) {
-        actionConfig = {
-          label: `Accept ${primaryOffer.label}`,
-          disabled: false,
-          className: 'primary',
-          onClick: primaryOffer.onAccept,
-          guidance: defaultReadyGuidance
-        };
-      } else {
-        const availableIn = Number.isFinite(primaryOffer.availableIn) ? primaryOffer.availableIn : null;
-        const daysText = availableIn === 1 ? '1 day' : `${availableIn} days`;
-        const label = availableIn && availableIn > 0 ? `Opens in ${daysText}` : 'Opens soon';
-        actionConfig = {
-          label,
-          disabled: true,
-          className: 'primary',
-          onClick: null,
-          guidance: defaultWaitingGuidance
-        };
-      }
-    } else if (typeof rollOffers === 'function') {
-      const rerollLabel = definition.market?.manualRerollLabel || 'Roll a fresh offer';
-      const rerollGuidance = definition.market?.manualRerollHelp || defaultRerollGuidance;
-      actionConfig = {
-        label: rerollLabel,
-        disabled: false,
-        className: 'secondary',
-        onClick: () =>
-          executeActionFn(() => {
-            rollOffers({ templates: [definition], day: currentDay, state });
-          }),
-        guidance: rerollGuidance
-      };
-    } else {
-      const emptyLabel = definition.market?.emptyActionLabel || 'Check back tomorrow';
-      const emptyGuidance = definition.market?.emptyGuidance || defaultEmptyGuidance;
-      actionConfig = {
-        label: emptyLabel,
-        disabled: true,
-        className: 'secondary',
-        onClick: null,
-        guidance: emptyGuidance
-      };
-    }
-
     const templateKind = definition.templateKind || definition.type || null;
+
+    const aggregatedSeatPolicy = (() => {
+      const activeEntry = offerEntries.find(entry => entry.seatPolicy);
+      if (activeEntry?.seatPolicy) {
+        return activeEntry.seatPolicy;
+      }
+      const metaPolicy = definition?.market?.metadata?.seatPolicy;
+      return typeof metaPolicy === 'string' && metaPolicy.trim() ? metaPolicy.trim() : null;
+    })();
+
+    const metrics = {
+      time: { value: time, label: formatHoursFn(time) },
+      payout: { value: payout, label: payout > 0 ? `$${formatMoneyFn(payout)}` : '' },
+      roi
+    };
 
     const badges = [`${formatHoursFn(time)} time`];
     if (payout > 0) {
@@ -395,73 +598,86 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
     if (resolvedCategoryLabel && resolvedCategoryLabel !== descriptors.categoryLabel) {
       badges.push(`${resolvedCategoryLabel} market`);
     }
-    if (commitments.length) {
-      badges.push(`${commitments.length} in progress`);
-    }
-    if (upcomingOffers.length) {
-      badges.push(`${upcomingOffers.length} queued`);
-    }
 
-    const available = Boolean(readyOffers.length);
-
-    return {
-      id: definition.id,
-      name: definition.name || definition.id,
-      description: definition.description || '',
-      tag: definition.tag || null,
-      templateKind,
-      actionCategory,
-      category: resolvedCategory || '',
-      categoryLabel: descriptors.categoryLabel,
-      descriptors,
-      labels: {
-        category: descriptors.categoryLabel
-      },
-      metrics: {
-        time: { value: time, label: formatHoursFn(time) },
-        payout: { value: payout, label: payout > 0 ? `$${formatMoneyFn(payout)}` : '' },
-        roi
-      },
-      badges,
-      requirements: {
-        summary: requirementSummary,
-        items: requirements
-      },
-      limit: usage
-        ? {
-            ...usage,
-            summary: limitSummary,
-            exhausted: usage.remaining <= 0
-          }
-        : null,
-      action: requirementGuidance && actionConfig && !actionConfig.guidance
-        ? { ...actionConfig, guidance: requirementGuidance }
-        : actionConfig,
-      available,
-      offers: readyOffers,
-      upcoming: upcomingOffers,
-      commitments,
-      filters: {
-        search,
-        time,
-        payout,
-        roi,
-        available,
-        limitRemaining: usage ? usage.remaining : null,
-        tag: definition.tag?.label || '',
-        category: actionCategory || '',
-        actionCategory: actionCategory || '',
-        categoryLabel: descriptors.categoryLabel || '',
-        templateKind: templateKind || '',
-        marketCategory: resolvedCategory || ''
-      },
-      seat: seatSummary
-        ? {
-            policy: aggregatedSeatPolicy,
-            available: aggregatedSeats,
-            summary: seatSummary
-          }
-        : null
+    const filters = {
+      search,
+      time,
+      payout,
+      roi,
+      available: false,
+      limitRemaining: usage ? usage.remaining : null,
+      tag: definition.tag?.label || '',
+      category: actionCategory || '',
+      actionCategory: actionCategory || '',
+      categoryLabel: descriptors.categoryLabel || '',
+      templateKind: templateKind || '',
+      marketCategory: resolvedCategory || ''
     };
+
+    const offerModels = offerEntries
+      .map(offer =>
+        createOfferModel({
+          definition,
+          offer,
+          descriptors,
+          descriptorCopy,
+          defaultReadyGuidance,
+          defaultWaitingGuidance,
+          baseBadges: badges,
+          metrics,
+          requirements,
+          requirementSummary,
+          requirementGuidance,
+          usage,
+          limitSummary,
+          filters,
+          commitments,
+          actionCategory,
+          templateKind,
+          resolvedCategory,
+          aggregatedSeatPolicy
+        })
+      )
+      .filter(Boolean);
+
+    if (offerModels.length > 0) {
+      allModels.push(...offerModels);
+    }
+
+    const unmatchedCommitments = commitments.filter(entry => {
+      const offerId = entry?.progress?.offerId || entry?.offerId || null;
+      return !offerId || !offerEntries.some(offer => offer.id === offerId);
+    });
+
+    if (!offerModels.length || unmatchedCommitments.length) {
+      const placeholder = createPlaceholderModel({
+        definition,
+        descriptors,
+        descriptorCopy,
+        defaultEmptyGuidance,
+        defaultRerollGuidance,
+        requirementGuidance,
+        baseBadges: badges,
+        metrics,
+        requirements,
+        requirementSummary,
+        usage,
+        limitSummary,
+        filters,
+        commitments: unmatchedCommitments,
+        actionCategory,
+        templateKind,
+        resolvedCategory,
+        rollOffers,
+        executeActionFn,
+        currentDay,
+        state
+      });
+      if (placeholder) {
+        allModels.push(placeholder);
+      }
+    }
   });
+
+  return allModels;
 }
