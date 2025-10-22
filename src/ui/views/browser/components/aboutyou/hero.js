@@ -45,18 +45,25 @@ export function renderHero(profile = {}, mount, options = {}) {
   const headline = document.createElement('div');
   headline.className = 'aboutyou-hero__headline';
 
+  const nameplate = document.createElement('div');
+  nameplate.className = 'aboutyou-hero__nameplate';
+
   const name = document.createElement('h1');
   name.className = 'aboutyou-hero__name';
   name.textContent = 'You';
 
-  const title = document.createElement('p');
+  const title = document.createElement('span');
   title.className = 'aboutyou-hero__title';
   title.textContent = summary?.title || summary?.tier || 'Aspiring Creator';
+
+  nameplate.append(name, title);
 
   const tagline = document.createElement('p');
   tagline.className = 'aboutyou-hero__tagline';
   tagline.textContent =
     summary?.note || 'Stack wins, celebrate streaks, and keep exploring new horizons.';
+
+  headline.append(nameplate, tagline);
 
   const activeAssets = Number(summary?.activeAssets) || 0;
   if (activeAssets > 0) {
@@ -65,10 +72,6 @@ export function renderHero(profile = {}, mount, options = {}) {
     ventures.textContent = `${activeAssets} active venture${activeAssets === 1 ? '' : 's'} humming right now.`;
     headline.append(ventures);
   }
-
-  headline.prepend(tagline);
-  headline.prepend(title);
-  headline.prepend(name);
 
   identity.append(avatar, headline);
   section.appendChild(identity);
