@@ -4,7 +4,7 @@ import { describeTargetScope, formatKeyLabel } from './formatting.js';
 export function describeEffectSummary(definition = {}) {
   const effects = definition.effects || {};
   const affects = definition.affects || {};
-  const parts = [];
+  const effectLabels = [];
 
   Object.entries(effects).forEach(([effect, value]) => {
     const numeric = Number(value);
@@ -27,20 +27,25 @@ export function describeEffectSummary(definition = {}) {
       default:
         label = `${formatKeyLabel(effect)}: ${numeric}`;
     }
-    const targetParts = [];
-    const assetScope = describeTargetScope(affects.assets);
-    if (assetScope) targetParts.push(`assets (${assetScope})`);
-    const hustleScope = describeTargetScope(affects.hustles);
-    if (hustleScope) targetParts.push(`hustles (${hustleScope})`);
-    const actionScope = ensureArray(affects.actions?.types);
-    if (actionScope.length) {
-      targetParts.push(`actions (${actionScope.join(', ')})`);
-    }
-    const summary = targetParts.length ? `${label} → ${targetParts.join(' & ')}` : label;
-    parts.push(summary);
+    effectLabels.push(label);
   });
 
-  return parts.join(' • ');
+  if (!effectLabels.length) {
+    return '';
+  }
+
+  const scopeParts = [];
+  const assetScope = describeTargetScope(affects.assets);
+  if (assetScope) scopeParts.push(`assets (${assetScope})`);
+  const hustleScope = describeTargetScope(affects.hustles);
+  if (hustleScope) scopeParts.push(`hustles (${hustleScope})`);
+  const actionScope = ensureArray(affects.actions?.types);
+  if (actionScope.length) {
+    scopeParts.push(`actions (${actionScope.join(', ')})`);
+  }
+
+  const scopeSummary = scopeParts.length ? ` — applies to ${scopeParts.join('; ')}` : '';
+  return `${effectLabels.join(', ')}${scopeSummary}`;
 }
 
 export default {

@@ -64,7 +64,7 @@ function describeTargetScope(scope) {
 
 export function describeEffectSummary(effects, affects) {
   if (!effects || typeof effects !== 'object') return null;
-  const parts = [];
+  const effectLabels = [];
   Object.entries(effects).forEach(([effect, value]) => {
     const numeric = Number(value);
     if (!Number.isFinite(numeric) || numeric === 1) return;
@@ -84,19 +84,52 @@ export function describeEffectSummary(effects, affects) {
         label = `${percent >= 0 ? '+' : ''}${percent}% quality progress`;
         break;
       default:
-        label = `${effect}: ${numeric}`;
+        label = `${formatKeyLabel(effect)}: ${numeric}`;
     }
-    const targetPieces = [];
-    const assetScope = describeTargetScope(affects?.assets);
-    if (assetScope) targetPieces.push(`assets (${assetScope})`);
-    const hustleScope = describeTargetScope(affects?.hustles);
-    if (hustleScope) targetPieces.push(`hustles (${hustleScope})`);
-    const actionScope = ensureArray(affects?.actions?.types);
-    if (actionScope.length) {
-      targetPieces.push(`actions (${actionScope.join(', ')})`);
-    }
-    const targetSummary = targetPieces.length ? ` → ${targetPieces.join(' & ')}` : '';
-    parts.push(`${label}${targetSummary}`);
+    effectLabels.push(label);
   });
-  return parts.length ? parts.join(' • ') : null;
+
+  if (!effectLabels.length) {
+    return null;
+  }
+
+  const scopeEntries = [];
+  const assetScope = describeTargetScope(affects?.assets);
+  if (assetScope) {
+    scopeEntries.push({ label: 'Assets', value: assetScope });
+  }
+  const hustleScope = describeTargetScope(affects?.hustles);
+  if (hustleScope) {
+    scopeEntries.push({ label: 'Hustles', value: hustleScope });
+  }
+  const actionScope = ensureArray(affects?.actions?.types);
+  if (actionScope.length) {
+    scopeEntries.push({ label: 'Actions', value: actionScope.join(' • ') });
+  }
+
+  const effectList = effectLabels
+    .map(label => `<li class="upgrade-effect-summary__item">${label}</li>`)
+    .join('');
+
+  const scopeMarkup = scopeEntries.length
+    ? `<div class="upgrade-effect-summary__applies">
+        <span class="upgrade-effect-summary__applies-label">Applies to</span>
+        <div class="upgrade-effect-summary__targets">
+          ${scopeEntries.map(entry => `
+            <span class="upgrade-effect-summary__target">
+              <span class="upgrade-effect-summary__target-label">${entry.label}</span>
+              <span class="upgrade-effect-summary__target-value">${entry.value}</span>
+            </span>
+          `).join('')}
+        </div>
+      </div>`
+    : '';
+
+  return `
+    <div class="upgrade-effect-summary">
+      <p class="upgrade-effect-summary__title">⚙️ Effects</p>
+      <ul class="upgrade-effect-summary__list">${effectList}</ul>
+      ${scopeMarkup}
+    </div>
+  `.trim();
 }
