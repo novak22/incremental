@@ -1,16 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { getGameTestHarness } from './helpers/gameTestHarness.js';
+import { getTestStorage, loadState, saveState } from './helpers/storage.js';
 
 const harness = await getGameTestHarness();
 const {
   stateModule,
-  storageModule,
   logModule
 } = harness;
 
 const { getState, getAssetState, getUpgradeState } = stateModule;
-const { loadState, saveState, defaultStorage: storage } = storageModule;
+const storage = getTestStorage();
 const { addLog } = logModule;
 const { archiveNicheAnalytics } = await import('../src/game/analytics/niches.js');
 

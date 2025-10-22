@@ -1,6 +1,5 @@
 import { addLog } from '../core/log.js';
 import { getState, getUpgradeState } from '../core/state.js';
-import { saveState } from '../core/storage.js';
 import { allocateAssetMaintenance, closeOutDay } from './assets/index.js';
 import { processAssistantPayroll } from './assistant.js';
 import { getTimeCap } from './time.js';
@@ -14,6 +13,7 @@ import { syncNicheTrendSnapshots } from './events/syncNicheTrendSnapshots.js';
 import { ensureDailyOffersForDay } from './hustles.js';
 import { getRegistrySnapshot } from '../core/state/registry.js';
 import { accumulateAssetVisits } from './assets/visits.js';
+import { getSaveState } from './storageProvider.js';
 
 function flushUiWithFallback(fallbackToFull = false) {
   const flushed = flushDirty();
@@ -83,7 +83,7 @@ export function endDay(auto = false) {
   allocateAssetMaintenance();
   markAllDirty();
   flushUiWithFallback(true);
-  saveState();
+  getSaveState()?.();
 }
 
 export function checkDayEnd() {
