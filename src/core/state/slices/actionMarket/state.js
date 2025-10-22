@@ -1,4 +1,3 @@
-import { structuredClone } from '../../../helpers.js';
 import {
   clampMarketDay as clampDay,
   clampMarketDaySpan as clampNonNegativeInteger,
@@ -6,14 +5,6 @@ import {
 } from '../../../../game/hustles/normalizers.js';
 import { decorateOfferWithAccepted, normalizeActionMarketOffer } from './offers.js';
 import { normalizeActionMarketAcceptedEntry } from './accepted.js';
-
-export const DEFAULT_ACTION_MARKET_CATEGORY_STATE = Object.freeze({
-  category: null,
-  lastRolledAt: 0,
-  lastRolledOnDay: 0,
-  offers: [],
-  accepted: []
-});
 
 export function createDefaultActionMarketCategoryState({ category = null } = {}) {
   return {
@@ -201,25 +192,5 @@ export function ensureActionMarketCategoryState(state, category = 'default', opt
   });
 
   return categoryState;
-}
-
-export function cloneActionMarketCategoryState(state, category = 'default') {
-  const ensured = ensureActionMarketCategoryState(state, category);
-  return {
-    category: ensured.category,
-    lastRolledAt: ensured.lastRolledAt,
-    lastRolledOnDay: ensured.lastRolledOnDay,
-    offers: ensured.offers.map(offer => structuredClone(offer)),
-    accepted: ensured.accepted.map(entry => structuredClone(entry))
-  };
-}
-
-export function clearActionMarketCategoryState(state, category = 'default') {
-  if (!state) return;
-  const categoryState = ensureActionMarketCategoryState(state, category);
-  categoryState.lastRolledAt = 0;
-  categoryState.lastRolledOnDay = 0;
-  categoryState.offers = [];
-  categoryState.accepted = [];
 }
 
