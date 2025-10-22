@@ -34,14 +34,6 @@ export function registerAssetWorkspace(definition = {}) {
   };
 }
 
-export function createAssetWorkspacePresenterFor(assetId, overrides = {}) {
-  const definition = registry.get(assetId);
-  if (!definition) {
-    throw new Error(`No asset workspace registered for "${assetId}".`);
-  }
-  return createAssetWorkspaceConfig({ ...definition, ...overrides });
-}
-
 export function createActionDelegates(helpers = {}) {
   const actions = ensureHelpersActions(helpers);
   const quick = typeof actions.quickAction === 'function' ? actions.quickAction : () => {};
@@ -169,7 +161,6 @@ export function withNavTheme(className, navConfig = {}) {
 
 export default {
   registerAssetWorkspace,
-  createAssetWorkspacePresenterFor,
   createLaunchAction,
   createLaunchButton,
   createActionDelegates,
