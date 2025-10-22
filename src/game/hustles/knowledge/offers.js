@@ -1,4 +1,5 @@
-import { ensureDailyOffersForDay, getAvailableOffers } from '../../hustles.js';
+import { ensureDailyOffersForDay } from '../marketAccess.js';
+import { getAvailableOffers } from '../market.js';
 import { structuredClone } from '../../../core/helpers.js';
 import { getTrackDefinitionId } from './utils.js';
 

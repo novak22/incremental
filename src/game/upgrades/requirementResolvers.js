@@ -1,4 +1,4 @@
-import { getKnowledgeProgress } from '../requirements.js';
+import { getKnowledgeProgress } from '../requirements/knowledgeProgress.js';
 
 function extractKnowledgeIds(requirement) {
   if (Array.isArray(requirement.keys)) {

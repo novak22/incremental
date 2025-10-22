@@ -1,13 +1,13 @@
 import knowledgeTrackData from '../requirements/data/knowledgeTracks.js';
 import { formatDays, formatHours, formatMoney } from '../../core/helpers.js';
 import { executeAction } from '../actions.js';
-import { checkDayEnd } from '../lifecycle.js';
 import { enrollInKnowledgeTrack } from '../requirements.js';
 import { describeTrackEducationBonuses } from '../educationEffects.js';
 import { createStudyAcceptHook } from './knowledge/enrollment.js';
 import { createStudyCompletionHook } from './knowledge/completion.js';
 import { createKnowledgeTrackPresenter, buildTrackViewModel } from './knowledge/presenter.js';
 import { buildStudyMarketConfig } from './knowledge/offers.js';
+import { scheduleDayEndCheck } from '../time/dayEndScheduler.js';
 
 const KNOWLEDGE_TRACKS = knowledgeTrackData;
 
@@ -60,14 +60,14 @@ export function createKnowledgeHustles() {
         className: 'secondary',
         disabled: () => !presenter.isEnrollable(),
         onClick: () => {
-          executeAction(() => {
-            const { canEnroll } = presenter.refresh();
-            if (!canEnroll) return;
-            enrollInKnowledgeTrack(track.id);
-          });
-          checkDayEnd();
-        }
-      },
+        executeAction(() => {
+          const { canEnroll } = presenter.refresh();
+          if (!canEnroll) return;
+          enrollInKnowledgeTrack(track.id);
+        });
+        scheduleDayEndCheck();
+      }
+    },
       cardState: (state, card) => presenter.applyCardState(card, state),
       templateOptions: {
         accept: {

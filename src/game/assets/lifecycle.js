@@ -1,13 +1,13 @@
 import { formatList, formatMoney } from '../../core/helpers.js';
 import { addLog } from '../../core/log.js';
-import { getAssetState, getState } from '../../core/state.js';
+import { getAssetState, getState, getUpgradeState } from '../../core/state.js';
 import { addMoney, spendMoney } from '../currency.js';
 import { spendTime } from '../time.js';
 import { ASSETS } from './registry.js';
 import { getAssetMetricId } from './helpers.js';
-import { instanceLabel } from './details.js';
+import { instanceLabel } from './instanceLabel.js';
 import { rollDailyIncome } from './payout.js';
-import { ASSISTANT_CONFIG, getAssistantCount } from '../assistant.js';
+import { ASSISTANT_CONFIG } from '../assistant/config.js';
 import {
   recordCostContribution,
   recordPayoutContribution,
@@ -21,7 +21,9 @@ export function allocateAssetMaintenance() {
   const state = getState();
   if (!state) return;
 
-  const assistantCount = getAssistantCount(state);
+  const assistantUpgrade = getUpgradeState('assistant', state);
+  const assistantCountRaw = Number(assistantUpgrade?.count) || 0;
+  const assistantCount = Math.max(0, Math.min(ASSISTANT_CONFIG.maxAssistants, assistantCountRaw));
   let assistantHoursRemaining = Math.max(
     0,
     assistantCount * ASSISTANT_CONFIG.hoursPerAssistant

@@ -1,5 +1,5 @@
 import { getState } from '../../core/state.js';
-import { buildAssetRequirementDescriptor } from '../requirements.js';
+import { buildAssetRequirementDescriptor } from '../requirements/descriptors.js';
 
 function getHustleRequirements(definition) {
   if (!definition) return [];

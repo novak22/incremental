@@ -1,5 +1,5 @@
 import { getAssetState } from '../../core/state.js';
-import { getKnowledgeProgress } from '../requirements.js';
+import { getKnowledgeProgress } from '../requirements/knowledgeProgress.js';
 
 function countActiveInstances(assetId) {
   if (!assetId) return 0;

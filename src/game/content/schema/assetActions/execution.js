@@ -2,10 +2,10 @@ import { formatHours, formatMoney, toNumber } from '../../../../core/helpers.js'
 import { countActiveAssetInstances, getState } from '../../../../core/state.js';
 import { markDirty } from '../../../../core/events/invalidationBus.js';
 import { executeAction } from '../../../actions.js';
-import { checkDayEnd } from '../../../lifecycle.js';
 import { recordTimeContribution } from '../../../metrics.js';
-import { summarizeAssetRequirements } from '../../../requirements.js';
+import { summarizeAssetRequirements } from '../../../requirements/descriptors.js';
 import { spendTime } from '../../../time.js';
+import { scheduleDayEndCheck } from '../../../time/dayEndScheduler.js';
 import { awardSkillProgress } from '../../../skills/index.js';
 import { applyMetric } from '../metrics.js';
 import { logHustleBlocked } from '../logMessaging.js';
@@ -233,7 +233,7 @@ export function createExecutionHooks({
         completeActionInstance(definition, instance, context);
       }
     });
-    checkDayEnd();
+    scheduleDayEndCheck();
   }
 
   return {

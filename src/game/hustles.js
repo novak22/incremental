@@ -1,5 +1,7 @@
 import { ACTIONS, INSTANT_ACTIONS, STUDY_ACTIONS } from './actions/definitions.js';
 import { rollDailyOffers, getAvailableOffers, getClaimedOffers } from './hustles/market.js';
+import { ensureDailyOffersForDay as ensureOffers } from './hustles/marketAccess.js';
+import { registerHustleMarketApi } from './requirements/orchestrator/marketSeats.js';
 import { getState } from '../core/state.js';
 import { structuredClone } from '../core/helpers.js';
 import {
@@ -78,48 +80,18 @@ export function releaseClaimedHustleOffer(identifiers, { state = getState() } = 
   return released;
 }
 
-function clampDay(value, fallback = 1) {
-  const parsed = Number(value);
-  if (!Number.isFinite(parsed) || parsed <= 0) {
-    const fallbackParsed = Number(fallback);
-    if (!Number.isFinite(fallbackParsed) || fallbackParsed <= 0) {
-      return 1;
-    }
-    return Math.floor(fallbackParsed);
-  }
-  return Math.floor(parsed);
+export function ensureDailyOffersForDay(options = {}) {
+  const { templates = HUSTLE_TEMPLATES, ...rest } = options || {};
+  return ensureOffers({ ...rest, templates, category: HUSTLE_ACTION_CATEGORY });
 }
 
-export function ensureDailyOffersForDay({
-  state = getState(),
-  templates = HUSTLE_TEMPLATES,
-  day,
-  now,
-  rng
-} = {}) {
-  const workingState = state || getState();
-  if (!workingState) {
-    return [];
-  }
-
-  const currentDay = clampDay(day ?? workingState.day ?? 1, workingState.day ?? 1);
-  const marketState = ensureActionMarketCategoryState(workingState, HUSTLE_ACTION_CATEGORY, { fallbackDay: currentDay });
-  const hasOffers = Array.isArray(marketState.offers) && marketState.offers.length > 0;
-  const rolledToday = marketState.lastRolledOnDay === currentDay;
-
-  if (rolledToday && hasOffers) {
-    return marketState.offers.map(offer => structuredClone(offer));
-  }
-
-  return rollDailyOffers({
-    templates,
-    day: currentDay,
-    now,
-    state: workingState,
-    rng,
-    category: HUSTLE_ACTION_CATEGORY
-  });
-}
+registerHustleMarketApi({
+  ensureDailyOffersForDay,
+  getAvailableOffers,
+  getClaimedOffers,
+  acceptHustleOffer,
+  releaseClaimedHustleOffer
+});
 
 const TEMPLATE_BY_ID = new Map(HUSTLE_TEMPLATES.map(template => [template.id, template]));
 

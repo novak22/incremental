@@ -5,9 +5,9 @@ import { createAssetInstance } from '../../core/state/assets.js';
 import { getAssetDefinition } from '../../core/state/registry.js';
 import { addMoney, spendMoney } from '../currency.js';
 import { executeAction } from '../actions.js';
-import { checkDayEnd } from '../lifecycle.js';
 import { spendTime } from '../time.js';
-import { assetRequirementsMetById } from '../requirements.js';
+import { scheduleDayEndCheck } from '../time/dayEndScheduler.js';
+import { assetRequirementsMetById } from '../requirements/checks.js';
 import {
   recordCostContribution,
   recordPayoutContribution,
@@ -15,7 +15,7 @@ import {
 } from '../metrics.js';
 import { awardSkillProgress } from '../skills/index.js';
 import { getAssetEffectMultiplier } from '../upgrades/effects/index.js';
-import { instanceLabel } from './details.js';
+import { instanceLabel } from './instanceLabel.js';
 import { getAssetMetricId } from './helpers.js';
 import { markDirty } from '../../core/events/invalidationBus.js';
 
@@ -111,7 +111,7 @@ function startAsset(definition) {
       : `You kicked off ${label}. Keep investing time until it launches.`;
     addLog(message, 'passive');
   });
-  checkDayEnd();
+  scheduleDayEndCheck();
 }
 
 export function buildAssetAction(definition, labels = {}) {
