@@ -31,6 +31,7 @@ Tags: **keep** (stays as-is), **compress** (candidate for future trimming), **ar
 | `docs/changelog.md` | keep | Short-form highlights; pair with the archive for granular notes. |
 | `docs/archive/changelog-legacy.md` | archive | Full historical entries preserved after the 2025-10 format change. |
 | `docs/content-authoring.md` | keep | Author workflow remains relevant to the narrative tooling. |
+| `docs/engineering/architecture.md` | keep | Coupling guardrails and remediation steps for UI dependencies. |
 | `docs/maintenance-plan.md` | compress | Still useful but repetitive; trim after the handbook stabilizes. |
 | `docs/ui/browser-styles.md` | keep | Single-page reference for UI theming. |
 

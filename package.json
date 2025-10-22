@@ -4,10 +4,12 @@
   "type": "module",
   "description": "Charming incremental game with modular browser CSS loaded directly",
   "scripts": {
-    "test": "node --test",
+    "check:coupling": "node scripts/check-coupling.mjs",
+    "test": "npm run check:coupling && node --test",
     "rebuild-economy-docs": "node scripts/rebuildEconomyDocs.mjs"
   },
   "devDependencies": {
-    "jsdom": "^23.0.0"
+    "jsdom": "^23.0.0",
+    "madge": "^8.0.0"
   }
 }

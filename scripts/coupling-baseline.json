@@ -1,0 +1,8 @@
+{
+  "uiToGameCoreEdges": {
+    "baselineCount": 238,
+    "threshold": 250,
+    "updated": "2025-10-22",
+    "description": "UI coupling baseline captured after introducing automated checks; aim to trend downward before raising the limit."
+  }
+}
