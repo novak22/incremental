@@ -61,8 +61,12 @@ function resolveCategory(entry = {}) {
 
 function formatHourLabel(hour) {
   const normalized = ((hour % 24) + 24) % 24;
-  const whole = Math.floor(normalized);
-  const minutes = Math.round((normalized - whole) * 60);
+  let whole = Math.floor(normalized);
+  let minutes = Math.round((normalized - whole) * 60);
+  if (minutes === 60) {
+    minutes = 0;
+    whole = (whole + 1) % 24;
+  }
   const paddedMinutes = minutes.toString().padStart(2, '0');
   return `${whole.toString().padStart(2, '0')}:${paddedMinutes}`;
 }
@@ -426,7 +430,8 @@ function teardownTimeline(container) {
 export {
   buildTimelineModel,
   renderTimeline,
-  teardownTimeline
+  teardownTimeline,
+  formatHourLabel
 };
 
 export default {
