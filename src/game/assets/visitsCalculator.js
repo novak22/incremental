@@ -2,7 +2,7 @@ import resolveIncomeFromBase from './income/engine.js';
 
 export const VISITS_PER_DOLLAR = 100;
 
-export const VISIT_CALCULATOR_DEFAULT_OPTIONS = Object.freeze({
+const VISIT_CALCULATOR_DEFAULT_OPTIONS = Object.freeze({
   triggerEvents: false
 });
 
@@ -95,4 +95,3 @@ export default function projectVisitsFromBase({
   };
 }
 
-export { projectVisitsFromBase };

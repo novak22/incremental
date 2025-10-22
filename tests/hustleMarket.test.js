@@ -27,8 +27,7 @@ const {
   acceptHustleOffer,
   releaseClaimedHustleOffer,
   HUSTLE_TEMPLATES,
-  describeHustleRequirements,
-  getMarketRollAuditLog: hustlesAuditLog
+  describeHustleRequirements
 } = hustlesModule;
 const { getState, getActionState } = stateModule;
 const {
@@ -739,7 +738,7 @@ test('audit log debug helpers expose the latest roll summary', () => {
   const printedOffers = debugNamespace.printOffers();
   assert.ok(Array.isArray(printedOffers), 'printOffers should return an array of offers');
 
-  const moduleAudit = hustlesAuditLog();
+  const moduleAudit = directAuditLog();
   assert.ok(moduleAudit.length > 0, 'module export should yield audit entries');
   assert.equal(moduleAudit[moduleAudit.length - 1].day, state.day, 'module export should mirror the latest audit entry');
 });

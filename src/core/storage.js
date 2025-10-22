@@ -308,17 +308,8 @@ export function createStorage({
   };
 }
 
-const defaultStorage = createStorage();
+export const defaultStorage = createStorage();
 
 export const loadState = (...args) => defaultStorage.loadState(...args);
 export const saveState = (...args) => defaultStorage.saveState(...args);
-export const getActiveSession = (...args) => defaultStorage.getActiveSession(...args);
-export const listSessions = (...args) => defaultStorage.listSessions(...args);
-export const createSession = (...args) => defaultStorage.createSession(...args);
-export const renameSession = (...args) => defaultStorage.renameSession(...args);
-export const deleteSession = (...args) => defaultStorage.deleteSession(...args);
-export const setActiveSession = (...args) => defaultStorage.setActiveSession(...args);
-export const resetActiveSession = (...args) => defaultStorage.resetActiveSession(...args);
-export const exportSession = (...args) => defaultStorage.exportSession(...args);
-export const importSession = (...args) => defaultStorage.importSession(...args);
 
