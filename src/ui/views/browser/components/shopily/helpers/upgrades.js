@@ -122,7 +122,7 @@ export function collectDetailStrings(definition) {
 }
 
 export function describeEffectSummary(effects = {}, affects = {}) {
-  const effectParts = [];
+  const effectLabels = [];
   Object.entries(effects).forEach(([effect, value]) => {
     const numeric = Number(value);
     if (!Number.isFinite(numeric) || numeric === 1) return;
@@ -144,15 +144,17 @@ export function describeEffectSummary(effects = {}, affects = {}) {
       default:
         label = `${effect}: ${numeric}`;
     }
-    effectParts.push(label);
+    effectLabels.push(label);
   });
-  if (!effectParts.length) return '';
-  const scope = [];
+  if (!effectLabels.length) return '';
+  const scopeParts = [];
   const assetIds = ensureArray(affects.assets?.ids);
-  if (assetIds.length) scope.push(`stores (${assetIds.join(', ')})`);
+  if (assetIds.length) scopeParts.push(`stores (${assetIds.join(', ')})`);
   const assetTags = ensureArray(affects.assets?.tags);
-  if (assetTags.length) scope.push(`tags ${assetTags.join(', ')}`);
-  return scope.length ? `${effectParts.join(' • ')} → ${scope.join(' & ')}` : effectParts.join(' • ');
+  if (assetTags.length) scopeParts.push(`tags ${assetTags.join(', ')}`);
+  return scopeParts.length
+    ? `${effectLabels.join(', ')} — applies to ${scopeParts.join('; ')}`
+    : effectLabels.join(', ');
 }
 
 export function collectUpgradeHighlights(upgrade) {

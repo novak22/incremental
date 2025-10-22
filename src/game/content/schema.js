@@ -221,7 +221,7 @@ export function createUpgrade(config, hooks = {}) {
   }
   const effectSummary = describeEffectSummary(effects, affects);
   if (effectSummary) {
-    details.push(() => `⚙️ Effects: <strong>${effectSummary}</strong>`);
+    details.push(() => effectSummary);
   }
   if (definition.exclusivityGroup) {
     details.push(() => `🔒 Exclusive lane: <strong>${formatKeyLabel(definition.exclusivityGroup)}</strong>`);
