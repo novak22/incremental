@@ -10,7 +10,7 @@ const {
 } = harness;
 
 const { getState, getAssetState, getUpgradeState } = stateModule;
-const { loadState, saveState } = storageModule;
+const { loadState, saveState, defaultStorage: storage } = storageModule;
 const { addLog } = logModule;
 const { archiveNicheAnalytics } = await import('../src/game/analytics/niches.js');
 
@@ -144,7 +144,7 @@ test('saveState persists a trimmed niche analytics history snapshot', () => {
 test('session repository APIs create, switch, and delete slots', () => {
   const primaryLoad = loadState();
   assert.equal(primaryLoad.returning, false);
-  const primarySession = storageModule.getActiveSession();
+  const primarySession = storage.getActiveSession();
   assert.ok(primarySession?.id, 'expected default session id');
   const defaultMoney = getState().money;
 
@@ -152,7 +152,7 @@ test('session repository APIs create, switch, and delete slots', () => {
   state.money = 777;
   saveState();
 
-  const { session: altSession, loadResult: altLoad } = storageModule.createSession({ name: 'Alt Slot' });
+  const { session: altSession, loadResult: altLoad } = storage.createSession({ name: 'Alt Slot' });
   assert.ok(altSession?.id, 'expected new session id');
   assert.notEqual(altSession.id, primarySession.id);
   assert.equal(altLoad.returning, false, 'new sessions should start from defaults');
@@ -162,17 +162,17 @@ test('session repository APIs create, switch, and delete slots', () => {
   altState.money = 1234;
   saveState();
 
-  const { loadResult: restored } = storageModule.setActiveSession(primarySession.id);
+  const { loadResult: restored } = storage.setActiveSession(primarySession.id);
   assert.equal(restored.returning, true, 'existing session should load saved data');
   assert.equal(getState().money, 777, 'primary session restores saved money');
 
-  const sessions = storageModule.listSessions();
+  const sessions = storage.listSessions();
   assert.equal(sessions.length, 2, 'expected two sessions tracked');
 
-  const { removed, session: fallback } = storageModule.deleteSession(altSession.id);
+  const { removed, session: fallback } = storage.deleteSession(altSession.id);
   assert.equal(removed.id, altSession.id);
   assert.equal(fallback.id, primarySession.id, 'fallback to primary after deletion');
-  assert.equal(storageModule.listSessions().length, 1, 'only primary session remains');
+  assert.equal(storage.listSessions().length, 1, 'only primary session remains');
 });
 
 test('exportSession returns a serialized snapshot for the active slot', () => {
@@ -182,34 +182,34 @@ test('exportSession returns a serialized snapshot for the active slot', () => {
   state.money = 1337;
   saveState();
 
-  const exported = storageModule.exportSession();
+  const exported = storage.exportSession();
   assert.ok(exported, 'expected export payload');
   assert.equal(exported.type, 'online-hustle-sim/session');
-  assert.equal(exported.session.id, storageModule.getActiveSession().id);
+  assert.equal(exported.session.id, storage.getActiveSession().id);
   assert.equal(exported.snapshot.money, 1337);
   assert.equal(exported.snapshot.lastSaved, exported.session.lastSaved);
 });
 
 test('importSession loads the provided snapshot into a new slot', () => {
   loadState();
-  const baseSessions = storageModule.listSessions().length;
+  const baseSessions = storage.listSessions().length;
 
-  const exported = storageModule.exportSession();
+  const exported = storage.exportSession();
   exported.session.name = 'Imported Adventure';
   exported.snapshot.money = 4242;
 
-  const result = storageModule.importSession(exported);
+  const result = storage.importSession(exported);
   assert.ok(result?.session, 'expected imported session metadata');
   assert.ok(result?.loadResult, 'expected a load result after import');
-  assert.equal(storageModule.listSessions().length, baseSessions + 1, 'adds a new session slot');
-  assert.equal(storageModule.getActiveSession().name, 'Imported Adventure');
+  assert.equal(storage.listSessions().length, baseSessions + 1, 'adds a new session slot');
+  assert.equal(storage.getActiveSession().name, 'Imported Adventure');
   assert.equal(getState().money, 4242, 'imported snapshot should apply to active state');
 });
 
 test('importSession rejects invalid payloads', () => {
   loadState();
-  const before = storageModule.listSessions().length;
-  const result = storageModule.importSession({ bogus: true });
+  const before = storage.listSessions().length;
+  const result = storage.importSession({ bogus: true });
   assert.equal(result, null, 'invalid payload should not import');
-  assert.equal(storageModule.listSessions().length, before, 'session roster remains unchanged');
+  assert.equal(storage.listSessions().length, before, 'session roster remains unchanged');
 });

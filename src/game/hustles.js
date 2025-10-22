@@ -1,5 +1,5 @@
 import { ACTIONS, INSTANT_ACTIONS, STUDY_ACTIONS } from './actions/definitions.js';
-import { rollDailyOffers, getAvailableOffers, getClaimedOffers, getMarketRollAuditLog } from './hustles/market.js';
+import { rollDailyOffers, getAvailableOffers, getClaimedOffers } from './hustles/market.js';
 import { getState } from '../core/state.js';
 import { structuredClone } from '../core/helpers.js';
 import {
@@ -30,7 +30,7 @@ export const KNOWLEDGE_HUSTLES = STUDY_ACTIONS;
 const HUSTLE_ACTION_CATEGORY = 'hustle';
 
 export { ACTIONS };
-export { rollDailyOffers, getAvailableOffers, getClaimedOffers, getMarketRollAuditLog };
+export { rollDailyOffers, getAvailableOffers, getClaimedOffers };
 
 export * from './hustles/helpers.js';
 

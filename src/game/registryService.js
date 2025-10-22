@@ -78,10 +78,6 @@ export function getRegistry() {
   return registrySnapshot;
 }
 
-export function getHustles() {
-  return getRegistry().hustles;
-}
-
 export function getAssets() {
   return getRegistry().assets;
 }

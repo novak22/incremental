@@ -5,7 +5,7 @@ import { getInstanceNicheEffect } from '../niches.js';
 import { applyAssetIncomeEducationBonus } from '../../educationEffects.js';
 import { applyIncomeEvents, maybeTriggerAssetEvents } from '../../events/index.js';
 
-export const INCOME_ENGINE_DEFAULT_OPTIONS = Object.freeze({
+const INCOME_ENGINE_DEFAULT_OPTIONS = Object.freeze({
   triggerEvents: true,
   updateInstance: false
 });

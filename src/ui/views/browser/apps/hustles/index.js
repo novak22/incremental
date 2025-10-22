@@ -1351,8 +1351,6 @@ export function createOfferCard(entry = {}) {
   return card;
 }
 
-export const createHustleCard = createOfferCard;
-
 export default function renderHustles(context = {}, definitions = [], models = []) {
   const page = getPageByType('hustles');
   if (!page) return null;
