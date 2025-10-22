@@ -4,6 +4,7 @@ import layoutManager from './widgets/layoutManager.js';
 const state = {
   primaryButton: null,
   onPrimaryAction: null,
+  onPrimaryModeChange: null,
   primaryButtonMinWidth: null
 };
 
@@ -43,8 +44,10 @@ function handlePrimaryClick(event) {
   if (executed) {
     return;
   }
+  const button = state.primaryButton || event?.currentTarget || null;
+  const mode = button?.dataset?.actionMode || null;
   if (typeof state.onPrimaryAction === 'function') {
-    state.onPrimaryAction();
+    state.onPrimaryAction({ mode });
   }
 }
 
@@ -77,7 +80,11 @@ function renderAction(model) {
 
   button.textContent = label;
   ensurePrimaryButtonWidth(button, label);
-  button.dataset.actionMode = hasTasks ? 'task' : (model?.button?.mode || 'end');
+  const actionMode = hasTasks ? 'task' : 'end';
+  button.dataset.actionMode = actionMode;
+  if (typeof state.onPrimaryModeChange === 'function') {
+    state.onPrimaryModeChange(actionMode);
+  }
 
   if (hasTasks && nextTask?.id) {
     button.dataset.actionId = nextTask.id;
@@ -133,8 +140,9 @@ function renderAutoForward() {
   // Browser shell does not expose an auto-forward toggle in the header yet.
 }
 
-function init({ onPrimaryAction } = {}) {
+function init({ onPrimaryAction, onPrimaryModeChange } = {}) {
   state.onPrimaryAction = typeof onPrimaryAction === 'function' ? onPrimaryAction : null;
+  state.onPrimaryModeChange = typeof onPrimaryModeChange === 'function' ? onPrimaryModeChange : null;
   resolveButtons();
   bindPrimaryButton(state.primaryButton);
 }
