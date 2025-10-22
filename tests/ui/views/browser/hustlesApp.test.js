@@ -229,11 +229,11 @@ test('renderHustles renders unified offer feed with metrics, CTA wiring, and fil
 
     const list = document.querySelector('[data-role="browser-hustle-list"]');
     const cards = [...list.querySelectorAll('.downwork-card')];
-    assert.equal(cards.length, 3, 'expected unified feed to render one card per offer');
+    assert.equal(cards.length, 4, 'expected unified feed to render one card per task');
     assert.equal(
       cards.filter(card => card.dataset.hustle === 'priority-hustle').length,
-      2,
-      'expected multiple offers from the same hustle to render separately'
+      3,
+      'expected each priority hustle offer to render separately'
     );
 
     const primaryCard = cards.find(card =>
@@ -252,6 +252,12 @@ test('renderHustles renders unified offer feed with metrics, CTA wiring, and fil
     assert.equal(primaryCard.querySelectorAll('.browser-card__badge').length, 2, 'expected primary card badges');
     assert.equal(primaryCard.querySelectorAll('.downwork-card__tag').length, 2, 'expected primary card tags');
     assert.equal(primaryCard.querySelector('.browser-card__meta')?.textContent, 'No requirements');
+    assert.equal(primaryCard.querySelectorAll('.hustle-card__offer').length, 1, 'expected primary card to show one ready offer');
+    assert.equal(
+      primaryCard.querySelectorAll('.hustle-card__offer.is-upcoming').length,
+      0,
+      'expected primary card to omit nested upcoming offers'
+    );
 
     const secondaryCard = cards.find(card =>
       card.dataset.hustle === 'priority-hustle' &&
@@ -280,6 +286,21 @@ test('renderHustles renders unified offer feed with metrics, CTA wiring, and fil
       secondaryCard.querySelector('.browser-card__meta'),
       null,
       'expected secondary card to hide requirements summary'
+    );
+
+    const priorityUpcomingCard = cards.find(card =>
+      card.dataset.hustle === 'priority-hustle' && card.dataset.available === 'false'
+    );
+    assert.ok(priorityUpcomingCard, 'expected upcoming priority hustle card to render separately');
+    assert.equal(
+      priorityUpcomingCard.querySelectorAll('.hustle-card__offer').length,
+      1,
+      'expected upcoming card to render a single queued offer'
+    );
+    assert.equal(
+      priorityUpcomingCard.querySelector('.browser-card__section-title')?.textContent,
+      'Opening soon',
+      'expected upcoming card to retain upcoming section heading'
     );
 
     const upcomingCard = cards.find(card =>
@@ -318,18 +339,13 @@ test('renderHustles renders unified offer feed with metrics, CTA wiring, and fil
     assert.ok(toast, 'expected toast after accepting an offer');
     assert.ok(toast.textContent.includes('Added to your hustle queue'));
 
-    const upcomingButton = primaryCard.querySelector('.hustle-card__offer.is-upcoming .browser-card__button');
-    assert.ok(upcomingButton, 'expected upcoming offer to render with disabled CTA');
-    assert.equal(upcomingButton.textContent, 'Opens in 2 days');
-    assert.equal(upcomingButton.disabled, true);
-
     const shortTaskFilter = document.querySelector('button[data-filter-id="shortTasks"]');
     shortTaskFilter.click();
     assert.ok(shortTaskFilter.classList.contains('is-active'));
     assert.equal(shortTaskFilter.getAttribute('aria-pressed'), 'true');
     assert.ok(board.classList.contains('is-filtered'));
     assert.ok(list.classList.contains('is-filtered'));
-    assert.equal(list.querySelectorAll('.downwork-card').length, 1, 'expected quick filter to narrow results');
+    assert.equal(list.querySelectorAll('.downwork-card').length, 2, 'expected quick filter to narrow results');
 
     const highPayoutFilter = document.querySelector('button[data-filter-id="highPayout"]');
     highPayoutFilter.click();
@@ -342,7 +358,7 @@ test('renderHustles renders unified offer feed with metrics, CTA wiring, and fil
 
     highPayoutFilter.click();
     shortTaskFilter.click();
-    assert.equal(list.querySelectorAll('.downwork-card').length, 3, 'expected cards to return after clearing filters');
+    assert.equal(list.querySelectorAll('.downwork-card').length, 4, 'expected cards to return after clearing filters');
     assert.ok(!board.classList.contains('is-filtered'));
     assert.ok(!list.classList.contains('is-filtered'));
   } finally {
@@ -447,7 +463,7 @@ test('renderHustles omits locked offers from DownWork feed', () => {
 
     const list = document.querySelector('[data-role="browser-hustle-list"]');
     const cards = list ? [...list.querySelectorAll('.downwork-card')] : [];
-    assert.equal(cards.length, 1, 'expected unified card with unlocked offers to render');
+    assert.equal(cards.length, 2, 'expected unlocked offers to render on separate cards');
 
     const offerTitles = [...document.querySelectorAll('.hustle-card__title')]
       .map(node => node.textContent.trim());

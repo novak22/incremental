@@ -391,7 +391,9 @@ function buildOfferEntries(definitions = [], models = [], { onOfferAccept } = {}
           offerIndex
         });
       });
-    } else if (visibleUpcoming.length > 0) {
+    }
+
+    if (visibleUpcoming.length > 0) {
       visibleUpcoming.forEach((offer, offerIndex) => {
         entries.push({
           definition,
@@ -418,7 +420,7 @@ function buildOfferEntries(definitions = [], models = [], { onOfferAccept } = {}
           offerIndex
         });
       });
-    } else if (commitments.length || model.action || model.description) {
+    } else if (!visibleOffers.length && (commitments.length || model.action || model.description)) {
       entries.push({
         definition,
         model,
@@ -454,11 +456,7 @@ function buildOfferEntries(definitions = [], models = [], { onOfferAccept } = {}
       entry.isPrimary = index === 0;
       entry.showCommitments = index === 0 || entry.status === 'placeholder';
       entry.showAction = index === 0 || entry.status === 'placeholder';
-      if (entry.status === 'ready') {
-        entry.upcomingOffers = index === 0 ? visibleUpcoming : [];
-      } else {
-        entry.upcomingOffers = [];
-      }
+      entry.upcomingOffers = [];
     });
 
     let filterEntry = hustleFilterMeta.get(hustleId);
@@ -1120,7 +1118,6 @@ export function createOfferCard(entry = {}) {
     commitments = [],
     status = 'ready',
     offer = null,
-    upcomingOffers = [],
     onAccept,
     metrics = {},
     expiresIn,
@@ -1346,25 +1343,6 @@ export function createOfferCard(entry = {}) {
     primarySection.appendChild(primaryList);
     card.appendChild(primarySection);
   }
-
-  const additionalUpcoming = Array.isArray(upcomingOffers) ? upcomingOffers.filter(Boolean) : [];
-  if (additionalUpcoming.length && status === 'ready') {
-    const upcomingSection = createCardSection(copy.upcoming);
-    const upcomingList = createOfferList(additionalUpcoming, {
-      upcoming: true,
-      model,
-      onAccept
-    });
-    upcomingSection.appendChild(upcomingList);
-    card.appendChild(upcomingSection);
-  }
-
-  additionalUpcoming.forEach(item => {
-    const expires = Number(item?.expiresIn);
-    if (Number.isFinite(expires)) {
-      expiryCandidates.push(expires);
-    }
-  });
 
   if (expiryCandidates.length) {
     card.dataset.expiresIn = String(Math.min(...expiryCandidates));
