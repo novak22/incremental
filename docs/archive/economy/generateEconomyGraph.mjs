@@ -2,7 +2,7 @@ import { promises as fs } from 'fs';
 import path from 'path';
 
 const DATA_PATH = path.resolve('docs/normalized_economy.json');
-const OUTPUT_PATH = path.resolve('economy_graph.mmd');
+const OUTPUT_PATH = path.resolve('docs/archive/economy/economy_graph.mmd');
 
 function sanitizeId(label, index) {
   const base = label
