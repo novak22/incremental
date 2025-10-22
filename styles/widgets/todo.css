@@ -117,7 +117,8 @@
   position: absolute;
   inset-block-start: 0;
   inset-inline-start: var(--todo-timeline-start);
-  inline-size: max(3rem, var(--todo-timeline-width));
+  inline-size: var(--todo-timeline-width);
+  min-inline-size: var(--todo-timeline-min-width, var(--todo-timeline-width));
   min-height: 2.85rem;
   padding: 0.55rem 0.7rem;
   border-radius: 15px;

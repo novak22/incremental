@@ -98,4 +98,57 @@ describe('timodoro timeline sequencing', () => {
       'segment start mirrors the in-game offset'
     );
   });
+
+  it('keeps sequential short completions visually separated without overlap', () => {
+    const recordedCompletions = [
+      {
+        id: 'short-focus',
+        title: '30m dash',
+        durationHours: 0.5,
+        durationMinutes: 30,
+        sequence: 21,
+        durationText: '30m dash'
+      },
+      {
+        id: 'micro-cleanup',
+        title: '15m tidy',
+        durationHours: 0.25,
+        durationMinutes: 15,
+        sequence: 22,
+        durationText: '15m tidy'
+      },
+      {
+        id: 'review-round',
+        title: '45m review',
+        durationHours: 0.75,
+        durationMinutes: 45,
+        sequence: 23,
+        durationText: '45m review'
+      }
+    ];
+
+    const timeline = buildTimelineCompletedEntries({}, { completedEntries: recordedCompletions });
+    const segments = createSegments({ completed: timeline, pending: [], hoursSpent: null });
+    const pastSegments = segments.filter(segment => segment.state === 'past' && !segment.isBuffer);
+
+    assert.equal(pastSegments.length, 3, 'renders each short completion as its own block');
+
+    assert.deepEqual(pastSegments.map(segment => segment.visualStartPercent), [
+      '0%',
+      'calc(3.125% + 1px)',
+      'calc(4.6875% + 1px)'
+    ]);
+
+    assert.deepEqual(pastSegments.map(segment => segment.visualWidthPercent), [
+      '3.125%',
+      'calc(1.5625% - 1px)',
+      'calc(4.6875% - 1px)'
+    ]);
+
+    assert.deepEqual(pastSegments.map(segment => segment.visualMinWidthPercent), [
+      '1.5625%',
+      'calc(1.5625% - 1px)',
+      '1.5625%'
+    ]);
+  });
 });

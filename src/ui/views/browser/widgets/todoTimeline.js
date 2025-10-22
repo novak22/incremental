@@ -6,6 +6,8 @@ const UPDATE_INTERVAL_MS = 60_000;
 const MIN_SEGMENT_GAP_PX = 1;
 const TOUCH_EPSILON = 1e-6;
 
+const MIN_SEGMENT_WIDTH_PERCENT = (MIN_SEGMENT_HOURS / TOTAL_DAY_HOURS) * 100;
+
 const tickerRegistry = new WeakMap();
 
 function clamp(value, min, max) {
@@ -157,6 +159,9 @@ function createSegments({ completed = [], pending = [], hoursSpent = null }) {
 
     let visualStartPercent = toPercent(startPercent);
     let visualWidthPercent = toPercent(widthPercent);
+    const minWidthPercent = Math.min(widthPercent, MIN_SEGMENT_WIDTH_PERCENT);
+    let visualMinWidthPercent =
+      minWidthPercent === widthPercent ? visualWidthPercent : toPercent(minWidthPercent);
 
     const previous = segments[segments.length - 1];
     if (previous) {
@@ -170,6 +175,9 @@ function createSegments({ completed = [], pending = [], hoursSpent = null }) {
         if (percentSpan > 0 && percentSpanValue > 0) {
           visualStartPercent = `calc(${adjustedStartValue}% + ${MIN_SEGMENT_GAP_PX}px)`;
           visualWidthPercent = `calc(${percentSpanValue}% - ${MIN_SEGMENT_GAP_PX}px)`;
+          if (minWidthPercent === widthPercent) {
+            visualMinWidthPercent = visualWidthPercent;
+          }
         }
       }
     }
@@ -178,9 +186,11 @@ function createSegments({ completed = [], pending = [], hoursSpent = null }) {
       ...segment,
       width,
       widthPercent,
+      minWidthPercent,
       startPercent,
       visualStartPercent,
-      visualWidthPercent
+      visualWidthPercent,
+      visualMinWidthPercent
     });
   };
 
@@ -397,8 +407,14 @@ function createBlockNode(segment, options = {}) {
   }
   const startValue = segment.visualStartPercent || `${segment.startPercent}%`;
   const widthValue = segment.visualWidthPercent || `${segment.widthPercent}%`;
+  const minWidthValue =
+    segment.visualMinWidthPercent ||
+    (Number.isFinite(segment.minWidthPercent)
+      ? toPercent(segment.minWidthPercent)
+      : toPercent(MIN_SEGMENT_WIDTH_PERCENT));
   block.style.setProperty('--todo-timeline-start', startValue);
   block.style.setProperty('--todo-timeline-width', widthValue);
+  block.style.setProperty('--todo-timeline-min-width', minWidthValue);
   block.setAttribute('data-task-type', segment.category);
   block.setAttribute('data-task-state', segment.state);
   const labelParts = [segment.title, segment.meta].filter(Boolean).join(' — ');
