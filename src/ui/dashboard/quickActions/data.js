@@ -172,10 +172,64 @@ export function extractQuickActionCandidates(state = {}) {
   }).filter(Boolean);
 }
 
+function shouldReplaceUpgradeSuggestion(existing = {}, candidate = {}) {
+  const existingLevel = Number.isFinite(existing?.targetLevel) ? existing.targetLevel : Infinity;
+  const candidateLevel = Number.isFinite(candidate?.targetLevel) ? candidate.targetLevel : Infinity;
+  if (candidateLevel !== existingLevel) {
+    return candidateLevel < existingLevel;
+  }
+
+  const existingRemaining = Number.isFinite(existing?.remaining) ? existing.remaining : Infinity;
+  const candidateRemaining = Number.isFinite(candidate?.remaining) ? candidate.remaining : Infinity;
+  if (candidateRemaining !== existingRemaining) {
+    return candidateRemaining < existingRemaining;
+  }
+
+  const existingCompletion = Number.isFinite(existing?.completion) ? existing.completion : 0;
+  const candidateCompletion = Number.isFinite(candidate?.completion) ? candidate.completion : 0;
+  if (candidateCompletion !== existingCompletion) {
+    return candidateCompletion > existingCompletion;
+  }
+
+  const existingOrder = Number.isFinite(existing?.orderIndex) ? existing.orderIndex : Infinity;
+  const candidateOrder = Number.isFinite(candidate?.orderIndex) ? candidate.orderIndex : Infinity;
+  return candidateOrder < existingOrder;
+}
+
+function mergeUpgradeSuggestion(targetMap, key, suggestion) {
+  if (!targetMap || !key) return;
+
+  const existing = targetMap.get(key);
+  if (!existing) {
+    targetMap.set(key, suggestion);
+    return;
+  }
+
+  const preservedOrder = Math.min(
+    Number.isFinite(existing?.orderIndex) ? existing.orderIndex : Infinity,
+    Number.isFinite(suggestion?.orderIndex) ? suggestion.orderIndex : Infinity
+  );
+
+  if (shouldReplaceUpgradeSuggestion(existing, suggestion)) {
+    const replacement = { ...suggestion };
+    if (Number.isFinite(preservedOrder)) {
+      replacement.orderIndex = preservedOrder;
+    }
+    targetMap.set(key, replacement);
+    return;
+  }
+
+  if (Number.isFinite(preservedOrder)) {
+    existing.orderIndex = preservedOrder;
+  }
+  targetMap.set(key, existing);
+}
+
 export function buildAssetUpgradeData(state) {
   if (!state) return [];
 
-  const suggestions = [];
+  const suggestionMap = new Map();
+  let suggestionSequence = 0;
 
   for (const asset of getAssets()) {
     const qualityActions = getQualityActions(asset);
@@ -240,9 +294,7 @@ export function buildAssetUpgradeData(state) {
           const remainingRuns = estimateRemainingRuns(asset, instance, action, remaining, state);
           const repeatable = remainingRuns == null ? true : remainingRuns > 1;
 
-          const orderIndex = suggestions.length;
-
-          suggestions.push({
+          const suggestion = {
             id: `asset-upgrade:${asset.id}:${instance.id}:${action.id}:${key}:L${levelDef.level}`,
             title: `${label} · ${buttonLabel}`,
             subtitle: `${remaining} ${requirementLabel} to go for Quality ${levelDef.level} (${percentRemaining}% to go).`,
@@ -258,13 +310,17 @@ export function buildAssetUpgradeData(state) {
             remainingRuns,
             repeatable,
             cost: moneyCost,
-            orderIndex
-          });
+            orderIndex: suggestionSequence++
+          };
+
+          const dedupeKey = `${asset.id}:${instance.id}:${action.id}:${key}`;
+          mergeUpgradeSuggestion(suggestionMap, dedupeKey, suggestion);
         });
       });
     });
   }
 
+  const suggestions = Array.from(suggestionMap.values());
   suggestions.sort((a, b) => {
     if (a.performance !== b.performance) {
       return a.performance - b.performance;
