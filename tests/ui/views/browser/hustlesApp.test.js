@@ -420,8 +420,7 @@ test('renderHustles renders unified offer feed with metrics, CTA wiring, and fil
 
   try {
     const result = renderHustles(context, definitions, models);
-    assert.ok(result?.meta.includes('2 offers ready'));
-    assert.ok(result?.meta.includes('2 queued'));
+    assert.equal(result?.meta, 'Keep the loop rolling — $250 potential on the board.');
 
     assert.equal(document.querySelectorAll('.downwork-tab').length, 0, 'expected legacy tabs to be removed');
 
@@ -439,7 +438,10 @@ test('renderHustles renders unified offer feed with metrics, CTA wiring, and fil
     const quickFilters = document.querySelectorAll('button[data-filter-id]');
     assert.equal(quickFilters.length, 4, 'expected quick filter pills');
     const categoryFilters = document.querySelectorAll('button[data-category-id]');
-    assert.equal(categoryFilters.length, 2, 'expected hustle category filters to be present');
+    const categoryFilterIds = [...categoryFilters]
+      .map(button => button.dataset.categoryId)
+      .sort();
+    assert.deepEqual(categoryFilterIds, ['community', 'writing'], 'expected hustle category filters to match categories');
 
     const list = document.querySelector('[data-role="browser-hustle-list"]');
     const cards = [...list.querySelectorAll('.downwork-card')];
@@ -450,57 +452,40 @@ test('renderHustles renders unified offer feed with metrics, CTA wiring, and fil
       'expected each priority hustle offer to render separately'
     );
 
-    const primaryCard = cards.find(card =>
-      card.dataset.hustle === 'priority-hustle' &&
-      card.dataset.available === 'true' &&
-      card.querySelector('.browser-card__summary')
+    const readyCards = cards.filter(
+      card => card.dataset.hustle === 'priority-hustle' && card.dataset.available === 'true'
     );
-    assert.ok(primaryCard, 'expected primary ready card for priority hustle');
-    assert.equal(primaryCard.dataset.time, '2');
-    assert.equal(primaryCard.dataset.payout, '50');
-    assert.equal(primaryCard.dataset.roi, '25');
-    assert.ok(primaryCard.querySelector('.downwork-card__metrics').textContent.includes('📈 ROI $25 / h'));
-    const primarySummary = primaryCard.querySelector('.browser-card__summary');
-    assert.ok(primarySummary, 'expected primary card to include summary copy');
-    assert.equal(primarySummary.textContent, 'Lock this contract now.');
-    assert.equal(primaryCard.querySelectorAll('.browser-card__badge').length, 2, 'expected primary card badges');
-    assert.equal(primaryCard.querySelectorAll('.downwork-card__tag').length, 2, 'expected primary card tags');
-    assert.equal(primaryCard.querySelector('.browser-card__meta')?.textContent, 'No requirements');
-    assert.equal(primaryCard.querySelectorAll('.hustle-card__offer').length, 1, 'expected primary card to show one ready offer');
+    assert.equal(readyCards.length, 2, 'expected two ready priority hustle cards');
+
+    const [topCard, nextCard] = readyCards;
+    assert.ok(topCard, 'expected high payout card to render first');
+    assert.equal(topCard.dataset.time, '3');
+    assert.equal(topCard.dataset.payout, '80');
+    assert.equal(topCard.dataset.roi, '25');
+    assert.ok(topCard.querySelector('.downwork-card__metrics').textContent.includes('📈 ROI'));
+    const topSummary = topCard.querySelector('.browser-card__summary');
+    assert.ok(topSummary, 'expected high payout card to include summary copy');
+    assert.equal(topSummary.textContent, 'Lock this contract now.');
+    assert.equal(topCard.querySelectorAll('.browser-card__badge').length, 2, 'expected high payout card badges');
+    assert.equal(topCard.querySelectorAll('.downwork-card__tag').length, 2, 'expected high payout card tags');
+    assert.equal(topCard.querySelector('.browser-card__meta')?.textContent, 'No requirements');
+    assert.equal(topCard.querySelectorAll('.hustle-card__offer').length, 1, 'expected high payout card to show one ready offer');
     assert.equal(
-      primaryCard.querySelectorAll('.hustle-card__offer.is-upcoming').length,
+      topCard.querySelectorAll('.hustle-card__offer.is-upcoming').length,
       0,
-      'expected primary card to omit nested upcoming offers'
+      'expected high payout card to omit nested upcoming offers'
     );
 
-    const secondaryCard = cards.find(card =>
-      card.dataset.hustle === 'priority-hustle' &&
-      card.dataset.available === 'true' &&
-      !card.querySelector('.browser-card__summary')
-    );
-    assert.ok(secondaryCard, 'expected secondary ready card for priority hustle');
-    assert.equal(secondaryCard.dataset.time, '3');
-    assert.equal(secondaryCard.dataset.payout, '80');
-    assert.equal(
-      secondaryCard.querySelector('.browser-card__summary'),
-      null,
-      'expected secondary card to omit repeated summary copy'
-    );
-    assert.equal(
-      secondaryCard.querySelector('.browser-card__badges'),
-      null,
-      'expected secondary card to hide badges'
-    );
-    assert.equal(
-      secondaryCard.querySelector('.downwork-card__tags'),
-      null,
-      'expected secondary card to hide tag list'
-    );
-    assert.equal(
-      secondaryCard.querySelector('.browser-card__meta'),
-      null,
-      'expected secondary card to hide requirements summary'
-    );
+    assert.ok(nextCard, 'expected second ready card for priority hustle');
+    assert.equal(nextCard.dataset.time, '2');
+    assert.equal(nextCard.dataset.payout, '50');
+    assert.equal(nextCard.dataset.roi, '25');
+    const nextSummary = nextCard.querySelector('.browser-card__summary');
+    assert.ok(nextSummary, 'expected second card to include summary copy');
+    assert.equal(nextSummary.textContent, 'Lock this contract now.');
+    assert.equal(nextCard.querySelectorAll('.browser-card__badge').length, 2, 'expected second card badges');
+    assert.equal(nextCard.querySelectorAll('.downwork-card__tag').length, 2, 'expected second card tags');
+    assert.ok(nextCard.querySelector('.browser-card__meta'), 'expected second card requirements summary');
 
     const priorityUpcomingCard = cards.find(card =>
       card.dataset.hustle === 'priority-hustle' && card.dataset.available === 'false'
@@ -533,13 +518,13 @@ test('renderHustles renders unified offer feed with metrics, CTA wiring, and fil
       'expected upcoming card to surface opening soon section'
     );
 
-    const primaryAction = primaryCard.querySelector('.browser-card__actions .browser-card__button--primary');
+    const primaryAction = nextCard.querySelector('.browser-card__actions .browser-card__button--primary');
     assert.ok(primaryAction, 'expected primary hustle CTA');
     assert.equal(primaryAction.textContent, 'Accept Ready Offer');
     primaryAction.click();
     assert.deepEqual(actionLog, ['model-action']);
 
-    const readyOfferButton = primaryCard.querySelector('.hustle-card__offer:not(.is-upcoming) .browser-card__button');
+    const readyOfferButton = nextCard.querySelector('.hustle-card__offer:not(.is-upcoming) .browser-card__button');
     assert.ok(readyOfferButton, 'expected ready offer button to render');
     assert.equal(readyOfferButton.textContent, 'Queue this lead');
     readyOfferButton.click();
@@ -899,11 +884,15 @@ test('renderHustles syncs quick filter state with session config', () => {
   ];
 
   const models = [
-    {
-      id: 'session-filter',
+    createOfferModel({
+      definitionId: 'session-filter',
+      offerId: 'offer-ready',
       name: 'Session Filter Hustle',
       description: 'Persists quick filters.',
       badges: [],
+      tags: [],
+      category: 'hustle',
+      categoryLabel: 'Hustle',
       metrics: {
         time: { value: 1, label: '1h' },
         payout: { value: 20, label: '$20' },
@@ -915,24 +904,20 @@ test('renderHustles syncs quick filter state with session config', () => {
         disabled: false,
         onClick: () => {}
       },
+      offer: {
+        id: 'offer-ready',
+        label: 'Ready Offer',
+        description: 'Open now',
+        meta: 'Available now • 1h focus',
+        payout: 20,
+        ready: true,
+        availableIn: 0,
+        expiresIn: 1,
+        onAccept: () => {}
+      },
       available: true,
-      offers: [
-        {
-          id: 'offer-ready',
-          label: 'Ready Offer',
-          description: 'Open now',
-          meta: 'Available now • 1h focus',
-          payout: 20,
-          ready: true,
-          availableIn: 0,
-          expiresIn: 1,
-          onAccept: () => {}
-        }
-      ],
-      upcoming: [],
-      commitments: [],
-      filters: { available: true }
-    }
+      status: 'ready'
+    })
   ];
 
   try {
@@ -1100,17 +1085,22 @@ test('renderHustles falls back to empty-state language when no offers exist', ()
   ];
 
   const models = [
-    {
-      id: 'empty-hustle',
+    createPlaceholderModel({
+      definitionId: 'empty-hustle',
       name: 'Empty Hustle',
       description: 'Waiting on the next drop.',
       badges: [],
-      metrics: {
-        time: { value: 2, label: '2h' },
-        payout: { value: 80, label: '$80' },
-        roi: 40
-      },
-      requirements: { summary: 'No requirements', items: [] },
+      tags: [],
+      category: 'hustle',
+      categoryLabel: 'Hustle',
+      metrics: createMetrics({
+        timeValue: 2,
+        timeLabel: '2h',
+        payoutValue: 80,
+        payoutLabel: '$80',
+        roiValue: 40
+      }),
+      requirements: createRequirements('No requirements', []),
       action: {
         label: 'Check back tomorrow',
         disabled: true,
@@ -1118,12 +1108,8 @@ test('renderHustles falls back to empty-state language when no offers exist', ()
         onClick: null,
         guidance: 'Fresh leads roll in with tomorrow\'s refresh. Accept the next hustle to keep momentum.'
       },
-      available: false,
-      offers: [],
-      upcoming: [],
-      commitments: [],
-      filters: { available: false }
-    }
+      commitments: []
+    })
   ];
 
   try {
