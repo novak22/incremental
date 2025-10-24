@@ -310,7 +310,14 @@ test('renderHustles renders unified offer feed with metrics, CTA wiring, and fil
         expiresIn: 1,
         acceptLabel: 'Queue this lead',
         locked: false,
-        onAccept: () => acceptLog.push('offer-ready-primary')
+        onAccept: () => acceptLog.push('offer-ready-primary'),
+        action: {
+          label: 'Accept Ready Offer',
+          disabled: false,
+          className: 'primary',
+          guidance: 'Fresh hustles just landed! Claim your next gig and keep momentum rolling.',
+          onClick: () => actionLog.push('offer-ready-primary-action')
+        }
       },
       available: true,
       status: 'ready'
@@ -344,7 +351,14 @@ test('renderHustles renders unified offer feed with metrics, CTA wiring, and fil
         hoursRequired: 3,
         expiresIn: 2,
         locked: false,
-        onAccept: () => acceptLog.push('offer-ready-secondary')
+        onAccept: () => acceptLog.push('offer-ready-secondary'),
+        action: {
+          label: 'Accept Ready Offer',
+          disabled: false,
+          className: 'primary',
+          guidance: 'Fresh hustles just landed! Claim your next gig and keep momentum rolling.',
+          onClick: () => actionLog.push('offer-ready-secondary-action')
+        }
       },
       available: true,
       status: 'ready'
@@ -378,7 +392,15 @@ test('renderHustles renders unified offer feed with metrics, CTA wiring, and fil
         hoursRequired: 2,
         expiresIn: 3,
         locked: false,
-        onAccept: () => acceptLog.push('offer-soon')
+        onAccept: () => acceptLog.push('offer-soon'),
+        action: {
+          label: 'Opens in 2 days',
+          disabled: true,
+          className: 'primary',
+          guidance:
+            'Next wave unlocks tomorrow. Prep now so you\'re ready to accept and start logging progress.',
+          onClick: null
+        }
       },
       available: false,
       status: 'upcoming'
@@ -411,7 +433,14 @@ test('renderHustles renders unified offer feed with metrics, CTA wiring, and fil
         hoursRequired: 4,
         expiresIn: 4,
         locked: false,
-        onAccept: () => acceptLog.push('offer-slow')
+        onAccept: () => acceptLog.push('offer-slow'),
+        action: {
+          label: 'Opens in 1 day',
+          disabled: true,
+          className: 'primary',
+          guidance: 'Queue another gig to unlock this lane.',
+          onClick: null
+        }
       },
       available: false,
       status: 'upcoming'
@@ -447,15 +476,20 @@ test('renderHustles renders unified offer feed with metrics, CTA wiring, and fil
     const cards = [...list.querySelectorAll('.downwork-card')];
     assert.equal(cards.length, 4, 'expected unified feed to render one card per task');
     assert.equal(
-      cards.filter(card => card.dataset.hustle === 'priority-hustle').length,
+      cards.filter(card => card.dataset.definitionId === 'priority-hustle').length,
       3,
       'expected each priority hustle offer to render separately'
     );
 
     const readyCards = cards.filter(
-      card => card.dataset.hustle === 'priority-hustle' && card.dataset.available === 'true'
+      card => card.dataset.definitionId === 'priority-hustle' && card.dataset.available === 'true'
     );
     assert.equal(readyCards.length, 2, 'expected two ready priority hustle cards');
+    assert.deepEqual(
+      readyCards.map(card => card.dataset.offerId),
+      ['offer-ready-secondary', 'offer-ready-primary'],
+      'expected ready cards to expose offer-specific ids'
+    );
 
     const [topCard, nextCard] = readyCards;
     assert.ok(topCard, 'expected high payout card to render first');
@@ -488,9 +522,10 @@ test('renderHustles renders unified offer feed with metrics, CTA wiring, and fil
     assert.ok(nextCard.querySelector('.browser-card__meta'), 'expected second card requirements summary');
 
     const priorityUpcomingCard = cards.find(card =>
-      card.dataset.hustle === 'priority-hustle' && card.dataset.available === 'false'
+      card.dataset.definitionId === 'priority-hustle' && card.dataset.available === 'false'
     );
     assert.ok(priorityUpcomingCard, 'expected upcoming priority hustle card to render separately');
+    assert.equal(priorityUpcomingCard.dataset.offerId, 'offer-soon');
     assert.equal(
       priorityUpcomingCard.querySelectorAll('.hustle-card__offer').length,
       1,
@@ -503,11 +538,12 @@ test('renderHustles renders unified offer feed with metrics, CTA wiring, and fil
     );
 
     const upcomingCard = cards.find(card =>
-      card.dataset.hustle === 'slow-burn' && card.dataset.available === 'false'
+      card.dataset.definitionId === 'slow-burn' && card.dataset.available === 'false'
     );
     assert.ok(upcomingCard, 'expected upcoming hustle card to be present');
     assert.equal(upcomingCard.dataset.available, 'false');
-    assert.equal(upcomingCard.dataset.hustle, 'slow-burn');
+    assert.equal(upcomingCard.dataset.definitionId, 'slow-burn');
+    assert.equal(upcomingCard.dataset.offerId, 'offer-slow');
     assert.ok(
       upcomingCard.querySelector('.browser-card__summary'),
       'expected upcoming primary card to keep descriptive summary'
@@ -522,7 +558,7 @@ test('renderHustles renders unified offer feed with metrics, CTA wiring, and fil
     assert.ok(primaryAction, 'expected primary hustle CTA');
     assert.equal(primaryAction.textContent, 'Accept Ready Offer');
     primaryAction.click();
-    assert.deepEqual(actionLog, ['model-action']);
+    assert.deepEqual(actionLog, ['offer-ready-primary-action']);
 
     const readyOfferButton = nextCard.querySelector('.hustle-card__offer:not(.is-upcoming) .browser-card__button');
     assert.ok(readyOfferButton, 'expected ready offer button to render');
@@ -1119,7 +1155,8 @@ test('renderHustles falls back to empty-state language when no offers exist', ()
     const list = document.querySelector('[data-role="browser-hustle-list"]');
     const cards = list ? list.querySelectorAll('.downwork-card') : [];
     assert.equal(cards.length, 1, 'expected placeholder hustle card when no offers exist');
-    assert.equal(cards[0]?.dataset.hustle, 'empty-hustle');
+    assert.equal(cards[0]?.dataset.definitionId, 'empty-hustle');
+    assert.equal(cards[0]?.dataset.offerId, 'empty-hustle:placeholder');
     assert.equal(cards[0]?.dataset.available, 'false');
     assert.ok(!list?.querySelector('.browser-empty--compact'), 'expected placeholder card instead of empty message');
 

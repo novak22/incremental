@@ -238,8 +238,13 @@ export function createWorkspaceViewManager({
   function applyHustleFilters(model = {}) {
     const list = document.querySelector('[data-role="browser-hustle-list"]');
     if (!list) return;
-    const cards = Array.from(list.querySelectorAll('[data-hustle]'));
-    const cardMap = new Map(cards.map(card => [card.dataset.hustle, card]));
+    const cards = Array.from(list.querySelectorAll('[data-offer-id]'));
+    const cardMap = new Map();
+    cards.forEach(card => {
+      const id = (card.dataset.offerId || '').trim();
+      if (!id) return;
+      cardMap.set(id, card);
+    });
     const fragment = document.createDocumentFragment();
     const orderedIds = Array.isArray(model.orderedIds) ? model.orderedIds : [];
     const hiddenSet = new Set(Array.isArray(model.hiddenIds) ? model.hiddenIds : []);
