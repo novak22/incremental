@@ -299,6 +299,62 @@ function resolveTagEntries(model = {}, definition = {}) {
   return Array.from(unique.entries()).map(([id, label]) => ({ id, label }));
 }
 
+function mergeOfferModel(baseModel = {}, offerModel = {}) {
+  const base = baseModel && typeof baseModel === 'object' ? baseModel : {};
+  const offer = offerModel && typeof offerModel === 'object' ? offerModel : {};
+
+  if (offer === base) {
+    return base;
+  }
+
+  const merged = { ...base, ...offer };
+
+  const baseMetrics = base.metrics && typeof base.metrics === 'object' ? base.metrics : null;
+  const offerMetrics = offer.metrics && typeof offer.metrics === 'object' ? offer.metrics : null;
+
+  if (baseMetrics || offerMetrics) {
+    const metricKeys = new Set([
+      ...Object.keys(baseMetrics || {}),
+      ...Object.keys(offerMetrics || {})
+    ]);
+
+    const metrics = {};
+
+    metricKeys.forEach(key => {
+      const baseValue = baseMetrics ? baseMetrics[key] : undefined;
+      const offerValue = offerMetrics ? offerMetrics[key] : undefined;
+
+      if (offerValue && typeof offerValue === 'object' && !Array.isArray(offerValue)) {
+        metrics[key] = {
+          ...(baseValue && typeof baseValue === 'object' && !Array.isArray(baseValue) ? baseValue : {}),
+          ...offerValue
+        };
+        return;
+      }
+
+      if (offerValue !== undefined) {
+        metrics[key] = offerValue;
+        return;
+      }
+
+      if (baseValue && typeof baseValue === 'object' && !Array.isArray(baseValue)) {
+        metrics[key] = { ...baseValue };
+        return;
+      }
+
+      if (baseValue !== undefined) {
+        metrics[key] = baseValue;
+      }
+    });
+
+    if (Object.keys(metrics).length > 0) {
+      merged.metrics = metrics;
+    }
+  }
+
+  return merged;
+}
+
 function buildOfferEntries(definitions = [], models = [], { onOfferAccept } = {}) {
   const definitionLookup = new Map();
   const definitionOrder = new Map();
@@ -1405,7 +1461,11 @@ export function createOfferCard(entry = {}) {
 
   if (offer) {
     const primarySection = createCardSection(status === 'ready' ? copy.ready : copy.upcoming);
-    const offerOptions = { model: detailModel, onAccept };
+    const offerModel =
+      detailModel === model
+        ? model
+        : mergeOfferModel(model, detailModel);
+    const offerOptions = { model: offerModel, onAccept };
     if (status !== 'ready') {
       offerOptions.upcoming = true;
     }
