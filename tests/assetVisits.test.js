@@ -19,6 +19,9 @@ function setupActiveBlog() {
   assetState.instances = [instance];
   instance.maintenanceFundedToday = true;
   instance.quality.level = 3;
+  instance.quality.progress.posts = 18;
+  instance.metrics.seoScore = 62;
+  instance.metrics.backlinks = 4;
   return { blogDefinition, assetState, instance };
 }
 
@@ -70,4 +73,29 @@ test('endDay rolls daily visit progress into lifetime totals', () => {
     'lifetime views should include the full day worth of visits'
   );
   assert.equal(metrics.lastViewBreakdown?.total || 0, Math.round(visitsPerDay));
+});
+
+test('blog visit projections respond to content and backlinks', () => {
+  const baseline = setupActiveBlog();
+  const baseVisits = computeProjectedDailyVisits({
+    definition: baseline.blogDefinition,
+    assetState: baseline.assetState,
+    instance: baseline.instance
+  });
+
+  // Expand the blog footprint with more posts, stronger SEO, and extra backlinks
+  baseline.instance.quality.progress.posts = 36;
+  baseline.instance.metrics.seoScore = 85;
+  baseline.instance.metrics.backlinks = 12;
+  const boostedVisits = computeProjectedDailyVisits({
+    definition: baseline.blogDefinition,
+    assetState: baseline.assetState,
+    instance: baseline.instance
+  });
+
+  assert.ok(baseVisits > 0, 'baseline blog should generate traffic');
+  assert.ok(
+    boostedVisits > baseVisits,
+    `expected boosted metrics to increase visits (baseline=${baseVisits}, boosted=${boostedVisits})`
+  );
 });

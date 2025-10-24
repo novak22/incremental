@@ -2,6 +2,84 @@ import resolveIncomeFromBase from './income/engine.js';
 
 export const VISITS_PER_DOLLAR = 100;
 
+const BLOG_VISIT_FORMULA_DEFAULTS = Object.freeze({
+  scale: 60, // C
+  postsExponent: 0.8, // a
+  seoExponent: 1.6, // b
+  backlinkBleed: 0.05, // ε
+  referralScale: 15, // w_ref
+  backlinkExponent: 1.1 // g
+});
+
+function normalizePositiveNumber(value, { min = 0, max = Number.POSITIVE_INFINITY } = {}) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) {
+    return min;
+  }
+  return Math.max(min, Math.min(max, numeric));
+}
+
+function normalizeWholeNumber(value, { min = 0, max = Number.POSITIVE_INFINITY } = {}) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) {
+    return min;
+  }
+  return Math.max(min, Math.min(max, Math.round(numeric)));
+}
+
+function deriveBlogPostCount({ definition, instance }) {
+  const directProgress = normalizePositiveNumber(instance?.quality?.progress?.posts);
+  if (directProgress > 0) {
+    return directProgress;
+  }
+
+  const level = normalizeWholeNumber(instance?.quality?.level);
+  const levels = Array.isArray(definition?.quality?.levels) ? definition.quality.levels : [];
+  let inferredPosts = 0;
+  levels.forEach(entry => {
+    if (!entry || normalizeWholeNumber(entry.level) > level) {
+      return;
+    }
+    const requirement = normalizePositiveNumber(entry?.requirements?.posts);
+    if (requirement > inferredPosts) {
+      inferredPosts = requirement;
+    }
+  });
+  return inferredPosts;
+}
+
+function computeBlogVisitBaseUnits({ definition, instance, defaultBase = 0 }) {
+  if (!instance) {
+    return Math.max(0, Math.round(defaultBase));
+  }
+
+  const posts = Math.max(0, deriveBlogPostCount({ definition, instance }));
+  const seoScore = normalizeWholeNumber(instance?.metrics?.seoScore, { min: 0, max: 100 });
+  const backlinks = normalizeWholeNumber(instance?.metrics?.backlinks);
+
+  const {
+    scale: C,
+    postsExponent: a,
+    seoExponent: b,
+    backlinkBleed: epsilon,
+    referralScale: wRef,
+    backlinkExponent: g
+  } = BLOG_VISIT_FORMULA_DEFAULTS;
+
+  const seoRatio = seoScore / 100;
+  const backlinkLog = Math.log(1 + backlinks);
+
+  const organic = Math.pow(posts, a) * Math.pow(seoRatio, b) * (1 + epsilon * backlinkLog);
+  const referral = wRef * Math.pow(backlinkLog, g);
+  const baseVisits = C * (organic + referral);
+
+  if (!Number.isFinite(baseVisits)) {
+    return Math.max(0, Math.round(defaultBase));
+  }
+
+  return Math.max(0, Math.round(baseVisits));
+}
+
 const VISIT_CALCULATOR_DEFAULT_OPTIONS = Object.freeze({
   triggerEvents: false
 });
@@ -51,11 +129,15 @@ export default function projectVisitsFromBase({
   triggerEvents = VISIT_CALCULATOR_DEFAULT_OPTIONS.triggerEvents
 }) {
   const numericBase = Math.max(0, Math.round(Number(baseAmount) || 0));
-  if (numericBase <= 0) {
+  if (numericBase <= 0 && (!definition || definition.id !== 'blog')) {
     return { visitsPerDay: 0, breakdown: null };
   }
 
-  const visitBaseUnits = numericBase * VISITS_PER_DOLLAR;
+  const defaultVisitBaseUnits = numericBase * VISITS_PER_DOLLAR;
+  const visitBaseUnits = definition?.id === 'blog'
+    ? computeBlogVisitBaseUnits({ definition, instance, defaultBase: defaultVisitBaseUnits })
+    : defaultVisitBaseUnits;
+
   if (visitBaseUnits <= 0) {
     return { visitsPerDay: 0, breakdown: null };
   }
