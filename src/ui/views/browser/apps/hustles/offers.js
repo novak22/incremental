@@ -21,7 +21,10 @@ function resolvePayout(offer = {}, model = {}) {
   return 0;
 }
 
-export function createOfferItem(offer = {}, { upcoming = false, onAccept, model } = {}) {
+export function createOfferItem(
+  offer = {},
+  { upcoming = false, onAccept, model, actionModel } = {}
+) {
   const item = document.createElement('li');
   item.className = 'browser-card__list-item hustle-card__offer downwork-marketplace__offer downwork-offer';
 
@@ -62,18 +65,31 @@ export function createOfferItem(offer = {}, { upcoming = false, onAccept, model 
 
   if (ready) {
     button.className = 'browser-card__button browser-card__button--primary downwork-offer__button';
-    button.textContent = offer.acceptLabel || 'Accept & Queue';
+    const readyLabel = offer.acceptLabel
+      || offer.action?.label
+      || actionModel?.label
+      || (offer.label ? `Accept ${offer.label}` : 'Accept & Queue');
+    button.textContent = readyLabel;
     button.disabled = false;
-    if (typeof offer.onAccept === 'function') {
-      button.addEventListener('click', () => {
-        const payout = resolvePayout(offer, model);
-        const focusHours = resolveFocusHours(offer, model);
-        if (typeof onAccept === 'function') {
-          onAccept({ offer, model, payout, focusHours });
-        }
-        offer.onAccept();
-      });
+    const clickHandlers = new Set();
+    if (typeof actionModel?.onClick === 'function') {
+      clickHandlers.add(actionModel.onClick);
     }
+    if (typeof offer.action?.onClick === 'function') {
+      clickHandlers.add(offer.action.onClick);
+    }
+    if (typeof offer.onAccept === 'function') {
+      clickHandlers.add(offer.onAccept);
+    }
+    button.addEventListener('click', () => {
+      if (button.disabled) return;
+      const payout = resolvePayout(offer, model);
+      const focusHours = resolveFocusHours(offer, model);
+      if (typeof onAccept === 'function') {
+        onAccept({ offer, model, payout, focusHours });
+      }
+      clickHandlers.forEach(handler => handler());
+    });
   } else {
     button.className = 'browser-card__button downwork-offer__button';
     if (locked) {
