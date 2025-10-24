@@ -982,6 +982,54 @@
   transition: border-color 140ms ease, box-shadow 140ms ease;
 }
 
+.downwork-offer {
+  gap: 0.6rem;
+}
+
+.downwork-offer__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.downwork-offer__title {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.downwork-offer__value {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--browser-text);
+}
+
+.downwork-offer__actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.downwork-offer__button {
+  padding: 0.35rem 0.85rem;
+  font-size: 0.85rem;
+}
+
+.downwork-offer__stats {
+  margin: 0;
+  color: var(--browser-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.downwork-offer__hint {
+  margin: 0;
+  color: var(--browser-muted);
+  font-size: 0.85rem;
+}
+
 .downwork-marketplace__offer-list {
   display: grid;
   gap: 0.9rem;

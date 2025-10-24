@@ -40,7 +40,7 @@ function describeDailyLimit(definition, state = getState()) {
   return [
     {
       type: 'limit',
-      label: `Daily runs left: ${remaining}/${limit}`,
+      label: `${remaining}/${limit} runs today`,
       met: remaining > 0,
       progress: {
         used,

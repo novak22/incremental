@@ -77,7 +77,7 @@ test('createOfferList builds upcoming entries with lock hints', () => {
     assert.equal(button.textContent, 'Locked');
     assert.equal(button.title, 'Complete the tutorial');
 
-    const note = list.querySelector('.browser-card__note');
+    const note = list.querySelector('.downwork-offer__hint');
     assert.equal(note?.textContent, 'Complete the tutorial');
   } finally {
     dom.window.close();
