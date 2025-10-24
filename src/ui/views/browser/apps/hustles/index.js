@@ -1059,15 +1059,9 @@ function resolveFocusHoursLeft(context = {}, models = []) {
 }
 
 const DEFAULT_COPY = {
-  ready: {
-    title: 'Open contracts'
-  },
-  upcoming: {
-    title: 'Opening soon'
-  },
-  commitments: {
-    title: 'In progress'
-  }
+  ready: {},
+  upcoming: {},
+  commitments: {}
 };
 
 function mergeCopy(base = {}, overrides = {}) {
@@ -1078,23 +1072,9 @@ function mergeCopy(base = {}, overrides = {}) {
   };
 }
 
-function createCardSection(copy = {}) {
+function createCardSection(_copy = {}) {
   const section = document.createElement('section');
-  section.className = 'browser-card__section';
-
-  if (copy.title) {
-    const heading = document.createElement('h3');
-    heading.className = 'browser-card__section-title';
-    heading.textContent = copy.title;
-    section.appendChild(heading);
-  }
-
-  if (copy.description) {
-    const note = document.createElement('p');
-    note.className = 'browser-card__section-note';
-    note.textContent = copy.description;
-    section.appendChild(note);
-  }
+  section.className = 'browser-card__section downwork-card__group';
 
   return section;
 }
@@ -1360,19 +1340,6 @@ export function createOfferCard(entry = {}) {
   const hasSkillTag = typeof detailModel.tag?.label === 'string' && /skill/i.test(detailModel.tag.label);
   card.dataset.skillXp = hasSkillBadge || hasSkillTag ? 'true' : 'false';
 
-  const meta = document.createElement('p');
-  meta.className = 'browser-card__meta';
-  meta.textContent = (() => {
-    const candidates = [
-      detailModel?.requirements?.summary,
-      offer?.requirements?.summary,
-      model?.requirements?.summary
-    ];
-    const summary = candidates.find(value => typeof value === 'string' && value.trim().length > 0);
-    return summary || 'No requirements';
-  })();
-  card.appendChild(meta);
-
   const seatSummary =
     typeof detailModel?.seat?.summary === 'string' && detailModel.seat.summary.trim().length > 0
       ? detailModel.seat.summary
@@ -1384,19 +1351,6 @@ export function createOfferCard(entry = {}) {
     seat.className = 'browser-card__note';
     seat.textContent = seatSummary;
     card.appendChild(seat);
-  }
-
-  const limitSummary =
-    typeof detailModel?.limit?.summary === 'string' && detailModel.limit.summary.trim().length > 0
-      ? detailModel.limit.summary
-      : typeof offer?.limit?.summary === 'string' && offer.limit.summary.trim().length > 0
-        ? offer.limit.summary
-        : null;
-  if (limitSummary) {
-    const limit = document.createElement('p');
-    limit.className = 'browser-card__note';
-    limit.textContent = limitSummary;
-    card.appendChild(limit);
   }
 
   const offerAction = offer && typeof offer.action === 'object' && offer.action !== null ? offer.action : null;
