@@ -80,6 +80,7 @@ test('timodoro component renders layout and populates lists', t => {
   mount.dataset.role = 'timodoro-root';
   document.body.appendChild(mount);
 
+  let runCalls = 0;
   const viewModel = {
     meta: '3 tasks logged • 6h logged • $320 earned',
     todoEntries: [
@@ -89,7 +90,13 @@ test('timodoro component renders layout and populates lists', t => {
         durationHours: 2,
         meta: 'Client work',
         moneyCost: 120,
-        focusCategory: 'hustle'
+        focusCategory: 'hustle',
+        buttonLabel: 'Sprint now',
+        onClick: () => {
+          runCalls += 1;
+          return { success: true };
+        },
+        disabled: () => false
       },
       {
         title: 'Research module',
@@ -160,6 +167,13 @@ test('timodoro component renders layout and populates lists', t => {
     .querySelector('[data-role="timodoro-todo-upgrade"] .timodoro-list__empty');
   assert.ok(upgradeEmpty, 'upgrade lane renders empty state');
   assert.equal(upgradeEmpty.textContent, 'Queue an upgrade to keep momentum.');
+
+  const timeline = mount.querySelector('[data-role="timodoro-timeline"]');
+  const runButton = timeline?.querySelector('.todo-timeline__block-action');
+  assert.ok(runButton, 'timeline surfaces next runnable action');
+  assert.equal(runButton?.textContent, 'Sprint now', 'timeline mirrors queue CTA label');
+  runButton?.click();
+  assert.equal(runCalls, 1, 'timeline run button triggers queue handler');
 
   tabs[1].click();
 

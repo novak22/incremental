@@ -6,6 +6,21 @@ const UPDATE_INTERVAL_MS = 60_000;
 
 const tickerRegistry = new WeakMap();
 
+function resolveEntryDisabled(entry) {
+  if (!entry) {
+    return false;
+  }
+  const { disabled } = entry;
+  if (typeof disabled === 'function') {
+    try {
+      return Boolean(disabled.call(entry));
+    } catch (error) {
+      return true;
+    }
+  }
+  return Boolean(disabled);
+}
+
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
@@ -243,7 +258,12 @@ function buildTimelineModel({
     segments[activeIndex].isCurrent = true;
   }
 
-  const firstRunnable = segments.find(segment => segment.state === 'future' && segment.entry && !segment.entry.disabled);
+  const firstRunnable = segments.find(segment => {
+    if (segment.state !== 'future' || !segment.entry) {
+      return false;
+    }
+    return !resolveEntryDisabled(segment.entry);
+  });
 
   return {
     startHour: DAY_START_HOUR,
