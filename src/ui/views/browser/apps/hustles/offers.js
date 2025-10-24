@@ -21,9 +21,12 @@ function resolvePayout(offer = {}, model = {}) {
   return 0;
 }
 
-export function createOfferItem(offer = {}, { upcoming = false, onAccept, model } = {}) {
+export function createOfferItem(
+  offer = {},
+  { upcoming = false, onAccept, model, actionModel } = {}
+) {
   const item = document.createElement('li');
-  item.className = 'browser-card__list-item hustle-card__offer downwork-marketplace__offer';
+  item.className = 'browser-card__list-item hustle-card__offer downwork-marketplace__offer downwork-offer';
 
   if (!offer.ready || upcoming) {
     item.classList.add('is-upcoming');
@@ -32,21 +35,97 @@ export function createOfferItem(offer = {}, { upcoming = false, onAccept, model 
   decorateUrgency(item, offer.expiresIn);
 
   const header = document.createElement('div');
-  header.className = 'hustle-card__row';
+  header.className = 'downwork-offer__header';
+
+  const titleBlock = document.createElement('div');
+  titleBlock.className = 'downwork-offer__title';
 
   const title = document.createElement('span');
   title.className = 'hustle-card__title';
   title.textContent = offer.label || 'Contract offer';
-  header.appendChild(title);
+  titleBlock.appendChild(title);
 
   if (offer.payout) {
     const payout = document.createElement('span');
-    payout.className = 'hustle-card__value';
+    payout.className = 'downwork-offer__value';
     payout.textContent = `$${formatMoney(offer.payout)}`;
-    header.appendChild(payout);
+    titleBlock.appendChild(payout);
   }
 
+  header.appendChild(titleBlock);
+
+  const actionWrapper = document.createElement('div');
+  actionWrapper.className = 'downwork-offer__actions';
+
+  const button = document.createElement('button');
+  button.type = 'button';
+
+  const locked = Boolean(offer.locked);
+  const ready = Boolean(offer.ready) && !locked && !upcoming;
+
+  if (ready) {
+    button.className = 'browser-card__button browser-card__button--primary downwork-offer__button';
+    const readyLabel = offer.acceptLabel
+      || offer.action?.label
+      || actionModel?.label
+      || (offer.label ? `Accept ${offer.label}` : 'Accept & Queue');
+    button.textContent = readyLabel;
+    button.disabled = false;
+    const clickHandlers = new Set();
+    if (typeof actionModel?.onClick === 'function') {
+      clickHandlers.add(actionModel.onClick);
+    }
+    if (typeof offer.action?.onClick === 'function') {
+      clickHandlers.add(offer.action.onClick);
+    }
+    if (typeof offer.onAccept === 'function') {
+      clickHandlers.add(offer.onAccept);
+    }
+    button.addEventListener('click', () => {
+      if (button.disabled) return;
+      const payout = resolvePayout(offer, model);
+      const focusHours = resolveFocusHours(offer, model);
+      if (typeof onAccept === 'function') {
+        onAccept({ offer, model, payout, focusHours });
+      }
+      clickHandlers.forEach(handler => handler());
+    });
+  } else {
+    button.className = 'browser-card__button downwork-offer__button';
+    if (locked) {
+      button.textContent = offer.lockedLabel || 'Locked';
+      button.disabled = true;
+      if (offer.unlockHint) {
+        button.title = offer.unlockHint;
+      }
+    } else {
+      const availableIn = Number.isFinite(offer.availableIn) ? offer.availableIn : null;
+      const days = availableIn === 1 ? '1 day' : `${availableIn} days`;
+      button.textContent = availableIn && availableIn > 0 ? `Opens in ${days}` : 'Upcoming';
+      button.disabled = true;
+    }
+  }
+
+  actionWrapper.appendChild(button);
+  header.appendChild(actionWrapper);
   item.appendChild(header);
+
+  const stats = [];
+  const payout = resolvePayout(offer, model);
+  if (Number.isFinite(payout) && payout > 0) {
+    stats.push(`💵 $${formatMoney(payout)}`);
+  }
+  const focusHours = resolveFocusHours(offer, model);
+  if (Number.isFinite(focusHours) && focusHours > 0) {
+    stats.push(`⏱️ ${focusHours === 1 ? '1 hour' : `${focusHours} hours`}`);
+  }
+
+  if (stats.length > 0) {
+    const statList = document.createElement('p');
+    statList.className = 'downwork-offer__stats';
+    statList.textContent = stats.join(' • ');
+    item.appendChild(statList);
+  }
 
   if (offer.description) {
     const summary = document.createElement('p');
@@ -62,55 +141,12 @@ export function createOfferItem(offer = {}, { upcoming = false, onAccept, model 
     item.appendChild(meta);
   }
 
-  const actions = document.createElement('div');
-  actions.className = 'browser-card__actions';
-
-  const button = document.createElement('button');
-  button.type = 'button';
-
-  const locked = Boolean(offer.locked);
-  const ready = Boolean(offer.ready) && !locked && !upcoming;
-
-  if (ready) {
-    button.className = 'browser-card__button browser-card__button--primary';
-    button.textContent = offer.acceptLabel || 'Accept & Queue';
-    button.disabled = false;
-    if (typeof offer.onAccept === 'function') {
-      button.addEventListener('click', () => {
-        const payout = resolvePayout(offer, model);
-        const focusHours = resolveFocusHours(offer, model);
-        if (typeof onAccept === 'function') {
-          onAccept({ offer, model, payout, focusHours });
-        }
-        offer.onAccept();
-      });
-    }
-  } else {
-    button.className = 'browser-card__button';
-    if (locked) {
-      button.textContent = offer.lockedLabel || 'Locked';
-      button.disabled = true;
-      if (offer.unlockHint) {
-        button.title = offer.unlockHint;
-      }
-    } else {
-      const availableIn = Number.isFinite(offer.availableIn) ? offer.availableIn : null;
-      const days = availableIn === 1 ? '1 day' : `${availableIn} days`;
-      button.textContent = availableIn && availableIn > 0 ? `Opens in ${days}` : 'Upcoming';
-      button.disabled = true;
-    }
-  }
-
-  actions.appendChild(button);
-
   if (locked && offer.unlockHint) {
     const note = document.createElement('p');
-    note.className = 'browser-card__note';
+    note.className = 'downwork-offer__hint';
     note.textContent = offer.unlockHint;
-    actions.appendChild(note);
+    item.appendChild(note);
   }
-
-  item.appendChild(actions);
 
   return item;
 }

@@ -1406,7 +1406,11 @@ export function createOfferCard(entry = {}) {
       : null)
     || (model && typeof model.action === 'object' && model.action !== null ? model.action : null);
 
-  if (actionModel?.label || actionModel?.acceptedLabel || actionModel?.state === 'accepted') {
+  const hasInlineOffer = Boolean(offer);
+  const shouldRenderActionBar = !hasInlineOffer
+    && (actionModel?.label || actionModel?.acceptedLabel || actionModel?.state === 'accepted');
+
+  if (shouldRenderActionBar) {
     const actions = document.createElement('div');
     actions.className = 'browser-card__actions';
 
@@ -1465,7 +1469,7 @@ export function createOfferCard(entry = {}) {
       detailModel === model
         ? model
         : mergeOfferModel(model, detailModel);
-    const offerOptions = { model: offerModel, onAccept };
+    const offerOptions = { model: offerModel, onAccept, actionModel };
     if (status !== 'ready') {
       offerOptions.upcoming = true;
     }

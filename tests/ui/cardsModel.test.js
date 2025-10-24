@@ -173,7 +173,7 @@ test('buildHustleModels prefers accepting ready offers and queues upcoming separ
   assert.equal(readyModel.action.label, 'Accept Ready Offer');
   assert.equal(readyModel.action.disabled, false);
   assert.equal(readyModel.action.className, 'primary');
-  assert.match(readyModel.action.guidance, /Step 1 • Accept/i);
+  assert.match(readyModel.action.guidance, /Claim your next/i);
 
   const upcomingModel = models.find(entry => entry.offerId === 'offer-upcoming');
   assert.ok(upcomingModel, 'expected upcoming offer model');

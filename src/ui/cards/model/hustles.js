@@ -34,7 +34,7 @@ function buildDescriptorCopy(categoryLabel) {
   return {
     ready: {
       title: 'Ready to accept',
-      description: `Step 1 • Accept: Claim your next ${noun} and move it into your active worklist.`
+      description: `Claim your next ${noun} and keep your worklist humming.`
     },
     upcoming: {
       title: 'Queued for later',
@@ -414,10 +414,10 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
     };
     const actionCategory = descriptors.category || normalizedCategory;
     const categoryNoun = (descriptors.categoryLabel || 'Action').toLowerCase();
-    const defaultReadyGuidance = `Step 1 • Accept: Claim your next ${categoryNoun} and move it into your active worklist.`;
-    const defaultWaitingGuidance = `Next wave unlocks tomorrow. Prep now so you're ready to accept and start logging progress.`;
-    const defaultRerollGuidance = `Need something now? Roll a fresh ${categoryNoun} and keep the accept → work → complete loop moving.`;
-    const defaultEmptyGuidance = `Fresh leads roll in with tomorrow's refresh. Accept the next ${categoryNoun} to keep momentum.`;
+    const defaultReadyGuidance = `Claim your next ${categoryNoun} to keep momentum rolling.`;
+    const defaultWaitingGuidance = `Next wave unlocks tomorrow. Prep now so you can jump in fast.`;
+    const defaultRerollGuidance = `Need something now? Roll a fresh ${categoryNoun} to keep work flowing.`;
+    const defaultEmptyGuidance = `Fresh leads roll in with tomorrow's refresh. Queue the next ${categoryNoun} to stay sharp.`;
 
     const time = Number(definition.time || definition.action?.timeCost) || 0;
     const payout = Number(definition.payout?.amount || definition.action?.payout) || 0;
@@ -436,7 +436,7 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
     const usage = getUsage?.(definition, state) || null;
     const limitSummary = usage
       ? usage.remaining > 0
-        ? `${usage.remaining}/${usage.limit} runs left today`
+        ? `${usage.remaining}/${usage.limit} runs today`
         : 'Daily limit reached for today. Resets tomorrow.'
       : '';
     const sortedOffers = [...templateOffers].sort((a, b) => {

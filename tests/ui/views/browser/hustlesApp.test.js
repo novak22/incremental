@@ -664,16 +664,14 @@ test('renderHustles renders unified offer feed with metrics, CTA wiring, and fil
     moreFiltersToggle.click();
     assert.equal(moreFiltersToggle.getAttribute('aria-expanded'), 'false');
 
-    const primaryAction = nextCard.querySelector('.browser-card__actions .browser-card__button--primary');
-    assert.ok(primaryAction, 'expected primary hustle CTA');
-    assert.equal(primaryAction.textContent, 'Accept Ready Offer');
-    primaryAction.click();
-    assert.deepEqual(actionLog, ['offer-remix-action']);
+    const standaloneActions = nextCard.querySelector('.browser-card__actions');
+    assert.equal(standaloneActions, null, 'expected inline offer layout to remove duplicate action bar');
 
     const readyOfferButton = nextCard.querySelector('.hustle-card__offer:not(.is-upcoming) .browser-card__button');
     assert.ok(readyOfferButton, 'expected ready offer button to render');
     assert.equal(readyOfferButton.textContent, 'Queue this lead');
     readyOfferButton.click();
+    assert.deepEqual(actionLog, ['offer-remix-action']);
     assert.deepEqual(acceptLog, ['offer-remix']);
 
     assert.equal(document.querySelector('[data-role="downwork-focus-value"]').textContent, '3h');
