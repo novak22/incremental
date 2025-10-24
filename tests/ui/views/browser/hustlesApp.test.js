@@ -252,7 +252,7 @@ test('renderHustles renders unified offer feed with metrics, CTA wiring, and fil
         label: 'Accept Ready Offer',
         className: 'primary',
         onClick: () => actionLog.push('model-action'),
-        guidance: 'Fresh hustles just landed! Claim your next gig and keep momentum rolling.'
+        guidance: 'Fresh hustles just landed! Queue your next gig whenever you\'re ready.'
       }
     },
     {
@@ -278,7 +278,7 @@ test('renderHustles renders unified offer feed with metrics, CTA wiring, and fil
     roiValue: 30
   });
   const writingGuidance =
-    'Fresh hustles just landed! Claim your next gig and keep momentum rolling.';
+    'Fresh hustles just landed! Queue your next gig whenever you\'re ready.';
 
   const models = [
     createOfferModel({
@@ -561,12 +561,7 @@ test('renderHustles renders unified offer feed with metrics, CTA wiring, and fil
       const tags = card.querySelectorAll('.downwork-card__tag');
       assert.ok(tags.length > 0, `expected tags for ${label || 'card'}`);
       const requirements = card.querySelector('.browser-card__meta');
-      assert.ok(requirements, `expected requirement summary for ${label || 'card'}`);
-      if (expectation) {
-        assert.equal(requirements.textContent, expectation.requirements);
-      } else {
-        assert.ok(requirements.textContent.trim().length > 0, 'expected requirement text to render');
-      }
+      assert.equal(requirements, null, `expected requirements to stay hidden for ${label || 'card'}`);
     });
 
     const writingCards = cards.filter(card => card.dataset.category === 'writing');
@@ -591,10 +586,7 @@ test('renderHustles renders unified offer feed with metrics, CTA wiring, and fil
     assert.equal(topSummary.textContent, 'Deliver thought leadership threads with quick turnaround.');
     assert.equal(topCard.querySelectorAll('.browser-card__badge').length, 2, 'expected high payout card badges');
     assert.equal(topCard.querySelectorAll('.downwork-card__tag').length, 2, 'expected high payout card tags');
-    assert.equal(
-      topCard.querySelector('.browser-card__meta')?.textContent,
-      'Requires writing samples and onboarding call.'
-    );
+    assert.equal(topCard.querySelector('.browser-card__meta'), null);
     assert.equal(topCard.querySelectorAll('.hustle-card__offer').length, 1, 'expected high payout card to show one ready offer');
     assert.equal(
       topCard.querySelectorAll('.hustle-card__offer.is-upcoming').length,
@@ -611,15 +603,13 @@ test('renderHustles renders unified offer feed with metrics, CTA wiring, and fil
     assert.equal(nextSummary.textContent, 'Repurpose newsletters into punchy social updates.');
     assert.equal(nextCard.querySelectorAll('.browser-card__badge').length, 2, 'expected second card badges');
     assert.equal(nextCard.querySelectorAll('.downwork-card__tag').length, 2, 'expected second card tags');
+    assert.equal(nextCard.querySelector('.browser-card__meta'), null);
+    const commitmentItems = nextCard.querySelectorAll('.hustle-card__commitment');
+    assert.ok(commitmentItems.length > 0, 'expected second card to surface commitment entries');
     assert.equal(
-      nextCard.querySelector('.browser-card__meta')?.textContent,
-      'Requires two focus sprints available.'
-    );
-    assert.ok(
-      [...nextCard.querySelectorAll('.browser-card__section-title')].some(
-        node => node.textContent === 'In progress'
-      ),
-      'expected second card to surface commitment section'
+      nextCard.querySelectorAll('.browser-card__section-title').length,
+      0,
+      'expected lean layout to omit commitment headings'
     );
 
     const priorityUpcomingCard = writingCards.find(card => card.dataset.available === 'false');
@@ -631,9 +621,9 @@ test('renderHustles renders unified offer feed with metrics, CTA wiring, and fil
       'expected upcoming card to render a single queued offer'
     );
     assert.equal(
-      priorityUpcomingCard.querySelector('.browser-card__section-title')?.textContent,
-      'Opening soon',
-      'expected upcoming card to retain upcoming section heading'
+      priorityUpcomingCard.querySelectorAll('.browser-card__section-title').length,
+      0,
+      'expected upcoming card to render without extra section headings'
     );
 
     const upcomingCard = cards.find(card => card.dataset.category === 'community');
@@ -641,10 +631,10 @@ test('renderHustles renders unified offer feed with metrics, CTA wiring, and fil
     assert.equal(upcomingCard.dataset.available, 'false');
     assert.equal(upcomingCard.dataset.offerLabel, 'Community Warmup Sprint');
     assert.ok(upcomingCard.querySelector('.browser-card__summary'), 'expected community summary');
-    assert.ok(
-      [...upcomingCard.querySelectorAll('.browser-card__section-title')]
-        .some(node => node.textContent === 'Opening soon'),
-      'expected community card to surface opening soon section'
+    assert.equal(
+      upcomingCard.querySelectorAll('.browser-card__section-title').length,
+      0,
+      'expected community card to flatten upcoming layout'
     );
 
     writingFilter.click();
@@ -985,9 +975,13 @@ test('renderHustles renders multiple upcoming-only offers without duplication', 
     });
 
     cards.forEach(card => {
-      const upcomingHeadings = [...card.querySelectorAll('.browser-card__section-title')]
-        .filter(node => node.textContent === 'Opening soon');
-      assert.equal(upcomingHeadings.length, 1, 'expected a single upcoming section per card');
+      const upcomingOffers = card.querySelectorAll('.hustle-card__offer.is-upcoming');
+      assert.equal(upcomingOffers.length, 1, 'expected a single upcoming offer per card');
+      assert.equal(
+        card.querySelectorAll('.browser-card__section-title').length,
+        0,
+        'expected upcoming cards to render without section headings'
+      );
     });
   } finally {
     dom.window.close();
@@ -1270,7 +1264,7 @@ test('renderHustles falls back to empty-state language when no offers exist', ()
     const placeholderSummary = placeholderCard?.querySelector('.browser-card__summary');
     assert.equal(placeholderSummary?.textContent, 'Waiting on the next drop.');
     const placeholderRequirements = placeholderCard?.querySelector('.browser-card__meta');
-    assert.equal(placeholderRequirements?.textContent, 'No requirements');
+    assert.equal(placeholderRequirements, null);
     assert.ok(!list?.querySelector('.browser-empty--compact'), 'expected placeholder card instead of empty message');
 
     const button = document.querySelector('.browser-card__actions .browser-card__button');

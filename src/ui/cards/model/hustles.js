@@ -32,18 +32,9 @@ function formatCategoryLabel(value) {
 function buildDescriptorCopy(categoryLabel) {
   const noun = (categoryLabel || 'action').toLowerCase();
   return {
-    ready: {
-      title: 'Ready to accept',
-      description: `Claim your next ${noun} and keep your worklist humming.`
-    },
-    upcoming: {
-      title: 'Queued for later',
-      description: `These ${noun} leads unlock with tomorrow's refresh. Prep so you can accept quickly.`
-    },
-    commitments: {
-      title: 'In progress',
-      description: `Step 2 • Work: Log hours until this ${noun} is complete.`
-    }
+    ready: {},
+    upcoming: {},
+    commitments: {}
   };
 }
 
@@ -414,7 +405,7 @@ export default function buildHustleModels(definitions = [], helpers = {}) {
     };
     const actionCategory = descriptors.category || normalizedCategory;
     const categoryNoun = (descriptors.categoryLabel || 'Action').toLowerCase();
-    const defaultReadyGuidance = `Claim your next ${categoryNoun} to keep momentum rolling.`;
+    const defaultReadyGuidance = `Queue this ${categoryNoun} whenever you're ready.`;
     const defaultWaitingGuidance = `Next wave unlocks tomorrow. Prep now so you can jump in fast.`;
     const defaultRerollGuidance = `Need something now? Roll a fresh ${categoryNoun} to keep work flowing.`;
     const defaultEmptyGuidance = `Fresh leads roll in with tomorrow's refresh. Queue the next ${categoryNoun} to stay sharp.`;
