@@ -1086,8 +1086,15 @@ export function createOfferCard(entry = {}) {
     expiresIn
   } = entry;
 
+  const detailModel =
+    offer && typeof offer.model === 'object' && offer.model !== null
+      ? offer.model
+      : model;
+
   const descriptorBundle = {
-    ...(typeof model.descriptors === 'object' && model.descriptors !== null ? model.descriptors : {}),
+    ...(typeof detailModel.descriptors === 'object' && detailModel.descriptors !== null
+      ? detailModel.descriptors
+      : {}),
     ...(typeof descriptorOverrides === 'object' && descriptorOverrides !== null ? descriptorOverrides : {})
   };
 
@@ -1095,21 +1102,56 @@ export function createOfferCard(entry = {}) {
 
   const card = document.createElement('article');
   card.className = 'browser-card browser-card--action browser-card--hustle downwork-card';
-  card.dataset.action = hustleId;
-  card.dataset.hustle = hustleId;
-  card.dataset.hustleLabel = hustleLabel;
-  card.dataset.search = search;
+  const definitionId = typeof definition?.id === 'string' ? definition.id : hustleId;
+  const detailModelId = typeof detailModel?.id === 'string' ? detailModel.id : '';
+  const resolvedOfferId =
+    (typeof offer?.id === 'string' && offer.id)
+    || (typeof detailModel?.offerId === 'string' && detailModel.offerId)
+    || '';
+  const actionId = resolvedOfferId || detailModelId || hustleId || '';
+  const resolvedLabel =
+    (typeof offer?.label === 'string' && offer.label)
+    || (typeof detailModel?.name === 'string' && detailModel.name)
+    || hustleLabel;
+
+  if (actionId) {
+    card.dataset.offerId = actionId;
+    card.dataset.action = actionId;
+  }
+  if (definitionId) {
+    card.dataset.definitionId = definitionId;
+  }
+  if (resolvedLabel) {
+    card.dataset.offerLabel = resolvedLabel;
+  }
+
+  const searchValue =
+    typeof detailModel?.filters?.search === 'string' && detailModel.filters.search.trim().length > 0
+      ? detailModel.filters.search
+      : search;
+  card.dataset.search = searchValue || '';
   card.dataset.category = categoryKey;
   card.dataset.actionCategory = categoryKey;
   card.dataset.categoryLabel = categoryConfig?.label || DEFAULT_CATEGORY_CONFIG.label;
 
-  if (limitRemaining !== null && limitRemaining !== undefined) {
-    card.dataset.limitRemaining = String(limitRemaining);
+  const resolvedLimitRemaining = (() => {
+    if (Number.isFinite(detailModel?.limit?.remaining)) {
+      return detailModel.limit.remaining;
+    }
+    if (limitRemaining !== null && limitRemaining !== undefined) {
+      return limitRemaining;
+    }
+    return null;
+  })();
+
+  if (resolvedLimitRemaining !== null && resolvedLimitRemaining !== undefined) {
+    card.dataset.limitRemaining = String(resolvedLimitRemaining);
   }
 
-  const fallbackTime = Number(model.metrics?.time?.value ?? 0);
-  const fallbackPayout = Number(model.metrics?.payout?.value ?? 0);
-  const fallbackRoi = Number(model.metrics?.roi ?? 0);
+  const metricsModel = detailModel && typeof detailModel === 'object' ? detailModel : model;
+  const fallbackTime = Number(metricsModel.metrics?.time?.value ?? 0);
+  const fallbackPayout = Number(metricsModel.metrics?.payout?.value ?? 0);
+  const fallbackRoi = Number(metricsModel.metrics?.roi ?? 0);
 
   const baseTime = Number.isFinite(Number(metrics?.timeValue))
     ? Number(metrics.timeValue)
@@ -1164,11 +1206,11 @@ export function createOfferCard(entry = {}) {
 
   const timeChip = document.createElement('span');
   timeChip.className = 'downwork-card__metric';
-  const timeLabel = model.metrics?.time?.label || formatHours(Math.max(0, safeTime));
+  const timeLabel = metricsModel.metrics?.time?.label || formatHours(Math.max(0, safeTime));
   timeChip.textContent = `⏱️ ${timeLabel}`;
   metricsRow.appendChild(timeChip);
 
-  const payoutLabel = model.metrics?.payout?.label
+  const payoutLabel = metricsModel.metrics?.payout?.label
     || (safePayout > 0 ? `$${formatMoney(safePayout)}` : 'Varies');
   const payoutChip = document.createElement('span');
   payoutChip.className = 'downwork-card__metric';
@@ -1189,14 +1231,36 @@ export function createOfferCard(entry = {}) {
 
   card.appendChild(metricsRow);
 
-  if (model.description) {
+  const descriptionCandidates = [
+    detailModel?.description,
+    offer?.description,
+    model?.description,
+    definition?.description
+  ];
+  const summaryText = descriptionCandidates.find(value => typeof value === 'string' && value.trim().length > 0);
+  if (summaryText) {
     const summary = document.createElement('p');
     summary.className = 'browser-card__summary';
-    summary.textContent = model.description;
+    summary.textContent = summaryText;
     card.appendChild(summary);
   }
 
-  const badges = Array.isArray(model.badges) ? model.badges : [];
+  const badgeSources = [];
+  if (Array.isArray(offer?.badges)) badgeSources.push(...offer.badges);
+  if (Array.isArray(detailModel?.badges)) badgeSources.push(...detailModel.badges);
+  else if (Array.isArray(model?.badges)) badgeSources.push(...model.badges);
+  const seenBadges = new Set();
+  const badges = badgeSources
+    .map(entry => (typeof entry === 'string' ? entry.trim() : ''))
+    .filter(Boolean)
+    .filter(entry => {
+      const normalized = entry.toLowerCase();
+      if (seenBadges.has(normalized)) return false;
+      seenBadges.add(normalized);
+      return true;
+    })
+    .filter(entry => !/\b\d+\s+(?:in\s+progress|queued)\b/i.test(entry));
+
   if (badges.length > 0) {
     const list = document.createElement('ul');
     list.className = 'browser-card__badges';
@@ -1210,7 +1274,15 @@ export function createOfferCard(entry = {}) {
     card.appendChild(list);
   }
 
-  const tagEntries = resolveTagEntries(model || {}, definition || {});
+  const tagModel = {
+    ...(detailModel || {}),
+    tags: [
+      ...(Array.isArray(detailModel?.tags) ? detailModel.tags : []),
+      ...(Array.isArray(offer?.tags) ? offer.tags : [])
+    ]
+  };
+
+  const tagEntries = resolveTagEntries(tagModel || {}, definition || {});
   card.dataset.tagList = JSON.stringify(tagEntries);
   card.dataset.tags = tagEntries.map(entry => entry.id).join(' ');
 
@@ -1229,52 +1301,95 @@ export function createOfferCard(entry = {}) {
   }
 
   const hasSkillBadge = badges.some(badge => typeof badge === 'string' && /xp/i.test(badge));
-  const hasSkillTag = typeof model.tag?.label === 'string' && /skill/i.test(model.tag.label);
+  const hasSkillTag = typeof detailModel.tag?.label === 'string' && /skill/i.test(detailModel.tag.label);
   card.dataset.skillXp = hasSkillBadge || hasSkillTag ? 'true' : 'false';
 
   const meta = document.createElement('p');
   meta.className = 'browser-card__meta';
-  meta.textContent = model.requirements?.summary || 'No requirements';
+  meta.textContent = (() => {
+    const candidates = [
+      detailModel?.requirements?.summary,
+      offer?.requirements?.summary,
+      model?.requirements?.summary
+    ];
+    const summary = candidates.find(value => typeof value === 'string' && value.trim().length > 0);
+    return summary || 'No requirements';
+  })();
   card.appendChild(meta);
 
-  if (model.seat?.summary) {
+  const seatSummary =
+    typeof detailModel?.seat?.summary === 'string' && detailModel.seat.summary.trim().length > 0
+      ? detailModel.seat.summary
+      : typeof offer?.seat?.summary === 'string' && offer.seat.summary.trim().length > 0
+        ? offer.seat.summary
+        : null;
+  if (seatSummary) {
     const seat = document.createElement('p');
     seat.className = 'browser-card__note';
-    seat.textContent = model.seat.summary;
+    seat.textContent = seatSummary;
     card.appendChild(seat);
   }
 
-  if (model.limit?.summary) {
+  const limitSummary =
+    typeof detailModel?.limit?.summary === 'string' && detailModel.limit.summary.trim().length > 0
+      ? detailModel.limit.summary
+      : typeof offer?.limit?.summary === 'string' && offer.limit.summary.trim().length > 0
+        ? offer.limit.summary
+        : null;
+  if (limitSummary) {
     const limit = document.createElement('p');
     limit.className = 'browser-card__note';
-    limit.textContent = model.limit.summary;
+    limit.textContent = limitSummary;
     card.appendChild(limit);
   }
 
-  if (model.action?.label) {
+  const offerAction = offer && typeof offer.action === 'object' && offer.action !== null ? offer.action : null;
+  const actionModel = offerAction
+    || (detailModel && typeof detailModel.action === 'object' && detailModel.action !== null
+      ? detailModel.action
+      : null)
+    || (model && typeof model.action === 'object' && model.action !== null ? model.action : null);
+
+  if (actionModel?.label || actionModel?.acceptedLabel || actionModel?.state === 'accepted') {
     const actions = document.createElement('div');
     actions.className = 'browser-card__actions';
 
     const queueButton = document.createElement('button');
     queueButton.type = 'button';
-    const variantName = model.action.className === 'secondary' ? 'secondary' : 'primary';
+    const variantName = actionModel.className === 'secondary' ? 'secondary' : 'primary';
     queueButton.className = `browser-card__button browser-card__button--${variantName}`;
-    queueButton.textContent = model.action.label || 'Accept & Queue';
-    queueButton.disabled = Boolean(model.action.disabled);
 
-    if (typeof model.action?.onClick === 'function') {
+    const isAccepted = actionModel.accepted === true || actionModel.state === 'accepted';
+    const buttonLabel = isAccepted
+      ? actionModel.acceptedLabel || actionModel.label || 'Accepted'
+      : actionModel.label || 'Accept & Queue';
+    queueButton.textContent = buttonLabel;
+    queueButton.disabled = Boolean(actionModel.disabled) || isAccepted;
+    if (isAccepted) {
+      queueButton.classList.add('is-accepted');
+    }
+
+    const clickHandlers = new Set();
+    if (typeof actionModel.onClick === 'function') {
+      clickHandlers.add(actionModel.onClick);
+    }
+    if (offerAction && typeof offerAction.onClick === 'function') {
+      clickHandlers.add(offerAction.onClick);
+    }
+
+    if (clickHandlers.size > 0) {
       queueButton.addEventListener('click', () => {
         if (queueButton.disabled) return;
-        model.action.onClick();
+        clickHandlers.forEach(handler => handler());
       });
     }
 
     actions.appendChild(queueButton);
 
-    if (model.action?.guidance) {
+    if (actionModel?.guidance) {
       const note = document.createElement('p');
       note.className = 'browser-card__note';
-      note.textContent = model.action.guidance;
+      note.textContent = actionModel.guidance;
       actions.appendChild(note);
     }
 
@@ -1290,7 +1405,7 @@ export function createOfferCard(entry = {}) {
 
   if (offer) {
     const primarySection = createCardSection(status === 'ready' ? copy.ready : copy.upcoming);
-    const offerOptions = { model, onAccept };
+    const offerOptions = { model: detailModel, onAccept };
     if (status !== 'ready') {
       offerOptions.upcoming = true;
     }

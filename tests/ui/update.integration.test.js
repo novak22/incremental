@@ -19,7 +19,7 @@ test('renderCards hydrates browser workspaces with default models', { concurrenc
 
   const hustleList = document.querySelector('[data-role="browser-hustle-list"]');
   assert.ok(hustleList, 'expected hustle workspace list to mount');
-  const hustleCards = hustleList.querySelectorAll('[data-hustle]');
+  const hustleCards = hustleList.querySelectorAll('[data-offer-id]');
   assert.ok(hustleCards.length > 0, 'expected hustle cards to render in workspace');
 
   t.after(() => {
