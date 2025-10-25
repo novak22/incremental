@@ -25,8 +25,8 @@ export function createOfferItem(
   offer = {},
   { upcoming = false, onAccept, model, actionModel } = {}
 ) {
-  const item = document.createElement('li');
-  item.className = 'browser-card__list-item hustle-card__offer downwork-marketplace__offer downwork-offer';
+  const item = document.createElement('article');
+  item.className = 'downwork-offer downwork-marketplace__offer';
 
   if (!offer.ready || upcoming) {
     item.classList.add('is-upcoming');
@@ -34,28 +34,58 @@ export function createOfferItem(
 
   decorateUrgency(item, offer.expiresIn);
 
-  const header = document.createElement('div');
-  header.className = 'downwork-offer__header';
+  const topRow = document.createElement('div');
+  topRow.className = 'downwork-offer__top';
 
-  const titleBlock = document.createElement('div');
-  titleBlock.className = 'downwork-offer__title';
-
-  const title = document.createElement('span');
-  title.className = 'hustle-card__title';
+  const title = document.createElement('h3');
+  title.className = 'downwork-offer__title';
   title.textContent = offer.label || 'Contract offer';
-  titleBlock.appendChild(title);
+  topRow.appendChild(title);
 
-  if (offer.payout) {
+  const payoutValue = resolvePayout(offer, model);
+  if (Number.isFinite(payoutValue) && payoutValue > 0) {
     const payout = document.createElement('span');
     payout.className = 'downwork-offer__value';
-    payout.textContent = `$${formatMoney(offer.payout)}`;
-    titleBlock.appendChild(payout);
+    payout.textContent = `$${formatMoney(payoutValue)}`;
+    topRow.appendChild(payout);
   }
 
-  header.appendChild(titleBlock);
+  item.appendChild(topRow);
 
-  const actionWrapper = document.createElement('div');
-  actionWrapper.className = 'downwork-offer__actions';
+  const metrics = [];
+  if (Number.isFinite(payoutValue) && payoutValue > 0) {
+    metrics.push(`💵 $${formatMoney(payoutValue)}`);
+  }
+  const focusHours = resolveFocusHours(offer, model);
+  if (Number.isFinite(focusHours) && focusHours > 0) {
+    metrics.push(`⏱️ ${focusHours === 1 ? '1 hour' : `${focusHours} hours`}`);
+  }
+
+  if (metrics.length > 0) {
+    const metricRow = document.createElement('div');
+    metricRow.className = 'downwork-offer__metrics';
+    metrics.forEach(entry => {
+      const chip = document.createElement('span');
+      chip.className = 'downwork-offer__metric';
+      chip.textContent = entry;
+      metricRow.appendChild(chip);
+    });
+    item.appendChild(metricRow);
+  }
+
+  if (offer.description) {
+    const summary = document.createElement('p');
+    summary.className = 'downwork-offer__description';
+    summary.textContent = offer.description;
+    item.appendChild(summary);
+  }
+
+  if (offer.meta) {
+    const meta = document.createElement('p');
+    meta.className = 'downwork-offer__meta';
+    meta.textContent = offer.meta;
+    item.appendChild(meta);
+  }
 
   const button = document.createElement('button');
   button.type = 'button';
@@ -106,40 +136,7 @@ export function createOfferItem(
     }
   }
 
-  actionWrapper.appendChild(button);
-  header.appendChild(actionWrapper);
-  item.appendChild(header);
-
-  const stats = [];
-  const payout = resolvePayout(offer, model);
-  if (Number.isFinite(payout) && payout > 0) {
-    stats.push(`💵 $${formatMoney(payout)}`);
-  }
-  const focusHours = resolveFocusHours(offer, model);
-  if (Number.isFinite(focusHours) && focusHours > 0) {
-    stats.push(`⏱️ ${focusHours === 1 ? '1 hour' : `${focusHours} hours`}`);
-  }
-
-  if (stats.length > 0) {
-    const statList = document.createElement('p');
-    statList.className = 'downwork-offer__stats';
-    statList.textContent = stats.join(' • ');
-    item.appendChild(statList);
-  }
-
-  if (offer.description) {
-    const summary = document.createElement('p');
-    summary.className = 'hustle-card__description';
-    summary.textContent = offer.description;
-    item.appendChild(summary);
-  }
-
-  if (offer.meta) {
-    const meta = document.createElement('p');
-    meta.className = 'hustle-card__meta';
-    meta.textContent = offer.meta;
-    item.appendChild(meta);
-  }
+  item.appendChild(button);
 
   if (locked && offer.unlockHint) {
     const note = document.createElement('p');
@@ -152,9 +149,8 @@ export function createOfferItem(
 }
 
 export function createOfferList(offers = [], options = {}) {
-  const { upcoming = false } = options;
-  const list = document.createElement('ul');
-  list.className = 'browser-card__list downwork-marketplace__offer-list';
+  const list = document.createElement('div');
+  list.className = 'downwork-marketplace__offer-list';
 
   offers.filter(Boolean).forEach(offer => {
     const item = createOfferItem(offer, options);
