@@ -950,13 +950,15 @@
   margin-top: 1.25rem;
 }
 
-.downwork-card__group {
-  gap: 0.85rem;
+.downwork-card__commitments {
   margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
-.downwork-card__group:first-of-type {
-  margin-top: 0.9rem;
+.downwork-card__offer {
+  margin-top: 1.25rem;
 }
 
 .browser-card__section-title {
@@ -992,10 +994,17 @@
 }
 
 .downwork-offer {
-  gap: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: var(--browser-radius-md);
+  border: 1px solid var(--browser-panel-border);
+  background: var(--browser-panel);
+  box-shadow: var(--browser-shadow-sm);
 }
 
-.downwork-offer__header {
+.downwork-offer__top {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -1003,40 +1012,55 @@
 }
 
 .downwork-offer__title {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.downwork-offer__value {
-  font-size: 0.95rem;
+  margin: 0;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--browser-text);
 }
 
-.downwork-offer__actions {
+.downwork-offer__value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--browser-accent, var(--browser-text));
+}
+
+.downwork-offer__metrics {
   display: flex;
-  align-items: center;
   flex-wrap: wrap;
   gap: 0.5rem;
 }
 
-.downwork-offer__button {
-  padding: 0.35rem 0.85rem;
-  font-size: 0.85rem;
-}
-
-.downwork-offer__stats {
-  margin: 0;
-  color: var(--browser-muted);
+.downwork-offer__metric {
+  padding: 0.3rem 0.55rem;
+  border-radius: var(--browser-radius-sm);
+  background: var(--browser-panel-elevated);
   font-size: 0.85rem;
   font-weight: 600;
+  color: var(--browser-muted-strong, var(--browser-muted));
+}
+
+.downwork-offer__description {
+  margin: 0;
+  color: var(--browser-text);
+  line-height: 1.45;
+}
+
+.downwork-offer__meta {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--browser-muted);
+}
+
+.downwork-offer__button {
+  align-self: flex-start;
+  padding: 0.45rem 1rem;
+  font-size: 0.9rem;
 }
 
 .downwork-offer__hint {
   margin: 0;
-  color: var(--browser-muted);
   font-size: 0.85rem;
+  color: var(--browser-muted);
 }
 
 .downwork-marketplace__offer-list {

@@ -2,7 +2,7 @@ import { formatHours, formatMoney } from '../../../../../core/helpers.js';
 import { getState } from '../../../../../core/state.js';
 import { getPageByType } from '../pageLookup.js';
 import { formatRoi } from '../../components/widgets.js';
-import { createOfferList } from './offers.js';
+import { createOfferItem } from './offers.js';
 import { createCommitmentList } from './commitments.js';
 import {
   ASSISTANT_CONFIG,
@@ -1058,27 +1058,6 @@ function resolveFocusHoursLeft(context = {}, models = []) {
   return Math.max(0, fallback);
 }
 
-const DEFAULT_COPY = {
-  ready: {},
-  upcoming: {},
-  commitments: {}
-};
-
-function mergeCopy(base = {}, overrides = {}) {
-  return {
-    ready: { ...DEFAULT_COPY.ready, ...base.ready, ...overrides.ready },
-    upcoming: { ...DEFAULT_COPY.upcoming, ...base.upcoming, ...overrides.upcoming },
-    commitments: { ...DEFAULT_COPY.commitments, ...base.commitments, ...overrides.commitments }
-  };
-}
-
-function createCardSection(_copy = {}) {
-  const section = document.createElement('section');
-  section.className = 'browser-card__section downwork-card__group';
-
-  return section;
-}
-
 export function describeMetaSummary({ potentialPayout = 0, acceptedCommitments = 0 } = {}) {
   const payout = Number.isFinite(potentialPayout) ? Math.max(0, potentialPayout) : 0;
   const commitments = Number.isFinite(acceptedCommitments)
@@ -1107,7 +1086,6 @@ export function createOfferCard(entry = {}) {
     definition = {},
     model = {},
     descriptorOverrides = {},
-    copyOverrides = {},
     categoryConfig = DEFAULT_CATEGORY_CONFIG,
     categoryKey = '',
     hustleId = '',
@@ -1133,8 +1111,6 @@ export function createOfferCard(entry = {}) {
       : {}),
     ...(typeof descriptorOverrides === 'object' && descriptorOverrides !== null ? descriptorOverrides : {})
   };
-
-  const copy = mergeCopy(descriptorBundle.copy, copyOverrides);
 
   const card = document.createElement('article');
   card.className = 'browser-card browser-card--action browser-card--hustle downwork-card';
@@ -1411,14 +1387,14 @@ export function createOfferCard(entry = {}) {
   }
 
   if (Array.isArray(commitments) && commitments.length > 0) {
-    const commitmentsSection = createCardSection(copy.commitments);
     const list = createCommitmentList(commitments);
-    commitmentsSection.appendChild(list);
-    card.appendChild(commitmentsSection);
+    const wrapper = document.createElement('div');
+    wrapper.className = 'downwork-card__commitments';
+    wrapper.appendChild(list);
+    card.appendChild(wrapper);
   }
 
   if (offer) {
-    const primarySection = createCardSection(status === 'ready' ? copy.ready : copy.upcoming);
     const offerModel =
       detailModel === model
         ? model
@@ -1427,9 +1403,9 @@ export function createOfferCard(entry = {}) {
     if (status !== 'ready') {
       offerOptions.upcoming = true;
     }
-    const primaryList = createOfferList([offer], offerOptions);
-    primarySection.appendChild(primaryList);
-    card.appendChild(primarySection);
+    const offerCard = createOfferItem(offer, offerOptions);
+    offerCard.classList.add('downwork-card__offer');
+    card.appendChild(offerCard);
   }
 
   if (expiryCandidates.length) {

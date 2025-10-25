@@ -547,7 +547,7 @@ test('renderHustles renders unified offer feed with metrics, CTA wiring, and fil
     ]);
 
     cards.forEach(card => {
-      const label = card.dataset.offerLabel || card.querySelector('.hustle-card__title')?.textContent;
+      const label = card.dataset.offerLabel || card.querySelector('.downwork-offer__title')?.textContent;
       const expectation = label ? cardExpectations.get(label) : null;
       const summary = card.querySelector('.browser-card__summary');
       assert.ok(summary, `expected summary copy for ${label || 'card'}`);
@@ -587,9 +587,9 @@ test('renderHustles renders unified offer feed with metrics, CTA wiring, and fil
     assert.equal(topCard.querySelectorAll('.browser-card__badge').length, 2, 'expected high payout card badges');
     assert.equal(topCard.querySelectorAll('.downwork-card__tag').length, 2, 'expected high payout card tags');
     assert.equal(topCard.querySelector('.browser-card__meta'), null);
-    assert.equal(topCard.querySelectorAll('.hustle-card__offer').length, 1, 'expected high payout card to show one ready offer');
+    assert.equal(topCard.querySelectorAll('.downwork-offer').length, 1, 'expected high payout card to show one ready offer');
     assert.equal(
-      topCard.querySelectorAll('.hustle-card__offer.is-upcoming').length,
+      topCard.querySelectorAll('.downwork-offer.is-upcoming').length,
       0,
       'expected high payout card to omit nested upcoming offers'
     );
@@ -616,7 +616,7 @@ test('renderHustles renders unified offer feed with metrics, CTA wiring, and fil
     assert.ok(priorityUpcomingCard, 'expected upcoming writing card to render separately');
     assert.equal(priorityUpcomingCard.dataset.offerLabel, 'Scope Next Sprint');
     assert.equal(
-      priorityUpcomingCard.querySelectorAll('.hustle-card__offer').length,
+      priorityUpcomingCard.querySelectorAll('.downwork-offer').length,
       1,
       'expected upcoming card to render a single queued offer'
     );
@@ -657,7 +657,7 @@ test('renderHustles renders unified offer feed with metrics, CTA wiring, and fil
     const standaloneActions = nextCard.querySelector('.browser-card__actions');
     assert.equal(standaloneActions, null, 'expected inline offer layout to remove duplicate action bar');
 
-    const readyOfferButton = nextCard.querySelector('.hustle-card__offer:not(.is-upcoming) .browser-card__button');
+    const readyOfferButton = nextCard.querySelector('.downwork-offer:not(.is-upcoming) .browser-card__button');
     assert.ok(readyOfferButton, 'expected ready offer button to render');
     assert.equal(readyOfferButton.textContent, 'Queue this lead');
     readyOfferButton.click();
@@ -860,7 +860,7 @@ test('renderHustles omits locked offers from DownWork feed', () => {
     const cards = list ? [...list.querySelectorAll('.downwork-card')] : [];
     assert.equal(cards.length, 2, 'expected unlocked offers to render on separate cards');
 
-    const offerTitles = [...document.querySelectorAll('.hustle-card__title')]
+    const offerTitles = [...document.querySelectorAll('.downwork-offer__title')]
       .map(node => node.textContent.trim());
     assert.ok(offerTitles.includes('Open Ready Offer'), 'expected unlocked offer to remain visible');
     assert.ok(!offerTitles.includes('Locked Ready Offer'), 'expected locked offer to be hidden');
@@ -969,13 +969,13 @@ test('renderHustles renders multiple upcoming-only offers without duplication', 
     assert.equal(cards.length, upcomingOffers.length, 'expected one card per upcoming offer');
 
     upcomingOffers.forEach(offer => {
-      const occurrences = [...document.querySelectorAll('.hustle-card__title')]
+      const occurrences = [...document.querySelectorAll('.downwork-offer__title')]
         .filter(node => node.textContent.trim() === offer.label).length;
       assert.equal(occurrences, 1, `expected ${offer.label} to appear once`);
     });
 
     cards.forEach(card => {
-      const upcomingOffers = card.querySelectorAll('.hustle-card__offer.is-upcoming');
+      const upcomingOffers = card.querySelectorAll('.downwork-offer.is-upcoming');
       assert.equal(upcomingOffers.length, 1, 'expected a single upcoming offer per card');
       assert.equal(
         card.querySelectorAll('.browser-card__section-title').length,

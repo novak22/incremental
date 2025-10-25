@@ -66,7 +66,7 @@ test('createOfferList builds upcoming entries with lock hints', () => {
 
     document.body.appendChild(list);
 
-    const item = list.querySelector('.hustle-card__offer');
+    const item = list.querySelector('.downwork-offer');
     assert.ok(item, 'expected list item to render');
     assert.equal(item.classList.contains('is-upcoming'), true);
     assert.equal(item.classList.contains('is-warning'), false, 'no urgency tone for distant expiry');
